@@ -14,7 +14,15 @@ function HomePage(){
         <main className="homePage pb-10">
             <div className="hero">
                 <span className="titles relative">
-                    <h2 className="w-fit font-bold text-white text-5xl max-[1300px]:text-[2.2rem] max-[1160px]:text-[2rem] max-[800px]:text-[2rem] max-[500px]:text-2xl">OptiFlowz<br/>{t("heroTitle")}</h2>
+                    <p className="heroEyebrow">Custom Video Platform</p>
+                    <h2 className="heroHeadline w-fit font-bold text-white text-5xl max-[1300px]:text-[2.2rem] max-[1160px]:text-[2rem] max-[800px]:text-[2rem] max-[500px]:text-2xl">
+                        <span>Build Smarter.</span>
+                        <span>Stream Faster.</span>
+                        <span className="headlineSignatureRow">
+                            <span>Scale with</span>
+                            <span className="brandSignature">OptiFlowz</span>
+                        </span>
+                    </h2>
 
                     <div ref={paragraphRef} className={`paragraphHolder`}>
                         <p className={`relative paragraph paragraph0 selected mt-5 mb-7.5 max-[800px]:mb-0 font-medium text-lg max-[1300px]:text-[1rem] max-[1160px]:text-[0.85rem] max-[500px]:mt-3 max-[450px]:text-[.85rem] text-(--text1)`}>

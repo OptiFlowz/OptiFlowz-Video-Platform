@@ -4,7 +4,7 @@ import { Link } from "react-router";
 import OptiFlowzLogo from "../../../assets/OptiFlowzLogo.webp";
 import { useI18n } from "~/i18n";
 
-function Footer(){
+function Footer() {
     const { t } = useI18n();
 
     return (
@@ -68,7 +68,9 @@ function Footer(){
                         <Link to="https://optiflowz.com/" target="_blank">{InstagramSVG}</Link>
                         <Link to="https://optiflowz.com/" target="_blank">{FacebookSVG}</Link>
                     </div>
-                    <Link to="https://optiflowz.com" target="_blank">{t("footerPoweredBy")}&nbsp;<img loading="lazy" src={OptiFlowzLogo} alt="OptiFlowz Logo" /></Link>
+                    <Link to="https://optiflowz.com" target="_blank">
+                        {t("footerPoweredBy")}&nbsp;<img loading="lazy" src={OptiFlowzLogo} alt="OptiFlowz Logo" />
+                    </Link>
                 </div>
 
                 <span className="accentLogo">
@@ -76,7 +78,7 @@ function Footer(){
                 </span>
             </div>
 
-            <span>{new Date().getFullYear()} © {t("footerCopyright")}</span>
+            <span className="footerCopyright">Copyright (c) {new Date().getFullYear()} - All rights reserved</span>
         </footer>
     );
 }

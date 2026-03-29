@@ -29,7 +29,7 @@ export const links: Route.LinksFunction = () => [
   },
   {
     rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Gabarito:wght@400..900&display=swap",
+    href: "https://fonts.googleapis.com/css2?family=Gabarito:wght@400..900&family=Solitreo&display=swap",
   },
 ];
 

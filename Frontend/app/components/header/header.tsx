@@ -119,16 +119,14 @@ function Header(){
     }
 
     return <>
-        <header className={`backdrop-blur-[20px] fixed px-4 max-[800px]:pr-1.5 z-10 duration-300 drop-shadow-[0_2px_25px_rgba(0,0,0,0.35)] ${searchOpen ? "search-open-mobile" : ""} ${
-            (searchOpen) ? 'bg-(--background1) rounded-br-none! max-[500px]:rounded-b-none!' : 'bg-[rgba(9,10,11,0.86)]'
-        }`}>
+        <header className={`fixed w-full px-4 max-[800px]:pr-1.5 z-10 duration-300 ${searchOpen ? "search-open-mobile" : ""}`}>
             <div className="max-w-(--contentWidth) py-3 flex justify-between items-center mx-auto relative">
                 {/* Logo - Klikabilan */}
                 <Link to="/" className="logo flex gap-3 items-center cursor-pointer hover:opacity-80 transition-opacity">
                     <img
                         src={OptiFlowzLogo}
                         alt="OptiFlowz Logo"
-                        className="w-12 h-12 object-contain shrink-0"
+                        className="w-9 h-9 object-contain shrink-0"
                     />
                     <span className="p-0">
                         <h3 className="font-medium text-xl -mb-1.25">OptiFlowz</h3>
@@ -138,7 +136,6 @@ function Header(){
 
                 {/* Desktop Navigation */}
                 <nav className="flex gap-2 font-regular max-[800px]:hidden">
-                    <Link to="https://optiflowz.com/" target="_blank">Platform</Link>
                     <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : "")}>{t("navHome")}</NavLink>
                     <NavLink to="/videos/1" end className={({ isActive }) => (isActive ? "active" : "")}>{t("navRecommended")}</NavLink>
                     <NavLink to="/videos/2" end className={({ isActive }) => (isActive ? "active" : "")}>{t("navTrending")}</NavLink>
@@ -283,13 +280,6 @@ function Header(){
                         {t("navMyPlaylists")}
                     </NavLink>
                     : ""}
-                    <Link 
-                        to="https://optiflowz.com/"
-                        target="_blank"
-                        className={`p-3 rounded-lg transition-colors hover:bg-(--background2)`}
-                    >
-                        Platform
-                    </Link>
                     <NavLink 
                         to="/videos/1" 
                         end 
