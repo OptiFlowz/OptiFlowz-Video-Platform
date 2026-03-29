@@ -1,0 +1,24 @@
+﻿# fly.toml app configuration file generated for optiflowz-video-platform-backend on 2026-02-13T11:46:03+01:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'optiflowz-video-platform-backend'
+primary_region = 'fra'
+
+[build]
+
+[http_service]
+  internal_port = 4000
+  force_https = true
+
+  auto_stop_machines = true
+  auto_start_machines = true
+
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  memory = '1gb'
+  cpus = 1
+  memory_mb = 1024
