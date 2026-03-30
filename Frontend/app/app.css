@@ -144,11 +144,10 @@ header nav a:hover {
   filter: none;
 }
 
-header nav a.active,
-nav a.active {
+header nav a.active, nav a.active {
   color: white;
   text-decoration-color: rgba(255, 255, 255, 0.95);
-  text-underline-offset: 12px;
+  text-underline-offset: 10px;
 }
 
 header .logo h3,
@@ -244,13 +243,6 @@ main.homePage .paragraph {
 
 .contentSection {
   margin-top: 1.6rem !important;
-  padding: 26px;
-  border-radius: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(180deg, rgba(24, 28, 38, 0.7), rgba(18, 21, 30, 0.72));
-  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.24);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
 }
 
 .collection-header {
@@ -2134,6 +2126,7 @@ mux-player::part(menu-item) {
 }
 .verticalSlider .pins p,
 .featured .pins p {
+    background-color: var(--seethroughtBlack);
   font-size: 0.85em;
   padding: 4px 10px;
   border-radius: 999px;
@@ -2638,11 +2631,11 @@ main.account .info .userInfo p svg path{
   stroke: var(--accentBlue2);
 }
 main.account .info .userInfo p.second{
-  color: #58647C;
+  color: #8c9ab8;
   font-weight: 400;
 }
 main.account .info .userInfo p.second svg path{
-  stroke: #58647C;
+  stroke: #8c9ab8;
 }
 
 main.account .info .userInfo p span.desc{
@@ -2652,7 +2645,7 @@ main.account .info .userInfo p span.desc{
 }
 
 main.account .info .userInfo p span.desc a{
-  color: var(--accentBlue);
+  color: var(--accentBlue2);
   text-decoration: underline;
 }
 
@@ -2997,7 +2990,7 @@ main.login .form .passwordInput button svg {
   margin-bottom: 0px !important;
 }
 main.login .form .passwordInput button svg path {
-  stroke: var(--accentBlue);
+  stroke: white;
   fill: none;
 }
 main.login .form > span input {

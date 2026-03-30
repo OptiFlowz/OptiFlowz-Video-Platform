@@ -204,11 +204,11 @@ function LoginPage() {
             <img
               src={OptiFlowzLogo}
               alt="OptiFlowz Logo"
-              className="w-12 h-12 object-contain shrink-0"
+              className="w-10 h-10 object-contain shrink-0"
             />
             <span className="p-0">
-                        <h3 className="font-medium text-[1.3rem] max-[500px]:text-[1.2rem] -mb-1.25 text-(--accentBlue)">OptiFlowz</h3>
-                <p className="font-medium text-[rgba(0,0,100,0.5)] text-sm">{t("appName")}</p>
+                        <h3 className="font-medium text-[1.3rem] max-[500px]:text-[1.2rem] -mb-1.25">OptiFlowz</h3>
+                <p className="font-medium text-sm">{t("appName")}</p>
             </span>
         </Link>
 
