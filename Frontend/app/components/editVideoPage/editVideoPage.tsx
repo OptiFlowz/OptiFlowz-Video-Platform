@@ -9,6 +9,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import MuxPlayer from "@mux/mux-player-react";
 import { AISVG } from "~/constants";
+import { env } from "~/env";
 import ContributorSearch from "~/components/uploadPage/contributorSearch";
 import { fetchFn } from "~/API";
 import { getToken } from "~/functions";
@@ -344,7 +345,7 @@ function EditVideoPage() {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_FIRST || ""}/api/video-moderation/subtitle/${videoId}?lang=${lang}`,
+        `${env.apiBaseUrl || ""}/api/video-moderation/subtitle/${videoId}?lang=${lang}`,
         {
           method: "GET",
           headers: myHeaders.current,
@@ -386,7 +387,7 @@ function EditVideoPage() {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_FIRST || ""}/api/video-moderation/subtitle/autogenerate/${videoId}?lang=${captionLanguage}&name=${encodeURIComponent(selectedLang.name)}`,
+        `${env.apiBaseUrl || ""}/api/video-moderation/subtitle/autogenerate/${videoId}?lang=${captionLanguage}&name=${encodeURIComponent(selectedLang.name)}`,
         {
           method: "GET",
           headers: myHeaders.current,
@@ -424,7 +425,7 @@ function EditVideoPage() {
     setLoading(true);
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_FIRST || ""}/api/video-moderation/details/autogenerate/${videoId}?type=${type}`,
+        `${env.apiBaseUrl || ""}/api/video-moderation/details/autogenerate/${videoId}?type=${type}`,
         {
           method: "GET",
           headers: myHeaders.current,
@@ -468,7 +469,7 @@ function EditVideoPage() {
     setIsSavingCaptions(true);
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_FIRST || ""}/api/video-moderation/subtitle/replacev2/${videoId}?lang=${captionLanguage}&name=${selectedLang.name}`,
+        `${env.apiBaseUrl || ""}/api/video-moderation/subtitle/replacev2/${videoId}?lang=${captionLanguage}&name=${selectedLang.name}`,
         {
           method: "POST",
           headers: myHeaders.current,
@@ -506,7 +507,7 @@ function EditVideoPage() {
     setIsDeletingCaptions(true);
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_FIRST || ""}/api/video-moderation/subtitle/${videoId}?lang=${captionLanguage}`,
+        `${env.apiBaseUrl || ""}/api/video-moderation/subtitle/${videoId}?lang=${captionLanguage}`,
         {
           method: "DELETE",
           headers: myHeaders.current,

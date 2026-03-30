@@ -1,4 +1,4 @@
-import { useParams, useSearchParams, Link } from "react-router";
+﻿import { useParams, useSearchParams, Link } from "react-router";
 import VerticalSlider from "./verticalSlider/verticalSlider";
 import { useState, useRef, useLayoutEffect, useMemo, useEffect } from "react";
 import { useQueries } from "@tanstack/react-query";
@@ -127,7 +127,7 @@ function SearchPage() {
     playlistQ.isFetching ||
     peopleQ.isFetching;
 
-  // brojevi za dugmiće (prefer: pagination.total, fallback: length)
+  // brojevi za dugmiÄ‡e (prefer: pagination.total, fallback: length)
   const videosCount =
     (videoQ.data as any)?.pagination?.total ?? ((videoQ.data as SearchT)?.videos?.length ?? 0);
 
@@ -139,7 +139,7 @@ function SearchPage() {
     (peopleQ.data as PeopleSearchRes | undefined)?.pagination?.total ??
     ((peopleQ.data as PeopleSearchRes | undefined)?.people?.length ?? 0);
 
-  // NEW: da li uopšte ima bilo kakvih rezultata
+  // NEW: da li uopÅ¡te ima bilo kakvih rezultata
   const hasAnyResults = videosCount > 0 || playlistsCount > 0 || peopleCount > 0;
 
   // NEW: da li je trenutno selektovan tab prazan
@@ -148,7 +148,7 @@ function SearchPage() {
     (selected === 1 && playlistsCount === 0) ||
     (selected === 2 && peopleCount === 0);
 
-  // NEW: auto-switch na prvi tab koji ima rezultate (posle učitavanja)
+  // NEW: auto-switch na prvi tab koji ima rezultate (posle uÄitavanja)
   useEffect(() => {
     if (showLoader) return;
     if (!hasAnyResults) return;
@@ -303,7 +303,7 @@ function SearchPage() {
                       {formatDescription(p.description)}
                     </p>
                     <p className="text-md font-normal">
-                      <strong className="font-medium">{formatViews(p.view_count)}</strong> �{" "}
+                      <strong className="font-medium">{formatViews(p.view_count)}</strong> •{" "}
                       {formatDate(p.created_at)}
                     </p>
                   </div>
@@ -349,4 +349,5 @@ function SearchPage() {
 }
 
 export default SearchPage;
+
 

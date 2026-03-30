@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import MuxPlayer from "@mux/mux-player-react";
 import type MuxPlayerElement from "@mux/mux-player";
+import { env } from "~/env";
 import type { ChapterT } from "~/types";
 import { getToken } from "~/functions";
 import { loadMediaTheme } from "./loadMediaTheme";
@@ -33,7 +34,7 @@ export default function VideoPlayer({
   playbackId,
   videoId,
   videoTitle,
-  apiBaseUrl = import.meta.env.VITE_FIRST,
+  apiBaseUrl = env.apiBaseUrl,
   autoplay = true,
   accentColor = "#ec8b55",
   style = EMPTY_STYLE,

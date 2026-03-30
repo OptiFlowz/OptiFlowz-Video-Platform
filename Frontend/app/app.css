@@ -11,12 +11,12 @@
   --gabarito: "Gabarito", sans-serif;
   --solitreo: "Solitreo", cursive;
 
-  --contentWidth: 1400px;
+  --contentWidth: 1300px;
 
   --bR: calc(infinity * 1px);
 
-  --borderC1: rgba(255, 255, 255, 0.3);
-  --borderC2: rgba(255, 255, 255, 0.05);
+  --borderC1: rgba(255, 255, 255, 0.14);
+  --borderC2: rgba(255, 255, 255, 0.035);
 
   --backgroundC2: rgba(255, 255, 255, 0.1);
   --backgroundC3: rgba(39, 41, 53, 0.6);
@@ -43,7 +43,7 @@
 
   --border1: var(--borderC1);
   --border2: var(--borderC2);
-  --border3: rgba(255, 255, 255, 0.1);
+  --border3: rgba(255, 255, 255, 0.06);
 
   --text1: var(--foreground);
   --text2: var(--textC2);
@@ -120,7 +120,7 @@ header {
 }
 
 header > div {
-  max-width: min(1200px, calc(100vw - 32px));
+  max-width: min(calc(var(--contentWidth) + 12px), calc(100vw - 32px));
   padding: 10px 15px !important;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.16);
@@ -330,9 +330,17 @@ main.homePage .paragraph {
 .collection .item .duration,
 .videoHolder .item .duration,
 .playlistItem .pins p {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--seethroughtBlack);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: rgba(255, 255, 255, 0.88);
+}
+
+.item .info .date svg path,
+.item .info .views svg path,
+.collection .item .duration svg path,
+.videoHolder .item .duration svg path,
+.playlistItem .pins p svg path {
+  stroke: var(--text1);
 }
 
 .watchToRecommend,
@@ -371,7 +379,6 @@ main.playlist .videoHolder {
 }
 
 main.play .player,
-main.play > div:nth-child(2),
 .videoInfo .viewVideoChapters,
 .videoInfo .author,
 .videoInfo .other,
@@ -580,6 +587,48 @@ body {
   filter: brightness(0.85);
 }
 
+/* Remove the bright hairline highlight from glass/bordered elements. */
+header > div,
+.collection-header a.button,
+.scroll-buttons,
+.scrollLeftBtn,
+.scrollRightBtn,
+.collection .item > span,
+.videoHolder .item > span,
+.item .info .date,
+.item .info .views,
+.collection .item .duration,
+.videoHolder .item .duration,
+.playlistItem .pins p,
+main.playlist > div:first-child,
+main.search > div:first-child,
+main.account > .info,
+main.analyticsPage .analyticsSimple,
+main.myVideos table,
+main.myPlaylists table,
+.login .holder,
+.maintenance-card,
+main.play .player,
+.videoInfo .viewVideoChapters,
+.videoInfo .author,
+.videoInfo .other,
+.comment-input,
+.commentsSection > div,
+footer > div,
+footer .socials div a,
+main.playlist .buttonHolder button {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.22) !important;
+}
+
+.scrollLeftBtn,
+.scrollRightBtn,
+main.playlist .buttonHolder button.play,
+.watchToRecommend {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18) !important;
+}
+
 svg{
   backface-visibility: hidden;
 }
@@ -732,7 +781,7 @@ header .search {
   background-color: var(--background1);
   letter-spacing: 0.03rem;
   font-size: 0.975rem;
-  border-radius: 12px;
+  border-radius: var(--bR);
   border: 1px solid rgba(9, 28, 66, 0.1);
   transition: border-color 0.18s ease, background-color 0.18s ease;
 }
@@ -759,7 +808,7 @@ header .search button {
   padding: 0 18px;
   min-width: 50px;
   align-self: stretch;
-  border-radius: 10px;
+  border-radius: var(--bR);
   margin: 4px;
   font-size: 13px;
   line-height: 13px;
@@ -772,7 +821,7 @@ header .search button svg path {
 
 header .searchPanel {
   position: absolute;
-  top: calc(100% - 8px);
+  top: calc(100% + 4px);
   right: 0;
   width: min(100%, 350px);
   z-index: -1;
@@ -798,7 +847,7 @@ header .searchPanel.open {
 header .searchPanelInner {
   background: linear-gradient(135deg, rgba(17, 20, 26, 0.98), rgba(24, 28, 38, 0.96));
   border: 1px solid var(--border1);
-  border-radius: 16px;
+  border-radius: var(--bR);
 }
 
 header .searchPanel:not(.open) .search {
@@ -878,7 +927,7 @@ header .searchDesktop:focus-within svg {
   }
 
   header .search {
-    border-radius: 16px;
+    border-radius: var(--bR);
   }
 
   header .search button {
@@ -888,8 +937,8 @@ header .searchDesktop:focus-within svg {
 
   header.search-open-mobile,
   header:has(.searchPanel.open) {
-    border-bottom-left-radius: 24px;
-    border-bottom-right-radius: 24px;
+    border-bottom-left-radius: var(--bR);
+    border-bottom-right-radius: var(--bR);
   }
 }
 /* HEADER */
@@ -917,23 +966,6 @@ footer > div {
 
 footer > div > div {
   display: flex;
-}
-
-footer .accentLogo {
-  position: absolute;
-  top: -50%;
-  right: 20%;
-  transform: translate(50%, 0%);
-  width: 50vw;
-  aspect-ratio: 1/1;
-  z-index: -1;
-}
-
-footer .accentLogo svg {
-  width: 100%;
-  height: 100%;
-  opacity: 0.3;
-  filter: blur(10px);
 }
 
 footer .info {
@@ -2093,7 +2125,7 @@ mux-player::part(menu-item) {
   line-height: 1.25;
   border-radius: 999px;
   border: 1px solid var(--background3);
-  color: var(--accentBlue);
+  color: var(--text2);
   font-weight: 500;
   background-color: var(--background2);
 }
@@ -2215,7 +2247,7 @@ mux-player::part(menu-item) {
 }
 
 .comment-actions button, .reply{
-  background-color: var(--background15);
+  background-color: var(--background2);
   width: fit-content;
   font-weight: 500;
   padding: 0px 10px;
@@ -2236,6 +2268,10 @@ mux-player::part(menu-item) {
 .comment-actions button svg{
   width: 15px;
   height: 15px;
+}
+
+.comment-actions button svg path{
+  stroke: var(--text1);
 }
 
 .comment-reaction-icon{
@@ -6394,10 +6430,6 @@ main.playlist .videoHolder .playlistOrderNumber {
   footer .socials {
     justify-content: left;
   }
-  footer .accentLogo {
-    top: 0%;
-    width: 70vw;
-  }
 }
 
 @media screen and (max-width: 800px) {
@@ -6837,10 +6869,6 @@ footer > span.footerCopyright {
     border-bottom-right-radius: 0px;
     padding: 30px;
   }
-  footer .accentLogo {
-    top: 0%;
-    width: 85vw;
-  }
   .skeleton-playlist-banner{
     width: 100%;
     flex-shrink: 1;
@@ -7199,11 +7227,6 @@ footer > span.footerCopyright {
     width: 100%;
     display: grid;
     grid-template-columns: 1fr 1fr;
-  }
-  footer .accentLogo {
-    top: 10%;
-    width: 100vw;
-    min-width: 400px;
   }
   .collection .item.playlistItem {
     width: calc(100% / 1.4 - 0.75rem - 20px);

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLayoutEffect, useRef, useState, useCallback } from "react";
+import { env } from "~/env";
 import { formatDescription, getToken } from "~/functions";
 import { useParams } from "react-router";
 import { fetchFn } from "~/API";
@@ -50,7 +51,7 @@ function PlaylistPage(){
 
     const sharePlaylistLink = useCallback((e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         e.preventDefault();
-        const fullPath = import.meta.env.VITE_SITE_URL + location.pathname + location.search + location.hash;
+        const fullPath = env.siteUrl + location.pathname + location.search + location.hash;
 
         if(navigator.share)
             return navigator.share({
@@ -116,7 +117,7 @@ function PlaylistPage(){
             myHeaders.set("Content-Type", "application/json");
 
             const response = await fetch(
-                `${import.meta.env.VITE_FIRST}/api/playlists/${data.id}/save`,
+                `${env.apiBaseUrl}/api/playlists/${data.id}/save`,
                 { method: "POST", headers: myHeaders, redirect: "follow" }
             );
 

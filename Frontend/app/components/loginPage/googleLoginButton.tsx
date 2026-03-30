@@ -1,4 +1,5 @@
 import { GoogleSVG } from "~/constants";
+import { env } from "~/env";
 import { useI18n } from "~/i18n";
 
 import { useEffect, useRef } from "react";
@@ -30,7 +31,7 @@ function GoogleLoginButton({props}: Props) {
 
             if (!googleInitialized.current) {
                 try{
-                    const clientId = import.meta.env.VITE_CLIENT_ID;
+                    const clientId = env.googleClientId;
 
                     if (!clientId) {
                         console.error("Missing Google client ID");
@@ -74,7 +75,7 @@ function GoogleLoginButton({props}: Props) {
 
     const handleSubmit = () => {
         localStorage.setItem("rememberMe", JSON.stringify(props.rememberMe));
-        const clientId = import.meta.env.VITE_CLIENT_ID;
+        const clientId = env.googleClientId;
         const redirectUri = `${window.location.origin}/google-callback`;
 
         window.location.href =

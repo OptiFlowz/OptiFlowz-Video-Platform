@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { memo, useLayoutEffect, useRef, useState, useEffect, useCallback } from "react";
 import { AutoPlaySVG, BookmarkSVG, CloseSVG, ShareSVG } from "~/constants";
+import { env } from "~/env";
 import type { PlaylistT } from "~/types";
 import { fetchFn } from "~/API";
 import PlaylistVideos from "./playlistVideos";
@@ -82,7 +83,7 @@ function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, vi
 
     const sharePlaylistLink = useCallback((e: React.MouseEvent<HTMLElement, MouseEvent>) => {
         e.preventDefault();
-        const fullPath = import.meta.env.VITE_SITE_URL + location.pathname + location.search + location.hash;
+        const fullPath = env.siteUrl + location.pathname + location.search + location.hash;
 
         if(navigator.share)
             return navigator.share({
@@ -123,7 +124,7 @@ function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, vi
             myHeaders.set("Content-Type", "application/json");
 
             const response = await fetch(
-                `${import.meta.env.VITE_FIRST}/api/playlists/${data.id}/save`,
+                `${env.apiBaseUrl}/api/playlists/${data.id}/save`,
                 { method: "POST", headers: myHeaders, redirect: "follow" }
             );
 

@@ -136,10 +136,10 @@ function Header(){
 
                 {/* Desktop Navigation */}
                 <nav className="flex gap-2 font-regular max-[800px]:hidden">
+                    <Link to="https://optiflowz.com/" target="_blank">OptiFlowz</Link>
                     <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : "")}>{t("navHome")}</NavLink>
                     <NavLink to="/videos/1" end className={({ isActive }) => (isActive ? "active" : "")}>{t("navRecommended")}</NavLink>
                     <NavLink to="/videos/2" end className={({ isActive }) => (isActive ? "active" : "")}>{t("navTrending")}</NavLink>
-                    {isUEMS && <NavLink to="/uems-reading-list" end className={({ isActive }) => (isActive ? "active" : "")}>{t("navUemsReadingList")}</NavLink>}
                 </nav>
 
                 <div className={`flex ${isAdmin ? "gap-3" : "gap-1"} max-[650px]:gap-2 max-[500px]:gap-0.5 items-center`}>
@@ -208,7 +208,7 @@ function Header(){
 
                 {/* Search Bar Mobile */}
                 <div className={`searchPanel ${searchOpen ? 'open' : ''} ${searchFocusArmed ? 'focus-armed' : ''}`}>
-                    <div className="searchPanelInner p-3">
+                    <div className="searchPanelInner p-2">
                         <span className="search w-full cursor-text flex items-center gap-2">
                             <span className="w-6 h-6 flex items-center justify-center shrink-0">{SearchSVG}</span>
                             <input 
@@ -310,6 +310,13 @@ function Header(){
                     >
                         {t("navUemsReadingList")}
                     </NavLink>}
+                    <Link 
+                        to="https://optiflowz.com/"
+                        target="_blank"
+                        className={`p-3 rounded-lg transition-colors hover:bg-(--background2)`}
+                    >
+                        OptiFlowz
+                    </Link>
                     <NavLink
                         to="/account"
                         end

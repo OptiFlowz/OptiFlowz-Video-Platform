@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import Sidebar from "../myVideosPage/sidebar/sidebar";
 import PageLoader from "../loaders/pageLoader";
+import { env } from "~/env";
 import { getToken } from "~/functions";
 
 type AnalyticsRange = "last30" | "last90" | "last365" | "all" | "custom";
@@ -23,7 +24,7 @@ function Analytics() {
   }, [from, isCustomRange, to]);
 
   const reportUrl = useMemo(() => {
-    const url = new URL(`${import.meta.env.VITE_FIRST}/api/reports/video-analytics.pdf`);
+    const url = new URL(`${env.apiBaseUrl}/api/reports/video-analytics.pdf`);
     if (range !== "all") {
       url.searchParams.set("range", range);
     }

@@ -1,3 +1,5 @@
+import { env } from "./env";
+
 type Props = {
     route: string,
     options: RequestInit
@@ -14,7 +16,7 @@ class FetchError extends Error {
 }
 
 export async function fetchFn<T>(props: Props): Promise<T> {
-  const res = await fetch(`${import.meta.env.VITE_FIRST}/${props.route}`, props.options);
+  const res = await fetch(`${env.apiBaseUrl}/${props.route}`, props.options);
 
   if (res.status === 401) {
     if(window.location.pathname !== "/login"){

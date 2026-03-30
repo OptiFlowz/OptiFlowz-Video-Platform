@@ -1,3 +1,5 @@
+import { env } from "./env";
+
 export const SERVER_REACHABILITY_TIMEOUT_MS = 4500;
 
 export async function checkServerReachability(signal?: AbortSignal) {
@@ -8,7 +10,7 @@ export async function checkServerReachability(signal?: AbortSignal) {
   signal?.addEventListener("abort", abortHandler);
 
   try {
-    await fetch(import.meta.env.VITE_FIRST, {
+    await fetch(`${env.apiBaseUrl}/health`, {
       method: "GET",
       cache: "no-store",
       signal: controller.signal,

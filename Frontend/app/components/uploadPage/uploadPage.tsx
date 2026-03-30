@@ -10,6 +10,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import MuxPlayer from "@mux/mux-player-react";
 import { AISVG, CloseSVG, UploadSVG } from "~/constants";
+import { env } from "~/env";
 import ContributorSearch from "./contributorSearch";
 import { fetchFn } from "~/API";
 import { getToken } from "~/functions";
@@ -292,7 +293,7 @@ function UploadPage() {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_FIRST || ""}/api/video-moderation/subtitle/${videoId}?lang=${lang}`,
+        `${env.apiBaseUrl || ""}/api/video-moderation/subtitle/${videoId}?lang=${lang}`,
         {
           method: "GET",
           headers: myHeaders.current,
@@ -334,7 +335,7 @@ function UploadPage() {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_FIRST || ""}/api/video-moderation/subtitle/autogenerate/${videoId}?lang=${captionLanguage}&name=${encodeURIComponent(selectedLang.name)}`,
+        `${env.apiBaseUrl || ""}/api/video-moderation/subtitle/autogenerate/${videoId}?lang=${captionLanguage}&name=${encodeURIComponent(selectedLang.name)}`,
         {
           method: "GET",
           headers: myHeaders.current,
@@ -370,7 +371,7 @@ function UploadPage() {
     setIsSavingCaptions(true);
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_FIRST || ""}/api/video-moderation/subtitle/replacev2/${videoId}?lang=${captionLanguage}&name=${selectedLang.name}`,
+        `${env.apiBaseUrl || ""}/api/video-moderation/subtitle/replacev2/${videoId}?lang=${captionLanguage}&name=${selectedLang.name}`,
         {
           method: "POST",
           headers: myHeaders.current,
@@ -410,7 +411,7 @@ function UploadPage() {
     setIsDeletingCaptions(true);
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_FIRST || ""}/api/video-moderation/subtitle/${videoId}?lang=${captionLanguage}`,
+        `${env.apiBaseUrl || ""}/api/video-moderation/subtitle/${videoId}?lang=${captionLanguage}`,
         {
           method: "DELETE",
           headers: myHeaders.current,
@@ -591,7 +592,7 @@ function UploadPage() {
     const poll = async () => {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_FIRST || ""}/api/video-moderation/subtitle/${vid}?lang=${lang}`,
+        `${env.apiBaseUrl || ""}/api/video-moderation/subtitle/${vid}?lang=${lang}`,
           {
             method: "GET",
             headers: myHeaders.current,

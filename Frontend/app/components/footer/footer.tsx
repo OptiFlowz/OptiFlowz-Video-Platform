@@ -55,7 +55,7 @@ function Footer() {
                         </Link>
                         <Link to="https://optiflowz.com/" target="_blank">
                             {ArrowSVG}
-                            <p>Platform</p>
+                            <p>OptiFlowz</p>
                         </Link>
                     </nav>
                 </div>
@@ -72,10 +72,6 @@ function Footer() {
                         {t("footerPoweredBy")}&nbsp;<img loading="lazy" src={OptiFlowzLogo} alt="OptiFlowz Logo" />
                     </Link>
                 </div>
-
-                <span className="accentLogo">
-                    <img src={OptiFlowzLogo} alt="OptiFlowz Logo" />
-                </span>
             </div>
 
             <span className="footerCopyright">Copyright (c) {new Date().getFullYear()} - All rights reserved</span>

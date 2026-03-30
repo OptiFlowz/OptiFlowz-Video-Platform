@@ -1,6 +1,8 @@
 .DS_Store
 .env
 /node_modules/
+.next/
+out/
 
 # React Router
 /.react-router/

@@ -1,6 +1,7 @@
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { ShareSVG, ArrowSVG, LikeSVG, DislikeSVG, InfoSVG, CommentSVG } from "~/constants";
 import { fetchFn } from "~/API";
+import { env } from "~/env";
 import { formatDate, formatViews, formatDescription, getToken } from "~/functions";
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FetchCommentRepliesT, FetchVideoCommentsT, VideoT } from "~/types";
@@ -300,7 +301,7 @@ function VideoInfo({
             myHeaders.append("Content-Type", "application/json");
 
             const response = await fetch(
-            `${import.meta.env.VITE_FIRST}/api/videos/${props.id}/like`,
+                `${env.apiBaseUrl}/api/videos/${props.id}/like`,
             { method: "POST", headers: myHeaders, redirect: "follow" }
             );
 
@@ -333,7 +334,7 @@ function VideoInfo({
             myHeaders.append("Content-Type", "application/json");
 
             const response = await fetch(
-            `${import.meta.env.VITE_FIRST}/api/videos/${props.id}/dislike`,
+                `${env.apiBaseUrl}/api/videos/${props.id}/dislike`,
             { method: "POST", headers: myHeaders, redirect: "follow" }
             );
 
@@ -365,7 +366,7 @@ function VideoInfo({
     }, [props?.user_reaction, props?.like_count]);
 
     const shareVideoLink = useCallback(() => {
-        const fullPath = import.meta.env.VITE_SITE_URL + location.pathname + location.hash;
+        const fullPath = env.siteUrl + location.pathname + location.hash;
 
         if(navigator.share)
             return navigator.share({
