@@ -163,6 +163,16 @@ export function ScrollRestoration() {
   return null;
 }
 
-export function isRouteErrorResponse(_error: unknown) {
-  return false;
+type RouteErrorResponse = {
+  status: number;
+  statusText?: string;
+};
+
+export function isRouteErrorResponse(error: unknown): error is RouteErrorResponse {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "status" in error &&
+    typeof (error as { status?: unknown }).status === "number"
+  );
 }

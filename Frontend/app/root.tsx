@@ -9,7 +9,6 @@ import {
 } from "react-router";
 import { useEffect, useState } from "react";
 
-import type { Route } from "./+types/root";
 import "./app.css";
 import { CurrentNavProvider } from "./context";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -20,7 +19,19 @@ import { I18nProvider, translate } from "./i18n";
 import MaintenancePage from "./components/maintenancePage/maintenancePage";
 import { checkServerReachability } from "./serverReachability";
 
-export const links: Route.LinksFunction = () => [
+type LinkDescriptor = {
+  rel: string;
+  href: string;
+  crossOrigin?: string;
+};
+
+type LinksFunction = () => LinkDescriptor[];
+
+type ErrorBoundaryProps = {
+  error: unknown;
+};
+
+export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
     rel: "preconnect",
@@ -123,7 +134,7 @@ export default function App() {
   return <Outlet />;
 }
 
-export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+export function ErrorBoundary({ error }: ErrorBoundaryProps) {
   let details = translate("errorUnexpected");
   let stack: string | undefined;
 
@@ -132,7 +143,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
       error.status === 404
         ? translate("errorNotFound")
         : error.statusText || details;
-  } else if (import.meta.env.DEV && error && error instanceof Error) {
+  } else if (process.env.NODE_ENV !== "production" && error && error instanceof Error) {
     details = error.message;
     stack = error.stack;
   }

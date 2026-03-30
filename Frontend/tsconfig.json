@@ -43,7 +43,6 @@
     "node_modules",
     "build",
     ".react-router",
-    "app/root.tsx",
     "app/routes.ts",
     "app/routes/**/*",
     "vite.config.ts",

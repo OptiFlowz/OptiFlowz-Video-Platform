@@ -2480,7 +2480,7 @@ mux-player::part(menu-item) {
     grid-template-columns: 1fr;
   }
 }
-  @media (min-height: 920px) {
+  @media (min-height: 900px) {
   .editAccountPopup .popup-content::-webkit-scrollbar {
     display: none;
   }

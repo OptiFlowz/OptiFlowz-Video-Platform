@@ -74,7 +74,10 @@ function Footer() {
                 </div>
             </div>
 
-            <span className="footerCopyright">Copyright (c) {new Date().getFullYear()} - All rights reserved</span>
+            <span className="footerCopyright">
+                <p className="inline text-(--accentBlue2) italic">OptiFlowz</p>
+                &nbsp;-&nbsp;Copyright © {new Date().getFullYear()}&nbsp;-&nbsp;All rights reserved
+            </span>
         </footer>
     );
 }

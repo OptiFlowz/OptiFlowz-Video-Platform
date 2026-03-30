@@ -38,42 +38,45 @@ function AccountPage(){
     }
 
     return (
-        <main className="account py-10">
-            <div className="info flex gap-4 max-[350px]:gap-3 items-center">
-                <div className="background">
-                    <img className="w-full h-full" src={backgroundImage} alt="Background" />
+        <>
+            <main className="account py-10">
+                <div className="info flex gap-4 max-[350px]:gap-3 items-center">
+                    <div className="background">
+                        <img className="w-full h-full" src={backgroundImage} alt="Background" />
+                    </div>
+
+                    <AccountInfo />
+
+                    <div className="accountActions z-2">
+                        <span>
+                            <button className="edit button" onClick={() => setIsEditPopupOpen(true)}>
+                                {EditSVG}
+                                <p>{t("accountEdit")}</p>
+                            </button>
+                            <button className="settings button" onClick={() => setIsSettingsPopupOpen(true)}>
+                                {SettingsSVG}
+                                <p>{t("settings")}</p>
+                            </button>
+                        </span>
+                        <button className="logOut button" onClick={logoutHandle}>
+                            {LogOutSVG}
+                            <p className="text-white">{t("accountLogout")}</p>
+                        </button>
+                    </div>
                 </div>
 
-                <AccountInfo />
-                <EditAccountPopup open={isEditPopupOpen} onClose={() => setIsEditPopupOpen(false)}/>
-                <SettingsPopup open={isSettingsPopupOpen} onClose={() => setIsSettingsPopupOpen(false)} />
+                <ItemSlider props={{type: 3, onDataStateChange: (state) => setSliderState(3, state)}} />
+                <ItemSlider props={{type: 4, onDataStateChange: (state) => setSliderState(4, state)}} />
+                <ItemSlider props={{type: 6, onDataStateChange: (state) => setSliderState(6, state)}} />
 
-                <div className="accountActions z-2">
-                    <span>
-                        <button className="edit button" onClick={() => setIsEditPopupOpen(true)}>
-                            {EditSVG}
-                            <p>{t("accountEdit")}</p>
-                        </button>
-                        <button className="settings button" onClick={() => setIsSettingsPopupOpen(true)}>
-                            {SettingsSVG}
-                            <p>{t("settings")}</p>
-                        </button>
-                    </span>
-                    <button className="logOut button" onClick={logoutHandle}>
-                        {LogOutSVG}
-                        <p className="text-white">{t("accountLogout")}</p>
-                    </button>
-                </div>
-            </div>
+                {allAccountSlidersEmpty && (
+                    <p className="watchToRecommend mt-5">{t("likeWatchSaveVideos")}</p>
+                )}
+            </main>
 
-            <ItemSlider props={{type: 3, onDataStateChange: (state) => setSliderState(3, state)}} />
-            <ItemSlider props={{type: 4, onDataStateChange: (state) => setSliderState(4, state)}} />
-            <ItemSlider props={{type: 6, onDataStateChange: (state) => setSliderState(6, state)}} />
-
-            {allAccountSlidersEmpty && (
-                <p className="watchToRecommend mt-5">{t("likeWatchSaveVideos")}</p>
-            )}
-        </main>
+            <EditAccountPopup open={isEditPopupOpen} onClose={() => setIsEditPopupOpen(false)} />
+            <SettingsPopup open={isSettingsPopupOpen} onClose={() => setIsSettingsPopupOpen(false)} />
+        </>
     );
 }
 
