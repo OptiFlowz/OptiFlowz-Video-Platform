@@ -3286,7 +3286,7 @@ main.search .buttons {
   margin-top: 15px;
 }
 main.search .buttons button {
-  background-color: var(--seeThroughtWhite);
+  background-color: var(--seethroughtBlack);
   padding: 8px 17px;
   padding-right: 8px;
   border-radius: 30px;
