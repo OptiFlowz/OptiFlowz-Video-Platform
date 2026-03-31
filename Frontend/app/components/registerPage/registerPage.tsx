@@ -197,8 +197,8 @@ function SetupWizardPage() {
                         className="w-12 h-12 object-contain shrink-0"
                     />
                     <span className="p-0">
-                        <h3 className="font-semibold text-[1.3rem] max-[500px]:text-[1.2rem] -mb-1.25 text-(--accentBlue)">OptiFlowz</h3>
-                        <p className="font-medium text-[rgba(0,0,100,0.5)] text-sm">{t("appName")}</p>
+                        <h3 className="font-semibold text-[1.3rem] max-[500px]:text-[1.2rem] -mb-1.25 text-(--text1)">OptiFlowz</h3>
+                        <p className="font-medium text-sm text-(--text2)">{t("appName")}</p>
                     </span>
                 </Link>
 
@@ -208,7 +208,7 @@ function SetupWizardPage() {
                     <div className="form">
                         {/* STEP 1: Login Details */}
                         <div className={step === 1 ? "" : "hidden"}>
-                            <h2 className="text-[1.8rem] font-bold tracking-[.1rem] text-(--accentBlue)">{t("register")}</h2>
+                            <h2 className="text-[1.8rem] font-bold tracking-[.1rem] text-(--text1)">{t("register")}</h2>
                             <p className="weakText text-[.95rem] mt-2">{t("registerIntro")}</p>
                             <div className="inputHolder">
                                 <input ref={firstName} className="mt-4" type="text" placeholder={t("firstName")} />
@@ -232,7 +232,7 @@ function SetupWizardPage() {
 
                             <div className="flex gap-3 mt-8 max-[800px]:mt-12">
                                 <button 
-                                    className="button flex-1 bg-(--accentOrange) text-white rounded-[12px] py-3 font-semibold" 
+                                    className="button flex-1 bg-(--accentOrange) text-white rounded-xl py-3 font-semibold" 
                                     onClick={handleNextStep}
                                 >
                                     {t("next")}
@@ -285,7 +285,7 @@ function SetupWizardPage() {
                         {/* STEP 2: Bio */}
                         {step === 2 && (
                             <>
-                                <h2 className="text-[1.8rem] font-bold tracking-[.1rem] text-(--accentBlue)">{t("aboutYou")}</h2>
+                                <h2 className="text-[1.8rem] font-bold tracking-[.1rem] text-(--text1)">{t("aboutYou")}</h2>
                                 <p className="weakText text-[.95rem] mt-0">{t("aboutYouText")}</p>
 
                                 <textarea
@@ -298,7 +298,7 @@ function SetupWizardPage() {
                                 <span className="flex items-center gap-2 mt-2">
                                     <input 
                                         ref={eaesMember}
-                                        className="appearance-none rounded-[6px]! p-2.25! border-2 cursor-pointer checked:bg-(--accentOrange)! transition-colors relative
+                                        className="appearance-none rounded-md! p-2.25! border-2 cursor-pointer checked:bg-(--accentOrange)! transition-colors relative
                                         checked:after:content-['✓'] checked:after:absolute checked:after:text-(--accentBlue2) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2" 
                                         type="checkbox" 
                                         id="rememberMe" 
@@ -309,10 +309,10 @@ function SetupWizardPage() {
                                 </span>
 
                                 <div className="flex gap-3 mt-12 max-[800px]:mt-16 max-[420px]:mt-8">
-                                    <button className="button flex-1 bg-(--background2) hover:bg-(--background3) text-(--accentBlue) rounded-[12px] py-3 font-semibold" onClick={() => setStep(1)}>
+                                    <button className="button flex-1 bg-(--background2) hover:bg-(--background3) text-(--text1) rounded-xl py-3 font-semibold" onClick={() => setStep(1)}>
                                         {t("previous")}
                                     </button>
-                                    <button className="button flex-1 bg-(--accentOrange) text-white rounded-[12px] py-3 font-semibold" onClick={handleFinish}>
+                                    <button className="button flex-1 bg-(--accentOrange) text-white rounded-xl py-3 font-semibold" onClick={handleFinish}>
                                         {t("finish")}
                                     </button>
                                 </div>

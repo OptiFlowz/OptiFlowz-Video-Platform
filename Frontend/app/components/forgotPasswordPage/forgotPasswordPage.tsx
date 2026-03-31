@@ -247,8 +247,8 @@ function ForgotPasswordPage() {
                         className="w-12 h-12 object-contain shrink-0"
                     />
                     <span className="p-0">
-                    <h3 className="font-semibold text-[1.3rem] max-[500px]:text-[1.2rem] -mb-1.25 text-(--accentBlue)">OptiFlowz</h3>
-                        <p className="font-medium text-[rgba(0,0,100,0.5)] text-sm">{t("appName")}</p>
+                    <h3 className="font-semibold text-[1.3rem] max-[500px]:text-[1.2rem] -mb-1.25 text-(--text1)">OptiFlowz</h3>
+                        <p className="font-medium text-sm text-(--text2)">{t("appName")}</p>
                     </span>
                 </Link>
 
@@ -256,7 +256,7 @@ function ForgotPasswordPage() {
                     <StepIndicator step={step} />
                     <div className="form">
                         <div className={step === 1 ? "" : "hidden"}>
-                            <h2 className="text-[1.8rem] font-bold text-(--accentBlue) tracking-[.1rem]">{userEmail ? t("resetYourPassword") : t("forgotPasswordTitle")}</h2>
+                            <h2 className="text-[1.8rem] font-bold text-(--text1) tracking-[.1rem]">{userEmail ? t("resetYourPassword") : t("forgotPasswordTitle")}</h2>
                             <p className="weakText text-[.95rem] mt-2 mb-7.5">
                                 {t("resetPasswordIntro")}
                             </p>
@@ -270,7 +270,7 @@ function ForgotPasswordPage() {
                             </Link>
 
                             <button
-                                className="button w-full bg-(--accentOrange) text-white rounded-[12px] py-3 font-semibold mt-12 max-[800px]:mt-16 max-[420px]:mt-8 disabled:opacity-60 disabled:cursor-not-allowed"
+                                className="button w-full bg-(--accentOrange) text-white rounded-xl py-3 font-semibold mt-12 max-[800px]:mt-16 max-[420px]:mt-8 disabled:opacity-60 disabled:cursor-not-allowed"
                                 onClick={sendPasswordResetEmail}
                                 disabled={cooldown > 0}
                             >
@@ -279,7 +279,7 @@ function ForgotPasswordPage() {
                         </div>
 
                         <div className={step === 2 ? "" : "hidden"}>
-                            <h2 className="text-[1.8rem] font-bold tracking-[.1rem] text-(--accentBlue)">{t("enterResetCode")}</h2>
+                            <h2 className="text-[1.8rem] font-bold tracking-[.1rem] text-(--text1)">{t("enterResetCode")}</h2>
                             <p className="weakText text-[.95rem] mt-2 mb-7.5 opacity-70">
                                 {t("resetCodeIntro")}
                             </p>
@@ -287,13 +287,13 @@ function ForgotPasswordPage() {
 
                             <div className="flex gap-3 mt-12 max-[800px]:mt-16">
                                 <button
-                                    className="button flex-1 bg-(--background2) hover:bg-(--background3) text-(--accentBlue) rounded-[12px] py-3 font-semibold"
+                                    className="button flex-1 bg-(--background2) hover:bg-(--background3) text-(--text1) rounded-xl py-3 font-semibold"
                                     onClick={() => setStep(1)}
                                 >
                                     {t("previous")}
                                 </button>
                                 <button
-                                    className="button flex-1 bg-(--accentOrange) text-white rounded-[12px] py-3 font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
+                                    className="button flex-1 bg-(--accentOrange) text-white rounded-xl py-3 font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
                                     onClick={checkResetCode}
                                     disabled={cooldown > 0}
                                 >
@@ -303,7 +303,7 @@ function ForgotPasswordPage() {
                         </div>
 
                         <div className={step === 3 ? "" : "hidden"}>
-                            <h2 className="text-[1.8rem] font-bold tracking-[.1rem] text-(--accentBlue) leading-8 mb-4">{t("letsChangePassword")}</h2>
+                            <h2 className="text-[1.8rem] font-bold tracking-[.1rem] text-(--text1) leading-8 mb-4">{t("letsChangePassword")}</h2>
                             <p className="weakText text-[.95rem] mt-2 mb-7.5 opacity-70">{t("newPasswordIntro")}</p>
                             <span className="passwordInput">
                                 <input ref={password} type={showPassword ? "text" : "password"} placeholder={t("newPassword")} />
@@ -320,13 +320,13 @@ function ForgotPasswordPage() {
 
                             <div className="flex gap-3 mt-12 max-[800px]:mt-16">
                                 <button
-                                    className="button flex-1 bg-(--background2) hover:bg-(--background3) text-(--accentBlue) rounded-[12px] py-3 font-semibold"
+                                    className="button flex-1 bg-(--background2) hover:bg-(--background3) text-(--text1) rounded-xl py-3 font-semibold"
                                     onClick={() => setStep(2)}
                                 >
                                     {t("previous")}
                                 </button>
                                 <button
-                                    className="button flex-1 bg-(--accentOrange) text-white rounded-[12px] py-3 font-semibold"
+                                    className="button flex-1 bg-(--accentOrange) text-white rounded-xl py-3 font-semibold"
                                     onClick={handleFinish}
                                 >
                                     {t("changePassword")}

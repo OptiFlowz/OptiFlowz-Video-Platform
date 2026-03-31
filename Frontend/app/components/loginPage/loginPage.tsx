@@ -207,14 +207,14 @@ function LoginPage() {
               className="w-10 h-10 object-contain shrink-0"
             />
             <span className="p-0">
-                        <h3 className="font-medium text-[1.3rem] max-[500px]:text-[1.2rem] -mb-1.25">OptiFlowz</h3>
-                <p className="font-medium text-sm">{t("appName")}</p>
+                <h3 className="font-medium text-[1.3rem] max-[500px]:text-[1.2rem] -mb-1.25 text-(--text1)">OptiFlowz</h3>
+                <p className="font-medium text-sm text-(--text2)">{t("appName")}</p>
             </span>
         </Link>
 
         <div className="holder">
           <div className="form">
-            <h1 className="mb-2 text-[1.8rem] text-(--accentBlue) font-bold tracking-[.1rem]">
+            <h1 className="mb-2 text-[1.8rem] text-(--text1) font-bold tracking-[.1rem]">
               {t("login")}
             </h1>
 
@@ -305,7 +305,7 @@ function LoginPage() {
             <GoogleLoginButton props={{isLoading: isLoading, rememberMe: rememberMe, onSuccess: handleGoogleSuccess}} />
 
             <span className="flex items-center justify-center flex-wrap mt-1 gap-1 text-[.925rem]">
-              <p className="font-medium text-(--accentBlue) max-[420px]:text-[0.8rem]!">
+              <p className="font-medium text-(--text2) max-[420px]:text-[0.8rem]!">
                 {t("dontHaveAccount")}
               </p>
               <Link
