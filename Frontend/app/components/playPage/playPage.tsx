@@ -13,9 +13,7 @@ import VideoChapters from "./playerCollection/videoChapters";
 import CommentsSection from "./commentsSection";
 
 function parseVideoSearch(search: string) {
-    const raw = search.startsWith("?") ? search.slice(1) : search;
-    const normalized = raw.replace(/\?/g, "&");
-    const params = new URLSearchParams(normalized);
+    const params = new URLSearchParams(search);
     const rawTime = params.get("time");
     const parsedTime = rawTime == null ? null : Number(rawTime);
 
@@ -27,7 +25,6 @@ function parseVideoSearch(search: string) {
 
 function PlayPage(){
     const {videoId} = useParams();
-    const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const location = useLocation();
     const queryClient = useQueryClient();
