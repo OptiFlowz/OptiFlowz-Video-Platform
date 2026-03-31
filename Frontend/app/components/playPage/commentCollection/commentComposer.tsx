@@ -2,7 +2,6 @@ import { useRef, type RefObject } from "react";
 import { CommentSendSVG } from "~/constants";
 import type { VideoCommentT } from "~/types";
 import { useI18n } from "~/i18n";
-import { time } from "console";
 
 type CommentComposerProps = {
   userProfileImage: string;
