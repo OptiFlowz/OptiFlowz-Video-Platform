@@ -287,10 +287,26 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
     setExpanded((prev) => ({ ...prev, [parentId]: !prev[parentId] }));
   };
 
-  const onReply = (comment: VideoCommentT) => {
+  //ENABLE TRACING BACK TO COMMENT
+  const [scrollBackTo, setScrollBackTo] = useState<HTMLButtonElement | null>(null);
+  const onReply = (comment: VideoCommentT, scrollBackTo: HTMLButtonElement) => {
     setEditingCommentId(null);
     setEditingValue("");
     setReplyingTo(comment);
+    setScrollBackTo(scrollBackTo);
+
+    if(scrollBackTo) {
+      const lastReplyArray = document.querySelectorAll(".comment-actions button.replying") as NodeListOf<HTMLButtonElement>;
+
+      if(lastReplyArray.length > 0)
+        lastReplyArray.forEach(button => {
+          if(button !== scrollBackTo)
+            // console.log(span);
+            button.classList.remove("replying");
+        });
+
+      scrollBackTo.classList.add("replying");
+    }
 
     const chain = getAncestorChain(comment.id, hydratedCommentsMap);
     if (chain.length > 0) {
@@ -301,7 +317,28 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
     }
 
     requestAnimationFrame(() => {
-      taRef.current?.focus();
+      const textarea = taRef.current;
+      const header = document.querySelector("header");
+
+      if (!textarea || !header) return;
+
+      const textareaRect = textarea.getBoundingClientRect();
+      const headerRect = header.getBoundingClientRect();
+
+      const spacing = headerRect.height;
+      const visibleTop = headerRect.bottom + spacing;
+
+      if (textareaRect.top < visibleTop) {
+        const absoluteTop = window.scrollY + textareaRect.top;
+        const targetScrollY = absoluteTop - visibleTop;
+
+        window.scrollTo({
+          top: targetScrollY,
+          behavior: "smooth",
+        });
+      }
+
+      textarea.focus();
       autoResize();
     });
   };
@@ -423,11 +460,12 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
         value={value}
         textareaRef={taRef}
         onChange={setValue}
-        onCancelReply={() => setReplyingTo(null)}
+        onCancelReply={() => {setReplyingTo(null); scrollBackTo?.classList.remove("replying"); setScrollBackTo(null);}}
         onAutoResize={autoResize}
         onSubmit={submitComment}
         isSubmitting={submitMutation.isPending}
         isSubmitError={submitMutation.isError}
+        scrollBackTo={scrollBackTo}
       />
 
       <div className={`comments-main comments-main-shell pt-4 ${mobileThreadId ? "mobile-thread-open" : ""}`}>

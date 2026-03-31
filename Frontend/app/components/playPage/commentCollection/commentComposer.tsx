@@ -1,7 +1,8 @@
-import type { RefObject } from "react";
+import { useRef, type RefObject } from "react";
 import { CommentSendSVG } from "~/constants";
 import type { VideoCommentT } from "~/types";
 import { useI18n } from "~/i18n";
+import { time } from "console";
 
 type CommentComposerProps = {
   userProfileImage: string;
@@ -14,6 +15,7 @@ type CommentComposerProps = {
   onSubmit: () => void;
   isSubmitting: boolean;
   isSubmitError: boolean;
+  scrollBackTo?: HTMLSpanElement | null;
 };
 
 function CommentComposer({
@@ -27,8 +29,35 @@ function CommentComposer({
   onSubmit,
   isSubmitting,
   isSubmitError,
+  scrollBackTo
 }: CommentComposerProps) {
   const { t } = useI18n();
+
+  const timeoutRef = useRef<NodeJS.Timeout>(null);
+
+  const handleReplyClick = () => {
+      if(scrollBackTo){
+        scrollBackTo.scrollIntoView({ behavior: "smooth", block: "center" });
+        const commentParent = (scrollBackTo.parentElement?.parentElement?.parentElement as HTMLDivElement);
+
+        const observer = new IntersectionObserver((entries) => {
+          if (entries[0].isIntersecting && commentParent) {
+            commentParent.classList.add("focusedComment");
+            
+            if(timeoutRef.current) {
+              clearTimeout(timeoutRef.current);
+            }
+            timeoutRef.current = setTimeout(() => {
+              commentParent.classList.remove("focusedComment");
+            }, 1010);
+
+            observer.unobserve(scrollBackTo);
+            observer.disconnect();
+          }
+        }, { threshold: 0.5 });
+        observer.observe(scrollBackTo);
+      }
+  }
 
   return (
     <div className="comment-input bg-(--background2) rounded-xl px-3 py-3 flex w-full gap-3 items-start">
@@ -40,8 +69,11 @@ function CommentComposer({
 
       <div className="flex-1 min-w-0">
         {replyingTo && (
-          <div className="flex items-center gap-2 mb-2 text-sm opacity-80">
-            <span>
+          <div className="flex items-center gap-1 mb-2 text-sm opacity-80">
+            <span
+              onClick={handleReplyClick}
+              className="replyIndicator"
+            >
               {t("replyingTo", { name: replyingTo.author_full_name })}
             </span>
             <button

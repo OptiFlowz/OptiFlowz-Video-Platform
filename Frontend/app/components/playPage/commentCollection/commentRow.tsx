@@ -8,7 +8,7 @@ import { timeAgo } from "./utils";
 type CommentRowProps = {
   comment: VideoCommentT;
   isCurrentUser: boolean;
-  onReply: (comment: VideoCommentT) => void;
+  onReply: (comment: VideoCommentT, scrollBackTo: HTMLButtonElement) => void;
   onReact: (comment: VideoCommentT, reaction: "like" | "dislike") => void;
   isReactionPending: boolean;
   isEditing: boolean;
@@ -73,11 +73,11 @@ function CommentRow({
   };
 
   return (
-    <div className="flex gap-3 relative min-w-0">
+    <div className="flex gap-3 relative min-w-0 w-fit commentContent">
       <img
         src={comment.author_image_url || DefaultProfile}
         alt={comment.author_full_name}
-        className="w-10 h-10 rounded-full object-cover border-2! border-white! border-solid! shrink-0"
+        className="w-10 h-10 rounded-full object-cover border-2! border-(--threadC1)! border-solid! shrink-0"
       />
 
       <div className="flex-1">
@@ -146,7 +146,7 @@ function CommentRow({
 
           <button
             type="button"
-            onClick={() => onReply(comment)}
+            onClick={e => onReply(comment, e.currentTarget as HTMLButtonElement)}
             className="flex items-center transition"
             disabled={isEditing}
           >

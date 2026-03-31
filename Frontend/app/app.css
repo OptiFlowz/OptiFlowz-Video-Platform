@@ -18,8 +18,8 @@
   --borderC1: rgba(255, 255, 255, 0.14);
   --borderC2: rgba(255, 255, 255, 0.035);
 
-  --backgroundC2: rgba(255, 255, 255, 0.1);
-  --backgroundC3: rgba(39, 41, 53, 0.6);
+  --backgroundC1: rgba(255, 255, 255, 0.1);
+  --backgroundC2: rgba(39, 41, 53, 0.6);
 
   --blueAccent1: #003e8e;
   --blueAccent2: #338cff;
@@ -27,13 +27,13 @@
 
   --blueButtonGradient: linear-gradient(-45deg, var(--blueAccent1), var(--blueAccent2), var(--blueAccent3));
 
-  --textC2: rgba(255, 255, 255, 0.6);
-  --textC3: rgba(255, 255, 255, 0.7);
+  --textC1: rgba(255, 255, 255, 0.6);
+  --textC2: rgba(255, 255, 255, 0.7);
 
   --background1: var(--background);
-  --background2: var(--backgroundC2);
+  --background2: var(--backgroundC1);
   --background15: rgba(39, 41, 53, 0.15);
-  --background3: var(--backgroundC3);
+  --background3: var(--backgroundC2);
   --background4: #11141a;
 
   --backgroundGradient1: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 25%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0.04) 75%);
@@ -46,8 +46,10 @@
   --border3: rgba(255, 255, 255, 0.06);
 
   --text1: var(--foreground);
-  --text2: var(--textC2);
-  --text3: var(--textC3);
+  --text2: var(--textC1);
+  --text3: var(--textC2);
+
+  --threadC1: #495153;
 
   --accentBlue: var(--blueAccent1);
   --accentBlue2: var(--blueAccent2);
@@ -247,8 +249,10 @@ main.homePage .paragraph {
 
 .collection-header {
   align-items: center;
-  min-height: 72px;
   margin-bottom: 0.5rem;
+}
+main.homePage .collection-header{
+  min-height: 72px;
 }
 
 .collection-header .subTitle {
@@ -2246,6 +2250,35 @@ mux-player::part(menu-item) {
   gap: 0.4rem;
 }
 
+.commentContent{
+  /* padding: 4px; */
+  padding-right: 8px;
+  width: fit-content;
+  background-color: transparent;
+  transition: background-color .2s ease;
+  border-radius: 24px;
+}
+/* .commentContent.focusedComment{
+  animation: commentFocusPulse 1s ease;
+}
+@keyframes commentFocusPulse {
+  0% {
+    background-color: transparent;
+  }
+  25% {
+    background-color: var(--backgroundC1);
+  }
+  50%{
+    background-color: transparent;
+  }
+  75%{
+    background-color: var(--backgroundC1);
+  }
+  100% {
+    background-color: transparent;
+  }
+} */
+
 .comment-actions button, .reply{
   background-color: var(--background2);
   width: fit-content;
@@ -2260,9 +2293,23 @@ mux-player::part(menu-item) {
   align-items: center;
   cursor: pointer;
 }
+.comment-actions button.replying{
+  background-color: var(--accentBlue);
+  color: white;
+}
 
 .comment-actions button:hover, .reply:hover{
   background-color: var(--background3);
+}
+
+.replyIndicator{
+  padding: 4px 8px;
+  border-radius: var(--bR);
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+.replyIndicator:hover{
+  background-color: var(--background2);
 }
 
 .comment-actions button svg{
@@ -2296,27 +2343,28 @@ mux-player::part(menu-item) {
 .thread-line{
   position: absolute;
   top: 40px;
-  left: 20px;
+  left: 18px;
   width: 2px;
   border-radius: 2px;
   height: calc(100% - 40px);
-  background-color: #cdd0d9;
+  background-color: var(--threadC1);
 }
 
 .thread-line.nested{
-  left: 20px;
+  left: 18px;
   top: 40px;
   height: calc(100% - 40px);
 }
 
 .comment-node-elbow{
   position: absolute;
-  left: -32px;
+  left: -34px;
   top: -37px;
   width: 45px;
   height: 58px;
-  border-left: 2px solid #cdd0d9;
-  border-bottom: 2px solid #cdd0d9;
+  z-index: -2;
+  border-left: 2px solid var(--threadC1);
+  border-bottom: 2px solid var(--threadC1);
   border-bottom-left-radius: 20px;
 }
 
