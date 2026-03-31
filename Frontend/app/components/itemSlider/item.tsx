@@ -20,11 +20,16 @@ function  Item({props, playlistIndex, playlistId}: {props: VideoT, playlistIndex
     const [isPreviewLoading, setIsPreviewLoading] = useState(true);
 
     const {setCurrentNav} = useContext(CurrentNavContext);
+    const params = new URLSearchParams();
+    if (playlistId) {
+        params.set("p", playlistId);
+    }
+    const videoHref = `/video/${props?.id || 0}${params.toString() ? `?${params.toString()}` : ""}`;
 
     return (
         <Link 
             className={`item ${playlistIndex == 1 ? "playlistStartVideo" : ""}`} 
-            to={`/video/${props?.id || 0}${playlistId ? ("?p="+playlistId) : ""}`}
+            to={videoHref}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
             onClick={() => setCurrentNav(-1)}

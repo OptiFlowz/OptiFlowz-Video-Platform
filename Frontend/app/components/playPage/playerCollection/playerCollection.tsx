@@ -2,7 +2,13 @@ import type { VideoT } from "~/types";
 import { useEffect, useMemo } from "react";
 import VideoPlayer from "./muxPlayer";
 
-function PlayerCollection({ props }: { props?: VideoT & { class?: string } }) {
+function PlayerCollection({
+  props,
+  startTimeOverride,
+}: {
+  props?: VideoT & { class?: string };
+  startTimeOverride?: number | null;
+}) {
   const streamUrl = props?.mux_playback_id;
 
   const speakers = useMemo(() => {
@@ -61,7 +67,13 @@ function PlayerCollection({ props }: { props?: VideoT & { class?: string } }) {
       ) : (
       <VideoPlayer
         playbackId={streamUrl}
-        currentTimee={props?.percentage_watched < 95 ? props?.progress_seconds : 0}
+        currentTimee={
+          startTimeOverride != null
+            ? startTimeOverride
+            : props?.percentage_watched < 95
+              ? props?.progress_seconds
+              : 0
+        }
         videoId={props?.id}
         videoTitle={props?.title}
         view_id={props?.view?.view_id}

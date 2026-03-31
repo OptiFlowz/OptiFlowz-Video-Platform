@@ -12,10 +12,22 @@ import { getToken } from "~/functions";
 import VideoChapters from "./playerCollection/videoChapters";
 import CommentsSection from "./commentsSection";
 
+function parseVideoSearch(search: string) {
+    const raw = search.startsWith("?") ? search.slice(1) : search;
+    const normalized = raw.replace(/\?/g, "&");
+    const params = new URLSearchParams(normalized);
+    const rawTime = params.get("time");
+    const parsedTime = rawTime == null ? null : Number(rawTime);
+
+    return {
+        playlistId: params.get("p"),
+        startTimeOverride: rawTime != null && parsedTime != null && Number.isFinite(parsedTime) && parsedTime >= 0 ? parsedTime : null,
+    };
+}
+
 function PlayPage(){
     const {videoId} = useParams();
     const [searchParams] = useSearchParams();
-    const playlistId = searchParams.get("p");
     const navigate = useNavigate();
     const location = useLocation();
     const queryClient = useQueryClient();
@@ -26,6 +38,10 @@ function PlayPage(){
     const theaterEnabled = useRef(true);
     const chaptersRef = useRef<HTMLDivElement | null>(null);
     const playlistRef = useRef<HTMLDivElement | null>(null);
+    const { playlistId, startTimeOverride } = useMemo(
+        () => parseVideoSearch(location.search),
+        [location.search]
+    );
 
     const scrollToPanel = (ref: { current: HTMLDivElement | null }) => {
         if (window.matchMedia("(max-width: 500px)").matches) return;
@@ -198,7 +214,7 @@ function PlayPage(){
                 !isTheater 
                 ? <>
                     <div className="flex flex-col gap-5 overflow-x-hidden">
-                        <PlayerCollection props={videoData} />
+                        <PlayerCollection props={videoData} startTimeOverride={startTimeOverride} />
 
                         <VideoInfo
                             props={videoData}
@@ -221,7 +237,7 @@ function PlayPage(){
                 </>
                 : <>
                     <div className="flex flex-col gap-5 overflow-x-hidden mx-auto">
-                        <PlayerCollection props={{...videoData, class: "theater"}} />
+                        <PlayerCollection props={{...videoData, class: "theater"}} startTimeOverride={startTimeOverride} />
                         
                         <div className="flex gap-5 overflow-x-hidden">
                             <div className="flex flex-col gap-5 overflow-x-hidden">

@@ -15,7 +15,11 @@ function PlayCard({props, playedVideoId, playlistId, nextVideo} : {props: Simila
 
     const [isHovered, setIsHovered] = useState(false);
 
-    let videoLink = props?.id + (playlistId ? ("?p=" + playlistId) : "");
+    const params = new URLSearchParams();
+    if (playlistId) {
+        params.set("p", playlistId);
+    }
+    const videoLink = `${props?.id}${params.toString() ? `?${params.toString()}` : ""}`;
 
     return (
         <Link to={`/video/${videoLink}`} className={`${props?.id == playedVideoId ? "active" : props?.id == nextVideo?.id ? "nextVideo" : ""} playCard flex gap-4 items-center rounded-xl transition-all hover:cursor-pointer`} onMouseEnter={() => setIsHovered(true)}
