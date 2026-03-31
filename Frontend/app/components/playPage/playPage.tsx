@@ -1,4 +1,4 @@
-import { useParams, useSearchParams, useLocation, useNavigate } from "react-router";
+import { useParams, useLocation, useNavigate } from "react-router";
 import PlayerCollection from "./playerCollection/playerCollection";
 import Similar from "./playerCollection/similar";
 import VideoInfo from "./playerCollection/videoInfo";
