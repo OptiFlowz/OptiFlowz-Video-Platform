@@ -3,7 +3,7 @@ import { Link, NavLink, useNavigate, useParams } from "react-router";
 import { SearchSVG, SearchSVGWhite, CloseSVG, MenuSVG, UploadSVG, EditModeSVG } from "~/constants";
 import DefaultProfile from "../../../assets/DefaultProfile.webp";
 import OptiFlowzLogo from "../../../assets/OptiFlowzLogo.webp";
-import { getStoredUser, getToken, isUserAdmin, isUserUEMS } from "~/functions";
+import { getStoredUser, getToken, isUserAdmin } from "~/functions";
 import type { AuthFetchT } from "~/types";
 import { useI18n } from "~/i18n";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -20,7 +20,6 @@ function Header(){
     const idToEdit = videoId || "";
 
     const isAdmin = isUserAdmin();
-    const isUEMS = isUserUEMS();
     // const [headerUserData, setHeaderUserData] = useState<AuthFetchT>(getStoredUser());
 
     const searchRef1 = useRef<HTMLInputElement>(null);
@@ -300,16 +299,6 @@ function Header(){
                     >
                         {t("navTrending")}
                     </NavLink>
-                    {isUEMS && <NavLink 
-                        to="/uems-reading-list" 
-                        end 
-                        className={({ isActive }) => `p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
-                        onClick={() => {
-                            closeMobileMenu();
-                        }}
-                    >
-                        {t("navUemsReadingList")}
-                    </NavLink>}
                     <Link 
                         to="https://optiflowz.com/"
                         target="_blank"
