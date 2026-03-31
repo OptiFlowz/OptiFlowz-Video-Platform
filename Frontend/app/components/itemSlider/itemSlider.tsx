@@ -204,10 +204,10 @@ function ItemSlider({props}: {props: ItemSliderT}){
                     <div ref={collectionRef} className={`collection ${props.type == 1 ? 'notscrollable' : ''} ${isPlaylist ? "featuredColl" : ""}`}>
                         {!data ? skeletonArray : itemsArray}
                     </div>
-                    <div ref={collectionRef} className={`collection ${props.type == 1 ? 'notscrollable' : ''} ${isPlaylist ? "featuredColl" : ""}`}>
+                    {/* <div ref={collectionRef} className={`collection ${props.type == 1 ? 'notscrollable' : ''} ${isPlaylist ? "featuredColl" : ""}`}>
                         
                         {skeletonArray}
-                    </div>
+                    </div> */}
                 </div>
             }
         </div>
