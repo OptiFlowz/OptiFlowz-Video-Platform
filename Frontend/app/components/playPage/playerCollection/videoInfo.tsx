@@ -1,5 +1,5 @@
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { ShareSVG, ArrowSVG, LikeSVG, DislikeSVG, InfoSVG, CommentSVG } from "~/constants";
+import { ShareSVG, ArrowSVG, LikeSVG, DislikeSVG, InfoSVG, CommentSVG, AIButtonSVG } from "~/constants";
 import { fetchFn } from "~/API";
 import { env } from "~/env";
 import { formatDate, formatViews, formatDescription, getToken } from "~/functions";
@@ -207,6 +207,7 @@ function VideoInfo({
     const [isInfoPopupOpen, setIsInfoPopupOpen] = useState(false);
     const [likeAnimation, setLikeAnimation] = useState(false);
     const [dislikeAnimation, setDislikeAnimation] = useState(false);
+    const [aiButtonAnimation, setAiButtonAnimation] = useState(false);
     const token = getToken();
 
     const commentHeaders = new Headers();
@@ -383,6 +384,26 @@ function VideoInfo({
         setIsInfoPopupOpen(true);
     }
 
+    const askAIAQuestion = () => {
+        const openButton = document.getElementById("optiflowz-chat-open");
+
+        if (!openButton) {
+            return;
+        }
+
+        if(!document.getElementById("optiflowz-chat")?.classList?.contains("chat-open")){
+            openButton.click();
+        }
+
+        setTimeout(() => {
+            if (typeof window.optiflowzSendMessage === "function") {
+                window.optiflowzSendMessage("I have a question about this video: " + props?.title);
+            } else {
+                console.error("optiflowzSendMessage nije dostupan na window objektu.");
+            }
+        }, 200);
+    }
+
     if (isLoading) {
         return <SkeletonVideoInfo />;
     }
@@ -397,7 +418,7 @@ function VideoInfo({
                     <p className="weakText text-sm max-[500px]:text-xs">{t("publishedOn")} {formatDate(props?.created_at)} • {formatViews(props?.view.counted ? props?.view_count + 1 : props?.view_count)}</p>
                 </span>
 
-                <span className="functional gap-2 flex items-center ml-3 max-[800px]:ml-0">
+                <span className="functional max-[800px]:overflow-y-scroll max-[800px]:w-full no-scrollbar shrink-0 gap-2 flex items-center ml-3 max-[800px]:ml-0">
                     <div className="flex bg-(--background2) rounded-full">
                         <button 
                             className={`${userReaction == 1 ? "bookmarked" : ""} ${likeAnimation ? "like-animate" : ""} bg-transparent! rounded-r-none! border-r! border-r-(--border1)! hover:bg-(--background2)! pl-3.5!`} 
@@ -419,6 +440,11 @@ function VideoInfo({
                     <button onClick={shareVideoLink} title={t("shareVideo")}>
                         {ShareSVG}
                         <p>{t("share")}</p>
+                    </button>
+
+                    <button className={`aiButton ${aiButtonAnimation ? "ai-bubbly-animate" : ""}`} onClick={askAIAQuestion} title="Ask AI">
+                        <span className="aiIconWrap">{AIButtonSVG}</span>
+                        <p>Ask AI</p>
                     </button>
 
                     <button className="p-1.75!" onClick={viewVideoCopyrights} title={t("viewCopyrightInfo")}>

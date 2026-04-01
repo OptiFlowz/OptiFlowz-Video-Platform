@@ -55,6 +55,44 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     };
   }, [retryNonce]);
 
+  useEffect(() => {
+    const closeOptiflowzChat = () => {
+      const chat = document.getElementById("optiflowz-chat");
+      const openButton = document.getElementById("optiflowz-chat-open");
+
+      if (!chat?.classList.contains("chat-open") || !(openButton instanceof HTMLElement)) {
+        return;
+      }
+
+      openButton.click();
+    };
+
+    const handleChatLinkClick = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element)) {
+        return;
+      }
+
+      const link = target.closest("a[href]");
+      if (!(link instanceof HTMLAnchorElement) || link.target === "_blank") {
+        return;
+      }
+
+      const chatRoot = document.getElementById("optiflowz-chat");
+      if (!chatRoot?.contains(link)) {
+        return;
+      }
+
+      closeOptiflowzChat();
+    };
+
+    document.addEventListener("click", handleChatLinkClick, true);
+
+    return () => {
+      document.removeEventListener("click", handleChatLinkClick, true);
+    };
+  }, []);
+
   if (serverState === "initial") {
     return null;
   }

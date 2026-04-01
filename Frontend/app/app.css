@@ -115,6 +115,15 @@ main.uemsPage {
   padding-bottom: 2rem;
 }
 
+.optiflowz-rating-content .optiflowz-rating-buttons button,
+.optiflowz-rating-content .optiflowz-rating-actions button{
+  padding-bottom: 0px !important;
+}
+
+.optiflowz-chat-wrapper{
+  border: 1px solid var(--border1) !important;
+}
+
 header {
   background: transparent !important;
   box-shadow: none !important;
@@ -1872,10 +1881,20 @@ mux-player::part(menu-item) {
   background-color: var(--background2);
   border-radius: 20px;
   cursor: pointer;
+  flex-shrink: 0;
   transition: all 0.15s ease-in-out;
+}
+.videoInfo .functional button.aiButton {
+  background-image: var(--blueButtonGradient);
+  color: white;
 }
 .videoInfo .functional button:hover {
   background-color: var(--background3);
+}
+.videoInfo .functional button.aiButton:hover{
+  filter: brightness(1.03);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(44, 100, 255, 0.3);
 }
 .videoInfo .functional button svg {
   width: 20px;
@@ -1883,6 +1902,14 @@ mux-player::part(menu-item) {
 }
 .videoInfo .functional button svg path {
   stroke: var(--text1);
+}
+.videoInfo .functional button.aiButton svg path{
+  stroke: white;
+}
+.videoInfo .functional button.aiButton .aiIconWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .videoInfo .functional button.bookmarked svg {
@@ -1924,6 +1951,92 @@ mux-player::part(menu-item) {
 
 .dislike-animate svg {
   animation: dislikeAnimation 0.3s ease-out;
+}
+
+@keyframes aiButtonChime {
+  0% {
+    transform: scale(1) translateY(0);
+    filter: brightness(1);
+  }
+  24% {
+    transform: scale(0.94) translateY(1px);
+    filter: brightness(1.02);
+  }
+  48% {
+    transform: scale(1.08) translateY(-2px);
+    filter: brightness(1.12);
+  }
+  72% {
+    transform: scale(0.985) translateY(0);
+    filter: brightness(1.05);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    filter: brightness(1);
+  }
+}
+
+@keyframes aiHoverSparkle {
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.08) rotate(-5deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes aiSparklePop {
+  0% {
+    transform: scale(0.8) rotate(0deg);
+  }
+  35% {
+    transform: scale(1.24) rotate(-10deg);
+  }
+  62% {
+    transform: scale(0.95) rotate(7deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes aiMiniSparkle {
+  0% {
+    transform: scale(0.7) rotate(0deg);
+  }
+  40% {
+    transform: scale(1.35) rotate(12deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.videoInfo .functional button.aiButton.ai-bubbly-animate {
+  animation: aiButtonChime 0.72s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.videoInfo .functional button.aiButton:hover:not(.ai-bubbly-animate) svg path:first-child,
+.videoInfo .functional button.aiButton:hover:not(.ai-bubbly-animate) svg path:nth-child(3),
+.videoInfo .functional button.aiButton:hover:not(.ai-bubbly-animate) svg path:nth-child(2),
+.videoInfo .functional button.aiButton:hover:not(.ai-bubbly-animate) svg path:nth-child(4) {
+  transform-origin: 42% 42%;
+  animation: aiHoverSparkle 1.1s ease-in-out infinite;
+}
+
+.videoInfo .functional button.aiButton.ai-bubbly-animate svg path:first-child,
+.videoInfo .functional button.aiButton.ai-bubbly-animate svg path:nth-child(3) {
+  transform-origin: 42% 42%;
+  animation: aiSparklePop 0.62s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.videoInfo .functional button.aiButton.ai-bubbly-animate svg path:nth-child(2),
+.videoInfo .functional button.aiButton.ai-bubbly-animate svg path:nth-child(4) {
+  transform-origin: 73% 74%;
+  animation: aiMiniSparkle 0.56s cubic-bezier(0.22, 1, 0.36, 1) 0.06s;
 }
 
 .videoInfo .author > span {
