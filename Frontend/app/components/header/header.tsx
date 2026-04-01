@@ -32,20 +32,14 @@ function Header(){
         if (token) myHeaders.current.set("Authorization", `Bearer ${token}`);
     }, [token]);
 
-    const alreadyFetched = sessionStorage.getItem('userImgFetched');
-    const storedUser = getStoredUser();
-
     const { data: headerUserData } = useQuery({
         queryKey: ["accountInfo"],
         queryFn: () => fetchFn<AuthFetchT>({
             route: `api/auth/me`,
             options: { method: "GET", headers: myHeaders.current }
         }),
-        enabled: !!token && !alreadyFetched,
-        initialData: storedUser ?? undefined,
+        enabled: !!token,
         staleTime: 5 * 60 * 1000,
-        refetchOnMount: false,
-        refetchOnWindowFocus: false,
     });
 
     //LISTEN FOR PROFILE UPDATE
