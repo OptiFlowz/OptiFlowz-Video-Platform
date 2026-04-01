@@ -3,7 +3,7 @@ import { Link, NavLink, useNavigate, useParams } from "react-router";
 import { SearchSVG, SearchSVGWhite, CloseSVG, MenuSVG, UploadSVG, EditModeSVG } from "~/constants";
 import DefaultProfile from "../../../assets/DefaultProfile.webp";
 import OptiFlowzLogo from "../../../assets/OptiFlowzLogo.webp";
-import { getStoredUser, getToken, isUserAdmin } from "~/functions";
+import { getToken, isUserAdmin } from "~/functions";
 import type { AuthFetchT } from "~/types";
 import { useI18n } from "~/i18n";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -19,8 +19,7 @@ function Header(){
     const { videoId } = useParams();
     const idToEdit = videoId || "";
 
-    const isAdmin = isUserAdmin();
-    // const [headerUserData, setHeaderUserData] = useState<AuthFetchT>(getStoredUser());
+    const [isAdmin, setIsAdmin] = useState(false);
 
     const searchRef1 = useRef<HTMLInputElement>(null);
     const searchRef2 = useRef<HTMLInputElement>(null);
@@ -46,6 +45,9 @@ function Header(){
     const queryClient = useQueryClient();
     
     useEffect(() => {
+        if(headerUserData && headerUserData.user)
+            setIsAdmin(headerUserData.user.role === "admin");
+
         const handleUpdate = () => {
             const newUser = localStorage.getItem("user");
 

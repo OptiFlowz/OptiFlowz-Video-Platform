@@ -1,5 +1,5 @@
 import { useInfiniteQuery, type InfiniteData } from "@tanstack/react-query";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useParams } from "react-router";
 import { fetchFn } from "~/API";
 import type { fetchVideo } from "~/types";
@@ -21,64 +21,73 @@ const SkeletonItem = () => (
 function VideosPage(){
     const { t } = useI18n();
     const {type} = useParams();
-    const title = useRef('');
-    const [token, setToken] = useState(String);
-    const myHeaders = useRef(new Headers());
+    const token = getToken();
     const loadMoreRef = useRef<HTMLDivElement>(null);
 
-    let route = null;
-    switch(type){
-        case '0': {
-            route = `api/videos/user/continue`;
-            title.current = t("continueWatching");
-            break;
+    const {route, title} = useMemo<{route: string, title: string}>(() => {
+        switch(type){
+            case '0': {
+                return {
+                    route: `api/videos/user/continue`,
+                    title: t("continueWatching")
+                }
+            }
+            case '1': {
+                return {
+                    route: `api/videos/user/recommended`,
+                    title: t("recommendedForYou")
+                }
+            }
+            case '2': {
+                return {
+                    route: `api/videos/trending`,
+                    title: t("navTrending")
+                }
+            }
+            case '3': {
+                return {
+                    route: `api/videos/user/liked`,
+                    title: t("savedVideos")
+                }
+            }
+            case '4': {
+                return {
+                    route: `api/videos/user/history`,
+                    title: t("watchHistory")
+                }
+            }
+            default:
+                return {
+                    route: '',
+                    title: ''
+                }
         }
-        case '1': {
-            route = `api/videos/user/recommended`;
-            title.current = t("recommendedForYou");
-            break;
-        }
-        case '2': {
-            route = `api/videos/trending`;
-            title.current = t("navTrending");
-            break;
-        }
-        case '3': {
-            route = `api/videos/user/liked`;
-            title.current = t("savedVideos");
-            break;
-        }
-        case '4': {
-            route = `api/videos/user/history`;
-            title.current = t("watchHistory");
-            break;
-        }
-        default:
-            break;
-    }
-
-    useLayoutEffect(() => {
-        const userToken = getToken();
-        if(!userToken) return;
-        setToken(userToken);
-
-        if(token)
-            myHeaders.current.append("Authorization", `Bearer ${userToken}`);
-    }, [token])
+    }, [type]);
 
     const {
         data,
         fetchNextPage,
         isFetchingNextPage,
         status,
+        refetch
     } = useInfiniteQuery<fetchVideo, Error, InfiniteData<fetchVideo, number>>({
         queryKey: ["infinite", type],
-        queryFn: ({pageParam}) => fetchFn<fetchVideo>({route: `${route}?page=${pageParam}`, options: {method: "GET", headers: myHeaders.current}}),
+        queryFn: ({pageParam}) => fetchFn<fetchVideo>({
+            route: `${route}?page=${pageParam}`,
+            options: {
+                method: "GET",
+                headers: {Authorization: `Bearer ${token}`}
+            }
+        }),
         getNextPageParam: () => undefined,
         initialPageParam: 1,
-        staleTime: 5*3600,
+        staleTime: 5 * 60 * 1000,
         enabled: !!token && !!route
     });
+
+    useEffect(() => {
+        if(type === '1' && token) refetch();
+    }, [type, token, refetch]);
 
     useEffect(() => {
         if (isFetchingNextPage) return;
@@ -106,7 +115,7 @@ function VideosPage(){
     return (
         <main ref={loadMoreRef} className="videos">
             <div className="heading">
-                <h2 className="font-bold -mt-5 text-3xl max-[520px]:text-2xl mb-6 max-[1075px]:mb-5 max-[1075px]:mt-1 max-[450px]:mb-5">{title?.current}</h2>
+                <h2 className="font-bold -mt-5 text-3xl max-[520px]:text-2xl mb-6 max-[1075px]:mb-5 max-[1075px]:mt-1 max-[450px]:mb-5">{title}</h2>
             </div>
 
             {itemsArray?.length == 0 && type == '1' ? 

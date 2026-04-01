@@ -92,7 +92,6 @@ function ItemSlider({props}: {props: ItemSliderT}){
             : fetchFn<fetchVideo>({ route, options: { method: "GET", headers: myHeaders.current } });
         },
         enabled: !!token && !!route,
-        staleTime: 5 * 60 * 1000,
         gcTime: 30 * 60 * 1000,
         refetchOnMount: false,
         refetchOnWindowFocus: false,
