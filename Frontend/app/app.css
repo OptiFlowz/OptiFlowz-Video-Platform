@@ -387,10 +387,11 @@ main.play .player,
 .videoInfo .author,
 .videoInfo .other,
 .comment-input,
-.commentsSection > div {
+.commentsSection > div,
+main.play > div > div:nth-child(3),
+main.play > div > div:nth-child(4) {
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: linear-gradient(180deg, rgba(24, 28, 38, 0.7), rgba(18, 21, 30, 0.72));
-  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.22);
 }
 
 footer {
@@ -6972,17 +6973,27 @@ footer > span.footerCopyright {
     -webkit-backdrop-filter: none;
   }
   main.play {
-    padding-top: calc(90px + 56.25dvw);
+    padding-top: calc(110px + 56.25dvw);
   }
   main.play .player {
     position: fixed;
-    top: 73px;
+    top: 90px;
     left: 0;
     right: 0;
     border-radius: 0px;
     border-bottom: 2px solid var(--background1);
     box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.3);
     z-index: 5;
+  }
+  main.play .player::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 120px;
+    background-color: var(--background1);
+    z-index: -1;
   }
   main.homePage .titles{
     padding: 0;
@@ -6991,7 +7002,7 @@ footer > span.footerCopyright {
     position: fixed;
     max-height: 100vh !important;
     background-color: var(--background1);
-    height: calc(100dvh - 73px - 56.25dvw);
+    height: calc(100dvh - 90px - 56.25dvw);
     bottom: 0;
     right: 0;
     left: 0;
@@ -7317,9 +7328,6 @@ footer > span.footerCopyright {
 @media screen and (max-width: 450px) {
   main {
     padding-top: 90px;
-  }
-  main.play {
-    padding-top: calc(90px + 56.25dvw);
   }
   main.textFilledMain {
     padding-bottom: 20px;
