@@ -14,7 +14,7 @@ type CommentComposerProps = {
   onSubmit: () => void;
   isSubmitting: boolean;
   isSubmitError: boolean;
-  scrollBackTo?: HTMLSpanElement | null;
+  scrollBackTo?: HTMLButtonElement | null;
 };
 
 function CommentComposer({

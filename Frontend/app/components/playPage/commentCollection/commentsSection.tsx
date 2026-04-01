@@ -301,7 +301,6 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
       if(lastReplyArray.length > 0)
         lastReplyArray.forEach(button => {
           if(button !== scrollBackTo)
-            // console.log(span);
             button.classList.remove("replying");
         });
 
