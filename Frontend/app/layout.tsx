@@ -26,9 +26,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           src="https://ai-chatbot-platform.fly.dev/widget/index.js"
           strategy="afterInteractive"
           data-agent-name="OptiFlowz AI"
-          data-chat-headerTitleFontSize="1.3rem"
-          data-agent-description="Your friendly AI Guide"
-          data-chat-headerDescriptionFontSize="0.72rem"
+          data-chat-header-title-font-size="1.3rem"
+          data-agent-description="Your friendly AI Agent"
+          data-chat-header-description-font-size="0.72rem"
           data-agent-icon="https://cdn.jsdelivr.net/gh/OptiFlowz/OptiFlowz-Main-Chat/aiAgentImg.png"
           data-privacy-url="https://optiflowz.com/privacy-policy"
           data-questions={`["I'd like to report a problem","Tell me more about OptiFlowz Video Platform"]`}
