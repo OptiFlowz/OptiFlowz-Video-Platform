@@ -81,6 +81,8 @@ out
 # Nuxt.js build / generate output
 .nuxt
 dist
+!Frontend/app/components/playPage/playerCollection/optiflowzTheme/dist/
+!Frontend/app/components/playPage/playerCollection/optiflowzTheme/dist/**
 
 # Gatsby files
 .cache/
