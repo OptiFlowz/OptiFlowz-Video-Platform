@@ -1,6 +1,6 @@
-import HeroLarge from "../../../assets/slider1.webp";
-import HeroMedium from "../../../assets/slider2.webp";
-import HeroSmall from "../../../assets/hero-large.webp";
+import HeroLarge from "../../../assets/Slider1.webp";
+import HeroMedium from "../../../assets/Slider2.webp";
+import HeroSmall from "../../../assets/Slider3.webp";
 import Slider from "../homePage/slider/slider";
 import { useLayoutEffect, useRef } from "react";
 
