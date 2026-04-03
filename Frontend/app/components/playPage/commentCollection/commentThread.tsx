@@ -180,11 +180,11 @@ export function CommentThread({
   const { t } = useI18n();
 
   if (!hasData && isLoading) {
-    return <h3 className="text-(--accentBlue) w-full text-center pb-1 font-medium">{t("loadingComments")}</h3>;
+    return <h3 className="text-(--text1) w-full text-center pb-1 font-medium">{t("loadingComments")}</h3>;
   }
 
   if (parents.length === 0) {
-    return <h3 className="text-(--accentBlue) w-full text-center pb-1 font-medium">{t("noCommentsYet")}</h3>;
+    return <h3 className="text-(--text1) w-full text-center pb-1 font-medium">{t("noCommentsYet")}</h3>;
   }
 
   return (

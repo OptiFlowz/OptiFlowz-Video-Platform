@@ -176,27 +176,6 @@ header .accountImg {
   border-color: rgba(255, 255, 255, 0.28);
 }
 
-header .searchDesktop,
-header .search {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.12);
-}
-
-header .searchDesktop input,
-header .search input {
-  color: white;
-}
-
-header .searchDesktop input::placeholder,
-header .search input::placeholder {
-  color: rgba(255, 255, 255, 0.45);
-}
-
-header .searchDesktop svg path,
-header .search svg path {
-  stroke: rgba(255, 255, 255, 0.7);
-}
-
 main .hero {
   background:
     radial-gradient(circle at 12% 18%, rgba(72, 180, 170, 0.2), transparent 25%),
@@ -781,7 +760,7 @@ header .search {
   align-items: center;
   min-height: 52px;
   padding-left: 14px;
-  background-color: var(--background1);
+  background-color: var(--background2);
   letter-spacing: 0.03rem;
   font-size: 0.975rem;
   border-radius: var(--bR);
@@ -797,13 +776,13 @@ header .search svg path {
 header .search input {
   font-weight: 500;
   padding-block: 12px;
-  color: var(--accentBlue);
+  color: var(--text1);
   background: transparent;
 }
 header .searchPanel.focus-armed .search:has(input:focus),
 header .searchPanel.focus-armed .search:has(input:focus) svg path {
-  border-color: var(--accentBlue);
-  stroke: var(--accentBlue);
+  border-color: var(--accentBlue2);
+  stroke: var(--text1);
 }
 
 header .search button {
@@ -1585,7 +1564,7 @@ main.play > div:nth-child(2) {
 
 main.play .player {
   background-color: black;
-  border-radius: 15px;
+  border-radius: 1rem;
   position: relative;
   overflow: hidden;
 }

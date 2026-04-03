@@ -150,6 +150,7 @@ const SkeletonVideoInfo = () => (
                     <div className="skeleton-dislike-button"></div>
                 </div>
                 <div className="skeleton-share-button"></div>
+                <div className="skeleton-share-button"></div>
             </span>
         </span>
 

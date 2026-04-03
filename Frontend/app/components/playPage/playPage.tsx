@@ -206,7 +206,7 @@ function PlayPage(){
     const videoData = data as VideoT;
 
     return <>
-        <main className={`play ${isTheater ? "theater pt-18.25!" : ""} px-0 py-7.5`}>
+        <main className={`play ${isTheater ? "theater pt-23!" : ""} px-0 py-7.5`}>
             {
                 !isTheater 
                 ? <>
