@@ -131,7 +131,7 @@ function Header(){
 
                 {/* Desktop Navigation */}
                 <nav className="flex gap-2 font-regular max-[800px]:hidden">
-                    <Link to="https://optiflowz.com/" target="_blank">OptiFlowz</Link>
+                    <Link to="https://optiflowz.com/">OptiFlowz</Link>
                     <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : "")}>{t("navHome")}</NavLink>
                     <NavLink to="/videos/1" end className={({ isActive }) => (isActive ? "active" : "")}>{t("navRecommended")}</NavLink>
                     <NavLink to="/videos/2" end className={({ isActive }) => (isActive ? "active" : "")}>{t("navTrending")}</NavLink>
@@ -297,7 +297,6 @@ function Header(){
                     </NavLink>
                     <Link 
                         to="https://optiflowz.com/"
-                        target="_blank"
                         className={`p-3 rounded-lg transition-colors hover:bg-(--background2)`}
                     >
                         OptiFlowz
