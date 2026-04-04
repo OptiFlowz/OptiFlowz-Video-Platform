@@ -1,9 +1,8 @@
-﻿import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer';
 import { readPool } from '../../database/index.js';
 
-const FRONTEND_VIDEO_BASE = process.env.FRONTEND_VIDEO_BASE || 'http://localhost:5173/video/';
-const REPORT_LOGO_URL = process.env.REPORT_LOGO_URL || 'https://optiflowzstorage.com/OptiFlowzLogo.png';
-
+const FRONTEND_VIDEO_BASE = 'https://videoplatform.optiflowz.com/video/';
+const REPORT_LOGO_URL = 'https://videoplatform.optiflowz.com/_next/static/media/OptiFlowzLogo.6e965059.webp';
 function escapeHtml(value = '') {
   return String(value)
     .replace(/&/g, '&amp;')
@@ -36,7 +35,19 @@ function fmtHMS(seconds = 0) {
 function shortLabel(text = '', max = 26) {
   const str = String(text || '');
   if (str.length <= max) return str;
-  return `${str.slice(0, max - 1)}â€¦`;
+  return `${str.slice(0, max - 1)}…`;
+}
+
+function resolveCountryIso2(countryIso = '') {
+  const iso2 = String(countryIso || '').trim();
+  if (!/^[A-Za-z]{2}$/.test(iso2)) return null;
+  return iso2.toUpperCase();
+}
+
+function getFlagImageUrl(countryIso = '') {
+  const iso2 = resolveCountryIso2(countryIso);
+  if (!iso2) return null;
+  return `https://flagcdn.com/w40/${iso2.toLowerCase()}.png`;
 }
 
 function formatDateLabel(dateLike, groupBy = 'day') {
@@ -137,7 +148,7 @@ function normalizeReportOptions(raw = {}) {
       throw new Error('"from" must be before or equal to "to"');
     }
 
-    label = `${raw.from} â†’ ${raw.to}`;
+    label = `${raw.from} → ${raw.to}`;
   } else if (range !== 'lifetime') {
     throw new Error('Invalid range. Allowed: lifetime, last7, last30, last90, last365, custom');
   }
@@ -408,6 +419,24 @@ function getDeviceBreakdownSql(includePrivate = false) {
   `;
 }
 
+function getGeographyBreakdownSql(includePrivate = false) {
+  const videoCondition = publicVideosCondition('v', includePrivate);
+
+  return `
+    SELECT
+      COALESCE(NULLIF(TRIM(vv.country), ''), 'Unknown') AS country,
+      COALESCE(NULLIF(TRIM(vv.country_iso), ''), '') AS country_iso,
+      COALESCE(NULLIF(TRIM(vv.city), ''), 'Unknown city') AS city,
+      COUNT(*) AS cnt
+    FROM video_views vv
+    JOIN videos v ON v.id = vv.video_id
+    WHERE ${videoCondition}
+      AND ${dateFilter('vv.created_at')}
+    GROUP BY 1, 2, 3
+    ORDER BY country ASC, cnt DESC, city ASC
+  `;
+}
+
 function getTopVideosSql(includePrivate = false) {
   const videoCondition = publicVideosCondition('v', includePrivate);
 
@@ -534,8 +563,7 @@ function getTopVideosSql(includePrivate = false) {
       fr.dislikes,
       fc.comments,
       ps.avg_percentage_watched
-    ORDER BY total_watch_seconds DESC, total_views DESC
-    LIMIT 15
+    ORDER BY total_watch_seconds DESC, total_views DESC, v.title ASC
   `;
 }
 
@@ -1034,7 +1062,7 @@ function buildDonutChartCard(items, options = {}) {
           <span class="donutLegendSwatch" style="background:${item.color};"></span>
           <div class="donutLegendMeta">
             <div class="donutLegendLabel">${escapeHtml(item.label)}</div>
-            <div class="donutLegendValue">${fmtNum(item.value)} <span>â€¢ ${fmtPct(pct, 0)}</span></div>
+            <div class="donutLegendValue">${fmtNum(item.value)} <span>• ${fmtPct(pct, 0)}</span></div>
           </div>
         </div>
       `;
@@ -1085,6 +1113,41 @@ function summarizeDeviceBreakdown(rows = []) {
   return { devices, osList };
 }
 
+function summarizeGeographyBreakdown(rows = []) {
+  const countryMap = new Map();
+
+  for (const row of rows) {
+    const country = String(row.country || 'Unknown').trim() || 'Unknown';
+    const countryIso = resolveCountryIso2(row.country_iso);
+    const city = String(row.city || 'Unknown city').trim() || 'Unknown city';
+    const count = Number(row.cnt || 0);
+
+    if (!countryMap.has(country)) {
+      countryMap.set(country, {
+        country,
+        value: 0,
+        iso2: countryIso,
+        cities: new Map(),
+      });
+    }
+
+    const countryEntry = countryMap.get(country);
+    countryEntry.value += count;
+    countryEntry.cities.set(city, (countryEntry.cities.get(city) || 0) + count);
+  }
+
+  return Array.from(countryMap.values())
+    .map((entry) => ({
+      country: entry.country,
+      value: entry.value,
+      iso2: entry.iso2,
+      cities: Array.from(entry.cities.entries())
+        .map(([city, value]) => ({ city, value }))
+        .sort((a, b) => b.value - a.value || a.city.localeCompare(b.city)),
+    }))
+    .sort((a, b) => b.value - a.value || a.country.localeCompare(b.country));
+}
+
 function buildHtml(report, options) {
   const overview = report.overview || {};
 
@@ -1114,6 +1177,7 @@ function buildHtml(report, options) {
   }));
 
   const { devices, osList } = summarizeDeviceBreakdown(report.deviceBreakdown || []);
+  const geographyBreakdown = summarizeGeographyBreakdown(report.geographyBreakdown || []);
   const deviceChartItems = devices.map((item, index) => ({
     ...item,
     label: item.label.charAt(0).toUpperCase() + item.label.slice(1),
@@ -1134,7 +1198,7 @@ function buildHtml(report, options) {
   ];
 
   const audienceSplitItems = [
-    { label: 'Declared members', value: Number(overview.eaes_member_video_views || 0) },
+    { label: 'EAES members', value: Number(overview.eaes_member_video_views || 0) },
     {
       label: 'Non-members',
       value: Number(overview.non_member_video_views || 0) + Number(overview.anonymous_video_views || 0),
@@ -1174,15 +1238,15 @@ function buildHtml(report, options) {
   const generatedAt = new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
 
   const logoHtml = REPORT_LOGO_URL
-    ? `<img class="brandLogo" src="${escapeHtml(REPORT_LOGO_URL)}" alt="Platform logo" />`
-    : `<div class="brandBadge">OF</div>`;
+    ? `<img class="brandLogo" src="${escapeHtml(REPORT_LOGO_URL)}" alt="EAES logo" />`
+    : `<div class="brandBadge">EAES</div>`;
 
   return `
 <!doctype html>
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>OptiFlowz Video Platform Analytics Report</title>
+  <title>EAES Video Corner Analytics Report</title>
   <style>
     @page {
       size: A4 portrait;
@@ -1403,6 +1467,104 @@ function buildHtml(report, options) {
       color: var(--muted);
       font-size: 9px;
       margin-top: 4px;
+    }
+
+    .geoGrid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .geoCountry {
+      border: 1px solid #d9e4f7;
+      border-radius: 14px;
+      padding: 14px;
+      background: linear-gradient(180deg, #ffffff 0%, #f7faff 100%);
+      display: flex;
+      flex-direction: column;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    .geoCountryHeader {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .geoCountryMeta {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .flagThumb {
+      width: 28px;
+      height: 20px;
+      border-radius: 4px;
+      object-fit: cover;
+      border: 1px solid #d6e1f5;
+      box-shadow: 0 1px 1px rgba(15, 23, 42, 0.06);
+      flex-shrink: 0;
+    }
+
+    .flagThumbFallback {
+      width: 28px;
+      height: 20px;
+      border-radius: 4px;
+      background: #eef4ff;
+      border: 1px solid #d6e1f5;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--accentBlue2);
+      flex-shrink: 0;
+    }
+
+    .geoCountryName {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .geoCountryViews {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accentBlue);
+      white-space: nowrap;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: #edf3ff;
+    }
+
+    .geoCities {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .geoCity {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 9px;
+      border-radius: 10px;
+      background: #eef4ff;
+      color: #334155;
+      font-size: 10px;
+      border: 1px solid #d8e4f8;
+    }
+
+    .geoCity strong {
+      color: var(--accentBlue2);
+      font-weight: 700;
     }
 
     .tableWrap {
@@ -1778,9 +1940,9 @@ function buildHtml(report, options) {
         <div class="brandWrap">
           ${logoHtml}
           <div>
-            <div class="headerTitle">OptiFlowz Video Platform Analytics Report</div>
+            <div class="headerTitle">EAES Video Corner Analytics Report</div>
             <div class="headerSub">
-              Period: ${escapeHtml(options.label)} â€¢ Grouped by ${escapeHtml(options.groupBy)} â€¢ ${options.includePrivate ? 'Includes private content' : 'Public content only'}
+              Period: ${escapeHtml(options.label)} • Grouped by ${escapeHtml(options.groupBy)} • ${options.includePrivate ? 'Includes private content' : 'Public content only'}
             </div>
           </div>
         </div>
@@ -1797,7 +1959,7 @@ function buildHtml(report, options) {
         <div class="card">
           <div class="kpiLabel">Total users</div>
           <div class="kpiValue">${fmtNum(overview.total_users)}</div>
-          <div class="kpiSub">Declared members: ${fmtNum(overview.eaes_members)}</div>
+          <div class="kpiSub">Declared EAES members: ${fmtNum(overview.eaes_members)}</div>
         </div>
 
         <div class="card">
@@ -1833,7 +1995,7 @@ function buildHtml(report, options) {
         <div class="card">
           <div class="kpiLabel">Video reactions</div>
           <div class="kpiValue">${fmtNum(overview.total_reactions)}</div>
-          <div class="kpiSub">Likes: ${fmtNum(overview.total_likes)} â€¢ Dislikes: ${fmtNum(overview.total_dislikes)}</div>
+          <div class="kpiSub">Likes: ${fmtNum(overview.total_likes)} • Dislikes: ${fmtNum(overview.total_dislikes)}</div>
         </div>
 
         <div class="card">
@@ -1949,64 +2111,6 @@ function buildHtml(report, options) {
     </div>
 
     <div class="section">
-      <div class="sectionTitle">Playlist performance</div>
-      <div class="tableCard">
-        <div class="tableWrap">
-          <table>
-            <thead>
-              <tr>
-                <th style="width:42px;">#</th>
-                <th style="width:46%;">Playlist</th>
-                <th class="textCenter" style="width:10%;">Videos</th>
-                <th class="textCenter" style="width:14%;">Unique users</th>
-                <th class="textCenter" style="width:15%;">Views</th>
-                <th class="textCenter" style="width:15%;">Saves</th>
-                <th style="width:120px;">Devices</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${(report.playlists || [])
-                .map((row, idx) => {
-                  const thumb = row.thumbnail_url
-                    ? `<img class="playlistThumb" src="${escapeHtml(row.thumbnail_url)}" alt="playlist thumbnail" />`
-                    : `<div class="playlistThumb placeholder"></div>`;
-
-                  return `
-                    <tr>
-                      <td class="rank">
-                        <div class="rankBadge"><span>${idx + 1}</span></div>
-                      </td>
-                      <td>
-                        <div class="videoCell">
-                          ${thumb}
-                          <div class="videoMeta">
-                            <div class="videoMetaTitle">${escapeHtml(row.title || 'Untitled')}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td class="textCenter">${fmtNum(row.videos)}</td>
-                      <td class="textCenter">${fmtNum(row.unique_users)}</td>
-                      <td class="textCenter">${fmtNum(row.period_view_count)}</td>
-                      <td class="textCenter">${fmtNum(row.period_save_count)}</td>
-                      <td class="deviceBreakdown">
-                        <div class="deviceGrid">
-                          <div class="deviceItem"><span class="metricIcon">${buildIcon('phone')}</span><span>${fmtNum(row.phone_views)}</span></div>
-                          <div class="deviceItem"><span class="metricIcon">${buildIcon('desktop')}</span><span>${fmtNum(row.desktop_views)}</span></div>
-                          <div class="deviceItem"><span class="metricIcon">${buildIcon('tablet')}</span><span>${fmtNum(row.tablet_views)}</span></div>
-                          <div class="deviceItem"><span class="metricIcon">${buildIcon('other')}</span><span>${fmtNum(row.other_device_views)}</span></div>
-                        </div>
-                      </td>
-                    </tr>
-                  `;
-                })
-                .join('')}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <div class="section">
       <div class="sectionTitle">Trends</div>
         <div class="chartCard">
         <div class="chartTitle">Platform activity over time</div>
@@ -2065,6 +2169,56 @@ function buildHtml(report, options) {
     </div>
 
     <div class="section">
+      <div class="sectionTitle">Geographic breakdown</div>
+      ${
+        geographyBreakdown.length
+          ? `
+          <div class="geoGrid">
+            ${geographyBreakdown
+              .map((countryRow) => {
+                const flagUrl = getFlagImageUrl(countryRow.iso2);
+                const flagHtml = flagUrl
+                  ? `<img class="flagThumb" src="${escapeHtml(flagUrl)}" alt="${escapeHtml(countryRow.country)} flag" />`
+                  : `<span class="flagThumbFallback">${escapeHtml((countryRow.iso2 || countryRow.country.slice(0, 2) || '--').toUpperCase())}</span>`;
+
+                return `
+                  <div class="geoCountry">
+                    <div class="geoCountryHeader">
+                      <div class="geoCountryMeta">
+                        ${flagHtml}
+                        <div class="geoCountryName">${escapeHtml(countryRow.country)}</div>
+                      </div>
+                      <div class="geoCountryViews">${fmtNum(countryRow.value)} views</div>
+                    </div>
+                    <div class="geoCities">
+                      ${countryRow.cities
+                        .slice(0, 8)
+                        .map(
+                          (cityRow) => `
+                            <span class="geoCity">
+                              <span>${escapeHtml(cityRow.city)}</span>
+                              <strong>${fmtNum(cityRow.value)}</strong>
+                            </span>
+                          `,
+                        )
+                        .join('')}
+                      ${
+                        countryRow.cities.length > 8
+                          ? `<span class="geoCity"><span>More cities</span><strong>+${fmtNum(countryRow.cities.length - 8)}</strong></span>`
+                          : ''
+                      }
+                    </div>
+                  </div>
+                `;
+              })
+              .join('')}
+          </div>
+        `
+          : `<div class="chartCard"><div class="emptyState">No geographic data available for the selected period</div></div>`
+      }
+    </div>
+
+    <div class="section">
       <div class="sectionTitle">Top content charts</div>
       <div class="chartsStack">
         <div class="chartCard">
@@ -2076,7 +2230,65 @@ function buildHtml(report, options) {
             barRadius: 3,
             suffix: '%',
           })}
-          <div class="smallNote">Engagement = total watch seconds / (views Ã— video duration)</div>
+          <div class="smallNote">Engagement = total watch seconds / (views × video duration)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sectionTitle">Playlist performance</div>
+      <div class="tableCard">
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:42px;">#</th>
+                <th style="width:46%;">Playlist</th>
+                <th class="textCenter" style="width:10%;">Videos</th>
+                <th class="textCenter" style="width:14%;">Unique users</th>
+                <th class="textCenter" style="width:15%;">Views</th>
+                <th class="textCenter" style="width:15%;">Saves</th>
+                <th style="width:120px;">Devices</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(report.playlists || [])
+                .map((row, idx) => {
+                  const thumb = row.thumbnail_url
+                    ? `<img class="playlistThumb" src="${escapeHtml(row.thumbnail_url)}" alt="playlist thumbnail" />`
+                    : `<div class="playlistThumb placeholder"></div>`;
+
+                  return `
+                    <tr>
+                      <td class="rank">
+                        <div class="rankBadge"><span>${idx + 1}</span></div>
+                      </td>
+                      <td>
+                        <div class="videoCell">
+                          ${thumb}
+                          <div class="videoMeta">
+                            <div class="videoMetaTitle">${escapeHtml(row.title || 'Untitled')}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="textCenter">${fmtNum(row.videos)}</td>
+                      <td class="textCenter">${fmtNum(row.unique_users)}</td>
+                      <td class="textCenter">${fmtNum(row.period_view_count)}</td>
+                      <td class="textCenter">${fmtNum(row.period_save_count)}</td>
+                      <td class="deviceBreakdown">
+                        <div class="deviceGrid">
+                          <div class="deviceItem"><span class="metricIcon">${buildIcon('phone')}</span><span>${fmtNum(row.phone_views)}</span></div>
+                          <div class="deviceItem"><span class="metricIcon">${buildIcon('desktop')}</span><span>${fmtNum(row.desktop_views)}</span></div>
+                          <div class="deviceItem"><span class="metricIcon">${buildIcon('tablet')}</span><span>${fmtNum(row.tablet_views)}</span></div>
+                          <div class="deviceItem"><span class="metricIcon">${buildIcon('other')}</span><span>${fmtNum(row.other_device_views)}</span></div>
+                        </div>
+                      </td>
+                    </tr>
+                  `;
+                })
+                .join('')}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -2099,6 +2311,7 @@ export async function generateVideoAnalyticsPdfReport(rawOptions = {}) {
       activeUsersTimelineResult,
       userSignupsTimelineResult,
       deviceBreakdownResult,
+      geographyBreakdownResult,
       topVideosResult,
       playlistsResult,
       completionBucketsResult,
@@ -2108,6 +2321,7 @@ export async function generateVideoAnalyticsPdfReport(rawOptions = {}) {
       readPool.query(getActiveUsersTimelineSql(options.groupBy, options.includePrivate), params),
       readPool.query(getUserSignupsTimelineSql(options.groupBy), params),
       readPool.query(getDeviceBreakdownSql(options.includePrivate), params),
+      readPool.query(getGeographyBreakdownSql(options.includePrivate), params),
       readPool.query(getTopVideosSql(options.includePrivate), params),
       readPool.query(getPlaylistPerformanceSql(options.includePrivate), params),
       readPool.query(getCompletionBucketsSql(options.includePrivate), params),
@@ -2119,6 +2333,7 @@ export async function generateVideoAnalyticsPdfReport(rawOptions = {}) {
       activeUsersTimeline: activeUsersTimelineResult.rows || [],
       userSignupsTimeline: userSignupsTimelineResult.rows || [],
       deviceBreakdown: deviceBreakdownResult.rows || [],
+      geographyBreakdown: geographyBreakdownResult.rows || [],
       topVideos: topVideosResult.rows || [],
       playlists: playlistsResult.rows || [],
       completionBuckets: completionBucketsResult.rows?.[0] || {},

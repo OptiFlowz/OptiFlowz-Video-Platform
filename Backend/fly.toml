@@ -3,7 +3,7 @@
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'optiflowz-video-platform-backend'
+app = 'video-platform-template'
 primary_region = 'fra'
 
 [build]
