@@ -25,13 +25,17 @@ function Similar({props, isLoading}: {props?: SimilarT, isLoading?: boolean}){
         <PlayCard key={`similar${index}`} props={item} playedVideoId="" playlistId="" />
     ));
 
+    const hasSimilarVideos = (props?.videos?.length ?? 0) > 0;
+
     return (
         <div className="similar">
-            <h2 className="subTitle">{t("similarVideos")}</h2>
+            <h2 className="subTitle">{isLoading || hasSimilarVideos ? t("similarVideos") : t("noSimilarVideos")}</h2>
 
-            <div className="holder">
-                {isLoading ? skeletonArray : similarArray}
-            </div>
+            {(isLoading || hasSimilarVideos) && (
+                <div className="holder">
+                    {isLoading ? skeletonArray : similarArray}
+                </div>
+            )}
         </div>
     );
 }

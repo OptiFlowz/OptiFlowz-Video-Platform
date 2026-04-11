@@ -198,6 +198,7 @@ function VideoInfo({
     const stockThumbnailUrl = props?.thumbnail_url.split("?")[0];
 
     const [isExpanded, setIsExpanded] = useState(false);
+    const [hasDescriptionOverflow, setHasDescriptionOverflow] = useState(false);
     const [areTagsExpanded, setAreTagsExpanded] = useState(false);
     const [isHoveringTags, setIsHoveringTags] = useState(false);
     const [userReaction, setUserReaction] = useState(props?.user_reaction);
@@ -228,6 +229,7 @@ function VideoInfo({
     //REMOVE TOGGLE BUTTON FOR TAGS
     const videoTagsButton = useRef<HTMLButtonElement>(null);
     const videoTags = useRef<HTMLSpanElement>(null);
+    const descriptionRef = useRef<HTMLParagraphElement>(null);
 
     useEffect(() => {
         const videoTagsHolder = videoTags.current;
@@ -249,6 +251,32 @@ function VideoInfo({
         return () => window.removeEventListener("resize", handleTagsOverflow);
     }, [props?.tags]);
     //
+
+    useEffect(() => {
+        const descriptionElement = descriptionRef.current;
+        if (!descriptionElement) return;
+
+        const handleDescriptionOverflow = () => {
+            if (isExpanded) return;
+
+            const hasOverflow = descriptionElement.scrollHeight > descriptionElement.clientHeight + 1;
+            setHasDescriptionOverflow(hasOverflow);
+        };
+
+        handleDescriptionOverflow();
+
+        const resizeObserver = typeof ResizeObserver !== "undefined"
+            ? new ResizeObserver(handleDescriptionOverflow)
+            : null;
+
+        resizeObserver?.observe(descriptionElement);
+        window.addEventListener("resize", handleDescriptionOverflow);
+
+        return () => {
+            resizeObserver?.disconnect();
+            window.removeEventListener("resize", handleDescriptionOverflow);
+        };
+    }, [props?.description, isExpanded]);
 
     const parentComments = commentsData?.comments.filter((comment) => !comment.parent_id) ?? [];
 
@@ -486,25 +514,25 @@ function VideoInfo({
 
             <span
                 className={`mt-3 p-3.75 rounded-2xl! bg-(--background2)! other flex flex-col transition-all ${
-                !isExpanded && !isHoveringTags ? "cursor-pointer hover:bg-(--background3)!" : ""
+                !isExpanded && hasDescriptionOverflow && !isHoveringTags ? "cursor-pointer hover:bg-(--background3)!" : ""
                 }`}
             >
                 <div className="weakText description"
                     onClick={(e) => {
-                    if (isExpanded) return;
+                    if (isExpanded || !hasDescriptionOverflow) return;
                     if (isClickOnTag(e.target)) return;
                     setIsExpanded(true);
                     }}
                 >
                     <h2 className="mb-2 text-lg font-semibold max-[500px]:text-sm">{t("description")}</h2>
 
-                    <p className={`max-[500px]:text-sm ${!isExpanded ? "line-clamp-4" : ""}`}>
+                    <p ref={descriptionRef} className={`max-[500px]:text-sm ${!isExpanded ? "line-clamp-4" : ""}`}>
                         {formatDescription(props?.description) || t("noDescription")}
                     </p>
 
-                    {!isExpanded ? (
+                    {!isExpanded && hasDescriptionOverflow ? (
                         <span className="font-semibold mt-1 max-[500px]:text-sm">{t("more")}</span>
-                    ) : (
+                    ) : isExpanded ? (
                         <button
                         onClick={(e) => {
                             e.stopPropagation();
@@ -515,7 +543,7 @@ function VideoInfo({
                         {ArrowSVG}
                         <p className="text-white">{t("showLess")}</p>
                         </button>
-                    )}
+                    ) : null}
                 </div>
 
                 {props?.chapters?.length > 0 && (
@@ -587,5 +615,3 @@ function VideoInfo({
 }
 
 export default VideoInfo;
-
-

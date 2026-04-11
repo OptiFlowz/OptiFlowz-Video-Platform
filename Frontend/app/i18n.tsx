@@ -67,6 +67,7 @@ const enBase: TranslationMap = {
   playlistShareTitle: "Share Playlist",
   playlistShareText: "Check this out",
   similarVideos: "Similar Videos",
+  noSimilarVideos: "No similar videos",
   featuredInPlaylists: "Featured in Playlists",
   videoChapters: "Video Chapters",
   close: "Close",
@@ -268,6 +269,7 @@ const localeOverrides: Record<Locale, Partial<TranslationMap>> = {
     playlistShareTitle: "Compartir lista",
     playlistShareText: "Mira esto",
     similarVideos: "Videos similares",
+    noSimilarVideos: "No hay videos similares",
     featuredInPlaylists: "Destacado en listas",
     videoChapters: "Capitulos del video",
     close: "Cerrar",
@@ -450,6 +452,7 @@ const localeOverrides: Record<Locale, Partial<TranslationMap>> = {
     playlistShareTitle: "Condividi playlist",
     playlistShareText: "Guarda questo",
     similarVideos: "Video simili",
+    noSimilarVideos: "Nessun video simile",
     featuredInPlaylists: "In playlist in evidenza",
     videoChapters: "Capitoli del video",
     close: "Chiudi",
@@ -626,6 +629,7 @@ const localeOverrides: Record<Locale, Partial<TranslationMap>> = {
     playlistShareTitle: "Podeli plejlistu",
     playlistShareText: "Pogledaj ovo",
     similarVideos: "Slični video snimci",
+    noSimilarVideos: "Nema sličnih video snimaka",
     featuredInPlaylists: "Istaknuto u plejlistama",
     videoChapters: "Poglavlja videa",
     close: "Zatvori",
@@ -803,6 +807,7 @@ const localeOverrides: Record<Locale, Partial<TranslationMap>> = {
     playlistShareTitle: "Partager la playlist",
     playlistShareText: "Regardez ceci",
     similarVideos: "Videos similaires",
+    noSimilarVideos: "Aucune video similaire",
     featuredInPlaylists: "Dans des playlists a la une",
     videoChapters: "Chapitres de la video",
     close: "Fermer",
@@ -981,6 +986,7 @@ const localeOverrides: Record<Locale, Partial<TranslationMap>> = {
     playlistShareTitle: "Playlist teilen",
     playlistShareText: "Schau dir das an",
     similarVideos: "Ahnliche Videos",
+    noSimilarVideos: "Keine ahnlichen Videos",
     featuredInPlaylists: "In Playlists enthalten",
     videoChapters: "Videokapitel",
     close: "Schliessen",
@@ -1158,6 +1164,7 @@ const localeOverrides: Record<Locale, Partial<TranslationMap>> = {
     playlistShareTitle: "Partilhar playlist",
     playlistShareText: "Veja isto",
     similarVideos: "Videos semelhantes",
+    noSimilarVideos: "Nenhum video semelhante",
     featuredInPlaylists: "Em playlists em destaque",
     videoChapters: "Capitulos do video",
     close: "Fechar",
@@ -1320,6 +1327,7 @@ const localeOverrides: Record<Locale, Partial<TranslationMap>> = {
     playlistShareTitle: "Playlist delen",
     playlistShareText: "Bekijk dit",
     similarVideos: "Vergelijkbare videos",
+    noSimilarVideos: "Geen vergelijkbare videos",
     featuredInPlaylists: "Uitgelicht in playlists",
     videoChapters: "Videohoofdstukken",
     close: "Sluiten",
@@ -1494,6 +1502,7 @@ const localeOverrides: Record<Locale, Partial<TranslationMap>> = {
     playlistShareTitle: "Podijeli playlistu",
     playlistShareText: "Pogledaj ovo",
     similarVideos: "Slični videozapisi",
+    noSimilarVideos: "Nema sličnih videozapisa",
     featuredInPlaylists: "Istaknuto u playlistama",
     videoChapters: "Poglavlja videa",
     close: "Zatvori",
@@ -1653,6 +1662,7 @@ const localeOverrides: Record<Locale, Partial<TranslationMap>> = {
     playlistShareTitle: "Udostepnij playliste",
     playlistShareText: "Zobacz to",
     similarVideos: "Podobne filmy",
+    noSimilarVideos: "Brak podobnych filmow",
     featuredInPlaylists: "Wyroznione w playlistach",
     videoChapters: "Rozdzialy filmu",
     close: "Zamknij",
@@ -1860,6 +1870,5 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 export function useI18n() {
   return useContext(I18nContext);
 }
-
 
 
