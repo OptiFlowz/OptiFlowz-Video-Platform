@@ -11,16 +11,6 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
-  const hasUser =
-    !!localStorage.getItem("user") || !!sessionStorage.getItem("user");
-
-  if (!hasUser) {
-    window.location.href = `/login?redirect=${encodeURIComponent(
-      window.location.pathname + window.location.search + window.location.hash
-    )}`;
-    return null;
-  }
-
   return <>
     <Header />
 

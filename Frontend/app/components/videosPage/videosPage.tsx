@@ -6,6 +6,7 @@ import type { fetchVideo } from "~/types";
 import Item from "../itemSlider/item";
 import { getToken } from "~/functions";
 import { useI18n } from "~/i18n";
+import { useRouter } from "next/navigation";
 
 const SkeletonItem = () => (
     <div className="skeleton-item">
@@ -22,7 +23,9 @@ function VideosPage(){
     const { t } = useI18n();
     const {type} = useParams();
     const token = getToken();
+    const router = useRouter();
     const loadMoreRef = useRef<HTMLDivElement>(null);
+    const requiresAuth = type === '0' || type === '1' || type === '3' || type === '4';
 
     const {route, title} = useMemo<{route: string, title: string}>(() => {
         switch(type){
@@ -76,14 +79,21 @@ function VideosPage(){
             route: `${route}?page=${pageParam}`,
             options: {
                 method: "GET",
-                headers: {Authorization: `Bearer ${token}`}
+                headers: token ? {Authorization: `Bearer ${token}`} : {}
             }
         }),
         getNextPageParam: () => undefined,
         initialPageParam: 1,
         staleTime: 5 * 60 * 1000,
-        enabled: !!token && !!route
+        enabled: !!route && (!requiresAuth || !!token)
     });
+
+    useEffect(() => {
+        if (!route || !requiresAuth || token) return;
+
+        const redirectTarget = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+        router.replace(`/login?redirect=${encodeURIComponent(redirectTarget)}`);
+    }, [requiresAuth, route, router, token]);
 
     useEffect(() => {
         if(type === '1' && token) refetch();
@@ -102,7 +112,7 @@ function VideosPage(){
         return () => {if(el) observer.unobserve(el)}
     }, [isFetchingNextPage, fetchNextPage]);
 
-    if (!route) return null;
+    if (!route || (requiresAuth && !token)) return null;
 
     const skeletonArray = Array.from({ length: 12 }).map((_, index) => (
         <SkeletonItem key={`skeleton-${index}`} />

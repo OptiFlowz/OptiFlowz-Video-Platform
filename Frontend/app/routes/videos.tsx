@@ -2,6 +2,7 @@
 import Header from "~/components/header/header";
 import type { Route } from "./+types/videos";
 import VideosPage from "~/components/videosPage/videosPage";
+import { getToken } from "~/functions";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -11,10 +12,9 @@ export function meta({}: Route.MetaArgs) {
 }
 
 function Videos(){
-  const hasUser =
-    !!localStorage.getItem("user") || !!sessionStorage.getItem("user");
+  const isTrendingPage = window.location.pathname.endsWith("/videos/2");
 
-  if (!hasUser) {
+  if (!isTrendingPage && !getToken()) {
     window.location.href = `/login?redirect=${encodeURIComponent(
       window.location.pathname + window.location.search + window.location.hash
     )}`;

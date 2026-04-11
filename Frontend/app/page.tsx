@@ -5,7 +5,7 @@ import { FramedPage } from "./page-shell";
 
 export default function Page() {
   return (
-    <FramedPage guard="auth">
+    <FramedPage guard="public">
       <HomePage />
     </FramedPage>
   );

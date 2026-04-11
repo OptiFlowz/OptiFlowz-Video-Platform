@@ -32,6 +32,7 @@ function ItemSlider({props}: {props: ItemSliderT}){
     const [showLeftFade, setShowLeftFade] = useState(false);
     const [showRightFade, setShowRightFade] = useState(false);
     const {setCurrentNav} = useContext(CurrentNavContext);
+    const requiresAuth = props.type === 0 || props.type === 1 || props.type === 3 || props.type === 4 || props.type === 6;
 
     let route = null;
     const isPlaylist = props.type === 5 || props.type === 6;
@@ -91,7 +92,7 @@ function ItemSlider({props}: {props: ItemSliderT}){
             ? fetchFn<fetchFeaturedPlaylist>({ route, options: { method: "GET", headers: myHeaders.current } })
             : fetchFn<fetchVideo>({ route, options: { method: "GET", headers: myHeaders.current } });
         },
-        enabled: !!token && !!route,
+        enabled: !!route && (!requiresAuth || !!token),
         gcTime: 30 * 60 * 1000,
         refetchOnMount: false,
         refetchOnWindowFocus: false,
@@ -123,7 +124,7 @@ function ItemSlider({props}: {props: ItemSliderT}){
         };
     }, [data]);
 
-    if (!route) return null;
+    if (!route || (requiresAuth && !token)) return null;
 
     const empty = !data || (("videos" in data) && data.videos.length === 0) || (("playlists" in data) && data.playlists.length === 0);
     if (empty && data && props.type != 1) return null;
