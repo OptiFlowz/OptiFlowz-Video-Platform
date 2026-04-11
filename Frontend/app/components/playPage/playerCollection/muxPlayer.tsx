@@ -36,7 +36,7 @@ export default function VideoPlayer({
   videoTitle,
   apiBaseUrl = env.apiBaseUrl,
   autoplay = true,
-  accentColor = "#ec8b55",
+  accentColor = "var(--accentBlue2)",
   style = EMPTY_STYLE,
   currentTimee,
   view_id,
