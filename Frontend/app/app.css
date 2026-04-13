@@ -3833,7 +3833,7 @@ main.uploadMain .links a:hover {
   padding: 1rem;
   background: var(--background2);
   border-radius: 12px;
-  color: var(--accentBlue2);
+  color: var(--text1);
   font-size: 1rem;
   font-family: inherit;
   font-weight: 500;
@@ -3922,7 +3922,7 @@ main.uploadMain .links a:hover {
   width: 100%;
   padding: 1rem 2rem;
   background: var(--background2);
-  color: var(--accentBlue2);
+  color: var(--text1);
   border-radius: 999px;
   font-size: 1rem;
   font-weight: 600;
@@ -3957,7 +3957,7 @@ main.uploadMain .links a:hover {
 }
 
 .uploadBtn:disabled {
-  background: var(--accentBlue2);
+  background: var(--background2);
   color: #888;
   cursor: not-allowed;
 }
