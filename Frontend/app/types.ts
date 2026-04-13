@@ -72,6 +72,8 @@ export type VideoT = {
     title: string,
     updated_at: string,
     uploader_name: string,
+    uploader_id: string,
+    uploader_image: string,
     view_count: number,
     people: PersonT[],
     playlists: VideoPlaylistT[],

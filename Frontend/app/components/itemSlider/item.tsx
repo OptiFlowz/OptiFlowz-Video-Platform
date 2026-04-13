@@ -76,7 +76,7 @@ function  Item({props, playlistIndex, playlistId}: {props: VideoT, playlistIndex
 
             <ContentInfo props={{
                 title: props?.title,
-                author: props?.people?.map(person => person.name).join(", "),
+                author: props?.people?.map(person => person.name).join(", ") || props?.uploader_name,
                 views: props?.view_count,
                 date: props?.created_at
             }} />

@@ -204,6 +204,10 @@ function PlayPage(){
     });
 
     const videoData = data as VideoT;
+    const resolvedSimilarData = similarData as SimilarT | undefined;
+    const hasSimilarVideos = (resolvedSimilarData?.videos?.length ?? 0) > 0;
+    const hasRelevantPanelsOpen = showChapters || showComments || !!playlistId;
+    const isCompactRelevant = !isLoadingSimilar && !hasSimilarVideos && !hasRelevantPanelsOpen;
 
     return <>
         <main className={`play ${isTheater ? "theater pt-23!" : ""} px-0 py-7.5`}>
@@ -225,11 +229,11 @@ function PlayPage(){
                         {videoId && !isMobileCommentsDrawer && <CommentsSection videoId={videoId} />}
                     </div>
 
-                    <div className="relevant flex flex-col gap-7">
+                    <div className={`relevant flex flex-col gap-7 ${isCompactRelevant ? "relevant--compact" : ""}`}>
                         {showChapters && data ? <div ref={chaptersRef}><VideoChapters props={videoData} onClose={() => handleCloseChapters()} /></div> : ""}
                         {showComments && videoId ? <CommentsSection videoId={videoId} variant="drawer" onClose={() => handleCloseComments()} /> : ""}
                         {playlistId ? <div ref={playlistRef}><PlayingPlaylist playlistId={playlistId} videoId={videoId || ""} onClose={() => handleClose()} /></div> : ""}
-                        <Similar props={similarData as SimilarT} isLoading={isLoadingSimilar} />
+                        <Similar props={resolvedSimilarData} isLoading={isLoadingSimilar} />
                     </div>
                 </>
                 : <>
@@ -245,10 +249,10 @@ function PlayPage(){
                                 {videoId && <CommentsSection videoId={videoId} />}
                             </div>
 
-                            <div className="relevant flex flex-col gap-7 min-w-110">
+                            <div className={`relevant flex flex-col gap-7 ${isCompactRelevant ? "relevant--compact" : "min-w-110"}`}>
                                 {showChapters && data ? <div ref={chaptersRef}><VideoChapters props={videoData} onClose={() => handleCloseChapters()} /></div> : ""}
                                 {playlistId ? <div ref={playlistRef}><PlayingPlaylist playlistId={playlistId} videoId={videoId || ""} onClose={() => handleClose()} /></div> : ""}
-                                <Similar props={similarData as SimilarT} isLoading={isLoadingSimilar} />
+                                <Similar props={resolvedSimilarData} isLoading={isLoadingSimilar} />
                             </div> 
                         </div>
                     </div>

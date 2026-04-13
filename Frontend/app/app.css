@@ -1562,6 +1562,12 @@ main.play > div:nth-child(2) {
   flex-grow: 0;
 }
 
+main.play > div:nth-child(2).relevant--compact,
+main.play .relevant.relevant--compact {
+  min-width: 240px;
+  max-width: 18%;
+}
+
 main.play .player {
   background-color: black;
   border-radius: 1rem;
