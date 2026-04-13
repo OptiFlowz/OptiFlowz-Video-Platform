@@ -8,6 +8,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchFn } from "~/API";
 import { ConfirmDialog } from "../confirmPopup/confirmDialog";
 import { useConfirm } from "../confirmPopup/useConfirm";
+import { AddSVG } from "~/constants";
 
 type SortColumn = "visibility" | "date" | "views" | "likes";
 type SortDirection = "asc" | "desc";
@@ -279,12 +280,38 @@ function MyVideos() {
               <h1>My Videos</h1>
               <p>Review uploads, update visibility, and keep your channel organized.</p>
             </div>
-            <div className="filter">
-              {FilterSVG}
-              <input type="text" placeholder="Filter videos" />
+            <div className="libraryActions">
+              <div className="filter">
+                {FilterSVG}
+                <input type="text" placeholder="Filter videos" />
+              </div>
+              <button
+                type="button"
+                className="playlistAddBtn"
+                title="Upload video"
+                aria-label="Upload video"
+                onClick={() => {
+                  window.location.href = "/upload";
+                }}
+              >
+                {AddSVG}
+              </button>
             </div>
           </div>
-          <h2 className="mobileTitle">My Videos</h2>
+          <div className="mobileTitleRow">
+            <h2 className="mobileTitle">My Videos</h2>
+            <button
+              type="button"
+              className="playlistAddBtn mobile"
+              title="Upload video"
+              aria-label="Upload video"
+              onClick={() => {
+                window.location.href = "/upload";
+              }}
+            >
+              {AddSVG}
+            </button>
+          </div>
           <div className="libraryTableWrap">
           <table>
             <thead>

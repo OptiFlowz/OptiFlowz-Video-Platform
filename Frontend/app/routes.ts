@@ -20,6 +20,7 @@ export default [
     route("my-videos", "routes/myVideos.tsx"),
     route("analytics", "routes/analytics.tsx"),
     route("my-playlists", "routes/myPlaylists.tsx"),
+    route("speakers-chairs", "routes/speakersChairs.tsx"),
     route("uems-reading-list", "routes/uems.tsx"),
     route("google-callback", "routes/googleCallback.tsx")
 ] satisfies RouteConfig;

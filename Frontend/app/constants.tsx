@@ -314,6 +314,10 @@ export const AnalyticsSVG = <svg width="24" height="24" viewBox="0 0 24 24" fill
 <path d="M3 17L9 11L13 15L21 7M21 7V12M21 7H16" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
 </svg>;
 
+export const PeopleSVG = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M16.5 20V18.5C16.5 16.8431 15.1569 15.5 13.5 15.5H8.5C6.84315 15.5 5.5 16.8431 5.5 18.5V20M13.5 8.5C13.5 10.1569 12.1569 11.5 10.5 11.5C8.84315 11.5 7.5 10.1569 7.5 8.5C7.5 6.84315 8.84315 5.5 10.5 5.5C12.1569 5.5 13.5 6.84315 13.5 8.5ZM18.5 20V18.5C18.5 17.1193 17.6193 15.9442 16.3887 15.509M15.5 5.71924C16.6621 6.13245 17.5 7.24165 17.5 8.54688C17.5 9.8521 16.6621 10.9613 15.5 11.3745" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+</svg>;
+
 export const GoogleSVG = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g clipPath="url(#clip0_1689_2563)">
 <path d="M11.9998 9.81836V14.4656H18.4579C18.1743 15.9602 17.3233 17.2257 16.047 18.0766L19.9415 21.0984C22.2106 19.0039 23.5197 15.9276 23.5197 12.273C23.5197 11.4221 23.4433 10.6039 23.3015 9.81849L11.9998 9.81836Z" fill="#4285F4"/>
