@@ -596,13 +596,15 @@ if (template) {
               }
 
               media-volume-range {
-                transition: opacity .2s ease-in-out .1s, width .2s ease-in-out .1s;
+                transition: opacity .2s ease-in-out .1s;
 
-                width: 0;
+                width: calc(3.4 * var(--base));
                 height: calc(1.2 * var(--base));
                 padding: 0;
                 border-radius: calc(0.25 * var(--base));
                 overflow: hidden;
+                opacity: 0;
+                pointer-events: none;
 
                 --media-range-bar-color: var(--media-accent-color);
 
@@ -620,15 +622,40 @@ if (template) {
                 --media-range-thumb-border-radius: 100%;
               }
 
-              .player-button-group:has(media-mute-button:hover) media-volume-range,
-              .player-button-group:has(media-mute-button) media-volume-range:hover {
+              .media-volume-range-wrapper {
+                display: flex;
+                align-items: center;
+                width: 0;
+                overflow: hidden;
+                transition: width .2s ease-in-out .1s, padding-inline .2s ease-in-out .1s;
+                padding-inline: 0;
+              }
+
+              media-mute-button:hover + .media-volume-range-wrapper,
+              media-mute-button:focus + .media-volume-range-wrapper,
+              media-mute-button:focus-within + .media-volume-range-wrapper,
+              .media-volume-range-wrapper:hover,
+              .media-volume-range-wrapper:focus-within {
                 width: calc(3.4 * var(--base));
                 transition-delay: 0s;
                 padding-inline: calc(0.3 * var(--base));
               }
 
-              .player-button-group:has(media-mute-button:hover) media-time-display,
-              .player-button-group:has(media-mute-button):has(media-volume-range:hover) media-time-display {
+              media-mute-button:hover + .media-volume-range-wrapper media-volume-range,
+              media-mute-button:focus + .media-volume-range-wrapper media-volume-range,
+              media-mute-button:focus-within + .media-volume-range-wrapper media-volume-range,
+              .media-volume-range-wrapper:hover media-volume-range,
+              .media-volume-range-wrapper:focus-within media-volume-range {
+                opacity: 1;
+                pointer-events: auto;
+                transition-delay: 0s;
+              }
+
+              media-mute-button:hover ~ media-time-display,
+              media-mute-button:focus ~ media-time-display,
+              media-mute-button:focus-within ~ media-time-display,
+              .media-volume-range-wrapper:hover ~ media-time-display,
+              .media-volume-range-wrapper:focus-within ~ media-time-display {
                 margin-left: 0;
                 transition-delay: 0s;
               }
