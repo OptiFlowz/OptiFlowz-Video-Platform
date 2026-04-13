@@ -4989,12 +4989,12 @@ main.myVideos table td .videoInfo .duration {
   bottom: 5px;
   right: 5px;
   padding: 2px 6px;
-  background-color: var(--seeThroughtWhite);
+  background-color: var(--seethroughtBlack);
   -webkit-backdrop-filter: blur(3px);
   backdrop-filter: blur(3px);
   border: 1px solid var(--border2);
   color: var(--text1);
-  border-radius: 7px;
+  border-radius: var(--bR);
   pointer-events: none;
 }
 main.myVideos table td .videoInfo .videoActions{
@@ -5078,10 +5078,11 @@ main.myVideos td h5{
 }
 main.myVideos td .visibility{
   display: flex;
-  padding: 5px 10px;
+  padding: 0.45rem 0.85rem;
   align-items: center;
   width: fit-content;
   border-radius: 999px;
+  border: 1px solid var(--border1);
   cursor: pointer;
   transition: background-color .2s ease;
 }
@@ -5091,18 +5092,13 @@ main.myVideos td .visibility.public{
 main.myVideos td .visibility.public:hover{
   background-color: var(--background3);
 }
-main.myVideos td .visibility.private{
-  background-color: rgb(247, 203, 203);
-}
-main.myVideos td .visibility.private:hover{
-  background-color: rgb(233, 177, 177);
-}
 main.myVideos td .visibility svg{
   width: 18px;
   height: 18px;
 }
 main.myVideos td .visibility svg path{
   stroke-width: 1;
+  stroke: var(--text1);
 }
 main.myVideos table input{
   accent-color: var(--accentBlue1);
@@ -5209,6 +5205,9 @@ main.myVideos .libraryActions{
   gap: 0.75rem;
   width: min(100%, 420px);
 }
+main.myVideos .libraryActions svg path, main.myVideos .filter svg path{
+  stroke: var(--text1);
+}
 main.myVideos .filter{
   margin-top: 0;
   padding: 0.72rem 1rem !important;
@@ -5270,10 +5269,16 @@ main.myVideos .libraryTableWrap{
   border: 1px solid var(--border1);
   border-radius: 20px;
   background: var(--background1);
+  overflow: hidden;
 }
 main.myVideos table{
   border-collapse: separate;
   border-spacing: 0;
+}
+main.myVideos table thead tr{
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  overflow: hidden;
 }
 main.myVideos table th{
   background: transparent;
@@ -5283,10 +5288,7 @@ main.myVideos table th{
   text-transform: uppercase;
 }
 main.myVideos table th.sortable.active{
-  color: var(--accentBlue);
-}
-main.myVideos table th:hover{
-  background: rgba(246, 248, 252, 0.9);
+  color: var(--text1);
 }
 main.myVideos table th.notHoverable:hover{
   background: transparent;
@@ -5304,7 +5306,7 @@ main.myVideos tbody tr{
   transition: background-color .2s ease;
 }
 main.myVideos tbody tr:hover{
-  background-color: rgba(246, 248, 252, 0.66);
+  background-color: var(--background2);
 }
 main.myVideos tr:not(:last-child){
   border-bottom: 1px solid var(--border1);
@@ -5339,13 +5341,6 @@ main.myVideos table td .videoInfo img{
   border-radius: 12px;
   box-shadow: none;
 }
-main.myVideos table td .videoInfo .duration {
-  bottom: 0.55rem;
-  right: 0.55rem;
-  padding: 0.22rem 0.55rem;
-  border-radius: 999px;
-  background-color: rgba(255, 255, 255, 0.75);
-}
 main.myVideos td h3{
   font-size: 1.08rem;
   font-weight: 600;
@@ -5372,26 +5367,11 @@ main.myVideos table td .videoInfo .videoActions button:hover,
 main.myVideos table td .videoInfo .videoActions a:hover{
   background: var(--background3);
 }
-main.myVideos td .visibility{
-  gap: 0.35rem;
-  padding: 0.45rem 0.85rem;
-  border: 1px solid transparent;
-  font-weight: 600;
-  box-shadow: none;
-}
-main.myVideos td .visibility.public{
-  background: var(--background2);
-  border-color: rgba(20, 56, 121, 0.1);
-}
-main.myVideos td .visibility.public:hover{
-  background: var(--background3);
-}
 main.myVideos td .visibility.private{
-  background: rgb(247, 203, 203);
-  border-color: rgba(192, 83, 97, 0.14);
+  background: var(--accentRed);
 }
 main.myVideos td .visibility.private:hover{
-  background: rgb(233, 177, 177);
+  filter: brightness(0.9);
 }
 main.myVideos td > p{
   color: var(--accentBlue2);
