@@ -1570,7 +1570,7 @@ main.play .player {
 }
 main.play .player.theater{
   width: 100%;
-  object-fit: cover;
+  height: calc(100dvh - 150px);
   max-height: calc(100dvh - 150px);
 }
 
@@ -1579,12 +1579,42 @@ main.play .player.theater{
   max-height: calc(100dvh - 150px);
   outline: none;
 }
+
+mux-player {
+  --media-object-fit: contain;
+  --media-object-position: center center;
+}
+
+mux-player::part(video) {
+  object-fit: contain !important;
+  object-position: center center !important;
+  background: black;
+}
+
 main.play #playerCanvas {
   position: relative;
   width: 100%;
 }
 main.play .player.theater #playerCanvas{
+  width: 100%;
+  height: 100%;
   margin-inline: auto;
+}
+
+main.play .player.theater mux-player {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+main.play .player.theater mux-player::part(video) {
+  width: auto !important;
+  height: 100% !important;
+  max-width: 100%;
+  max-height: 100%;
+  margin-inline: auto;
+  display: block;
 }
 
 .player-skeleton {

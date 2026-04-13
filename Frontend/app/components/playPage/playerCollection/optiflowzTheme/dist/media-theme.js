@@ -21,6 +21,7 @@ if (template) {
         --_primary-color: var(--media-primary-color, white);
         --_secondary-color: var(--media-secondary-color, transparent);
         --_accent-color: var(--media-accent-color, white);
+        --media-object-fit: contain;
       }
 
       .displayNone{
@@ -30,6 +31,7 @@ if (template) {
       media-controller {
         position: relative;
         --base: 18px;
+        overflow: hidden;
 
         --media-control-hover-background: rgba(255, 255, 255, 0.1);
         --media-tooltip-background: rgb(0 0 0 / .5);
@@ -66,7 +68,7 @@ if (template) {
         height: 100%;
         max-width: 100%;
         max-height: 100%;
-        object-fit: contain;
+        object-fit: var(--media-object-fit, contain) !important;
       }
 
       @supports (-moz-appearance: none) {
@@ -1002,19 +1004,11 @@ if (template) {
 
 class MediaTheaterModeButton extends HTMLElement {
   connectedCallback(){
-    const isFirefox = /firefox/i.test(globalThis.navigator?.userAgent ?? "");
     const button = this.querySelector("button");
     const syncVisibility = () => {
       const isSmall = globalThis.matchMedia?.("(max-width: 1075px)")?.matches;
       this.classList.toggle("displayNone", !!isSmall);
     };
-
-    if (isFirefox) {
-      this.classList.add("displayNone");
-      button?.setAttribute("disabled", "true");
-      button?.setAttribute("aria-hidden", "true");
-      return;
-    }
 
     button?.addEventListener("click", () => {
       window.dispatchEvent(new CustomEvent('theater-mode', { bubbles: true, composed: true }));
