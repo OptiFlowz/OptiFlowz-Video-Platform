@@ -10,7 +10,8 @@ import { fileURLToPath } from 'url';
 
 
 function hashIp(ip) {
-  const salt = process.env.IP_HASH_SALT; // stavi neki random string u env
+  if (!ip) return null;
+  const salt = process.env.IP_HASH_SALT;
   return crypto.createHmac("sha256", salt).update(ip).digest("hex");
 }
 
@@ -230,6 +231,7 @@ export async function getVideoById(videoId, userId = null) {
             v.visibility,
             u.id as uploader_id,
             u.full_name as uploader_name,
+            u.image_url as uploader_image,
             ${userId ? 'wp.progress_seconds, wp.percentage_watched,' : ''}
             ${userId ? 'COALESCE(vr.reaction, 0) as user_reaction,' : ''}
             CASE WHEN v.mux_playback_id IS NOT NULL 
@@ -644,7 +646,7 @@ export async function incrementViewCount(videoId,{ userId = null, ip = null, use
   try {
     await client.query('BEGIN');
 
-    const hashedIp = hashIp(ip);
+    const hashedIp = hashIp(rawIp);
 
     let checkQuery, checkParams;
 
