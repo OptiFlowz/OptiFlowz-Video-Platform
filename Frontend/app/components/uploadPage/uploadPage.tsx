@@ -233,6 +233,9 @@ function UploadPage() {
 
   // Step 3 tracking
   const [isSavingDetails, setIsSavingDetails] = useState(false);
+  const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
+  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
+  const [isGeneratingTags, setIsGeneratingTags] = useState(false);
 
   const myHeaders = useRef(new Headers());
   const [token, setToken] = useState<string>("");
@@ -736,6 +739,52 @@ function UploadPage() {
     } catch (error) {
       console.error("Error generating chapters:", error);
       setProcessingPhase("complete");
+    }
+  };
+
+  const handleGenerateWithAI = async (
+    type: "title" | "description" | "tags"
+  ) => {
+    if (!videoId) return;
+
+    const setLoading =
+      type === "title"
+        ? setIsGeneratingTitle
+        : type === "description"
+          ? setIsGeneratingDescription
+          : setIsGeneratingTags;
+
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `${env.apiBaseUrl || ""}/api/video-moderation/details/autogenerate/${videoId}?type=${type}`,
+        {
+          method: "GET",
+          headers: myHeaders.current,
+        }
+      );
+
+      if (!response.ok) {
+        setProcessingError(
+          `Failed to generate ${type}. Make sure the video has English subtitles added.`
+        );
+        return;
+      }
+
+      const data = await response.json();
+
+      if (type === "title") {
+        setTitle(data.result as string);
+      } else if (type === "description") {
+        setDescription(data.result as string);
+      } else {
+        setTags(Array.from(new Set(data.result as string[])));
+      }
+    } catch (error) {
+      console.error(`Error generating ${type}:`, error);
+      setProcessingError(`Failed to generate ${type}. Please try again.`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1469,7 +1518,17 @@ function UploadPage() {
                   <div className="formGroup editSection">
                     <label htmlFor="videoTitle">
                       Title
-                      <button type="button">{AISVG}&nbsp;Generate with AI</button>
+                      <button
+                        type="button"
+                        onClick={() => handleGenerateWithAI("title")}
+                        disabled={isGeneratingTitle || !videoId}
+                      >
+                        {isGeneratingTitle ? (
+                          <><div className="uploadSpinner tiny" />&nbsp;Generating...</>
+                        ) : (
+                          <>{AISVG}&nbsp;Generate with AI</>
+                        )}
+                      </button>
                     </label>
                     <input
                       type="text"
@@ -1485,7 +1544,17 @@ function UploadPage() {
                   <div className="formGroup editSection">
                     <label htmlFor="videoDescription">
                       Description
-                      <button type="button">{AISVG}&nbsp;Generate with AI</button>
+                      <button
+                        type="button"
+                        onClick={() => handleGenerateWithAI("description")}
+                        disabled={isGeneratingDescription || !videoId}
+                      >
+                        {isGeneratingDescription ? (
+                          <><div className="uploadSpinner tiny" />&nbsp;Generating...</>
+                        ) : (
+                          <>{AISVG}&nbsp;Generate with AI</>
+                        )}
+                      </button>
                     </label>
                     <textarea
                       id="videoDescription"
@@ -1501,7 +1570,17 @@ function UploadPage() {
                   <div className="formGroup editSection">
                     <label htmlFor="videoTags">
                       Tags
-                      <button type="button">{AISVG}&nbsp;Generate with AI</button>
+                      <button
+                        type="button"
+                        onClick={() => handleGenerateWithAI("tags")}
+                        disabled={isGeneratingTags || !videoId}
+                      >
+                        {isGeneratingTags ? (
+                          <><div className="uploadSpinner tiny" />&nbsp;Generating...</>
+                        ) : (
+                          <>{AISVG}&nbsp;Generate with AI</>
+                        )}
+                      </button>
                     </label>
                     <div className="tagsContainer">
                       {tags.map((tag) => (
