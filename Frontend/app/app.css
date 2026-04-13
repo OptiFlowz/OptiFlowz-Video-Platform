@@ -4922,8 +4922,8 @@ main.myVideos{
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
-  backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   text-align: center;
 }
 .videoAsideEyebrow{
@@ -4970,8 +4970,8 @@ main.myVideos{
   flex-direction: column;
   gap: 0.5rem;
   z-index: 2;
-  backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.22);
 }
 .videoAside nav a{

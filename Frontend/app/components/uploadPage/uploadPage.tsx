@@ -17,6 +17,7 @@ import { getToken } from "~/functions";
 import { EUROPEAN_LANGUAGES } from "~/constants";
 import { loadMediaTheme } from "../playPage/playerCollection/loadMediaTheme";
 import Sidebar from "../myVideosPage/sidebar/sidebar";
+import { useConstrainedSticky } from "../shared/useConstrainedSticky";
 
 interface Contributor {
   id: string;
@@ -230,6 +231,9 @@ function UploadPage() {
   const [isSavingContributors, setIsSavingContributors] = useState(false);
   const [isSavingChapters, setIsSavingChapters] = useState(false);
   const captionPollingRef = useRef<NodeJS.Timeout | null>(null);
+  const previewAsideRef = useRef<HTMLElement | null>(null);
+  const previewStickyRef = useRef<HTMLDivElement | null>(null);
+  const previewBoundaryRef = useRef<HTMLElement | null>(null);
 
   // Step 3 tracking
   const [isSavingDetails, setIsSavingDetails] = useState(false);
@@ -240,6 +244,14 @@ function UploadPage() {
   const myHeaders = useRef(new Headers());
   const [token, setToken] = useState<string>("");
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  const previewStickyStyle = useConstrainedSticky({
+    containerRef: previewAsideRef,
+    stickyRef: previewStickyRef,
+    boundaryRef: previewBoundaryRef,
+    disabledBelow: 1420,
+    topOffset: 89,
+    bottomGap: 24,
+  });
 
   // Store speakers/chairs at upload time to save after chapters generate
   const pendingSpeakersRef = useRef<Contributor[]>([]);
@@ -1233,8 +1245,10 @@ function UploadPage() {
           {/* Step 2: Captions & Chapters */}
           {currentStep === 2 && (
             <div className="stepContentWithPreview">
-              <aside className="stepContentSidebar">
-                <VideoPreview isVideoLoading={isVideoLoading} videoData={videoData} title={title} />
+              <aside ref={previewAsideRef} className="stepContentSidebar">
+                <div ref={previewStickyRef} style={previewStickyStyle}>
+                  <VideoPreview isVideoLoading={isVideoLoading} videoData={videoData} title={title} />
+                </div>
               </aside>
               <div className="stepContentMain">
                 <div className="videoDetailsForm">
@@ -1510,8 +1524,10 @@ function UploadPage() {
           {/* Step 3: Video Details */}
           {currentStep === 3 && (
             <div className="stepContentWithPreview">
-              <aside className="stepContentSidebar">
-                <VideoPreview isVideoLoading={isVideoLoading} videoData={videoData} title={title} />
+              <aside ref={previewAsideRef} className="stepContentSidebar">
+                <div ref={previewStickyRef} style={previewStickyStyle}>
+                  <VideoPreview isVideoLoading={isVideoLoading} videoData={videoData} title={title} />
+                </div>
               </aside>
               <div className="stepContentMain">
                 <div className="videoDetailsForm">
@@ -1633,7 +1649,7 @@ function UploadPage() {
           )}
 
           {/* Navigation Buttons */}
-          <section className="bottomBtns">
+          <section ref={previewBoundaryRef} className="bottomBtns">
             {currentStep === 1 ? (
               <button
                 type="button"
