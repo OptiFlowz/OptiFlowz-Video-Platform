@@ -625,6 +625,7 @@ async function getCountryAndCityFromIp(ip) {
 
     return {
       // Ako hoćeš puno ime države umesto koda, stavi geo?.country?.names?.en
+      country_iso: geo?.country?.iso_code || null,
       country: geo?.country?.names?.en|| null,
       city: geo?.city?.names?.en || null,
     };
@@ -639,7 +640,7 @@ export async function incrementViewCount(videoId,{ userId = null, ip = null, use
   const rawIp = normalizeIp(ip);
 
   // Lookup radi nad sirovim IP-jem, pre hashovanja
-  const { country, city } = await getCountryAndCityFromIp(rawIp);
+  const { country, city, country_iso } = await getCountryAndCityFromIp(rawIp);
 
   const client = await writePool.connect();
 
@@ -698,13 +699,14 @@ export async function incrementViewCount(videoId,{ userId = null, ip = null, use
           user_id,
           ip_address,
           user_agent,
-          country,
-          city
+          country,        
+          city,
+          country_iso
         )
-        VALUES ($1, $2, $3, $4, $5, $6)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING id, COALESCE(last_seq,0) AS last_seq
       `;
-      insertParams = [videoId, userId, hashedIp, userAgent, country, city];
+      insertParams = [videoId, userId, hashedIp, userAgent, country, city, country_iso];
     } else {
       insertQuery = `
         INSERT INTO video_views (
@@ -712,12 +714,13 @@ export async function incrementViewCount(videoId,{ userId = null, ip = null, use
           ip_address,
           user_agent,
           country,
-          city
+          city,
+          country_iso
         )
-        VALUES ($1, $2, $3, $4, $5)
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING id, COALESCE(last_seq,0) AS last_seq
       `;
-      insertParams = [videoId, hashedIp, userAgent, country, city];
+      insertParams = [videoId, hashedIp, userAgent, country, city, country_iso];
     }
 
     const inserted = await client.query(insertQuery, insertParams);
