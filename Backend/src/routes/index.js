@@ -6,6 +6,7 @@ import reportRoutes from '../modules/reports/report.routes.js';
 import videoModerationRoutes from '../modules/videos/video-moderation.routes.js';
 import videoRoutes from '../modules/videos/video.routes.js';
 import commentRoutes from '../modules/comments/comments.routes.js';
+import channelRoutes from '../modules/channels/channel.routes.js';
 
 export function registerRoutes(app) {
   app.get('/health', (_req, res) => res.json({ ok: true }));
@@ -17,5 +18,6 @@ export function registerRoutes(app) {
   app.use('/api/playlists-moderation', playlistModerationRoutes);
   app.use('/api/auth', authRoutes);
   app.use('/api/reports', reportRoutes);
-  app.use('/api/comments',commentRoutes)
+  app.use('/api/comments',commentRoutes);
+  app.use('/api/channels',channelRoutes);
 }
