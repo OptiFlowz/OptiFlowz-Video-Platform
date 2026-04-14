@@ -6,10 +6,8 @@ import { sendSuccess, sendError } from '../../common/response.js';
 export async function getChannelDetailsById(req, res) {
   try {
     const channel = await getChannelDetailsByIdInternal(req.params);
-
     if (!channel) 
-      return sendError(res, 'Channel not found', 404);
-    
+      return sendError(res, 'Channel not found', 404);   
     return sendSuccess(res, { channel });
   } catch (error) {
     console.error('Error fetching channel by id:', error);
