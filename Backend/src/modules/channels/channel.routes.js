@@ -1,11 +1,11 @@
 import express from 'express';
 import { optionalAuth } from '../../middleware/auth.js';
-import getChannelDetailsById from './operations/getChannelDetailsById.js'
-import getChannelVideos from './operations/getChannelVideos.js';
+import * as channelController from './channel.controller.js';
 
 const router = express.Router();
 
-router.get('/:id/videos', optionalAuth, getChannelVideos);
-router.get('/:id', optionalAuth, getChannelDetailsById);
+router.get('/:id/videos', optionalAuth, channelController.getChannelVideos);
+router.get('/:id', optionalAuth, channelController.getChannelDetailsById);
+
 
 export default router;
