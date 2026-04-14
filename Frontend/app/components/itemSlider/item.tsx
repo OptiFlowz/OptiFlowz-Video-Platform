@@ -12,7 +12,7 @@ function  Item({props, playlistIndex, playlistId}: {props: VideoT, playlistIndex
         ?.replace(/\.jpg(?=([?#]|$))/i, ".webp")
         ?.replace(/width=\d+/i, `width=${isBigWindow ? 700 : 500}`)
         ?.replace(/height=\d+/i, `height=${isBigWindow ? 525 : 375}`);
-    const animGifUrl = `https://image.mux.com/` + props?.thumbnail_url?.split('mux.com/')[1]?.split('/')[0] + `/animated.webp?width=640&fps=10&start=` + (props.progress_seconds ? props.progress_seconds : 220);
+    const animGifUrl = `https://image.mux.com/` + props?.thumbnail_url?.split('mux.com/')[1]?.split('/')[0] + `/animated.webp?width=640&fps=10&start=` + (props.progress_seconds ? props.progress_seconds : props.duration_seconds/2);
     const isWatched = (props?.percentage_watched ?? 0) >= 5 && !!props?.progress_seconds;
 
     const [isHovered, setIsHovered] = useState(false);
@@ -78,7 +78,8 @@ function  Item({props, playlistIndex, playlistId}: {props: VideoT, playlistIndex
                 title: props?.title,
                 author: props?.people?.map(person => person.name).join(", ") || props?.uploader_name,
                 views: props?.view_count,
-                date: props?.created_at
+                date: props?.created_at,
+                uploader_name: props?.uploader_name,
             }} />
         </Link>
     );

@@ -8,6 +8,7 @@ export type VPreviewProps = {
     views: string,
     date: string,
     duration: string,
+    uploader_name: string,
     duration_seconds: number
 }
 

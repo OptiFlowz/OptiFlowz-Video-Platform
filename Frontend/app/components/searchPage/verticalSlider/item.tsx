@@ -12,7 +12,7 @@ function Item({props}: {props: VPreviewProps}){
         ?.replace(/\.jpg(?=([?#]|$))/i, ".webp")
         .replace(/width=\d+/i, `width=${550}`)
         .replace(/height=\d+/i, `height=${350}`);
-    let animGifUrl = `https://image.mux.com/` + props?.thumbnail.split('mux.com/')[1].split('/')[0] + "/animated.webp?width=350&fps=10&start=" + (props?.progress_seconds ? props.progress_seconds : 0);
+    let animGifUrl = `https://image.mux.com/` + props?.thumbnail.split('mux.com/')[1].split('/')[0] + "/animated.webp?width=350&fps=10&start=" + (props?.progress_seconds ? props.progress_seconds : props.duration_seconds/2);
     const isWatched = (props?.percentage_watched < 5 || props?.percentage_watched > 95) ? false : props?.progress_seconds;
 
     const [isHovered, setIsHovered] = useState(false);

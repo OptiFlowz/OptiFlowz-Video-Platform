@@ -6,7 +6,8 @@ type Props = {
     title: string,
     author: string,
     views: number,
-    date: string
+    date: string,
+    uploader_name: string
 }
 
 function ContentInfo({props}: {props: Props}){
@@ -14,7 +15,7 @@ function ContentInfo({props}: {props: Props}){
     return (
         <div className="info">
             <h2 title={props?.title}>{props?.title}</h2>
-            <p className="author">{props?.author || t("unknownSpeakers")}</p>
+            <p className="author">{props?.author || props?.uploader_name || t("unknownSpeakers")}</p>
 
             <span className="flex gap-1.5">
                 <p className="views">{formatViews(props?.views)}</p>

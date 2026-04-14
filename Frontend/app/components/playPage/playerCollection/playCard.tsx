@@ -10,7 +10,7 @@ function PlayCard({props, playedVideoId, playlistId, nextVideo} : {props: Simila
         ?.replace(/\.jpg(?=([?#]|$))/i, ".webp")
         .replace(/width=\d+/i, `width=${450}`)
         .replace(/height=\d+/i, `height=${250}`);
-    let animGifUrl = `https://image.mux.com/` + props?.thumbnail_url.split('mux.com/')[1].split('/')[0] + "/animated.webp?width=300&fps=10&start=" + (props?.progress_seconds ? props.progress_seconds : 220);
+    let animGifUrl = `https://image.mux.com/` + props?.thumbnail_url.split('mux.com/')[1].split('/')[0] + "/animated.webp?width=300&fps=10&start=" + (props?.progress_seconds ? props.progress_seconds : props.duration_seconds/2);
     const isWatched = props?.percentage_watched < 5 ? false : props?.progress_seconds;
 
     const [isHovered, setIsHovered] = useState(false);
@@ -40,7 +40,7 @@ function PlayCard({props, playedVideoId, playlistId, nextVideo} : {props: Simila
             <span className="info flex flex-col gap-1">
                 <h2 title={props?.title}>{props?.title}</h2>
 
-                <p className="author weakText">{props?.people.map(person => person.name).join(", ") || "Unknown author"}</p>
+                <p className="author weakText">{props?.people.map(person => person.name).join(", ") || props?.uploader_name || "Unknown author"}</p>
             
                 <span className="flex items-center">
                     <p><b>{formatViews(props?.view_count)}</b></p>&nbsp;·&nbsp;<p className="weakText">{formatDate(props?.created_at)}</p>
