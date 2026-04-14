@@ -1,4 +1,5 @@
 import { writePool } from '../../../database/index.js';
+import { sendSuccess, sendError } from '../../../common/response.js';
 import { z } from 'zod';
 
 function prerequisites(object) {
@@ -124,24 +125,10 @@ export async function getChannelVideosInternal(object, userId = null) {
 
 export default async function getChannelVideos(req, res) {
   try {
-    const result = await getChannelVideosInternal(
-      {
-        ...req.params,
-        ...req.query,
-      },
-      req.user?.id || null
-    );
-
-    return res.status(200).json({
-      success: true,
-      ...result,
-    });
+    const result = await getChannelVideosInternal({...req.params, ...req.query,},req.user?.id || null);
+    return sendSuccess(res,  result );
   } catch (error) {
     console.error('Error fetching channel videos:', error);
-
-    return res.status(error.status || 500).json({
-      success: false,
-      message: error.message || 'Internal server error',
-    });
+    return sendError(res);
   }
 }

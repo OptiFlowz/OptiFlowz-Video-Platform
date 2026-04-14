@@ -1,4 +1,5 @@
 import { writePool } from '../../../database/index.js';
+import { sendSuccess, sendError } from '../../../common/response.js';
 import { z } from 'zod';
 
 function prerequisites(object) {
@@ -37,23 +38,12 @@ export default async function getChannelDetailsById(req, res) {
   try {
     const channel = await getChannelDetailsByIdInternal(req.params);
 
-    if (!channel) {
-      return res.status(404).json({
-        success: false,
-        message: 'Channel not found',
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      channel,
-    });
+    if (!channel) 
+      return sendError(res, 'Channel not found', 404);
+    
+    return sendSuccess(res, { channel });
   } catch (error) {
     console.error('Error fetching channel by id:', error);
-
-    return res.status(error.status || 500).json({
-      success: false,
-      message: error.message || 'Internal server error',
-    });
+    return sendError(res);
   }
 }
