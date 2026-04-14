@@ -26,7 +26,7 @@ router.post('/upload/initiate', requireAuth, requireAdmin, handleInitiateUpload)
 router.post('/heartbeat', requireAuth, handleHeartbeat);
 router.post('/generate-chapters', requireAuth, requireAdmin, handleGenerateChapters);
 router.post('/webhook/mux', handleMuxWebhook);
-router.get('/search', requireAuth, handleSearchVideos);
+router.get('/search', optionalAuth, handleSearchVideos);
 router.get('/trending', optionalAuth, handleGetTrending);
 router.get('/categories', requireAuth, handleGetCategories);
 router.get('/user/history', requireAuth, handleGetUserHistory);
@@ -36,8 +36,8 @@ router.get('/user/recommended', requireAuth, handleGetRecommended);
 router.post('/:id/progress', requireAuth, handleUpdateProgress);
 router.post('/:id/like', requireAuth, handleLikeVideo);
 router.post('/:id/dislike', requireAuth, handleDislikeVideo);
-router.get('/:id/similar', requireAuth, handleGetSimilarVideos);
-router.get('/:id/comments', requireAuth, handleGetComments);
-router.get('/:id', requireAuth, handleGetVideoById);
+router.get('/:id/similar', optionalAuth, handleGetSimilarVideos);
+router.get('/:id/comments', optionalAuth, handleGetComments);
+router.get('/:id', optionalAuth, handleGetVideoById);
 
 export default router;
