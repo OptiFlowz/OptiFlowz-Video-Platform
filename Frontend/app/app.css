@@ -754,6 +754,7 @@ header .accountImg{
 }
 
 .adminAvatarDropdown a {
+  display: block;
   padding: 0.8rem 0.95rem;
   border-radius: 12px;
   color: var(--text1);
@@ -761,7 +762,19 @@ header .accountImg{
   text-decoration: none;
 }
 
-.adminAvatarDropdown a:hover {
+.adminAvatarDropdown button {
+  width: 100%;
+  text-align: left;
+  padding: 0.8rem 0.95rem;
+  border-radius: 12px;
+  color: var(--text1);
+  font-weight: 600;
+  background: transparent;
+  cursor: pointer;
+}
+
+.adminAvatarDropdown a:hover,
+.adminAvatarDropdown button:hover {
   background: rgba(255, 255, 255, 0.08);
 }
 

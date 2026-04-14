@@ -8,7 +8,7 @@ import {
 } from "react";
 import { useQuery } from "@tanstack/react-query";
 import MuxPlayer from "@mux/mux-player-react";
-import { AISVG } from "~/constants";
+import { AISVG, UploadSVG } from "~/constants";
 import { env } from "~/env";
 import ContributorSearch from "~/components/uploadPage/contributorSearch";
 import { fetchFn } from "~/API";
@@ -191,6 +191,15 @@ function EditVideoPage() {
   const [oldVisibility, setOldVisibility] = useState<"public" | "private">(
     "public"
   );
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+  const [pendingThumbnailFile, setPendingThumbnailFile] = useState<File | null>(
+    null
+  );
+  const [pendingThumbnailUrl, setPendingThumbnailUrl] = useState<string | null>(
+    null
+  );
+  const [thumbnailMarkedForRemoval, setThumbnailMarkedForRemoval] =
+    useState(false);
 
   // Caption status tracking
   const [captionStatus, setCaptionStatus] = useState<CaptionStatus>("loading");
@@ -206,6 +215,8 @@ function EditVideoPage() {
   const [isSavingContributors, setIsSavingContributors] = useState(false);
   const [isSavingChapters, setIsSavingChapters] = useState(false);
   const [isSavingDetails, setIsSavingDetails] = useState(false);
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
+  const [isRemovingThumbnail, setIsRemovingThumbnail] = useState(false);
   const [isGeneratingChapters, setIsGeneratingChapters] = useState(false);
 
   // ─── AI generation loading states ────────────────────────────────────────
@@ -219,6 +230,7 @@ function EditVideoPage() {
   const previewAsideRef = useRef<HTMLElement | null>(null);
   const previewStickyRef = useRef<HTMLDivElement | null>(null);
   const previewBoundaryRef = useRef<HTMLElement | null>(null);
+  const thumbnailInputRef = useRef<HTMLInputElement | null>(null);
 
   const myHeaders = useRef(new Headers());
   const [token, setToken] = useState<string>("");
@@ -272,6 +284,7 @@ function EditVideoPage() {
       setOldTags(videoData.tags || []);
       setVisibility(videoData.visibility || "private");
       setOldVisibility(videoData.visibility || "private");
+      setThumbnailUrl(videoData.thumbnail_url || null);
 
       console.log(videoData);
 
@@ -304,6 +317,14 @@ function EditVideoPage() {
     }
   }, [videoData]);
 
+  useEffect(() => {
+    return () => {
+      if (pendingThumbnailUrl) {
+        URL.revokeObjectURL(pendingThumbnailUrl);
+      }
+    };
+  }, [pendingThumbnailUrl]);
+
   // Check if details have been modified
   useEffect(() => {
     const titleChanged = title !== oldTitle;
@@ -321,6 +342,143 @@ function EditVideoPage() {
     visibility,
     oldVisibility,
   ]);
+
+  const displayedThumbnailUrl = thumbnailMarkedForRemoval
+    ? null
+    : pendingThumbnailUrl || thumbnailUrl;
+  const thumbnailModified = thumbnailMarkedForRemoval || !!pendingThumbnailFile;
+
+  const uploadThumbnail = async (file: File) => {
+    if (!videoId) return;
+
+    setIsUploadingThumbnail(true);
+    setError(null);
+
+    try {
+      const headers = new Headers();
+      headers.append("Authorization", `Bearer ${getToken()}`);
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetchFn<{
+        success: boolean;
+        video?: { thumbnail_url?: string | null };
+      }>({
+        route: `api/video-moderation/${videoId}/thumbnail`,
+        options: {
+          method: "POST",
+          headers,
+          body: formData,
+        },
+      });
+
+      if (!response?.success) {
+        setError("Failed to upload video thumbnail.");
+        return;
+      }
+
+      const nextThumbnailUrl = response.video?.thumbnail_url || null;
+      setThumbnailUrl(nextThumbnailUrl);
+      setPendingThumbnailFile(null);
+      setPendingThumbnailUrl(null);
+      setThumbnailMarkedForRemoval(false);
+    } catch (err) {
+      console.error("Error uploading video thumbnail:", err);
+      setError("Failed to upload video thumbnail.");
+    } finally {
+      setIsUploadingThumbnail(false);
+      if (thumbnailInputRef.current) {
+        thumbnailInputRef.current.value = "";
+      }
+    }
+  };
+
+  const resetThumbnailSelection = () => {
+    setPendingThumbnailFile(null);
+    setPendingThumbnailUrl(null);
+    setThumbnailMarkedForRemoval(false);
+    if (thumbnailInputRef.current) {
+      thumbnailInputRef.current.value = "";
+    }
+  };
+
+  const handleThumbnailFileSelect = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setPendingThumbnailFile(file);
+    setPendingThumbnailUrl((previousUrl) => {
+      if (previousUrl) {
+        URL.revokeObjectURL(previousUrl);
+      }
+      return URL.createObjectURL(file);
+    });
+    setThumbnailMarkedForRemoval(false);
+  };
+
+  const handleSaveThumbnail = async () => {
+    if (!videoId) return;
+
+    if (thumbnailMarkedForRemoval) {
+      setIsRemovingThumbnail(true);
+      setError(null);
+
+      try {
+        const headers = new Headers();
+        headers.append("Authorization", `Bearer ${getToken()}`);
+        headers.append("Content-Type", "application/json");
+
+        const response = await fetchFn<{ success: boolean }>({
+          route: `api/video-moderation/${videoId}/thumbnail`,
+          options: {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              file: null,
+            }),
+          },
+        });
+
+        if (!response?.success) {
+          setError("Failed to remove video thumbnail.");
+          return;
+        }
+
+        setThumbnailUrl(null);
+        resetThumbnailSelection();
+      } catch (err) {
+        console.error("Error removing video thumbnail:", err);
+        setError("Failed to remove video thumbnail.");
+      } finally {
+        setIsRemovingThumbnail(false);
+      }
+
+      return;
+    }
+
+    if (!pendingThumbnailFile) return;
+
+    await uploadThumbnail(pendingThumbnailFile);
+  };
+
+  const handleRemoveThumbnail = () => {
+    if (!thumbnailUrl && !pendingThumbnailFile) return;
+
+    if (pendingThumbnailFile) {
+      resetThumbnailSelection();
+      return;
+    }
+
+    setPendingThumbnailFile(null);
+    setPendingThumbnailUrl(null);
+    setThumbnailMarkedForRemoval(true);
+    if (thumbnailInputRef.current) {
+      thumbnailInputRef.current.value = "";
+    }
+  };
 
   // Check if chapters have been modified
   useEffect(() => {
@@ -858,6 +1016,109 @@ function EditVideoPage() {
             <div className="stepContentMain">
               <div className="videoDetailsForm">
                 {/* Video Details Section */}
+                <section className="editSection">
+                  <h2 className="editSectionTitle">Thumbnail</h2>
+
+                  <div
+                    className={`uploadZone ${pendingThumbnailFile ? "hasFile" : ""}`}
+                    onClick={() =>
+                      !pendingThumbnailFile && thumbnailInputRef.current?.click()
+                    }
+                  >
+                    <input
+                      type="file"
+                      ref={thumbnailInputRef}
+                      accept="image/*"
+                      onChange={handleThumbnailFileSelect}
+                      hidden
+                    />
+                    {pendingThumbnailFile ? (
+                      <div className="fileInfo">
+                        {UploadSVG}
+                        <p className="fileName">{pendingThumbnailFile.name}</p>
+                        <p className="fileSize">
+                          {(pendingThumbnailFile.size / (1024 * 1024)).toFixed(2)} MB
+                        </p>
+                        <button
+                          type="button"
+                          className="removeFileBtn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveThumbnail();
+                          }}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="uploadPrompt">
+                        {UploadSVG}
+                        <p>Select thumbnail image</p>
+                        <span>PNG, JPG, WEBP and similar image formats</span>
+                        <button type="button" className="selectFileBtn">
+                          Select file
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="captionsActions">
+                    <div className="captionsButtonGroup">
+                      <button
+                        type="button"
+                        onClick={handleSaveThumbnail}
+                        disabled={
+                          !thumbnailModified ||
+                          isUploadingThumbnail ||
+                          isRemovingThumbnail
+                        }
+                        className="saveCaptionsBtn"
+                      >
+                        {isUploadingThumbnail || isRemovingThumbnail ? (
+                          <>
+                            <div className="uploadSpinner tiny" />
+                            {thumbnailMarkedForRemoval ? "Saving..." : "Uploading..."}
+                          </>
+                        ) : (
+                          "Save Thumbnail"
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleRemoveThumbnail}
+                        disabled={
+                          (!thumbnailUrl && !pendingThumbnailFile) ||
+                          isUploadingThumbnail ||
+                          isRemovingThumbnail
+                        }
+                        className="deleteCaptionsBtn"
+                      >
+                        {pendingThumbnailFile ? "Clear Selection" : "Remove Thumbnail"}
+                      </button>
+                      {thumbnailModified && (
+                        <button
+                          type="button"
+                          onClick={resetThumbnailSelection}
+                          className="cancelBtn thumbnailCancelBtn"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                    <p className="formHint thumbnailHint">
+                      {thumbnailModified ? (
+                        <span className="unsavedIndicator">
+                          • Unsaved thumbnail changes
+                        </span>
+                      ) : displayedThumbnailUrl ? (
+                        "Current thumbnail is set. Select a new image, then save it explicitly."
+                      ) : (
+                        "No thumbnail selected yet."
+                      )}
+                    </p>
+                  </div>
+                </section>
+
                 <section className="editSection">
                   <h2 className="editSectionTitle">Video Details</h2>
 

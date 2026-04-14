@@ -3,7 +3,7 @@ import { Link, NavLink, useNavigate, useParams } from "react-router";
 import { SearchSVG, SearchSVGWhite, CloseSVG, MenuSVG, EditModeSVG } from "~/constants";
 import DefaultProfile from "../../../assets/DefaultProfile.webp";
 import OptiFlowzLogo from "../../../assets/OptiFlowzLogo.webp";
-import { getToken, isUserAdmin } from "~/functions";
+import { getToken } from "~/functions";
 import type { AuthFetchT } from "~/types";
 import { useI18n } from "~/i18n";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -14,7 +14,7 @@ function Header(){
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
     const [searchFocusArmed, setSearchFocusArmed] = useState(false);
-    const [adminMenuOpen, setAdminMenuOpen] = useState(false);
+    const [accountMenuOpen, setAccountMenuOpen] = useState(false);
     const navigate = useNavigate();
     const {searchValue} = useParams();
     const { videoId } = useParams();
@@ -24,7 +24,7 @@ function Header(){
 
     const searchRef1 = useRef<HTMLInputElement>(null);
     const searchRef2 = useRef<HTMLInputElement>(null);
-    const adminMenuRef = useRef<HTMLDivElement>(null);
+    const accountMenuRef = useRef<HTMLDivElement>(null);
 
     const token = getToken();
     const myHeaders = useRef(new Headers());
@@ -92,17 +92,17 @@ function Header(){
     }, [searchOpen]);
 
     useEffect(() => {
-        if (!adminMenuOpen) return;
+        if (!accountMenuOpen) return;
 
         const handleClickOutside = (event: MouseEvent) => {
-            if (!adminMenuRef.current?.contains(event.target as Node)) {
-                setAdminMenuOpen(false);
+            if (!accountMenuRef.current?.contains(event.target as Node)) {
+                setAccountMenuOpen(false);
             }
         };
 
         const handleEscape = (event: KeyboardEvent) => {
             if (event.key === "Escape") {
-                setAdminMenuOpen(false);
+                setAccountMenuOpen(false);
             }
         };
 
@@ -113,7 +113,7 @@ function Header(){
             document.removeEventListener("mousedown", handleClickOutside);
             document.removeEventListener("keydown", handleEscape);
         };
-    }, [adminMenuOpen]);
+    }, [accountMenuOpen]);
 
     const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if(e.key !== "Enter") return;
@@ -137,6 +137,17 @@ function Header(){
 
     const closeMobileMenu = () => {
         setMobileMenuOpen(false);
+    }
+
+    const hasAuthenticatedUser = !!headerUserData?.user && !!token;
+
+    const handleLogout = () => {
+        localStorage.removeItem("user");
+        sessionStorage.removeItem("user");
+        setAccountMenuOpen(false);
+        setMobileMenuOpen(false);
+        queryClient.removeQueries({ queryKey: ["accountInfo"] });
+        navigate("/login");
     }
 
     return <>
@@ -187,16 +198,35 @@ function Header(){
                     </button>
 
                     {/* Account Icon */}
-                    {isAdmin ? (
-                        <div ref={adminMenuRef} className="adminAvatarMenuWrap darkSVG max-[380px]:hidden">
+                    <Link 
+                        className={`darkSVG hidden max-[500px]:flex items-center p-1 rounded-full transition-all duration-200 cursor-pointer`} 
+                        to={hasAuthenticatedUser ? "/account" : "/login"}
+                    >
+                        <img 
+                            className="accountImg rounded-full w-9 h-9 aspect-square object-cover"
+                            src={headerUserData?.user?.image_url || DefaultProfile}
+                            alt="Profile Photo"
+                            onError={e => {
+                                e.currentTarget.src = DefaultProfile;
+                            }}
+                        />
+                    </Link>
+
+                    {hasAuthenticatedUser ? (
+                        <div ref={accountMenuRef} className="adminAvatarMenuWrap darkSVG max-[500px]:hidden">
                             <button
                                 type="button"
-                                className="adminAvatarTrigger flex items-center bg-(--accentOrange) p-1 rounded-full transition-all duration-200 cursor-pointer"
-                                onClick={() => setAdminMenuOpen((prev) => !prev)}
+                                className={`adminAvatarTrigger flex items-center ${isAdmin ? "bg-(--accentOrange) p-1" : "p-1 pl-3 max-[1075px]:pl-1"} rounded-full transition-all duration-200 cursor-pointer`}
+                                onClick={() => setAccountMenuOpen((prev) => !prev)}
                                 aria-haspopup="menu"
-                                aria-expanded={adminMenuOpen}
-                                aria-label="Open admin menu"
+                                aria-expanded={accountMenuOpen}
+                                aria-label="Open account menu"
                             >
+                                {!isAdmin ? (
+                                    <p className="mr-2.5 font-medium max-[1075px]:hidden">
+                                        <span>👋&nbsp;{t("helloUser", {firstName: headerUserData.user.full_name.split(" ")[0]})}</span>
+                                    </p>
+                                ) : null}
                                 <img 
                                     className="accountImg rounded-full w-9 h-9 aspect-square object-cover"
                                     src={headerUserData?.user?.image_url || DefaultProfile}
@@ -207,45 +237,53 @@ function Header(){
                                 />
                             </button>
 
-                            {adminMenuOpen ? (
+                            {accountMenuOpen ? (
                                 <div className="adminAvatarDropdown animate-slideIn" role="menu">
                                     <Link
                                         to="/account"
                                         role="menuitem"
-                                        onClick={() => setAdminMenuOpen(false)}
+                                        onClick={() => setAccountMenuOpen(false)}
                                     >
                                         Account
                                     </Link>
-                                    <Link
-                                        to="/my-videos"
+                                    {isAdmin ? (
+                                        <Link
+                                            to="/my-videos"
+                                            role="menuitem"
+                                            onClick={() => setAccountMenuOpen(false)}
+                                        >
+                                            My channel
+                                        </Link>
+                                    ) : null}
+                                    {isAdmin ? (
+                                        <Link
+                                            to="/analytics"
+                                            role="menuitem"
+                                            onClick={() => setAccountMenuOpen(false)}
+                                        >
+                                            Analytics
+                                        </Link>
+                                    ) : null}
+                                    <button
+                                        type="button"
                                         role="menuitem"
-                                        onClick={() => setAdminMenuOpen(false)}
+                                        onClick={handleLogout}
                                     >
-                                        My channel
-                                    </Link>
-                                    <Link
-                                        to="/analytics"
-                                        role="menuitem"
-                                        onClick={() => setAdminMenuOpen(false)}
-                                    >
-                                        Analytics
-                                    </Link>
+                                        Log out
+                                    </button>
                                 </div>
                             ) : null}
                         </div>
                     ) : (
                         <Link 
-                            className={`darkSVG flex items-center p-1 pl-3 max-[1075px]:pl-1 max-[380px]:hidden hover:bg-(--background2) rounded-full transition-all duration-200 cursor-pointer`} 
-                            to="/account"
+                            className="darkSVG flex items-center p-1 pl-3 max-[1075px]:pl-1 max-[500px]:hidden hover:bg-(--background2) rounded-full transition-all duration-200 cursor-pointer"
+                            to="/login"
                         >
-                            <p className="mr-2.5 font-medium max-[1075px]:hidden">{!headerUserData?.user ? t("login") : <span>👋&nbsp;{t("helloUser", {firstName: headerUserData.user.full_name.split(" ")[0]})}</span>}</p>
+                            <p className="mr-2.5 font-medium max-[1075px]:hidden">{t("login")}</p>
                             <img 
                                 className="accountImg rounded-full w-9 h-9 aspect-square object-cover"
-                                src={headerUserData?.user?.image_url || DefaultProfile}
+                                src={DefaultProfile}
                                 alt="Profile Photo"
-                                onError={e => {
-                                    e.currentTarget.src = DefaultProfile;
-                                }}
                             />
                         </Link>
                     )}
