@@ -4479,6 +4479,29 @@ main.uploadMain .links a:hover {
   margin: 0;
 }
 
+.videoPreviewThumbBlock {
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border1);
+}
+
+.videoPreviewThumbLabel {
+  margin: 0 0 0.45rem 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text2);
+}
+
+.videoPreviewThumbImage {
+  width: 100%;
+  max-width: 200px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
 .videoPreviewLoading,
 .videoPreviewPlaceholder {
   display: flex;
@@ -4637,6 +4660,226 @@ select.disabled {
   margin-top: 0;
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
+}
+
+.thumbnailSourceActions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.thumbnailSourceHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.thumbnailPickerToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-height: 2.75rem;
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(18, 86, 180, 0.18);
+  background: rgba(18, 86, 180, 0.08);
+  color: var(--accentBlue2);
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.18s ease;
+}
+
+.thumbnailPickerToggle:hover:not(:disabled) {
+  background: rgba(18, 86, 180, 0.14);
+  transform: translateY(-1px);
+}
+
+.thumbnailPickerToggle.active {
+  background: var(--accentBlue2);
+  color: white;
+  border-color: var(--accentBlue2);
+}
+
+.thumbnailPickerToggle:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.thumbnailPickerHint {
+  margin: 0;
+  text-align: left;
+  max-width: 460px;
+}
+
+.thumbnailPickerCard {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 1.25rem;
+  background:
+    linear-gradient(135deg, rgba(18, 86, 180, 0.08), rgba(7, 18, 56, 0.02)),
+    var(--background2);
+  border: 1px solid rgba(18, 86, 180, 0.12);
+}
+
+.thumbnailPickerPreview {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 360px;
+  border-radius: 1rem;
+  overflow: hidden;
+  background: rgba(7, 18, 56, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(18, 86, 180, 0.08);
+}
+
+.thumbnailImageShell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.thumbnailPickerImage,
+.thumbnailPickerPreview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbnailImagePending {
+  opacity: 0;
+}
+
+.thumbnailImageLoader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  background: rgba(7, 18, 56, 0.08);
+  color: var(--text2);
+  z-index: 1;
+}
+
+.thumbnailImageLoader span {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.thumbnailImageFallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: 1rem;
+  background: rgba(7, 18, 56, 0.12);
+  color: var(--text2);
+  text-align: center;
+  z-index: 1;
+}
+
+.thumbnailImageRetryBtn {
+  min-height: 2.2rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(18, 86, 180, 0.12);
+  color: var(--accentBlue2);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.thumbnailPickerPreviewPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  color: var(--text2);
+}
+
+.thumbnailPickerControls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.thumbnailPickerTimeRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.95rem;
+  color: var(--text2);
+}
+
+.thumbnailPickerTimeRow strong {
+  color: var(--text);
+  font-size: 1.05rem;
+}
+
+.thumbnailPickerTimeInputRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.thumbnailPickerTimeInputRow label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text2);
+}
+
+.thumbnailPickerTimeInput {
+  width: min(150px, 100%);
+  padding: 1rem;
+  background: var(--background2);
+  border-radius: 12px;
+  color: var(--text1);
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 500;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.thumbnailPickerTimeInput:focus {
+  outline: none;
+  border-color: var(--accentBlue);
+  box-shadow: 0 0 0 3px rgba(18, 86, 180, 0.12);
+}
+
+.thumbnailPickerSliderWrap {
+  width: 100%;
+  padding: 0.35rem 0 0.15rem;
+}
+
+.thumbnailPickerSlider {
+  width: 100%;
+  accent-color: var(--accentBlue2);
+  cursor: pointer;
+}
+
+.thumbnailPickerRangeLabels {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--text2);
+  font-size: 0.825rem;
 }
 
 .thumbnailHint {
@@ -4822,6 +5065,19 @@ select.disabled {
 }
 
 @media (max-width: 700px) {
+  .thumbnailSourceHeading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .thumbnailPickerHint {
+    text-align: left;
+  }
+
+  .thumbnailPickerTimeInput {
+    width: 100%;
+  }
+
   .thumbnailHint {
     width: 100%;
     text-align: left;

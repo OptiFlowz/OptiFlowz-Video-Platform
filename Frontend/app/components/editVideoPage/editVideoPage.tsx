@@ -69,14 +69,207 @@ function parseTimestampToSeconds(timestamp: string): number {
   return 0;
 }
 
+function formatThumbnailPickerTime(seconds: number): string {
+  if (!Number.isFinite(seconds)) return "00:00";
+
+  const rounded = Math.max(0, Math.floor(seconds));
+  const mins = Math.floor(rounded / 60);
+  const secs = rounded % 60;
+
+  if (mins >= 60) {
+    return formatSecondsToTimestamp(rounded);
+  }
+
+  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+}
+
+function getMuxThumbnailUrl(playbackId: string, time: number): string {
+  const safeTime = Math.max(0, Number(time.toFixed(2)));
+  return `https://image.mux.com/${playbackId}/thumbnail.jpg?time=${safeTime}&width=1280`;
+}
+
+function clampThumbnailTime(seconds: number, duration: number): number {
+  if (!Number.isFinite(seconds)) return 0;
+  if (duration <= 0) return Math.max(0, seconds);
+  return Math.min(Math.max(seconds, 0), Math.max(duration - 0.1, 0));
+}
+
+function parseThumbnailPickerInput(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const parts = trimmed.split(":").map((part) => part.trim());
+  if (parts.some((part) => part === "" || Number.isNaN(Number(part)))) {
+    return null;
+  }
+
+  if (parts.length === 1) {
+    return Number(parts[0]);
+  }
+
+  if (parts.length === 2) {
+    return Number(parts[0]) * 60 + Number(parts[1]);
+  }
+
+  if (parts.length === 3) {
+    return Number(parts[0]) * 3600 + Number(parts[1]) * 60 + Number(parts[2]);
+  }
+
+  return null;
+}
+
+function getInitialThumbnailTime(video?: VideoData | null): number {
+  const duration = video?.duration_seconds ?? 0;
+  const fallbackTime = duration > 1 ? Math.min(duration / 3, Math.max(duration - 0.1, 0)) : 0;
+  const thumbnailUrl = video?.thumbnail_url;
+
+  if (!thumbnailUrl) {
+    return fallbackTime;
+  }
+
+  try {
+    const parsedUrl = new URL(thumbnailUrl);
+    const timeValue = parsedUrl.searchParams.get("time");
+    if (!timeValue) {
+      return fallbackTime;
+    }
+
+    const parsedTime = Number(timeValue);
+    if (!Number.isFinite(parsedTime)) {
+      return fallbackTime;
+    }
+
+    if (duration <= 0) {
+      return Math.max(0, parsedTime);
+    }
+
+    return Math.min(Math.max(parsedTime, 0), Math.max(duration - 0.1, 0));
+  } catch {
+    return fallbackTime;
+  }
+}
+
 // ─── VideoPreview is defined OUTSIDE EditVideoPage ───────────────────────────
 interface VideoPreviewProps {
   isVideoLoading: boolean;
   videoData: VideoData | null | undefined;
   title: string;
+  thumbnailUrl?: string | null;
 }
 
-const VideoPreview = ({ isVideoLoading, videoData, title }: VideoPreviewProps) => {
+interface ThumbnailImageProps {
+  src: string;
+  alt: string;
+  className?: string;
+}
+
+const ThumbnailImage = ({ src, alt, className }: ThumbnailImageProps) => {
+  const [displaySrc, setDisplaySrc] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [attempt, setAttempt] = useState(0);
+  const [hasFailed, setHasFailed] = useState(false);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const revealTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setDisplaySrc(null);
+    setIsLoading(true);
+    setAttempt(0);
+    setHasFailed(false);
+  }, [src]);
+
+  useEffect(() => {
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+    if (revealTimeoutRef.current) {
+      clearTimeout(revealTimeoutRef.current);
+      revealTimeoutRef.current = null;
+    }
+
+    const separator = src.includes("?") ? "&" : "?";
+    const nextSrc = `${src}${separator}previewAttempt=${attempt}`;
+    const revealDelay = attempt === 0 ? 180 : Math.min(350 * attempt, 900);
+
+    revealTimeoutRef.current = setTimeout(() => {
+      setDisplaySrc(nextSrc);
+    }, revealDelay);
+
+    return () => {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
+      if (revealTimeoutRef.current) {
+        clearTimeout(revealTimeoutRef.current);
+      }
+    };
+  }, [src, attempt]);
+
+  const handleLoad = () => {
+    setHasFailed(false);
+    setIsLoading(false);
+  };
+
+  const handleError = () => {
+    if (attempt >= 3) {
+      setIsLoading(false);
+      setHasFailed(true);
+      return;
+    }
+
+    setIsLoading(true);
+    setHasFailed(false);
+
+    const retryDelay = 400 + attempt * 450;
+    retryTimeoutRef.current = setTimeout(() => {
+      setAttempt((currentAttempt) => currentAttempt + 1);
+    }, retryDelay);
+  };
+
+  return (
+    <div className="thumbnailImageShell">
+      {isLoading && (
+        <div className="thumbnailImageLoader">
+          <div className="uploadSpinner tiny" />
+          <span>{attempt === 0 ? "Loading frame..." : "Retrying frame..."}</span>
+        </div>
+      )}
+      {hasFailed && !isLoading ? (
+        <div className="thumbnailImageFallback">
+          <span>Preview unavailable right now</span>
+          <button
+            type="button"
+            className="thumbnailImageRetryBtn"
+            onClick={() => {
+              setHasFailed(false);
+              setIsLoading(true);
+              setAttempt(0);
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      ) : null}
+      {displaySrc ? (
+        <img
+          src={displaySrc}
+          alt={alt}
+          className={`${className ?? ""} ${isLoading ? "thumbnailImagePending" : ""}`.trim()}
+          onLoad={handleLoad}
+          onError={handleError}
+        />
+      ) : null}
+    </div>
+  );
+};
+
+const VideoPreview = ({
+  isVideoLoading,
+  videoData,
+  title,
+  thumbnailUrl,
+}: VideoPreviewProps) => {
   const [isThemeReady, setIsThemeReady] = useState(false);
 
   useEffect(() => {
@@ -158,6 +351,16 @@ const VideoPreview = ({ isVideoLoading, videoData, title }: VideoPreviewProps) =
             Duration: {formatSecondsToTimestamp(videoData.duration_seconds)}
           </p>
         )}
+        {thumbnailUrl ? (
+          <div className="videoPreviewThumbBlock">
+            <p className="videoPreviewThumbLabel">Thumbnail</p>
+            <ThumbnailImage
+              src={thumbnailUrl}
+              alt="Video thumbnail"
+              className="videoPreviewThumbImage"
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -200,6 +403,11 @@ function EditVideoPage() {
   );
   const [thumbnailMarkedForRemoval, setThumbnailMarkedForRemoval] =
     useState(false);
+  const [isThumbnailPickerOpen, setIsThumbnailPickerOpen] = useState(false);
+  const [selectedThumbnailTime, setSelectedThumbnailTime] = useState(0);
+  const [pendingGeneratedThumbnailUrl, setPendingGeneratedThumbnailUrl] =
+    useState<string | null>(null);
+  const [thumbnailTimeInput, setThumbnailTimeInput] = useState("00:00");
 
   // Caption status tracking
   const [captionStatus, setCaptionStatus] = useState<CaptionStatus>("loading");
@@ -285,6 +493,11 @@ function EditVideoPage() {
       setVisibility(videoData.visibility || "private");
       setOldVisibility(videoData.visibility || "private");
       setThumbnailUrl(videoData.thumbnail_url || null);
+      const initialThumbnailTime = getInitialThumbnailTime(videoData);
+      setSelectedThumbnailTime(initialThumbnailTime);
+      setThumbnailTimeInput(formatThumbnailPickerTime(initialThumbnailTime));
+      setPendingGeneratedThumbnailUrl(null);
+      setIsThumbnailPickerOpen(false);
 
       console.log(videoData);
 
@@ -345,8 +558,14 @@ function EditVideoPage() {
 
   const displayedThumbnailUrl = thumbnailMarkedForRemoval
     ? null
-    : pendingThumbnailUrl || thumbnailUrl;
-  const thumbnailModified = thumbnailMarkedForRemoval || !!pendingThumbnailFile;
+    : pendingGeneratedThumbnailUrl || pendingThumbnailUrl || thumbnailUrl;
+  const thumbnailModified =
+    thumbnailMarkedForRemoval ||
+    !!pendingThumbnailFile ||
+    !!pendingGeneratedThumbnailUrl;
+  const videoDuration = videoData?.duration_seconds ?? 0;
+  const maxThumbnailTime = videoDuration > 0 ? Math.max(videoDuration - 0.1, 0) : 0;
+  const canChooseVideoFrame = !!videoData?.mux_playback_id && videoDuration > 0;
 
   const uploadThumbnail = async (file: File) => {
     if (!videoId) return;
@@ -382,7 +601,9 @@ function EditVideoPage() {
       setThumbnailUrl(nextThumbnailUrl);
       setPendingThumbnailFile(null);
       setPendingThumbnailUrl(null);
+      setPendingGeneratedThumbnailUrl(null);
       setThumbnailMarkedForRemoval(false);
+      setIsThumbnailPickerOpen(false);
     } catch (err) {
       console.error("Error uploading video thumbnail:", err);
       setError("Failed to upload video thumbnail.");
@@ -397,7 +618,12 @@ function EditVideoPage() {
   const resetThumbnailSelection = () => {
     setPendingThumbnailFile(null);
     setPendingThumbnailUrl(null);
+    setPendingGeneratedThumbnailUrl(null);
     setThumbnailMarkedForRemoval(false);
+    const initialThumbnailTime = getInitialThumbnailTime(videoData);
+    setSelectedThumbnailTime(initialThumbnailTime);
+    setThumbnailTimeInput(formatThumbnailPickerTime(initialThumbnailTime));
+    setIsThumbnailPickerOpen(false);
     if (thumbnailInputRef.current) {
       thumbnailInputRef.current.value = "";
     }
@@ -416,7 +642,109 @@ function EditVideoPage() {
       }
       return URL.createObjectURL(file);
     });
+    setPendingGeneratedThumbnailUrl(null);
     setThumbnailMarkedForRemoval(false);
+    setIsThumbnailPickerOpen(false);
+  };
+
+  const handleToggleThumbnailPicker = () => {
+    if (!canChooseVideoFrame) return;
+
+    setThumbnailMarkedForRemoval(false);
+    setPendingThumbnailFile(null);
+    setPendingThumbnailUrl(null);
+    if (thumbnailInputRef.current) {
+      thumbnailInputRef.current.value = "";
+    }
+
+    setIsThumbnailPickerOpen((previousValue) => {
+      const nextValue = !previousValue;
+      if (nextValue) {
+        const initialTime = selectedThumbnailTime || getInitialThumbnailTime(videoData);
+        setSelectedThumbnailTime(initialTime);
+        setThumbnailTimeInput(formatThumbnailPickerTime(initialTime));
+        if (videoData?.mux_playback_id) {
+          setPendingGeneratedThumbnailUrl(
+            getMuxThumbnailUrl(videoData.mux_playback_id, initialTime)
+          );
+        }
+      } else {
+        setPendingGeneratedThumbnailUrl(null);
+      }
+
+      return nextValue;
+    });
+  };
+
+  const applyThumbnailTime = (nextTime: number) => {
+    const clampedTime = clampThumbnailTime(nextTime, videoDuration);
+    setSelectedThumbnailTime(clampedTime);
+    setThumbnailTimeInput(formatThumbnailPickerTime(clampedTime));
+
+    if (videoData?.mux_playback_id) {
+      setPendingGeneratedThumbnailUrl(
+        getMuxThumbnailUrl(videoData.mux_playback_id, clampedTime)
+      );
+    }
+  };
+
+  const handleThumbnailTimeChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    applyThumbnailTime(Number(e.target.value));
+  };
+
+  const handleThumbnailTimeInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setThumbnailTimeInput(e.target.value);
+  };
+
+  const commitThumbnailTimeInput = () => {
+    const parsedValue = parseThumbnailPickerInput(thumbnailTimeInput);
+    if (parsedValue === null) {
+      setThumbnailTimeInput(formatThumbnailPickerTime(selectedThumbnailTime));
+      return;
+    }
+
+    applyThumbnailTime(parsedValue);
+  };
+
+  const handleSaveGeneratedThumbnail = async () => {
+    if (!videoId || !pendingGeneratedThumbnailUrl) return;
+
+    setIsUploadingThumbnail(true);
+    setError(null);
+
+    try {
+      const response = await fetchFn<{ success: boolean }>({
+        route: `api/video-moderation/video-details/${videoId}`,
+        options: {
+          method: "PATCH",
+          headers: myHeaders.current,
+          body: JSON.stringify({
+            thumbnail_url: pendingGeneratedThumbnailUrl,
+          }),
+        },
+      });
+
+      if (!response?.success) {
+        setError("Failed to save video thumbnail.");
+        return;
+      }
+
+      setThumbnailUrl(pendingGeneratedThumbnailUrl);
+      setPendingGeneratedThumbnailUrl(null);
+      setPendingThumbnailFile(null);
+      setPendingThumbnailUrl(null);
+      setThumbnailMarkedForRemoval(false);
+      setIsThumbnailPickerOpen(false);
+    } catch (err) {
+      console.error("Error saving generated thumbnail:", err);
+      setError("Failed to save video thumbnail.");
+    } finally {
+      setIsUploadingThumbnail(false);
+    }
   };
 
   const handleSaveThumbnail = async () => {
@@ -459,6 +787,11 @@ function EditVideoPage() {
       return;
     }
 
+    if (pendingGeneratedThumbnailUrl) {
+      await handleSaveGeneratedThumbnail();
+      return;
+    }
+
     if (!pendingThumbnailFile) return;
 
     await uploadThumbnail(pendingThumbnailFile);
@@ -474,7 +807,9 @@ function EditVideoPage() {
 
     setPendingThumbnailFile(null);
     setPendingThumbnailUrl(null);
+    setPendingGeneratedThumbnailUrl(null);
     setThumbnailMarkedForRemoval(true);
+    setIsThumbnailPickerOpen(false);
     if (thumbnailInputRef.current) {
       thumbnailInputRef.current.value = "";
     }
@@ -1010,6 +1345,7 @@ function EditVideoPage() {
                   isVideoLoading={isVideoLoading}
                   videoData={videoData}
                   title={title}
+                  thumbnailUrl={displayedThumbnailUrl}
                 />
               </div>
             </aside>
@@ -1019,48 +1355,129 @@ function EditVideoPage() {
                 <section className="editSection">
                   <h2 className="editSectionTitle">Thumbnail</h2>
 
-                  <div
-                    className={`uploadZone ${pendingThumbnailFile ? "hasFile" : ""}`}
-                    onClick={() =>
-                      !pendingThumbnailFile && thumbnailInputRef.current?.click()
-                    }
-                  >
-                    <input
-                      type="file"
-                      ref={thumbnailInputRef}
-                      accept="image/*"
-                      onChange={handleThumbnailFileSelect}
-                      hidden
-                    />
-                    {pendingThumbnailFile ? (
-                      <div className="fileInfo">
-                        {UploadSVG}
-                        <p className="fileName">{pendingThumbnailFile.name}</p>
-                        <p className="fileSize">
-                          {(pendingThumbnailFile.size / (1024 * 1024)).toFixed(2)} MB
-                        </p>
-                        <button
-                          type="button"
-                          className="removeFileBtn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveThumbnail();
-                          }}
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="uploadPrompt">
-                        {UploadSVG}
-                        <p>Select thumbnail image</p>
-                        <span>PNG, JPG, WEBP and similar image formats</span>
-                        <button type="button" className="selectFileBtn">
-                          Select file
-                        </button>
-                      </div>
-                    )}
+                  <div className="thumbnailSourceActions">
+                    <div className="thumbnailSourceHeading">
+                      <button
+                        type="button"
+                        className={`thumbnailPickerToggle ${isThumbnailPickerOpen ? "active" : ""}`}
+                        onClick={handleToggleThumbnailPicker}
+                        disabled={!canChooseVideoFrame || isUploadingThumbnail || isRemovingThumbnail}
+                      >
+                        {isThumbnailPickerOpen ? "Back to upload" : "Choose from video"}
+                      </button>
+                      <p className="formHint thumbnailPickerHint">
+                        {canChooseVideoFrame
+                          ? isThumbnailPickerOpen
+                            ? "Choose the exact frame you want and save it as the thumbnail."
+                            : "Pick a frame directly from the video timeline instead of uploading an image."
+                          : "Frame selection becomes available once the video preview and duration are ready."}
+                      </p>
+                    </div>
                   </div>
+
+                  {!isThumbnailPickerOpen ? (
+                    <div
+                      className={`uploadZone ${pendingThumbnailFile ? "hasFile" : ""}`}
+                      onClick={() =>
+                        !pendingThumbnailFile && thumbnailInputRef.current?.click()
+                      }
+                    >
+                      <input
+                        type="file"
+                        ref={thumbnailInputRef}
+                        accept="image/*"
+                        onChange={handleThumbnailFileSelect}
+                        hidden
+                      />
+                      {pendingThumbnailFile ? (
+                        <div className="fileInfo">
+                          {UploadSVG}
+                          <p className="fileName">{pendingThumbnailFile.name}</p>
+                          <p className="fileSize">
+                            {(pendingThumbnailFile.size / (1024 * 1024)).toFixed(2)} MB
+                          </p>
+                          <button
+                            type="button"
+                            className="removeFileBtn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveThumbnail();
+                            }}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="uploadPrompt">
+                          {UploadSVG}
+                          <p>Select thumbnail image</p>
+                          <span>PNG, JPG, WEBP and similar image formats</span>
+                          <button type="button" className="selectFileBtn">
+                            Select file
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+
+                  {isThumbnailPickerOpen && canChooseVideoFrame ? (
+                    <div className="thumbnailPickerCard">
+                      <div className="thumbnailPickerPreview">
+                        {pendingGeneratedThumbnailUrl ? (
+                          <ThumbnailImage
+                            src={pendingGeneratedThumbnailUrl}
+                            alt={`Thumbnail preview at ${formatThumbnailPickerTime(selectedThumbnailTime)}`}
+                            className="thumbnailPickerImage"
+                          />
+                        ) : (
+                          <div className="thumbnailPickerPreviewPlaceholder">
+                            <div className="uploadSpinner tiny" />
+                            <span>Preparing frame preview...</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="thumbnailPickerControls">
+                        <div className="thumbnailPickerTimeRow">
+                          <span>Selected frame</span>
+                          <strong>{formatThumbnailPickerTime(selectedThumbnailTime)}</strong>
+                        </div>
+                        <div className="thumbnailPickerTimeInputRow">
+                          <label htmlFor="thumbnailFrameTime">Jump to time</label>
+                          <input
+                            id="thumbnailFrameTime"
+                            type="text"
+                            value={thumbnailTimeInput}
+                            onChange={handleThumbnailTimeInputChange}
+                            onBlur={commitThumbnailTimeInput}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                commitThumbnailTimeInput();
+                              }
+                            }}
+                            placeholder="00:00 or 00:00:00"
+                            className="thumbnailPickerTimeInput"
+                          />
+                        </div>
+                        <div className="thumbnailPickerSliderWrap">
+                          <input
+                            type="range"
+                            min={0}
+                            max={maxThumbnailTime}
+                            step={0.1}
+                            value={Math.min(selectedThumbnailTime, maxThumbnailTime)}
+                            onChange={handleThumbnailTimeChange}
+                            className="thumbnailPickerSlider"
+                          />
+                        </div>
+                        <div className="thumbnailPickerRangeLabels">
+                          <span>00:00</span>
+                          <span>{formatThumbnailPickerTime(videoDuration)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
 
                   <div className="captionsActions">
                     <div className="captionsButtonGroup">
@@ -1077,10 +1494,16 @@ function EditVideoPage() {
                         {isUploadingThumbnail || isRemovingThumbnail ? (
                           <>
                             <div className="uploadSpinner tiny" />
-                            {thumbnailMarkedForRemoval ? "Saving..." : "Uploading..."}
+                            {thumbnailMarkedForRemoval
+                              ? "Saving..."
+                              : pendingGeneratedThumbnailUrl
+                              ? "Setting..."
+                              : "Uploading..."}
                           </>
                         ) : (
-                          "Save Thumbnail"
+                          pendingGeneratedThumbnailUrl
+                            ? "Set Frame as Thumbnail"
+                            : "Save Thumbnail"
                         )}
                       </button>
                       <button
