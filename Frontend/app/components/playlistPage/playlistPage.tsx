@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useLayoutEffect, useRef, useState, useCallback } from "react";
+import { useLayoutEffect, useRef, useState, useCallback, useEffect } from "react";
 import { env } from "~/env";
 import { formatDescription, getToken } from "~/functions";
 import { useParams } from "react-router";
@@ -45,7 +45,8 @@ function PlaylistPage(){
     const myHeaders = useRef(new Headers());
     const [token, setToken] = useState(String);
     const [descOpen, setDescOpen] = useState(false);
-    const readMoreButtonRef = useRef<HTMLButtonElement>(null);
+    const [hasDescriptionOverflow, setHasDescriptionOverflow] = useState(false);
+    const descriptionRef = useRef<HTMLParagraphElement>(null);
     const [isSaved, setIsSaved] = useState(false);
     const [saveCount, setSaveCount] = useState(0);
 
@@ -68,17 +69,7 @@ function PlaylistPage(){
         document.querySelector<HTMLAnchorElement>(".playlistStartVideo")?.click();
     }
 
-    const toggleDescOpen = () => {
-        if(!readMoreButtonRef.current) return;
-
-        if(descOpen){
-            readMoreButtonRef.current.innerHTML = t("readMore");
-            setDescOpen(false);
-        }else{
-            readMoreButtonRef.current.innerHTML = t("readLess");
-            setDescOpen(true);
-        }
-    };
+    const toggleDescOpen = () => setDescOpen((current) => !current);
 
     useLayoutEffect(() => {
         const userToken = getToken();
@@ -139,6 +130,32 @@ function PlaylistPage(){
         }
     }, [data?.is_saved, data?.save_count]);
 
+    useEffect(() => {
+        const descriptionElement = descriptionRef.current;
+        if (!descriptionElement) return;
+
+        let resizeObserver: ResizeObserver | null = null;
+
+        const measureOverflow = () => {
+            const hasOverflow = descriptionElement.scrollHeight > descriptionElement.clientHeight + 1;
+            setHasDescriptionOverflow(hasOverflow);
+        };
+
+        measureOverflow();
+
+        if (typeof ResizeObserver !== "undefined") {
+            resizeObserver = new ResizeObserver(() => measureOverflow());
+            resizeObserver.observe(descriptionElement);
+        }
+
+        window.addEventListener("resize", measureOverflow);
+
+        return () => {
+            resizeObserver?.disconnect();
+            window.removeEventListener("resize", measureOverflow);
+        };
+    }, [data?.description, descOpen]);
+
     const skeletonVideoArray = Array.from({ length: 8 }).map((_, index) => (
         <SkeletonVideoItem key={`skeleton-video-${index}`} />
     ));
@@ -175,9 +192,9 @@ function PlaylistPage(){
                         <button onClick={e => sharePlaylistLink(e)} className="clickable bg-(--background2) hover:bg-(--background3) rounded-full flex">{ShareSVG}&nbsp;{t("share")}</button>
                     </span>
 
-                    <p className={`description ${descOpen ? "open" : ""}`}>{formatDescription(data?.description)}</p>
-                    {data?.description && (
-                        <button ref={readMoreButtonRef} className="w-fit hover:underline cursor-pointer" onClick={() => toggleDescOpen()}>{t("readMore")}</button>
+                    <p ref={descriptionRef} className={`description ${descOpen ? "open" : ""}`}>{formatDescription(data?.description)}</p>
+                    {data?.description && hasDescriptionOverflow && (
+                        <button className="w-fit hover:underline cursor-pointer" onClick={toggleDescOpen}>{descOpen ? t("readLess") : t("readMore")}</button>
                     )}
                 </span>
             </div>

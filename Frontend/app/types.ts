@@ -230,6 +230,51 @@ export type PlaylistT = {
     featured?: boolean
 }
 
+export type ChannelT = {
+    id: string,
+    full_name: string,
+    role: string,
+    image_url: string | null,
+    description: string | null
+}
+
+export type FetchChannelT = {
+    success: boolean,
+    channel: ChannelT
+}
+
+export type ChannelVideoT = {
+    id: string,
+    title: string,
+    thumbnail_url: string,
+    duration_seconds: number,
+    view_count: number,
+    created_at: string,
+    uploader_name: string,
+    progress_seconds?: number | string,
+    percentage_watched?: number | string,
+    people: PersonT[]
+}
+
+export type ChannelVideosPaginationT = {
+    page: number,
+    limit: number,
+    total: number,
+    totalPages: number,
+    hasNextPage: boolean,
+    hasPreviousPage: boolean
+}
+
+export type ChannelVideosT = {
+    success: boolean,
+    videos: ChannelVideoT[],
+    pagination: ChannelVideosPaginationT,
+    sorting: {
+        sortBy: string,
+        sortOrder: "asc" | "desc"
+    }
+}
+
 export type PlaylistSearchRes = {
   playlists: Array<{
     id: string,

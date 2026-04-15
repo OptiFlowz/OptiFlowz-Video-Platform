@@ -14,6 +14,7 @@ export default [
     route("privacyPolicy", "routes/privacyPolicy.tsx"),
     route("videos/:type", "routes/videos.tsx"),
     route("playlist/:id", "routes/playlist.tsx"),
+    route("channel/:id", "routes/channel.tsx"),
     route("upload", "routes/upload.tsx"),
     route("edit", "routes/editVideo.tsx"),
     route("edit-playlist", "routes/editPlaylist.tsx"),

@@ -483,14 +483,14 @@ function VideoInfo({
             </span>
 
             {props?.uploader_id && props?.uploader_name ?
-            <span className="mt-3 p-3.75 author rounded-2xl! flex items-center transition-all bg-(--background2)! max-[500px]:flex-col max-[500px]:items-start max-[500px]:gap-3">
+            <Link to={`/channel/${props.uploader_id}`} className="mt-3 p-3.75 author rounded-2xl! flex items-center transition-all bg-(--background2)! hover:bg-(--background3)! max-[500px]:flex-col max-[500px]:items-start max-[500px]:gap-3">
                 <h2 className="text-lg font-semibold mr-2 max-[500px]:text-sm">Channel:</h2>
 
                 <span>
                     <img src={props?.uploader_image} alt="Profile" />
                     <p className="weakText max-[500px]:text-sm">{props?.uploader_name}</p>
                 </span>
-            </span>
+            </Link>
             : null}
 
             {props?.people?.filter((person) => person?.type == 0).length > 0 ?
