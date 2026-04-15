@@ -2,7 +2,7 @@ import { writePool } from '../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
 
-function prerequisites(object,userId) {
+function prerequisites(object, userId) {
   const schema = z.object({
     video_id: z.string().uuid('Invalid video id'),
     parent_id: z.string().uuid('Invalid parent id').nullable().optional(),

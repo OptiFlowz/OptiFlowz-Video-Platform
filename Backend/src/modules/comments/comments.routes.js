@@ -1,17 +1,14 @@
 import express from 'express';
-import { requireAuth, requireAdmin } from '../../middleware/auth.js';
-import { getReplies, handleLikeComment, handleDislikeComment, editComment, deleteComment} from './comments.service.js';
-import * as channelController from './comments.controller.js';
-
+import { requireAuth, requireAdmin , optionalAuth} from '../../middleware/auth.js';
+import * as commentsController from './comments.controller.js';
 
 const router = express.Router();
 
-
-router.post('/post',requireAuth,channelController.postComment)
-router.get('/:id/replies',requireAuth,getReplies)
-router.post("/:id/like", requireAuth, handleLikeComment);
-router.post("/:id/dislike", requireAuth, handleDislikeComment);
-router.patch("/:id/edit", requireAuth, editComment);
-router.delete("/:id/delete", requireAuth, deleteComment);
+router.post('/post',requireAuth,commentsController.postComment)
+router.get('/:id/replies',optionalAuth,commentsController.getReplies)
+router.post("/:id/like", requireAuth, commentsController.handleLikeComment);
+router.post("/:id/dislike", requireAuth, commentsController.handleDislikeComment);
+router.patch("/:id/edit", requireAuth, commentsController.editComment);
+router.delete("/:id/delete", requireAuth, commentsController.deleteComment);
 
 export default router;
