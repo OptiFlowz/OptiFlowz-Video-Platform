@@ -1,10 +1,10 @@
 import express from 'express';
-import { requireAuth } from '../../middleware/auth.js';
+import { requireAuth , optionalAuth} from '../../middleware/auth.js';
 import * as peopleService from './people.service.js';
 
 const router = express.Router();
 
-router.get('/person', requireAuth, async (req, res) => {
+router.get('/person', optionalAuth, async (req, res) => {
   try {
     const result = await peopleService.getPersonById(req.query.id);
     res.json(result);
@@ -14,7 +14,7 @@ router.get('/person', requireAuth, async (req, res) => {
   }
 });
 
-router.get('/search', requireAuth, async (req, res) => {
+router.get('/search', optionalAuth, async (req, res) => {
   try {
     const result = await peopleService.searchPeople(req.query);
     res.json(result);

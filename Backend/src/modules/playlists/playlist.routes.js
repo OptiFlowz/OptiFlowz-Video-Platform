@@ -5,7 +5,7 @@ import { logEvent } from '../../common/logger.js';
 
 const router = express.Router();
 
-router.get('/search', requireAuth, async (req, res) => {
+router.get('/search', optionalAuth, async (req, res) => {
   try {
     const { q, tags, sort = 'relevance', limit = 20, page = 1 } = req.query;
 
