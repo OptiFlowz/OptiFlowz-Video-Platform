@@ -10,7 +10,7 @@ import type { ChannelT, ChannelVideosT, FetchChannelT, VideoT } from "~/types";
 import Item from "../itemSlider/item";
 import DefaultProfile from "../../../assets/DefaultProfile.webp";
 
-type ChannelSortBy = "view_count" | "created_at" | "title";
+type ChannelSortBy = "view_count" | "created_at";
 type ChannelSortOrder = "asc" | "desc";
 
 const CHANNEL_SORT_OPTIONS: Array<{
@@ -21,8 +21,6 @@ const CHANNEL_SORT_OPTIONS: Array<{
     { value: "view_count:desc", label: "Views: High to Low" },
     { value: "created_at:desc", label: "Date: Newest First" },
     { value: "created_at:asc", label: "Date: Oldest First" },
-    { value: "title:asc", label: "Title: A to Z" },
-    { value: "title:desc", label: "Title: Z to A" },
 ];
 
 const SkeletonVideoItem = () => (
