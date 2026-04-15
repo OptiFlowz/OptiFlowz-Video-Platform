@@ -6891,6 +6891,14 @@ main.playlist .channelVideosHeader select {
   background: var(--background2);
   color: var(--text1);
   outline: none;
+  color-scheme: dark;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+main.playlist .channelVideosHeader select option {
+  background: var(--background2);
+  color: var(--text1);
 }
 
 main.playlist .channelVideosTitle {
