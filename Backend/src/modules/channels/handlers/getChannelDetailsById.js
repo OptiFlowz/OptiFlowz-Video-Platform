@@ -1,19 +1,17 @@
 import { writePool } from '../../../database/index.js';
 import { z } from 'zod';
+import { validateOrThrow } from '../../../common/input.validation.js';
 
 function prerequisites(object) {
-  const schema = z.object({id: z.string().uuid('Invalid channel ID'),});
-  return schema.safeParse(object);
+  const schema = z.object({
+    id: z.string().uuid('Invalid channel ID'),
+  });
+
+  return validateOrThrow(schema.safeParse(object));
 }
 
 export async function getChannelDetailsByIdInternal(object) {
-  const parsed = prerequisites(object);
-  if (!parsed.success) {
-    const error = new Error(parsed.error.issues[0]?.message || 'Invalid input');
-    error.status = 400;
-    throw error;
-  }
-  const { id } = parsed.data;
+  const { id } = prerequisites(object);
 
   const result = await writePool.query(
     `
@@ -29,6 +27,6 @@ export async function getChannelDetailsByIdInternal(object) {
     `,
     [id]
   );
-
+  
   return result.rows[0] || null;
 }

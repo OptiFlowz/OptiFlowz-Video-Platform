@@ -1,6 +1,8 @@
 import { writePool } from '../../../database/index.js';
 import { buildVideoCardSelect,buildVideoCardJoins,buildVideoCardVisibilityWhere } from '../../../database/sql/videoCardFragments.js';
 import { z } from 'zod';
+import { validateOrThrow } from '../../../common/input.validation.js';
+
 
 function prerequisites(object) {
   const schema = z.object({
@@ -11,19 +13,11 @@ function prerequisites(object) {
     limit: z.coerce.number().int().min(1).max(100).optional().default(12),
   });
 
-  return schema.safeParse(object);
+  return validateOrThrow(schema.safeParse(object));
 }
 
 export async function getChannelVideosInternal(object, userId = null) {
-  const parsed = prerequisites(object);
-
-  if (!parsed.success) {
-    const error = new Error(parsed.error.issues[0]?.message || 'Invalid input');
-    error.status = 400;
-    throw error;
-  }
-
-  const { id, sortBy, sortOrder, page, limit } = parsed.data;
+  const { id, sortBy, sortOrder, page, limit } = prerequisites(object);
   const offset = (page - 1) * limit;
 
   const allowedSortFields = {

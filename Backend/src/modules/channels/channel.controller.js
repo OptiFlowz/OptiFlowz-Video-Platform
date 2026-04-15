@@ -11,7 +11,7 @@ export async function getChannelDetailsById(req, res) {
     return sendSuccess(res, { channel });
   } catch (error) {
     console.error('Error fetching channel by id:', error);
-    return sendError(res);
+    return sendError(res,error.message, error.status || 500);
   }
 }
 
@@ -21,6 +21,6 @@ export async function getChannelVideos(req, res) {
     return sendSuccess(res,  result );
   } catch (error) {
     console.error('Error fetching channel videos:', error);
-    return sendError(res);
+    return sendError(res,error.message, error.status || 500);
   }
 }

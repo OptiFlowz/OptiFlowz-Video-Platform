@@ -8,44 +8,44 @@ const postCommentSchema = z.object({
     content: z.string().trim().min(1).max(500),
 }).strict();
 
-export async function postComment(req , res){
-    try {
-        const user_id = req.user?.sub || null;
-        const parsed = postCommentSchema.safeParse(req.body);
+// export async function postComment(req , res){
+//     try {
+//         const user_id = req.user?.sub || null;
+//         const parsed = postCommentSchema.safeParse(req.body);
 
-        if(!parsed.success){
-            return res.status(400).json({message: "Invalid input", errors: parsed.error.flatten()});
-        }
+//         if(!parsed.success){
+//             return res.status(400).json({message: "Invalid input", errors: parsed.error.flatten()});
+//         }
 
-        const {video_id, parent_id=null,content} = parsed.data;
+//         const {video_id, parent_id=null,content} = parsed.data;
 
-        const videoCheck = await writePool.query("SELECT id FROM public.videos WHERE id = $1 LIMIT 1",[video_id]);
-        if(videoCheck.rowCount === 0){
-            return res.status(404).json({message: "Video not found"});
-        }
+//         const videoCheck = await writePool.query("SELECT id FROM public.videos WHERE id = $1 LIMIT 1",[video_id]);
+//         if(videoCheck.rowCount === 0){
+//             return res.status(404).json({message: "Video not found"});
+//         }
 
-        if(parent_id){
-            const parentCheck = await writePool.query("SELECT id,video_id FROM public.video_comments WHERE id = $1 AND video_id = $2 LIMIT 1",[parent_id,video_id])
-            if(parentCheck.rowCount === 0){
-                return res.status(404).json({message: "Parent comment not found"});
-            }
-        }
+//         if(parent_id){
+//             const parentCheck = await writePool.query("SELECT id,video_id FROM public.video_comments WHERE id = $1 AND video_id = $2 LIMIT 1",[parent_id,video_id])
+//             if(parentCheck.rowCount === 0){
+//                 return res.status(404).json({message: "Parent comment not found"});
+//             }
+//         }
 
-        const insertRes = await writePool.query(
-            `
-                INSERT INTO public.video_comments (video_id, user_id, parent_id, content)
-                VALUES ($1,$2,$3,$4)
-                RETURNING id, video_id, user_id, parent_id, content, like_count, dislike_count, reply_count, created_at, updated_at
-            `,
-            [video_id,user_id,parent_id,content]
-        );
+//         const insertRes = await writePool.query(
+//             `
+//                 INSERT INTO public.video_comments (video_id, user_id, parent_id, content)
+//                 VALUES ($1,$2,$3,$4)
+//                 RETURNING id, video_id, user_id, parent_id, content, like_count, dislike_count, reply_count, created_at, updated_at
+//             `,
+//             [video_id,user_id,parent_id,content]
+//         );
 
-        return res.status(201).json({success: true, comment: insertRes.rows[0]});
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({message: "Internal server error"});
-    }
-}
+//         return res.status(201).json({success: true, comment: insertRes.rows[0]});
+//     } catch (error) {
+//         console.log(error);
+//         return res.status(500).json({message: "Internal server error"});
+//     }
+// }
 
 export async function getReplies(req, res) {
     try {
