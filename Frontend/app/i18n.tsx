@@ -361,6 +361,7 @@ const localeOverrides: Record<Locale, Partial<TranslationMap>> = {
     viewsLabel: (params?: Params) => `${getParam(params, "count")} visualizaciones`,
     oneView: "1 visualizacion",
     pluralViews: (params?: Params) => `${getParam(params, "count")} visualizaciones`,
+    videosTab: "Videos",
     noVideosInPlaylist: "No hay videos en esta lista.",
     searchResultsFor: (params?: Params) => `Resultados de busqueda para "${getParam(params, "value")}"`,
     categoryResultsFor: (params?: Params) => `Categoria: ${getParam(params, "value")}`,
@@ -537,6 +538,7 @@ const localeOverrides: Record<Locale, Partial<TranslationMap>> = {
     oneView: "1 visualizzazione",
     pluralViews: (params?: Params) => `${getParam(params, "count")} visualizzazioni`,
     videosLabel: (params?: Params) => `${getParam(params, "count")} video`,
+    videosTab: "Video",
     noVideosInPlaylist: "Non ci sono video in questa playlist.",
     contributorsTab: "Contributori",
     noResultsTitle: "Nessun risultato trovato",
@@ -715,6 +717,7 @@ const localeOverrides: Record<Locale, Partial<TranslationMap>> = {
     pluralViews: (params?: Params) => `${getParam(params, "count")} pregleda`,
     viewsLabel: (params?: Params) => `${getParam(params, "count")} pregleda`,
     videosLabel: (params?: Params) => `${getParam(params, "count")} video snimaka`,
+    videosTab: "Video snimci",
     noVideosInPlaylist: "Nema videa u ovoj plejlisti.",
     noResultsTitle: "Nema rezultata",
     support: "Podrška",
@@ -899,6 +902,7 @@ const localeOverrides: Record<Locale, Partial<TranslationMap>> = {
     oneView: "1 vue",
     pluralViews: (params?: Params) => `${getParam(params, "count")} vues`,
     videosLabel: (params?: Params) => `${getParam(params, "count")} videos`,
+    videosTab: "Videos",
     noVideosInPlaylist: "Il n'y a pas de videos dans cette playlist.",
     searchResultsFor: (params?: Params) => `Resultats de recherche pour "${getParam(params, "value")}"`,
     categoryResultsFor: (params?: Params) => `Categorie : ${getParam(params, "value")}`,
@@ -1073,6 +1077,7 @@ const localeOverrides: Record<Locale, Partial<TranslationMap>> = {
     oneView: "1 Aufruf",
     pluralViews: (params?: Params) => `${getParam(params, "count")} Aufrufe`,
     videosLabel: (params?: Params) => `${getParam(params, "count")} Videos`,
+    videosTab: "Videos",
     noVideosInPlaylist: "Es gibt keine Videos in dieser Playlist.",
     noResultsTitle: "Keine Ergebnisse gefunden",
     noResultsText: "Versuchen Sie, Ihre Suche anzupassen oder andere Kategorien zu durchsuchen",
@@ -1240,6 +1245,7 @@ const localeOverrides: Record<Locale, Partial<TranslationMap>> = {
     oneView: "1 visualizacao",
     pluralViews: (params?: Params) => `${getParam(params, "count")} visualizacoes`,
     videosLabel: (params?: Params) => `${getParam(params, "count")} videos`,
+    videosTab: "Videos",
     noVideosInPlaylist: "Nao ha videos nesta playlist.",
     support: "Suporte",
     rememberMe: "Lembrar-me",
@@ -1414,6 +1420,7 @@ const localeOverrides: Record<Locale, Partial<TranslationMap>> = {
     oneView: "1 weergave",
     pluralViews: (params?: Params) => `${getParam(params, "count")} weergaven`,
     videosLabel: (params?: Params) => `${getParam(params, "count")} video's`,
+    videosTab: "Video's",
     noVideosInPlaylist: "Er zijn geen video's in deze playlist.",
     noResultsTitle: "Geen resultaten gevonden",
     rememberMe: "Onthoud mij",
@@ -1738,6 +1745,7 @@ const localeOverrides: Record<Locale, Partial<TranslationMap>> = {
     pluralViews: (params?: Params) => `${getParam(params, "count")} wyswietlen`,
     viewsLabel: (params?: Params) => `${getParam(params, "count")} wyswietlen`,
     videosLabel: (params?: Params) => `${getParam(params, "count")} filmow`,
+    videosTab: "Filmy",
     noVideosInPlaylist: "W tej playliscie nie ma filmow.",
     contributorsTab: "Wspoltworcy",
     support: "Wsparcie",
@@ -1870,5 +1878,4 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 export function useI18n() {
   return useContext(I18nContext);
 }
-
 

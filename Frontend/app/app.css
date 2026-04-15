@@ -6873,6 +6873,34 @@ main.playlist .buttonHolder button:hover {
   filter: brightness(0.85);
 }
 
+main.playlist .channelVideosHeader {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.85rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+main.playlist .channelVideosHeader select {
+  min-width: 210px;
+  width: auto;
+  padding: 0.65rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid var(--border1);
+  background: var(--background2);
+  color: var(--text1);
+  outline: none;
+}
+
+main.playlist .channelVideosTitle {
+  margin: 0;
+  color: var(--text1);
+  font-size: 1.45rem;
+  line-height: normal;
+  font-weight: 600;
+}
+
 main.playlist .videoHolder {
   width: 100%;
   display: grid;
@@ -7204,6 +7232,15 @@ main.playlist .videoHolder .playlistOrderNumber {
   }
   main.playlist div:nth-child(1) {
     flex-direction: column;
+  }
+  main.playlist .channelVideosTitle {
+    margin: 0;
+    font-size: 1.25rem;
+    line-height: 1.2rem;
+  }
+  main.playlist .channelVideosHeader select {
+    min-width: 0;
+    width: 100%;
   }
 }
 

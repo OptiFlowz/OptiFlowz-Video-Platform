@@ -10,6 +10,21 @@ import type { ChannelT, ChannelVideosT, FetchChannelT, VideoT } from "~/types";
 import Item from "../itemSlider/item";
 import DefaultProfile from "../../../assets/DefaultProfile.webp";
 
+type ChannelSortBy = "view_count" | "created_at" | "title";
+type ChannelSortOrder = "asc" | "desc";
+
+const CHANNEL_SORT_OPTIONS: Array<{
+    value: `${ChannelSortBy}:${ChannelSortOrder}`;
+    label: string;
+}> = [
+    { value: "view_count:asc", label: "Views: Low to High" },
+    { value: "view_count:desc", label: "Views: High to Low" },
+    { value: "created_at:desc", label: "Date: Newest First" },
+    { value: "created_at:asc", label: "Date: Oldest First" },
+    { value: "title:asc", label: "Title: A to Z" },
+    { value: "title:desc", label: "Title: Z to A" },
+];
+
 const SkeletonVideoItem = () => (
     <div className="skeleton-item">
         <div className="skeleton-thumbnail"></div>
@@ -43,6 +58,8 @@ function ChannelPage() {
     const { id: channelId } = useParams();
     const [descOpen, setDescOpen] = useState(false);
     const [hasDescriptionOverflow, setHasDescriptionOverflow] = useState(false);
+    const [sortBy, setSortBy] = useState<ChannelSortBy>("created_at");
+    const [sortOrder, setSortOrder] = useState<ChannelSortOrder>("desc");
     const descriptionRef = useRef<HTMLParagraphElement>(null);
     const token = getToken();
 
@@ -90,15 +107,16 @@ function ChannelPage() {
     });
 
     const { data: channelVideosData, isLoading: isLoadingVideos } = useQuery({
-        queryKey: [`channel-videos-${channelId}`, !!token],
+        queryKey: [`channel-videos-${channelId}`, !!token, sortBy, sortOrder],
         queryFn: () => fetchFn<ChannelVideosT>({
-            route: `api/channels/${channelId}/videos?sortBy=view_count&sortOrder=asc&page=1&limit=20`,
+            route: `api/channels/${channelId}/videos?sortBy=${sortBy}&sortOrder=${sortOrder}&page=1&limit=20`,
             options: {
                 method: "GET",
                 headers
             }
         }),
-        enabled: !!channelId
+        enabled: !!channelId,
+        placeholderData: (previousData) => previousData
     });
 
     const channel = channelData?.channel as ChannelT | undefined;
@@ -134,15 +152,21 @@ function ChannelPage() {
         };
     }, [channel?.description, descOpen]);
 
-    const videoArray = normalizedVideos.map((video, index) => (
-        <Item key={video.id} props={video as VideoT} playlistIndex={index + 1} />
+    const videoArray = normalizedVideos.map((video) => (
+        <Item key={video.id} props={video as VideoT} />
     ));
 
     const skeletonVideoArray = Array.from({ length: 8 }).map((_, index) => (
         <SkeletonVideoItem key={`channel-skeleton-video-${index}`} />
     ));
 
-    if (isLoadingChannel || isLoadingVideos) {
+    const handleSortChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const [nextSortBy, nextSortOrder] = event.target.value.split(":") as [ChannelSortBy, ChannelSortOrder];
+        setSortBy(nextSortBy);
+        setSortOrder(nextSortOrder);
+    };
+
+    if ((isLoadingChannel && !channelData) || (isLoadingVideos && !channelVideosData)) {
         return (
             <main className="playlist">
                 <SkeletonHeader />
@@ -184,6 +208,22 @@ function ChannelPage() {
                         </button>
                     )}
                 </span>
+            </div>
+
+            <div className="channelVideosHeader">
+                <h3 className="channelVideosTitle">{t("videosTab")}</h3>
+                <select
+                    aria-label="Sort videos"
+                    id="channel-sort-select"
+                    value={`${sortBy}:${sortOrder}`}
+                    onChange={handleSortChange}
+                >
+                    {CHANNEL_SORT_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                            {option.label}
+                        </option>
+                    ))}
+                </select>
             </div>
 
             <div className="videoHolder">{videoArray}</div>
