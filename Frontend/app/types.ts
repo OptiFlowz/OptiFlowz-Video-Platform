@@ -328,11 +328,19 @@ export type FetchCommentRepliesT = {
     success: boolean,
     parent_id: string,
     video_id: string,
-    page: number,
-    limit: number,
-    total: number,
-    total_pages: number,
-    replies: VideoCommentT[]
+    replies: VideoCommentT[],
+    pagination: {
+        page: number,
+        limit: number,
+        total: number,
+        totalPages: number,
+        hasNextPage: boolean,
+        hasPreviousPage: boolean
+    },
+    sorting: {
+        sortBy: string,
+        sortOrder: "asc" | "desc"
+    }
 }
 
 export type PostCommentResponseT = {

@@ -55,7 +55,7 @@ export async function fetchAllReplies(parentId: string, headers: Headers): Promi
     },
   });
 
-  const totalPages = Math.max(firstPage.total_pages ?? 1, 1);
+  const totalPages = Math.max(firstPage.pagination?.totalPages ?? 1, 1);
 
   if (totalPages === 1) {
     return firstPage;
@@ -119,10 +119,18 @@ export async function fetchReplyThread(rootParentId: string, headers: Headers): 
     success: true,
     parent_id: rootParentId,
     video_id: videoId,
-    page: 1,
-    limit: 100,
-    total: repliesMap.size,
-    total_pages: 1,
     replies: Array.from(repliesMap.values()),
+    pagination: {
+      page: 1,
+      limit: 100,
+      total: repliesMap.size,
+      totalPages: 1,
+      hasNextPage: false,
+      hasPreviousPage: false,
+    },
+    sorting: {
+      sortBy: "created_at",
+      sortOrder: "asc" as const,
+    },
   };
 }

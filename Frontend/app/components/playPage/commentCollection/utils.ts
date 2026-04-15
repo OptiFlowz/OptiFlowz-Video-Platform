@@ -135,11 +135,19 @@ export function appendReplyToCache(current: FetchCommentRepliesT | undefined, re
       success: true,
       parent_id: reply.parent_id ?? "",
       video_id: reply.video_id,
-      page: 1,
-      limit: 100,
-      total: 1,
-      total_pages: 1,
       replies: [reply],
+      pagination: {
+        page: 1,
+        limit: 100,
+        total: 1,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      },
+      sorting: {
+        sortBy: "created_at",
+        sortOrder: "asc" as const,
+      },
     };
   }
 
@@ -149,8 +157,12 @@ export function appendReplyToCache(current: FetchCommentRepliesT | undefined, re
 
   return {
     ...current,
-    total: Math.max(current.total, replies.length),
-    total_pages: Math.max(current.total_pages, 1),
+    pagination: {
+      ...current.pagination,
+      total: Math.max(current.pagination.total, replies.length),
+      totalPages: Math.max(current.pagination.totalPages, 1),
+      hasNextPage: false,
+    },
     replies,
   };
 }
@@ -310,7 +322,10 @@ export function removeCommentFromRepliesCache(
 
   return {
     ...current,
-    total: Math.max(current.total - deletedIds.size, 0),
+    pagination: {
+      ...current.pagination,
+      total: Math.max(current.pagination.total - deletedIds.size, 0),
+    },
     replies: current.replies.filter((reply) => !deletedIds.has(reply.id)),
   };
 }
