@@ -172,8 +172,8 @@ header .darkSVG svg path {
   stroke: white;
 }
 
-header .accountImg {
-  border-color: rgba(255, 255, 255, 0.28);
+header a .accountImg {
+  border: 2px solid var(--accentBlue2);
 }
 
 main .hero {
@@ -695,10 +695,6 @@ nav a.active {
 }
 header nav a:hover{
   color: var(--accentOrange);
-}
-
-header .accountImg{
-  border: 2px solid var(--accentBlue2);
 }
 
 .mobileMenuBg{
@@ -8593,4 +8589,77 @@ footer > span.footerCopyright {
     /* text-align: center; */
   }
   /* END UPLOAD PAGE */
+}
+
+@media screen and (max-width: 640px) {
+  main.homePage {
+    padding-top: 82px !important;
+  }
+
+  main.homePage .hero {
+    min-height: unset !important;
+    max-height: none !important;
+    height: auto !important;
+  }
+
+  main.homePage .hero .image-grid,
+  main.homePage .sliderHolder {
+    min-height: 100% !important;
+    height: 100% !important;
+  }
+
+  main.homePage .hero .titles {
+    position: relative !important;
+    inset: auto !important;
+    z-index: 2 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: flex-start !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 0 !important;
+    padding: 1rem 1rem 1.25rem !important;
+  }
+
+  .heroEyebrow {
+    margin-bottom: 0.5rem !important;
+  }
+
+  .heroHeadline {
+    font-size: clamp(2rem, 9vw, 2.55rem) !important;
+    max-width: min(100%, 12rem) !important;
+  }
+
+  main.homePage .paragraphHolder {
+    margin-top: 0.85rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-right: 0 !important;
+    border-radius: 16px !important;
+  }
+
+  main.homePage .paragraphHolder .paragraph,
+  main.homePage .paragraphHolder p {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 14px 16px !important;
+    border-radius: 16px !important;
+    margin-top: 0 !important;
+  }
+
+  main.homePage .hero::before {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(8, 13, 24, 0.9) 0%,
+        rgba(8, 13, 24, 0.72) 38%,
+        rgba(8, 13, 24, 0.36) 72%,
+        rgba(8, 13, 24, 0.12) 100%
+      ) !important;
+  }
+
+  main.homePage .hero .image-grid img {
+    object-position: center top !important;
+  }
 }
