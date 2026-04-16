@@ -347,7 +347,13 @@ export function buildRepliesTree(
     const roots: CommentTreeNode[] = [];
 
     for (const reply of replies) {
-      nodes.set(reply.id, { ...reply, children: [] });
+      nodes.set(reply.id, {
+        ...reply,
+        depth: 1,
+        replyTargetId: reply.parent_id === parent.id ? parent.id : reply.parent_id,
+        replyTargetAuthorName: reply.parent_id === parent.id ? parent.author_full_name : null,
+        children: [],
+      });
     }
 
     for (const reply of replies) {
@@ -361,6 +367,9 @@ export function buildRepliesTree(
 
       const parentNode = reply.parent_id ? nodes.get(reply.parent_id) : null;
       if (parentNode) {
+        node.depth = parentNode.depth + 1;
+        node.replyTargetId = parentNode.id;
+        node.replyTargetAuthorName = parentNode.author_full_name;
         parentNode.children.push(node);
       } else {
         roots.push(node);

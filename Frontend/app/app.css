@@ -2415,12 +2415,13 @@ mux-player::part(menu-item) {
 .commentContent{
   /* padding: 4px; */
   padding-right: 8px;
-  width: fit-content;
+  width: 100%;
   background-color: transparent;
   transition: background-color .2s ease;
   border-radius: 24px;
+  scroll-margin-top: 110px;
 }
-/* .commentContent.focusedComment{
+.commentContent.focusedComment{
   animation: commentFocusPulse 1s ease;
 }
 @keyframes commentFocusPulse {
@@ -2439,7 +2440,7 @@ mux-player::part(menu-item) {
   100% {
     background-color: transparent;
   }
-} */
+}
 
 .comment-actions button, .reply{
   background-color: var(--background2);
@@ -2558,8 +2559,39 @@ mux-player::part(menu-item) {
   will-change: transform;
 }
 
+.comment-replies-panel-flat{
+  margin-left: 0;
+  padding-left: 0;
+}
+
 .comment-replies-shell.open .comment-replies-panel{
   transform: translateY(0) scale(1);
+}
+
+.comment-thread-flat-node{
+  padding-left: 0;
+}
+
+.comment-reference-tag{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accentBlue) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accentBlue) 38%, transparent);
+  color: var(--text1);
+  font-size: 0.8rem;
+  line-height: 1.2;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color .2s ease, border-color .2s ease;
+}
+
+.comment-reference-tag:hover{
+  background: color-mix(in srgb, var(--accentBlue) 25%, transparent);
+  border-color: color-mix(in srgb, var(--accentBlue) 50%, transparent);
 }
 
 .mobile-thread-view{

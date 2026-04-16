@@ -4,6 +4,8 @@ import type { VideoCommentT } from "~/types";
 import type { CommentTreeNode } from "./types";
 import CommentRow from "./commentRow";
 
+const MAX_DESKTOP_THREAD_DEPTH = 3;
+
 type SharedThreadProps = {
   editingCommentId: string | null;
   editingValue: string;
@@ -13,12 +15,14 @@ type SharedThreadProps = {
   isCurrentUser: (comment: VideoCommentT) => boolean;
   canDelete: (comment: VideoCommentT) => boolean;
   onReply: (comment: VideoCommentT, scrollBackTo: HTMLButtonElement) => void;
+  onNavigateToComment: (commentId: string) => void;
   onReact: (comment: VideoCommentT, reaction: "like" | "dislike") => void;
   onEditStart: (comment: VideoCommentT) => void;
   onEditChange: (value: string) => void;
   onEditCancel: () => void;
   onEditConfirm: (comment: VideoCommentT) => void;
   onDelete: (comment: VideoCommentT) => void;
+  focusedCommentId: string | null;
 };
 
 type NestedReplyTreeProps = Pick<
@@ -33,12 +37,14 @@ type NestedReplyTreeProps = Pick<
   | "isCurrentUser"
   | "canDelete"
   | "onReply"
+  | "onNavigateToComment"
   | "onReact"
   | "onEditStart"
   | "onEditChange"
   | "onEditCancel"
   | "onEditConfirm"
   | "onDelete"
+  | "focusedCommentId"
 > & {
   nodes: CommentTreeNode[];
 };
@@ -66,12 +72,14 @@ function NestedReplyTree({
   isCurrentUser,
   canDelete,
   onReply,
+  onNavigateToComment,
   onReact,
   onEditStart,
   onEditChange,
   onEditCancel,
   onEditConfirm,
   onDelete,
+  focusedCommentId,
 }: NestedReplyTreeProps) {
   const { t } = useI18n();
 
@@ -80,16 +88,19 @@ function NestedReplyTree({
       {nodes.map((reply) => {
         const hasChildren = reply.children.length > 0;
         const isOpen = !!expanded[reply.id];
+        const isFlattenedDepth = reply.depth > MAX_DESKTOP_THREAD_DEPTH;
+        const childPanelFlattened = reply.depth >= MAX_DESKTOP_THREAD_DEPTH;
 
         return (
-          <div key={reply.id} className="relative">
-            <span className="comment-node-elbow" />
-            {hasChildren && <span className="thread-line nested"></span>}
+          <div key={reply.id} className={`relative ${isFlattenedDepth ? "comment-thread-flat-node" : ""}`}>
+            {!isFlattenedDepth && <span className="comment-node-elbow" />}
+            {hasChildren && !isFlattenedDepth && <span className="thread-line nested"></span>}
 
             <CommentRow
               comment={reply}
               isCurrentUser={isCurrentUser(reply)}
               onReply={onReply}
+              onNavigateToComment={isFlattenedDepth ? onNavigateToComment : undefined}
               onReact={onReact}
               isReactionPending={isReactionPending}
               isEditing={editingCommentId === reply.id}
@@ -102,6 +113,9 @@ function NestedReplyTree({
               isEditPending={isEditPending(reply.id)}
               isDeletePending={isDeletePending(reply.id)}
               canDelete={canDelete(reply)}
+              replyTargetId={isFlattenedDepth ? reply.replyTargetId : null}
+              replyTargetAuthorName={isFlattenedDepth ? reply.replyTargetAuthorName : null}
+              isHighlighted={focusedCommentId === reply.id}
             />
 
             {hasChildren && (
@@ -120,7 +134,9 @@ function NestedReplyTree({
             {hasChildren && (
               <div className={`comment-replies-shell ${isOpen ? "open" : ""}`} aria-hidden={!isOpen}>
                 <div className="comment-replies-inner">
-                  <div className="comment-replies-panel mt-3 ml-7 pl-6">
+                  <div
+                    className={`comment-replies-panel mt-3 ${childPanelFlattened ? "comment-replies-panel-flat" : "ml-7 pl-6"}`}
+                  >
                     <div className="flex flex-col gap-5">
                       <NestedReplyTree
                         nodes={reply.children}
@@ -134,12 +150,14 @@ function NestedReplyTree({
                         isCurrentUser={isCurrentUser}
                         canDelete={canDelete}
                         onReply={onReply}
+                        onNavigateToComment={onNavigateToComment}
                         onReact={onReact}
                         onEditStart={onEditStart}
                         onEditChange={onEditChange}
                         onEditCancel={onEditCancel}
                         onEditConfirm={onEditConfirm}
                         onDelete={onDelete}
+                        focusedCommentId={focusedCommentId}
                       />
                     </div>
                   </div>
@@ -170,12 +188,14 @@ export function CommentThread({
   isCurrentUser,
   canDelete,
   onReply,
+  onNavigateToComment,
   onReact,
   onEditStart,
   onEditChange,
   onEditCancel,
   onEditConfirm,
   onDelete,
+  focusedCommentId,
 }: CommentThreadProps) {
   const { t } = useI18n();
 
@@ -200,6 +220,7 @@ export function CommentThread({
               comment={comment}
               isCurrentUser={isCurrentUser(comment)}
               onReply={onReply}
+              onNavigateToComment={onNavigateToComment}
               onReact={onReact}
               isReactionPending={isReactionPending}
               isEditing={editingCommentId === comment.id}
@@ -212,6 +233,7 @@ export function CommentThread({
               isEditPending={isEditPending(comment.id)}
               isDeletePending={isDeletePending(comment.id)}
               canDelete={canDelete(comment)}
+              isHighlighted={focusedCommentId === comment.id}
             />
 
             {totalReplies > 0 && <span className="thread-line"></span>}
@@ -249,12 +271,14 @@ export function CommentThread({
                           isCurrentUser={isCurrentUser}
                           canDelete={canDelete}
                           onReply={onReply}
+                          onNavigateToComment={onNavigateToComment}
                           onReact={onReact}
                           onEditStart={onEditStart}
                           onEditChange={onEditChange}
                           onEditCancel={onEditCancel}
                           onEditConfirm={onEditConfirm}
                           onDelete={onDelete}
+                          focusedCommentId={focusedCommentId}
                         />
                       </div>
                     ) : (
@@ -299,12 +323,14 @@ export function MobileCommentThreadView({
   isCurrentUser,
   canDelete,
   onReply,
+  onNavigateToComment,
   onReact,
   onEditStart,
   onEditChange,
   onEditCancel,
   onEditConfirm,
   onDelete,
+  focusedCommentId,
 }: MobileCommentThreadViewProps) {
   const { t } = useI18n();
 
@@ -339,6 +365,7 @@ export function MobileCommentThreadView({
             isEditPending={isEditPending(mobileThreadComment.id)}
             isDeletePending={isDeletePending(mobileThreadComment.id)}
             canDelete={canDelete(mobileThreadComment)}
+            isHighlighted={focusedCommentId === mobileThreadComment.id}
           />
           {mobileThreadReplies.length > 0 && <span className="thread-line mobile-thread-parent-line"></span>}
         </div>
@@ -371,6 +398,7 @@ export function MobileCommentThreadView({
                     isEditPending={isEditPending(reply.id)}
                     isDeletePending={isDeletePending(reply.id)}
                     canDelete={canDelete(reply)}
+                    isHighlighted={focusedCommentId === reply.id}
                   />
 
                   {hasChildren && (

@@ -42,6 +42,7 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
   const { t } = useI18n();
   const queryClient = useQueryClient();
   const taRef = useRef<HTMLTextAreaElement | null>(null);
+  const focusResetTimeoutRef = useRef<number | null>(null);
   const userProfileImage = getUserImageUrl() || DefaultProfile;
   const token = getToken() ?? "";
   const storedUser = getStoredUser();
@@ -52,6 +53,7 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
   const [value, setValue] = useState("");
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [replyingTo, setReplyingTo] = useState<VideoCommentT | null>(null);
+  const [focusedCommentId, setFocusedCommentId] = useState<string | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(variant !== "drawer");
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState("");
@@ -287,6 +289,57 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
     setExpanded((prev) => ({ ...prev, [parentId]: !prev[parentId] }));
   };
 
+  const highlightComment = (commentId: string) => {
+    setFocusedCommentId(commentId);
+
+    if (focusResetTimeoutRef.current) {
+      window.clearTimeout(focusResetTimeoutRef.current);
+    }
+
+    focusResetTimeoutRef.current = window.setTimeout(() => {
+      setFocusedCommentId((current) => (current === commentId ? null : current));
+    }, 1800);
+  };
+
+  const scrollToComment = (commentId: string) => {
+    const target = document.querySelector(`[data-comment-id="${commentId}"]`) as HTMLElement | null;
+    if (!target) return false;
+
+    const header = document.querySelector("header");
+    const headerHeight = header instanceof HTMLElement ? header.getBoundingClientRect().height : 0;
+    const absoluteTop = window.scrollY + target.getBoundingClientRect().top;
+
+    window.scrollTo({
+      top: Math.max(absoluteTop - headerHeight - 24, 0),
+      behavior: "smooth",
+    });
+
+    highlightComment(commentId);
+    return true;
+  };
+
+  const navigateToComment = (commentId: string) => {
+    const chain = getAncestorChain(commentId, hydratedCommentsMap);
+    if (chain.length > 1) {
+      setExpanded((prev) => ({
+        ...prev,
+        ...Object.fromEntries(chain.slice(0, -1).map((id) => [id, true])),
+      }));
+    }
+
+    let attempts = 0;
+    const tryScroll = () => {
+      if (scrollToComment(commentId)) return;
+      if (attempts >= 8) return;
+      attempts += 1;
+      window.setTimeout(tryScroll, 90);
+    };
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(tryScroll);
+    });
+  };
+
   //ENABLE TRACING BACK TO COMMENT
   const [scrollBackTo, setScrollBackTo] = useState<HTMLButtonElement | null>(null);
   const onReply = (comment: VideoCommentT, scrollBackTo: HTMLButtonElement) => {
@@ -341,6 +394,14 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
       autoResize();
     });
   };
+
+  useEffect(() => {
+    return () => {
+      if (focusResetTimeoutRef.current) {
+        window.clearTimeout(focusResetTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const onReact = (comment: VideoCommentT, reaction: "like" | "dislike") => {
     if (reactionMutation.isPending) return;
@@ -486,12 +547,14 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
             isCurrentUser={isCurrentUser}
             canDelete={canDelete}
             onReply={onReply}
+            onNavigateToComment={navigateToComment}
             onReact={onReact}
             onEditStart={onEditStart}
             onEditChange={setEditingValue}
             onEditCancel={onEditCancel}
             onEditConfirm={onEditConfirm}
             onDelete={onDelete}
+            focusedCommentId={focusedCommentId}
           />
         </div>
 
@@ -512,12 +575,14 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
           isCurrentUser={isCurrentUser}
           canDelete={canDelete}
           onReply={onReply}
+          onNavigateToComment={navigateToComment}
           onReact={onReact}
           onEditStart={onEditStart}
           onEditChange={setEditingValue}
           onEditCancel={onEditCancel}
           onEditConfirm={onEditConfirm}
           onDelete={onDelete}
+          focusedCommentId={focusedCommentId}
         />
       </div>
 

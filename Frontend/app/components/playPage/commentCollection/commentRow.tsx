@@ -10,6 +10,7 @@ type CommentRowProps = {
   isCurrentUser: boolean;
   onReply: (comment: VideoCommentT, scrollBackTo: HTMLButtonElement) => void;
   onReact: (comment: VideoCommentT, reaction: "like" | "dislike") => void;
+  onNavigateToComment?: (commentId: string) => void;
   isReactionPending: boolean;
   isEditing: boolean;
   editValue: string;
@@ -21,6 +22,9 @@ type CommentRowProps = {
   isEditPending: boolean;
   isDeletePending: boolean;
   canDelete: boolean;
+  replyTargetId?: string | null;
+  replyTargetAuthorName?: string | null;
+  isHighlighted?: boolean;
 };
 
 function CommentRow({
@@ -28,6 +32,7 @@ function CommentRow({
   isCurrentUser,
   onReply,
   onReact,
+  onNavigateToComment,
   isReactionPending,
   isEditing,
   editValue,
@@ -39,6 +44,9 @@ function CommentRow({
   isEditPending,
   isDeletePending,
   canDelete,
+  replyTargetId,
+  replyTargetAuthorName,
+  isHighlighted = false,
 }: CommentRowProps) {
   const { t } = useI18n();
   const userReaction = comment.my_reaction;
@@ -73,7 +81,10 @@ function CommentRow({
   };
 
   return (
-    <div className="flex gap-3 relative min-w-0 w-fit commentContent">
+    <div
+      className={`flex gap-3 relative min-w-0 w-full commentContent ${isHighlighted ? "focusedComment" : ""}`}
+      data-comment-id={comment.id}
+    >
       <img
         src={comment.author_image_url || DefaultProfile}
         alt={comment.author_full_name}
@@ -86,6 +97,16 @@ function CommentRow({
           <span className="text-sm opacity-70">{timeAgo(comment.created_at)}</span>
           {isCurrentUser && <span className="text-xs opacity-70 -ml-0.5">({t("yourComment")})</span>}
         </div>
+
+        {replyTargetId && replyTargetAuthorName && onNavigateToComment && (
+          <button
+            type="button"
+            onClick={() => onNavigateToComment(replyTargetId)}
+            className="comment-reference-tag"
+          >
+            {t("replyingTo", { name: replyTargetAuthorName })}
+          </button>
+        )}
 
         {isEditing ? (
           <div className="mb-2">
