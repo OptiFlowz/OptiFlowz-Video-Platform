@@ -183,8 +183,6 @@ main .hero {
     linear-gradient(135deg, rgba(17, 21, 30, 0.82), rgba(10, 12, 18, 0.88));
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 34px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 32px 80px rgba(0, 0, 0, 0.38);
   color: white;
 }
