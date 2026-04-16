@@ -433,10 +433,6 @@ footer > span {
     max-width: none;
   }
 
-  .contentSection {
-    padding: 20px;
-  }
-
   footer > div {
     width: calc(100vw - 24px);
     padding: 24px;
