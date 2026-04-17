@@ -5,10 +5,12 @@ import { AnalyticsSVG, PeopleSVG, PlaylistSVG, PlaySVG } from "~/constants";
 import backgroundImage from "../../../../assets/LoginBackground.webp";
 import { memo, useRef } from "react";
 import { useConstrainedSticky } from "~/components/shared/useConstrainedSticky";
+import { useI18n } from "~/i18n";
 
 function Sidebar() {
+    const { t } = useI18n();
     const user = getStoredUser()?.user;
-    const channelName = user?.full_name?.trim() || "Your channel";
+    const channelName = user?.full_name?.trim() || t("yourChannel");
     const asideRef = useRef<HTMLElement | null>(null);
     const stickyRef = useRef<HTMLDivElement | null>(null);
     const stickyStyle = useConstrainedSticky({
@@ -29,23 +31,23 @@ function Sidebar() {
                 <section>
                     <img src={user?.image_url || DefaultProfile} alt={channelName} />
                     <div className="videoAsideIdentity">
-                        <span className="videoAsideEyebrow">Channel</span>
+                        <span className="videoAsideEyebrow">{t("channelLabel")}</span>
                         <h3>{channelName}</h3>
                         <p>{user?.email}</p>
                     </div>
                 </section>
                 <nav>
                     <NavLink to="/my-videos" end className={({ isActive }) => (isActive ? "active" : "")}>
-                        {PlaySVG}&nbsp;My videos
+                        {PlaySVG}&nbsp;{t("navMyVideos")}
                     </NavLink>
                     <NavLink to="/my-playlists" end className={({ isActive }) => (isActive ? "active" : "")}>
-                        {PlaylistSVG}&nbsp;My playlists
+                        {PlaylistSVG}&nbsp;{t("navMyPlaylists")}
                     </NavLink>
                     <NavLink to="/speakers-chairs" end className={({ isActive }) => (isActive ? "active" : "")}>
-                        {PeopleSVG}&nbsp;Speakers/Chairs
+                        {PeopleSVG}&nbsp;{t("navSpeakersChairs")}
                     </NavLink>
                     <NavLink to="/analytics" end className={({ isActive }) => (isActive ? "active" : "")}>
-                        {AnalyticsSVG}&nbsp;Analytics
+                        {AnalyticsSVG}&nbsp;{t("navAnalytics")}
                     </NavLink>
                 </nav>
             </div>

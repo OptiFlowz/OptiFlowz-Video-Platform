@@ -9,6 +9,7 @@ import { fetchFn } from "~/API";
 import { ConfirmDialog } from "../confirmPopup/confirmDialog";
 import { useConfirm } from "../confirmPopup/useConfirm";
 import { AddSVG } from "~/constants";
+import { useI18n } from "~/i18n";
 
 type SortColumn = "visibility" | "date" | "views" | "likes";
 type SortDirection = "asc" | "desc";
@@ -23,6 +24,7 @@ const SortIndicator = ({ column, sortColumn, sortDirection }: { column: SortColu
 };
 
 function MyVideos() {
+  const { t } = useI18n();
   const myHeaders = useRef(new Headers());
   const [token, setToken] = useState("");
   const [sortColumn, setSortColumn] = useState<SortColumn | null>("date");
@@ -277,7 +279,7 @@ function MyVideos() {
         <div className="holder libraryShell">
           <div className="libraryHeader">
             <div className="libraryHeading">
-              <h1>My Videos</h1>
+              <h1>{t("navMyVideos")}</h1>
               <p>Review uploads, update visibility, and keep your channel organized.</p>
             </div>
             <div className="libraryActions">
@@ -299,7 +301,7 @@ function MyVideos() {
             </div>
           </div>
           <div className="mobileTitleRow">
-            <h2 className="mobileTitle">My Videos</h2>
+            <h2 className="mobileTitle">{t("navMyVideos")}</h2>
             <button
               type="button"
               className="playlistAddBtn mobile"

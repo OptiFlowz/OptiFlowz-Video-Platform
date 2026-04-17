@@ -14,14 +14,9 @@ function HomePage(){
         <main className="homePage pb-10">
             <div className="hero">
                 <span className="titles relative">
-                    <p className="heroEyebrow">Custom Video Platform</p>
+                    <p className="heroEyebrow">{t("heroEyebrow")}</p>
                     <h2 className="heroHeadline w-fit font-bold text-white text-5xl max-[1300px]:text-[2.2rem] max-[1160px]:text-[2rem] max-[800px]:text-[2rem] max-[500px]:text-2xl">
-                        <span>Build Smarter.</span>
-                        <span>Stream Faster.</span>
-                        <span className="headlineSignatureRow">
-                            <span>Scale with</span>
-                            <span className="brandSignature">OptiFlowz</span>
-                        </span>
+                        {t("heroTitle")}
                     </h2>
 
                     <div ref={paragraphRef} className={`paragraphHolder`}>

@@ -9,6 +9,16 @@ import { formatDate, formatDescription, formatViews, getToken } from "~/function
 import DefaultProfile from "../../../assets/DefaultProfile.webp";
 import { useI18n } from "~/i18n";
 
+const decodeSearchValue = (value?: string | null) => {
+  if (!value) return "";
+
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+};
+
 const SkeletonSearchItem = () => (
   <div className="skeleton-search-item">
     <div className="skeleton-search-thumbnail"></div>
@@ -81,7 +91,7 @@ function SearchPage() {
 
   const q = useMemo(() => {
     const fallback = searchValue || categoryTitle || tagId || personName || "";
-    return decodeURIComponent(fallback);
+    return decodeSearchValue(fallback);
   }, [searchValue, categoryTitle, tagId, personName]);
 
   const videosEnabled = !!token && (!!searchValue || !!categoryId || !!tagId || !!personId);
@@ -191,13 +201,13 @@ function SearchPage() {
       <div className="heading hero">
         {searchValue && !categoryId && (
           <h2 className="font-light text-3xl">
-            {t("searchResultsFor", { value: searchValue || "" })}
+            {t("searchResultsFor", { value: q })}
           </h2>
         )}
 
         {categoryId && categoryTitle && (
           <h2 className="font-light text-3xl">
-            {t("categoryResultsFor", { value: decodeURIComponent(categoryTitle) })}
+            {t("categoryResultsFor", { value: decodeSearchValue(categoryTitle) })}
           </h2>
         )}
 
@@ -209,7 +219,7 @@ function SearchPage() {
 
         {personName && (
           <h2 className="font-light text-3xl">
-            {t("personResultsFor", { value: decodeURIComponent(personName) })}
+            {t("personResultsFor", { value: decodeSearchValue(personName) })}
           </h2>
         )}
 
@@ -349,5 +359,4 @@ function SearchPage() {
 }
 
 export default SearchPage;
-
 

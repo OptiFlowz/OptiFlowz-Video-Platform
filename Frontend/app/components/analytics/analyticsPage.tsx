@@ -3,11 +3,13 @@ import Sidebar from "../myVideosPage/sidebar/sidebar";
 import PageLoader from "../loaders/pageLoader";
 import { env } from "~/env";
 import { getToken } from "~/functions";
+import { useI18n } from "~/i18n";
 
 type AnalyticsRange = "last30" | "last90" | "last365" | "all" | "custom";
 type AnalyticsGroupBy = "day" | "week" | "month";
 
 function Analytics() {
+  const { t } = useI18n();
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [range, setRange] = useState<AnalyticsRange>("last30");
   const [groupBy, setGroupBy] = useState<AnalyticsGroupBy>("day");
@@ -129,12 +131,12 @@ function Analytics() {
         <div className="holder libraryShell">
           <div className="libraryHeader">
             <div className="libraryHeading">
-              <h1>Analytics</h1>
+              <h1>{t("navAnalytics")}</h1>
               <p>Generate your video analytics PDF report.</p>
             </div>
           </div>
 
-          <h2 className="mobileTitle">Analytics</h2>
+          <h2 className="mobileTitle">{t("navAnalytics")}</h2>
 
           <section className="analyticsSimple">
             <div className="analyticsSimpleRow">

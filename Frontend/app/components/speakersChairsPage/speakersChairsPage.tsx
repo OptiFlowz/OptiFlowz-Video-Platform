@@ -5,6 +5,7 @@ import DefaultProfile from "../../../assets/DefaultProfile.webp";
 import { AddSVG, EditSVG, FilterSVG } from "~/constants";
 import Sidebar from "../myVideosPage/sidebar/sidebar";
 import CreatePersonPopup, { type CreatePersonPayload } from "./createPersonPopup";
+import { useI18n } from "~/i18n";
 
 type PersonRecord = {
   id: string;
@@ -50,6 +51,7 @@ const initialPeople: PersonRecord[] = [
 ];
 
 function SpeakersChairsPage() {
+  const { t } = useI18n();
   const [people, setPeople] = useState<PersonRecord[]>(initialPeople);
   const [search, setSearch] = useState("");
   const [isCreatePopupOpen, setIsCreatePopupOpen] = useState(false);
@@ -143,7 +145,7 @@ function SpeakersChairsPage() {
         <div className="holder libraryShell">
           <div className="libraryHeader">
             <div className="libraryHeading">
-              <h1>Persons</h1>
+              <h1>{t("navSpeakersChairs")}</h1>
               <p>
                 Manage the shared person records used across videos. Speaker or chair assignment will be handled later on the video itself.
               </p>
@@ -155,14 +157,14 @@ function SpeakersChairsPage() {
                   type="text"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Filter people"
+                  placeholder={t("searchPlaceholder")}
                 />
               </div>
               <button
                 type="button"
                 className="playlistAddBtn"
-                title="Add person"
-                aria-label="Add person"
+                title={t("navSpeakersChairs")}
+                aria-label={t("navSpeakersChairs")}
                 onClick={() => setIsCreatePopupOpen(true)}
               >
                 {AddSVG}
@@ -171,12 +173,12 @@ function SpeakersChairsPage() {
           </div>
 
           <div className="mobileTitleRow">
-            <h2 className="mobileTitle">Persons</h2>
+            <h2 className="mobileTitle">{t("navSpeakersChairs")}</h2>
             <button
               type="button"
               className="playlistAddBtn mobile"
-              title="Add person"
-              aria-label="Add person"
+              title={t("navSpeakersChairs")}
+              aria-label={t("navSpeakersChairs")}
               onClick={() => setIsCreatePopupOpen(true)}
             >
               {AddSVG}

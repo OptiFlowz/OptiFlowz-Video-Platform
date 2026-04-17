@@ -9,6 +9,7 @@ import PlaylistRow from "./playlistRow/playlistRow";
 import { ConfirmDialog } from "../confirmPopup/confirmDialog";
 import { useConfirm } from "../confirmPopup/useConfirm";
 import CreatePlaylistPopup from "./createPlaylistPopup";
+import { useI18n } from "~/i18n";
 
 type SortColumn = "created_at" | "view_count" | "save_count";
 type SortDirection = "asc" | "desc";
@@ -23,6 +24,7 @@ const SortIndicator = ({ column, sortColumn, sortDirection }: { column: SortColu
 };
 
 function MyPlaylistsPage() {
+  const { t } = useI18n();
   const myHeaders = useRef(new Headers());
   const [token, setToken] = useState("");
   const [sortColumn, setSortColumn] = useState<SortColumn | null>("created_at");
@@ -333,7 +335,7 @@ function MyPlaylistsPage() {
         <div className="holder libraryShell">
           <div className="libraryHeader">
             <div className="libraryHeading">
-              <h1>My Playlists</h1>
+              <h1>{t("navMyPlaylists")}</h1>
               <p>Group sessions into curated sets and manage playlist visibility from one place.</p>
             </div>
             <div className="libraryActions">
@@ -353,7 +355,7 @@ function MyPlaylistsPage() {
             </div>
           </div>
           <div className="mobileTitleRow">
-            <h2 className="mobileTitle">My Playlists</h2>
+            <h2 className="mobileTitle">{t("navMyPlaylists")}</h2>
             <button
               type="button"
               className="playlistAddBtn mobile"

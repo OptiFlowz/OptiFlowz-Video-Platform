@@ -244,7 +244,7 @@ function Header(){
                                         role="menuitem"
                                         onClick={() => setAccountMenuOpen(false)}
                                     >
-                                        Account
+                                        {t("footerAccount")}
                                     </Link>
                                     {isAdmin ? (
                                         <Link
@@ -252,7 +252,7 @@ function Header(){
                                             role="menuitem"
                                             onClick={() => setAccountMenuOpen(false)}
                                         >
-                                            My channel
+                                            {t("channelLabel")}
                                         </Link>
                                     ) : null}
                                     {isAdmin ? (
@@ -261,7 +261,7 @@ function Header(){
                                             role="menuitem"
                                             onClick={() => setAccountMenuOpen(false)}
                                         >
-                                            Analytics
+                                            {t("navAnalytics")}
                                         </Link>
                                     ) : null}
                                     <button
@@ -269,7 +269,7 @@ function Header(){
                                         role="menuitem"
                                         onClick={handleLogout}
                                     >
-                                        Log out
+                                        {t("accountLogout")}
                                     </button>
                                 </div>
                             ) : null}
@@ -378,7 +378,7 @@ function Header(){
                             closeMobileMenu();
                         }}
                     >
-                        Speakers/Chairs
+                        {t("navSpeakersChairs")}
                     </NavLink>
                     : ""}
                     {isAdmin ? 
@@ -390,7 +390,7 @@ function Header(){
                             closeMobileMenu();
                         }}
                     >
-                        Analytics
+                        {t("navAnalytics")}
                     </NavLink>
                     : ""}
                     <NavLink 
