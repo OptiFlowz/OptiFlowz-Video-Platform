@@ -2885,9 +2885,11 @@ main.account .info .profilePhoto {
 }
 
 main.account .info .userInfo {
-  background-color: var(--background2);
+  background-color: var(--background3);
+  --webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   padding: 16px 20px;
-  border-radius: 24px;
+  border-radius: 20px;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
