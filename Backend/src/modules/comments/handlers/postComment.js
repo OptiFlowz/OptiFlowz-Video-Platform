@@ -1,6 +1,7 @@
 import { writePool } from '../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
+import { moderateText } from '../../../common/moderateText.js';
 
 function prerequisites(object, userId) {
   const schema = z.object({
@@ -12,6 +13,15 @@ function prerequisites(object, userId) {
   if (!userId) {
     const error = new Error('Unauthorized');
     error.status = 401;
+    throw error;
+  }
+
+  const textModeration = moderateText(object.content)
+
+  if(!textModeration.allowed)
+  {
+    const error = new Error(textModeration.reason);
+    error.status = 403;
     throw error;
   }
 
