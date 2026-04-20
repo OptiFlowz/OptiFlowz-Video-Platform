@@ -5,6 +5,7 @@ import * as channelController from './channel.controller.js';
 const router = express.Router();
 
 router.get('/:id/videos', optionalAuth, channelController.getChannelVideos);
+router.get('/:id/playlists', optionalAuth, channelController.getChannelPlaylists);
 router.get('/:id', optionalAuth, channelController.getChannelDetailsById);
 
 
