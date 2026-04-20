@@ -5128,6 +5128,10 @@ select.disabled {
 
 /* UPLOAD PAGE */
 
+.rowActionSheet svg path{
+  stroke: var(--text1);
+}
+
 /* EDIT VIDEO PAGE */
 
 .editSectionTitle {

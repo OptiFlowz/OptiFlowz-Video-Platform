@@ -40,6 +40,7 @@ function PlaylistRow({
 }) {
   const [isHidden, setIsHidden] = useState(false);
   const [visOpen, setVisOpen] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [draftVisibility, setDraftVisibility] = useState<"public" | "private">(
     props?.status === "public" ? "public" : "private"
   );
@@ -84,6 +85,16 @@ function PlaylistRow({
   useEffect(() => {
     setDraftVisibility(props?.status === "public" ? "public" : "private");
   }, [props?.status]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 768px)");
+    const updateViewport = () => setIsMobileViewport(mediaQuery.matches);
+
+    updateViewport();
+    mediaQuery.addEventListener("change", updateViewport);
+
+    return () => mediaQuery.removeEventListener("change", updateViewport);
+  }, []);
 
   useEffect(() => {
     if (!visOpen) return;
@@ -282,60 +293,126 @@ function PlaylistRow({
           {visOpen &&
             typeof document !== "undefined" &&
             createPortal(
-              <div
-                ref={visPopupRef}
-                role="dialog"
-                aria-label="Change visibility"
-                style={visPopupStyle}
-                className="z-50 rounded-2xl border! border-(--border1)! bg-(--background1) p-3 shadow-2xl"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex flex-col gap-2">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name={`visibility-${props?.id}`}
-                      value="public"
-                      checked={draftVisibility === "public"}
-                      onChange={() => setDraftVisibility("public")}
-                      className="appearance-none rounded-full! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative
-                          checked:after:content-['✓'] checked:after:absolute checked:after:text-(--accentBlue2) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
-                    />
-                    Public
-                  </label>
-
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name={`visibility-${props?.id}`}
-                      value="private"
-                      checked={draftVisibility === "private"}
-                      onChange={() => setDraftVisibility("private")}
-                      className="appearance-none rounded-full! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative
-                          checked:after:content-['✓'] checked:after:absolute checked:after:text-(--accentBlue2) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
-                    />
-                    Private
-                  </label>
-                </div>
-
-                <div className="mt-3 flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={cancelVisibility}
-                    className="rounded-full border border-(--border1) duration-200 bg-(--background2) hover:bg-(--background3) px-4 py-1.5 text-sm cursor-pointer"
+              isMobileViewport ? (
+                <div
+                  className="fixed inset-0 z-100 flex items-end justify-center"
+                  onClick={() => setVisOpen(false)}
+                >
+                  <div className="absolute inset-0 bg-black/50" />
+                  <div
+                    className="rowVisibilitySheet relative w-full max-w-lg animate-slide-up rounded-t-3xl bg-(--background1) pb-safe"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    Cancel
-                  </button>
+                    <div className="flex justify-center py-3">
+                      <div className="h-1 w-10 rounded-full bg-(--border1)" />
+                    </div>
+                    <div className="px-4 pb-2">
+                      <h3 className="text-base font-semibold">Change visibility</h3>
+                    </div>
 
-                  <button
-                    type="button"
-                    onClick={saveVisibility}
-                    className="rounded-full text-white bg-(--accentBlue) duration-200 hover:bg-(--accentBlue2) px-4 py-1.5 text-sm cursor-pointer"
-                  >
-                    Save
-                  </button>
+                    <div className="flex flex-col gap-2 px-4 py-2">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`visibility-${props?.id}`}
+                          value="public"
+                          checked={draftVisibility === "public"}
+                          onChange={() => setDraftVisibility("public")}
+                          className="appearance-none rounded-full! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative
+                              checked:after:content-['✓'] checked:after:absolute checked:after:text-(--accentBlue2) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
+                        />
+                        Public
+                      </label>
+
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`visibility-${props?.id}`}
+                          value="private"
+                          checked={draftVisibility === "private"}
+                          onChange={() => setDraftVisibility("private")}
+                          className="appearance-none rounded-full! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative
+                              checked:after:content-['✓'] checked:after:absolute checked:after:text-(--accentBlue2) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
+                        />
+                        Private
+                      </label>
+                    </div>
+
+                    <div className="px-4 pb-4 pt-2 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={cancelVisibility}
+                        className="flex-1 rounded-full border border-(--border1) bg-(--background2) py-3 font-medium hover:bg-(--background3) transition-colors cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={saveVisibility}
+                        className="flex-1 rounded-full text-white bg-(--accentBlue) hover:bg-(--accentBlue2) py-3 font-medium transition-colors cursor-pointer"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>,
+              ) : (
+                <div
+                  ref={visPopupRef}
+                  role="dialog"
+                  aria-label="Change visibility"
+                  style={visPopupStyle}
+                  className="rowVisibilityPopup z-50 rounded-2xl border! border-(--border1)! bg-(--background1) p-3 shadow-2xl"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex flex-col gap-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`visibility-${props?.id}`}
+                        value="public"
+                        checked={draftVisibility === "public"}
+                        onChange={() => setDraftVisibility("public")}
+                        className="appearance-none rounded-full! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative
+                            checked:after:content-['✓'] checked:after:absolute checked:after:text-(--accentBlue2) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
+                      />
+                      Public
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`visibility-${props?.id}`}
+                        value="private"
+                        checked={draftVisibility === "private"}
+                        onChange={() => setDraftVisibility("private")}
+                        className="appearance-none rounded-full! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative
+                            checked:after:content-['✓'] checked:after:absolute checked:after:text-(--accentBlue2) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
+                      />
+                      Private
+                    </label>
+                  </div>
+
+                  <div className="mt-3 flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={cancelVisibility}
+                      className="rounded-full border border-(--border1) duration-200 bg-(--background2) hover:bg-(--background3) px-4 py-1.5 text-sm cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={saveVisibility}
+                      className="rounded-full text-white bg-(--accentBlue) duration-200 hover:bg-(--accentBlue2) px-4 py-1.5 text-sm cursor-pointer"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              ),
               document.body
             )}
         </div>
