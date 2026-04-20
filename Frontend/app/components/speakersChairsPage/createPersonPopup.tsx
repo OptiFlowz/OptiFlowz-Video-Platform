@@ -8,6 +8,7 @@ export type CreatePersonPayload = {
   last_name: string;
   image_url: string;
   biography: string;
+  image_file: File | null;
 };
 
 type Props = {
@@ -23,7 +24,14 @@ const emptyForm: CreatePersonPayload = {
   last_name: "",
   image_url: "",
   biography: "",
+  image_file: null,
 };
+
+function revokePreviewUrl(url: string | null) {
+  if (url?.startsWith("blob:")) {
+    URL.revokeObjectURL(url);
+  }
+}
 
 function CreatePersonPopup({
   open,
@@ -48,8 +56,10 @@ function CreatePersonPopup({
       if (closeTimeoutRef.current) {
         window.clearTimeout(closeTimeoutRef.current);
       }
+
+      revokePreviewUrl(previewUrl);
     };
-  }, []);
+  }, [previewUrl]);
 
   useEffect(() => {
     if (open) {
@@ -59,7 +69,7 @@ function CreatePersonPopup({
       setError(null);
       setIsSubmitting(false);
       setPreviewUrl((old) => {
-        if (old) URL.revokeObjectURL(old);
+        revokePreviewUrl(old);
         return null;
       });
       setPreviewUrl(initialValues?.image_url || null);
@@ -109,9 +119,10 @@ function CreatePersonPopup({
       setError("Please select an image file.");
       event.target.value = "";
       setPreviewUrl((old) => {
-        if (old) URL.revokeObjectURL(old);
+        revokePreviewUrl(old);
         return null;
       });
+      setForm((current) => ({ ...current, image_file: null }));
       return;
     }
 
@@ -120,17 +131,22 @@ function CreatePersonPopup({
       setError("Image must be smaller than 4MB.");
       event.target.value = "";
       setPreviewUrl((old) => {
-        if (old) URL.revokeObjectURL(old);
+        revokePreviewUrl(old);
         return null;
       });
+      setForm((current) => ({ ...current, image_file: null }));
       return;
     }
 
     const url = URL.createObjectURL(file);
     setPreviewUrl((old) => {
-      if (old) URL.revokeObjectURL(old);
+      revokePreviewUrl(old);
       return url;
     });
+    setForm((current) => ({
+      ...current,
+      image_file: file,
+    }));
     setError(null);
   };
 
@@ -140,9 +156,14 @@ function CreatePersonPopup({
     }
 
     setPreviewUrl((old) => {
-      if (old) URL.revokeObjectURL(old);
+      revokePreviewUrl(old);
       return null;
     });
+    setForm((current) => ({
+      ...current,
+      image_file: null,
+      image_url: initialValues ? "" : current.image_url,
+    }));
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -165,6 +186,7 @@ function CreatePersonPopup({
         last_name,
         image_url: previewUrl || initialValues?.image_url || "",
         biography: form.biography.trim(),
+        image_file: form.image_file,
       });
       setForm(emptyForm);
     } catch (err) {
