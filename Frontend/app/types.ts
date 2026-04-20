@@ -50,7 +50,8 @@ export type VideoPlaylistT = {
     thumbnail_url: string,
     view_count: number,
     video_count: number,
-    created_at: string
+    created_at: string,
+    status?: "private" | "public"
 }
 
 export type VideoT = {
@@ -268,6 +269,16 @@ export type ChannelVideosPaginationT = {
 export type ChannelVideosT = {
     success: boolean,
     videos: ChannelVideoT[],
+    pagination: ChannelVideosPaginationT,
+    sorting: {
+        sortBy: string,
+        sortOrder: "asc" | "desc"
+    }
+}
+
+export type ChannelPlaylistsT = {
+    success: boolean,
+    playlists: VideoPlaylistT[],
     pagination: ChannelVideosPaginationT,
     sorting: {
         sortBy: string,

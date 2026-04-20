@@ -5128,6 +5128,10 @@ select.disabled {
 
 /* UPLOAD PAGE */
 
+.rowActionSheet svg path{
+  stroke: var(--text1);
+}
+
 /* EDIT VIDEO PAGE */
 
 .editSectionTitle {
@@ -5338,6 +5342,9 @@ main.myVideos .mobileTitle{
   top: 1rem;
   right: 1rem;
   opacity: 0;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
   pointer-events: none;
   transition: opacity 0.2s ease;
 }
@@ -5352,7 +5359,7 @@ main.myVideos .mobileTitle{
   border: 1px solid var(--border1);
   background: var(--background2);
   box-shadow: none;
-  border-radius: 12px;
+  border-radius: var(--bR);
   cursor: pointer;
   transition: background 0.15s ease-in-out;
 }
@@ -5814,6 +5821,9 @@ main.myVideos .mobileTitleRow{
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+}
+main.myVideos .mobileTitleRow button svg path{
+  stroke: var(--text1);
 }
 main.myVideos .libraryTableWrap{
   border: 1px solid var(--border1);
@@ -6927,6 +6937,14 @@ main.playlist .channelVideosTitle {
   font-weight: 600;
 }
 
+main.playlist .channelPlaylistsSection {
+  margin-top: 2.5rem;
+}
+
+main.playlist .channelPlaylistsSection .collection.notscrollable {
+  margin-top: 1.25rem;
+}
+
 main.playlist .videoHolder {
   width: 100%;
   display: grid;
@@ -7425,9 +7443,6 @@ footer > span.footerCopyright {
   .heading h2 {
     font-size: 1.6rem;
     margin-bottom: 1rem;
-  }
-  .speakersChairsPeopleGrid {
-    padding-inline: 1rem;
   }
   .speakersChairsPersonCard {
     flex-direction: column;

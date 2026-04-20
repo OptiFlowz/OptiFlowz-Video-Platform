@@ -6,8 +6,9 @@ import { PlaySVG, ShareSVG } from "~/constants";
 import { env } from "~/env";
 import { formatDescription, getToken } from "~/functions";
 import { useI18n } from "~/i18n";
-import type { ChannelT, ChannelVideosT, FetchChannelT, VideoT } from "~/types";
+import type { ChannelPlaylistsT, ChannelT, ChannelVideosT, FetchChannelT, VideoT, VideoPlaylistT } from "~/types";
 import Item from "../itemSlider/item";
+import PlaylistItem from "../itemSlider/playlistItem";
 import DefaultProfile from "../../../assets/DefaultProfile.webp";
 
 type ChannelSortBy = "view_count" | "created_at";
@@ -17,10 +18,10 @@ const CHANNEL_SORT_OPTIONS: Array<{
     value: `${ChannelSortBy}:${ChannelSortOrder}`;
     label: string;
 }> = [
-    { value: "view_count:asc", label: "Views: Low to High" },
-    { value: "view_count:desc", label: "Views: High to Low" },
-    { value: "created_at:desc", label: "Date: Newest First" },
-    { value: "created_at:asc", label: "Date: Oldest First" },
+    { value: "view_count:desc", label: "Most Popular" },
+    { value: "created_at:desc", label: "Newest" },
+    { value: "view_count:asc", label: "Least Popular" },
+    { value: "created_at:asc", label: "Oldest" },
 ];
 
 const SkeletonVideoItem = () => (
@@ -56,8 +57,10 @@ function ChannelPage() {
     const { id: channelId } = useParams();
     const [descOpen, setDescOpen] = useState(false);
     const [hasDescriptionOverflow, setHasDescriptionOverflow] = useState(false);
-    const [sortBy, setSortBy] = useState<ChannelSortBy>("created_at");
-    const [sortOrder, setSortOrder] = useState<ChannelSortOrder>("desc");
+    const [videoSortBy, setVideoSortBy] = useState<ChannelSortBy>("created_at");
+    const [videoSortOrder, setVideoSortOrder] = useState<ChannelSortOrder>("desc");
+    const [playlistSortBy, setPlaylistSortBy] = useState<ChannelSortBy>("created_at");
+    const [playlistSortOrder, setPlaylistSortOrder] = useState<ChannelSortOrder>("desc");
     const descriptionRef = useRef<HTMLParagraphElement>(null);
     const token = getToken();
 
@@ -105,9 +108,22 @@ function ChannelPage() {
     });
 
     const { data: channelVideosData, isLoading: isLoadingVideos } = useQuery({
-        queryKey: [`channel-videos-${channelId}`, !!token, sortBy, sortOrder],
+        queryKey: [`channel-videos-${channelId}`, !!token, videoSortBy, videoSortOrder],
         queryFn: () => fetchFn<ChannelVideosT>({
-            route: `api/channels/${channelId}/videos?sortBy=${sortBy}&sortOrder=${sortOrder}&page=1&limit=20`,
+            route: `api/channels/${channelId}/videos?sortBy=${videoSortBy}&sortOrder=${videoSortOrder}&page=1&limit=20`,
+            options: {
+                method: "GET",
+                headers
+            }
+        }),
+        enabled: !!channelId,
+        placeholderData: (previousData) => previousData
+    });
+
+    const { data: channelPlaylistsData, isLoading: isLoadingPlaylists } = useQuery({
+        queryKey: [`channel-playlists-${channelId}`, !!token, playlistSortBy, playlistSortOrder],
+        queryFn: () => fetchFn<ChannelPlaylistsT>({
+            route: `api/channels/${channelId}/playlists?sortBy=${playlistSortBy}&sortOrder=${playlistSortOrder}`,
             options: {
                 method: "GET",
                 headers
@@ -123,6 +139,7 @@ function ChannelPage() {
         progress_seconds: Number(video.progress_seconds ?? 0),
         percentage_watched: Number(video.percentage_watched ?? 0),
     })) ?? [];
+    const normalizedPlaylists = channelPlaylistsData?.playlists ?? [];
 
     useEffect(() => {
         const descriptionElement = descriptionRef.current;
@@ -153,22 +170,39 @@ function ChannelPage() {
     const videoArray = normalizedVideos.map((video) => (
         <Item key={video.id} props={video as VideoT} />
     ));
+    const playlistArray = normalizedPlaylists.map((playlist) => (
+        <PlaylistItem key={playlist.id} props={playlist as VideoPlaylistT} featured={true} />
+    ));
 
     const skeletonVideoArray = Array.from({ length: 8 }).map((_, index) => (
         <SkeletonVideoItem key={`channel-skeleton-video-${index}`} />
     ));
+    const skeletonPlaylistArray = Array.from({ length: 3 }).map((_, index) => (
+        <div className="item playlistItem featured" key={`channel-skeleton-playlist-${index}`}>
+            <SkeletonVideoItem />
+        </div>
+    ));
 
-    const handleSortChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const handleVideoSortChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const [nextSortBy, nextSortOrder] = event.target.value.split(":") as [ChannelSortBy, ChannelSortOrder];
-        setSortBy(nextSortBy);
-        setSortOrder(nextSortOrder);
+        setVideoSortBy(nextSortBy);
+        setVideoSortOrder(nextSortOrder);
     };
 
-    if ((isLoadingChannel && !channelData) || (isLoadingVideos && !channelVideosData)) {
+    const handlePlaylistSortChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const [nextSortBy, nextSortOrder] = event.target.value.split(":") as [ChannelSortBy, ChannelSortOrder];
+        setPlaylistSortBy(nextSortBy);
+        setPlaylistSortOrder(nextSortOrder);
+    };
+
+    if ((isLoadingChannel && !channelData) || (isLoadingVideos && !channelVideosData) || (isLoadingPlaylists && !channelPlaylistsData)) {
         return (
             <main className="playlist">
                 <SkeletonHeader />
                 <div className="videoHolder">{skeletonVideoArray}</div>
+                <div className="channelPlaylistsSection">
+                    <div className="collection notscrollable">{skeletonPlaylistArray}</div>
+                </div>
             </main>
         );
     }
@@ -213,8 +247,8 @@ function ChannelPage() {
                 <select
                     aria-label="Sort videos"
                     id="channel-sort-select"
-                    value={`${sortBy}:${sortOrder}`}
-                    onChange={handleSortChange}
+                    value={`${videoSortBy}:${videoSortOrder}`}
+                    onChange={handleVideoSortChange}
                 >
                     {CHANNEL_SORT_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value}>
@@ -228,6 +262,27 @@ function ChannelPage() {
 
             {normalizedVideos.length === 0 && (
                 <p className="noVideosMessage">{t("noVideosInPlaylist")}</p>
+            )}
+
+            {normalizedPlaylists.length > 0 && (
+                <section className="channelPlaylistsSection">
+                    <div className="channelVideosHeader">
+                        <h3 className="channelVideosTitle">{t("playlistsTab")}</h3>
+                        <select
+                            aria-label="Sort playlists"
+                            id="channel-playlists-sort-select"
+                            value={`${playlistSortBy}:${playlistSortOrder}`}
+                            onChange={handlePlaylistSortChange}
+                        >
+                            {CHANNEL_SORT_OPTIONS.map((option) => (
+                                <option key={`playlists-${option.value}`} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="collection notscrollable">{playlistArray}</div>
+                </section>
             )}
         </main>
     );

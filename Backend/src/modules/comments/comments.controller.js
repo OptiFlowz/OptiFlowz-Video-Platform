@@ -11,7 +11,8 @@ export async function postComment(req, res) {
     const comment = await postCommentInternal(req.body, req.user?.sub || null);
     return sendSuccess(res, { comment }, 201);
   } catch (error) {
-    console.error('postComment error:', error);
+    if(error.status!=403)
+      console.error('postComment error:', error);
     return sendError(res, error.message, error.status || 500);
   }
 }
@@ -86,7 +87,7 @@ export async function deleteComment(req, res) {
 
     return sendSuccess(res, result);
   } catch (error) {
-    console.error('deleteComment error:', error);
+    console.error('deleteComment error:', error)
     return sendError(res, error.message, error.status || 500);
   }
 }

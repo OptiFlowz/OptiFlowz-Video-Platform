@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { CurrentNavContext } from "~/context";
 import type { VideoPlaylistT } from "~/types";
 import PlaylistInfo from "../playlistInfo";
-import { LibrarySVG } from "~/constants";
+import { LibrarySVG, LockSVG } from "~/constants";
 import { useI18n } from "~/i18n";
 
 function PlaylistItem({props, featured}: {props: VideoPlaylistT, featured?:boolean}){
@@ -46,6 +46,12 @@ function PlaylistItem({props, featured}: {props: VideoPlaylistT, featured?:boole
                     <p className="flex items-center max-[450px]:hidden">{LibrarySVG}&nbsp;{t("playlistLabel")}</p>
 
                     <p>{t("videosLabel", { count: props.video_count })}</p>
+                    {props.status === "private" && (
+                        <p aria-label="Private playlist" title="Private playlist" className="flex items-center gap-1.5">
+                            {LockSVG}
+                            <span>Private</span>
+                        </p>
+                    )}
                 </span>
             </span>
 
