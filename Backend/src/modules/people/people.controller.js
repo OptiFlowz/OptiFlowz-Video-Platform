@@ -4,6 +4,7 @@ import { createPersonInternal } from './handlers/createPerson.js';
 import { uploadPersonImageInternal } from './handlers/uploadPersonImage.js';
 import { updatePersonDetailsInternal } from './handlers/updatePersonDetails.js';
 import { deletePersonInternal } from './handlers/deletePerson.js';
+import { getAllPeopleInternal } from './handlers/getAllPeople.js';
 import { sendSuccess, sendError } from '../../common/response.js';
 
 export async function getPersonById(req, res) {
@@ -68,6 +69,17 @@ export async function deletePerson(req, res) {
     return sendSuccess(res, result);
   } catch (error) {
     console.error('Error deleting person:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+
+export async function getAllPeople(req, res) {
+  try {
+    const result = await getAllPeopleInternal(req.query);
+    return sendSuccess(res, result);
+  } catch (error) {
+    console.error('Error fetching people:', error);
     return sendError(res, error.message, error.status || 500);
   }
 }

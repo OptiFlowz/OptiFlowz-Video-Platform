@@ -31,7 +31,7 @@ export async function getChannelPlaylists(req, res) {
     const result = await getChannelPlaylistsInternal({...req.params, ...req.query,},req.user?.sub || null);
     return sendSuccess(res,  result );
   } catch (error) {
-    console.error('Error fetching channel videos:', error);
+    console.error('Error fetching channel playlists:', error);
     return sendError(res,error.message, error.status || 500);
   }
 }

@@ -7,7 +7,8 @@ export function buildPlaylistCardSelect({ includeDescription = false } = {}) {
       COALESCE(p.thumbnail_url, fv.first_video_thumbnail_url) AS thumbnail_url,
       p.view_count,
       ic.video_count,
-      p.created_at
+      p.created_at,
+      p.status
   `;
 }
 

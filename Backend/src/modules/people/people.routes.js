@@ -10,6 +10,7 @@ router.get('/search', optionalAuth, peopleController.searchPeople);
 router.post('/create',requireAuth, requireAdmin, peopleController.createPerson);
 router.patch('/:personId/image',requireAuth,requireAdmin,personImageUploadMiddleware,peopleController.uploadPersonImage);
 router.patch('/:personId',requireAuth, requireAdmin, peopleController.updatePersonDetails);
-router.delete('/:personId', requireAuth, peopleController.deletePerson);
+router.delete('/:personId', requireAuth, requireAdmin, peopleController.deletePerson);
+router.get('/', optionalAuth, peopleController.getAllPeople);
 
 export default router;

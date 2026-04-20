@@ -28,17 +28,19 @@ export async function getChannelPlaylistsInternal(object, userId = null) {
   const orderByField = allowedSortFields[sortBy];
   const orderByDirection = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
-  const values = 
-  userId != null ? 
-  [id, limit, offset, userId]: 
-  [id, limit, offset];
+  const canSeePrivate = userId != null && String(userId) === String(id);
+
+  const values = [id, limit, offset, canSeePrivate];
 
   const query = `
-      ${buildPlaylistCardSelect({ includeDescription: false})}
+      ${buildPlaylistCardSelect({ includeDescription: false })}
       ${buildPlaylistCardJoins()}
       WHERE
-        ${ buildPlaylistCardVisibilityWhere()}
-        AND p.created_by = $1
+        p.created_by = $1
+        AND (
+          p.status = 'public'
+          OR ($4 = true AND p.status = 'private')
+        )
       ORDER BY ${orderByField} ${orderByDirection}
       LIMIT $2 OFFSET $3
   `;
@@ -47,12 +49,15 @@ export async function getChannelPlaylistsInternal(object, userId = null) {
     SELECT COUNT(*)::int AS total
     FROM playlists p
     WHERE p.created_by = $1
-      AND p.status = 'public'
+      AND (
+        p.status = 'public'
+        OR ($2 = true AND p.status = 'private')
+      )
   `;
 
   const [playlistsResult, countResult] = await Promise.all([
     writePool.query(query, values),
-    writePool.query(countQuery, [id]),
+    writePool.query(countQuery, [id, canSeePrivate]),
   ]);
 
   const total = countResult.rows[0]?.total || 0;
