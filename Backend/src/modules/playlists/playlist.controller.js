@@ -18,7 +18,7 @@ export async function getPlaylistById(req, res) {
             "playlistId":req.params.id,
             "userId":req.user?.sub||null,
             "ip":getClientIp(req),
-            "userAgent":req.userAgent });
+            "userAgent":req.get('user-agent') || '' });
 
         return sendSuccess(res,{playlist,view});
     }catch(error){
