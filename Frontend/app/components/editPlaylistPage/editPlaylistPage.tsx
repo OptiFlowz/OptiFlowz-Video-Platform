@@ -12,13 +12,18 @@ import { useQuery } from "@tanstack/react-query";
 import { AddSVG, CloseSVG, DeleteSVG, UploadSVG } from "~/constants";
 import { fetchFn } from "~/API";
 import { formatDescription, getToken } from "~/functions";
-import type { PlaylistT, SearchT } from "~/types";
+import type {
+  FetchPlaylistT,
+  PlaylistVideoT,
+  PlaylistVideosT,
+  SearchT,
+} from "~/types";
 import Sidebar from "../myVideosPage/sidebar/sidebar";
 import DefaultThumbnail from "../../../assets/DefaultThumbnail.webp";
 import { useConstrainedSticky } from "~/components/shared/useConstrainedSticky";
 
 function reorderPlaylistVideos(
-  videos: PlaylistT["videos"],
+  videos: PlaylistVideoT[],
   draggedId: string,
   targetId: string
 ) {
@@ -43,7 +48,7 @@ function PlaylistVideoRowContent({
   video,
   index,
 }: {
-  video: PlaylistT["videos"][number];
+  video: PlaylistVideoT;
   index: number;
 }) {
   return (
@@ -97,7 +102,7 @@ function EditPlaylistPage() {
   );
   const [thumbnailMarkedForRemoval, setThumbnailMarkedForRemoval] =
     useState(false);
-  const [playlistVideos, setPlaylistVideos] = useState<PlaylistT["videos"]>([]);
+  const [playlistVideos, setPlaylistVideos] = useState<PlaylistVideoT[]>([]);
   const [draggedVideoId, setDraggedVideoId] = useState<string | null>(null);
   const [dragOverVideoId, setDragOverVideoId] = useState<string | null>(null);
   const [playlistVideoSearch, setPlaylistVideoSearch] = useState("");
@@ -114,7 +119,7 @@ function EditPlaylistPage() {
   const [isRemovingThumbnail, setIsRemovingThumbnail] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const dragPreviewRef = useRef<HTMLDivElement | null>(null);
-  const dragStartVideosRef = useRef<PlaylistT["videos"]>([]);
+  const dragStartVideosRef = useRef<PlaylistVideoT[]>([]);
   const previewAsideRef = useRef<HTMLElement | null>(null);
   const previewStickyRef = useRef<HTMLDivElement | null>(null);
   const previewBoundaryRef = useRef<HTMLElement | null>(null);
@@ -144,7 +149,7 @@ function EditPlaylistPage() {
   } = useQuery({
     queryKey: [`playlist-edit-${playlistId}`],
     queryFn: () =>
-      fetchFn<PlaylistT>({
+      fetchFn<FetchPlaylistT>({
         route: `api/playlists/${playlistId}`,
         options: {
           method: "GET",
@@ -155,33 +160,53 @@ function EditPlaylistPage() {
     refetchOnWindowFocus: false,
   });
 
-  useEffect(() => {
-    if (!playlistData) return;
+  const playlistDetails = playlistData?.playlist;
 
-    console.log("Loaded playlist data for editing:", playlistData);
+  const { data: playlistVideosData } = useQuery({
+    queryKey: [`playlist-edit-videos-${playlistId}`],
+    queryFn: () =>
+      fetchFn<PlaylistVideosT>({
+        route: `api/playlists/${playlistId}/videos?limit=100&page=1`,
+        options: {
+          method: "GET",
+          headers: myHeaders.current,
+        },
+      }),
+    enabled: !!token && !!playlistId,
+    refetchOnWindowFocus: false,
+  });
+
+  useEffect(() => {
+    if (!playlistDetails) return;
+
+    console.log("Loaded playlist data for editing:", playlistDetails);
 
     const nextStatus =
-      playlistData.status ??
+      playlistDetails.status ??
       (initialStatus === "public" ? "public" : "private");
-    const nextFeatured = playlistData.featured === true;
-    const nextTags = playlistData.tags ?? [];
+    const nextFeatured = playlistDetails.featured === true;
+    const nextTags = playlistDetails.tags ?? [];
 
-    setTitle(playlistData.title || "");
-    setOldTitle(playlistData.title || "");
-    setDescription(playlistData.description || "");
-    setOldDescription(playlistData.description || "");
+    setTitle(playlistDetails.title || "");
+    setOldTitle(playlistDetails.title || "");
+    setDescription(playlistDetails.description || "");
+    setOldDescription(playlistDetails.description || "");
     setTags(nextTags);
     setOldTags(nextTags);
     setStatus(nextStatus);
     setOldStatus(nextStatus);
     setFeatured(nextFeatured);
     setOldFeatured(nextFeatured);
-    setThumbnailUrl(playlistData.thumbnail_url || null);
+    setThumbnailUrl(playlistDetails.thumbnail_url || null);
     setPendingThumbnailFile(null);
     setPendingThumbnailUrl(null);
     setThumbnailMarkedForRemoval(false);
-    setPlaylistVideos(playlistData.videos || []);
-  }, [playlistData, initialStatus]);
+  }, [playlistDetails, initialStatus]);
+
+  useEffect(() => {
+    if (!playlistVideosData) return;
+    setPlaylistVideos(playlistVideosData.videos || []);
+  }, [playlistVideosData]);
 
   useEffect(() => {
     return () => {
@@ -561,7 +586,7 @@ function EditPlaylistPage() {
     }
   };
 
-  const handleAddPlaylistVideo = async (video: PlaylistT["videos"][number]) => {
+  const handleAddPlaylistVideo = async (video: PlaylistVideoT) => {
     if (!playlistId || isAddingVideoId || isDeletingVideoId) return;
 
     setIsAddingVideoId(video.id);

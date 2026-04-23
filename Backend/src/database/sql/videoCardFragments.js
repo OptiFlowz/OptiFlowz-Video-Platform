@@ -10,7 +10,7 @@ export function buildVideoCardSelect({ includeWatchProgress = false } = {}) {
       u.full_name AS uploader_name,
       ${includeWatchProgress ? `
       wp.progress_seconds,
-      wp.percentage_watched,
+      wp.percentage_watched::float AS percentage_watched,
       ` : ''}
       COALESCE(ppl.people, '[]'::json) AS people
   `;

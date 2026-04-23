@@ -1,9 +1,11 @@
 import { memo, useState } from "react";
 import { Link } from "react-router";
 import { formatDate, formatDuration, formatViews } from "~/functions";
-import type { SimilarVideoT } from "~/types";
+import type { PlaylistVideoT, SimilarVideoT } from "~/types";
 
-function PlayCard({props, playedVideoId, playlistId, nextVideo} : {props: SimilarVideoT, playedVideoId: string, playlistId: string, nextVideo?: SimilarVideoT}){
+type PlayCardVideoT = SimilarVideoT | PlaylistVideoT;
+
+function PlayCard({props, playedVideoId, playlistId, nextVideo} : {props: PlayCardVideoT, playedVideoId: string, playlistId: string, nextVideo?: PlayCardVideoT}){
 
     const newThumbnailUrl = props?.thumbnail_url
         ?.replace(/\.png(?=([?#]|$))/i, ".webp")

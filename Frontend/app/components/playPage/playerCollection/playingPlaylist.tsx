@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { memo, useLayoutEffect, useRef, useState, useEffect, useCallback } from "react";
 import { AutoPlaySVG, BookmarkSVG, CloseSVG, ShareSVG } from "~/constants";
 import { env } from "~/env";
-import type { PlaylistT } from "~/types";
+import type { FetchPlaylistT, PlaylistVideosT } from "~/types";
 import { fetchFn } from "~/API";
 import PlaylistVideos from "./playlistVideos";
 import { Link, useLocation } from "react-router";
@@ -69,9 +69,9 @@ function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, vi
             myHeaders.current.append("Authorization", `Bearer ${userToken}`);
     }, [token]);
 
-    const {data} = useQuery({
+    const {data: playlistResponse} = useQuery({
         queryKey: [`playlist${playlistId}`],
-        queryFn: () => fetchFn<PlaylistT>({
+        queryFn: () => fetchFn<FetchPlaylistT>({
             route: `api/playlists/${playlistId}`,
             options: {
                 method: "GET",
@@ -79,6 +79,20 @@ function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, vi
             }
         }),
         enabled: !!token
+    });
+
+    const data = playlistResponse?.playlist;
+
+    const {data: playlistVideosResponse} = useQuery({
+        queryKey: [`playlist-videos${playlistId}`],
+        queryFn: () => fetchFn<PlaylistVideosT>({
+            route: `api/playlists/${playlistId}/videos?limit=100&page=1`,
+            options: {
+                method: "GET",
+                headers: myHeaders.current
+            }
+        }),
+        enabled: !!token && !!playlistId
     });
 
     const sharePlaylistLink = useCallback((e: React.MouseEvent<HTMLElement, MouseEvent>) => {
@@ -169,7 +183,7 @@ function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, vi
                     </span>
                 </span>
             </div>
-            <PlaylistVideos props={data as PlaylistT} playedVideoId={videoId} />
+            <PlaylistVideos playlistId={playlistId} videos={playlistVideosResponse?.videos ?? []} playedVideoId={videoId} />
         </div>
     );
 }
