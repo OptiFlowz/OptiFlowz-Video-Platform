@@ -21,6 +21,7 @@ export async function getPlaylistByIdInternal(object, userId = null) {
     ${buildPlaylistCardSelect({ includeDescription: true })},
     p.tags,
     p.featured,
+    p.save_count,
     CASE
       WHEN $2::uuid IS NULL THEN false
       ELSE EXISTS (
