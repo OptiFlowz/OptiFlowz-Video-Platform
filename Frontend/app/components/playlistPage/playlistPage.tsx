@@ -6,7 +6,7 @@ import { useParams } from "react-router";
 import { fetchFn } from "~/API";
 import { BookmarkSVG, PlaySVG, ShareSVG } from "~/constants";
 import DefaultThumbnail from "../../../assets/DefaultThumbnail.webp";
-import type { PlaylistT, VideoT } from "~/types";
+import type { FetchPlaylistT, PlaylistT, PlaylistVideosT, VideoT } from "~/types";
 import Item from "../itemSlider/item";
 import { useI18n } from "~/i18n";
 
@@ -80,9 +80,9 @@ function PlaylistPage(){
             myHeaders.current.append("Authorization", `Bearer ${userToken}`);
     }, [token]);
 
-    const {data, isLoading} = useQuery({
+    const {data: playlistResponse, isLoading: isLoadingPlaylist} = useQuery({
         queryKey: [`playlist${playlistId}`],
-        queryFn: () => fetchFn<PlaylistT>({
+        queryFn: () => fetchFn<FetchPlaylistT>({
             route: `api/playlists/${playlistId}`,
             options: {
                 method: "GET",
@@ -90,6 +90,20 @@ function PlaylistPage(){
             }
         }),
         enabled: !!token
+    });
+
+    const data = playlistResponse?.playlist;
+
+    const {data: playlistVideosResponse, isLoading: isLoadingVideos} = useQuery({
+        queryKey: [`playlist-videos${playlistId}`],
+        queryFn: () => fetchFn<PlaylistVideosT>({
+            route: `api/playlists/${playlistId}/videos?limit=100&page=1`,
+            options: {
+                method: "GET",
+                headers: myHeaders.current
+            }
+        }),
+        enabled: !!token && !!playlistId
     });
 
     const toggleSave = async () => {
@@ -160,11 +174,13 @@ function PlaylistPage(){
         <SkeletonVideoItem key={`skeleton-video-${index}`} />
     ));
 
-    const videoArray = data?.videos?.map((video, index) =>
+    const playlistVideos = playlistVideosResponse?.videos ?? [];
+
+    const videoArray = playlistVideos.map((video, index) =>
         <Item key={video.id} props={video as any as VideoT} playlistIndex={index+1} playlistId={playlistId} />
     );
 
-    if (isLoading) {
+    if (isLoadingPlaylist || isLoadingVideos) {
         return (
             <main className="playlist">
                 <SkeletonHeader />

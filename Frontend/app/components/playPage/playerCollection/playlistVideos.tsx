@@ -1,9 +1,8 @@
 import { memo, useMemo, useLayoutEffect, useRef } from "react";
 import PlayCard from "./playCard";
-import type { PlaylistT, SimilarVideoT } from "~/types";
+import type { PlaylistVideoT } from "~/types";
 
-function PlaylistVideos({ props, playedVideoId }: { props: PlaylistT; playedVideoId: string }) {
-  const videos = props?.videos ?? [];
+function PlaylistVideos({ playlistId, videos, playedVideoId }: { playlistId: string; videos: PlaylistVideoT[]; playedVideoId: string }) {
   const holderRef = useRef<HTMLDivElement>(null);
 
   const { currentIndex, nextVideo } = useMemo(() => {
@@ -12,13 +11,13 @@ function PlaylistVideos({ props, playedVideoId }: { props: PlaylistT; playedVide
     return { currentIndex: idx, nextVideo: next };
   }, [videos, playedVideoId]);
 
-  const similarArray = props?.videos?.map((item, index) => (
+  const similarArray = videos.map((item, index) => (
     <PlayCard
       key={`similar${index}`}
       props={item}
       playedVideoId={playedVideoId}
-      playlistId={props.id}
-      nextVideo={nextVideo as SimilarVideoT}
+      playlistId={playlistId}
+      nextVideo={nextVideo as PlaylistVideoT}
     />
   ));
 

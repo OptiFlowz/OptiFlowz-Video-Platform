@@ -140,6 +140,19 @@ export type PlaylistViewT = {
     counted: boolean
 }
 
+export type PlaylistVideoT = {
+    created_at: string,
+    duration_seconds: number,
+    id: string,
+    percentage_watched: number,
+    progress_seconds: number,
+    thumbnail_url: string,
+    title: string,
+    uploader_name: string,
+    view_count: number,
+    people: PersonT[]
+}
+
 export type SimilarVideoT = {
     created_at: string,
     duration_seconds: number 
@@ -224,11 +237,25 @@ export type PlaylistT = {
     thumbnail_url: string,
     title: string,
     video_count: number,
-    videos: SimilarVideoT[],
     view_count: number,
     view: PlaylistViewT,
     status?: "public" | "private",
     featured?: boolean
+}
+
+export type FetchPlaylistT = {
+    success: boolean,
+    playlist: PlaylistT
+}
+
+export type PlaylistVideosT = {
+    success: boolean,
+    videos: PlaylistVideoT[],
+    pagination: ChannelVideosPaginationT,
+    sorting: {
+        sortBy: string,
+        sortOrder: "asc" | "desc"
+    }
 }
 
 export type ChannelT = {
