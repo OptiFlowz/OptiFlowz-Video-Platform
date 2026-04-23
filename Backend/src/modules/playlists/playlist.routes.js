@@ -2,6 +2,7 @@ import express from 'express';
 import * as playlistService from './playlist.service.js';
 import { requireAuth , optionalAuth } from '../../middleware/auth.js';
 import { logEvent } from '../../common/logger.js';
+import * as playlistController from './playlist.controller.js';
 
 const router = express.Router();
 
@@ -83,27 +84,10 @@ router.get('/user/saved', requireAuth, async (req, res) => {
   }
 });
 
-router.get('/:id', requireAuth, async (req, res) => {
-  try {
-    const userId = req.user?.sub || null;
-    let playlist = await playlistService.getPlaylistWithVideos(req.params.id, userId);
 
-    if (!playlist) {
-      return res.status(404).json({ message: 'Playlist not found' });
-    }
-    const view = await playlistService.incrementViewCount(req.params.id, {
-      userId,
-      ip: getClientIp(req),
-      userAgent: req.get('user-agent') || '',
-    });
-    playlist.view = view;
-    res.json(playlist);
-    logEvent('playlist.get', { user_id: userId, playlist_id: playlist.id, message: 'Requested the playlist' });
-  } catch (error) {
-    console.error('Get playlist error:', error);
-    res.status(500).json({ message: 'Failed to fetch playlist' });
-  }
-});
+router.get('/:id/videos', optionalAuth, playlistController.getPlaylistVideos);
+router.get('/:id', optionalAuth, playlistController.getPlaylistById);
+
 
 function getClientIp(req) {
   let ip = req.ip || '';
