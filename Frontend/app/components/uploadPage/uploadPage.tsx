@@ -9,6 +9,7 @@ import {
 } from "react";
 import { useQuery } from "@tanstack/react-query";
 import MuxPlayer from "@mux/mux-player-react";
+import type MuxPlayerElement from "@mux/mux-player";
 import { AISVG, CloseSVG, UploadSVG } from "~/constants";
 import { env } from "~/env";
 import ContributorSearch from "./contributorSearch";
@@ -311,14 +312,42 @@ function VideoPreview({
   isVideoLoading,
   videoData,
   title,
+  chapters,
   thumbnailUrl,
 }: {
   isVideoLoading: boolean;
   videoData: VideoData | null | undefined;
   title: string;
+  chapters: Chapter[];
   thumbnailUrl?: string | null;
 }) {
   const [isThemeReady, setIsThemeReady] = useState(false);
+  const [metadataLoaded, setMetadataLoaded] = useState(false);
+  const playerRef = useRef<MuxPlayerElement | null>(null);
+
+  useEffect(() => {
+    setMetadataLoaded(false);
+  }, [videoData?.mux_playback_id]);
+
+  useEffect(() => {
+    const player = playerRef.current;
+    if (!player || !metadataLoaded) return;
+
+    const muxChapters = (chapters ?? [])
+      .map((chapter) => ({
+        startTime: parseTimestampToSeconds(chapter.timestamp),
+        value: String(chapter.title ?? ""),
+      }))
+      .filter((chapter) => Number.isFinite(chapter.startTime) && chapter.value.length > 0);
+
+    if (!muxChapters.length) return;
+
+    try {
+      player.addChapters(muxChapters);
+    } catch {
+      // ignore preview chapter registration errors
+    }
+  }, [chapters, metadataLoaded]);
 
   useEffect(() => {
     let cancelled = false;
@@ -373,11 +402,13 @@ function VideoPreview({
         {isThemeReady ? (
           <MuxPlayer
             theme="optiflowz-theme"
-            themeProps={{ videotitlee: title, chapterLenght: 0 }}
+            themeProps={{ videotitlee: title, chapterLenght: chapters?.length || 0 }}
             playbackId={videoData.mux_playback_id}
             autoPlay={false}
             playsInline
             volume={0.1}
+            ref={playerRef as any}
+            onLoadedMetadata={() => setMetadataLoaded(true)}
             style={{
               width: "100%",
               aspectRatio: "16 / 9",
@@ -1883,7 +1914,12 @@ function UploadPage() {
             <div className="stepContentWithPreview">
               <aside ref={previewAsideRef} className="stepContentSidebar">
                 <div ref={previewStickyRef} style={previewStickyStyle}>
-                  <VideoPreview isVideoLoading={isVideoLoading} videoData={videoData} title={title} />
+                  <VideoPreview
+                    isVideoLoading={isVideoLoading}
+                    videoData={videoData}
+                    title={title}
+                    chapters={chapters}
+                  />
                 </div>
               </aside>
               <div className="stepContentMain">
@@ -2166,6 +2202,7 @@ function UploadPage() {
                     isVideoLoading={isVideoLoading}
                     videoData={videoData}
                     title={title}
+                    chapters={chapters}
                     thumbnailUrl={displayedThumbnailUrl}
                   />
                 </div>
