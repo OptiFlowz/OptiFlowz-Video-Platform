@@ -7706,7 +7706,10 @@ footer > span.footerCopyright {
     font-weight: 500 !important;
     background-color: var(--background2);
   }
-
+  main.myVideos table, main.myPlaylists table{
+    background: transparent !important;
+    border: none !important;
+  }
   main.search .verticalSlider .item {
     flex-direction: column;
     align-items: center;
@@ -7747,6 +7750,7 @@ footer > span.footerCopyright {
   main.myVideos table th, main.myVideos table td, main.myVideos table tr{
     border: none !important;
     padding: 0.25rem 1rem 1rem 0;
+    border-radius: 16px !important;
   }
   main.myVideos table input, main.myVideos table td .videoInfo .videoActions{
     display: none;
