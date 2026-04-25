@@ -1,5 +1,5 @@
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { ShareSVG, ArrowSVG, LikeSVG, DislikeSVG, InfoSVG, CommentSVG, AIButtonSVG } from "~/constants";
+import { ShareSVG, ArrowSVG, LikeSVG, DislikeSVG, InfoSVG, CommentSVG, AIButtonSVG, QuizSVG } from "~/constants";
 import { fetchFn } from "~/API";
 import { env } from "~/env";
 import { formatDate, formatViews, formatDescription, getToken } from "~/functions";
@@ -592,6 +592,25 @@ function VideoInfo({
                         onClick={onOpenComments}
                     >
                         <p>{CommentSVG} {t("commentCount", { count: resolvedCommentCount })} {ArrowSVG}</p>
+                    </button>
+                )}
+
+                {true && (
+                    <button
+                        className="quizOpenButton noHover"
+                        onMouseEnter={() => setIsHoveringTags(true)}
+                        onMouseLeave={() => setIsHoveringTags(false)}
+                        onPointerEnter={() => setIsHoveringTags(true)}
+                        onPointerLeave={() => setIsHoveringTags(false)}
+                    >
+                        <div>
+                            <span className="quizSvg">{QuizSVG}</span>
+                            <span className="quizProgressWrap">
+                                <p className="text-left leading-5">Complete 50% of the video to unlock the quiz about this topic</p>
+                                <span className="quizProgressBar"><span className="quizProgress" style={{ width: `${40}%` }}></span></span>
+                            </span>
+                            {ArrowSVG}
+                        </div>
                     </button>
                 )}
 
