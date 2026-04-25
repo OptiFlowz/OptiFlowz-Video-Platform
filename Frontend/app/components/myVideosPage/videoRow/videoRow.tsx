@@ -234,7 +234,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                 props.setSelectedVideos(prev => prev.filter(video => video.id != other.id));
             }}
             className="appearance-none rounded-lg! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative
-                        checked:after:content-['✓'] checked:after:absolute checked:after:text-(--accentBlue2) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
+                        checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
             type="checkbox"
           />
           <span className="videoInfo">
@@ -391,7 +391,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                           checked={draftVisibility === "public"}
                           onChange={() => setDraftVisibility("public")}
                           className="appearance-none rounded-full! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative
-                              checked:after:content-['✓'] checked:after:absolute checked:after:text-(--accentBlue2) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
+                              checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
                         />
                         Public
                       </label>
@@ -404,7 +404,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                           checked={draftVisibility === "private"}
                           onChange={() => setDraftVisibility("private")}
                           className="appearance-none rounded-full! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative
-                              checked:after:content-['✓'] checked:after:absolute checked:after:text-(--accentBlue2) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
+                              checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
                         />
                         Private
                       </label>
@@ -446,7 +446,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                         checked={draftVisibility === "public"}
                         onChange={() => setDraftVisibility("public")}
                         className="appearance-none rounded-full! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative
-                            checked:after:content-['✓'] checked:after:absolute checked:after:text-(--accentBlue2) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
+                            checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
                       />
                       Public
                     </label>
@@ -459,7 +459,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                         checked={draftVisibility === "private"}
                         onChange={() => setDraftVisibility("private")}
                         className="appearance-none rounded-full! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative
-                            checked:after:content-['✓'] checked:after:absolute checked:after:text-(--accentBlue2) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
+                            checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
                       />
                       Private
                     </label>

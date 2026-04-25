@@ -18,6 +18,11 @@ import { EUROPEAN_LANGUAGES } from "~/constants";
 import { loadMediaTheme } from "../playPage/playerCollection/loadMediaTheme";
 import Sidebar from "../myVideosPage/sidebar/sidebar";
 import { useConstrainedSticky } from "../shared/useConstrainedSticky";
+import CreateQuizPopup, {
+  type CreateQuizPayload,
+} from "../editVideoPage/createQuizPopup";
+import { useConfirm } from "../confirmPopup/useConfirm";
+import { ConfirmDialog } from "../confirmPopup/confirmDialog";
 
 interface Contributor {
   id: string;
@@ -56,6 +61,22 @@ interface VideoData {
   tags: string[];
   chapters: { timestamp: number; title: string }[];
   people: { id: string; name: string; image_url?: string; role: string }[];
+}
+
+interface QuizData {
+  id: string;
+  video_id: string;
+  title: string;
+  description: string;
+  is_active: boolean;
+  time_limit_seconds: number;
+  question_count: number;
+  max_attempts: number;
+  passing_score_percentage: number | string;
+  shuffle_questions: boolean;
+  shuffle_options: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 type ProcessingPhase =
@@ -457,10 +478,14 @@ function UploadPage() {
   const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   const [isGeneratingTags, setIsGeneratingTags] = useState(false);
+  const [isCreateQuizOpen, setIsCreateQuizOpen] = useState(false);
+  const [quizData, setQuizData] = useState<QuizData | null>(null);
+  const [isDeletingQuiz, setIsDeletingQuiz] = useState(false);
 
   const myHeaders = useRef(new Headers());
   const [token, setToken] = useState<string>("");
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  const { confirm, dialogProps } = useConfirm();
   const previewStickyStyle = useConstrainedSticky({
     containerRef: previewAsideRef,
     stickyRef: previewStickyRef,
@@ -1483,6 +1508,121 @@ function UploadPage() {
     }
   };
 
+  const handleCreateQuiz = async (payload: CreateQuizPayload) => {
+    if (!videoId) return;
+
+    setProcessingError(null);
+
+    try {
+      const response = await fetchFn<{ success: boolean; quiz?: QuizData }>({
+        route: `api/quizzes/${videoId}/create`,
+        options: {
+          method: "POST",
+          headers: myHeaders.current,
+          body: JSON.stringify(payload),
+        },
+      });
+
+      if (!response?.success || !response.quiz) {
+        throw new Error("Failed to create quiz.");
+      }
+
+      setQuizData(response.quiz);
+      setIsCreateQuizOpen(false);
+    } catch (err) {
+      console.error("Error creating quiz:", err);
+      throw err instanceof Error ? err : new Error("Failed to create quiz.");
+    }
+  };
+
+  const handleUpdateQuiz = async (payload: CreateQuizPayload) => {
+    if (!videoId || !quizData) return;
+
+    setProcessingError(null);
+
+    const currentQuizValues: CreateQuizPayload = {
+      title: quizData.title,
+      description: quizData.description,
+      is_active: quizData.is_active,
+      time_limit_seconds: Number(quizData.time_limit_seconds),
+      question_count: Number(quizData.question_count),
+      max_attempts: Number(quizData.max_attempts),
+      passing_score_percentage: Number(quizData.passing_score_percentage),
+      shuffle_questions: quizData.shuffle_questions,
+      shuffle_options: quizData.shuffle_options,
+    };
+
+    const changedFields: Partial<CreateQuizPayload> = {};
+    const assignChangedField = <K extends keyof CreateQuizPayload>(key: K) => {
+      if (payload[key] !== currentQuizValues[key]) {
+        changedFields[key] = payload[key];
+      }
+    };
+    (Object.keys(payload) as Array<keyof CreateQuizPayload>).forEach(assignChangedField);
+
+    if (!Object.keys(changedFields).length) {
+      setIsCreateQuizOpen(false);
+      return;
+    }
+
+    try {
+      const response = await fetchFn<{ success: boolean; quiz?: QuizData }>({
+        route: `api/quizzes/${videoId}/update`,
+        options: {
+          method: "PATCH",
+          headers: myHeaders.current,
+          body: JSON.stringify(changedFields),
+        },
+      });
+
+      if (!response?.success) {
+        throw new Error("Failed to update quiz.");
+      }
+
+      setQuizData(response.quiz ?? { ...quizData, ...changedFields });
+      setIsCreateQuizOpen(false);
+    } catch (err) {
+      console.error("Error updating quiz:", err);
+      throw err instanceof Error ? err : new Error("Failed to update quiz.");
+    }
+  };
+
+  const handleDeleteQuiz = async () => {
+    if (!videoId || !quizData || isDeletingQuiz) return;
+
+    const confirmed = await confirm({
+      title: `Delete quiz "${quizData.title}"?`,
+      message: "This will permanently remove the quiz from this video.",
+      yesText: "Delete",
+      noText: "Cancel",
+    });
+    if (!confirmed) return;
+
+    setIsDeletingQuiz(true);
+    setProcessingError(null);
+
+    try {
+      const response = await fetchFn<{ success: boolean; deleted?: boolean }>({
+        route: `api/quizzes/${videoId}/delete`,
+        options: {
+          method: "DELETE",
+          headers: myHeaders.current,
+        },
+      });
+
+      if (!response?.success) {
+        throw new Error("Failed to delete quiz.");
+      }
+
+      setQuizData(null);
+    } catch (err) {
+      console.error("Error deleting quiz:", err);
+      setProcessingError("Failed to delete quiz.");
+    } finally {
+      setIsDeletingQuiz(false);
+    }
+  };
+
   const steps = [
     { number: 1, label: "Upload Video" },
     { number: 2, label: "Captions & Chapters" },
@@ -2334,6 +2474,55 @@ function UploadPage() {
                         : "Only you and people you share the link with can view this video."}
                     </p>
                   </div>
+
+                  <section className="editSection">
+                    <h2 className="editSectionTitle">Quiz</h2>
+
+                    <div className="captionsActions">
+                      <p className="formHint quizSectionHint">
+                        {quizData
+                          ? `Quiz ready: ${quizData.title}`
+                          : "Create a quiz for this video before finishing, or come back and add it later from Edit Video."}
+                      </p>
+                      <div className="captionsButtonGroup">
+                        {quizData ? (
+                          <>
+                            <button
+                              type="button"
+                              className="saveCaptionsBtn"
+                              onClick={() => setIsCreateQuizOpen(true)}
+                            >
+                              Edit Quiz
+                            </button>
+                            <button
+                              type="button"
+                              className="deleteCaptionsBtn"
+                              onClick={handleDeleteQuiz}
+                              disabled={isDeletingQuiz}
+                            >
+                              {isDeletingQuiz ? (
+                                <>
+                                  <div className="uploadSpinner tiny" />
+                                  Deleting...
+                                </>
+                              ) : (
+                                "Delete Quiz"
+                              )}
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            type="button"
+                            className="saveCaptionsBtn"
+                            onClick={() => setIsCreateQuizOpen(true)}
+                            disabled={!videoId}
+                          >
+                            Create Quiz
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </section>
                 </div>
               </div>
             </div>
@@ -2381,6 +2570,29 @@ function UploadPage() {
           </section>
         </div>
       </main>
+      <CreateQuizPopup
+        open={isCreateQuizOpen}
+        mode={quizData ? "edit" : "create"}
+        videoTitle={title}
+        initialValues={
+          quizData
+            ? {
+                title: quizData.title,
+                description: quizData.description,
+                is_active: quizData.is_active,
+                time_limit_seconds: Number(quizData.time_limit_seconds),
+                question_count: Number(quizData.question_count),
+                max_attempts: Number(quizData.max_attempts),
+                passing_score_percentage: Number(quizData.passing_score_percentage),
+                shuffle_questions: quizData.shuffle_questions,
+                shuffle_options: quizData.shuffle_options,
+              }
+            : null
+        }
+        onClose={() => setIsCreateQuizOpen(false)}
+        onSubmit={quizData ? handleUpdateQuiz : handleCreateQuiz}
+      />
+      <ConfirmDialog {...dialogProps} />
     </>
   );
 }
