@@ -13,6 +13,7 @@ import { useI18n } from "~/i18n";
 
 type SortColumn = "created_at" | "view_count" | "save_count";
 type SortDirection = "asc" | "desc";
+const EMPTY_PLAYLISTS: MyPlaylistT[] = [];
 
 const SortIndicator = ({ column, sortColumn, sortDirection }: { column: SortColumn; sortColumn: SortColumn | null; sortDirection: SortDirection }) => {
     if (sortColumn !== column) return <span className="sortIcon">⇅</span>;
@@ -75,7 +76,7 @@ function MyPlaylistsPage() {
     setPage(1);
   };
 
-  const currentPlaylists = data?.playlists ?? [];
+  const currentPlaylists = data?.playlists ?? EMPTY_PLAYLISTS;
 
   const itemsArray = currentPlaylists.map((item, index) => (
     <PlaylistRow
@@ -222,11 +223,20 @@ function MyPlaylistsPage() {
   }, [confirm, limit, page, queryClient, selectedPlaylists, sortColumn, sortDirection]);
 
   useEffect(() => {
-    setSelectedPlaylists((prev) =>
-      prev.filter((selected) =>
+    setSelectedPlaylists((prev) => {
+      const next = prev.filter((selected) =>
         currentPlaylists.some((playlist) => playlist.id === selected.id)
-      )
-    );
+      );
+
+      if (
+        next.length === prev.length &&
+        next.every((playlist, index) => playlist.id === prev[index]?.id)
+      ) {
+        return prev;
+      }
+
+      return next;
+    });
   }, [currentPlaylists]);
 
   useEffect(() => {
