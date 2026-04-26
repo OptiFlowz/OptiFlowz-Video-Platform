@@ -8,6 +8,7 @@ import type { FetchCommentRepliesT, FetchVideoCommentsT, VideoT } from "~/types"
 import { Link, useLocation } from "react-router";
 import ChairPopup from "./chairPopup";
 import InfoPopup from "./infoPopup";
+import VideoQuizPopup from "./videoQuizPopup";
 import { useI18n } from "~/i18n";
 
 async function fetchAllComments(videoId: string, headers: Headers): Promise<FetchVideoCommentsT> {
@@ -215,6 +216,7 @@ function VideoInfo({
     const [isChairPopupOpen, setIsChairPopupOpen] = useState(false);
     const [isChair, setIsChair] = useState(0);
     const [isInfoPopupOpen, setIsInfoPopupOpen] = useState(false);
+    const [isQuizPopupOpen, setIsQuizPopupOpen] = useState(false);
     const [likeAnimation, setLikeAnimation] = useState(false);
     const [dislikeAnimation, setDislikeAnimation] = useState(false);
     const [aiButtonAnimation, setAiButtonAnimation] = useState(false);
@@ -598,6 +600,7 @@ function VideoInfo({
                 {true && (
                     <button
                         className="quizOpenButton noHover"
+                        onClick={() => setIsQuizPopupOpen(true)}
                         onMouseEnter={() => setIsHoveringTags(true)}
                         onMouseLeave={() => setIsHoveringTags(false)}
                         onPointerEnter={() => setIsHoveringTags(true)}
@@ -648,6 +651,13 @@ function VideoInfo({
 
             <ChairPopup props={props} open={isChairPopupOpen} type={isChair} onClose={() => setIsChairPopupOpen(false)} />
             <InfoPopup text={t("videoCopyrightInfo")} open={isInfoPopupOpen} onClose={() => setIsInfoPopupOpen(false)} />
+            <VideoQuizPopup
+                open={isQuizPopupOpen}
+                onClose={() => setIsQuizPopupOpen(false)}
+                videoId={props.id}
+                videoTitle={props.title}
+                percentageWatched={props.percentage_watched}
+            />
         </div>
     </>;
 }
