@@ -80,7 +80,6 @@ type Props = {
 
 type QuizAnswers = Record<string, string | string[] | Record<string, string>>;
 
-const QUIZ_UNLOCK_PERCENTAGE = 50;
 const QUIZ_STORAGE_VERSION = 2;
 const DEFAULT_QUIZ_TIME_LIMIT_SECONDS = 15 * 60;
 
@@ -410,7 +409,6 @@ function VideoQuizPopup({
   const quizMaxAttempts = Math.max(0, Number(quizSummary?.max_attempts) || 0);
   const quizDisplayTitle = quizSummary?.title || `${videoTitle} Quiz`;
   const attemptsLeft = Math.max(0, quizMaxAttempts - attempts.length);
-  const isUnlocked = percentageWatched >= QUIZ_UNLOCK_PERCENTAGE;
   const answeredCount = questions.filter((question) => isQuestionAnswered(question, answers[question.id])).length;
   const currentQuestion = questions[currentQuestionIndex];
   const hasQuizQuestions = questions.length > 0;
@@ -527,7 +525,7 @@ function VideoQuizPopup({
   }, [open, stage]);
 
   const startAttempt = () => {
-    if (!isUnlocked || attemptsLeft <= 0 || !hasQuizQuestions) return;
+    if (attemptsLeft <= 0 || !hasQuizQuestions) return;
 
     const now = Date.now();
     setQuestionMotionDirection("forward");
@@ -798,16 +796,6 @@ function VideoQuizPopup({
                 </div>
               ) : null}
 
-              {!isUnlocked ? (
-                <div className="videoQuizUnlockNotice">
-                  <strong>Quiz locked for now</strong>
-                  <p>
-                    Watch at least {QUIZ_UNLOCK_PERCENTAGE}% of the video to unlock the quiz. You are currently at{" "}
-                    {Math.round(percentageWatched)}%.
-                  </p>
-                </div>
-              ) : null}
-
               {quizMaxAttempts > 0 && attemptsLeft === 0 ? (
                 <div className="videoQuizUnlockNotice">
                   <strong>No attempts left</strong>
@@ -823,7 +811,7 @@ function VideoQuizPopup({
                   type="button"
                   className="videoQuizPrimaryButton"
                   onClick={startAttempt}
-                  disabled={isQuizLoading || !quizSummary || !hasQuizQuestions || !isUnlocked || (quizMaxAttempts > 0 && attemptsLeft <= 0)}
+                  disabled={isQuizLoading || !quizSummary || !hasQuizQuestions || (quizMaxAttempts > 0 && attemptsLeft <= 0)}
                 >
                   Attempt {ArrowSVG}
                 </button>
