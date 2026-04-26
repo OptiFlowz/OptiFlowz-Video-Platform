@@ -1,6 +1,9 @@
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { fetchFn } from "~/API";
 import { ArrowSVG, CloseSVG, IconChevron, QuizSVG } from "~/constants";
+import { getToken } from "~/functions";
 
 type QuizQuestionType = "single" | "multiple" | "match";
 
@@ -77,152 +80,60 @@ type Props = {
 
 type QuizAnswers = Record<string, string | string[] | Record<string, string>>;
 
-const QUIZ_TIME_LIMIT_SECONDS = 15 * 60;
-const QUIZ_PASSING_PERCENTAGE = 50;
-const QUIZ_MAX_ATTEMPTS = 15;
 const QUIZ_UNLOCK_PERCENTAGE = 50;
 const QUIZ_STORAGE_VERSION = 2;
+const DEFAULT_QUIZ_TIME_LIMIT_SECONDS = 15 * 60;
+
+type VideoQuizSummary = {
+  id: string;
+  video_id: string;
+  title: string;
+  description: string;
+  is_active: boolean;
+  time_limit_seconds: number;
+  question_count: number;
+  max_attempts: number;
+  passing_score_percentage: number | string;
+  shuffle_questions: boolean;
+  shuffle_options: boolean;
+  created_at?: string;
+  updated_at?: string;
+};
+
+type FetchedQuizOption = {
+  id: string;
+  question_id: string;
+  option_text: string;
+  is_correct: boolean;
+  position: number;
+  created_at?: string;
+};
+
+type FetchedQuizPair = {
+  id: string;
+  question_id: string;
+  left_text: string;
+  right_text: string;
+  position: number;
+  created_at?: string;
+};
+
+type FetchedQuizQuestion = {
+  id: string;
+  quiz_id: string;
+  question_text: string;
+  question_type: "single_choice" | "multiple_choice" | "matching";
+  explanation: string;
+  points: number;
+  position: number;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+  options: FetchedQuizOption[];
+  pairs: FetchedQuizPair[];
+};
 
 const getStorageKey = (videoId: string) => `optiflowz-video-quiz:${videoId}`;
-
-const createMockQuestions = (videoTitle: string): QuizQuestion[] => [
-  {
-    id: "q1",
-    type: "single",
-    prompt: `What is the main goal of the "${videoTitle}" quiz?`,
-    explanation: "The quiz checks whether the learner understood the key ideas presented in the video.",
-    options: [
-      { id: "a", label: "To rate the video production quality" },
-      { id: "b", label: "To test understanding of the video content" },
-      { id: "c", label: "To unlock unrelated videos in the library" },
-      { id: "d", label: "To replace the full lecture notes" },
-    ],
-    correctOptionIds: ["b"],
-  },
-  {
-    id: "q2",
-    type: "multiple",
-    prompt: "Which actions usually help a learner prepare for a post-video quiz?",
-    explanation: "Reviewing objectives, taking notes, and revisiting key timestamps are all useful preparation habits.",
-    options: [
-      { id: "a", label: "Review the learning objectives" },
-      { id: "b", label: "Skip directly to the final minute only" },
-      { id: "c", label: "Take notes on important decisions or definitions" },
-      { id: "d", label: "Replay the important moments before submitting" },
-    ],
-    correctOptionIds: ["a", "c", "d"],
-  },
-  {
-    id: "q3",
-    type: "match",
-    prompt: "Match each quiz element to its role in the learner flow.",
-    explanation: "The question navigator tracks progress, the timer preserves pacing, and the results view explains what to review.",
-    choices: [
-      { id: "progress", label: "Shows answered and current items" },
-      { id: "timer", label: "Limits how long the attempt can stay open" },
-      { id: "results", label: "Summarizes score and feedback after submission" },
-    ],
-    pairs: [
-      { id: "p1", label: "Question navigator", correctChoiceId: "progress" },
-      { id: "p2", label: "Attempt timer", correctChoiceId: "timer" },
-      { id: "p3", label: "Results screen", correctChoiceId: "results" },
-    ],
-  },
-  {
-    id: "q4",
-    type: "single",
-    prompt: "What happens when an answer is changed before the attempt is finished?",
-    explanation: "Before submission, the current answer state remains editable and the newest selection is used.",
-    options: [
-      { id: "a", label: "The first answer is locked forever" },
-      { id: "b", label: "The newest answer replaces the previous one" },
-      { id: "c", label: "The question is deleted from the attempt" },
-      { id: "d", label: "The timer resets to the full duration" },
-    ],
-    correctOptionIds: ["b"],
-  },
-  {
-    id: "q5",
-    type: "multiple",
-    prompt: "Which states are visible in the popup flow?",
-    explanation: "The current UI includes an intro state, the active question flow, a review screen, and a results screen.",
-    options: [
-      { id: "a", label: "Intro / attempts overview" },
-      { id: "b", label: "Question answering view" },
-      { id: "c", label: "Review before final submit" },
-      { id: "d", label: "Final results with feedback" },
-    ],
-    correctOptionIds: ["a", "b", "c", "d"],
-  },
-  {
-    id: "q6",
-    type: "single",
-    prompt: `When does the quiz unlock for "${videoTitle}" in this prototype?`,
-    explanation: "The unlock rule is based on watch progress so the quiz opens once the learner reaches the configured threshold.",
-    options: [
-      { id: "a", label: "After watching 10% of the video" },
-      { id: "b", label: "After watching 25% of the video" },
-      { id: "c", label: "After watching 50% of the video" },
-      { id: "d", label: "Only after the whole video ends" },
-    ],
-    correctOptionIds: ["c"],
-  },
-  {
-    id: "q7",
-    type: "match",
-    prompt: "Match the question type to the expected answer behavior.",
-    explanation: "Single choice uses one option, multiple choice uses several options, and match uses one answer per row.",
-    choices: [
-      { id: "one", label: "Select exactly one answer" },
-      { id: "many", label: "Select more than one answer" },
-      { id: "row", label: "Choose one option for each row" },
-    ],
-    pairs: [
-      { id: "p1", label: "Single choice", correctChoiceId: "one" },
-      { id: "p2", label: "Multiple choice", correctChoiceId: "many" },
-      { id: "p3", label: "Match concepts", correctChoiceId: "row" },
-    ],
-  },
-  {
-    id: "q8",
-    type: "single",
-    prompt: "Why is a review screen helpful before final submission?",
-    explanation: "It lets the learner spot unanswered questions and make last changes before locking the attempt.",
-    options: [
-      { id: "a", label: "It automatically changes incorrect answers" },
-      { id: "b", label: "It highlights unanswered or uncertain items" },
-      { id: "c", label: "It removes the attempt limit" },
-      { id: "d", label: "It publishes the score to other users" },
-    ],
-    correctOptionIds: ["b"],
-  },
-  {
-    id: "q9",
-    type: "multiple",
-    prompt: "Which details are shown on the intro screen before starting an attempt?",
-    explanation: "The intro stage summarizes the quiz, lists previous attempts, and shows how many attempts remain.",
-    options: [
-      { id: "a", label: "Quiz title and time limit" },
-      { id: "b", label: "Previous attempt scores" },
-      { id: "c", label: "Attempts left" },
-      { id: "d", label: "A hidden admin-only answer key" },
-    ],
-    correctOptionIds: ["a", "b", "c"],
-  },
-  {
-    id: "q10",
-    type: "single",
-    prompt: "What is stored locally in this temporary implementation until the API is ready?",
-    explanation: "Attempts are persisted in localStorage so the popup can still show prior scores between opens.",
-    options: [
-      { id: "a", label: "Nothing is remembered after closing" },
-      { id: "b", label: "Only the open/closed state of the popup" },
-      { id: "c", label: "Previous attempts and scores for this video" },
-      { id: "d", label: "Every second of the video playback session" },
-    ],
-    correctOptionIds: ["c"],
-  },
-];
 
 function getStoredAttempts(videoId: string): AttemptRecord[] {
   if (typeof window === "undefined") return [];
@@ -254,6 +165,48 @@ function formatTime(secondsLeft: number) {
   const minutes = Math.floor(safeSeconds / 60);
   const seconds = safeSeconds % 60;
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function mapFetchedQuestion(question: FetchedQuizQuestion): QuizQuestion {
+  if (question.question_type === "matching") {
+    const sortedPairs = [...(question.pairs ?? [])].sort(
+      (a, b) => Number(a.position || 0) - Number(b.position || 0)
+    );
+
+    const choices = sortedPairs.map((pair) => ({
+      id: pair.id,
+      label: pair.right_text,
+    }));
+
+    return {
+      id: question.id,
+      prompt: question.question_text,
+      explanation: question.explanation,
+      type: "match",
+      choices,
+      pairs: sortedPairs.map((pair) => ({
+        id: pair.id,
+        label: pair.left_text,
+        correctChoiceId: pair.id,
+      })),
+    };
+  }
+
+  const sortedOptions = [...(question.options ?? [])].sort(
+    (a, b) => Number(a.position || 0) - Number(b.position || 0)
+  );
+
+  return {
+    id: question.id,
+    prompt: question.question_text,
+    explanation: question.explanation,
+    type: question.question_type === "multiple_choice" ? "multiple" : "single",
+    options: sortedOptions.map((option) => ({
+      id: option.id,
+      label: option.option_text,
+    })),
+    correctOptionIds: sortedOptions.filter((option) => option.is_correct).map((option) => option.id),
+  };
 }
 
 function isQuestionAnswered(question: QuizQuestion, answer: QuizAnswers[string]) {
@@ -394,16 +347,74 @@ function VideoQuizPopup({
   const [answers, setAnswers] = useState<QuizAnswers>({});
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [deadline, setDeadline] = useState<number | null>(null);
-  const [secondsLeft, setSecondsLeft] = useState(QUIZ_TIME_LIMIT_SECONDS);
+  const [secondsLeft, setSecondsLeft] = useState(DEFAULT_QUIZ_TIME_LIMIT_SECONDS);
   const [latestResult, setLatestResult] = useState<AttemptResult | null>(null);
   const [questionMotionDirection, setQuestionMotionDirection] = useState<"forward" | "backward">("forward");
   const popupRef = useRef<HTMLDivElement | null>(null);
+  const requestHeaders = useMemo(() => {
+    const headers = new Headers();
+    headers.set("Content-Type", "application/json");
 
-  const questions = useMemo(() => createMockQuestions(videoTitle), [videoTitle]);
-  const attemptsLeft = Math.max(0, QUIZ_MAX_ATTEMPTS - attempts.length);
+    const token = getToken();
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
+
+    return headers;
+  }, []);
+
+  const { data: quizSummary, isLoading: isQuizSummaryLoading } = useQuery({
+    queryKey: ["video-quiz-popup-summary", videoId],
+    queryFn: () =>
+      fetchFn<{ success: boolean; quiz?: VideoQuizSummary }>({
+        route: `api/quizzes/${videoId}`,
+        options: {
+          method: "GET",
+          headers: requestHeaders,
+        },
+      })
+        .then((response) => response.quiz ?? null)
+        .catch((error: { status?: number }) => {
+          if (error?.status === 404) return null;
+          throw error;
+        }),
+    enabled: open && !!videoId,
+    refetchOnWindowFocus: false,
+  });
+  const { data: fetchedQuestions = [], isLoading: areQuestionsLoading } = useQuery({
+    queryKey: ["video-quiz-popup-questions", quizSummary?.id],
+    queryFn: () =>
+      fetchFn<{
+        success: boolean;
+        questions: FetchedQuizQuestion[];
+      }>({
+        route: `api/quizzes/${quizSummary!.id}/questions?page=1&limit=100&sortBy=position&sortOrder=asc`,
+        options: {
+          method: "GET",
+          headers: requestHeaders,
+        },
+      }).then((response) => response.questions ?? []),
+    enabled: open && !!quizSummary?.id,
+    refetchOnWindowFocus: false,
+  });
+
+  const questions = useMemo(
+    () =>
+      [...fetchedQuestions]
+        .sort((a, b) => Number(a.position || 0) - Number(b.position || 0))
+        .map(mapFetchedQuestion),
+    [fetchedQuestions]
+  );
+  const quizTimeLimitSeconds = Math.max(1, Number(quizSummary?.time_limit_seconds) || DEFAULT_QUIZ_TIME_LIMIT_SECONDS);
+  const quizPassingPercentage = Number(quizSummary?.passing_score_percentage) || 0;
+  const quizMaxAttempts = Math.max(0, Number(quizSummary?.max_attempts) || 0);
+  const quizDisplayTitle = quizSummary?.title || `${videoTitle} Quiz`;
+  const attemptsLeft = Math.max(0, quizMaxAttempts - attempts.length);
   const isUnlocked = percentageWatched >= QUIZ_UNLOCK_PERCENTAGE;
   const answeredCount = questions.filter((question) => isQuestionAnswered(question, answers[question.id])).length;
   const currentQuestion = questions[currentQuestionIndex];
+  const hasQuizQuestions = questions.length > 0;
+  const isQuizLoading = isQuizSummaryLoading || areQuestionsLoading;
 
   useEffect(() => {
     setMounted(true);
@@ -417,9 +428,9 @@ function VideoQuizPopup({
     setAnswers({});
     setCurrentQuestionIndex(0);
     setDeadline(null);
-    setSecondsLeft(QUIZ_TIME_LIMIT_SECONDS);
+    setSecondsLeft(quizTimeLimitSeconds);
     setLatestResult(null);
-  }, [open, videoId]);
+  }, [open, videoId, quizTimeLimitSeconds]);
 
   useEffect(() => {
     if (!open) return;
@@ -516,7 +527,7 @@ function VideoQuizPopup({
   }, [open, stage]);
 
   const startAttempt = () => {
-    if (!isUnlocked || attemptsLeft <= 0) return;
+    if (!isUnlocked || attemptsLeft <= 0 || !hasQuizQuestions) return;
 
     const now = Date.now();
     setQuestionMotionDirection("forward");
@@ -524,8 +535,8 @@ function VideoQuizPopup({
     setCurrentQuestionIndex(0);
     setLatestResult(null);
     setStage("question");
-    setDeadline(now + QUIZ_TIME_LIMIT_SECONDS * 1000);
-    setSecondsLeft(QUIZ_TIME_LIMIT_SECONDS);
+    setDeadline(now + quizTimeLimitSeconds * 1000);
+    setSecondsLeft(quizTimeLimitSeconds);
   };
 
   const finishAttempt = () => {
@@ -544,14 +555,15 @@ function VideoQuizPopup({
       };
     });
 
+    const totalQuestions = questions.length;
     const score = questionResults.filter((result) => result.isCorrect).length;
-    const passed = (score / questions.length) * 100 >= QUIZ_PASSING_PERCENTAGE;
+    const passed = totalQuestions > 0 && (score / totalQuestions) * 100 >= quizPassingPercentage;
     const nextAttemptNumber = attempts.length + 1;
     const nextAttempt: AttemptRecord = {
       id: `${videoId}-${Date.now()}`,
       number: nextAttemptNumber,
       score,
-      total: questions.length,
+      total: totalQuestions,
       passed,
       completedAt: Date.now(),
     };
@@ -561,7 +573,7 @@ function VideoQuizPopup({
     setStoredAttempts(videoId, nextAttempts);
     setLatestResult({
       score,
-      total: questions.length,
+      total: totalQuestions,
       passed,
       attemptNumber: nextAttemptNumber,
       questionResults,
@@ -717,9 +729,9 @@ function VideoQuizPopup({
           <div className="videoQuizHeading">
             <span className="videoQuizBadge">{QuizSVG}</span>
             <span>
-              <h2>{videoTitle} - Quiz</h2>
+              <h2>{quizDisplayTitle}</h2>
               <p>
-                Certificate when completed • {questions.length} questions • {QUIZ_TIME_LIMIT_SECONDS / 60} minutes
+                Certificate when completed • {questions.length} questions • {Math.max(1, Math.round(quizTimeLimitSeconds / 60))} minutes
               </p>
             </span>
           </div>
@@ -742,10 +754,15 @@ function VideoQuizPopup({
             <div className="videoQuizIntro">
               <div className="videoQuizSectionTitle">
                 <h3>Your last attempts</h3>
-                <p>{attemptsLeft} attempts left</p>
+                <p>{quizMaxAttempts > 0 ? `${attemptsLeft} attempts left` : "Attempts will appear here"}</p>
               </div>
 
-              {attempts.length > 0 ? (
+              {isQuizLoading ? (
+                <div className="videoQuizEmptyState">
+                  <strong>Loading quiz</strong>
+                  <p>Questions are being prepared for this video.</p>
+                </div>
+              ) : attempts.length > 0 ? (
                 <div className="videoQuizAttemptList">
                   {[...attempts].reverse().map((attempt) => (
                     <div key={attempt.id} className="videoQuizAttemptCard">
@@ -767,6 +784,20 @@ function VideoQuizPopup({
                 </div>
               )}
 
+              {!isQuizLoading && !quizSummary ? (
+                <div className="videoQuizUnlockNotice">
+                  <strong>No quiz available</strong>
+                  <p>This video does not have a quiz yet.</p>
+                </div>
+              ) : null}
+
+              {!isQuizLoading && quizSummary && !hasQuizQuestions ? (
+                <div className="videoQuizUnlockNotice">
+                  <strong>No questions yet</strong>
+                  <p>The quiz exists, but questions have not been added yet.</p>
+                </div>
+              ) : null}
+
               {!isUnlocked ? (
                 <div className="videoQuizUnlockNotice">
                   <strong>Quiz locked for now</strong>
@@ -777,10 +808,10 @@ function VideoQuizPopup({
                 </div>
               ) : null}
 
-              {attemptsLeft === 0 ? (
+              {quizMaxAttempts > 0 && attemptsLeft === 0 ? (
                 <div className="videoQuizUnlockNotice">
                   <strong>No attempts left</strong>
-                  <p>You have used all {QUIZ_MAX_ATTEMPTS} attempts in this temporary local version.</p>
+                  <p>You have used all {quizMaxAttempts} attempts in this temporary local version.</p>
                 </div>
               ) : null}
 
@@ -792,7 +823,7 @@ function VideoQuizPopup({
                   type="button"
                   className="videoQuizPrimaryButton"
                   onClick={startAttempt}
-                  disabled={!isUnlocked || attemptsLeft <= 0}
+                  disabled={isQuizLoading || !quizSummary || !hasQuizQuestions || !isUnlocked || (quizMaxAttempts > 0 && attemptsLeft <= 0)}
                 >
                   Attempt {ArrowSVG}
                 </button>
@@ -969,7 +1000,7 @@ function VideoQuizPopup({
                   type="button"
                   className="videoQuizPrimaryButton"
                   onClick={startAttempt}
-                  disabled={attempts.length >= QUIZ_MAX_ATTEMPTS}
+                  disabled={isQuizLoading || !quizSummary || !hasQuizQuestions || (quizMaxAttempts > 0 && attempts.length >= quizMaxAttempts)}
                 >
                   Attempt again {ArrowSVG}
                 </button>

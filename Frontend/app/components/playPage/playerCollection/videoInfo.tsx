@@ -11,6 +11,39 @@ import InfoPopup from "./infoPopup";
 import VideoQuizPopup from "./videoQuizPopup";
 import { useI18n } from "~/i18n";
 
+type VideoQuizSummary = {
+    id: string;
+    video_id: string;
+    title: string;
+    description: string;
+    is_active: boolean;
+    time_limit_seconds: number;
+    question_count: number;
+    max_attempts: number;
+    passing_score_percentage: number | string;
+    shuffle_questions: boolean;
+    shuffle_options: boolean;
+    created_at?: string;
+    updated_at?: string;
+};
+
+function formatQuizTimeLimit(seconds: number) {
+    const totalSeconds = Math.max(0, Number(seconds) || 0);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const remainingSeconds = totalSeconds % 60;
+
+    if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+    }
+
+    if (minutes > 0) {
+        return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
+    }
+
+    return `${remainingSeconds}s`;
+}
+
 async function fetchAllComments(videoId: string, headers: Headers): Promise<FetchVideoCommentsT> {
     const firstPage = await fetchFn<FetchVideoCommentsT>({
         route: `api/videos/${videoId}/comments?limit=100&page=1`,
@@ -218,6 +251,36 @@ function VideoInfo({
     const [isInfoPopupOpen, setIsInfoPopupOpen] = useState(false);
     const [isQuizPopupOpen, setIsQuizPopupOpen] = useState(false);
     const [likeAnimation, setLikeAnimation] = useState(false);
+    const {
+        data: quizResponse,
+        isLoading: isQuizSummaryLoading,
+    } = useQuery({
+        queryKey: ["video-quiz-summary", props?.id],
+        queryFn: async () => {
+            if (!props?.id) return null as VideoQuizSummary | null;
+
+            const response = await fetch(`${env.apiBaseUrl || ""}/api/quizzes/${props.id}`, {
+                method: "GET",
+            });
+
+            if (response.status === 404) {
+                return null as VideoQuizSummary | null;
+            }
+
+            const body = (await response.json().catch(() => null)) as
+                | { success?: boolean; quiz?: VideoQuizSummary; message?: string }
+                | null;
+
+            if (!response.ok) {
+                throw new Error(body?.message ?? "Failed to load quiz.");
+            }
+
+            return body?.quiz ?? null;
+        },
+        enabled: !!props?.id,
+        refetchOnWindowFocus: false,
+    });
+    const quizSummary = quizResponse ?? null;
     const [dislikeAnimation, setDislikeAnimation] = useState(false);
     const [aiButtonAnimation, setAiButtonAnimation] = useState(false);
     const token = getToken();
@@ -597,7 +660,7 @@ function VideoInfo({
                     </button>
                 )}
 
-                {true && (
+                {quizSummary && (
                     <button
                         className="quizOpenButton noHover"
                         onClick={() => setIsQuizPopupOpen(true)}
@@ -608,13 +671,29 @@ function VideoInfo({
                     >
                         <div>
                             <span className="quizSvg">{QuizSVG}</span>
-                            <span className="quizProgressWrap">
-                                <p className="text-left leading-5">Complete 50% of the video to unlock the quiz about this topic</p>
-                                <span className="quizProgressBar"><span className="quizProgress" style={{ width: `${40}%` }}></span></span>
+                            <span className="quizSummaryWrap">
+                                <strong>{quizSummary.title || "Quiz"}</strong>
+                                <span className="quizSummaryMeta">
+                                    <span>{quizSummary.question_count} questions</span>
+                                    <span>{quizSummary.max_attempts} max attempts</span>
+                                    <span>{Number(quizSummary.passing_score_percentage)}% passing score</span>
+                                    <span>{formatQuizTimeLimit(Number(quizSummary.time_limit_seconds))} time limit</span>
+                                </span>
                             </span>
                             {ArrowSVG}
                         </div>
                     </button>
+                )}
+
+                {isQuizSummaryLoading && (
+                    <span className="quizOpenButton noHover opacity-70">
+                        <div>
+                            <span className="quizSvg">{QuizSVG}</span>
+                            <span className="quizSummaryWrap">
+                                <strong>Loading quiz...</strong>
+                            </span>
+                        </div>
+                    </span>
                 )}
 
                 {!!props?.tags?.length && (
