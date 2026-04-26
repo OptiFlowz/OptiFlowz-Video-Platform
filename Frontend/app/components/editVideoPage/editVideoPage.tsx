@@ -21,6 +21,9 @@ import { useConstrainedSticky } from "~/components/shared/useConstrainedSticky";
 import CreateQuizPopup, {
   type CreateQuizPayload,
 } from "~/components/editVideoPage/createQuizPopup";
+import EditQuizQuestionsPopup, {
+  type CreateQuizQuestionPayload,
+} from "~/components/editVideoPage/editQuizQuestionsPopup";
 import { useConfirm } from "~/components/confirmPopup/useConfirm";
 import { ConfirmDialog } from "~/components/confirmPopup/confirmDialog";
 
@@ -68,6 +71,19 @@ interface QuizData {
   passing_score_percentage: number | string;
   shuffle_questions: boolean;
   shuffle_options: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface QuizQuestionResponse {
+  id: string;
+  quiz_id: string;
+  question_text: string;
+  question_type: "single_choice" | "multiple_choice" | "matching";
+  explanation: string;
+  points: number;
+  position: number;
+  is_active: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -479,6 +495,7 @@ function EditVideoPage() {
   const [isRemovingThumbnail, setIsRemovingThumbnail] = useState(false);
   const [isGeneratingChapters, setIsGeneratingChapters] = useState(false);
   const [isCreateQuizOpen, setIsCreateQuizOpen] = useState(false);
+  const [isEditQuestionsOpen, setIsEditQuestionsOpen] = useState(false);
   const [isDeletingQuiz, setIsDeletingQuiz] = useState(false);
 
   // ─── AI generation loading states ────────────────────────────────────────
@@ -1450,6 +1467,47 @@ function EditVideoPage() {
     }
   };
 
+  const handleCreateQuizQuestion = async (payload: CreateQuizQuestionPayload) => {
+    if (!quizData?.id) {
+      throw new Error("Create a quiz before adding questions.");
+    }
+
+    setError(null);
+
+    try {
+      const response = await fetchFn<{
+        success: boolean;
+        question?: QuizQuestionResponse;
+      }>({
+        route: `api/quizzes/${quizData.id}/question/create`,
+        options: {
+          method: "POST",
+          headers: myHeaders.current,
+          body: JSON.stringify(payload),
+        },
+      });
+
+      if (!response?.success || !response.question) {
+        throw new Error("Failed to create quiz question.");
+      }
+
+      await refetchQuiz();
+
+      return {
+        id: response.question.id,
+        question_text: response.question.question_text,
+        question_type: response.question.question_type,
+        points: Number(response.question.points),
+        position: Number(response.question.position),
+      };
+    } catch (err) {
+      console.error("Error creating quiz question:", err);
+      throw err instanceof Error
+        ? err
+        : new Error("Failed to create quiz question.");
+    }
+  };
+
   // Cleanup polling on unmount
   useLayoutEffect(() => {
     return () => {
@@ -2178,6 +2236,13 @@ function EditVideoPage() {
                           </button>
                           <button
                             type="button"
+                            className="saveCaptionsBtn"
+                            onClick={() => setIsEditQuestionsOpen(true)}
+                          >
+                            Edit Questions
+                          </button>
+                          <button
+                            type="button"
                             className="deleteCaptionsBtn"
                             onClick={handleDeleteQuiz}
                             disabled={isDeletingQuiz}
@@ -2245,6 +2310,14 @@ function EditVideoPage() {
         }
         onClose={() => setIsCreateQuizOpen(false)}
         onSubmit={quizData ? handleUpdateQuiz : handleCreateQuiz}
+      />
+      <EditQuizQuestionsPopup
+        open={isEditQuestionsOpen}
+        quizId={quizData?.id ?? ""}
+        quizTitle={quizData?.title ?? title}
+        requestHeaders={myHeaders.current}
+        onClose={() => setIsEditQuestionsOpen(false)}
+        onSubmit={handleCreateQuizQuestion}
       />
       <ConfirmDialog {...dialogProps} />
     </main>
