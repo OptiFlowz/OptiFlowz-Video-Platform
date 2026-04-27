@@ -7879,24 +7879,44 @@ main.playlist .buttonHolder button:hover {
 
 main.playlist .channelVideosHeader {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: flex-start;
   gap: 0.85rem;
   margin-top: 1.5rem;
   flex-wrap: wrap;
 }
 
-main.playlist .channelVideosHeader select {
-  min-width: 210px;
-  width: auto;
-  padding: 0.65rem 0.9rem;
-  border-radius: 14px;
+main.playlist .channelSortChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+main.playlist .channelSortChip {
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background-image: linear-gradient(180deg, rgba(24, 28, 38, 0.74), rgba(18, 21, 30, 0.76));
-  background-color: black;
+  background: linear-gradient(180deg, rgba(26, 29, 37, 0.92), rgba(18, 21, 29, 0.96));
+  color: var(--text2);
+  border-radius: 999px;
+  padding: 0.68rem 1.1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+}
+
+main.playlist .channelSortChip:hover {
   color: var(--text1);
-  outline: none;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+  border-color: rgba(255, 255, 255, 0.16);
+  transform: translateY(-1px);
+}
+
+main.playlist .channelSortChip.active {
+  background: var(--text1);
+  color: var(--background1);
+  border-color: transparent;
+  box-shadow: 0 14px 35px rgba(255, 255, 255, 0.12);
 }
 
 main.playlist .channelVideosTitle {
@@ -8252,9 +8272,26 @@ main.playlist .videoHolder .playlistOrderNumber {
     font-size: 1.25rem;
     line-height: 1.2rem;
   }
-  main.playlist .channelVideosHeader select {
-    min-width: 0;
+  main.playlist .channelSortChips {
     width: 100%;
+    gap: 0.55rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 0.2rem;
+  }
+  main.playlist .channelSortChips::-webkit-scrollbar {
+    display: none;
+  }
+  main.playlist .channelSortChip {
+    flex: 0 0 auto;
+    padding: 0.62rem 0.95rem;
+    font-size: 0.9rem;
+  }
+  main.playlist .channelSortChip:hover {
+    transform: none;
   }
 }
 

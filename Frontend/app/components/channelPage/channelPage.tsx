@@ -24,6 +24,8 @@ const CHANNEL_SORT_OPTIONS: Array<{
     { value: "created_at:asc", label: "Oldest" },
 ];
 
+type ChannelSortValue = `${ChannelSortBy}:${ChannelSortOrder}`;
+
 const SkeletonVideoItem = () => (
     <div className="skeleton-item">
         <div className="skeleton-thumbnail"></div>
@@ -183,14 +185,14 @@ function ChannelPage() {
         </div>
     ));
 
-    const handleVideoSortChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        const [nextSortBy, nextSortOrder] = event.target.value.split(":") as [ChannelSortBy, ChannelSortOrder];
+    const handleVideoSortChange = (value: ChannelSortValue) => {
+        const [nextSortBy, nextSortOrder] = value.split(":") as [ChannelSortBy, ChannelSortOrder];
         setVideoSortBy(nextSortBy);
         setVideoSortOrder(nextSortOrder);
     };
 
-    const handlePlaylistSortChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        const [nextSortBy, nextSortOrder] = event.target.value.split(":") as [ChannelSortBy, ChannelSortOrder];
+    const handlePlaylistSortChange = (value: ChannelSortValue) => {
+        const [nextSortBy, nextSortOrder] = value.split(":") as [ChannelSortBy, ChannelSortOrder];
         setPlaylistSortBy(nextSortBy);
         setPlaylistSortOrder(nextSortOrder);
     };
@@ -244,18 +246,20 @@ function ChannelPage() {
 
             <div className="channelVideosHeader">
                 <h3 className="channelVideosTitle">{t("videosTab")}</h3>
-                <select
-                    aria-label="Sort videos"
-                    id="channel-sort-select"
-                    value={`${videoSortBy}:${videoSortOrder}`}
-                    onChange={handleVideoSortChange}
-                >
+                <div className="channelSortChips" role="tablist" aria-label="Sort videos">
                     {CHANNEL_SORT_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
+                        <button
+                            key={option.value}
+                            type="button"
+                            role="tab"
+                            aria-selected={`${videoSortBy}:${videoSortOrder}` === option.value}
+                            className={`channelSortChip ${`${videoSortBy}:${videoSortOrder}` === option.value ? "active" : ""}`}
+                            onClick={() => handleVideoSortChange(option.value)}
+                        >
                             {option.label}
-                        </option>
+                        </button>
                     ))}
-                </select>
+                </div>
             </div>
 
             <div className="videoHolder">{videoArray}</div>
@@ -268,18 +272,20 @@ function ChannelPage() {
                 <section className="channelPlaylistsSection">
                     <div className="channelVideosHeader">
                         <h3 className="channelVideosTitle">{t("playlistsTab")}</h3>
-                        <select
-                            aria-label="Sort playlists"
-                            id="channel-playlists-sort-select"
-                            value={`${playlistSortBy}:${playlistSortOrder}`}
-                            onChange={handlePlaylistSortChange}
-                        >
+                        <div className="channelSortChips" role="tablist" aria-label="Sort playlists">
                             {CHANNEL_SORT_OPTIONS.map((option) => (
-                                <option key={`playlists-${option.value}`} value={option.value}>
+                                <button
+                                    key={`playlists-${option.value}`}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={`${playlistSortBy}:${playlistSortOrder}` === option.value}
+                                    className={`channelSortChip ${`${playlistSortBy}:${playlistSortOrder}` === option.value ? "active" : ""}`}
+                                    onClick={() => handlePlaylistSortChange(option.value)}
+                                >
                                     {option.label}
-                                </option>
+                                </button>
                             ))}
-                        </select>
+                        </div>
                     </div>
                     <div className="collection notscrollable">{playlistArray}</div>
                 </section>
