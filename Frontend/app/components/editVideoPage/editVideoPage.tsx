@@ -1546,7 +1546,7 @@ function EditVideoPage() {
       <Sidebar />
       <div className="uploadSide max-w-full! w-full">
         <h1>Edit Video</h1>
-        <p className="mt-3 links">
+        <p className="mt-1 mb-3 links">
           Make changes to your video's details, captions, and chapters.
         </p>
 
