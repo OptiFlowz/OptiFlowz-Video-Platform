@@ -18,14 +18,16 @@ import { EUROPEAN_LANGUAGES } from "~/constants";
 import { loadMediaTheme } from "../playPage/playerCollection/loadMediaTheme";
 import Sidebar from "../myVideosPage/sidebar/sidebar";
 import { useConstrainedSticky } from "~/components/shared/useConstrainedSticky";
-import CreateQuizPopup, {
-  type CreateQuizPayload,
-} from "~/components/editVideoPage/createQuizPopup";
-import EditQuizQuestionsPopup, {
-  type CreateQuizQuestionPayload,
-} from "~/components/editVideoPage/editQuizQuestionsPopup";
+import CreateQuizPopup from "~/components/editVideoPage/createQuizPopup";
+import EditQuizQuestionsPopup from "~/components/editVideoPage/editQuizQuestionsPopup";
 import { useConfirm } from "~/components/confirmPopup/useConfirm";
 import { ConfirmDialog } from "~/components/confirmPopup/confirmDialog";
+import type {
+  CreateQuizPayload,
+  CreateQuizQuestionPayload,
+  QuizData,
+  QuizQuestionResponse,
+} from "./quizTypes";
 
 interface Contributor {
   id: string;
@@ -57,35 +59,6 @@ interface VideoData {
   chapters: { startTime: number; title: string }[];
   people: { id: string; name: string; image_url?: string; type: string }[];
   visibility: "public" | "private";
-}
-
-interface QuizData {
-  id: string;
-  video_id: string;
-  title: string;
-  description: string;
-  is_active: boolean;
-  time_limit_seconds: number;
-  question_count: number;
-  max_attempts: number;
-  passing_score_percentage: number | string;
-  shuffle_questions: boolean;
-  shuffle_options: boolean;
-  created_at?: string;
-  updated_at?: string;
-}
-
-interface QuizQuestionResponse {
-  id: string;
-  quiz_id: string;
-  question_text: string;
-  question_type: "single_choice" | "multiple_choice" | "matching";
-  explanation: string;
-  points: number;
-  position: number;
-  is_active: boolean;
-  created_at?: string;
-  updated_at?: string;
 }
 
 type CaptionStatus = "loading" | "available" | "not_available" | "generating";

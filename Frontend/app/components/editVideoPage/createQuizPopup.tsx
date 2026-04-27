@@ -1,17 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-
-export type CreateQuizPayload = {
-  title: string;
-  description: string;
-  is_active: boolean;
-  time_limit_seconds: number;
-  question_count: number;
-  max_attempts: number;
-  passing_score_percentage: number;
-  shuffle_questions: boolean;
-  shuffle_options: boolean;
-};
+import type { CreateQuizPayload } from "./quizTypes";
 
 type Props = {
   open: boolean;

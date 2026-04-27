@@ -3,48 +3,17 @@ import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { AddSVG } from "~/constants";
 import { fetchFn } from "~/API";
-import CreateQuizQuestionPopup, {
-  type CreateQuizQuestionPayload,
-  type QuestionDraftValues,
-  type QuestionType,
-} from "~/components/editVideoPage/createQuizQuestionPopup";
+import CreateQuizQuestionPopup from "~/components/editVideoPage/createQuizQuestionPopup";
 import { useConfirm } from "~/components/confirmPopup/useConfirm";
 import { ConfirmDialog } from "~/components/confirmPopup/confirmDialog";
+import type {
+  CreateQuizQuestionPayload,
+  QuestionDraftValues,
+  QuestionType,
+  QuizQuestion,
+} from "./quizTypes";
 
-export type { CreateQuizQuestionPayload } from "~/components/editVideoPage/createQuizQuestionPopup";
-
-type QuestionOption = {
-  id: string;
-  question_id: string;
-  option_text: string;
-  is_correct: boolean;
-  position: number;
-  created_at?: string;
-};
-
-type QuestionPair = {
-  id: string;
-  question_id: string;
-  left_text: string;
-  right_text: string;
-  position: number;
-  created_at?: string;
-};
-
-type QuizQuestion = {
-  id: string;
-  quiz_id: string;
-  question_text: string;
-  question_type: QuestionType;
-  explanation: string;
-  points: number;
-  position: number;
-  is_active: boolean;
-  created_at?: string;
-  updated_at?: string;
-  options: QuestionOption[];
-  pairs: QuestionPair[];
-};
+export type { CreateQuizQuestionPayload } from "./quizTypes";
 
 type Props = {
   open: boolean;

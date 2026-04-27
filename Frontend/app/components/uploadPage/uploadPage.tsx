@@ -19,11 +19,10 @@ import { EUROPEAN_LANGUAGES } from "~/constants";
 import { loadMediaTheme } from "../playPage/playerCollection/loadMediaTheme";
 import Sidebar from "../myVideosPage/sidebar/sidebar";
 import { useConstrainedSticky } from "../shared/useConstrainedSticky";
-import CreateQuizPopup, {
-  type CreateQuizPayload,
-} from "../editVideoPage/createQuizPopup";
+import CreateQuizPopup from "../editVideoPage/createQuizPopup";
 import { useConfirm } from "../confirmPopup/useConfirm";
 import { ConfirmDialog } from "../confirmPopup/confirmDialog";
+import type { CreateQuizPayload } from "../editVideoPage/quizTypes";
 
 interface Contributor {
   id: string;

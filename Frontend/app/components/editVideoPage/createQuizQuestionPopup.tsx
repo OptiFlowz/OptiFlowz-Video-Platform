@@ -1,38 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-
-export type QuestionType = "single_choice" | "multiple_choice" | "matching";
-
-type ChoiceOption = {
-  option_text: string;
-  is_correct: boolean;
-};
-
-type MatchingPair = {
-  left_text: string;
-  right_text: string;
-};
-
-export type QuestionDraftValues = {
-  question_text: string;
-  question_type: QuestionType;
-  explanation: string;
-  points: number;
-  position: number;
-  options: ChoiceOption[];
-  pairs: MatchingPair[];
-};
-
-export type CreateQuizQuestionPayload = {
-  question_text: string;
-  question_type: QuestionType;
-  explanation: string;
-  points: number;
-  position: number;
-  is_active: boolean;
-  options: ChoiceOption[];
-  pairs: MatchingPair[];
-};
+import type {
+  ChoiceOption,
+  CreateQuizQuestionPayload,
+  MatchingPair,
+  QuestionDraftValues,
+  QuestionType,
+} from "./quizTypes";
 
 type Props = {
   open: boolean;
