@@ -9,6 +9,7 @@ import { createQuizQuestionInternal } from './handlers/createQuizQuestion.js';
 import { deleteQuizQuestionInternal } from './handlers/deleteQuizQuestion.js';
 import { updateQuizQuestionInternal } from './handlers/updateQuizQuestion.js';
 import { getAllQuizQuestionsInternal } from './handlers/getAllQuizQuestions.js';
+import { getVideoQuizInternal } from './handlers/getVideoQuiz.js';
 
 // import { getUserQuizAttemptsInternal } from './handlers/getUserQuizAttempts.js';
 // import { startQuizAttemptInternal } from './handlers/startQuizAttempt.js';
@@ -65,6 +66,21 @@ export async function getUserQuizzes(req, res) {
     }
 
     return sendSuccess(res, { quizzes });
+  } catch (error) {
+    console.error('Error fetching video quiz:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function getVideoQuiz(req, res) {
+  try {
+    const quiz = await getVideoQuizInternal({ ...req.params},  req.user?.sub || null);
+
+    if (!quiz) {
+      return sendError(res, 'Quiz not found', 404);
+    }
+
+    return sendSuccess(res, { quiz });
   } catch (error) {
     console.error('Error fetching video quiz:', error);
     return sendError(res, error.message, error.status || 500);
