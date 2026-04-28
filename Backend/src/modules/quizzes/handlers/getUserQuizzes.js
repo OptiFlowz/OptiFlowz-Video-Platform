@@ -46,7 +46,10 @@ export async function getUserQuizzesInternal(object, userId = null) {
         SELECT 
           q.id,
           q.title,
-          q.description
+          q.description,
+          q.is_active,
+          q.question_count,
+          q.time_limit_seconds
         FROM quizzes q
         WHERE q.created_by = $1
         ORDER BY ${orderByField} ${orderByDirection}
