@@ -27,6 +27,7 @@ function prerequisites(object, userId) {
     is_active: z.boolean().optional(),
     options: z.array(optionSchema).optional(),
     pairs: z.array(pairSchema).optional(),
+    video_id: z.string().uuid('Invalid video ID').optional().nullable(),
   });
 
   if (!userId) {
@@ -111,7 +112,8 @@ export async function updateQuizQuestionInternal(object, userId = null) {
           explanation = COALESCE($3, explanation),
           points = COALESCE($4, points),
           position = COALESCE($5, position),
-          is_active = COALESCE($6, is_active)
+          is_active = COALESCE($6, is_active),
+          video_id = $8
         WHERE id = $1
           AND quiz_id = $7
         RETURNING *
@@ -124,6 +126,7 @@ export async function updateQuizQuestionInternal(object, userId = null) {
         data.position ?? null,
         data.is_active ?? null,
         data.quizId,
+        data.video_id ?? null
       ]
     );
 
