@@ -658,7 +658,7 @@ function EditPlaylistPage() {
         <Sidebar />
         <div className="uploadSide max-w-full! w-full">
           <h1>Edit Playlist</h1>
-          <p className="mt-3 links">Playlist id is missing.</p>
+          <p className="mt-1 mb-3 links">Playlist id is missing.</p>
           <button
             type="button"
             className="cancelBtn mt-4"
@@ -677,7 +677,7 @@ function EditPlaylistPage() {
         <Sidebar />
         <div className="uploadSide max-w-full! w-full">
           <h1>Edit Playlist</h1>
-          <p className="mt-3 links">Failed to load playlist data.</p>
+          <p className="mt-1 mb-3 links">Failed to load playlist data.</p>
           <button
             type="button"
             className="cancelBtn mt-4"
@@ -695,7 +695,7 @@ function EditPlaylistPage() {
       <Sidebar />
       <div className="uploadSide max-w-full! w-full">
         <h1>Edit Playlist</h1>
-        <p className="mt-3 links">
+        <p className="mt-1 mb-3 links">
           Make changes to your playlist details and thumbnail.
         </p>
 

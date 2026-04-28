@@ -17,6 +17,7 @@ import {
   PlaySVG,
   PrivateSVG,
   PublicSVG,
+  ThreeDotMenuSVG,
 } from "~/constants";
 import {
   formatDate,
@@ -40,6 +41,7 @@ function PlaylistRow({
 }) {
   const [isHidden, setIsHidden] = useState(false);
   const [visOpen, setVisOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [draftVisibility, setDraftVisibility] = useState<"public" | "private">(
     props?.status === "public" ? "public" : "private"
@@ -130,6 +132,18 @@ function PlaylistRow({
     };
   }, [visOpen]);
 
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileMenuOpen]);
+
   useLayoutEffect(() => {
     const userToken = getToken();
     if (!userToken || myHeaders.current.has("Authorization")) return;
@@ -184,6 +198,8 @@ function PlaylistRow({
   };
 
   const handleDelete = async () => {
+    setMobileMenuOpen(false);
+
     const ok = await confirm({
       title: `Delete playlist "${props?.title}"?`,
       message: "This action cannot be undone.",
@@ -224,6 +240,16 @@ function PlaylistRow({
     setIsHidden(true);
   };
 
+  const handleOpenPlaylist = () => {
+    setMobileMenuOpen(false);
+    window.location.href = `/playlist/${props?.id}`;
+  };
+
+  const handleEditPlaylist = () => {
+    setMobileMenuOpen(false);
+    window.location.href = `/edit-playlist?playlist=${props?.id}&status=${props?.status}`;
+  };
+
   if (isHidden) return null;
 
   return (
@@ -243,7 +269,7 @@ function PlaylistRow({
               );
             }}
             className="appearance-none rounded-lg! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative
-                        checked:after:content-['✓'] checked:after:absolute checked:after:text-(--accentBlue2) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
+                        checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
             type="checkbox"
           />
           <span className="videoInfo">
@@ -270,9 +296,88 @@ function PlaylistRow({
                 </button>
               </div>
             </span>
+            <button
+              className="mobileOptionsButton"
+              onClick={() => setMobileMenuOpen(true)}
+            >
+              {ThreeDotMenuSVG}
+            </button>
           </span>
         </span>
         <ConfirmDialog {...dialogProps} />
+
+        {mobileMenuOpen &&
+          typeof document !== "undefined" &&
+          createPortal(
+            <div
+              className="fixed inset-0 z-100 flex items-end justify-center"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <div className="absolute inset-0 bg-black/50" />
+
+              <div
+                className="rowActionSheet relative w-full max-w-lg animate-slide-up rounded-t-3xl bg-(--background1) pb-safe"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex justify-center py-3">
+                  <div className="h-1 w-10 rounded-full bg-(--border1)" />
+                </div>
+
+                <div className="flex items-center gap-3 px-4 pb-3 border-b border-(--border1)">
+                  <img
+                    src={props?.thumbnail_url || DefaultThumbnail}
+                    alt="Thumbnail"
+                    className="h-12 w-20 rounded-lg object-cover"
+                  />
+                  <p className="text-sm font-medium line-clamp-2 flex-1">
+                    {props?.title}
+                  </p>
+                </div>
+
+                <div className="flex flex-col py-2">
+                  <button
+                    onClick={handleOpenPlaylist}
+                    className="flex items-center gap-4 px-4 py-3 text-left hover:bg-(--background2) active:bg-(--background3) transition-colors cursor-pointer"
+                  >
+                    <span className="w-6 h-6 flex items-center justify-center playSvg">
+                      {PlaySVG}
+                    </span>
+                    <span>Open Playlist</span>
+                  </button>
+
+                  <button
+                    onClick={handleEditPlaylist}
+                    className="flex items-center gap-4 px-4 py-3 text-left hover:bg-(--background2) active:bg-(--background3) transition-colors cursor-pointer"
+                  >
+                    <span className="w-6 h-6 flex items-center justify-center">
+                      {EditSVG}
+                    </span>
+                    <span>Edit Playlist</span>
+                  </button>
+
+                  <button
+                    onClick={handleDelete}
+                    className="flex items-center gap-4 px-4 py-3 text-left hover:bg-(--background2) active:bg-(--background3) transition-colors cursor-pointer"
+                  >
+                    <span className="w-6 h-6 flex items-center justify-center">
+                      {DeleteSVG}
+                    </span>
+                    <span>Delete Playlist</span>
+                  </button>
+                </div>
+
+                <div className="px-4 pb-4 pt-2">
+                  <button
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full rounded-full border border-(--border1) bg-(--background2) py-3 font-medium hover:bg-(--background3) transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )}
       </td>
 
       <td>
@@ -319,7 +424,7 @@ function PlaylistRow({
                           checked={draftVisibility === "public"}
                           onChange={() => setDraftVisibility("public")}
                           className="appearance-none rounded-full! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative
-                              checked:after:content-['✓'] checked:after:absolute checked:after:text-(--accentBlue2) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
+                              checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
                         />
                         Public
                       </label>
@@ -332,7 +437,7 @@ function PlaylistRow({
                           checked={draftVisibility === "private"}
                           onChange={() => setDraftVisibility("private")}
                           className="appearance-none rounded-full! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative
-                              checked:after:content-['✓'] checked:after:absolute checked:after:text-(--accentBlue2) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
+                              checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
                         />
                         Private
                       </label>
@@ -375,7 +480,7 @@ function PlaylistRow({
                         checked={draftVisibility === "public"}
                         onChange={() => setDraftVisibility("public")}
                         className="appearance-none rounded-full! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative
-                            checked:after:content-['✓'] checked:after:absolute checked:after:text-(--accentBlue2) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
+                            checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
                       />
                       Public
                     </label>
@@ -388,7 +493,7 @@ function PlaylistRow({
                         checked={draftVisibility === "private"}
                         onChange={() => setDraftVisibility("private")}
                         className="appearance-none rounded-full! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative
-                            checked:after:content-['✓'] checked:after:absolute checked:after:text-(--accentBlue2) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
+                            checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
                       />
                       Private
                     </label>

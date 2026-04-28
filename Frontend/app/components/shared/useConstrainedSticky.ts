@@ -26,13 +26,29 @@ export function useConstrainedSticky({
   useEffect(() => {
     let frameId = 0;
 
+    const setStickyStyleIfChanged = (nextStyle: CSSProperties) => {
+      setStickyStyle((currentStyle) => {
+        const currentKeys = Object.keys(currentStyle) as Array<keyof CSSProperties>;
+        const nextKeys = Object.keys(nextStyle) as Array<keyof CSSProperties>;
+
+        if (
+          currentKeys.length === nextKeys.length &&
+          nextKeys.every((key) => currentStyle[key] === nextStyle[key])
+        ) {
+          return currentStyle;
+        }
+
+        return nextStyle;
+      });
+    };
+
     const updateStickyPosition = () => {
       const containerEl = containerRef.current;
       const stickyEl = stickyRef.current;
       if (!containerEl || !stickyEl) return;
 
       if (window.innerWidth <= disabledBelow) {
-        setStickyStyle({});
+        setStickyStyleIfChanged({});
         return;
       }
 
@@ -46,7 +62,7 @@ export function useConstrainedSticky({
         : undefined;
 
       if (containerRect.top > topOffset) {
-        setStickyStyle({});
+        setStickyStyleIfChanged({});
         return;
       }
 
@@ -67,7 +83,7 @@ export function useConstrainedSticky({
           boundaryRect.top - anchorRect.top - stickyHeight - bottomGap;
         const pinnedLeft = containerRect.left - anchorRect.left;
 
-        setStickyStyle({
+        setStickyStyleIfChanged({
           position: "absolute",
           top: `${pinnedTop}px`,
           left: `${pinnedLeft}px`,
@@ -77,7 +93,7 @@ export function useConstrainedSticky({
         return;
       }
 
-      setStickyStyle({
+      setStickyStyleIfChanged({
         position: "fixed",
         top: `${computedTop}px`,
         left: `${containerRect.left}px`,

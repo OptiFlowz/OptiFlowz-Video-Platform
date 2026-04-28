@@ -198,10 +198,10 @@ function TermsOfUsePage(){
             <section aria-labelledby="contact">
                 <h2 id="contact">15) Contact</h2>
                 <p>
-                <strong>OptiFlowz</strong><br />
-                Beatrix de Rijkweg 8, 5657 EG Eindhoven, The Netherlands<br />
+                <strong>OptiFlowz LLC</strong><br />
+                30 N Gould St Ste R, Sheridan, WY 82801, USA<br />
                 Email: <a href="mailto:office@optiflowz.com">office@optiflowz.com</a><br />
-                Phone: <a href="tel:+31402525288">+31 40 252 5288</a>
+                Monday-Friday 09:00-17:00
                 </p>
             </section>
             </main>

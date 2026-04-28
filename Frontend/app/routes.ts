@@ -19,6 +19,7 @@ export default [
     route("edit", "routes/editVideo.tsx"),
     route("edit-playlist", "routes/editPlaylist.tsx"),
     route("my-videos", "routes/myVideos.tsx"),
+    route("quizzes", "routes/quizzes.tsx"),
     route("analytics", "routes/analytics.tsx"),
     route("my-playlists", "routes/myPlaylists.tsx"),
     route("speakers-chairs", "routes/speakersChairs.tsx"),

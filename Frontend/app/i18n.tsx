@@ -35,6 +35,7 @@ const enBase: TranslationMap = {
   navTrending: "Trending",
   navUemsReadingList: "UEMS Reading List",
   navMyVideos: "My videos",
+  navQuizzes: "Quizzes",
   navMyPlaylists: "My playlists",
   navAnalytics: "Analytics",
   navSpeakersChairs: "Speakers/Chairs",

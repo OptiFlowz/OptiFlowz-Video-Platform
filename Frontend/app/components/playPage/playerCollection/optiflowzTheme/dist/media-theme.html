@@ -166,6 +166,11 @@
     .quality-settings[submenusize='1'] {
       display: none;
     }
+
+    /* Hide audio settings when there is only a single available track. */
+    .audio-settings[submenusize='1'] {
+      display: none;
+    }
   </style>
   <media-settings-menu hidden anchor="auto">
     <media-settings-menu-item>
@@ -173,6 +178,12 @@
       <media-playback-rate-menu slot="submenu" hidden>
         <div slot="title">Playback Speed</div>
       </media-playback-rate-menu>
+    </media-settings-menu-item>
+    <media-settings-menu-item class="audio-settings">
+      Audio Track
+      <media-audio-track-menu slot="submenu" hidden>
+        <div slot="title">Audio Track</div>
+      </media-audio-track-menu>
     </media-settings-menu-item>
     <media-settings-menu-item class="quality-settings">
       Quality
