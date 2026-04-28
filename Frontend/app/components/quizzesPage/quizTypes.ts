@@ -25,6 +25,7 @@ export type MatchingPair = {
 export type QuestionDraftValues = {
   question_text: string;
   question_type: QuestionType;
+  video_id: string | null;
   explanation: string;
   points: number;
   position: number;
@@ -35,6 +36,7 @@ export type QuestionDraftValues = {
 export type CreateQuizQuestionPayload = {
   question_text: string;
   question_type: QuestionType;
+  video_id: string | null;
   explanation: string;
   points: number;
   position: number;
@@ -81,6 +83,7 @@ export type QuestionPair = {
 export type QuizQuestion = {
   id: string;
   quiz_id: string;
+  video_id: string | null;
   question_text: string;
   question_type: QuestionType;
   explanation: string;
@@ -96,6 +99,7 @@ export type QuizQuestion = {
 export type QuizQuestionResponse = {
   id: string;
   quiz_id: string;
+  video_id: string | null;
   question_text: string;
   question_type: QuestionType;
   explanation: string;

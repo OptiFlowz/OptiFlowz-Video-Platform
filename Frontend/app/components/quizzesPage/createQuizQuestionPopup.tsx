@@ -1,5 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useQuery } from "@tanstack/react-query";
+import { fetchFn } from "~/API";
+import type { SearchT } from "~/types";
 import type {
   ChoiceOption,
   CreateQuizQuestionPayload,
@@ -11,11 +14,14 @@ import type {
 type Props = {
   open: boolean;
   nextPosition: number;
+  requestHeaders: Headers;
   mode?: "create" | "edit";
   initialValues?: QuestionDraftValues | null;
   onClose: () => void;
   onSubmit: (payload: CreateQuizQuestionPayload) => Promise<void>;
 };
+
+type SearchVideo = SearchT["videos"][number];
 
 const QUESTION_TYPE_OPTIONS: Array<{ value: QuestionType; label: string }> = [
   { value: "single_choice", label: "Single choice" },
@@ -36,6 +42,7 @@ const createEmptyPair = (): MatchingPair => ({
 function CreateQuizQuestionPopup({
   open,
   nextPosition,
+  requestHeaders,
   mode = "create",
   initialValues,
   onClose,
@@ -46,6 +53,9 @@ function CreateQuizQuestionPopup({
   const [visible, setVisible] = useState(false);
   const [questionText, setQuestionText] = useState("");
   const [questionType, setQuestionType] = useState<QuestionType>("single_choice");
+  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+  const [videoSearch, setVideoSearch] = useState("");
+  const [debouncedVideoSearch, setDebouncedVideoSearch] = useState("");
   const [explanation, setExplanation] = useState("");
   const [points, setPoints] = useState("1");
   const [options, setOptions] = useState<ChoiceOption[]>([
@@ -59,11 +69,15 @@ function CreateQuizQuestionPopup({
   const closeTimeoutRef = useRef<number | null>(null);
   const isEditMode = mode === "edit";
 
-  const usesOptions = questionType === "single_choice" || questionType === "multiple_choice";
+  const usesOptions =
+    questionType === "single_choice" || questionType === "multiple_choice";
 
-  const resetForm = (initialPosition: number) => {
+  const resetForm = () => {
     setQuestionText(initialValues?.question_text ?? "");
     setQuestionType(initialValues?.question_type ?? "single_choice");
+    setSelectedVideoId(initialValues?.video_id ?? null);
+    setVideoSearch("");
+    setDebouncedVideoSearch("");
     setExplanation(initialValues?.explanation ?? "");
     setPoints(String(initialValues?.points ?? 1));
     setOptions(
@@ -87,6 +101,14 @@ function CreateQuizQuestionPopup({
   };
 
   useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setDebouncedVideoSearch(videoSearch.trim());
+    }, 300);
+
+    return () => window.clearTimeout(timeout);
+  }, [videoSearch]);
+
+  useEffect(() => {
     return () => {
       if (closeTimeoutRef.current) {
         window.clearTimeout(closeTimeoutRef.current);
@@ -103,7 +125,7 @@ function CreateQuizQuestionPopup({
 
       setMounted(true);
       setVisible(false);
-      resetForm(nextPosition);
+      resetForm();
 
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -144,7 +166,70 @@ function CreateQuizQuestionPopup({
     if (options.length < 2) {
       setOptions([createEmptyOption(), createEmptyOption()]);
     }
-  }, [questionType]);
+  }, [options.length, pairs.length, questionType]);
+
+  const { data: videoSearchData, isFetching: isSearchingVideos } = useQuery({
+    queryKey: ["quiz-question-video-search", debouncedVideoSearch],
+    queryFn: () =>
+      fetchFn<SearchT>({
+        route: `api/videos/search?q=${encodeURIComponent(debouncedVideoSearch)}`,
+        options: {
+          method: "GET",
+          headers: requestHeaders,
+        },
+      }),
+    enabled: open && debouncedVideoSearch.length > 0,
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: selectedVideoDetails } = useQuery({
+    queryKey: ["quiz-question-selected-video", selectedVideoId],
+    queryFn: () =>
+      fetchFn<{
+        id: string;
+        title: string;
+        thumbnail_url: string;
+        uploader_name?: string;
+      }>({
+        route: `api/videos/${selectedVideoId}`,
+        options: {
+          method: "GET",
+          headers: requestHeaders,
+        },
+      }),
+    enabled: open && !!selectedVideoId,
+    refetchOnWindowFocus: false,
+  });
+
+  const searchVideos = useMemo(() => videoSearchData?.videos ?? [], [videoSearchData?.videos]);
+
+  const selectedVideo = useMemo<SearchVideo | null>(() => {
+    if (!selectedVideoId) return null;
+
+    const existingSearchVideo = searchVideos.find((video) => video.id === selectedVideoId);
+    if (existingSearchVideo) return existingSearchVideo;
+
+    if (!selectedVideoDetails?.id) return null;
+
+    return {
+      id: selectedVideoDetails.id,
+      title: selectedVideoDetails.title,
+      thumbnail_url: selectedVideoDetails.thumbnail_url,
+      uploader_name: selectedVideoDetails.uploader_name ?? "",
+      created_at: "",
+      duration_seconds: 0,
+      percentage_watched: 0,
+      progress_seconds: 0,
+      view_count: 0,
+      people: [],
+      similarity_score: 0,
+    };
+  }, [searchVideos, selectedVideoDetails, selectedVideoId]);
+
+  const filteredSearchVideos = useMemo(
+    () => searchVideos.filter((video) => video.id !== selectedVideoId),
+    [searchVideos, selectedVideoId]
+  );
 
   const parsePositiveInteger = (
     value: string,
@@ -234,6 +319,7 @@ function CreateQuizQuestionPopup({
       const payload: CreateQuizQuestionPayload = {
         question_text: questionText.trim(),
         question_type: questionType,
+        video_id: selectedVideoId,
         explanation: explanation.trim(),
         points: parsePositiveInteger(points, "Points"),
         position: nextPosition,
@@ -355,6 +441,97 @@ function CreateQuizQuestionPopup({
             </div>
 
             <div className="formGroup">
+              <label htmlFor="quizQuestionVideoSearch">Video The Quiz Appears On</label>
+              <div className="mt-3 rounded-3xl border border-(--border1) bg-(--background2) p-4">
+                <input
+                  id="quizQuestionVideoSearch"
+                  type="text"
+                  value={videoSearch}
+                  onChange={(event) => setVideoSearch(event.target.value)}
+                  placeholder="Search videos to attach this question to"
+                  disabled={isSubmitting}
+                  className="w-full rounded-2xl border border-(--border1) bg-(--background1) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
+                />
+
+                {selectedVideo ? (
+                  <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-(--border1) bg-(--background1) p-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <img
+                        src={selectedVideo.thumbnail_url}
+                        alt={selectedVideo.title}
+                        className="h-14 w-24 rounded-xl object-cover"
+                      />
+                      <span className="flex min-w-0 flex-col gap-1">
+                        <strong className="line-clamp-2">{selectedVideo.title}</strong>
+                        <span className="text-sm opacity-80">
+                          {selectedVideo.uploader_name || selectedVideo.id}
+                        </span>
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="deleteCaptionsBtn"
+                      onClick={() => setSelectedVideoId(null)}
+                      disabled={isSubmitting}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : selectedVideoId ? (
+                  <div className="mt-3 rounded-2xl border border-(--border1) bg-(--background1) px-4 py-3 text-sm opacity-75">
+                    Loading selected video...
+                  </div>
+                ) : (
+                  <div className="mt-3 rounded-2xl border border-dashed border-(--border1) bg-(--background1) px-4 py-3 text-sm opacity-75">
+                    No video selected.
+                  </div>
+                )}
+
+                {debouncedVideoSearch ? (
+                  <div className="mt-3 grid gap-3">
+                    {isSearchingVideos ? (
+                      <p className="text-sm opacity-75">Searching videos...</p>
+                    ) : filteredSearchVideos.length ? (
+                      filteredSearchVideos.map((video) => (
+                        <div
+                          key={video.id}
+                          className="flex items-center justify-between gap-3 rounded-2xl border border-(--border1) bg-(--background1) p-3"
+                        >
+                          <div className="flex min-w-0 items-center gap-3">
+                            <img
+                              src={video.thumbnail_url}
+                              alt={video.title}
+                              className="h-14 w-24 rounded-xl object-cover"
+                            />
+                            <span className="flex min-w-0 flex-col gap-1">
+                              <strong className="line-clamp-2">{video.title}</strong>
+                              <span className="text-sm opacity-80">{video.uploader_name}</span>
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            className="saveCaptionsBtn"
+                            onClick={() => {
+                              setSelectedVideoId(video.id);
+                              setVideoSearch("");
+                              setDebouncedVideoSearch("");
+                            }}
+                            disabled={isSubmitting}
+                          >
+                            Select
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm opacity-75">No videos found.</p>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="formGroup">
               <label htmlFor="quizQuestionExplanation">Explanation</label>
               <textarea
                 id="quizQuestionExplanation"
@@ -425,7 +602,7 @@ function CreateQuizQuestionPopup({
                             handleOptionChange(index, "is_correct", checked);
                           }}
                           disabled={isSubmitting}
-                          className="appearance-none rounded-lg! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
+                          className="appearance-none rounded-lg! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative checked:after:content-['âœ“'] checked:after:absolute checked:after:text-white checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
                         />
                         Correct
                       </label>
@@ -527,8 +704,10 @@ function CreateQuizQuestionPopup({
                   <div className="uploadSpinner tiny" />
                   Saving...
                 </>
+              ) : isEditMode ? (
+                "Save Question"
               ) : (
-                isEditMode ? "Save Question" : "Add Question"
+                "Add Question"
               )}
             </button>
           </div>

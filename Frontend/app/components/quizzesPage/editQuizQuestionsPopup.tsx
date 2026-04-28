@@ -213,6 +213,7 @@ function EditQuizQuestionsPopup({
   const getQuestionDraftValues = (question: QuizQuestion): QuestionDraftValues => ({
     question_text: question.question_text,
     question_type: question.question_type,
+    video_id: question.video_id ?? null,
     explanation: question.explanation,
     points: question.points,
     position: question.position,
@@ -238,6 +239,7 @@ function EditQuizQuestionsPopup({
   ): CreateQuizQuestionPayload => ({
     question_text: question.question_text,
     question_type: question.question_type,
+    video_id: question.video_id ?? null,
     explanation: question.explanation,
     points: question.points,
     position: nextPositionValue,
@@ -382,6 +384,8 @@ function EditQuizQuestionsPopup({
                       <span>•</span>
                       <span>{question.points} pts</span>
                       <span>•</span>
+                      <span>{question.video_id ? "Video attached" : "No video"}</span>
+                      <span>•</span>
                       <span>Drag to reorder</span>
                     </div>
                     <div className="mt-2 flex items-center justify-between gap-4">
@@ -468,6 +472,7 @@ function EditQuizQuestionsPopup({
       <CreateQuizQuestionPopup
         open={isCreateQuestionOpen}
         nextPosition={nextQuestionPosition}
+        requestHeaders={requestHeaders}
         onClose={() => setIsCreateQuestionOpen(false)}
         onSubmit={handleCreateQuestion}
       />
@@ -476,6 +481,7 @@ function EditQuizQuestionsPopup({
         mode="edit"
         initialValues={editingQuestion ? getQuestionDraftValues(editingQuestion) : null}
         nextPosition={editingQuestion?.position ?? nextQuestionPosition}
+        requestHeaders={requestHeaders}
         onClose={() => setEditingQuestion(null)}
         onSubmit={handleUpdateQuestion}
       />
