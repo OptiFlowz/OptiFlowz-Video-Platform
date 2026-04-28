@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { AddSVG } from "~/constants";
 import { fetchFn } from "~/API";
-import CreateQuizQuestionPopup from "~/components/editVideoPage/createQuizQuestionPopup";
+import CreateQuizQuestionPopup from "~/components/quizzesPage/createQuizQuestionPopup";
 import { useConfirm } from "~/components/confirmPopup/useConfirm";
 import { ConfirmDialog } from "~/components/confirmPopup/confirmDialog";
 import type {
@@ -68,7 +68,7 @@ function EditQuizQuestionsPopup({
           hasPreviousPage: boolean;
         };
       }>({
-        route: `api/quizzes/${quizId}/questions?page=1&limit=100&sortBy=position&sortOrder=asc`,
+        route: `api/quizzes/${quizId}/questions?page=1&limit=10&sortBy=position&sortOrder=asc`,
         options: {
           method: "GET",
           headers: requestHeaders,
@@ -163,7 +163,7 @@ function EditQuizQuestionsPopup({
     if (!editingQuestion) return;
 
     await fetchFn<{ success: boolean }>({
-      route: `api/quizzes/${quizId}/question/${editingQuestion.id}`,
+      route: `api/quizzes/question/${editingQuestion.id}`,
       options: {
         method: "PATCH",
         headers: requestHeaders,
@@ -186,7 +186,7 @@ function EditQuizQuestionsPopup({
     if (!confirmed) return;
 
     await fetchFn<{ success: boolean; deleted?: boolean }>({
-      route: `api/quizzes/${quizId}/question/${question.id}`,
+      route: `api/quizzes/question/${question.id}`,
       options: {
         method: "DELETE",
         headers: requestHeaders,
@@ -294,7 +294,7 @@ function EditQuizQuestionsPopup({
       await Promise.all(
         changedQuestions.map((question) =>
           fetchFn<{ success: boolean }>({
-            route: `api/quizzes/${quizId}/question/${question.id}`,
+            route: `api/quizzes/question/${question.id}`,
             options: {
               method: "PATCH",
               headers: requestHeaders,
@@ -399,7 +399,7 @@ function EditQuizQuestionsPopup({
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          className="rounded-full border border-(--border1) bg-(--background1) px-3 py-1.5 text-sm transition-colors hover:bg-(--background3)"
+                          className="cursor-pointer rounded-full border border-(--border1) bg-(--background1) px-3 py-1.5 text-sm transition-colors hover:bg-(--background3) disabled:cursor-not-allowed"
                           onClick={() => {
                             setSuccessMessage(null);
                             setEditingQuestion(question);
@@ -410,7 +410,7 @@ function EditQuizQuestionsPopup({
                         </button>
                         <button
                           type="button"
-                          className="rounded-full border border-[rgba(220,38,38,0.35)] bg-[rgba(220,38,38,0.12)] px-3 py-1.5 text-sm text-red-400 transition-colors hover:bg-[rgba(220,38,38,0.18)]"
+                          className="cursor-pointer rounded-full border border-[rgba(220,38,38,0.35)] bg-[rgba(220,38,38,0.12)] px-3 py-1.5 text-sm text-red-400 transition-colors hover:bg-[rgba(220,38,38,0.18)] disabled:cursor-not-allowed"
                           onClick={() => void handleDeleteQuestion(question)}
                           disabled={isReordering}
                         >
@@ -429,7 +429,7 @@ function EditQuizQuestionsPopup({
 
               <button
                 type="button"
-                className="flex items-center gap-3 self-start rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 text-sm font-medium transition-colors hover:bg-(--background3)"
+                className="flex cursor-pointer items-center gap-3 self-start rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 text-sm font-medium transition-colors hover:bg-(--background3) disabled:cursor-not-allowed"
                 title="Add question"
                 aria-label="Add question"
                 onClick={() => {
@@ -447,10 +447,18 @@ function EditQuizQuestionsPopup({
           </div>
 
           <div className="quizPopupActions mt-4">
-            <button type="button" className="cancelBtn" onClick={onClose}>
+            <button
+              type="button"
+              className="cancelBtn cursor-pointer"
+              onClick={onClose}
+            >
               Cancel
             </button>
-            <button type="button" className="saveCaptionsBtn" onClick={onClose}>
+            <button
+              type="button"
+              className="saveCaptionsBtn cursor-pointer"
+              onClick={onClose}
+            >
               Save Questions
             </button>
           </div>

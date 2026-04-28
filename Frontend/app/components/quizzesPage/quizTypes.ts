@@ -45,7 +45,8 @@ export type CreateQuizQuestionPayload = {
 
 export type QuizData = {
   id: string;
-  video_id: string;
+  video_id?: string;
+  created_by?: string;
   title: string;
   description: string;
   is_active: boolean;

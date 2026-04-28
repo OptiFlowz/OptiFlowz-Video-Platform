@@ -186,8 +186,8 @@ function CreateQuizPopup({
             </h3>
             <p className="mt-2 text-sm opacity-80">
               {isEditMode
-                ? "Update quiz details for this video. Only changed values will be sent to the API."
-                : "Set the quiz details for this video. You can adjust timing, score, attempts, and shuffle behavior before creating it."}
+                ? "Update the quiz details. Only changed values will be sent to the API."
+                : "Set the quiz details. You can adjust timing, score, attempts, and shuffle behavior before creating it."}
             </p>
           </div>
         </div>
@@ -275,9 +275,7 @@ function CreateQuizPopup({
                   max={100}
                   step={1}
                   value={passingScorePercentage}
-                  onChange={(event) =>
-                    setPassingScorePercentage(event.target.value)
-                  }
+                  onChange={(event) => setPassingScorePercentage(event.target.value)}
                   disabled={isSubmitting}
                   className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
                 />
@@ -335,10 +333,19 @@ function CreateQuizPopup({
           </div>
 
           <div className="quizPopupActions">
-            <button type="button" className="cancelBtn" onClick={onClose} disabled={isSubmitting}>
+            <button
+              type="button"
+              className="cancelBtn cursor-pointer disabled:cursor-not-allowed"
+              onClick={onClose}
+              disabled={isSubmitting}
+            >
               Cancel
             </button>
-            <button type="submit" className="saveCaptionsBtn" disabled={isSubmitting}>
+            <button
+              type="submit"
+              className="saveCaptionsBtn cursor-pointer disabled:cursor-not-allowed"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? (
                 <>
                   <div className="uploadSpinner tiny" />

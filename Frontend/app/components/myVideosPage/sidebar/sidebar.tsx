@@ -1,7 +1,7 @@
 import { NavLink } from "react-router";
 import { getStoredUser } from "~/functions";
 import DefaultProfile from "../../../../assets/DefaultProfile.webp";
-import { AnalyticsSVG, PeopleSVG, PlaylistSVG, PlaySVG } from "~/constants";
+import { AnalyticsSVG, PeopleSVG, PlaylistSVG, PlaySVG, QuizSVG } from "~/constants";
 import backgroundImage from "../../../../assets/LoginBackground.webp";
 import { memo, useRef } from "react";
 import { useConstrainedSticky } from "~/components/shared/useConstrainedSticky";
@@ -45,6 +45,9 @@ function Sidebar() {
                     </NavLink>
                     <NavLink to="/speakers-chairs" end className={({ isActive }) => (isActive ? "active" : "")}>
                         {PeopleSVG}&nbsp;{t("navSpeakersChairs")}
+                    </NavLink>
+                    <NavLink to="/quizzes" end className={({ isActive }) => (isActive ? "active" : "")}>
+                        {QuizSVG}&nbsp;{t("navQuizzes")}
                     </NavLink>
                     <NavLink to="/analytics" end className={({ isActive }) => (isActive ? "active" : "")}>
                         {AnalyticsSVG}&nbsp;{t("navAnalytics")}

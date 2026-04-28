@@ -8083,6 +8083,11 @@ main.playlist .videoHolder .playlistOrderNumber {
   main.myVideos table th:nth-child(6), main.myVideos table td:nth-child(6){
     display: none;
   }
+
+  main.quizzesPage table th:nth-child(4),
+  main.quizzesPage table td:nth-child(4) {
+    display: table-cell;
+  }
 }
 
 @media screen and (max-width: 1075px) {

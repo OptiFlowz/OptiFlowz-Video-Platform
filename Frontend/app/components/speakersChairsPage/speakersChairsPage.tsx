@@ -384,7 +384,7 @@ function SpeakersChairsPage() {
             <div className="libraryHeading">
               <h1>{t("navSpeakersChairs")}</h1>
               <p>
-                Manage the shared person records used across videos. Speaker or chair assignment will be handled later on the video itself.
+                Manage the shared person records used across videos.
               </p>
             </div>
             <div className="libraryActions">
