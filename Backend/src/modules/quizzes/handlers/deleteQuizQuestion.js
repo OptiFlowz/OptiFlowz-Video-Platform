@@ -5,7 +5,6 @@ import { assertQuizOwner } from '../../../common/quizOwnership.js';
 
 function prerequisites(object, userId) {
   const schema = z.object({
-    quizId: z.string().uuid('Invalid quiz ID'),
     questionId: z.string().uuid('Invalid question ID'),
   });
 
@@ -19,12 +18,25 @@ function prerequisites(object, userId) {
 }
 
 export async function deleteQuizQuestionInternal(object, userId = null) {
-  const { questionId, quizId } = prerequisites(object, userId);
-  await assertQuizOwner(quizId,userId);
+  const { questionId } = prerequisites(object, userId);
+  const result = await writePool.query(
+    `SELECT quiz_id FROM quiz_questions WHERE id = $1`,
+    [questionId]
+  );
+
+  if (result.rows.length === 0 || !result.rows[0].quiz_id) {
+    throw new Error("Quiz ID not found for this question");
+  }
+
+  const { quiz_id } = result.rows[0];
+
+  
+
+  await assertQuizOwner(quiz_id,userId);
 
   const { rowCount } = await writePool.query(
     `DELETE FROM quiz_questions WHERE id = $1 AND quiz_id = $2`,
-    [questionId, quizId]
+    [questionId, quiz_id]
   );
 
   return rowCount > 0;

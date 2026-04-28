@@ -11,7 +11,7 @@ function prerequisites(object, userId) {
     limit: z.coerce.number().int().min(1).max(100).optional().default(10),
 
     sortBy: z
-      .enum(['position', 'created_at', 'updated_at', 'points', 'question_text'])
+      .enum(['position', 'points', 'question_text'])
       .optional()
       .default('position'),
 
@@ -33,8 +33,6 @@ function prerequisites(object, userId) {
 function getSortColumn(sortBy) {
   const allowedColumns = {
     position: 'q.position',
-    created_at: 'q.created_at',
-    updated_at: 'q.updated_at',
     points: 'q.points',
     question_text: 'q.question_text',
   };
@@ -76,7 +74,7 @@ export async function getAllQuizQuestionsInternal(object, userId = null) {
         SELECT *
         FROM quiz_questions q
         WHERE q.quiz_id = $1
-        ORDER BY ${sortColumn} ${safeSortOrder}, q.created_at ASC
+        ORDER BY ${sortColumn} ${safeSortOrder}
         LIMIT $2 OFFSET $3
       `,
       [data.quizId, limit, offset]
@@ -92,7 +90,7 @@ export async function getAllQuizQuestionsInternal(object, userId = null) {
           SELECT *
           FROM quiz_question_options
           WHERE question_id = ANY($1::uuid[])
-          ORDER BY position ASC, created_at ASC
+          ORDER BY position ASC
         `,
         [questionIds]
       );
@@ -102,7 +100,7 @@ export async function getAllQuizQuestionsInternal(object, userId = null) {
           SELECT *
           FROM quiz_matching_pairs
           WHERE question_id = ANY($1::uuid[])
-          ORDER BY position ASC, created_at ASC
+          ORDER BY position ASC
         `,
         [questionIds]
       );

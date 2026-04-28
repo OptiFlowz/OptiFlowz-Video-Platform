@@ -19,7 +19,6 @@ const pairSchema = z.object({
 
 function prerequisites(object, userId) {
   const schema = z.object({
-    quizId: z.string().uuid('Invalid quiz ID'),
     questionId: z.string().uuid('Invalid question ID'),
     question_text: z.string().trim().min(1).optional(),
     explanation: z.string().trim().max(5000).optional().nullable(),
@@ -61,7 +60,7 @@ async function getFullQuestion(client, questionId) {
       SELECT *
       FROM quiz_question_options
       WHERE question_id = $1
-      ORDER BY position ASC, created_at ASC
+      ORDER BY position ASC
     `,
     [questionId]
   );
@@ -71,7 +70,7 @@ async function getFullQuestion(client, questionId) {
       SELECT *
       FROM quiz_matching_pairs
       WHERE question_id = $1
-      ORDER BY position ASC, created_at ASC
+      ORDER BY position ASC
     `,
     [questionId]
   );
@@ -83,8 +82,19 @@ async function getFullQuestion(client, questionId) {
   };
 }
 
-export async function updateQuizQuestionInternal(object, userId = null) {
+export async function updateQuizQuestionInternal(object, userId = null) {  
   const data = prerequisites(object, userId);
+
+  const result = await writePool.query(
+    `SELECT quiz_id FROM quiz_questions WHERE id = $1`,
+    [data.questionId]
+  );
+
+  if (result.rows.length === 0 || !result.rows[0].quiz_id) {
+    throw new Error("Quiz ID not found for this question");
+  }
+  const { quiz_id } = result.rows[0];
+  data.quizId=quiz_id;
 
   await assertQuizOwner(data.quizId, userId);
 
@@ -101,8 +111,7 @@ export async function updateQuizQuestionInternal(object, userId = null) {
           explanation = COALESCE($3, explanation),
           points = COALESCE($4, points),
           position = COALESCE($5, position),
-          is_active = COALESCE($6, is_active),
-          updated_at = NOW()
+          is_active = COALESCE($6, is_active)
         WHERE id = $1
           AND quiz_id = $7
         RETURNING *

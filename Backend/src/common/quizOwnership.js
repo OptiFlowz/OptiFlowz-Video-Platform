@@ -11,8 +11,8 @@ export async function assertQuizOwner(quizId, userId) {
   const { rowCount } = await readPool.query(
     `
       SELECT 1
-      FROM video_quizzes q JOIN videos v ON q.video_id = v.id
-      WHERE q.id = $1 AND v.uploaded_by = $2
+      FROM quizzes
+      WHERE id = $1 AND created_by = $2
       LIMIT 1
     `,
     [quizId, userId]

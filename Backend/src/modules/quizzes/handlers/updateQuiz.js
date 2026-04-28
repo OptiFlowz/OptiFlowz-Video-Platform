@@ -1,11 +1,11 @@
 import { writePool } from '../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
-import { assertVideoOwner } from '../../../common/videoOwnership.js';
+import { assertQuizOwner } from '../../../common/quizOwnership.js';
 
-function prerequisites(object) {
+function prerequisites(object, userId) {
   const schema = z.object({
-    videoId: z.string().uuid('Invalid video ID'),
+    quizId: z.string().uuid('Invalid video ID'),
 
     title: z.string().trim().min(1).max(255).optional(),
     description: z.string().trim().max(5000).nullable().optional(),
@@ -20,6 +20,13 @@ function prerequisites(object) {
     shuffle_options: z.boolean().optional(),
   });
 
+
+  if (!userId) {
+    const error = new Error('Unauthorized');
+    error.status = 401;
+    throw error;
+  }
+  
   return validateOrThrow(schema.safeParse(object));
 }
 
@@ -27,14 +34,14 @@ function hasField(object, field) {
   return Object.prototype.hasOwnProperty.call(object, field);
 }
 
-export async function updateVideoQuizInternal(object, userId = null) {
-  const data = prerequisites(object);
+export async function updateQuizInternal(object, userId = null) {
+  const data = prerequisites(object, userId);
 
-  await assertVideoOwner(data.videoId, userId);
+  await assertQuizOwner(data.quizId, userId);
 
   const { rows } = await writePool.query(
     `
-      UPDATE video_quizzes
+      UPDATE quizzes
       SET
         title = CASE WHEN $2 THEN $3 ELSE title END,
         description = CASE WHEN $4 THEN $5 ELSE description END,
@@ -44,13 +51,12 @@ export async function updateVideoQuizInternal(object, userId = null) {
         max_attempts = CASE WHEN $12 THEN $13 ELSE max_attempts END,
         passing_score_percentage = CASE WHEN $14 THEN $15 ELSE passing_score_percentage END,
         shuffle_questions = CASE WHEN $16 THEN $17 ELSE shuffle_questions END,
-        shuffle_options = CASE WHEN $18 THEN $19 ELSE shuffle_options END,
-        updated_at = NOW()
-      WHERE video_id = $1
+        shuffle_options = CASE WHEN $18 THEN $19 ELSE shuffle_options END
+      WHERE id = $1
       RETURNING *
     `,
     [
-      data.videoId,
+      data.quizId,
 
       hasField(data, 'title'),
       data.title,

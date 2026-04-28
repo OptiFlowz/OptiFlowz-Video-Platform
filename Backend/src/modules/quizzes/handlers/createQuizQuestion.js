@@ -18,6 +18,7 @@ const pairSchema = z.object({
 function prerequisites(object, userId) {
   const schema = z.object({
     quizId: z.string().uuid('Invalid quiz ID'),
+    video_id: z.string().uuid('Invalid quiz ID').optional().nullable(),
     question_text: z.string().trim().min(1),
     question_type: z.enum(['single_choice', 'multiple_choice', 'matching']),
     explanation: z.string().trim().max(5000).optional().nullable(),
@@ -91,7 +92,7 @@ async function getFullQuestion(client, questionId) {
       SELECT *
       FROM quiz_question_options
       WHERE question_id = $1
-      ORDER BY position ASC, created_at ASC
+      ORDER BY position ASC
     `,
     [questionId]
   );
@@ -101,7 +102,7 @@ async function getFullQuestion(client, questionId) {
       SELECT *
       FROM quiz_matching_pairs
       WHERE question_id = $1
-      ORDER BY position ASC, created_at ASC
+      ORDER BY position ASC
     `,
     [questionId]
   );
@@ -132,9 +133,10 @@ export async function createQuizQuestionInternal(object, userId = null) {
           explanation,
           points,
           position,
-          is_active
+          is_active,
+          video_id
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
         RETURNING *
       `,
       [
@@ -145,6 +147,7 @@ export async function createQuizQuestionInternal(object, userId = null) {
         data.points,
         data.position || null,
         data.is_active,
+        data.video_id
       ]
     );
 

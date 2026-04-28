@@ -1,19 +1,24 @@
 import { sendSuccess, sendError } from '../../common/response.js';
 
-import { createVideoQuizInternal } from './handlers/createVideoQuiz.js';
-import { updateVideoQuizInternal } from './handlers/updateVideoQuiz.js';
-import { deleteVideoQuizInternal } from './handlers/deleteVideoQuiz.js';
-import { getVideoQuizInternal } from './handlers/getVideoQuiz.js';
+import { createQuizInternal } from './handlers/createQuiz.js';
+import { updateQuizInternal } from './handlers/updateQuiz.js';
+import { deleteQuizInternal } from './handlers/deleteQuiz.js';
+import { getUserQuizzesInternal } from './handlers/getUserQuizzes.js';
 
 import { createQuizQuestionInternal } from './handlers/createQuizQuestion.js';
 import { deleteQuizQuestionInternal } from './handlers/deleteQuizQuestion.js';
 import { updateQuizQuestionInternal } from './handlers/updateQuizQuestion.js';
 import { getAllQuizQuestionsInternal } from './handlers/getAllQuizQuestions.js';
 
+// import { getUserQuizAttemptsInternal } from './handlers/getUserQuizAttempts.js';
+// import { startQuizAttemptInternal } from './handlers/startQuizAttempt.js';
+// import { saveQuizAttemptAnswerInternal } from './handlers/saveAttemptAnswer.js';
 
-export async function createVideoQuiz(req, res) {
+
+
+export async function createQuiz(req, res) {
   try {
-    const quiz = await createVideoQuizInternal({ ...req.params, ...req.body }, req.user?.sub || null);
+    const quiz = await createQuizInternal({ ...req.params, ...req.body }, req.user?.sub || null);
     return sendSuccess(res, { quiz }, 201);
   } catch (error) {
     console.error('Error creating video quiz:', error);
@@ -23,7 +28,7 @@ export async function createVideoQuiz(req, res) {
 
 export async function updateVideoQuiz(req, res) {
   try {
-    const quiz = await updateVideoQuizInternal({ ...req.params, ...req.body }, req.user?.sub || null);
+    const quiz = await updateQuizInternal({ ...req.params, ...req.body }, req.user?.sub || null);
 
     if (!quiz) {
       return sendError(res, 'Quiz not found', 404);
@@ -36,9 +41,9 @@ export async function updateVideoQuiz(req, res) {
   }
 }
 
-export async function deleteVideoQuiz(req, res) {
+export async function deleteQuiz(req, res) {
   try {
-    const deleted = await deleteVideoQuizInternal(req.params, req.user?.sub || null);
+    const deleted = await deleteQuizInternal(req.params, req.user?.sub || null);
 
     if (!deleted) {
       return sendError(res, 'Quiz not found', 404);
@@ -51,15 +56,15 @@ export async function deleteVideoQuiz(req, res) {
   }
 }
 
-export async function getVideoQuiz(req, res) {
+export async function getUserQuizzes(req, res) {
   try {
-    const quiz = await getVideoQuizInternal({ ...req.params},  req.user?.sub || null);
+    const quizzes = await getUserQuizzesInternal({ ...req.params, ...req.query },req.user?.sub || null);
 
-    if (!quiz) {
+    if (!quizzes) {
       return sendError(res, 'Quiz not found', 404);
     }
 
-    return sendSuccess(res, { quiz });
+    return sendSuccess(res, { quizzes });
   } catch (error) {
     console.error('Error fetching video quiz:', error);
     return sendError(res, error.message, error.status || 500);
@@ -118,3 +123,41 @@ export async function getAllQuizQuestions(req, res) {
     return sendError(res, error.message, error.status || 500);
   }
 }
+
+
+
+// export async function startQuizAttempt(req, res) {
+//   try {
+//     const attempt = await startQuizAttemptInternal({ ...req.params, ...req.body }, req.user?.sub || null);
+//     return sendSuccess(res, { attempt }, 201);
+//   } catch (error) {
+//     console.error('Error starting quiz attempt:', error);
+//     return sendError(res, error.message, error.status || 500);
+//   }
+// }
+
+
+// export async function getUserQuizAttempts(req, res) {
+//   try {
+//     const result = await getUserQuizAttemptsInternal({ ...req.params, ...req.query },  req.user?.sub || null);
+//     return sendSuccess(res, result);
+//   } catch (error) {
+//     console.error('Error fetching user quiz attempts:', error);
+//     return sendError(res, error.message, error.status || 500);
+//   }
+// }
+
+
+// export async function saveQuizAttemptAnswer(req, res) {
+//   try {
+//     const result = await saveQuizAttemptAnswerInternal(
+//       { ...req.params, ...req.body },
+//       req.user?.sub || null
+//     );
+
+//     return sendSuccess(res, result);
+//   } catch (error) {
+//     console.error('Error saving quiz attempt answer:', error);
+//     return sendError(res, error.message, error.status || 500);
+//   }
+// }
