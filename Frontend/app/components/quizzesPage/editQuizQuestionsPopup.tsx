@@ -93,14 +93,10 @@ function EditQuizQuestionsPopup({
 
   useEffect(() => {
     setOrderedQuestions((currentQuestions) => {
-      if (
-        currentQuestions.length === sortedQuestions.length &&
-        currentQuestions.every(
-          (question, index) =>
-            question.id === sortedQuestions[index]?.id &&
-            question.position === sortedQuestions[index]?.position
-        )
-      ) {
+      const nextQuestionsSnapshot = JSON.stringify(sortedQuestions);
+      const currentQuestionsSnapshot = JSON.stringify(currentQuestions);
+
+      if (currentQuestionsSnapshot === nextQuestionsSnapshot) {
         return currentQuestions;
       }
 
