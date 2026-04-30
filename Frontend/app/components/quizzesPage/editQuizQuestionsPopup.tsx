@@ -449,17 +449,10 @@ function EditQuizQuestionsPopup({
           <div className="quizPopupActions mt-4">
             <button
               type="button"
-              className="cancelBtn cursor-pointer"
+              className="cancelBtn cursor-pointer min-w-[140px]"
               onClick={onClose}
             >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="saveCaptionsBtn cursor-pointer"
-              onClick={onClose}
-            >
-              Save Questions
+              Close
             </button>
           </div>
         </div>
