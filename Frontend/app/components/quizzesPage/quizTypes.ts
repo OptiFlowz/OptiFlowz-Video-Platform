@@ -45,6 +45,27 @@ export type CreateQuizQuestionPayload = {
   pairs: MatchingPair[];
 };
 
+export type QuizRuleType =
+  | "video_watch_percentage"
+  | "video_watch_seconds"
+  | (string & {});
+
+export type CreateQuizRulePayload = {
+  rule_type: QuizRuleType;
+  video_id: string | null;
+  is_active: boolean;
+  required_percentage?: number;
+  required_seconds?: number;
+};
+
+export type RuleDraftValues = {
+  rule_type: QuizRuleType;
+  video_id: string | null;
+  is_active: boolean;
+  required_percentage: string;
+  required_seconds: string;
+};
+
 export type QuizData = {
   id: string;
   video_id?: string;
@@ -108,4 +129,37 @@ export type QuizQuestionResponse = {
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
+};
+
+export type QuizRuleApiResponse = {
+  id?: string;
+  rule_id?: string;
+  quiz_id?: string;
+  rule_type: QuizRuleType;
+  video_id: string | null;
+  playlist_id?: string | null;
+  required_quiz_id?: string | null;
+  required_percentage?: number | string | null;
+  required_seconds?: number | string | null;
+  is_active: boolean;
+  video_title?: string | null;
+  video_thumbnail?: string | null;
+  playlist_title?: string | null;
+  playlist_thumbnail?: string | null;
+};
+
+export type QuizRule = {
+  id: string;
+  quiz_id?: string;
+  rule_type: QuizRuleType;
+  video_id: string | null;
+  playlist_id?: string | null;
+  required_quiz_id?: string | null;
+  required_percentage?: number | string | null;
+  required_seconds?: number | string | null;
+  is_active: boolean;
+  video_title?: string | null;
+  video_thumbnail?: string | null;
+  playlist_title?: string | null;
+  playlist_thumbnail?: string | null;
 };

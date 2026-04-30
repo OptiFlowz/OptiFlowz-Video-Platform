@@ -6,12 +6,14 @@ import { getToken } from "~/functions";
 import Sidebar from "~/components/myVideosPage/sidebar/sidebar";
 import CreateQuizPopup from "~/components/quizzesPage/createQuizPopup";
 import EditQuizQuestionsPopup from "~/components/quizzesPage/editQuizQuestionsPopup";
+import EditQuizRulesPopup from "~/components/quizzesPage/editQuizRulesPopup";
 import { ConfirmDialog } from "~/components/confirmPopup/confirmDialog";
 import { useConfirm } from "~/components/confirmPopup/useConfirm";
 import { useI18n } from "~/i18n";
 import type {
   CreateQuizPayload,
   CreateQuizQuestionPayload,
+  CreateQuizRulePayload,
   QuizData,
   QuizQuestionResponse,
 } from "~/components/quizzesPage/quizTypes";
@@ -89,6 +91,7 @@ function QuizzesPage() {
   const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState<QuizData | null>(null);
   const [questionsQuiz, setQuestionsQuiz] = useState<QuizData | null>(null);
+  const [rulesQuiz, setRulesQuiz] = useState<QuizData | null>(null);
   const [selectedQuizzes, setSelectedQuizzes] = useState<QuizData[]>([]);
   const [isDeletingQuizId, setIsDeletingQuizId] = useState<string | null>(null);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
@@ -301,6 +304,10 @@ function QuizzesPage() {
         setQuestionsQuiz(null);
       }
 
+      if (rulesQuiz?.id === quiz.id) {
+        setRulesQuiz(null);
+      }
+
       if (selectedQuiz?.id === quiz.id) {
         setSelectedQuiz(null);
       }
@@ -342,6 +349,10 @@ function QuizzesPage() {
         setQuestionsQuiz(null);
       }
 
+      if (rulesQuiz && selectedQuizzes.some((quiz) => quiz.id === rulesQuiz.id)) {
+        setRulesQuiz(null);
+      }
+
       if (selectedQuiz && selectedQuizzes.some((quiz) => quiz.id === selectedQuiz.id)) {
         setSelectedQuiz(null);
       }
@@ -351,7 +362,7 @@ function QuizzesPage() {
     } finally {
       setIsBulkDeleting(false);
     }
-  }, [confirm, questionsQuiz, refetch, selectedQuiz, selectedQuizzes]);
+  }, [confirm, questionsQuiz, refetch, rulesQuiz, selectedQuiz, selectedQuizzes]);
 
   const handleCreateQuizQuestion = async (payload: CreateQuizQuestionPayload) => {
     if (!questionsQuiz?.id) {
@@ -383,6 +394,32 @@ function QuizzesPage() {
       points: Number(response.question.points),
       position: Number(response.question.position),
     };
+  };
+
+  const handleCreateQuizRule = async (payload: CreateQuizRulePayload) => {
+    if (!rulesQuiz?.id) {
+      throw new Error("Open a quiz before creating rules.");
+    }
+
+    const response = await fetchFn<{
+      success: boolean;
+      rule?: { id?: string; rule_id?: string };
+    }>({
+      route: `api/quizzes/${rulesQuiz.id}/rule/create`,
+      options: {
+        method: "POST",
+        headers: headersRef.current,
+        body: JSON.stringify(payload),
+      },
+    });
+
+    await refetch();
+
+    if (!response?.rule?.id && !response?.rule?.rule_id) {
+      throw new Error("Failed to create quiz rule.");
+    }
+
+    return response.rule;
   };
 
   return (
@@ -539,6 +576,13 @@ function QuizzesPage() {
                           </button>
                           <button
                             type="button"
+                            className="saveCaptionsBtn"
+                            onClick={() => setRulesQuiz(quiz)}
+                          >
+                            Rules
+                          </button>
+                          <button
+                            type="button"
                             className="deleteCaptionsBtn"
                             onClick={() => void handleDeleteQuiz(quiz)}
                             disabled={isDeletingQuizId === quiz.id || isBulkDeleting}
@@ -610,6 +654,15 @@ function QuizzesPage() {
         requestHeaders={headersRef.current}
         onClose={() => setQuestionsQuiz(null)}
         onSubmit={handleCreateQuizQuestion}
+      />
+
+      <EditQuizRulesPopup
+        open={!!rulesQuiz}
+        quizId={rulesQuiz?.id ?? ""}
+        quizTitle={rulesQuiz?.title ?? ""}
+        requestHeaders={headersRef.current}
+        onClose={() => setRulesQuiz(null)}
+        onSubmit={handleCreateQuizRule}
       />
     </main>
   );
