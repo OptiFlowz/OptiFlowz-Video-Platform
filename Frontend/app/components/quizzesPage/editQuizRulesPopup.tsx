@@ -56,14 +56,16 @@ function getRuleTypeLabel(ruleType: QuizRuleType) {
 }
 
 function getRuleSummary(rule: QuizRule) {
+  const videoName = rule.video_title || rule.video_id || "selected video";
+
   if (rule.rule_type === "video_watch_percentage") {
     const percentage = rule.required_percentage ?? "0";
-    return `Watch ${percentage}% of the selected video`;
+    return `Watch ${percentage}% of ${videoName}`;
   }
 
   if (rule.rule_type === "video_watch_seconds") {
     const seconds = rule.required_seconds ?? "0";
-    return `Watch ${seconds} seconds of the selected video`;
+    return `Watch ${seconds} seconds of ${videoName}`;
   }
 
   return "Rule details available for supported types only.";
@@ -272,12 +274,6 @@ function EditQuizRulesPopup({
                       >
                         {rule.is_active ? "Active" : "Inactive"}
                       </span>
-                      {rule.video_id ? (
-                        <>
-                          <span>•</span>
-                          <span>{rule.video_title || "Video selected"}</span>
-                        </>
-                      ) : null}
                     </div>
 
                     <div className="mt-3 flex flex-wrap items-center justify-between gap-4">
@@ -349,11 +345,8 @@ function EditQuizRulesPopup({
           </div>
 
           <div className="quizPopupActions mt-4">
-            <button type="button" className="cancelBtn cursor-pointer" onClick={onClose}>
-              Cancel
-            </button>
-            <button type="button" className="saveCaptionsBtn cursor-pointer" onClick={onClose}>
-              Save Rules
+            <button type="button" className="cancelBtn cursor-pointer min-w-[140px]" onClick={onClose}>
+              Close
             </button>
           </div>
         </div>
