@@ -242,7 +242,7 @@ export async function getVideoById(videoId, userId = null) {
         LEFT JOIN users u ON v.uploaded_by = u.id
         ${userId ? 'LEFT JOIN watch_progress wp ON v.id = wp.video_id AND wp.user_id = $3' : ''}
         ${userId ? 'LEFT JOIN video_reactions vr ON v.id = vr.video_id AND vr.user_id = $3' : ''}
-        WHERE v.id = $1 AND v.mux_status = 'ready' AND (v.visibility = 'public' OR (v.visibility = 'private' AND v.uploaded_by = $3))
+        WHERE v.id = $1 AND v.mux_status = 'ready' AND (v.visibility = 'public'  ${userId ? 'OR (v.visibility = \'private\' AND v.uploaded_by = $3)' : ''})
     `;
 
     const params = [videoId, 'https://stream.mux.com/'];
