@@ -24,7 +24,7 @@ const PlayPage = dynamic(() => import("~/components/playPage/playPage"), {
 
 export default function Page() {
   return (
-    <FramedPage guard="auth">
+    <FramedPage>
       <PlayPage />
     </FramedPage>
   );
