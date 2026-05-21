@@ -106,7 +106,7 @@ function PlayPage(){
 
     const { data, isLoading } = useQuery({
         queryKey: ["video", videoId],
-        enabled: Boolean(videoId && token),
+        enabled: Boolean(videoId),
         staleTime: 4 * 60 * 1000,
         refetchOnMount: false,
         refetchOnWindowFocus: false,
@@ -200,7 +200,7 @@ function PlayPage(){
         staleTime: 4 * 60 * 1000,
         refetchOnMount: false,
         refetchOnWindowFocus: false,
-        enabled: !!token
+        enabled: !!videoId
     });
 
     const videoData = data as VideoT;

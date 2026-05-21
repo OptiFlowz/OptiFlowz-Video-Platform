@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { memo, useLayoutEffect, useRef, useState, useEffect, useCallback } from "react";
+import { memo, useLayoutEffect, useRef, useState, useEffect, useCallback, useMemo } from "react";
 import { AutoPlaySVG, BookmarkSVG, CloseSVG, ShareSVG } from "~/constants";
 import { env } from "~/env";
 import type { FetchPlaylistT, PlaylistVideosT } from "~/types";
@@ -13,8 +13,7 @@ function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, vi
     const { t } = useI18n();
     const location = useLocation();
 
-    const myHeaders = useRef(new Headers());
-    const [token, setToken] = useState(String);
+    const token = getToken() ?? "";
     const [isOpen, setIsOpen] = useState(false);
     const [isAutoPlayOn, setAutoPlay] = useState(() => {
         const v = localStorage.getItem("autoplay");
@@ -60,13 +59,12 @@ function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, vi
         return () => window.removeEventListener("resize", update);
     }, []);
 
-    useLayoutEffect(() => {
-        const userToken = getToken();
-        if(!userToken) return;
-        setToken(userToken);
-
-        if(token)
-            myHeaders.current.append("Authorization", `Bearer ${userToken}`);
+    const myHeaders = useMemo(() => {
+        const headers = new Headers();
+        if (token) {
+            headers.set("Authorization", `Bearer ${token}`);
+        }
+        return headers;
     }, [token]);
 
     const {data: playlistResponse} = useQuery({
@@ -75,10 +73,10 @@ function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, vi
             route: `api/playlists/${playlistId}`,
             options: {
                 method: "GET",
-                headers: myHeaders.current
+                headers: myHeaders
             }
         }),
-        enabled: !!token
+        enabled: !!playlistId
     });
 
     const data = playlistResponse?.playlist;
@@ -89,10 +87,10 @@ function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, vi
             route: `api/playlists/${playlistId}/videos?limit=100&page=1`,
             options: {
                 method: "GET",
-                headers: myHeaders.current
+                headers: myHeaders
             }
         }),
-        enabled: !!token && !!playlistId
+        enabled: !!playlistId
     });
 
     const sharePlaylistLink = useCallback((e: React.MouseEvent<HTMLElement, MouseEvent>) => {
@@ -123,7 +121,7 @@ function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, vi
     }, []);
 
     const toggleSave = async () => {
-        if (!data?.id) return;
+        if (!data?.id || !token) return;
 
         const prevSaved = isSaved;
         const prevCount = saveCount;

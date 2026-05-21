@@ -11,6 +11,16 @@ import { updateQuizQuestionInternal } from './handlers/updateQuizQuestion.js';
 import { getAllQuizQuestionsInternal } from './handlers/getAllQuizQuestions.js';
 import { getVideoQuizInternal } from './handlers/getVideoQuiz.js';
 
+import { createQuizAccessRuleInternal } from './handlers/createQuizAccessRule.js';
+import { updateQuizAccessRuleInternal } from './handlers/updateQuizAccessRule.js';
+import { deleteQuizAccessRuleInternal } from './handlers/deleteQuizAccessRule.js';
+import { getQuizAccessRulesInternal } from './handlers/getQuizAccessRules.js';
+
+import { createQuizQuestionSourceInternal } from './handlers/createQuizQuestionSource.js';
+import { updateQuizQuestionSourceInternal } from './handlers/updateQuizQuestionSource.js';
+import { deleteQuizQuestionSourceInternal } from './handlers/deleteQuizQuestionSource.js';
+import { getQuizQuestionSourcesInternal } from './handlers/getQuizQuestionSources.js';
+
 // import { getUserQuizAttemptsInternal } from './handlers/getUserQuizAttempts.js';
 // import { startQuizAttemptInternal } from './handlers/startQuizAttempt.js';
 // import { saveQuizAttemptAnswerInternal } from './handlers/saveAttemptAnswer.js';
@@ -27,7 +37,7 @@ export async function createQuiz(req, res) {
   }
 }
 
-export async function updateVideoQuiz(req, res) {
+export async function updateQuiz(req, res) {
   try {
     const quiz = await updateQuizInternal({ ...req.params, ...req.body }, req.user?.sub || null);
 
@@ -88,6 +98,8 @@ export async function getVideoQuiz(req, res) {
 }
 
 
+
+
 export async function createQuizQuestion(req, res) {
   try {
     const question = await createQuizQuestionInternal({ ...req.params, ...req.body }, req.user?.sub || null);
@@ -128,7 +140,6 @@ export async function updateQuizQuestion(req, res) {
   }
 }
 
-
 export async function getAllQuizQuestions(req, res) {
   try {
     const result = await getAllQuizQuestionsInternal({ ...req.params, ...req.query },req.user?.sub || null);
@@ -142,38 +153,101 @@ export async function getAllQuizQuestions(req, res) {
 
 
 
-// export async function startQuizAttempt(req, res) {
-//   try {
-//     const attempt = await startQuizAttemptInternal({ ...req.params, ...req.body }, req.user?.sub || null);
-//     return sendSuccess(res, { attempt }, 201);
-//   } catch (error) {
-//     console.error('Error starting quiz attempt:', error);
-//     return sendError(res, error.message, error.status || 500);
-//   }
-// }
+
+export async function createQuizAccessRule(req, res) {
+  try {
+    const rule = await createQuizAccessRuleInternal({ ...req.params, ...req.body }, req.user?.sub || null);
+    return sendSuccess(res, { rule }, 201);
+  } catch (error) {
+    console.error('Error creating quiz access rule:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function updateQuizAccessRule(req, res) {
+  try {
+    const rule = await updateQuizAccessRuleInternal({ ...req.params, ...req.body }, req.user?.sub || null);
+    return sendSuccess(res, { rule }, 200);
+  } catch (error) {
+    console.error('Error updating quiz access rule:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function deleteQuizAccessRule(req, res) {
+  try {
+    await deleteQuizAccessRuleInternal(req.params.ruleId, req.user?.sub || null);
+    return sendSuccess(res, { message: 'Quiz access rule deleted successfully.' }, 200);
+  } catch (error) {
+    console.error('Error deleting quiz access rule:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function getQuizAccessRules(req, res) {
+  try {
+    const rules = await getQuizAccessRulesInternal(req.params.quizId, req.user?.sub || null);
+    return sendSuccess(res, { rules }, 200);
+  } catch (error) {
+    console.error('Error fetching quiz access rules:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
 
 
-// export async function getUserQuizAttempts(req, res) {
-//   try {
-//     const result = await getUserQuizAttemptsInternal({ ...req.params, ...req.query },  req.user?.sub || null);
-//     return sendSuccess(res, result);
-//   } catch (error) {
-//     console.error('Error fetching user quiz attempts:', error);
-//     return sendError(res, error.message, error.status || 500);
-//   }
-// }
 
+export async function createQuizQuestionSource(req, res) {
+  try {
+    const source = await createQuizQuestionSourceInternal(
+      { ...req.params, ...req.body },
+      req.user?.sub || null
+    );
 
-// export async function saveQuizAttemptAnswer(req, res) {
-//   try {
-//     const result = await saveQuizAttemptAnswerInternal(
-//       { ...req.params, ...req.body },
-//       req.user?.sub || null
-//     );
+    return sendSuccess(res, { source }, 201);
+  } catch (error) {
+    console.error('Error creating quiz question source:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
 
-//     return sendSuccess(res, result);
-//   } catch (error) {
-//     console.error('Error saving quiz attempt answer:', error);
-//     return sendError(res, error.message, error.status || 500);
-//   }
-// }
+export async function updateQuizQuestionSource(req, res) {
+  try {
+    const source = await updateQuizQuestionSourceInternal(
+      { ...req.params, ...req.body },
+      req.user?.sub || null
+    );
+
+    return sendSuccess(res, { source }, 200);
+  } catch (error) {
+    console.error('Error updating quiz question source:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function deleteQuizQuestionSource(req, res) {
+  try {
+    const deleted = await deleteQuizQuestionSourceInternal(
+      { ...req.params },
+      req.user?.sub || null
+    );
+
+    return sendSuccess(res, { deleted }, 200);
+  } catch (error) {
+    console.error('Error deleting quiz question source:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function getQuizQuestionSources(req, res) {
+  try {
+    const sources = await getQuizQuestionSourcesInternal(
+      { ...req.params },
+      req.user?.sub || null
+    );
+
+    return sendSuccess(res, { sources }, 200);
+  } catch (error) {
+    console.error('Error fetching quiz question sources:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}

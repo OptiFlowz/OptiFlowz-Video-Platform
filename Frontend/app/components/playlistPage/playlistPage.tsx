@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useLayoutEffect, useRef, useState, useCallback, useEffect } from "react";
+import { useLayoutEffect, useRef, useState, useCallback, useEffect, useMemo } from "react";
 import { env } from "~/env";
 import { formatDescription, getToken } from "~/functions";
 import { useParams } from "react-router";
@@ -42,8 +42,7 @@ const SkeletonHeader = () => (
 function PlaylistPage(){
     const { t } = useI18n();
     const {id: playlistId} = useParams();
-    const myHeaders = useRef(new Headers());
-    const [token, setToken] = useState(String);
+    const token = getToken() ?? "";
     const [descOpen, setDescOpen] = useState(false);
     const [hasDescriptionOverflow, setHasDescriptionOverflow] = useState(false);
     const descriptionRef = useRef<HTMLParagraphElement>(null);
@@ -71,13 +70,12 @@ function PlaylistPage(){
 
     const toggleDescOpen = () => setDescOpen((current) => !current);
 
-    useLayoutEffect(() => {
-        const userToken = getToken();
-        if(!userToken) return;
-        setToken(userToken);
-
-        if(token)
-            myHeaders.current.append("Authorization", `Bearer ${userToken}`);
+    const myHeaders = useMemo(() => {
+        const headers = new Headers();
+        if (token) {
+            headers.set("Authorization", `Bearer ${token}`);
+        }
+        return headers;
     }, [token]);
 
     const {data: playlistResponse, isLoading: isLoadingPlaylist} = useQuery({
@@ -86,10 +84,10 @@ function PlaylistPage(){
             route: `api/playlists/${playlistId}`,
             options: {
                 method: "GET",
-                headers: myHeaders.current
+                headers: myHeaders
             }
         }),
-        enabled: !!token
+        enabled: !!playlistId
     });
 
     const data = playlistResponse?.playlist;
@@ -100,14 +98,14 @@ function PlaylistPage(){
             route: `api/playlists/${playlistId}/videos?limit=100&page=1`,
             options: {
                 method: "GET",
-                headers: myHeaders.current
+                headers: myHeaders
             }
         }),
-        enabled: !!token && !!playlistId
+        enabled: !!playlistId
     });
 
     const toggleSave = async () => {
-        if (!data?.id) return;
+        if (!data?.id || !token) return;
 
         const prevSaved = isSaved;
         const prevCount = saveCount;
@@ -118,7 +116,7 @@ function PlaylistPage(){
 
         try {
             const myHeaders = new Headers();
-            myHeaders.set("Authorization", `Bearer ${JSON.parse(localStorage.user).token}`);
+            myHeaders.set("Authorization", `Bearer ${token}`);
             myHeaders.set("Content-Type", "application/json");
 
             const response = await fetch(
