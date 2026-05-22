@@ -637,10 +637,10 @@ function VideoQuizPage() {
   };
 
   return (
-    <main className="videoQuizPage videoQuizPopup">
+    <main className="videoQuizPage">
       <div
         ref={pageRef}
-        className={`videoQuizPopupContent ${stage === "intro" ? "introStage" : ""} ${stage === "results" ? "resultsStage" : ""} ${stage === "question" || stage === "review" ? "flowStage" : ""}`}
+        className={`videoQuizPageContent ${stage === "intro" ? "introStage" : ""} ${stage === "results" ? "resultsStage" : ""} ${stage === "question" || stage === "review" ? "flowStage" : ""}`}
         aria-label={quizDisplayTitle}
         tabIndex={-1}
       >
