@@ -23,8 +23,8 @@ import { updateQuizQuestionSourceInternal } from './handlers/updateQuizQuestionS
 import { deleteQuizQuestionSourceInternal } from './handlers/deleteQuizQuestionSource.js';
 import { getQuizQuestionSourcesInternal } from './handlers/getQuizQuestionSources.js';
 
-// import { getUserQuizAttemptsInternal } from './handlers/getUserQuizAttempts.js';
-// import { startQuizAttemptInternal } from './handlers/startQuizAttempt.js';
+import { getUserQuizAttemptsInternal } from './handlers/getUserQuizAttempts.js';
+import { startQuizAttemptInternal } from './handlers/startQuizAttempt.js';
 // import { saveQuizAttemptAnswerInternal } from './handlers/saveAttemptAnswer.js';
 
 
@@ -270,6 +270,26 @@ export async function getQuizQuestionSources(req, res) {
     return sendSuccess(res, { sources }, 200);
   } catch (error) {
     console.error('Error fetching quiz question sources:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function startQuizAttempt(req, res) {
+  try {
+    const attempt = await startQuizAttemptInternal({ ...req.params }, req.user?.sub || null);
+    return sendSuccess(res, { attempt }, 201);
+  } catch (error) {
+    console.error('Error starting quiz attempt:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function getUserQuizAttempts(req, res) {
+  try {
+    const attempts = await getUserQuizAttemptsInternal({ ...req.params }, req.user?.sub || null);
+    return sendSuccess(res, { attempts }, 200);
+  } catch (error) {
+    console.error('Error fetching user quiz attempts:', error);
     return sendError(res, error.message, error.status || 500);
   }
 }

@@ -29,8 +29,8 @@ router.delete('/question-source/:sourceId',requireAuth,requireAdmin,quizControll
 
 
 
-// router.post('/:quizId/attempt/start',requireAuth, quizController.startQuizAttempt);
-// router.get('/:quizId/attempts',requireAuth, quizController.getUserQuizAttempts);
+router.post('/:quizId/attempt/start',requireAuth, quizController.startQuizAttempt);
+router.get('/:quizId/attempts',requireAuth, quizController.getUserQuizAttempts);
 // router.put('/attempt/:attemptId/question/:questionId/answer',requireAuth,quizController.saveQuizAttemptAnswer);
 
 
