@@ -15,6 +15,7 @@ import { createQuizAccessRuleInternal } from './handlers/createQuizAccessRule.js
 import { updateQuizAccessRuleInternal } from './handlers/updateQuizAccessRule.js';
 import { deleteQuizAccessRuleInternal } from './handlers/deleteQuizAccessRule.js';
 import { getQuizAccessRulesInternal } from './handlers/getQuizAccessRules.js';
+import { checkQuizRequirementsInternal } from './handlers/checkQuizRequirements.js';
 
 import { createQuizQuestionSourceInternal } from './handlers/createQuizQuestionSource.js';
 import { updateQuizQuestionSourceInternal } from './handlers/updateQuizQuestionSource.js';
@@ -190,6 +191,16 @@ export async function getQuizAccessRules(req, res) {
     return sendSuccess(res, { rules }, 200);
   } catch (error) {
     console.error('Error fetching quiz access rules:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function checkQuizRequirements(req, res) {
+  try {
+    const hasMetRequirements = await checkQuizRequirementsInternal(req.params, req.user?.sub || null);
+    return sendSuccess(res, { hasMetRequirements }, 200);
+  } catch (error) {
+    console.error('Error checking quiz requirements:', error);
     return sendError(res, error.message, error.status || 500);
   }
 }
