@@ -16,6 +16,7 @@ import { updateQuizAccessRuleInternal } from './handlers/updateQuizAccessRule.js
 import { deleteQuizAccessRuleInternal } from './handlers/deleteQuizAccessRule.js';
 import { getQuizAccessRulesInternal } from './handlers/getQuizAccessRules.js';
 import { checkQuizRequirementsInternal } from './handlers/checkQuizRequirements.js';
+import { getQuizRequirementVideosInternal } from './handlers/getQuizRequirementVideos.js';
 
 import { createQuizQuestionSourceInternal } from './handlers/createQuizQuestionSource.js';
 import { updateQuizQuestionSourceInternal } from './handlers/updateQuizQuestionSource.js';
@@ -201,6 +202,16 @@ export async function checkQuizRequirements(req, res) {
     return sendSuccess(res, { hasMetRequirements }, 200);
   } catch (error) {
     console.error('Error checking quiz requirements:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function getQuizRequirementVideos(req, res) {
+  try {
+    const requirements = await getQuizRequirementVideosInternal(req.params, req.user?.sub || null);
+    return sendSuccess(res, { requirements }, 200);
+  } catch (error) {
+    console.error('Error fetching quiz requirement videos:', error);
     return sendError(res, error.message, error.status || 500);
   }
 }

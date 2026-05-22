@@ -9,6 +9,7 @@ router.patch('/:quizId', requireAuth,requireAdmin, quizController.updateQuiz);
 router.delete('/:quizId',requireAuth, requireAdmin, quizController.deleteQuiz);
 router.get('/user',requireAuth, requireAdmin, quizController.getUserQuizzes);
 router.get('/:quizId/details', optionalAuth, quizController.getVideoQuiz);
+router.get('/:quizId/requirements/videos', requireAuth, quizController.getQuizRequirementVideos);
 router.get('/:quizId/requirements', requireAuth, quizController.checkQuizRequirements);
 router.get('/:quizId/questions', requireAuth, requireAdmin, quizController.getAllQuizQuestions);
 router.get('/:quizId/rules', requireAuth, requireAdmin, quizController.getQuizAccessRules);
