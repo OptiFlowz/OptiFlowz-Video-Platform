@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchFn } from "~/API";
-import type { SearchT } from "~/types";
+import type { PlaylistSearchRes, SearchT } from "~/types";
 import type {
   ChoiceOption,
   CreateQuizQuestionPayload,
@@ -22,6 +22,14 @@ type Props = {
 };
 
 type SearchVideo = SearchT["videos"][number];
+type SearchPlaylist = PlaylistSearchRes["playlists"][number];
+
+type PlaylistDetailsResponse =
+  | SearchPlaylist
+  | {
+      playlist?: SearchPlaylist;
+      success?: boolean;
+    };
 
 const QUESTION_TYPE_OPTIONS: Array<{ value: QuestionType; label: string }> = [
   { value: "single_choice", label: "Single choice" },
@@ -39,6 +47,13 @@ const createEmptyPair = (): MatchingPair => ({
   right_text: "",
 });
 
+function normalizePlaylistDetails(response: PlaylistDetailsResponse | undefined) {
+  if (!response) return null;
+  if ("playlist" in response && response.playlist) return response.playlist;
+  if ("id" in response) return response;
+  return null;
+}
+
 function CreateQuizQuestionPopup({
   open,
   nextPosition,
@@ -54,8 +69,11 @@ function CreateQuizQuestionPopup({
   const [questionText, setQuestionText] = useState("");
   const [questionType, setQuestionType] = useState<QuestionType>("single_choice");
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
   const [videoSearch, setVideoSearch] = useState("");
   const [debouncedVideoSearch, setDebouncedVideoSearch] = useState("");
+  const [playlistSearch, setPlaylistSearch] = useState("");
+  const [debouncedPlaylistSearch, setDebouncedPlaylistSearch] = useState("");
   const [explanation, setExplanation] = useState("");
   const [points, setPoints] = useState("1");
   const [options, setOptions] = useState<ChoiceOption[]>([
@@ -76,8 +94,11 @@ function CreateQuizQuestionPopup({
     setQuestionText(initialValues?.question_text ?? "");
     setQuestionType(initialValues?.question_type ?? "single_choice");
     setSelectedVideoId(initialValues?.video_id ?? null);
+    setSelectedPlaylistId(initialValues?.playlist_id ?? null);
     setVideoSearch("");
     setDebouncedVideoSearch("");
+    setPlaylistSearch("");
+    setDebouncedPlaylistSearch("");
     setExplanation(initialValues?.explanation ?? "");
     setPoints(String(initialValues?.points ?? 1));
     setOptions(
@@ -107,6 +128,14 @@ function CreateQuizQuestionPopup({
 
     return () => window.clearTimeout(timeout);
   }, [videoSearch]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setDebouncedPlaylistSearch(playlistSearch.trim());
+    }, 300);
+
+    return () => window.clearTimeout(timeout);
+  }, [playlistSearch]);
 
   useEffect(() => {
     return () => {
@@ -201,7 +230,40 @@ function CreateQuizQuestionPopup({
     refetchOnWindowFocus: false,
   });
 
+  const { data: playlistSearchData, isFetching: isSearchingPlaylists } = useQuery({
+    queryKey: ["quiz-question-playlist-search", debouncedPlaylistSearch],
+    queryFn: () =>
+      fetchFn<PlaylistSearchRes>({
+        route: `api/playlists/search?q=${encodeURIComponent(debouncedPlaylistSearch)}`,
+        options: {
+          method: "GET",
+          headers: requestHeaders,
+        },
+      }),
+    enabled: open && debouncedPlaylistSearch.length > 0,
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: selectedPlaylistDetailsResponse } = useQuery({
+    queryKey: ["quiz-question-selected-playlist", selectedPlaylistId],
+    queryFn: () =>
+      fetchFn<PlaylistDetailsResponse>({
+        route: `api/playlists/${selectedPlaylistId}`,
+        options: {
+          method: "GET",
+          headers: requestHeaders,
+        },
+      }),
+    enabled: open && !!selectedPlaylistId,
+    refetchOnWindowFocus: false,
+  });
+
   const searchVideos = useMemo(() => videoSearchData?.videos ?? [], [videoSearchData?.videos]);
+  const searchPlaylists = useMemo(
+    () => playlistSearchData?.playlists ?? [],
+    [playlistSearchData?.playlists]
+  );
+  const selectedPlaylistDetails = normalizePlaylistDetails(selectedPlaylistDetailsResponse);
 
   const selectedVideo = useMemo<SearchVideo | null>(() => {
     if (!selectedVideoId) return null;
@@ -229,6 +291,31 @@ function CreateQuizQuestionPopup({
   const filteredSearchVideos = useMemo(
     () => searchVideos.filter((video) => video.id !== selectedVideoId),
     [searchVideos, selectedVideoId]
+  );
+
+  const selectedPlaylist = useMemo<SearchPlaylist | null>(() => {
+    if (!selectedPlaylistId) return null;
+
+    const existingSearchPlaylist = searchPlaylists.find(
+      (playlist) => playlist.id === selectedPlaylistId
+    );
+    if (existingSearchPlaylist) return existingSearchPlaylist;
+    if (selectedPlaylistDetails) return selectedPlaylistDetails;
+
+    return {
+      id: selectedPlaylistId,
+      title: selectedPlaylistId,
+      thumbnail_url: "",
+      view_count: 0,
+      video_count: 0,
+      created_at: "",
+      description: "",
+    };
+  }, [searchPlaylists, selectedPlaylistDetails, selectedPlaylistId]);
+
+  const filteredSearchPlaylists = useMemo(
+    () => searchPlaylists.filter((playlist) => playlist.id !== selectedPlaylistId),
+    [searchPlaylists, selectedPlaylistId]
   );
 
   const parsePositiveInteger = (
@@ -320,6 +407,7 @@ function CreateQuizQuestionPopup({
         question_text: questionText.trim(),
         question_type: questionType,
         video_id: selectedVideoId,
+        playlist_id: selectedPlaylistId,
         explanation: explanation.trim(),
         points: parsePositiveInteger(points, "Points"),
         position: nextPosition,
@@ -441,7 +529,7 @@ function CreateQuizQuestionPopup({
             </div>
 
             <div className="formGroup">
-              <label htmlFor="quizQuestionVideoSearch">Video The Quiz Appears On</label>
+              <label htmlFor="quizQuestionVideoSearch">Connected video</label>
               <div className="mt-3 rounded-3xl border border-(--border1) bg-(--background2) p-4">
                 <input
                   id="quizQuestionVideoSearch"
@@ -525,6 +613,111 @@ function CreateQuizQuestionPopup({
                       ))
                     ) : (
                       <p className="text-sm opacity-75">No videos found.</p>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="formGroup">
+              <label htmlFor="quizQuestionPlaylistSearch">Connected playlist</label>
+              <div className="mt-3 rounded-3xl border border-(--border1) bg-(--background2) p-4">
+                <input
+                  id="quizQuestionPlaylistSearch"
+                  type="text"
+                  value={playlistSearch}
+                  onChange={(event) => setPlaylistSearch(event.target.value)}
+                  placeholder="Search playlists to attach this question to"
+                  disabled={isSubmitting}
+                  className="w-full rounded-2xl border border-(--border1) bg-(--background1) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
+                />
+
+                {selectedPlaylist ? (
+                  <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-(--border1) bg-(--background1) p-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      {selectedPlaylist.thumbnail_url ? (
+                        <img
+                          src={selectedPlaylist.thumbnail_url}
+                          alt={selectedPlaylist.title}
+                          className="h-14 w-24 rounded-xl object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-14 w-24 items-center justify-center rounded-xl bg-(--background2) text-xs opacity-70">
+                          No thumb
+                        </div>
+                      )}
+                      <span className="flex min-w-0 flex-col gap-1">
+                        <strong className="line-clamp-2">{selectedPlaylist.title}</strong>
+                        <span className="text-sm opacity-80">
+                          {selectedPlaylist.video_count} videos
+                        </span>
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="deleteCaptionsBtn"
+                      onClick={() => setSelectedPlaylistId(null)}
+                      disabled={isSubmitting}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : selectedPlaylistId ? (
+                  <div className="mt-3 rounded-2xl border border-(--border1) bg-(--background1) px-4 py-3 text-sm opacity-75">
+                    Loading selected playlist...
+                  </div>
+                ) : (
+                  <div className="mt-3 rounded-2xl border border-dashed border-(--border1) bg-(--background1) px-4 py-3 text-sm opacity-75">
+                    No playlist selected.
+                  </div>
+                )}
+
+                {debouncedPlaylistSearch ? (
+                  <div className="mt-3 grid gap-3">
+                    {isSearchingPlaylists ? (
+                      <p className="text-sm opacity-75">Searching playlists...</p>
+                    ) : filteredSearchPlaylists.length ? (
+                      filteredSearchPlaylists.map((playlist) => (
+                        <div
+                          key={playlist.id}
+                          className="flex items-center justify-between gap-3 rounded-2xl border border-(--border1) bg-(--background1) p-3"
+                        >
+                          <div className="flex min-w-0 items-center gap-3">
+                            {playlist.thumbnail_url ? (
+                              <img
+                                src={playlist.thumbnail_url}
+                                alt={playlist.title}
+                                className="h-14 w-24 rounded-xl object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-14 w-24 items-center justify-center rounded-xl bg-(--background2) text-xs opacity-70">
+                                No thumb
+                              </div>
+                            )}
+                            <span className="flex min-w-0 flex-col gap-1">
+                              <strong className="line-clamp-2">{playlist.title}</strong>
+                              <span className="text-sm opacity-80">
+                                {playlist.video_count} videos
+                              </span>
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            className="saveCaptionsBtn"
+                            onClick={() => {
+                              setSelectedPlaylistId(playlist.id);
+                              setPlaylistSearch("");
+                              setDebouncedPlaylistSearch("");
+                            }}
+                            disabled={isSubmitting}
+                          >
+                            Select
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm opacity-75">No playlists found.</p>
                     )}
                   </div>
                 ) : null}

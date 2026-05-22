@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router";
 import { AddSVG, FilterSVG, QuizSVG } from "~/constants";
 import { fetchFn } from "~/API";
 import { getToken } from "~/functions";
@@ -7,6 +8,7 @@ import Sidebar from "~/components/myVideosPage/sidebar/sidebar";
 import CreateQuizPopup from "~/components/quizzesPage/createQuizPopup";
 import EditQuizQuestionsPopup from "~/components/quizzesPage/editQuizQuestionsPopup";
 import EditQuizRulesPopup from "~/components/quizzesPage/editQuizRulesPopup";
+import EditQuizSourcesPopup from "~/components/quizzesPage/editQuizSourcesPopup";
 import { ConfirmDialog } from "~/components/confirmPopup/confirmDialog";
 import { useConfirm } from "~/components/confirmPopup/useConfirm";
 import { useI18n } from "~/i18n";
@@ -14,6 +16,7 @@ import type {
   CreateQuizPayload,
   CreateQuizQuestionPayload,
   CreateQuizRulePayload,
+  CreateQuizSourcePayload,
   QuizData,
   QuizQuestionResponse,
 } from "~/components/quizzesPage/quizTypes";
@@ -92,6 +95,7 @@ function QuizzesPage() {
   const [selectedQuiz, setSelectedQuiz] = useState<QuizData | null>(null);
   const [questionsQuiz, setQuestionsQuiz] = useState<QuizData | null>(null);
   const [rulesQuiz, setRulesQuiz] = useState<QuizData | null>(null);
+  const [sourcesQuiz, setSourcesQuiz] = useState<QuizData | null>(null);
   const [selectedQuizzes, setSelectedQuizzes] = useState<QuizData[]>([]);
   const [isDeletingQuizId, setIsDeletingQuizId] = useState<string | null>(null);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
@@ -287,7 +291,7 @@ function QuizzesPage() {
       yesText: "Delete",
       noText: "Cancel",
     });
-    if (!confirmed) return;
+    if (!confirmed) return false;
 
     setIsDeletingQuizId(quiz.id);
 
@@ -308,14 +312,43 @@ function QuizzesPage() {
         setRulesQuiz(null);
       }
 
+      if (sourcesQuiz?.id === quiz.id) {
+        setSourcesQuiz(null);
+      }
+
       if (selectedQuiz?.id === quiz.id) {
         setSelectedQuiz(null);
       }
 
       await refetch();
+      return true;
     } finally {
       setIsDeletingQuizId(null);
     }
+  };
+
+  const handleOpenQuestionsFromModal = () => {
+    if (!selectedQuiz) return;
+
+    setQuestionsQuiz(selectedQuiz);
+    setIsQuizModalOpen(false);
+    setSelectedQuiz(null);
+  };
+
+  const handleOpenRulesFromModal = () => {
+    if (!selectedQuiz) return;
+
+    setRulesQuiz(selectedQuiz);
+    setIsQuizModalOpen(false);
+    setSelectedQuiz(null);
+  };
+
+  const handleOpenSourcesFromModal = () => {
+    if (!selectedQuiz) return;
+
+    setSourcesQuiz(selectedQuiz);
+    setIsQuizModalOpen(false);
+    setSelectedQuiz(null);
   };
 
   const handleDeleteSelectedQuizzes = useCallback(async () => {
@@ -353,6 +386,10 @@ function QuizzesPage() {
         setRulesQuiz(null);
       }
 
+      if (sourcesQuiz && selectedQuizzes.some((quiz) => quiz.id === sourcesQuiz.id)) {
+        setSourcesQuiz(null);
+      }
+
       if (selectedQuiz && selectedQuizzes.some((quiz) => quiz.id === selectedQuiz.id)) {
         setSelectedQuiz(null);
       }
@@ -362,7 +399,7 @@ function QuizzesPage() {
     } finally {
       setIsBulkDeleting(false);
     }
-  }, [confirm, questionsQuiz, refetch, rulesQuiz, selectedQuiz, selectedQuizzes]);
+  }, [confirm, questionsQuiz, refetch, rulesQuiz, selectedQuiz, selectedQuizzes, sourcesQuiz]);
 
   const handleCreateQuizQuestion = async (payload: CreateQuizQuestionPayload) => {
     if (!questionsQuiz?.id) {
@@ -420,6 +457,32 @@ function QuizzesPage() {
     }
 
     return response.rule;
+  };
+
+  const handleCreateQuizSource = async (payload: CreateQuizSourcePayload) => {
+    if (!sourcesQuiz?.id) {
+      throw new Error("Open a quiz before creating sources.");
+    }
+
+    const response = await fetchFn<{
+      success: boolean;
+      source?: { id?: string; source_id?: string };
+    }>({
+      route: `api/quizzes/${sourcesQuiz.id}/question-source/create`,
+      options: {
+        method: "POST",
+        headers: headersRef.current,
+        body: JSON.stringify(payload),
+      },
+    });
+
+    await refetch();
+
+    if (!response?.source?.id && !response?.source?.source_id) {
+      throw new Error("Failed to create quiz source.");
+    }
+
+    return response.source;
   };
 
   return (
@@ -560,26 +623,18 @@ function QuizzesPage() {
                       <td>{quiz.question_count}</td>
                       <td>
                         <div className="flex flex-wrap gap-2 py-2">
+                          <Link
+                            to={`/quiz/${quiz.id}`}
+                            className="saveCaptionsBtn"
+                          >
+                            Open
+                          </Link>
                           <button
                             type="button"
                             className="saveCaptionsBtn"
                             onClick={() => void openEditModal(quiz)}
                           >
                             Edit
-                          </button>
-                          <button
-                            type="button"
-                            className="saveCaptionsBtn"
-                            onClick={() => setQuestionsQuiz(quiz)}
-                          >
-                            Questions
-                          </button>
-                          <button
-                            type="button"
-                            className="saveCaptionsBtn"
-                            onClick={() => setRulesQuiz(quiz)}
-                          >
-                            Rules
                           </button>
                           <button
                             type="button"
@@ -645,6 +700,9 @@ function QuizzesPage() {
           setSelectedQuiz(null);
         }}
         onSubmit={selectedQuiz ? handleUpdateQuiz : handleCreateQuiz}
+        onOpenQuestions={handleOpenQuestionsFromModal}
+        onOpenRules={handleOpenRulesFromModal}
+        onOpenSources={handleOpenSourcesFromModal}
       />
 
       <EditQuizQuestionsPopup
@@ -663,6 +721,15 @@ function QuizzesPage() {
         requestHeaders={headersRef.current}
         onClose={() => setRulesQuiz(null)}
         onSubmit={handleCreateQuizRule}
+      />
+
+      <EditQuizSourcesPopup
+        open={!!sourcesQuiz}
+        quizId={sourcesQuiz?.id ?? ""}
+        quizTitle={sourcesQuiz?.title ?? ""}
+        requestHeaders={headersRef.current}
+        onClose={() => setSourcesQuiz(null)}
+        onSubmit={handleCreateQuizSource}
       />
     </main>
   );
