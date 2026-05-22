@@ -2322,7 +2322,8 @@ mux-player::part(menu-item) {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 138px max(20px, calc((100vw - var(--contentWidth)) / 2)) 96px;
+  padding: 20px;
+  padding-top: 100px;
   position: relative;
   z-index: 2;
   background: transparent;
