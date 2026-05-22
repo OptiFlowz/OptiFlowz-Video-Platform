@@ -23,7 +23,7 @@ import {
 const router = express.Router();
 
 router.post('/upload/initiate', requireAuth, requireAdmin, handleInitiateUpload);
-router.post('/heartbeat', requireAuth, handleHeartbeat);
+router.post('/heartbeat', optionalAuth, handleHeartbeat);
 router.post('/generate-chapters', requireAuth, requireAdmin, handleGenerateChapters);
 router.post('/webhook/mux', handleMuxWebhook);
 router.get('/search', optionalAuth, handleSearchVideos);
