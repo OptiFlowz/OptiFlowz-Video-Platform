@@ -28,6 +28,7 @@ function prerequisites(object, userId) {
     options: z.array(optionSchema).optional(),
     pairs: z.array(pairSchema).optional(),
     video_id: z.string().uuid('Invalid video ID').optional().nullable(),
+    playlist_id: z.string().uuid('Invalid playlist ID').optional().nullable(),
   });
 
   if (!userId) {
@@ -37,6 +38,10 @@ function prerequisites(object, userId) {
   }
 
   return validateOrThrow(schema.safeParse(object));
+}
+
+function hasField(object, field) {
+  return Object.prototype.hasOwnProperty.call(object, field);
 }
 
 async function getFullQuestion(client, questionId) {
@@ -113,7 +118,8 @@ export async function updateQuizQuestionInternal(object, userId = null) {
           points = COALESCE($4, points),
           position = COALESCE($5, position),
           is_active = COALESCE($6, is_active),
-          video_id = $8
+          video_id = $8,
+          playlist_id = CASE WHEN $9 THEN $10 ELSE playlist_id END
         WHERE id = $1
           AND quiz_id = $7
         RETURNING *
@@ -126,7 +132,9 @@ export async function updateQuizQuestionInternal(object, userId = null) {
         data.position ?? null,
         data.is_active ?? null,
         data.quizId,
-        data.video_id ?? null
+        data.video_id ?? null,
+        hasField(data, 'playlist_id'),
+        data.playlist_id ?? null
       ]
     );
 

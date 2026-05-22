@@ -19,6 +19,7 @@ function prerequisites(object, userId) {
   const schema = z.object({
     quizId: z.string().uuid('Invalid quiz ID'),
     video_id: z.string().uuid('Invalid quiz ID').optional().nullable(),
+    playlist_id: z.string().uuid('Invalid playlist ID').optional().nullable(),
     question_text: z.string().trim().min(1),
     question_type: z.enum(['single_choice', 'multiple_choice', 'matching']),
     explanation: z.string().trim().max(5000).optional().nullable(),
@@ -134,9 +135,10 @@ export async function createQuizQuestionInternal(object, userId = null) {
           points,
           position,
           is_active,
-          video_id
+          video_id,
+          playlist_id
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
         RETURNING *
       `,
       [
@@ -147,7 +149,8 @@ export async function createQuizQuestionInternal(object, userId = null) {
         data.points,
         data.position || null,
         data.is_active,
-        data.video_id
+        data.video_id,
+        data.playlist_id || null
       ]
     );
 
