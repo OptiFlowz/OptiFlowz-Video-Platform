@@ -210,6 +210,7 @@ function EditQuizQuestionsPopup({
     question_text: question.question_text,
     question_type: question.question_type,
     video_id: question.video_id ?? null,
+    playlist_id: question.playlist_id ?? null,
     explanation: question.explanation,
     points: question.points,
     position: question.position,
@@ -236,6 +237,7 @@ function EditQuizQuestionsPopup({
     question_text: question.question_text,
     question_type: question.question_type,
     video_id: question.video_id ?? null,
+    playlist_id: question.playlist_id ?? null,
     explanation: question.explanation,
     points: question.points,
     position: nextPositionValue,
@@ -381,6 +383,8 @@ function EditQuizQuestionsPopup({
                       <span>{question.points} pts</span>
                       <span>•</span>
                       <span>{question.video_id ? "Video attached" : "No video"}</span>
+                      <span>•</span>
+                      <span>{question.playlist_id ? "Playlist attached" : "No playlist"}</span>
                       <span>•</span>
                       <span>Drag to reorder</span>
                     </div>

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useNavigate, useParams } from "react-router";
 import { fetchFn } from "~/API";
 import { ArrowSVG, CloseSVG, IconChevron, QuizSVG } from "~/constants";
 import { getToken } from "~/functions";
@@ -70,14 +70,6 @@ type StoredQuizState = {
   attempts: AttemptRecord[];
 };
 
-type Props = {
-  open: boolean;
-  onClose: () => void;
-  videoId: string;
-  videoTitle: string;
-  percentageWatched?: number;
-};
-
 type QuizAnswers = Record<string, string | string[] | Record<string, string>>;
 
 const QUIZ_STORAGE_VERSION = 2;
@@ -132,18 +124,18 @@ type FetchedQuizQuestion = {
   pairs: FetchedQuizPair[];
 };
 
-const getStorageKey = (videoId: string) => `optiflowz-video-quiz:${videoId}`;
+const getStorageKey = (quizId: string) => `optiflowz-quiz:${quizId}`;
 
-function getStoredAttempts(videoId: string): AttemptRecord[] {
+function getStoredAttempts(quizId: string): AttemptRecord[] {
   if (typeof window === "undefined") return [];
 
   try {
-    const raw = window.localStorage.getItem(getStorageKey(videoId));
+    const raw = window.localStorage.getItem(getStorageKey(quizId));
     if (!raw) return [];
 
     const parsed = JSON.parse(raw) as StoredQuizState;
     if (parsed?.version !== QUIZ_STORAGE_VERSION) {
-      window.localStorage.removeItem(getStorageKey(videoId));
+      window.localStorage.removeItem(getStorageKey(quizId));
       return [];
     }
     return Array.isArray(parsed?.attempts) ? parsed.attempts : [];
@@ -152,11 +144,11 @@ function getStoredAttempts(videoId: string): AttemptRecord[] {
   }
 }
 
-function setStoredAttempts(videoId: string, attempts: AttemptRecord[]) {
+function setStoredAttempts(quizId: string, attempts: AttemptRecord[]) {
   if (typeof window === "undefined") return;
 
   const payload: StoredQuizState = { version: QUIZ_STORAGE_VERSION, attempts };
-  window.localStorage.setItem(getStorageKey(videoId), JSON.stringify(payload));
+  window.localStorage.setItem(getStorageKey(quizId), JSON.stringify(payload));
 }
 
 function formatTime(secondsLeft: number) {
@@ -333,14 +325,9 @@ function AnimatedTimer({ secondsLeft }: { secondsLeft: number }) {
   );
 }
 
-function VideoQuizPopup({
-  open,
-  onClose,
-  videoId,
-  videoTitle,
-  percentageWatched = 0,
-}: Props) {
-  const [mounted, setMounted] = useState(false);
+function VideoQuizPage() {
+  const { quizId = "" } = useParams();
+  const navigate = useNavigate();
   const [attempts, setAttempts] = useState<AttemptRecord[]>([]);
   const [stage, setStage] = useState<"intro" | "question" | "review" | "results">("intro");
   const [answers, setAnswers] = useState<QuizAnswers>({});
@@ -349,7 +336,7 @@ function VideoQuizPopup({
   const [secondsLeft, setSecondsLeft] = useState(DEFAULT_QUIZ_TIME_LIMIT_SECONDS);
   const [latestResult, setLatestResult] = useState<AttemptResult | null>(null);
   const [questionMotionDirection, setQuestionMotionDirection] = useState<"forward" | "backward">("forward");
-  const popupRef = useRef<HTMLDivElement | null>(null);
+  const pageRef = useRef<HTMLDivElement | null>(null);
   const requestHeaders = useMemo(() => {
     const headers = new Headers();
     headers.set("Content-Type", "application/json");
@@ -363,10 +350,10 @@ function VideoQuizPopup({
   }, []);
 
   const { data: quizSummary, isLoading: isQuizSummaryLoading } = useQuery({
-    queryKey: ["video-quiz-popup-summary", videoId],
+    queryKey: ["quiz-page-summary", quizId],
     queryFn: () =>
       fetchFn<{ success: boolean; quiz?: VideoQuizSummary }>({
-        route: `api/quizzes/${videoId}`,
+        route: `api/quizzes/${quizId}/details`,
         options: {
           method: "GET",
           headers: requestHeaders,
@@ -374,14 +361,28 @@ function VideoQuizPopup({
       })
         .then((response) => response.quiz ?? null)
         .catch((error: { status?: number }) => {
-          if (error?.status === 404) return null;
-          throw error;
+          if (error?.status && error.status !== 404) {
+            throw error;
+          }
+
+          return fetchFn<{ success: boolean; quiz?: VideoQuizSummary }>({
+            route: `api/quizzes/${quizId}`,
+            options: {
+              method: "GET",
+              headers: requestHeaders,
+            },
+          })
+            .then((response) => response.quiz ?? null)
+            .catch((fallbackError: { status?: number }) => {
+              if (fallbackError?.status === 404) return null;
+              throw fallbackError;
+            });
         }),
-    enabled: open && !!videoId,
+    enabled: !!quizId,
     refetchOnWindowFocus: false,
   });
   const { data: fetchedQuestions = [], isLoading: areQuestionsLoading } = useQuery({
-    queryKey: ["video-quiz-popup-questions", quizSummary?.id],
+    queryKey: ["quiz-page-questions", quizSummary?.id],
     queryFn: () =>
       fetchFn<{
         success: boolean;
@@ -393,7 +394,7 @@ function VideoQuizPopup({
           headers: requestHeaders,
         },
       }).then((response) => response.questions ?? []),
-    enabled: open && !!quizSummary?.id,
+    enabled: !!quizSummary?.id,
     refetchOnWindowFocus: false,
   });
 
@@ -407,7 +408,7 @@ function VideoQuizPopup({
   const quizTimeLimitSeconds = Math.max(1, Number(quizSummary?.time_limit_seconds) || DEFAULT_QUIZ_TIME_LIMIT_SECONDS);
   const quizPassingPercentage = Number(quizSummary?.passing_score_percentage) || 0;
   const quizMaxAttempts = Math.max(0, Number(quizSummary?.max_attempts) || 0);
-  const quizDisplayTitle = quizSummary?.title || `${videoTitle} Quiz`;
+  const quizDisplayTitle = quizSummary?.title || "Quiz";
   const attemptsLeft = Math.max(0, quizMaxAttempts - attempts.length);
   const answeredCount = questions.filter((question) => isQuestionAnswered(question, answers[question.id])).length;
   const currentQuestion = questions[currentQuestionIndex];
@@ -415,95 +416,17 @@ function VideoQuizPopup({
   const isQuizLoading = isQuizSummaryLoading || areQuestionsLoading;
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!open) return;
-
-    setAttempts(getStoredAttempts(videoId));
+    setAttempts(getStoredAttempts(quizId));
     setStage("intro");
     setAnswers({});
     setCurrentQuestionIndex(0);
     setDeadline(null);
     setSecondsLeft(quizTimeLimitSeconds);
     setLatestResult(null);
-  }, [open, videoId, quizTimeLimitSeconds]);
+  }, [quizId, quizTimeLimitSeconds]);
 
   useEffect(() => {
-    if (!open) return;
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose, open]);
-
-  useEffect(() => {
-    if (!open || typeof document === "undefined") return;
-
-    const scrollY = window.scrollY;
-    const previousHtmlOverflow = document.documentElement.style.overflow;
-    const previousHtmlPosition = document.documentElement.style.position;
-    const previousHtmlWidth = document.documentElement.style.width;
-    const previousHtmlHeight = document.documentElement.style.height;
-    const previousHtmlOverscroll = document.documentElement.style.overscrollBehavior;
-    const previousBodyOverflow = document.body.style.overflow;
-    const previousBodyPosition = document.body.style.position;
-    const previousBodyTop = document.body.style.top;
-    const previousBodyLeft = document.body.style.left;
-    const previousBodyRight = document.body.style.right;
-    const previousBodyHeight = document.body.style.height;
-    const previousBodyWidth = document.body.style.width;
-    const previousBodyOverscroll = document.body.style.overscrollBehavior;
-    const previousBodyTouchAction = document.body.style.touchAction;
-    const previousPaddingRight = document.body.style.paddingRight;
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-
-    document.documentElement.style.overflow = "hidden";
-    document.documentElement.style.position = "fixed";
-    document.documentElement.style.width = "100%";
-    document.documentElement.style.height = "100%";
-    document.documentElement.style.overscrollBehavior = "none";
-    document.body.style.overflow = "hidden";
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.left = "0";
-    document.body.style.right = "0";
-    document.body.style.height = "100vh";
-    document.body.style.width = "100%";
-    document.body.style.overscrollBehavior = "none";
-    document.body.style.touchAction = "none";
-    if (scrollbarWidth > 0) {
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
-    }
-
-    return () => {
-      document.documentElement.style.overflow = previousHtmlOverflow;
-      document.documentElement.style.position = previousHtmlPosition;
-      document.documentElement.style.width = previousHtmlWidth;
-      document.documentElement.style.height = previousHtmlHeight;
-      document.documentElement.style.overscrollBehavior = previousHtmlOverscroll;
-      document.body.style.overflow = previousBodyOverflow;
-      document.body.style.position = previousBodyPosition;
-      document.body.style.top = previousBodyTop;
-      document.body.style.left = previousBodyLeft;
-      document.body.style.right = previousBodyRight;
-      document.body.style.height = previousBodyHeight;
-      document.body.style.width = previousBodyWidth;
-      document.body.style.overscrollBehavior = previousBodyOverscroll;
-      document.body.style.touchAction = previousBodyTouchAction;
-      document.body.style.paddingRight = previousPaddingRight;
-      window.scrollTo(0, scrollY);
-    };
-  }, [open]);
-
-  useEffect(() => {
-    if (!open || !deadline || (stage !== "question" && stage !== "review")) return;
+    if (!deadline || (stage !== "question" && stage !== "review")) return;
 
     const tick = () => {
       const nextSeconds = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
@@ -517,12 +440,20 @@ function VideoQuizPopup({
     tick();
     const intervalId = window.setInterval(tick, 1000);
     return () => window.clearInterval(intervalId);
-  }, [deadline, open, stage]);
+  }, [deadline, stage]);
 
   useEffect(() => {
-    if (!open) return;
-    requestAnimationFrame(() => popupRef.current?.focus());
-  }, [open, stage]);
+    requestAnimationFrame(() => pageRef.current?.focus());
+  }, [stage]);
+
+  const handleExit = () => {
+    if (quizSummary?.video_id) {
+      navigate(`/video/${quizSummary.video_id}`);
+      return;
+    }
+
+    navigate(-1);
+  };
 
   const startAttempt = () => {
     if (attemptsLeft <= 0 || !hasQuizQuestions) return;
@@ -558,7 +489,7 @@ function VideoQuizPopup({
     const passed = totalQuestions > 0 && (score / totalQuestions) * 100 >= quizPassingPercentage;
     const nextAttemptNumber = attempts.length + 1;
     const nextAttempt: AttemptRecord = {
-      id: `${videoId}-${Date.now()}`,
+      id: `${quizId}-${Date.now()}`,
       number: nextAttemptNumber,
       score,
       total: totalQuestions,
@@ -568,7 +499,7 @@ function VideoQuizPopup({
     const nextAttempts = [...attempts, nextAttempt];
 
     setAttempts(nextAttempts);
-    setStoredAttempts(videoId, nextAttempts);
+    setStoredAttempts(quizId, nextAttempts);
     setLatestResult({
       score,
       total: totalQuestions,
@@ -705,22 +636,12 @@ function VideoQuizPopup({
     );
   };
 
-  if (!open || !mounted) return null;
-
-  return createPortal(
-    <div className={`popup videoQuizPopup ${open ? "active" : ""}`}>
+  return (
+    <main className="videoQuizPage videoQuizPopup">
       <div
-        className="closePopup"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      <div
-        ref={popupRef}
+        ref={pageRef}
         className={`videoQuizPopupContent ${stage === "intro" ? "introStage" : ""} ${stage === "results" ? "resultsStage" : ""} ${stage === "question" || stage === "review" ? "flowStage" : ""}`}
-        role="dialog"
-        aria-modal="true"
-        aria-label={`${videoTitle} quiz`}
+        aria-label={quizDisplayTitle}
         tabIndex={-1}
       >
         <div className="videoQuizTop">
@@ -741,7 +662,7 @@ function VideoQuizPopup({
               </span>
             )}
 
-            <button type="button" onClick={onClose} className="videoQuizCloseButton" aria-label="Close quiz">
+            <button type="button" onClick={handleExit} className="videoQuizCloseButton" aria-label="Close quiz">
               {CloseSVG}
             </button>
           </div>
@@ -804,7 +725,7 @@ function VideoQuizPopup({
               ) : null}
 
               <div className="videoQuizFooterActions">
-                <button type="button" className="videoQuizGhostButton" onClick={onClose}>
+                <button type="button" className="videoQuizGhostButton" onClick={handleExit}>
                   Cancel
                 </button>
                 <button
@@ -971,7 +892,7 @@ function VideoQuizPopup({
                       <button
                         type="button"
                         className="videoQuizInlineButton"
-                        onClick={onClose}
+                        onClick={handleExit}
                       >
                         View in video
                       </button>
@@ -981,7 +902,7 @@ function VideoQuizPopup({
               </div>
 
               <div className="videoQuizFooterActions">
-                <button type="button" className="videoQuizGhostButton" onClick={onClose}>
+                <button type="button" className="videoQuizGhostButton" onClick={handleExit}>
                   Close quiz
                 </button>
                 <button
@@ -997,9 +918,8 @@ function VideoQuizPopup({
           ) : null}
         </div>
       </div>
-    </div>,
-    document.body
+    </main>
   );
 }
 
-export default VideoQuizPopup;
+export default VideoQuizPage;

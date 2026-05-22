@@ -9,6 +9,9 @@ type Props = {
   initialValues?: CreateQuizPayload | null;
   onClose: () => void;
   onSubmit: (payload: CreateQuizPayload) => Promise<void>;
+  onOpenQuestions?: () => void;
+  onOpenRules?: () => void;
+  onOpenSources?: () => void;
 };
 
 const DEFAULT_DESCRIPTION = "Test your knowledge after watching the video";
@@ -20,6 +23,9 @@ function CreateQuizPopup({
   initialValues,
   onClose,
   onSubmit,
+  onOpenQuestions,
+  onOpenRules,
+  onOpenSources,
 }: Props) {
   const DURATION = 200;
   const [mounted, setMounted] = useState(false);
@@ -331,6 +337,35 @@ function CreateQuizPopup({
 
             {error ? <p className="quizPopupError">{error}</p> : null}
           </div>
+
+          {isEditMode ? (
+            <div className="quizPopupManageActions">
+              <button
+                type="button"
+                className="saveCaptionsBtn"
+                onClick={onOpenQuestions}
+                disabled={isSubmitting}
+              >
+                Questions
+              </button>
+              <button
+                type="button"
+                className="saveCaptionsBtn"
+                onClick={onOpenRules}
+                disabled={isSubmitting}
+              >
+                Rules
+              </button>
+              <button
+                type="button"
+                className="saveCaptionsBtn"
+                onClick={onOpenSources}
+                disabled={isSubmitting}
+              >
+                Sources
+              </button>
+            </div>
+          ) : null}
 
           <div className="quizPopupActions">
             <button

@@ -26,6 +26,7 @@ export type QuestionDraftValues = {
   question_text: string;
   question_type: QuestionType;
   video_id: string | null;
+  playlist_id?: string | null;
   explanation: string;
   points: number;
   position: number;
@@ -37,6 +38,7 @@ export type CreateQuizQuestionPayload = {
   question_text: string;
   question_type: QuestionType;
   video_id: string | null;
+  playlist_id?: string | null;
   explanation: string;
   points: number;
   position: number;
@@ -64,6 +66,26 @@ export type RuleDraftValues = {
   is_active: boolean;
   required_percentage: string;
   required_seconds: string;
+};
+
+export type QuizQuestionSourceType = "playlist" | "video";
+
+export type CreateQuizSourcePayload = {
+  source_type: QuizQuestionSourceType;
+  playlist_id?: string | null;
+  video_id?: string | null;
+  percentage: number;
+  include_general_questions: boolean;
+  fixed_question_count?: number | null;
+};
+
+export type SourceDraftValues = {
+  source_type: QuizQuestionSourceType;
+  playlist_id: string | null;
+  video_id: string | null;
+  percentage: string;
+  include_general_questions: boolean;
+  fixed_question_count: string;
 };
 
 export type QuizData = {
@@ -105,6 +127,7 @@ export type QuizQuestion = {
   id: string;
   quiz_id: string;
   video_id: string | null;
+  playlist_id?: string | null;
   question_text: string;
   question_type: QuestionType;
   explanation: string;
@@ -121,6 +144,7 @@ export type QuizQuestionResponse = {
   id: string;
   quiz_id: string;
   video_id: string | null;
+  playlist_id?: string | null;
   question_text: string;
   question_type: QuestionType;
   explanation: string;
@@ -162,4 +186,37 @@ export type QuizRule = {
   video_thumbnail?: string | null;
   playlist_title?: string | null;
   playlist_thumbnail?: string | null;
+};
+
+export type QuizQuestionSourceApiResponse = {
+  id?: string;
+  source_id?: string;
+  quiz_id?: string;
+  source_type: QuizQuestionSourceType;
+  playlist_id?: string | null;
+  playlist_title?: string | null;
+  playlist_thumbnail?: string | null;
+  video_id?: string | null;
+  video_title?: string | null;
+  video_thumbnail?: string | null;
+  percentage?: number | string | null;
+  question_count?: number | string | null;
+  fixed_question_count?: number | string | null;
+  include_general_questions?: boolean;
+};
+
+export type QuizQuestionSource = {
+  id: string;
+  quiz_id?: string;
+  source_type: QuizQuestionSourceType;
+  playlist_id: string | null;
+  playlist_title?: string | null;
+  playlist_thumbnail?: string | null;
+  video_id: string | null;
+  video_title?: string | null;
+  video_thumbnail?: string | null;
+  percentage: number | string | null;
+  question_count?: number | string | null;
+  fixed_question_count?: number | string | null;
+  include_general_questions: boolean;
 };
