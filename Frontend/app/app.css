@@ -2518,7 +2518,8 @@ mux-player::part(menu-item) {
 .videoQuizPage .videoQuizReviewCard,
 .videoQuizPage .videoQuizResultCard,
 .videoQuizPage .videoQuizEmptyState,
-.videoQuizPage .videoQuizUnlockNotice {
+.videoQuizPage .videoQuizUnlockNotice,
+.videoQuizPage .videoQuizFeedbackCard {
   border-radius: 18px;
   border: 1px solid var(--border1);
   background: var(--background2);
@@ -2529,6 +2530,16 @@ mux-player::part(menu-item) {
   align-items: center;
   gap: 1rem;
   padding: 16px 18px;
+}
+
+.videoQuizPage .videoQuizAttemptText {
+  min-width: 0;
+  flex: 1;
+}
+
+.videoQuizPage .videoQuizAttemptViewButton {
+  min-height: 42px;
+  padding: 0 18px;
 }
 
 .videoQuizPage .videoQuizAttemptCard strong,
@@ -2550,10 +2561,17 @@ mux-player::part(menu-item) {
 }
 
 .videoQuizPage .videoQuizEmptyState strong,
-.videoQuizPage .videoQuizUnlockNotice strong {
+.videoQuizPage .videoQuizUnlockNotice strong,
+.videoQuizPage .videoQuizFeedbackCard strong {
   display: block;
   margin-bottom: 0.35rem;
   color: var(--text1);
+}
+
+.videoQuizPage .videoQuizUnlockNotice.error,
+.videoQuizPage .videoQuizFeedbackCard.error {
+  border-color: rgba(188, 57, 57, 0.48);
+  background: rgba(188, 57, 57, 0.1);
 }
 
 .videoQuizPage .videoQuizStatusIcon {
@@ -2575,6 +2593,12 @@ mux-player::part(menu-item) {
   background: rgba(42, 201, 106, 0.16);
 }
 
+.videoQuizPage .videoQuizStatusIcon.partial {
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.16);
+}
+
+.videoQuizPage .videoQuizStatusIcon.incorrect,
 .videoQuizPage .videoQuizStatusIcon.failed {
   color: #ff9a9a;
   background: rgba(188, 57, 57, 0.16);
@@ -2614,7 +2638,7 @@ mux-player::part(menu-item) {
 
 .videoQuizPage .introStage .videoQuizFooterActions {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1rem;
 }
 
@@ -2740,6 +2764,22 @@ mux-player::part(menu-item) {
   padding: 0;
 }
 
+.videoQuizPage .videoQuizReviewPanel {
+  padding-top: 10px;
+}
+
+.videoQuizPage .videoQuizReviewPanel h3 {
+  margin-bottom: 0.9rem;
+}
+
+.videoQuizPage .videoQuizReviewPanel .videoQuizReviewList {
+  gap: 1.05rem;
+}
+
+.videoQuizPage .videoQuizReviewPanel .videoQuizActionRow {
+  margin-top: 1.25rem;
+}
+
 .videoQuizPage .videoQuizQuestionHeader {
   display: flex;
   align-items: flex-start;
@@ -2807,6 +2847,12 @@ mux-player::part(menu-item) {
 .videoQuizPage .videoQuizOption:hover,
 .videoQuizPage .videoQuizMatchRow:hover {
   background: var(--background3);
+}
+
+.videoQuizPage .videoQuizOption:disabled,
+.videoQuizPage .videoQuizSelect select:disabled {
+  cursor: not-allowed;
+  opacity: 0.76;
 }
 
 .videoQuizPage .videoQuizOption.selected {
@@ -2885,11 +2931,44 @@ mux-player::part(menu-item) {
   pointer-events: none;
 }
 
+.videoQuizPage .videoQuizFeedbackCard {
+  margin-top: 1rem;
+  padding: 16px 18px;
+}
+
+.videoQuizPage .videoQuizFeedbackCard.correct {
+  border-color: rgba(42, 201, 106, 0.46);
+  background: rgba(42, 201, 106, 0.08);
+}
+
+.videoQuizPage .videoQuizFeedbackCard.incorrect {
+  border-color: rgba(188, 57, 57, 0.48);
+  background: rgba(188, 57, 57, 0.1);
+}
+
+.videoQuizPage .videoQuizFeedbackCard.partial {
+  border-color: rgba(245, 158, 11, 0.5);
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.videoQuizPage .videoQuizFeedbackCard.correct strong {
+  color: #7df7a4;
+}
+
+.videoQuizPage .videoQuizFeedbackCard.partial strong {
+  color: #fbbf24;
+}
+
+.videoQuizPage .videoQuizFeedbackCard.incorrect strong,
+.videoQuizPage .videoQuizFeedbackCard.error strong {
+  color: #ffc4c4;
+}
+
 .videoQuizPage .videoQuizReviewCard {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 14px 16px;
+  padding: 18px 20px;
   color: var(--text1);
 }
 
@@ -2939,6 +3018,11 @@ mux-player::part(menu-item) {
 
 .videoQuizPage .videoQuizResultCard.correct {
   background: rgba(42, 201, 106, 0.08);
+}
+
+.videoQuizPage .videoQuizResultCard.partial {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.48);
 }
 
 .videoQuizPage .videoQuizResultCard.incorrect {

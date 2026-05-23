@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { fetchFn } from "~/API";
@@ -14,6 +14,7 @@ type QuizOption = {
 
 type QuizBaseQuestion = {
   id: string;
+  attemptQuestionId: string;
   prompt: string;
   explanation: string;
   type: QuizQuestionType;
@@ -22,7 +23,6 @@ type QuizBaseQuestion = {
 type SingleOrMultipleQuestion = QuizBaseQuestion & {
   type: "single" | "multiple";
   options: QuizOption[];
-  correctOptionIds: string[];
 };
 
 type MatchPair = {
@@ -40,39 +40,40 @@ type QuizQuestion = SingleOrMultipleQuestion | MatchQuestion;
 
 type AttemptRecord = {
   id: string;
-  number: number;
-  score: number;
-  total: number;
-  passed: boolean;
-  completedAt: number;
+  attempt_number: number;
+  status: "in_progress" | "submitted" | "expired" | string;
+  score_points: number | string | null;
+  max_points: number | string | null;
+  score_percentage: number | string | null;
+  passed: boolean | null;
+  started_at: string;
+  submitted_at: string | null;
+  expires_at: string | null;
+  answer_review_mode: "immediate" | string;
 };
 
 type AttemptQuestionResult = {
   questionId: string;
   prompt: string;
   answerSummary: string;
-  correctAnswerSummary: string;
   isAnswered: boolean;
-  isCorrect: boolean;
+  isCorrect: boolean | null;
+  reviewStatus: "correct" | "partial" | "incorrect" | null;
+  correctAnswerSummary: string;
   explanation: string;
 };
 
 type AttemptResult = {
-  score: number;
-  total: number;
-  passed: boolean;
+  score: number | string | null;
+  total: number | string | null;
+  percentage: number | string | null;
+  passed: boolean | null;
   attemptNumber: number;
   questionResults: AttemptQuestionResult[];
 };
 
-type StoredQuizState = {
-  version?: number;
-  attempts: AttemptRecord[];
-};
-
 type QuizAnswers = Record<string, string | string[] | Record<string, string>>;
 
-const QUIZ_STORAGE_VERSION = 2;
 const DEFAULT_QUIZ_TIME_LIMIT_SECONDS = 15 * 60;
 
 type VideoQuizSummary = {
@@ -91,65 +92,82 @@ type VideoQuizSummary = {
   updated_at?: string;
 };
 
-type FetchedQuizOption = {
+type AttemptQuizOption = {
   id: string;
-  question_id: string;
   option_text: string;
-  is_correct: boolean;
   position: number;
-  created_at?: string;
+  selected?: boolean;
 };
 
-type FetchedQuizPair = {
+type AttemptQuizMatchLeftItem = {
   id: string;
-  question_id: string;
   left_text: string;
+  position: number;
+};
+
+type AttemptQuizMatchRightItem = {
+  id: string;
   right_text: string;
   position: number;
-  created_at?: string;
 };
 
-type FetchedQuizQuestion = {
-  id: string;
-  quiz_id: string;
+type AttemptSelectedPair = {
+  left_pair_id?: string;
+  right_pair_id?: string;
+  left_item_id?: string;
+  right_item_id?: string;
+  left_id?: string;
+  right_id?: string;
+};
+
+type AttemptQuizQuestion = {
+  attempt_question_id: string;
+  attempt_id: string;
+  question_id: string;
+  attempt_position: number;
   question_text: string;
   question_type: "single_choice" | "multiple_choice" | "matching";
-  explanation: string;
   points: number;
-  position: number;
-  is_active: boolean;
-  created_at?: string;
-  updated_at?: string;
-  options: FetchedQuizOption[];
-  pairs: FetchedQuizPair[];
+  video_id: string | null;
+  playlist_id: string | null;
+  selected_option_ids?: string[];
+  selected_pairs?: AttemptSelectedPair[];
+  options?: AttemptQuizOption[];
+  left_items?: AttemptQuizMatchLeftItem[];
+  right_items?: AttemptQuizMatchRightItem[];
+  review?: SaveAnswerReview | null;
+  result?: "correct" | "incorrect" | "partial" | string;
+  awarded_points?: number | string;
+  max_points?: number | string;
+  correct_option_ids?: string[];
+  correct_pairs?: AttemptSelectedPair[];
+  explanation?: string | null;
 };
 
-const getStorageKey = (quizId: string) => `optiflowz-quiz:${quizId}`;
+type SaveAnswerReview = {
+  result?: "correct" | "incorrect" | "partial" | string;
+  awarded_points?: number | string;
+  max_points?: number | string;
+  correct_option_ids?: string[];
+  correct_pairs?: AttemptSelectedPair[];
+  selected_option_ids?: string[];
+  explanation?: string | null;
+};
 
-function getStoredAttempts(quizId: string): AttemptRecord[] {
-  if (typeof window === "undefined") return [];
+type SaveAnswerResponse = {
+  success: boolean;
+  saved?: boolean;
+  review?: SaveAnswerReview | null;
+  score?: {
+    score_points?: number | string | null;
+    score_percentage?: number | string | null;
+  };
+};
 
-  try {
-    const raw = window.localStorage.getItem(getStorageKey(quizId));
-    if (!raw) return [];
-
-    const parsed = JSON.parse(raw) as StoredQuizState;
-    if (parsed?.version !== QUIZ_STORAGE_VERSION) {
-      window.localStorage.removeItem(getStorageKey(quizId));
-      return [];
-    }
-    return Array.isArray(parsed?.attempts) ? parsed.attempts : [];
-  } catch {
-    return [];
-  }
-}
-
-function setStoredAttempts(quizId: string, attempts: AttemptRecord[]) {
-  if (typeof window === "undefined") return;
-
-  const payload: StoredQuizState = { version: QUIZ_STORAGE_VERSION, attempts };
-  window.localStorage.setItem(getStorageKey(quizId), JSON.stringify(payload));
-}
+type SubmitAttemptResponse = {
+  success: boolean;
+  attempt: AttemptRecord;
+};
 
 function formatTime(secondsLeft: number) {
   const safeSeconds = Math.max(0, secondsLeft);
@@ -158,27 +176,31 @@ function formatTime(secondsLeft: number) {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
-function mapFetchedQuestion(question: FetchedQuizQuestion): QuizQuestion {
+function mapAttemptQuestion(question: AttemptQuizQuestion): QuizQuestion {
   if (question.question_type === "matching") {
-    const sortedPairs = [...(question.pairs ?? [])].sort(
+    const sortedLeftItems = [...(question.left_items ?? [])].sort(
+      (a, b) => Number(a.position || 0) - Number(b.position || 0)
+    );
+    const sortedRightItems = [...(question.right_items ?? [])].sort(
       (a, b) => Number(a.position || 0) - Number(b.position || 0)
     );
 
-    const choices = sortedPairs.map((pair) => ({
-      id: pair.id,
-      label: pair.right_text,
+    const choices = sortedRightItems.map((item) => ({
+      id: item.id,
+      label: item.right_text,
     }));
 
     return {
-      id: question.id,
+      id: question.question_id,
+      attemptQuestionId: question.attempt_question_id,
       prompt: question.question_text,
-      explanation: question.explanation,
+      explanation: "",
       type: "match",
       choices,
-      pairs: sortedPairs.map((pair) => ({
-        id: pair.id,
-        label: pair.left_text,
-        correctChoiceId: pair.id,
+      pairs: sortedLeftItems.map((item) => ({
+        id: item.id,
+        label: item.left_text,
+        correctChoiceId: item.id,
       })),
     };
   }
@@ -188,16 +210,84 @@ function mapFetchedQuestion(question: FetchedQuizQuestion): QuizQuestion {
   );
 
   return {
-    id: question.id,
+    id: question.question_id,
+    attemptQuestionId: question.attempt_question_id,
     prompt: question.question_text,
-    explanation: question.explanation,
+    explanation: "",
     type: question.question_type === "multiple_choice" ? "multiple" : "single",
     options: sortedOptions.map((option) => ({
       id: option.id,
       label: option.option_text,
     })),
-    correctOptionIds: sortedOptions.filter((option) => option.is_correct).map((option) => option.id),
   };
+}
+
+function buildInitialAnswers(questions: AttemptQuizQuestion[]): QuizAnswers {
+  return questions.reduce<QuizAnswers>((nextAnswers, question) => {
+    if (question.question_type === "matching") {
+      const selectedPairs = Array.isArray(question.selected_pairs) ? question.selected_pairs : [];
+      const selectedMap = selectedPairs.reduce<Record<string, string>>((map, pair) => {
+        const leftId = pair.left_pair_id ?? pair.left_item_id ?? pair.left_id;
+        const rightId = pair.right_pair_id ?? pair.right_item_id ?? pair.right_id;
+        if (leftId && rightId) {
+          map[leftId] = rightId;
+        }
+        return map;
+      }, {});
+
+      if (Object.keys(selectedMap).length > 0) {
+        nextAnswers[question.question_id] = selectedMap;
+      }
+
+      return nextAnswers;
+    }
+
+    const selectedOptionIds =
+      question.selected_option_ids ??
+      (question.options ?? [])
+        .filter((option) => option.selected)
+        .map((option) => option.id);
+
+    if (question.question_type === "single_choice") {
+      if (selectedOptionIds[0]) {
+        nextAnswers[question.question_id] = selectedOptionIds[0];
+      }
+      return nextAnswers;
+    }
+
+    if (selectedOptionIds.length > 0) {
+      nextAnswers[question.question_id] = selectedOptionIds;
+    }
+
+    return nextAnswers;
+  }, {});
+}
+
+function getQuestionReview(question: AttemptQuizQuestion): SaveAnswerReview | null {
+  if (question.review) return question.review;
+  if (!question.result && question.awarded_points == null && !question.correct_option_ids && !question.correct_pairs) {
+    return null;
+  }
+
+  return {
+    result: question.result,
+    awarded_points: question.awarded_points,
+    max_points: question.max_points ?? question.points,
+    correct_option_ids: question.correct_option_ids,
+    correct_pairs: question.correct_pairs,
+    selected_option_ids: question.selected_option_ids,
+    explanation: question.explanation,
+  };
+}
+
+function buildQuestionReviews(questions: AttemptQuizQuestion[]) {
+  return questions.reduce<Record<string, SaveAnswerReview>>((reviews, question) => {
+    const review = getQuestionReview(question);
+    if (review) {
+      reviews[question.question_id] = review;
+    }
+    return reviews;
+  }, {});
 }
 
 function isQuestionAnswered(question: QuizQuestion, answer: QuizAnswers[string]) {
@@ -255,47 +345,88 @@ function getAnswerSummary(question: QuizQuestion, answer: QuizAnswers[string]) {
   return matched.length > 0 ? matched.join(" • ") : "You haven't answered this question yet";
 }
 
-function getCorrectSummary(question: QuizQuestion) {
+function getAttemptScoreText(attempt: AttemptRecord) {
+  const score = attempt.score_points ?? "-";
+  const total = attempt.max_points ?? "-";
+  return `${score}/${total}`;
+}
+
+function getReviewStatus(review: SaveAnswerReview | null | undefined): "correct" | "partial" | "incorrect" | null {
+  if (!review?.result) return null;
+  if (review.result === "correct" || review.result === "partial" || review.result === "incorrect") {
+    return review.result;
+  }
+  return "incorrect";
+}
+
+function getReviewIsCorrect(review: SaveAnswerReview | null | undefined) {
+  return getReviewStatus(review) === "correct";
+}
+
+function getCorrectAnswerSummary(question: QuizQuestion, review: SaveAnswerReview | null | undefined) {
+  if (!review) return "";
+
   if (question.type === "match") {
-    return question.pairs
+    const pairs = review.correct_pairs ?? [];
+    const summary = pairs
       .map((pair) => {
-        const choice = question.choices.find((item) => item.id === pair.correctChoiceId);
-        return `${pair.label}: ${choice?.label ?? ""}`;
+        const leftId = pair.left_pair_id ?? pair.left_item_id ?? pair.left_id;
+        const rightId = pair.right_pair_id ?? pair.right_item_id ?? pair.right_id;
+        const left = question.pairs.find((item) => item.id === leftId);
+        const right = question.choices.find((item) => item.id === rightId);
+        return left && right ? `${left.label}: ${right.label}` : null;
       })
-      .join(" • ");
+      .filter(Boolean);
+
+    return summary.length > 0 ? summary.join(" • ") : "";
   }
 
-  return question.options
-    .filter((option) => question.correctOptionIds.includes(option.id))
-    .map((option) => option.label)
-    .join(", ");
+  const correctOptionIds = review.correct_option_ids ?? [];
+  const summary = question.options
+    .filter((option) => correctOptionIds.includes(option.id))
+    .map((option) => option.label);
+
+  return summary.length > 0 ? summary.join(", ") : "";
 }
 
-function isCorrectAnswer(question: QuizQuestion, answer: QuizAnswers[string]) {
+function buildAnswerPayload(question: QuizQuestion, answer: QuizAnswers[string]) {
+  if (question.type === "match") {
+    const selectedMap =
+      answer && typeof answer === "object" && !Array.isArray(answer)
+        ? answer
+        : {};
+
+    return {
+      pairs: question.pairs
+        .map((pair) => ({
+          left_pair_id: pair.id,
+          right_pair_id: selectedMap[pair.id],
+        }))
+        .filter((pair) => Boolean(pair.right_pair_id)),
+    };
+  }
+
   if (question.type === "single") {
-    return typeof answer === "string" && question.correctOptionIds[0] === answer;
+    return {
+      option_ids: typeof answer === "string" && answer ? [answer] : [],
+    };
   }
 
-  if (question.type === "multiple") {
-    if (!Array.isArray(answer)) return false;
-
-    const normalizedAnswer = [...answer].sort().join("|");
-    const normalizedCorrect = [...question.correctOptionIds].sort().join("|");
-    return normalizedAnswer === normalizedCorrect;
-  }
-
-  if (question.type !== "match") return false;
-
-  if (typeof answer !== "object" || Array.isArray(answer)) return false;
-  return question.pairs.every((pair) => answer[pair.id] === pair.correctChoiceId);
+  return {
+    option_ids: Array.isArray(answer) ? answer : [],
+  };
 }
 
-function QuizStatusIcon({ passed }: { passed: boolean }) {
+function QuizStatusIcon({ passed, status }: { passed?: boolean; status?: "correct" | "partial" | "incorrect" | null }) {
+  const iconStatus = status ?? (passed ? "correct" : "incorrect");
+
   return (
-    <span className={`videoQuizStatusIcon ${passed ? "passed" : "failed"}`}>
+    <span className={`videoQuizStatusIcon ${iconStatus === "correct" ? "passed" : iconStatus}`}>
       <svg viewBox="0 0 24 24" fill="none">
-        {passed ? (
+        {iconStatus === "correct" ? (
           <path d="M5 12.5L9.5 17L19 7.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+        ) : iconStatus === "partial" ? (
+          <path d="M7 12H17" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
         ) : (
           <>
             <path d="M8 8L16 16" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
@@ -328,13 +459,20 @@ function AnimatedTimer({ secondsLeft }: { secondsLeft: number }) {
 function VideoQuizPage() {
   const { quizId = "" } = useParams();
   const navigate = useNavigate();
-  const [attempts, setAttempts] = useState<AttemptRecord[]>([]);
+  const queryClient = useQueryClient();
   const [stage, setStage] = useState<"intro" | "question" | "review" | "results">("intro");
   const [answers, setAnswers] = useState<QuizAnswers>({});
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [deadline, setDeadline] = useState<number | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(DEFAULT_QUIZ_TIME_LIMIT_SECONDS);
   const [latestResult, setLatestResult] = useState<AttemptResult | null>(null);
+  const [activeAttempt, setActiveAttempt] = useState<AttemptRecord | null>(null);
+  const [questionReviews, setQuestionReviews] = useState<Record<string, SaveAnswerReview>>({});
+  const [dirtyQuestionIds, setDirtyQuestionIds] = useState<Set<string>>(() => new Set());
+  const [savingQuestionId, setSavingQuestionId] = useState<string | null>(null);
+  const [isStartingAttempt, setIsStartingAttempt] = useState(false);
+  const [isSubmittingAttempt, setIsSubmittingAttempt] = useState(false);
+  const [quizFlowError, setQuizFlowError] = useState("");
   const [questionMotionDirection, setQuestionMotionDirection] = useState<"forward" | "backward">("forward");
   const pageRef = useRef<HTMLDivElement | null>(null);
   const requestHeaders = useMemo(() => {
@@ -381,48 +519,83 @@ function VideoQuizPage() {
     enabled: !!quizId,
     refetchOnWindowFocus: false,
   });
-  const { data: fetchedQuestions = [], isLoading: areQuestionsLoading } = useQuery({
-    queryKey: ["quiz-page-questions", quizSummary?.id],
+
+  const { data: attempts = [], isLoading: areAttemptsLoading } = useQuery({
+    queryKey: ["quiz-page-attempts", quizId],
     queryFn: () =>
-      fetchFn<{
-        success: boolean;
-        questions: FetchedQuizQuestion[];
-      }>({
-        route: `api/quizzes/${quizSummary!.id}/questions?page=1&limit=100&sortBy=position&sortOrder=asc`,
+      fetchFn<{ success: boolean; attempts: AttemptRecord[] }>({
+        route: `api/quizzes/${quizId}/attempts`,
         options: {
           method: "GET",
           headers: requestHeaders,
         },
-      }).then((response) => response.questions ?? []),
-    enabled: !!quizSummary?.id,
+      }).then((response) => response.attempts ?? []),
+    enabled: !!quizId,
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: attemptQuestions = [], isLoading: areQuestionsLoading } = useQuery({
+    queryKey: ["quiz-page-attempt-questions", activeAttempt?.id],
+    queryFn: () =>
+      fetchFn<{
+        success: boolean;
+        attempt?: AttemptRecord;
+        questions: AttemptQuizQuestion[];
+      }>({
+        route: `api/quizzes/attempt/${activeAttempt!.id}/questions`,
+        options: {
+          method: "GET",
+          headers: requestHeaders,
+        },
+      }).then((response) => {
+        if (response.attempt) {
+          setActiveAttempt(response.attempt);
+        }
+        setAnswers(buildInitialAnswers(response.questions ?? []));
+        setQuestionReviews(buildQuestionReviews(response.questions ?? []));
+        setDirtyQuestionIds(new Set());
+        return response.questions ?? [];
+      }),
+    enabled: !!activeAttempt?.id && stage !== "intro" && stage !== "results",
     refetchOnWindowFocus: false,
   });
 
   const questions = useMemo(
     () =>
-      [...fetchedQuestions]
-        .sort((a, b) => Number(a.position || 0) - Number(b.position || 0))
-        .map(mapFetchedQuestion),
-    [fetchedQuestions]
+      [...attemptQuestions]
+        .sort((a, b) => Number(a.attempt_position || 0) - Number(b.attempt_position || 0))
+        .map(mapAttemptQuestion),
+    [attemptQuestions]
   );
   const quizTimeLimitSeconds = Math.max(1, Number(quizSummary?.time_limit_seconds) || DEFAULT_QUIZ_TIME_LIMIT_SECONDS);
-  const quizPassingPercentage = Number(quizSummary?.passing_score_percentage) || 0;
   const quizMaxAttempts = Math.max(0, Number(quizSummary?.max_attempts) || 0);
   const quizDisplayTitle = quizSummary?.title || "Quiz";
   const attemptsLeft = Math.max(0, quizMaxAttempts - attempts.length);
   const answeredCount = questions.filter((question) => isQuestionAnswered(question, answers[question.id])).length;
   const currentQuestion = questions[currentQuestionIndex];
-  const hasQuizQuestions = questions.length > 0;
-  const isQuizLoading = isQuizSummaryLoading || areQuestionsLoading;
+  const hasQuizQuestions = stage === "intro" ? Number(quizSummary?.question_count ?? 0) > 0 : questions.length > 0;
+  const selectedActiveAttempt = useMemo(
+    () => attempts.find((attempt) => attempt.status === "in_progress") ?? null,
+    [attempts]
+  );
+  const activeReviewMode = activeAttempt?.answer_review_mode ?? selectedActiveAttempt?.answer_review_mode ?? "immediate";
+  const isImmediateReview = activeReviewMode === "immediate";
+  const isReadOnlyAttempt = Boolean(activeAttempt && activeAttempt.status !== "in_progress");
+  const currentQuestionReview = currentQuestion ? questionReviews[currentQuestion.id] : undefined;
+  const isQuizLoading = isQuizSummaryLoading || areAttemptsLoading || (stage !== "intro" && areQuestionsLoading);
 
   useEffect(() => {
-    setAttempts(getStoredAttempts(quizId));
     setStage("intro");
     setAnswers({});
     setCurrentQuestionIndex(0);
     setDeadline(null);
     setSecondsLeft(quizTimeLimitSeconds);
     setLatestResult(null);
+    setActiveAttempt(null);
+    setQuestionReviews({});
+    setDirtyQuestionIds(new Set());
+    setIsSubmittingAttempt(false);
+    setQuizFlowError("");
   }, [quizId, quizTimeLimitSeconds]);
 
   useEffect(() => {
@@ -455,66 +628,250 @@ function VideoQuizPage() {
     navigate(-1);
   };
 
-  const startAttempt = () => {
-    if (attemptsLeft <= 0 || !hasQuizQuestions) return;
+  const beginAttemptFlow = (attempt: AttemptRecord) => {
+    const expiresAt = attempt.expires_at ? new Date(attempt.expires_at).getTime() : Date.now() + quizTimeLimitSeconds * 1000;
+    const nextSecondsLeft = Math.max(1, Math.ceil((expiresAt - Date.now()) / 1000));
 
-    const now = Date.now();
+    setActiveAttempt(attempt);
     setQuestionMotionDirection("forward");
     setAnswers({});
     setCurrentQuestionIndex(0);
     setLatestResult(null);
+    setQuestionReviews({});
+    setDirtyQuestionIds(new Set());
+    setQuizFlowError("");
     setStage("question");
-    setDeadline(now + quizTimeLimitSeconds * 1000);
-    setSecondsLeft(quizTimeLimitSeconds);
+    setDeadline(Date.now() + nextSecondsLeft * 1000);
+    setSecondsLeft(nextSecondsLeft);
   };
 
-  const finishAttempt = () => {
+  const startAttempt = async () => {
+    if ((quizMaxAttempts > 0 && attemptsLeft <= 0) || !quizSummary || isStartingAttempt) return;
+
+    setIsStartingAttempt(true);
+    setQuizFlowError("");
+
+    try {
+      const response = await fetchFn<{ success: boolean; attempt: AttemptRecord }>({
+        route: `api/quizzes/${quizSummary.id}/attempt/start`,
+        options: {
+          method: "POST",
+          headers: requestHeaders,
+        },
+      });
+
+      await queryClient.invalidateQueries({ queryKey: ["quiz-page-attempts", quizId] });
+      beginAttemptFlow(response.attempt);
+    } catch (error) {
+      setQuizFlowError(error instanceof Error ? error.message : "Failed to start quiz attempt.");
+    } finally {
+      setIsStartingAttempt(false);
+    }
+  };
+
+  const resumeAttempt = () => {
+    if (!selectedActiveAttempt) return;
+    beginAttemptFlow(selectedActiveAttempt);
+  };
+
+  const viewAttempt = (attempt: AttemptRecord) => {
+    setActiveAttempt(attempt);
+    setQuestionMotionDirection("forward");
+    setAnswers({});
+    setCurrentQuestionIndex(0);
+    setLatestResult(null);
+    setQuestionReviews({});
+    setDirtyQuestionIds(new Set());
+    setQuizFlowError("");
     setDeadline(null);
+    setSecondsLeft(0);
+    setStage("review");
+  };
 
-    const questionResults = questions.map((question) => {
-      const answer = answers[question.id];
-      return {
-        questionId: question.id,
-        prompt: question.prompt,
-        answerSummary: getAnswerSummary(question, answer),
-        correctAnswerSummary: getCorrectSummary(question),
-        isAnswered: isQuestionAnswered(question, answer),
-        isCorrect: isCorrectAnswer(question, answer),
-        explanation: question.explanation,
-      };
-    });
+  const saveAnswerForQuestion = async (question: QuizQuestion) => {
+    if (!activeAttempt || savingQuestionId || isReadOnlyAttempt) return null;
 
-    const totalQuestions = questions.length;
-    const score = questionResults.filter((result) => result.isCorrect).length;
-    const passed = totalQuestions > 0 && (score / totalQuestions) * 100 >= quizPassingPercentage;
-    const nextAttemptNumber = attempts.length + 1;
-    const nextAttempt: AttemptRecord = {
-      id: `${quizId}-${Date.now()}`,
-      number: nextAttemptNumber,
-      score,
-      total: totalQuestions,
-      passed,
-      completedAt: Date.now(),
-    };
-    const nextAttempts = [...attempts, nextAttempt];
+    const payload = buildAnswerPayload(question, answers[question.id]);
+    setSavingQuestionId(question.id);
+    setQuizFlowError("");
 
-    setAttempts(nextAttempts);
-    setStoredAttempts(quizId, nextAttempts);
-    setLatestResult({
-      score,
-      total: totalQuestions,
-      passed,
-      attemptNumber: nextAttemptNumber,
-      questionResults,
-    });
-    setStage("results");
+    try {
+      const response = await fetchFn<SaveAnswerResponse>({
+        route: `api/quizzes/attempt/${activeAttempt.id}/question/${question.id}/answer`,
+        options: {
+          method: "PUT",
+          headers: requestHeaders,
+          body: JSON.stringify({ answer: payload }),
+        },
+      });
+
+      if (response.review) {
+        setQuestionReviews((current) => ({
+          ...current,
+          [question.id]: response.review!,
+        }));
+      }
+
+      setDirtyQuestionIds((current) => {
+        const next = new Set(current);
+        next.delete(question.id);
+        return next;
+      });
+
+      return response;
+    } catch (error) {
+      setQuizFlowError(error instanceof Error ? error.message : "Failed to save answer.");
+      return null;
+    } finally {
+      setSavingQuestionId(null);
+    }
+  };
+
+  const saveCurrentAnswer = async () => {
+    if (!currentQuestion) return null;
+    return saveAnswerForQuestion(currentQuestion);
+  };
+
+  const moveToQuestion = (nextIndex: number) => {
+    setQuestionMotionDirection(nextIndex >= currentQuestionIndex ? "forward" : "backward");
+    setCurrentQuestionIndex(nextIndex);
+    setStage("question");
+  };
+
+  const handleNextQuestion = async () => {
+    if (!currentQuestion) return;
+
+    if (isReadOnlyAttempt) {
+      moveToQuestion(Math.min(questions.length - 1, currentQuestionIndex + 1));
+      return;
+    }
+
+    if (isImmediateReview && currentQuestionReview) {
+      moveToQuestion(Math.min(questions.length - 1, currentQuestionIndex + 1));
+      return;
+    }
+
+    const response = await saveCurrentAnswer();
+    if (!response) return;
+
+    if (isImmediateReview && response.review) {
+      return;
+    }
+
+    moveToQuestion(Math.min(questions.length - 1, currentQuestionIndex + 1));
+  };
+
+  const handleQuestionNavigation = (nextIndex: number) => {
+    if (nextIndex === currentQuestionIndex && stage === "question") return;
+    moveToQuestion(nextIndex);
+  };
+
+  const handleOpenReview = () => {
+    setStage("review");
+  };
+
+  const handleLastQuestionAction = async () => {
+    if (isReadOnlyAttempt) {
+      handleOpenReview();
+      return;
+    }
+
+    if (isImmediateReview && !currentQuestionReview) {
+      await saveCurrentAnswer();
+      return;
+    }
+
+    handleOpenReview();
+  };
+
+  const finishAttempt = async () => {
+    if (!activeAttempt || isSubmittingAttempt) return;
+
+    setIsSubmittingAttempt(true);
+    setQuizFlowError("");
+
+    try {
+      const dirtyQuestions = questions.filter(
+        (question) => dirtyQuestionIds.has(question.id) && isQuestionAnswered(question, answers[question.id])
+      );
+      let latestSaveResponse: SaveAnswerResponse | null = null;
+
+      for (const question of dirtyQuestions) {
+        const response = await saveAnswerForQuestion(question);
+        if (!response) {
+          setIsSubmittingAttempt(false);
+          return;
+        }
+        latestSaveResponse = response;
+      }
+
+      const submitResponse = await fetchFn<SubmitAttemptResponse>({
+        route: `api/quizzes/attempt/${activeAttempt.id}/submit`,
+        options: {
+          method: "POST",
+          headers: requestHeaders,
+        },
+      });
+      const submittedAttempt = submitResponse.attempt;
+
+      setActiveAttempt(submittedAttempt);
+      setDeadline(null);
+
+      const questionResults = questions.map((question) => {
+        const answer = answers[question.id];
+        const review = questionReviews[question.id];
+        const reviewStatus = getReviewStatus(review);
+        return {
+          questionId: question.id,
+          prompt: question.prompt,
+          answerSummary: getAnswerSummary(question, answer),
+          isAnswered: isQuestionAnswered(question, answer),
+          isCorrect: reviewStatus ? reviewStatus === "correct" : null,
+          reviewStatus,
+          correctAnswerSummary: getCorrectAnswerSummary(question, review),
+          explanation: review?.explanation ?? question.explanation,
+        };
+      });
+
+      setLatestResult({
+        score: submittedAttempt.score_points ?? latestSaveResponse?.score?.score_points ?? null,
+        total: submittedAttempt.max_points ?? questions.length,
+        percentage: submittedAttempt.score_percentage ?? latestSaveResponse?.score?.score_percentage ?? null,
+        passed: submittedAttempt.passed,
+        attemptNumber: submittedAttempt.attempt_number,
+        questionResults,
+      });
+      setDirtyQuestionIds(new Set());
+      await queryClient.invalidateQueries({ queryKey: ["quiz-page-attempts", quizId] });
+      setStage("results");
+    } catch (error) {
+      setQuizFlowError(error instanceof Error ? error.message : "Failed to submit quiz attempt.");
+    } finally {
+      setIsSubmittingAttempt(false);
+    }
+  };
+
+  const finishAttemptAction = () => {
+    void finishAttempt();
   };
 
   const handleSingleChoiceSelect = (questionId: string, optionId: string) => {
+    setQuestionReviews((current) => {
+      const next = { ...current };
+      delete next[questionId];
+      return next;
+    });
+    setDirtyQuestionIds((current) => new Set(current).add(questionId));
     setAnswers((current) => ({ ...current, [questionId]: optionId }));
   };
 
   const handleMultipleChoiceToggle = (questionId: string, optionId: string) => {
+    setQuestionReviews((current) => {
+      const next = { ...current };
+      delete next[questionId];
+      return next;
+    });
+    setDirtyQuestionIds((current) => new Set(current).add(questionId));
     setAnswers((current) => {
       const previous = Array.isArray(current[questionId]) ? [...(current[questionId] as string[])] : [];
       const next = previous.includes(optionId)
@@ -526,6 +883,12 @@ function VideoQuizPage() {
   };
 
   const handleMatchSelect = (questionId: string, pairId: string, optionId: string) => {
+    setQuestionReviews((current) => {
+      const next = { ...current };
+      delete next[questionId];
+      return next;
+    });
+    setDirtyQuestionIds((current) => new Set(current).add(questionId));
     setAnswers((current) => {
       const previous =
         current[questionId] && typeof current[questionId] === "object" && !Array.isArray(current[questionId])
@@ -549,12 +912,6 @@ function VideoQuizPage() {
     setStage("question");
   };
 
-  const goToQuestion = (nextIndex: number) => {
-    setQuestionMotionDirection(nextIndex >= currentQuestionIndex ? "forward" : "backward");
-    setCurrentQuestionIndex(nextIndex);
-    setStage("question");
-  };
-
   const renderQuestionContent = () => {
     if (!currentQuestion) return null;
 
@@ -575,6 +932,7 @@ function VideoQuizPage() {
               <label className="videoQuizSelect">
                 <select
                   value={selectedMap[pair.id] ?? ""}
+                  disabled={isReadOnlyAttempt || Boolean(currentQuestionReview) || savingQuestionId === currentQuestion.id}
                   onChange={(event) =>
                     handleMatchSelect(currentQuestion.id, pair.id, event.target.value)
                   }
@@ -611,6 +969,7 @@ function VideoQuizPage() {
               type="button"
               key={option.id}
               className={`videoQuizOption ${isSelected ? "selected" : ""}`}
+              disabled={isReadOnlyAttempt || Boolean(currentQuestionReview) || savingQuestionId === currentQuestion.id}
               onClick={() =>
                 currentQuestion.type === "single"
                   ? handleSingleChoiceSelect(currentQuestion.id, option.id)
@@ -656,7 +1015,7 @@ function VideoQuizPage() {
           </div>
 
           <div className="videoQuizTopActions">
-            {(stage === "question" || stage === "review") && (
+            {(stage === "question" || stage === "review") && !isReadOnlyAttempt && (
               <span className={`videoQuizTimer ${secondsLeft <= 60 ? "urgent" : ""}`}>
                 <span>Time left:</span> <AnimatedTimer secondsLeft={secondsLeft} />
               </span>
@@ -685,14 +1044,26 @@ function VideoQuizPage() {
                 <div className="videoQuizAttemptList">
                   {[...attempts].reverse().map((attempt) => (
                     <div key={attempt.id} className="videoQuizAttemptCard">
-                      <QuizStatusIcon passed={attempt.passed} />
+                      <QuizStatusIcon passed={attempt.passed === true || attempt.status === "in_progress"} />
 
-                      <div>
-                        <strong>Attempt {attempt.number}</strong>
+                      <div className="videoQuizAttemptText">
+                        <strong>Attempt {attempt.attempt_number}</strong>
                         <p>
-                          You scored {attempt.score}/{attempt.total}
+                          {attempt.status === "in_progress"
+                            ? "In progress"
+                            : `You scored ${getAttemptScoreText(attempt)}`}
                         </p>
                       </div>
+
+                      {attempt.status !== "in_progress" ? (
+                        <button
+                          type="button"
+                          className="videoQuizInlineButton videoQuizAttemptViewButton"
+                          onClick={() => viewAttempt(attempt)}
+                        >
+                          View
+                        </button>
+                      ) : null}
                     </div>
                   ))}
                 </div>
@@ -720,7 +1091,14 @@ function VideoQuizPage() {
               {quizMaxAttempts > 0 && attemptsLeft === 0 ? (
                 <div className="videoQuizUnlockNotice">
                   <strong>No attempts left</strong>
-                  <p>You have used all {quizMaxAttempts} attempts in this temporary local version.</p>
+                  <p>You have used all {quizMaxAttempts} attempts for this quiz.</p>
+                </div>
+              ) : null}
+
+              {quizFlowError ? (
+                <div className="videoQuizUnlockNotice error">
+                  <strong>Quiz error</strong>
+                  <p>{quizFlowError}</p>
                 </div>
               ) : null}
 
@@ -728,13 +1106,23 @@ function VideoQuizPage() {
                 <button type="button" className="videoQuizGhostButton" onClick={handleExit}>
                   Cancel
                 </button>
+                {selectedActiveAttempt ? (
+                  <button
+                    type="button"
+                    className="videoQuizGhostButton"
+                    onClick={resumeAttempt}
+                    disabled={isQuizLoading}
+                  >
+                    Continue attempt
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   className="videoQuizPrimaryButton"
                   onClick={startAttempt}
-                  disabled={isQuizLoading || !quizSummary || !hasQuizQuestions || (quizMaxAttempts > 0 && attemptsLeft <= 0)}
+                  disabled={isQuizLoading || isStartingAttempt || !quizSummary || !hasQuizQuestions || (quizMaxAttempts > 0 && attemptsLeft <= 0)}
                 >
-                  Attempt {ArrowSVG}
+                  {isStartingAttempt ? "Starting..." : "Attempt"} {ArrowSVG}
                 </button>
               </div>
             </div>
@@ -758,7 +1146,8 @@ function VideoQuizPage() {
                         key={question.id}
                         type="button"
                         className={`videoQuizGridButton ${answered ? "answered" : ""} ${isCurrent ? "current" : ""}`}
-                        onClick={() => goToQuestion(index)}
+                        disabled={savingQuestionId === currentQuestion?.id}
+                        onClick={() => handleQuestionNavigation(index)}
                       >
                         {index + 1}
                       </button>
@@ -769,13 +1158,21 @@ function VideoQuizPage() {
                 <button
                   type="button"
                   className="videoQuizReviewLink"
-                  onClick={() => setStage("review")}
+                  disabled={savingQuestionId === currentQuestion?.id}
+                  onClick={handleOpenReview}
                 >
-                  Finish Attempt...
+                  {isReadOnlyAttempt ? "Attempt summary" : "Finish Attempt..."}
                 </button>
               </aside>
 
-              {stage === "question" ? (
+              {stage === "question" && !currentQuestion ? (
+                <section className="videoQuizQuestionPanel">
+                  <div className="videoQuizEmptyState">
+                    <strong>Loading questions</strong>
+                    <p>Your attempt is being prepared.</p>
+                  </div>
+                </section>
+              ) : stage === "question" && currentQuestion ? (
                 <section className="videoQuizQuestionPanel">
                   <div
                     key={currentQuestion.id}
@@ -790,6 +1187,34 @@ function VideoQuizPage() {
                     </div>
 
                     {renderQuestionContent()}
+
+                    {quizFlowError ? (
+                      <div className="videoQuizFeedbackCard error">
+                        <strong>Could not save answer</strong>
+                        <p>{quizFlowError}</p>
+                      </div>
+                    ) : null}
+
+                    {currentQuestionReview ? (
+                      <div className={`videoQuizFeedbackCard ${getReviewStatus(currentQuestionReview) ?? "incorrect"}`}>
+                        <strong>
+                          {getReviewStatus(currentQuestionReview) === "correct"
+                            ? "Correct answer"
+                            : getReviewStatus(currentQuestionReview) === "partial"
+                              ? "Partially correct"
+                              : "Not quite right"}
+                        </strong>
+                        <p>
+                          {currentQuestionReview.awarded_points ?? 0}/{currentQuestionReview.max_points ?? "-"} points
+                          {currentQuestionReview.explanation ? ` • ${currentQuestionReview.explanation}` : ""}
+                        </p>
+                        {getCorrectAnswerSummary(currentQuestion, currentQuestionReview) ? (
+                          <p>
+                            Correct answer: {getCorrectAnswerSummary(currentQuestion, currentQuestionReview)}
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
 
                   <div className="videoQuizActionRow">
@@ -797,10 +1222,8 @@ function VideoQuizPage() {
                       <button
                         type="button"
                         className="videoQuizGhostButton"
-                        onClick={() => {
-                          setQuestionMotionDirection("backward");
-                          setCurrentQuestionIndex((index) => Math.max(0, index - 1));
-                        }}
+                        disabled={savingQuestionId === currentQuestion.id}
+                        onClick={() => handleQuestionNavigation(Math.max(0, currentQuestionIndex - 1))}
                       >
                         Previous Question
                       </button>
@@ -810,27 +1233,34 @@ function VideoQuizPage() {
                       <button
                         type="button"
                         className="videoQuizPrimaryButton"
-                        onClick={() => {
-                          setQuestionMotionDirection("forward");
-                          setCurrentQuestionIndex((index) => Math.min(questions.length - 1, index + 1));
-                        }}
+                        disabled={savingQuestionId === currentQuestion.id}
+                        onClick={handleNextQuestion}
                       >
-                        Next Question {ArrowSVG}
+                        {savingQuestionId === currentQuestion.id
+                          ? "Saving..."
+                          : !isReadOnlyAttempt && isImmediateReview && !currentQuestionReview
+                            ? "Check answer"
+                            : "Next Question"} {ArrowSVG}
                       </button>
                     ) : (
                       <button
                         type="button"
                         className="videoQuizPrimaryButton"
-                        onClick={() => setStage("review")}
+                        disabled={savingQuestionId === currentQuestion.id}
+                        onClick={() => void handleLastQuestionAction()}
                       >
-                        Review Attempt {ArrowSVG}
+                        {savingQuestionId === currentQuestion.id
+                          ? "Saving..."
+                          : !isReadOnlyAttempt && isImmediateReview && !currentQuestionReview
+                            ? "Check answer"
+                            : "Review Attempt"} {ArrowSVG}
                       </button>
                     )}
                   </div>
                 </section>
               ) : (
                 <section className="videoQuizReviewPanel">
-                  <h3>Answered all questions?</h3>
+                  <h3>{isReadOnlyAttempt ? `Attempt ${activeAttempt?.attempt_number ?? ""} review` : "Answered all questions?"}</h3>
 
                   <div className="videoQuizReviewList">
                     {questions.map((question, index) => {
@@ -847,12 +1277,23 @@ function VideoQuizPage() {
                   </div>
 
                   <div className="videoQuizActionRow">
-                    <button type="button" className="videoQuizGhostButton" onClick={goToFirstIncomplete}>
-                      Back to quiz
+                    <button
+                      type="button"
+                      className="videoQuizGhostButton"
+                      onClick={isReadOnlyAttempt ? () => handleQuestionNavigation(0) : goToFirstIncomplete}
+                      disabled={isSubmittingAttempt || questions.length === 0}
+                    >
+                      {isReadOnlyAttempt ? "View questions" : "Back to quiz"}
                     </button>
-                    <button type="button" className="videoQuizPrimaryButton" onClick={finishAttempt}>
-                      Finish attempt
-                    </button>
+                    {isReadOnlyAttempt ? (
+                      <button type="button" className="videoQuizPrimaryButton" onClick={() => setStage("intro")}>
+                        Back to attempts
+                      </button>
+                    ) : (
+                      <button type="button" className="videoQuizPrimaryButton" onClick={finishAttemptAction} disabled={isSubmittingAttempt}>
+                        {isSubmittingAttempt ? "Submitting..." : "Finish attempt"}
+                      </button>
+                    )}
                   </div>
                 </section>
               )}
@@ -862,9 +1303,10 @@ function VideoQuizPage() {
           {stage === "results" && latestResult ? (
             <div className="videoQuizResults">
               <div className="videoQuizResultHeadline">
-                <h3>{latestResult.passed ? "Congrats!" : "Quiz complete"}</h3>
+                <h3>{latestResult.passed === true ? "Congrats!" : "Quiz complete"}</h3>
                 <p>
-                  You answered {latestResult.score}/{latestResult.total} questions right.
+                  Current score: {latestResult.score ?? "-"}/{latestResult.total ?? "-"}
+                  {latestResult.percentage ? ` (${latestResult.percentage}%)` : ""}
                 </p>
               </div>
 
@@ -872,23 +1314,29 @@ function VideoQuizPage() {
                 {latestResult.questionResults.map((result, index) => (
                   <div
                     key={result.questionId}
-                    className={`videoQuizResultCard ${result.isCorrect ? "correct" : "incorrect"}`}
+                    className={`videoQuizResultCard ${result.reviewStatus ?? ""}`}
                   >
-                    <QuizStatusIcon passed={result.isCorrect} />
+                    <QuizStatusIcon status={result.reviewStatus} />
 
                     <div className="videoQuizResultCardText">
                       <strong>
                         {index + 1}. {result.answerSummary}
                       </strong>
 
-                      {!result.isCorrect ? (
+                      {result.correctAnswerSummary ? (
                         <p>
-                          Correct answer: {result.correctAnswerSummary}. {result.explanation}
+                          Correct answer: {result.correctAnswerSummary}
+                        </p>
+                      ) : null}
+
+                      {result.isCorrect === false && result.explanation ? (
+                        <p>
+                          {result.explanation}
                         </p>
                       ) : null}
                     </div>
 
-                    {!result.isCorrect ? (
+                    {result.isCorrect === false ? (
                       <button
                         type="button"
                         className="videoQuizInlineButton"
@@ -909,7 +1357,7 @@ function VideoQuizPage() {
                   type="button"
                   className="videoQuizPrimaryButton"
                   onClick={startAttempt}
-                  disabled={isQuizLoading || !quizSummary || !hasQuizQuestions || (quizMaxAttempts > 0 && attempts.length >= quizMaxAttempts)}
+                  disabled={isQuizLoading || isStartingAttempt || !quizSummary || (quizMaxAttempts > 0 && attempts.length >= quizMaxAttempts)}
                 >
                   Attempt again {ArrowSVG}
                 </button>
