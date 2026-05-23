@@ -2598,6 +2598,11 @@ mux-player::part(menu-item) {
   background: rgba(245, 158, 11, 0.16);
 }
 
+.videoQuizPage .videoQuizStatusIcon.in_progress {
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.16);
+}
+
 .videoQuizPage .videoQuizStatusIcon.incorrect,
 .videoQuizPage .videoQuizStatusIcon.failed {
   color: #ff9a9a;
@@ -2684,6 +2689,11 @@ mux-player::part(menu-item) {
   min-height: 560px;
   overflow: visible;
   align-items: flex-start;
+}
+
+.videoQuizPage .videoQuizShell.summaryShell {
+  display: block;
+  min-height: 0;
 }
 
 .videoQuizPage .videoQuizSidebar {
@@ -2966,14 +2976,44 @@ mux-player::part(menu-item) {
 
 .videoQuizPage .videoQuizReviewCard {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 1rem;
   padding: 18px 20px;
   color: var(--text1);
 }
 
-.videoQuizPage .videoQuizReviewCard span {
+.videoQuizPage .videoQuizReviewCardText {
+  min-width: 0;
+  flex: 1;
+}
+
+.videoQuizPage .videoQuizReviewCardTopline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.45rem;
+}
+
+.videoQuizPage .videoQuizReviewCardTopline span,
+.videoQuizPage .videoQuizReviewCardText p {
   color: var(--text2);
+}
+
+.videoQuizPage .videoQuizReviewCardText p + p {
+  margin-top: 0.25rem;
+}
+
+.videoQuizPage .videoQuizReviewCard.correct {
+  border-color: rgba(42, 201, 106, 0.34);
+}
+
+.videoQuizPage .videoQuizReviewCard.partial {
+  border-color: rgba(245, 158, 11, 0.42);
+}
+
+.videoQuizPage .videoQuizReviewCard.incorrect {
+  border-color: rgba(188, 57, 57, 0.42);
 }
 
 .videoQuizPage .videoQuizReviewCard.unanswered {

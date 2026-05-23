@@ -59,6 +59,7 @@ type AttemptQuestionResult = {
   isAnswered: boolean;
   isCorrect: boolean | null;
   reviewStatus: "correct" | "partial" | "incorrect" | null;
+  scoreSummary: string;
   correctAnswerSummary: string;
   explanation: string;
 };
@@ -389,6 +390,18 @@ function getCorrectAnswerSummary(question: QuizQuestion, review: SaveAnswerRevie
   return summary.length > 0 ? summary.join(", ") : "";
 }
 
+function getReviewScoreSummary(review: SaveAnswerReview | null | undefined) {
+  if (!review) return "";
+  return `${review.awarded_points ?? 0}/${review.max_points ?? "-"} points`;
+}
+
+function getReviewStatusLabel(status: "correct" | "partial" | "incorrect" | null) {
+  if (status === "correct") return "Correct";
+  if (status === "partial") return "Partially correct";
+  if (status === "incorrect") return "Incorrect";
+  return "Not checked";
+}
+
 function buildAnswerPayload(question: QuizQuestion, answer: QuizAnswers[string]) {
   if (question.type === "match") {
     const selectedMap =
@@ -417,7 +430,7 @@ function buildAnswerPayload(question: QuizQuestion, answer: QuizAnswers[string])
   };
 }
 
-function QuizStatusIcon({ passed, status }: { passed?: boolean; status?: "correct" | "partial" | "incorrect" | null }) {
+function QuizStatusIcon({ passed, status }: { passed?: boolean; status?: "correct" | "partial" | "incorrect" | "in_progress" | null }) {
   const iconStatus = status ?? (passed ? "correct" : "incorrect");
 
   return (
@@ -427,6 +440,11 @@ function QuizStatusIcon({ passed, status }: { passed?: boolean; status?: "correc
           <path d="M5 12.5L9.5 17L19 7.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
         ) : iconStatus === "partial" ? (
           <path d="M7 12H17" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+        ) : iconStatus === "in_progress" ? (
+          <>
+            <path d="M12 7V12L15.5 14" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M20 12A8 8 0 1 1 4 12A8 8 0 0 1 20 12Z" stroke="currentColor" strokeWidth="2.2" />
+          </>
         ) : (
           <>
             <path d="M8 8L16 16" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
@@ -583,6 +601,26 @@ function VideoQuizPage() {
   const isReadOnlyAttempt = Boolean(activeAttempt && activeAttempt.status !== "in_progress");
   const currentQuestionReview = currentQuestion ? questionReviews[currentQuestion.id] : undefined;
   const isQuizLoading = isQuizSummaryLoading || areAttemptsLoading || (stage !== "intro" && areQuestionsLoading);
+  const summaryQuestionResults = useMemo(
+    () =>
+      questions.map((question) => {
+        const answer = answers[question.id];
+        const review = questionReviews[question.id];
+        const reviewStatus = getReviewStatus(review);
+        return {
+          questionId: question.id,
+          prompt: question.prompt,
+          answerSummary: getAnswerSummary(question, answer),
+          isAnswered: isQuestionAnswered(question, answer),
+          isCorrect: reviewStatus ? reviewStatus === "correct" : null,
+          reviewStatus,
+          scoreSummary: getReviewScoreSummary(review),
+          correctAnswerSummary: getCorrectAnswerSummary(question, review),
+          explanation: review?.explanation ?? question.explanation,
+        };
+      }),
+    [answers, questionReviews, questions]
+  );
 
   useEffect(() => {
     setStage("intro");
@@ -667,11 +705,6 @@ function VideoQuizPage() {
     } finally {
       setIsStartingAttempt(false);
     }
-  };
-
-  const resumeAttempt = () => {
-    if (!selectedActiveAttempt) return;
-    beginAttemptFlow(selectedActiveAttempt);
   };
 
   const viewAttempt = (attempt: AttemptRecord) => {
@@ -828,6 +861,7 @@ function VideoQuizPage() {
           isAnswered: isQuestionAnswered(question, answer),
           isCorrect: reviewStatus ? reviewStatus === "correct" : null,
           reviewStatus,
+          scoreSummary: getReviewScoreSummary(review),
           correctAnswerSummary: getCorrectAnswerSummary(question, review),
           explanation: review?.explanation ?? question.explanation,
         };
@@ -1044,7 +1078,10 @@ function VideoQuizPage() {
                 <div className="videoQuizAttemptList">
                   {[...attempts].reverse().map((attempt) => (
                     <div key={attempt.id} className="videoQuizAttemptCard">
-                      <QuizStatusIcon passed={attempt.passed === true || attempt.status === "in_progress"} />
+                      <QuizStatusIcon
+                        status={attempt.status === "in_progress" ? "in_progress" : undefined}
+                        passed={attempt.passed === true}
+                      />
 
                       <div className="videoQuizAttemptText">
                         <strong>Attempt {attempt.attempt_number}</strong>
@@ -1055,15 +1092,14 @@ function VideoQuizPage() {
                         </p>
                       </div>
 
-                      {attempt.status !== "in_progress" ? (
-                        <button
-                          type="button"
-                          className="videoQuizInlineButton videoQuizAttemptViewButton"
-                          onClick={() => viewAttempt(attempt)}
-                        >
-                          View
-                        </button>
-                      ) : null}
+                      <button
+                        type="button"
+                        className="videoQuizInlineButton videoQuizAttemptViewButton"
+                        onClick={() => attempt.status === "in_progress" ? beginAttemptFlow(attempt) : viewAttempt(attempt)}
+                        disabled={isQuizLoading}
+                      >
+                        {attempt.status === "in_progress" ? "Continue" : "View"}
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -1106,16 +1142,6 @@ function VideoQuizPage() {
                 <button type="button" className="videoQuizGhostButton" onClick={handleExit}>
                   Cancel
                 </button>
-                {selectedActiveAttempt ? (
-                  <button
-                    type="button"
-                    className="videoQuizGhostButton"
-                    onClick={resumeAttempt}
-                    disabled={isQuizLoading}
-                  >
-                    Continue attempt
-                  </button>
-                ) : null}
                 <button
                   type="button"
                   className="videoQuizPrimaryButton"
@@ -1129,7 +1155,8 @@ function VideoQuizPage() {
           ) : null}
 
           {stage === "question" || stage === "review" ? (
-            <div className="videoQuizShell">
+            <div className={`videoQuizShell ${stage === "review" ? "summaryShell" : ""}`}>
+              {stage === "question" ? (
               <aside className="videoQuizSidebar">
                 <h3>Questions</h3>
                 <p>
@@ -1164,6 +1191,7 @@ function VideoQuizPage() {
                   {isReadOnlyAttempt ? "Attempt summary" : "Finish Attempt..."}
                 </button>
               </aside>
+              ) : null}
 
               {stage === "question" && !currentQuestion ? (
                 <section className="videoQuizQuestionPanel">
@@ -1263,14 +1291,25 @@ function VideoQuizPage() {
                   <h3>{isReadOnlyAttempt ? `Attempt ${activeAttempt?.attempt_number ?? ""} review` : "Answered all questions?"}</h3>
 
                   <div className="videoQuizReviewList">
-                    {questions.map((question, index) => {
-                      const answer = answers[question.id];
-                      const answered = isQuestionAnswered(question, answer);
-
+                    {summaryQuestionResults.map((result, index) => {
                       return (
-                        <div key={question.id} className={`videoQuizReviewCard ${answered ? "" : "unanswered"}`}>
-                          <strong>{index + 1}.</strong>
-                          <span>{getAnswerSummary(question, answer)}</span>
+                        <div
+                          key={result.questionId}
+                          className={`videoQuizReviewCard ${result.isAnswered ? "" : "unanswered"} ${result.reviewStatus ?? ""}`}
+                        >
+                          <QuizStatusIcon status={result.reviewStatus} />
+
+                          <div className="videoQuizReviewCardText">
+                            <div className="videoQuizReviewCardTopline">
+                              <strong>{index + 1}. {getReviewStatusLabel(result.reviewStatus)}</strong>
+                              {result.scoreSummary ? <span>{result.scoreSummary}</span> : null}
+                            </div>
+                            <p>{result.answerSummary}</p>
+                            {result.correctAnswerSummary ? (
+                              <p>Correct answer: {result.correctAnswerSummary}</p>
+                            ) : null}
+                            {result.explanation ? <p>{result.explanation}</p> : null}
+                          </div>
                         </div>
                       );
                     })}
