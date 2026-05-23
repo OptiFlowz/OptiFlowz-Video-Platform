@@ -49,7 +49,7 @@ type AttemptRecord = {
   started_at: string;
   submitted_at: string | null;
   expires_at: string | null;
-  answer_review_mode: "immediate" | string;
+  answer_review_mode: "immediate" | "at_end" | "attempt_review" | string;
 };
 
 type AttemptQuestionResult = {
@@ -346,6 +346,14 @@ function getAnswerSummary(question: QuizQuestion, answer: QuizAnswers[string]) {
   return matched.length > 0 ? matched.join(" • ") : "You haven't answered this question yet";
 }
 
+function getAnsweredSummaryText(answerSummary: string) {
+  if (answerSummary.startsWith("Answered") || answerSummary.startsWith("You haven't")) {
+    return answerSummary;
+  }
+
+  return `Answered ${answerSummary}`;
+}
+
 function getAttemptScoreText(attempt: AttemptRecord) {
   const score = attempt.score_points ?? "-";
   const total = attempt.max_points ?? "-";
@@ -400,6 +408,29 @@ function getReviewStatusLabel(status: "correct" | "partial" | "incorrect" | null
   if (status === "partial") return "Partially correct";
   if (status === "incorrect") return "Incorrect";
   return "Not checked";
+}
+
+function buildQuestionResults(
+  questions: QuizQuestion[],
+  answers: QuizAnswers,
+  questionReviews: Record<string, SaveAnswerReview>
+) {
+  return questions.map((question) => {
+    const answer = answers[question.id];
+    const review = questionReviews[question.id];
+    const reviewStatus = getReviewStatus(review);
+    return {
+      questionId: question.id,
+      prompt: question.prompt,
+      answerSummary: getAnswerSummary(question, answer),
+      isAnswered: isQuestionAnswered(question, answer),
+      isCorrect: reviewStatus ? reviewStatus === "correct" : null,
+      reviewStatus,
+      scoreSummary: getReviewScoreSummary(review),
+      correctAnswerSummary: getCorrectAnswerSummary(question, review),
+      explanation: review?.explanation ?? question.explanation,
+    };
+  });
 }
 
 function buildAnswerPayload(question: QuizQuestion, answer: QuizAnswers[string]) {
@@ -504,6 +535,18 @@ function VideoQuizPage() {
 
     return headers;
   }, []);
+  const fetchAttemptQuestions = (attemptId: string) =>
+    fetchFn<{
+      success: boolean;
+      attempt?: AttemptRecord;
+      questions: AttemptQuizQuestion[];
+    }>({
+      route: `api/quizzes/attempt/${attemptId}/questions`,
+      options: {
+        method: "GET",
+        headers: requestHeaders,
+      },
+    });
 
   const { data: quizSummary, isLoading: isQuizSummaryLoading } = useQuery({
     queryKey: ["quiz-page-summary", quizId],
@@ -555,22 +598,15 @@ function VideoQuizPage() {
   const { data: attemptQuestions = [], isLoading: areQuestionsLoading } = useQuery({
     queryKey: ["quiz-page-attempt-questions", activeAttempt?.id],
     queryFn: () =>
-      fetchFn<{
-        success: boolean;
-        attempt?: AttemptRecord;
-        questions: AttemptQuizQuestion[];
-      }>({
-        route: `api/quizzes/attempt/${activeAttempt!.id}/questions`,
-        options: {
-          method: "GET",
-          headers: requestHeaders,
-        },
-      }).then((response) => {
+      fetchAttemptQuestions(activeAttempt!.id).then((response) => {
+        const nextAttempt = response.attempt ?? activeAttempt!;
         if (response.attempt) {
-          setActiveAttempt(response.attempt);
+          setActiveAttempt(nextAttempt);
         }
+        const nextReviewMode = nextAttempt.answer_review_mode ?? "immediate";
+        const canRevealReviews = nextAttempt.status !== "in_progress" || nextReviewMode === "immediate";
         setAnswers(buildInitialAnswers(response.questions ?? []));
-        setQuestionReviews(buildQuestionReviews(response.questions ?? []));
+        setQuestionReviews(canRevealReviews ? buildQuestionReviews(response.questions ?? []) : {});
         setDirtyQuestionIds(new Set());
         return response.questions ?? [];
       }),
@@ -598,27 +634,12 @@ function VideoQuizPage() {
   );
   const activeReviewMode = activeAttempt?.answer_review_mode ?? selectedActiveAttempt?.answer_review_mode ?? "immediate";
   const isImmediateReview = activeReviewMode === "immediate";
+  const isDeferredReview = activeReviewMode === "at_end" || activeReviewMode === "attempt_review";
   const isReadOnlyAttempt = Boolean(activeAttempt && activeAttempt.status !== "in_progress");
   const currentQuestionReview = currentQuestion ? questionReviews[currentQuestion.id] : undefined;
   const isQuizLoading = isQuizSummaryLoading || areAttemptsLoading || (stage !== "intro" && areQuestionsLoading);
   const summaryQuestionResults = useMemo(
-    () =>
-      questions.map((question) => {
-        const answer = answers[question.id];
-        const review = questionReviews[question.id];
-        const reviewStatus = getReviewStatus(review);
-        return {
-          questionId: question.id,
-          prompt: question.prompt,
-          answerSummary: getAnswerSummary(question, answer),
-          isAnswered: isQuestionAnswered(question, answer),
-          isCorrect: reviewStatus ? reviewStatus === "correct" : null,
-          reviewStatus,
-          scoreSummary: getReviewScoreSummary(review),
-          correctAnswerSummary: getCorrectAnswerSummary(question, review),
-          explanation: review?.explanation ?? question.explanation,
-        };
-      }),
+    () => buildQuestionResults(questions, answers, questionReviews),
     [answers, questionReviews, questions]
   );
 
@@ -738,7 +759,7 @@ function VideoQuizPage() {
         },
       });
 
-      if (response.review) {
+      if (response.review && isImmediateReview) {
         setQuestionReviews((current) => ({
           ...current,
           [question.id]: response.review!,
@@ -846,34 +867,28 @@ function VideoQuizPage() {
         },
       });
       const submittedAttempt = submitResponse.attempt;
+      const submittedQuestionsResponse = await fetchAttemptQuestions(activeAttempt.id);
+      const submittedQuestions = submittedQuestionsResponse.questions ?? [];
+      const submittedAnswers = buildInitialAnswers(submittedQuestions);
+      const submittedQuestionReviews = buildQuestionReviews(submittedQuestions);
+      const submittedQuizQuestions = [...submittedQuestions]
+        .sort((a, b) => Number(a.attempt_position || 0) - Number(b.attempt_position || 0))
+        .map(mapAttemptQuestion);
+      const refreshedAttempt = submittedQuestionsResponse.attempt ?? submittedAttempt;
 
-      setActiveAttempt(submittedAttempt);
+      setActiveAttempt(refreshedAttempt);
+      setAnswers(submittedAnswers);
+      setQuestionReviews(submittedQuestionReviews);
       setDeadline(null);
-
-      const questionResults = questions.map((question) => {
-        const answer = answers[question.id];
-        const review = questionReviews[question.id];
-        const reviewStatus = getReviewStatus(review);
-        return {
-          questionId: question.id,
-          prompt: question.prompt,
-          answerSummary: getAnswerSummary(question, answer),
-          isAnswered: isQuestionAnswered(question, answer),
-          isCorrect: reviewStatus ? reviewStatus === "correct" : null,
-          reviewStatus,
-          scoreSummary: getReviewScoreSummary(review),
-          correctAnswerSummary: getCorrectAnswerSummary(question, review),
-          explanation: review?.explanation ?? question.explanation,
-        };
-      });
+      queryClient.setQueryData(["quiz-page-attempt-questions", activeAttempt.id], submittedQuestions);
 
       setLatestResult({
-        score: submittedAttempt.score_points ?? latestSaveResponse?.score?.score_points ?? null,
-        total: submittedAttempt.max_points ?? questions.length,
-        percentage: submittedAttempt.score_percentage ?? latestSaveResponse?.score?.score_percentage ?? null,
-        passed: submittedAttempt.passed,
-        attemptNumber: submittedAttempt.attempt_number,
-        questionResults,
+        score: refreshedAttempt.score_points ?? latestSaveResponse?.score?.score_points ?? null,
+        total: refreshedAttempt.max_points ?? submittedQuizQuestions.length,
+        percentage: refreshedAttempt.score_percentage ?? latestSaveResponse?.score?.score_percentage ?? null,
+        passed: refreshedAttempt.passed,
+        attemptNumber: refreshedAttempt.attempt_number,
+        questionResults: buildQuestionResults(submittedQuizQuestions, submittedAnswers, submittedQuestionReviews),
       });
       setDirtyQuestionIds(new Set());
       await queryClient.invalidateQueries({ queryKey: ["quiz-page-attempts", quizId] });
@@ -1292,23 +1307,26 @@ function VideoQuizPage() {
 
                   <div className="videoQuizReviewList">
                     {summaryQuestionResults.map((result, index) => {
+                      const shouldShowReviewDetails = isReadOnlyAttempt || !isDeferredReview;
                       return (
                         <div
                           key={result.questionId}
                           className={`videoQuizReviewCard ${result.isAnswered ? "" : "unanswered"} ${result.reviewStatus ?? ""}`}
                         >
-                          <QuizStatusIcon status={result.reviewStatus} />
+                          {shouldShowReviewDetails ? <QuizStatusIcon status={result.reviewStatus} /> : null}
 
                           <div className="videoQuizReviewCardText">
                             <div className="videoQuizReviewCardTopline">
-                              <strong>{index + 1}. {getReviewStatusLabel(result.reviewStatus)}</strong>
-                              {result.scoreSummary ? <span>{result.scoreSummary}</span> : null}
+                              <strong>
+                                {index + 1}. {shouldShowReviewDetails ? getReviewStatusLabel(result.reviewStatus) : result.answerSummary}
+                              </strong>
+                              {shouldShowReviewDetails && result.scoreSummary ? <span>{result.scoreSummary}</span> : null}
                             </div>
-                            <p>{result.answerSummary}</p>
-                            {result.correctAnswerSummary ? (
+                            {shouldShowReviewDetails ? <p>{result.answerSummary}</p> : null}
+                            {shouldShowReviewDetails && result.correctAnswerSummary ? (
                               <p>Correct answer: {result.correctAnswerSummary}</p>
                             ) : null}
-                            {result.explanation ? <p>{result.explanation}</p> : null}
+                            {shouldShowReviewDetails && result.explanation ? <p>{result.explanation}</p> : null}
                           </div>
                         </div>
                       );
@@ -1359,8 +1377,10 @@ function VideoQuizPage() {
 
                     <div className="videoQuizResultCardText">
                       <strong>
-                        {index + 1}. {result.answerSummary}
+                        {index + 1}. {result.prompt}
                       </strong>
+
+                      <p>{getAnsweredSummaryText(result.answerSummary)}</p>
 
                       {result.correctAnswerSummary ? (
                         <p>
