@@ -690,6 +690,7 @@ function QuizzesPage() {
                 question_count: Number(selectedQuiz.question_count),
                 max_attempts: Number(selectedQuiz.max_attempts),
                 passing_score_percentage: Number(selectedQuiz.passing_score_percentage),
+                answer_review_mode: selectedQuiz.answer_review_mode === "at_end" ? "at_end" : "immediate",
                 shuffle_questions: selectedQuiz.shuffle_questions,
                 shuffle_options: selectedQuiz.shuffle_options,
               }

@@ -815,18 +815,39 @@ function VideoQuizPage() {
     moveToQuestion(Math.min(questions.length - 1, currentQuestionIndex + 1));
   };
 
-  const handleQuestionNavigation = (nextIndex: number) => {
+  const handleQuestionNavigation = async (nextIndex: number) => {
     if (nextIndex === currentQuestionIndex && stage === "question") return;
+
+    if (!isReadOnlyAttempt && stage === "question" && currentQuestion) {
+      const isCurrentAnswerDirty = dirtyQuestionIds.has(currentQuestion.id);
+      const hasCurrentAnswer = isQuestionAnswered(currentQuestion, answers[currentQuestion.id]);
+
+      if (isCurrentAnswerDirty && hasCurrentAnswer) {
+        const response = await saveCurrentAnswer();
+        if (!response) return;
+      }
+    }
+
     moveToQuestion(nextIndex);
   };
 
-  const handleOpenReview = () => {
+  const handleOpenReview = async () => {
+    if (!isReadOnlyAttempt && stage === "question" && currentQuestion) {
+      const isCurrentAnswerDirty = dirtyQuestionIds.has(currentQuestion.id);
+      const hasCurrentAnswer = isQuestionAnswered(currentQuestion, answers[currentQuestion.id]);
+
+      if (isCurrentAnswerDirty && hasCurrentAnswer) {
+        const response = await saveCurrentAnswer();
+        if (!response) return;
+      }
+    }
+
     setStage("review");
   };
 
   const handleLastQuestionAction = async () => {
     if (isReadOnlyAttempt) {
-      handleOpenReview();
+      await handleOpenReview();
       return;
     }
 
@@ -835,7 +856,7 @@ function VideoQuizPage() {
       return;
     }
 
-    handleOpenReview();
+    await handleOpenReview();
   };
 
   const finishAttempt = async () => {

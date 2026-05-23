@@ -6,6 +6,7 @@ export type CreateQuizPayload = {
   question_count: number;
   max_attempts: number;
   passing_score_percentage: number;
+  answer_review_mode: "immediate" | "at_end";
   shuffle_questions: boolean;
   shuffle_options: boolean;
 };
@@ -99,6 +100,7 @@ export type QuizData = {
   question_count: number;
   max_attempts: number;
   passing_score_percentage: number | string;
+  answer_review_mode?: "immediate" | "at_end" | string;
   shuffle_questions: boolean;
   shuffle_options: boolean;
   created_at?: string;

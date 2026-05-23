@@ -37,6 +37,7 @@ function CreateQuizPopup({
   const [questionCount, setQuestionCount] = useState("10");
   const [maxAttempts, setMaxAttempts] = useState("3");
   const [passingScorePercentage, setPassingScorePercentage] = useState("50");
+  const [answerReviewMode, setAnswerReviewMode] = useState<"immediate" | "at_end">("immediate");
   const [shuffleQuestions, setShuffleQuestions] = useState(true);
   const [shuffleOptions, setShuffleOptions] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +67,7 @@ function CreateQuizPopup({
       setQuestionCount(String(initialValues?.question_count ?? 10));
       setMaxAttempts(String(initialValues?.max_attempts ?? 3));
       setPassingScorePercentage(String(initialValues?.passing_score_percentage ?? 50));
+      setAnswerReviewMode(initialValues?.answer_review_mode === "at_end" ? "at_end" : "immediate");
       setShuffleQuestions(initialValues?.shuffle_questions ?? true);
       setShuffleOptions(initialValues?.shuffle_options ?? true);
       setError(null);
@@ -145,6 +147,7 @@ function CreateQuizPopup({
           "Passing score percentage",
           { min: 0, max: 100 }
         ),
+        answer_review_mode: answerReviewMode,
         shuffle_questions: shuffleQuestions,
         shuffle_options: shuffleOptions,
       };
@@ -285,6 +288,22 @@ function CreateQuizPopup({
                   disabled={isSubmitting}
                   className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
                 />
+              </div>
+
+              <div className="formGroup">
+                <label htmlFor="quizAnswerReviewMode">Answer Review Mode</label>
+                <select
+                  id="quizAnswerReviewMode"
+                  value={answerReviewMode}
+                  onChange={(event) =>
+                    setAnswerReviewMode(event.target.value === "at_end" ? "at_end" : "immediate")
+                  }
+                  disabled={isSubmitting}
+                  className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
+                >
+                  <option value="immediate">Immediate</option>
+                  <option value="at_end">At end</option>
+                </select>
               </div>
             </div>
 
