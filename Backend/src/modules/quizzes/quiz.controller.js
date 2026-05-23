@@ -25,7 +25,9 @@ import { getQuizQuestionSourcesInternal } from './handlers/getQuizQuestionSource
 
 import { getUserQuizAttemptsInternal } from './handlers/getUserQuizAttempts.js';
 import { startQuizAttemptInternal } from './handlers/startQuizAttempt.js';
-// import { saveQuizAttemptAnswerInternal } from './handlers/saveAttemptAnswer.js';
+import { saveAttemptAnswerInternal } from './handlers/saveAttemptAnswer.js';
+import { getAttemptQuestionsInternal } from './handlers/getAttemptQuestions.js';
+import { submitQuizAttemptInternal } from './handlers/submitQuizAttempt.js';
 
 
 
@@ -290,6 +292,43 @@ export async function getUserQuizAttempts(req, res) {
     return sendSuccess(res, { attempts }, 200);
   } catch (error) {
     console.error('Error fetching user quiz attempts:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function saveAttemptAnswer(req, res) {
+  try {
+    const answer = Object.prototype.hasOwnProperty.call(req.body || {}, 'answer')
+      ? req.body.answer
+      : req.body;
+    const result = await saveAttemptAnswerInternal(
+      { ...req.params, answer },
+      req.user?.sub || null
+    );
+
+    return sendSuccess(res, result, 200);
+  } catch (error) {
+    console.error('Error saving quiz attempt answer:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function getAttemptQuestions(req, res) {
+  try {
+    const result = await getAttemptQuestionsInternal({ ...req.params }, req.user?.sub || null);
+    return sendSuccess(res, result, 200);
+  } catch (error) {
+    console.error('Error fetching quiz attempt questions:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function submitQuizAttempt(req, res) {
+  try {
+    const attempt = await submitQuizAttemptInternal({ ...req.params }, req.user?.sub || null);
+    return sendSuccess(res, { attempt }, 200);
+  } catch (error) {
+    console.error('Error submitting quiz attempt:', error);
     return sendError(res, error.message, error.status || 500);
   }
 }
