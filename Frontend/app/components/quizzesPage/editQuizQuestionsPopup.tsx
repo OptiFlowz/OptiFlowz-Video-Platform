@@ -51,7 +51,9 @@ function EditQuizQuestionsPopup({
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
   const [isCreateQuestionOpen, setIsCreateQuestionOpen] = useState(false);
+  const [shouldRenderCreateQuestionPopup, setShouldRenderCreateQuestionPopup] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<QuizQuestion | null>(null);
+  const [closingEditingQuestion, setClosingEditingQuestion] = useState<QuizQuestion | null>(null);
   const [orderedQuestions, setOrderedQuestions] = useState<QuizQuestion[]>([]);
   const [draggedQuestionId, setDraggedQuestionId] = useState<string | null>(null);
   const [isReordering, setIsReordering] = useState(false);
@@ -93,10 +95,21 @@ function EditQuizQuestionsPopup({
     refetchOnWindowFocus: false,
   });
 
-  const questions = useMemo(
-    () => questionsResponse?.pages.flatMap((page) => page.questions ?? []) ?? [],
-    [questionsResponse]
-  );
+  const questions = useMemo(() => {
+    const seenQuestionIds = new Set<string>();
+    const uniqueQuestions: QuizQuestion[] = [];
+
+    questionsResponse?.pages.forEach((page) => {
+      page.questions?.forEach((question) => {
+        if (seenQuestionIds.has(question.id)) return;
+
+        seenQuestionIds.add(question.id);
+        uniqueQuestions.push(question);
+      });
+    });
+
+    return uniqueQuestions;
+  }, [questionsResponse]);
   const latestPagination = questionsResponse?.pages.at(-1)?.pagination;
   const sortedQuestions = useMemo(
     () =>
@@ -157,6 +170,31 @@ function EditQuizQuestionsPopup({
     setVisible(false);
     closeTimeoutRef.current = window.setTimeout(() => setMounted(false), DURATION);
   }, [open]);
+
+  useEffect(() => {
+    if (isCreateQuestionOpen) {
+      setShouldRenderCreateQuestionPopup(true);
+      return;
+    }
+
+    const timeout = window.setTimeout(
+      () => setShouldRenderCreateQuestionPopup(false),
+      DURATION
+    );
+
+    return () => window.clearTimeout(timeout);
+  }, [isCreateQuestionOpen]);
+
+  useEffect(() => {
+    if (editingQuestion) {
+      setClosingEditingQuestion(editingQuestion);
+      return;
+    }
+
+    const timeout = window.setTimeout(() => setClosingEditingQuestion(null), DURATION);
+
+    return () => window.clearTimeout(timeout);
+  }, [editingQuestion]);
 
   useEffect(() => {
     if (!open) return;
@@ -383,11 +421,27 @@ function EditQuizQuestionsPopup({
           }`}
           onMouseDown={(event) => event.stopPropagation()}
         >
-          <div className="mb-5">
-            <h3 className="text-xl font-semibold">Edit Questions</h3>
-            <p className="mt-2 text-sm opacity-80">
-              Add new questions to <strong>{quizTitle || "this quiz"}</strong>.
-            </p>
+          <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h3 className="text-xl font-semibold">Edit Questions</h3>
+              <p className="mt-2 text-sm opacity-80">
+                Add new questions to <strong>{quizTitle || "this quiz"}</strong>.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="flex cursor-pointer items-center gap-3 rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 text-sm font-medium transition-colors hover:bg-(--background3) disabled:cursor-not-allowed"
+              title="Add question"
+              aria-label="Add question"
+              onClick={() => {
+                setSuccessMessage(null);
+                setIsCreateQuestionOpen(true);
+              }}
+              disabled={isReordering}
+            >
+              <span className="[&>svg_path]:stroke-(--text1)">{AddSVG}</span>
+              <span>Add Question</span>
+            </button>
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
@@ -481,20 +535,6 @@ function EditQuizQuestionsPopup({
                 </div>
               ) : null}
 
-              <button
-                type="button"
-                className="flex cursor-pointer items-center gap-3 self-start rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 text-sm font-medium transition-colors hover:bg-(--background3) disabled:cursor-not-allowed"
-                title="Add question"
-                aria-label="Add question"
-                onClick={() => {
-                  setSuccessMessage(null);
-                  setIsCreateQuestionOpen(true);
-                }}
-                disabled={isReordering}
-              >
-                <span className="[&>svg_path]:stroke-(--text1)">{AddSVG}</span>
-                <span>Add Question</span>
-              </button>
             </div>
 
             {successMessage ? <p className="mt-4 text-sm text-green-600">{successMessage}</p> : null}
@@ -512,22 +552,28 @@ function EditQuizQuestionsPopup({
         </div>
       </div>
 
-      <CreateQuizQuestionPopup
-        open={isCreateQuestionOpen}
-        nextPosition={nextQuestionPosition}
-        requestHeaders={requestHeaders}
-        onClose={() => setIsCreateQuestionOpen(false)}
-        onSubmit={handleCreateQuestion}
-      />
-      <CreateQuizQuestionPopup
-        open={!!editingQuestion}
-        mode="edit"
-        initialValues={editingQuestion ? getQuestionDraftValues(editingQuestion) : null}
-        nextPosition={editingQuestion?.position ?? nextQuestionPosition}
-        requestHeaders={requestHeaders}
-        onClose={() => setEditingQuestion(null)}
-        onSubmit={handleUpdateQuestion}
-      />
+      {shouldRenderCreateQuestionPopup ? (
+        <CreateQuizQuestionPopup
+          key="create-quiz-question"
+          open={isCreateQuestionOpen}
+          nextPosition={nextQuestionPosition}
+          requestHeaders={requestHeaders}
+          onClose={() => setIsCreateQuestionOpen(false)}
+          onSubmit={handleCreateQuestion}
+        />
+      ) : null}
+      {closingEditingQuestion ? (
+        <CreateQuizQuestionPopup
+          key={`edit-quiz-question-${closingEditingQuestion.id}`}
+          open={!!editingQuestion}
+          mode="edit"
+          initialValues={getQuestionDraftValues(closingEditingQuestion)}
+          nextPosition={closingEditingQuestion.position}
+          requestHeaders={requestHeaders}
+          onClose={() => setEditingQuestion(null)}
+          onSubmit={handleUpdateQuestion}
+        />
+      ) : null}
       <ConfirmDialog {...dialogProps} />
     </>,
     document.body

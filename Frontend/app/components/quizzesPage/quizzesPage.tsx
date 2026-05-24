@@ -46,6 +46,8 @@ type QuizCollectionResponse =
       data?: QuizData[];
     };
 
+const QUIZ_MODAL_DURATION = 200;
+
 function normalizeQuizCollection(payload: QuizCollectionResponse): QuizData[] {
   if (Array.isArray(payload)) {
     return payload;
@@ -93,6 +95,7 @@ function QuizzesPage() {
   const [filterValue, setFilterValue] = useState("");
   const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState<QuizData | null>(null);
+  const [closingSelectedQuiz, setClosingSelectedQuiz] = useState<QuizData | null>(null);
   const [questionsQuiz, setQuestionsQuiz] = useState<QuizData | null>(null);
   const [rulesQuiz, setRulesQuiz] = useState<QuizData | null>(null);
   const [sourcesQuiz, setSourcesQuiz] = useState<QuizData | null>(null);
@@ -197,6 +200,20 @@ function QuizzesPage() {
       selectedVisibleCount > 0 && selectedVisibleCount < filteredQuizzes.length;
   }, [filteredQuizzes, selectedQuizzes]);
 
+  useEffect(() => {
+    if (selectedQuiz) {
+      setClosingSelectedQuiz(selectedQuiz);
+      return;
+    }
+
+    const timeout = window.setTimeout(
+      () => setClosingSelectedQuiz(null),
+      QUIZ_MODAL_DURATION
+    );
+
+    return () => window.clearTimeout(timeout);
+  }, [selectedQuiz]);
+
   const toggleSelectAll = () => {
     const el = selectAllRef.current;
     if (!el) return;
@@ -281,6 +298,7 @@ function QuizzesPage() {
     });
 
     setIsQuizModalOpen(false);
+    setSelectedQuiz(null);
     await refetch();
   };
 
@@ -485,6 +503,23 @@ function QuizzesPage() {
     return response.source;
   };
 
+  const activeQuizModalQuiz = selectedQuiz ?? closingSelectedQuiz;
+  const activeQuizModalInitialValues: CreateQuizPayload | null = activeQuizModalQuiz
+    ? {
+        title: activeQuizModalQuiz.title,
+        description: activeQuizModalQuiz.description,
+        is_active: activeQuizModalQuiz.is_active,
+        time_limit_seconds: Number(activeQuizModalQuiz.time_limit_seconds),
+        question_count: Number(activeQuizModalQuiz.question_count),
+        max_attempts: Number(activeQuizModalQuiz.max_attempts),
+        passing_score_percentage: Number(activeQuizModalQuiz.passing_score_percentage),
+        answer_review_mode:
+          activeQuizModalQuiz.answer_review_mode === "at_end" ? "at_end" : "immediate",
+        shuffle_questions: activeQuizModalQuiz.shuffle_questions,
+        shuffle_options: activeQuizModalQuiz.shuffle_options,
+      }
+    : null;
+
   return (
     <main className="myVideos quizzesPage">
       <Sidebar />
@@ -678,29 +713,14 @@ function QuizzesPage() {
 
       <CreateQuizPopup
         open={isQuizModalOpen}
-        mode={selectedQuiz ? "edit" : "create"}
+        mode={activeQuizModalQuiz ? "edit" : "create"}
         videoTitle=""
-        initialValues={
-          selectedQuiz
-            ? {
-                title: selectedQuiz.title,
-                description: selectedQuiz.description,
-                is_active: selectedQuiz.is_active,
-                time_limit_seconds: Number(selectedQuiz.time_limit_seconds),
-                question_count: Number(selectedQuiz.question_count),
-                max_attempts: Number(selectedQuiz.max_attempts),
-                passing_score_percentage: Number(selectedQuiz.passing_score_percentage),
-                answer_review_mode: selectedQuiz.answer_review_mode === "at_end" ? "at_end" : "immediate",
-                shuffle_questions: selectedQuiz.shuffle_questions,
-                shuffle_options: selectedQuiz.shuffle_options,
-              }
-            : null
-        }
+        initialValues={activeQuizModalInitialValues}
         onClose={() => {
           setIsQuizModalOpen(false);
           setSelectedQuiz(null);
         }}
-        onSubmit={selectedQuiz ? handleUpdateQuiz : handleCreateQuiz}
+        onSubmit={activeQuizModalQuiz ? handleUpdateQuiz : handleCreateQuiz}
         onOpenQuestions={handleOpenQuestionsFromModal}
         onOpenRules={handleOpenRulesFromModal}
         onOpenSources={handleOpenSourcesFromModal}
