@@ -61,6 +61,7 @@ type AttemptQuestionResult = {
   reviewStatus: "correct" | "partial" | "incorrect" | null;
   scoreSummary: string;
   correctAnswerSummary: string;
+  correctAnswerPairs: CorrectAnswerPair[];
   explanation: string;
 };
 
@@ -76,6 +77,11 @@ type AttemptResult = {
 type ExplanationLink = {
   label: string;
   url: string;
+};
+
+type CorrectAnswerPair = {
+  left: string;
+  right: string;
 };
 
 type QuizAnswers = Record<string, string | string[] | Record<string, string>>;
@@ -387,17 +393,7 @@ function getCorrectAnswerSummary(question: QuizQuestion, review: SaveAnswerRevie
   if (!review) return "";
 
   if (question.type === "match") {
-    const pairs = review.correct_pairs ?? [];
-    const summary = pairs
-      .map((pair) => {
-        const leftId = pair.left_pair_id ?? pair.left_item_id ?? pair.left_id;
-        const rightId = pair.right_pair_id ?? pair.right_item_id ?? pair.right_id;
-        const left = question.pairs.find((item) => item.id === leftId);
-        const right = question.choices.find((item) => item.id === rightId);
-        return left && right ? `${left.label}: ${right.label}` : null;
-      })
-      .filter(Boolean);
-
+    const summary = getCorrectAnswerPairs(question, review).map((pair) => `${pair.left}: ${pair.right}`);
     return summary.length > 0 ? summary.join(" • ") : "";
   }
 
@@ -407,6 +403,21 @@ function getCorrectAnswerSummary(question: QuizQuestion, review: SaveAnswerRevie
     .map((option) => option.label);
 
   return summary.length > 0 ? summary.join(", ") : "";
+}
+
+function getCorrectAnswerPairs(question: QuizQuestion, review: SaveAnswerReview | null | undefined): CorrectAnswerPair[] {
+  if (!review || question.type !== "match") return [];
+
+  return (review.correct_pairs ?? [])
+    .map((pair) => {
+      const leftId = pair.left_pair_id ?? pair.left_item_id ?? pair.left_id;
+      const rightId = pair.right_pair_id ?? pair.right_item_id ?? pair.right_id;
+      const left = question.pairs.find((item) => item.id === leftId);
+      const right = question.choices.find((item) => item.id === rightId);
+
+      return left && right ? { left: left.label, right: right.label } : null;
+    })
+    .filter((pair): pair is CorrectAnswerPair => Boolean(pair));
 }
 
 function getReviewScoreSummary(review: SaveAnswerReview | null | undefined) {
@@ -478,6 +489,35 @@ function QuizExplanation({ explanation }: { explanation?: string | null }) {
   );
 }
 
+function QuizCorrectAnswer({
+  summary,
+  pairs,
+}: {
+  summary: string;
+  pairs?: CorrectAnswerPair[];
+}) {
+  const matchingPairs = pairs ?? [];
+
+  if (matchingPairs.length > 0) {
+    return (
+      <div className="videoQuizCorrectAnswerBlock">
+        <span className="videoQuizCorrectAnswerLabel">Correct matches:</span>
+        {matchingPairs.map((pair, index) => (
+          <span className="videoQuizCorrectAnswerPair" key={`${pair.left}-${pair.right}-${index}`}>
+            <span className="videoQuizCorrectAnswerPrompt">{pair.left}</span>
+            <span className="videoQuizCorrectAnswerConnector" aria-hidden="true">→</span>
+            <span className="videoQuizCorrectAnswerValue">{pair.right}</span>
+          </span>
+        ))}
+      </div>
+    );
+  }
+
+  if (!summary) return null;
+
+  return <p className="videoQuizCorrectAnswer">Correct answer: {summary}</p>;
+}
+
 function buildQuestionResults(
   questions: QuizQuestion[],
   answers: QuizAnswers,
@@ -496,6 +536,7 @@ function buildQuestionResults(
       reviewStatus,
       scoreSummary: getReviewScoreSummary(review),
       correctAnswerSummary: getCorrectAnswerSummary(question, review),
+      correctAnswerPairs: getCorrectAnswerPairs(question, review),
       explanation: review?.explanation ?? question.explanation,
     };
   });
@@ -1417,11 +1458,10 @@ function VideoQuizPage() {
                           {currentQuestionReview.awarded_points ?? 0}/{currentQuestionReview.max_points ?? "-"} points
                         </p>
                         <QuizExplanation explanation={currentQuestionReview.explanation} />
-                        {getCorrectAnswerSummary(currentQuestion, currentQuestionReview) ? (
-                          <p>
-                            Correct answer: {getCorrectAnswerSummary(currentQuestion, currentQuestionReview)}
-                          </p>
-                        ) : null}
+                        <QuizCorrectAnswer
+                          summary={getCorrectAnswerSummary(currentQuestion, currentQuestionReview)}
+                          pairs={getCorrectAnswerPairs(currentQuestion, currentQuestionReview)}
+                        />
                       </div>
                     ) : null}
                   </div>
@@ -1499,10 +1539,11 @@ function VideoQuizPage() {
                                 </div>
                               ) : null}
                             </div>
-                            {shouldShowReviewDetails && result.correctAnswerSummary ? (
-                              <p className="videoQuizCorrectAnswer">
-                                Correct answer: {result.correctAnswerSummary}
-                              </p>
+                            {shouldShowReviewDetails ? (
+                              <QuizCorrectAnswer
+                                summary={result.correctAnswerSummary}
+                                pairs={result.correctAnswerPairs}
+                              />
                             ) : null}
                             {shouldShowReviewDetails ? <QuizExplanation explanation={result.explanation} /> : null}
                           </div>
@@ -1560,11 +1601,10 @@ function VideoQuizPage() {
 
                       <p>{getAnsweredSummaryText(result.answerSummary)}</p>
 
-                      {result.correctAnswerSummary ? (
-                        <p>
-                          Correct answer: {result.correctAnswerSummary}
-                        </p>
-                      ) : null}
+                      <QuizCorrectAnswer
+                        summary={result.correctAnswerSummary}
+                        pairs={result.correctAnswerPairs}
+                      />
 
                       {result.isCorrect === false && result.explanation ? (
                         <QuizExplanation explanation={result.explanation} />
