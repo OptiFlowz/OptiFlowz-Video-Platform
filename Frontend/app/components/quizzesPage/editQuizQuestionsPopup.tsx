@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { AddSVG } from "~/constants";
 import { fetchFn } from "~/API";
 import CreateQuizQuestionPopup from "~/components/quizzesPage/createQuizQuestionPopup";
@@ -14,6 +14,21 @@ import type {
 } from "./quizTypes";
 
 export type { CreateQuizQuestionPayload } from "./quizTypes";
+
+const QUESTIONS_PAGE_LIMIT = 10;
+
+type QuizQuestionsResponse = {
+  success: boolean;
+  questions: QuizQuestion[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+};
 
 type Props = {
   open: boolean;
@@ -42,6 +57,7 @@ function EditQuizQuestionsPopup({
   const [isReordering, setIsReordering] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const closeTimeoutRef = useRef<number | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const { confirm, dialogProps } = useConfirm();
 
   const modalLabel = useMemo(
@@ -51,34 +67,37 @@ function EditQuizQuestionsPopup({
 
   const {
     data: questionsResponse,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
     isLoading: isQuestionsLoading,
     refetch: refetchQuestions,
-  } = useQuery({
+  } = useInfiniteQuery({
     queryKey: ["quiz-questions", quizId],
-    queryFn: () =>
-      fetchFn<{
-        success: boolean;
-        questions: QuizQuestion[];
-        pagination?: {
-          page: number;
-          limit: number;
-          total: number;
-          totalPages: number;
-          hasNextPage: boolean;
-          hasPreviousPage: boolean;
-        };
-      }>({
-        route: `api/quizzes/${quizId}/questions?page=1&limit=10&sortBy=position&sortOrder=asc`,
+    queryFn: ({ pageParam }) =>
+      fetchFn<QuizQuestionsResponse>({
+        route: `api/quizzes/${quizId}/questions?page=${pageParam}&limit=${QUESTIONS_PAGE_LIMIT}&sortBy=position&sortOrder=asc`,
         options: {
           method: "GET",
           headers: requestHeaders,
         },
       }),
+    getNextPageParam: (lastPage) => {
+      const pagination = lastPage.pagination;
+      if (!pagination?.hasNextPage) return undefined;
+
+      return pagination.page + 1;
+    },
+    initialPageParam: 1,
     enabled: open && !!quizId,
     refetchOnWindowFocus: false,
   });
 
-  const questions = questionsResponse?.questions ?? [];
+  const questions = useMemo(
+    () => questionsResponse?.pages.flatMap((page) => page.questions ?? []) ?? [],
+    [questionsResponse]
+  );
+  const latestPagination = questionsResponse?.pages.at(-1)?.pagination;
   const sortedQuestions = useMemo(
     () =>
       questions
@@ -86,10 +105,13 @@ function EditQuizQuestionsPopup({
         .sort((a, b) => Number(a.position || 0) - Number(b.position || 0)),
     [questions]
   );
-  const nextQuestionPosition =
+  const loadedMaxQuestionPosition =
     orderedQuestions.length > 0
-      ? Math.max(...orderedQuestions.map((question) => Number(question.position) || 0)) + 1
-      : 1;
+      ? Math.max(...orderedQuestions.map((question) => Number(question.position) || 0))
+      : 0;
+  const totalQuestionCount = Number(latestPagination?.total) || 0;
+  const nextQuestionPosition =
+    Math.max(loadedMaxQuestionPosition, totalQuestionCount) + 1;
 
   useEffect(() => {
     setOrderedQuestions((currentQuestions) => {
@@ -148,6 +170,26 @@ function EditQuizQuestionsPopup({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [editingQuestion, isCreateQuestionOpen, onClose, open]);
+
+  useEffect(() => {
+    if (!open || !hasNextPage || isFetchingNextPage) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          void fetchNextPage();
+        }
+      },
+      { rootMargin: "240px" }
+    );
+    const el = loadMoreRef.current;
+
+    if (el) observer.observe(el);
+
+    return () => {
+      if (el) observer.unobserve(el);
+    };
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, open]);
 
   const handleCreateQuestion = async (payload: CreateQuizQuestionPayload) => {
     await onSubmit(payload);
@@ -430,6 +472,14 @@ function EditQuizQuestionsPopup({
                   No questions yet.
                 </div>
               )}
+
+              <div ref={loadMoreRef} className="h-px" aria-hidden="true" />
+
+              {isFetchingNextPage ? (
+                <div className="rounded-3xl border border-dashed border-(--border1) bg-(--background2) px-5 py-4 text-sm opacity-75">
+                  Loading more questions...
+                </div>
+              ) : null}
 
               <button
                 type="button"
