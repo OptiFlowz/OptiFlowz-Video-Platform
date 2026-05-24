@@ -105,6 +105,28 @@ type VideoQuizSummary = {
   updated_at?: string;
 };
 
+type QuizRequirementsStatus = {
+  success: boolean;
+  hasMetRequirements?: boolean;
+};
+
+type QuizRequirementVideo = {
+  id: string;
+  title: string;
+  thumbnail_url?: string | null;
+  duration_seconds?: number | string | null;
+  view_count?: number | string | null;
+  uploader_name?: string | null;
+  progress_seconds?: number | string | null;
+  percentage_watched?: number | string | null;
+  rule_type?: string | null;
+  required_percentage?: number | string | null;
+  required_seconds?: number | string | null;
+  missing_percentage?: number | string | null;
+  missing_seconds?: number | string | null;
+  has_met_requirement?: boolean;
+};
+
 type AttemptQuizOption = {
   id: string;
   option_text: string;
@@ -192,6 +214,61 @@ function formatTime(secondsLeft: number) {
   const minutes = Math.floor(safeSeconds / 60);
   const seconds = safeSeconds % 60;
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function formatDurationLabel(value: QuizRequirementVideo["duration_seconds"]) {
+  const seconds = Math.max(0, Math.round(Number(value) || 0));
+  if (seconds <= 0) return "";
+
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainder = seconds % 60;
+
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
+  }
+
+  return `${minutes}:${String(remainder).padStart(2, "0")}`;
+}
+
+function getRequirementProgressText(video: QuizRequirementVideo) {
+  const watchedPercentage = Number(video.percentage_watched);
+  const requiredPercentage = Number(video.required_percentage);
+  const progressSeconds = Number(video.progress_seconds);
+  const requiredSeconds = Number(video.required_seconds);
+
+  if (video.rule_type === "video_watch_percentage" && Number.isFinite(requiredPercentage) && requiredPercentage > 0) {
+    const watched = Number.isFinite(watchedPercentage) ? Math.round(watchedPercentage) : 0;
+    return `${watched}% watched of ${Math.round(requiredPercentage)}% required`;
+  }
+
+  if (video.rule_type === "video_watch_seconds" && Number.isFinite(requiredSeconds) && requiredSeconds > 0) {
+    const watched = Number.isFinite(progressSeconds) ? Math.round(progressSeconds) : 0;
+    return `${formatTime(watched)} watched of ${formatTime(Math.round(requiredSeconds))} required`;
+  }
+
+  if (Number.isFinite(watchedPercentage)) {
+    return `${Math.round(watchedPercentage)}% watched`;
+  }
+
+  return "Watch requirement";
+}
+
+function getRequirementMissingText(video: QuizRequirementVideo) {
+  if (video.has_met_requirement) return "Requirement met";
+
+  const missingPercentage = Number(video.missing_percentage);
+  const missingSeconds = Number(video.missing_seconds);
+
+  if (Number.isFinite(missingPercentage) && missingPercentage > 0) {
+    return `${Math.ceil(missingPercentage)}% more needed`;
+  }
+
+  if (Number.isFinite(missingSeconds) && missingSeconds > 0) {
+    return `${formatTime(Math.ceil(missingSeconds))} more needed`;
+  }
+
+  return "More watch progress needed";
 }
 
 function mapAttemptQuestion(question: AttemptQuizQuestion): QuizQuestion {
@@ -631,6 +708,7 @@ function VideoQuizPage() {
   const [isStartingAttempt, setIsStartingAttempt] = useState(false);
   const [isSubmittingAttempt, setIsSubmittingAttempt] = useState(false);
   const [quizFlowError, setQuizFlowError] = useState("");
+  const [areRequirementsOpen, setAreRequirementsOpen] = useState(false);
   const [questionMotionDirection, setQuestionMotionDirection] = useState<"forward" | "backward">("forward");
   const pageRef = useRef<HTMLDivElement | null>(null);
   const finishAttemptRef = useRef<() => void>(() => {});
@@ -707,6 +785,42 @@ function VideoQuizPage() {
     refetchOnWindowFocus: false,
   });
 
+  const {
+    data: requirementsStatus,
+    isLoading: areRequirementsLoading,
+    isError: hasRequirementsStatusError,
+  } = useQuery({
+    queryKey: ["quiz-page-requirements", quizId],
+    queryFn: () =>
+      fetchFn<QuizRequirementsStatus>({
+        route: `api/quizzes/${quizId}/requirements`,
+        options: {
+          method: "GET",
+          headers: requestHeaders,
+        },
+      }),
+    enabled: !!quizId,
+    refetchOnWindowFocus: false,
+  });
+
+  const {
+    data: requirementVideos = [],
+    isLoading: areRequirementVideosLoading,
+    isError: hasRequirementVideosError,
+  } = useQuery({
+    queryKey: ["quiz-page-requirement-videos", quizId],
+    queryFn: () =>
+      fetchFn<{ success: boolean; requirements?: QuizRequirementVideo[] }>({
+        route: `api/quizzes/${quizId}/requirements/videos`,
+        options: {
+          method: "GET",
+          headers: requestHeaders,
+        },
+      }).then((response) => response.requirements ?? []),
+    enabled: !!quizId && areRequirementsOpen,
+    refetchOnWindowFocus: false,
+  });
+
   const { data: attemptQuestions = [], isLoading: areQuestionsLoading } = useQuery({
     queryKey: ["quiz-page-attempt-questions", activeAttempt?.id],
     queryFn: () =>
@@ -739,6 +853,8 @@ function VideoQuizPage() {
   const displayedQuestionCount = stage === "intro" ? summaryQuestionCount : questions.length || summaryQuestionCount;
   const quizDisplayTitle = quizSummary?.title || "Quiz";
   const attemptsLeft = Math.max(0, quizMaxAttempts - attempts.length);
+  const hasMetQuizRequirements = requirementsStatus?.hasMetRequirements === true;
+  const isRequirementsBlocking = requirementsStatus?.hasMetRequirements === false;
   const answeredCount = questions.filter((question) => isQuestionAnswered(question, answers[question.id])).length;
   const currentQuestion = questions[currentQuestionIndex];
   const hasQuizQuestions = stage === "intro" ? summaryQuestionCount > 0 : questions.length > 0;
@@ -769,6 +885,7 @@ function VideoQuizPage() {
     setDirtyQuestionIds(new Set());
     setIsSubmittingAttempt(false);
     setQuizFlowError("");
+    setAreRequirementsOpen(false);
   }, [quizId, quizTimeLimitSeconds]);
 
   useEffect(() => {
@@ -823,7 +940,13 @@ function VideoQuizPage() {
   };
 
   const startAttempt = async () => {
-    if ((quizMaxAttempts > 0 && attemptsLeft <= 0) || !quizSummary || isStartingAttempt) return;
+    if ((quizMaxAttempts > 0 && attemptsLeft <= 0) || !quizSummary || isStartingAttempt || isRequirementsBlocking) {
+      if (isRequirementsBlocking) {
+        setAreRequirementsOpen(true);
+        setQuizFlowError("Complete the quiz requirements before starting an attempt.");
+      }
+      return;
+    }
 
     setIsStartingAttempt(true);
     setQuizFlowError("");
@@ -1325,12 +1448,96 @@ function VideoQuizPage() {
                     </div>
                   ))}
                 </div>
-              ) : (
+              ) : !isRequirementsBlocking ? (
                 <div className="videoQuizEmptyState">
                   <strong>No attempts yet</strong>
                   <p>Start your first quiz attempt when you are ready.</p>
                 </div>
-              )}
+              ) : null}
+
+              {!hasMetQuizRequirements ? (
+                <div className={`videoQuizRequirementsCard ${isRequirementsBlocking ? "blocked" : ""}`}>
+                  <div className="videoQuizRequirementsSummary">
+                    <div>
+                      <strong>Quiz requirements</strong>
+                      <p>
+                        {areRequirementsLoading
+                          ? "Checking your eligibility..."
+                          : hasRequirementsStatusError
+                            ? "We could not check the requirements right now."
+                            : isRequirementsBlocking
+                              ? "Complete the required videos before starting."
+                              : "Open requirements to see what is needed."}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="videoQuizInlineButton"
+                      onClick={() => setAreRequirementsOpen((current) => !current)}
+                      disabled={areRequirementsLoading && !areRequirementsOpen}
+                    >
+                      {areRequirementsOpen ? "Hide requirements" : "View requirements"}
+                    </button>
+                  </div>
+
+                  {areRequirementsOpen ? (
+                    <div className="videoQuizRequirementsPanel">
+                      {areRequirementVideosLoading ? (
+                        <div className="videoQuizEmptyState">
+                          <strong>Loading requirements</strong>
+                          <p>Checking the videos linked to this quiz.</p>
+                        </div>
+                      ) : hasRequirementVideosError ? (
+                        <div className="videoQuizUnlockNotice error">
+                          <strong>Could not load requirements</strong>
+                          <p>Please try opening the requirements again.</p>
+                        </div>
+                      ) : requirementVideos.length > 0 ? (
+                        <div className="videoQuizRequirementList">
+                          {requirementVideos.map((video) => (
+                            <div key={video.id} className={`videoQuizRequirementVideo ${video.has_met_requirement ? "met" : ""}`}>
+                              {video.thumbnail_url ? (
+                                <img src={video.thumbnail_url} alt="" loading="lazy" decoding="async" />
+                              ) : (
+                                <div className="videoQuizRequirementThumbFallback" aria-hidden="true">
+                                  {QuizSVG}
+                                </div>
+                              )}
+
+                              <div className="videoQuizRequirementVideoText">
+                                <strong>{video.title || "Required video"}</strong>
+                                <p>{getRequirementProgressText(video)}</p>
+                                <span>{getRequirementMissingText(video)}</span>
+                              </div>
+
+                              <div className="videoQuizRequirementVideoActions">
+                                {formatDurationLabel(video.duration_seconds) ? (
+                                  <span className="videoQuizRequirementDuration">
+                                    {formatDurationLabel(video.duration_seconds)}
+                                  </span>
+                                ) : null}
+                                <button
+                                  type="button"
+                                  className="videoQuizInlineButton"
+                                  onClick={() => navigate(`/video/${video.id}`)}
+                                >
+                                  Watch
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="videoQuizEmptyState">
+                          <strong>No requirement videos</strong>
+                          <p>There are no required videos listed for this quiz.</p>
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
 
               {!isQuizLoading && !quizSummary ? (
                 <div className="videoQuizUnlockNotice">
@@ -1368,7 +1575,7 @@ function VideoQuizPage() {
                   type="button"
                   className="videoQuizPrimaryButton"
                   onClick={startAttempt}
-                  disabled={isQuizLoading || isStartingAttempt || !quizSummary || !hasQuizQuestions || (quizMaxAttempts > 0 && attemptsLeft <= 0)}
+                  disabled={isQuizLoading || areRequirementsLoading || isStartingAttempt || !quizSummary || !hasQuizQuestions || isRequirementsBlocking || (quizMaxAttempts > 0 && attemptsLeft <= 0)}
                 >
                   {isStartingAttempt ? "Starting..." : "Attempt"} {ArrowSVG}
                 </button>

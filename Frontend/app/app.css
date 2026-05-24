@@ -2565,6 +2565,124 @@ mux-player::part(menu-item) {
   color: var(--text1);
 }
 
+.videoQuizPage .videoQuizRequirementsCard {
+  border-radius: 18px;
+  border: 1px solid var(--border1);
+  background: rgba(255, 255, 255, 0.025);
+  overflow: hidden;
+}
+
+.videoQuizPage .videoQuizRequirementsCard.blocked {
+  border-color: rgba(245, 158, 11, 0.42);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.videoQuizPage .videoQuizRequirementsCard.met {
+  border-color: rgba(42, 201, 106, 0.35);
+  background: rgba(42, 201, 106, 0.08);
+}
+
+.videoQuizPage .videoQuizRequirementsSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 16px 18px;
+}
+
+.videoQuizPage .videoQuizRequirementsSummary > div {
+  min-width: 0;
+}
+
+.videoQuizPage .videoQuizRequirementsSummary strong,
+.videoQuizPage .videoQuizRequirementVideo strong {
+  color: var(--text1);
+}
+
+.videoQuizPage .videoQuizRequirementsSummary p {
+  margin-top: 0.15rem;
+}
+
+.videoQuizPage .videoQuizRequirementsPanel {
+  border-top: 1px solid var(--border1);
+  padding: 14px;
+}
+
+.videoQuizPage .videoQuizRequirementList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.videoQuizPage .videoQuizRequirementVideo {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--background2);
+}
+
+.videoQuizPage .videoQuizRequirementVideo.met {
+  background: rgba(42, 201, 106, 0.1);
+}
+
+.videoQuizPage .videoQuizRequirementVideo img,
+.videoQuizPage .videoQuizRequirementThumbFallback {
+  width: 112px;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  object-fit: cover;
+  background: var(--background3);
+}
+
+.videoQuizPage .videoQuizRequirementThumbFallback {
+  display: grid;
+  place-items: center;
+  color: var(--accentBlue2);
+}
+
+.videoQuizPage .videoQuizRequirementThumbFallback svg {
+  width: 30px;
+  height: 30px;
+}
+
+.videoQuizPage .videoQuizRequirementVideoText {
+  min-width: 0;
+}
+
+.videoQuizPage .videoQuizRequirementVideoText strong,
+.videoQuizPage .videoQuizRequirementVideoText p,
+.videoQuizPage .videoQuizRequirementVideoText span {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.videoQuizPage .videoQuizRequirementVideoText p {
+  margin-top: 0.15rem;
+}
+
+.videoQuizPage .videoQuizRequirementVideoText span,
+.videoQuizPage .videoQuizRequirementDuration {
+  color: var(--text2);
+  font-size: 0.85rem;
+}
+
+.videoQuizPage .videoQuizRequirementVideo.met .videoQuizRequirementVideoText span {
+  color: #7df7a4;
+}
+
+.videoQuizPage .videoQuizRequirementVideoActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.videoQuizPage .videoQuizRequirementDuration {
+  white-space: nowrap;
+}
+
 .videoQuizPage .videoQuizUnlockNotice.error,
 .videoQuizPage .videoQuizFeedbackCard.error {
   border-color: rgba(188, 57, 57, 0.48);
@@ -3402,6 +3520,23 @@ mux-player::part(menu-item) {
   .videoQuizPage .videoQuizPrimaryButton,
   .videoQuizPage .videoQuizInlineButton {
     width: 100%;
+  }
+
+  .videoQuizPage .videoQuizRequirementsSummary,
+  .videoQuizPage .videoQuizRequirementVideo,
+  .videoQuizPage .videoQuizRequirementVideoActions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .videoQuizPage .videoQuizRequirementVideo img,
+  .videoQuizPage .videoQuizRequirementThumbFallback {
+    width: 100%;
+  }
+
+  .videoQuizPage .videoQuizRequirementDuration {
+    text-align: left;
   }
 
   .videoQuizPage .introStage .videoQuizFooterActions {
