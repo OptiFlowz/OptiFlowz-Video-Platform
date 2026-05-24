@@ -2,6 +2,7 @@ import { writePool } from '../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
 import { gradeQuizAnswer } from './gradeQuizAnswer.js';
+import { finalizeQuizAttempt } from './finalizeQuizAttempt.js';
 
 function prerequisites(object, userId) {
   const schema = z.object({
@@ -149,23 +150,16 @@ export async function saveAttemptAnswerInternal(object, userId = null) {
     assertAttemptCanReceiveAnswer(attemptQuestion);
 
     if (attemptQuestion.expires_at && new Date(attemptQuestion.expires_at).getTime() <= Date.now()) {
-      await client.query(
-        `
-          UPDATE quiz_attempts
-          SET status = 'expired'
-          WHERE id = $1
-            AND user_id = $2
-            AND status = 'in_progress';
-        `,
-        [attemptId, validatedUserId]
-      );
+      const attempt = await finalizeQuizAttempt(client, attemptId, validatedUserId);
 
       await client.query('COMMIT');
       transactionFinished = true;
 
-      const error = new Error('Quiz attempt time has expired.');
-      error.status = 403;
-      throw error;
+      return {
+        saved: false,
+        submitted: true,
+        attempt,
+      };
     }
 
     const storedAnswer = mergeAnswer(attemptQuestion.existing_answer, answer);

@@ -2,6 +2,7 @@ import { writePool } from '../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
 import { checkQuizRequirementsInternal } from './checkQuizRequirements.js';
+import { finalizeQuizAttempt } from './finalizeQuizAttempt.js';
 
 function prerequisites(object, userId) {
   const schema = z.object({
@@ -250,6 +251,24 @@ export async function startQuizAttemptInternal(object, userId = null) {
       const error = new Error('Quiz not found');
       error.status = 404;
       throw error;
+    }
+
+    const timedOutAttemptsResult = await client.query(
+      `
+        SELECT id
+        FROM quiz_attempts
+        WHERE quiz_id = $1
+          AND user_id = $2
+          AND status = 'in_progress'
+          AND expires_at IS NOT NULL
+          AND expires_at <= now()
+        FOR UPDATE;
+      `,
+      [quizId, validatedUserId]
+    );
+
+    for (const attempt of timedOutAttemptsResult.rows) {
+      await finalizeQuizAttempt(client, attempt.id, validatedUserId);
     }
 
     const attemptsResult = await client.query(

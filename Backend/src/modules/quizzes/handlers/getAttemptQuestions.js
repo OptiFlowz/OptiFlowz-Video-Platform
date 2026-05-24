@@ -1,7 +1,8 @@
-import { readPool } from '../../../database/index.js';
+import { writePool } from '../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
 import { gradeQuizAnswer } from './gradeQuizAnswer.js';
+import { finalizeQuizAttempt } from './finalizeQuizAttempt.js';
 
 function prerequisites(object, userId) {
   const schema = z.object({
@@ -176,114 +177,134 @@ function stripInternalFields(question) {
 
 export async function getAttemptQuestionsInternal(object, userId = null) {
   const { attemptId, userId: validatedUserId } = prerequisites(object, userId);
+  const client = await writePool.connect();
 
-  const attemptResult = await readPool.query(
-    `
-      SELECT
-        id,
-        quiz_id,
-        user_id,
-        attempt_number,
-        status,
-        started_at,
-        submitted_at,
-        expires_at,
-        score_points,
-        max_points,
-        score_percentage,
-        passed,
-        answer_review_mode
-      FROM quiz_attempts
-      WHERE id = $1
-        AND user_id = $2
-      LIMIT 1;
-    `,
-    [attemptId, validatedUserId]
-  );
+  try {
+    await client.query('BEGIN');
 
-  const attempt = attemptResult.rows[0] || null;
+    const attemptResult = await client.query(
+      `
+        SELECT
+          id,
+          quiz_id,
+          user_id,
+          attempt_number,
+          status,
+          started_at,
+          submitted_at,
+          expires_at,
+          score_points,
+          max_points,
+          score_percentage,
+          passed,
+          answer_review_mode
+        FROM quiz_attempts
+        WHERE id = $1
+          AND user_id = $2
+        FOR UPDATE;
+      `,
+      [attemptId, validatedUserId]
+    );
 
-  if (!attempt) {
-    const error = new Error('Quiz attempt not found');
-    error.status = 404;
+    let attempt = attemptResult.rows[0] || null;
+
+    if (!attempt) {
+      const error = new Error('Quiz attempt not found');
+      error.status = 404;
+      throw error;
+    }
+
+    if (
+      attempt.status === 'in_progress' &&
+      attempt.expires_at &&
+      new Date(attempt.expires_at).getTime() <= Date.now()
+    ) {
+      attempt = await finalizeQuizAttempt(client, attemptId, validatedUserId);
+    }
+
+    const questionsResult = await client.query(
+      `
+        SELECT
+          qaq.id AS attempt_question_id,
+          qaq.attempt_id,
+          qaq.question_id,
+          qaq.position AS attempt_position,
+          qaq.answer,
+          qaq.result,
+          qaq.awarded_points,
+          qq.question_text,
+          qq.question_type,
+          qq.explanation,
+          qq.points,
+          qq.video_id,
+          qq.playlist_id
+        FROM quiz_attempt_questions qaq
+        JOIN quiz_questions qq
+          ON qq.id = qaq.question_id
+        WHERE qaq.attempt_id = $1
+        ORDER BY qaq.position ASC;
+      `,
+      [attemptId]
+    );
+
+    const questions = questionsResult.rows;
+    const questionIds = questions.map((question) => question.question_id);
+
+    const optionsResult = await client.query(
+      `
+        SELECT id, question_id, option_text, is_correct, position
+        FROM quiz_question_options
+        WHERE question_id = ANY($1::uuid[])
+        ORDER BY position ASC, id ASC;
+      `,
+      [questionIds]
+    );
+
+    const pairsResult = await client.query(
+      `
+        SELECT id, question_id, left_text, right_text, position
+        FROM quiz_matching_pairs
+        WHERE question_id = ANY($1::uuid[])
+        ORDER BY position ASC, id ASC;
+      `,
+      [questionIds]
+    );
+
+    const optionsByQuestionId = optionsResult.rows.reduce((acc, option) => {
+      if (!acc[option.question_id]) {
+        acc[option.question_id] = [];
+      }
+
+      acc[option.question_id].push(option);
+      return acc;
+    }, {});
+
+    const pairsByQuestionId = pairsResult.rows.reduce((acc, pair) => {
+      if (!acc[pair.question_id]) {
+        acc[pair.question_id] = [];
+      }
+
+      acc[pair.question_id].push(pair);
+      return acc;
+    }, {});
+
+    await client.query('COMMIT');
+
+    return {
+      attempt,
+      questions: questions.map((question) => {
+        const questionWithData =
+          question.question_type === 'matching'
+            ? buildMatchingQuestion(attempt, question, pairsByQuestionId[question.question_id] || [])
+            : buildChoiceQuestion(attempt, question, optionsByQuestionId[question.question_id] || []);
+
+        return stripInternalFields(questionWithData);
+      }),
+    };
+  } catch (error) {
+    await client.query('ROLLBACK');
     throw error;
+  } finally {
+    client.release();
   }
-
-  const questionsResult = await readPool.query(
-    `
-      SELECT
-        qaq.id AS attempt_question_id,
-        qaq.attempt_id,
-        qaq.question_id,
-        qaq.position AS attempt_position,
-        qaq.answer,
-        qaq.result,
-        qaq.awarded_points,
-        qq.question_text,
-        qq.question_type,
-        qq.explanation,
-        qq.points,
-        qq.video_id,
-        qq.playlist_id
-      FROM quiz_attempt_questions qaq
-      JOIN quiz_questions qq
-        ON qq.id = qaq.question_id
-      WHERE qaq.attempt_id = $1
-      ORDER BY qaq.position ASC;
-    `,
-    [attemptId]
-  );
-
-  const questions = questionsResult.rows;
-  const questionIds = questions.map((question) => question.question_id);
-
-  const optionsResult = await readPool.query(
-    `
-      SELECT id, question_id, option_text, is_correct, position
-      FROM quiz_question_options
-      WHERE question_id = ANY($1::uuid[])
-      ORDER BY position ASC, id ASC;
-    `,
-    [questionIds]
-  );
-
-  const pairsResult = await readPool.query(
-    `
-      SELECT id, question_id, left_text, right_text, position
-      FROM quiz_matching_pairs
-      WHERE question_id = ANY($1::uuid[])
-      ORDER BY position ASC, id ASC;
-    `,
-    [questionIds]
-  );
-
-  const optionsByQuestionId = optionsResult.rows.reduce((acc, option) => {
-    if (!acc[option.question_id]) {
-      acc[option.question_id] = [];
-    }
-
-    acc[option.question_id].push(option);
-    return acc;
-  }, {});
-
-  const pairsByQuestionId = pairsResult.rows.reduce((acc, pair) => {
-    if (!acc[pair.question_id]) {
-      acc[pair.question_id] = [];
-    }
-
-    acc[pair.question_id].push(pair);
-    return acc;
-  }, {});
-
-  return {
-    attempt,
-    questions: questions.map((question) => {
-      const questionWithData =
-        question.question_type === 'matching'
-          ? buildMatchingQuestion(attempt, question, pairsByQuestionId[question.question_id] || [])
-          : buildChoiceQuestion(attempt, question, optionsByQuestionId[question.question_id] || []);
-
-      return stripInternalFields(questionWithData);
-    }),
-  };
 }
