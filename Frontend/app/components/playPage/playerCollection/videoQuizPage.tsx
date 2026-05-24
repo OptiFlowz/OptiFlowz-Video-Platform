@@ -623,11 +623,13 @@ function VideoQuizPage() {
   );
   const quizTimeLimitSeconds = Math.max(1, Number(quizSummary?.time_limit_seconds) || DEFAULT_QUIZ_TIME_LIMIT_SECONDS);
   const quizMaxAttempts = Math.max(0, Number(quizSummary?.max_attempts) || 0);
+  const summaryQuestionCount = Math.max(0, Number(quizSummary?.question_count) || 0);
+  const displayedQuestionCount = stage === "intro" ? summaryQuestionCount : questions.length || summaryQuestionCount;
   const quizDisplayTitle = quizSummary?.title || "Quiz";
   const attemptsLeft = Math.max(0, quizMaxAttempts - attempts.length);
   const answeredCount = questions.filter((question) => isQuestionAnswered(question, answers[question.id])).length;
   const currentQuestion = questions[currentQuestionIndex];
-  const hasQuizQuestions = stage === "intro" ? Number(quizSummary?.question_count ?? 0) > 0 : questions.length > 0;
+  const hasQuizQuestions = stage === "intro" ? summaryQuestionCount > 0 : questions.length > 0;
   const selectedActiveAttempt = useMemo(
     () => attempts.find((attempt) => attempt.status === "in_progress") ?? null,
     [attempts]
@@ -1079,7 +1081,7 @@ function VideoQuizPage() {
             <span>
               <h2>{quizDisplayTitle}</h2>
               <p>
-                Certificate when completed • {questions.length} questions • {Math.max(1, Math.round(quizTimeLimitSeconds / 60))} minutes
+                Certificate when completed • {displayedQuestionCount} questions • {Math.max(1, Math.round(quizTimeLimitSeconds / 60))} minutes
               </p>
             </span>
           </div>
