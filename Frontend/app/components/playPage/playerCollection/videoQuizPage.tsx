@@ -76,6 +76,7 @@ type AttemptResult = {
 type QuizAnswers = Record<string, string | string[] | Record<string, string>>;
 
 const DEFAULT_QUIZ_TIME_LIMIT_SECONDS = 15 * 60;
+const QUIZ_LOW_TIME_AUTOSAVE_SECONDS = 5;
 
 type VideoQuizSummary = {
   id: string;
@@ -168,6 +169,11 @@ type SaveAnswerResponse = {
 type SubmitAttemptResponse = {
   success: boolean;
   attempt: AttemptRecord;
+};
+
+type SaveDirtyAnswersResult = {
+  latestSaveResponse: SaveAnswerResponse | null;
+  failed: boolean;
 };
 
 function formatTime(secondsLeft: number) {
@@ -524,6 +530,9 @@ function VideoQuizPage() {
   const [quizFlowError, setQuizFlowError] = useState("");
   const [questionMotionDirection, setQuestionMotionDirection] = useState<"forward" | "backward">("forward");
   const pageRef = useRef<HTMLDivElement | null>(null);
+  const finishAttemptRef = useRef<() => void>(() => {});
+  const saveDirtyAnswersRef = useRef<() => void>(() => {});
+  const dirtyAnswersSavePromiseRef = useRef<Promise<SaveDirtyAnswersResult> | null>(null);
   const requestHeaders = useMemo(() => {
     const headers = new Headers();
     headers.set("Content-Type", "application/json");
@@ -666,8 +675,12 @@ function VideoQuizPage() {
       const nextSeconds = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
       setSecondsLeft(nextSeconds);
 
+      if (nextSeconds > 0 && nextSeconds <= QUIZ_LOW_TIME_AUTOSAVE_SECONDS) {
+        saveDirtyAnswersRef.current();
+      }
+
       if (nextSeconds <= 0) {
-        finishAttempt();
+        finishAttemptRef.current();
       }
     };
 
@@ -861,13 +874,16 @@ function VideoQuizPage() {
     await handleOpenReview();
   };
 
-  const finishAttempt = async () => {
-    if (!activeAttempt || isSubmittingAttempt) return;
+  const saveDirtyAnswers = () => {
+    if (dirtyAnswersSavePromiseRef.current) {
+      return dirtyAnswersSavePromiseRef.current;
+    }
 
-    setIsSubmittingAttempt(true);
-    setQuizFlowError("");
+    const savePromise = (async (): Promise<SaveDirtyAnswersResult> => {
+      if (!activeAttempt) {
+        return { latestSaveResponse: null, failed: false };
+      }
 
-    try {
       const dirtyQuestions = questions.filter(
         (question) => dirtyQuestionIds.has(question.id) && isQuestionAnswered(question, answers[question.id])
       );
@@ -876,10 +892,50 @@ function VideoQuizPage() {
       for (const question of dirtyQuestions) {
         const response = await saveAnswerForQuestion(question);
         if (!response) {
+          return { latestSaveResponse, failed: true };
+        }
+        latestSaveResponse = response;
+      }
+
+      return { latestSaveResponse, failed: false };
+    })();
+
+    dirtyAnswersSavePromiseRef.current = savePromise;
+    savePromise.finally(() => {
+      if (dirtyAnswersSavePromiseRef.current === savePromise) {
+        dirtyAnswersSavePromiseRef.current = null;
+      }
+    });
+
+    return savePromise;
+  };
+
+  const finishAttempt = async () => {
+    if (!activeAttempt || isSubmittingAttempt) return;
+
+    setIsSubmittingAttempt(true);
+    setQuizFlowError("");
+
+    try {
+      let latestSaveResponse: SaveAnswerResponse | null = null;
+      const pendingSave = dirtyAnswersSavePromiseRef.current;
+
+      if (pendingSave) {
+        const pendingResult = await pendingSave;
+        latestSaveResponse = pendingResult.latestSaveResponse;
+
+        if (pendingResult.failed) {
           setIsSubmittingAttempt(false);
           return;
         }
-        latestSaveResponse = response;
+      }
+
+      const { latestSaveResponse: finalSaveResponse, failed } = await saveDirtyAnswers();
+      latestSaveResponse = finalSaveResponse ?? latestSaveResponse;
+
+      if (failed) {
+        setIsSubmittingAttempt(false);
+        return;
       }
 
       const submitResponse = await fetchFn<SubmitAttemptResponse>({
@@ -927,6 +983,28 @@ function VideoQuizPage() {
     void finishAttempt();
   };
 
+  finishAttemptRef.current = () => {
+    void finishAttempt();
+  };
+
+  saveDirtyAnswersRef.current = () => {
+    void saveDirtyAnswers();
+  };
+
+  const saveDirtyAnswersSoonIfLowTime = () => {
+    if (secondsLeft <= 0 || secondsLeft > QUIZ_LOW_TIME_AUTOSAVE_SECONDS) return;
+    window.setTimeout(() => {
+      const pendingSave = dirtyAnswersSavePromiseRef.current;
+
+      if (pendingSave) {
+        void pendingSave.finally(() => saveDirtyAnswersRef.current());
+        return;
+      }
+
+      saveDirtyAnswersRef.current();
+    }, 0);
+  };
+
   const handleSingleChoiceSelect = (questionId: string, optionId: string) => {
     setQuestionReviews((current) => {
       const next = { ...current };
@@ -935,6 +1013,7 @@ function VideoQuizPage() {
     });
     setDirtyQuestionIds((current) => new Set(current).add(questionId));
     setAnswers((current) => ({ ...current, [questionId]: optionId }));
+    saveDirtyAnswersSoonIfLowTime();
   };
 
   const handleMultipleChoiceToggle = (questionId: string, optionId: string) => {
@@ -952,6 +1031,7 @@ function VideoQuizPage() {
 
       return { ...current, [questionId]: next };
     });
+    saveDirtyAnswersSoonIfLowTime();
   };
 
   const handleMatchSelect = (questionId: string, pairId: string, optionId: string) => {
@@ -975,6 +1055,7 @@ function VideoQuizPage() {
         },
       };
     });
+    saveDirtyAnswersSoonIfLowTime();
   };
 
   const goToFirstIncomplete = () => {
