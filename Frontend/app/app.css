@@ -2318,7 +2318,6 @@ mux-player::part(menu-item) {
 
 .videoQuizPage {
   width: 100%;
-  min-height: 100dvh;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -2357,7 +2356,6 @@ mux-player::part(menu-item) {
 .videoQuizPage .videoQuizPageContent.flowStage {
   width: 100%;
   max-width: var(--contentWidth);
-  min-height: 700px;
   padding: 0;
   border: 0;
   border-radius: 0;
