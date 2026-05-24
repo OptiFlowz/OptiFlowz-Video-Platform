@@ -14,6 +14,7 @@ function prerequisites(object, userId) {
     passing_score_percentage: z.coerce.number().min(0).max(100).optional().default(50),
     shuffle_questions: z.boolean().optional().default(true),
     shuffle_options: z.boolean().optional().default(true),
+    answer_review_mode: z.enum(['immediate', 'at_end']).optional().default('immediate'),
   });
 
   if (!userId) {
@@ -40,9 +41,10 @@ export async function createQuizInternal(object, userId = null) {
         passing_score_percentage,
         shuffle_questions,
         shuffle_options,
+        answer_review_mode,
         created_by
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
       RETURNING *
     `,
     [
@@ -55,6 +57,7 @@ export async function createQuizInternal(object, userId = null) {
       data.passing_score_percentage,
       data.shuffle_questions,
       data.shuffle_options,
+      data.answer_review_mode,
       userId
     ]
   );

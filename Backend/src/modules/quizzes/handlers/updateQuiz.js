@@ -18,6 +18,7 @@ function prerequisites(object, userId) {
     passing_score_percentage: z.coerce.number().min(0).max(100).optional(),
     shuffle_questions: z.boolean().optional(),
     shuffle_options: z.boolean().optional(),
+    answer_review_mode: z.enum(['immediate', 'at_end']).optional(),
   });
 
 
@@ -51,7 +52,8 @@ export async function updateQuizInternal(object, userId = null) {
         max_attempts = CASE WHEN $12 THEN $13 ELSE max_attempts END,
         passing_score_percentage = CASE WHEN $14 THEN $15 ELSE passing_score_percentage END,
         shuffle_questions = CASE WHEN $16 THEN $17 ELSE shuffle_questions END,
-        shuffle_options = CASE WHEN $18 THEN $19 ELSE shuffle_options END
+        shuffle_options = CASE WHEN $18 THEN $19 ELSE shuffle_options END,
+        answer_review_mode = CASE WHEN $20 THEN $21 ELSE answer_review_mode END
       WHERE id = $1
       RETURNING *
     `,
@@ -84,6 +86,9 @@ export async function updateQuizInternal(object, userId = null) {
 
       hasField(data, 'shuffle_options'),
       data.shuffle_options,
+
+      hasField(data, 'answer_review_mode'),
+      data.answer_review_mode,
     ]
   );
 
