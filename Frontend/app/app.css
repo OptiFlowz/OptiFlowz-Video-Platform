@@ -2348,7 +2348,6 @@ mux-player::part(menu-item) {
   display: flex;
   flex-direction: column;
   gap: 22px;
-  overscroll-behavior: contain;
 }
 
 .videoQuizPage .videoQuizPageContent.introStage {
