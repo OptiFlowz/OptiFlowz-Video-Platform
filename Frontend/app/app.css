@@ -2989,19 +2989,87 @@ mux-player::part(menu-item) {
 
 .videoQuizPage .videoQuizReviewCardTopline {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 0.45rem;
 }
 
-.videoQuizPage .videoQuizReviewCardTopline span,
 .videoQuizPage .videoQuizReviewCardText p {
   color: var(--text2);
 }
 
+.videoQuizPage .videoQuizReviewMeta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
 .videoQuizPage .videoQuizReviewCardText p + p {
   margin-top: 0.25rem;
+}
+
+.videoQuizPage .videoQuizReviewStatus,
+.videoQuizPage .videoQuizScoreChip {
+  width: max-content;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  line-height: 1.35;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.videoQuizPage .videoQuizScoreChip {
+  color: var(--text2);
+}
+
+.videoQuizPage .videoQuizReviewStatus.correct {
+  color: #7df7a4 !important;
+  background: rgba(42, 201, 106, 0.12);
+}
+
+.videoQuizPage .videoQuizReviewStatus.partial {
+  color: #fbbf24 !important;
+  background: rgba(245, 158, 11, 0.14);
+}
+
+.videoQuizPage .videoQuizReviewStatus.incorrect {
+  color: #ffc4c4 !important;
+  background: rgba(188, 57, 57, 0.14);
+}
+
+.videoQuizPage .videoQuizCorrectAnswer {
+  margin-top: 0.55rem !important;
+  color: var(--text1) !important;
+}
+
+.videoQuizPage .videoQuizExplanation {
+  margin-top: 0.65rem;
+}
+
+.videoQuizPage .videoQuizExplanation p {
+  color: var(--text2);
+  line-height: 1.45;
+}
+
+.videoQuizPage .videoQuizExplanation a {
+  color: var(--accentBlue2);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.videoQuizPage .videoQuizExplanation a:hover {
+  color: var(--accentBlue3);
+}
+
+.videoQuizPage .videoQuizExplanation + p {
+  margin-top: 0.75rem;
 }
 
 .videoQuizPage .videoQuizReviewCard.correct {
@@ -3247,6 +3315,15 @@ mux-player::part(menu-item) {
   .videoQuizPage .videoQuizReviewCard,
   .videoQuizPage .videoQuizResultCard {
     padding: 16px;
+  }
+
+  .videoQuizPage .videoQuizReviewCardTopline {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .videoQuizPage .videoQuizReviewMeta {
+    justify-content: flex-start;
   }
 
   .videoQuizPage .videoQuizSelect {

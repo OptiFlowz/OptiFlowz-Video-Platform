@@ -73,6 +73,11 @@ type AttemptResult = {
   questionResults: AttemptQuestionResult[];
 };
 
+type ExplanationLink = {
+  label: string;
+  url: string;
+};
+
 type QuizAnswers = Record<string, string | string[] | Record<string, string>>;
 
 const DEFAULT_QUIZ_TIME_LIMIT_SECONDS = 15 * 60;
@@ -414,6 +419,63 @@ function getReviewStatusLabel(status: "correct" | "partial" | "incorrect" | null
   if (status === "partial") return "Partially correct";
   if (status === "incorrect") return "Incorrect";
   return "Not checked";
+}
+
+function parseExplanation(explanation: string) {
+  const links: ExplanationLink[] = [];
+  const textParts: string[] = [];
+  const linkPattern = /\[([^\]]+)\]\(([^)]+)\)/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = linkPattern.exec(explanation)) !== null) {
+    if (match.index > lastIndex) {
+      textParts.push(explanation.slice(lastIndex, match.index));
+    }
+
+    links.push({
+      label: match[1].trim() || "Explanation",
+      url: match[2].trim(),
+    });
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < explanation.length) {
+    textParts.push(explanation.slice(lastIndex));
+  }
+
+  return {
+    text: textParts.join(" ").replace(/\s+/g, " ").trim(),
+    links,
+  };
+}
+
+function QuizExplanation({ explanation }: { explanation?: string | null }) {
+  const normalizedExplanation = explanation?.trim();
+  if (!normalizedExplanation) return null;
+
+  const { text, links } = parseExplanation(normalizedExplanation);
+  const getExplanationLinkLabel = (label: string) =>
+    label.toLowerCase() === "explanation" ? "Watch explanation segment" : label;
+
+  return (
+    <div className="videoQuizExplanation">
+      {text || links.length > 0 ? (
+        <p>
+          {text}
+          {links.map((link, index) => (
+            <span key={`${link.url}-${index}`}>
+              {text || index > 0 ? " " : ""}
+              {index > 0 ? "• " : ""}
+              <a href={link.url} target="_blank" rel="noreferrer">
+                {getExplanationLinkLabel(link.label)}
+              </a>
+            </span>
+          ))}
+        </p>
+      ) : null}
+    </div>
+  );
 }
 
 function buildQuestionResults(
@@ -1353,8 +1415,8 @@ function VideoQuizPage() {
                         </strong>
                         <p>
                           {currentQuestionReview.awarded_points ?? 0}/{currentQuestionReview.max_points ?? "-"} points
-                          {currentQuestionReview.explanation ? ` • ${currentQuestionReview.explanation}` : ""}
                         </p>
+                        <QuizExplanation explanation={currentQuestionReview.explanation} />
                         {getCorrectAnswerSummary(currentQuestion, currentQuestionReview) ? (
                           <p>
                             Correct answer: {getCorrectAnswerSummary(currentQuestion, currentQuestionReview)}
@@ -1415,22 +1477,34 @@ function VideoQuizPage() {
                       return (
                         <div
                           key={result.questionId}
-                          className={`videoQuizReviewCard ${result.isAnswered ? "" : "unanswered"} ${result.reviewStatus ?? ""}`}
+                          className={`videoQuizReviewCard ${
+                            !shouldShowReviewDetails && !result.isAnswered ? "unanswered" : ""
+                          } ${result.reviewStatus ?? ""}`}
                         >
                           {shouldShowReviewDetails ? <QuizStatusIcon status={result.reviewStatus} /> : null}
 
                           <div className="videoQuizReviewCardText">
                             <div className="videoQuizReviewCardTopline">
                               <strong>
-                                {index + 1}. {shouldShowReviewDetails ? getReviewStatusLabel(result.reviewStatus) : result.answerSummary}
+                                {index + 1}. {shouldShowReviewDetails ? result.prompt : result.answerSummary}
                               </strong>
-                              {shouldShowReviewDetails && result.scoreSummary ? <span>{result.scoreSummary}</span> : null}
+                              {shouldShowReviewDetails ? (
+                                <div className="videoQuizReviewMeta">
+                                  <span className={`videoQuizReviewStatus ${result.reviewStatus ?? ""}`}>
+                                    {getReviewStatusLabel(result.reviewStatus)}
+                                  </span>
+                                  {result.scoreSummary ? (
+                                    <span className="videoQuizScoreChip">{result.scoreSummary}</span>
+                                  ) : null}
+                                </div>
+                              ) : null}
                             </div>
-                            {shouldShowReviewDetails ? <p>{result.answerSummary}</p> : null}
                             {shouldShowReviewDetails && result.correctAnswerSummary ? (
-                              <p>Correct answer: {result.correctAnswerSummary}</p>
+                              <p className="videoQuizCorrectAnswer">
+                                Correct answer: {result.correctAnswerSummary}
+                              </p>
                             ) : null}
-                            {shouldShowReviewDetails && result.explanation ? <p>{result.explanation}</p> : null}
+                            {shouldShowReviewDetails ? <QuizExplanation explanation={result.explanation} /> : null}
                           </div>
                         </div>
                       );
@@ -1493,21 +1567,9 @@ function VideoQuizPage() {
                       ) : null}
 
                       {result.isCorrect === false && result.explanation ? (
-                        <p>
-                          {result.explanation}
-                        </p>
+                        <QuizExplanation explanation={result.explanation} />
                       ) : null}
                     </div>
-
-                    {result.isCorrect === false ? (
-                      <button
-                        type="button"
-                        className="videoQuizInlineButton"
-                        onClick={handleExit}
-                      >
-                        View in video
-                      </button>
-                    ) : null}
                   </div>
                 ))}
               </div>

@@ -65,7 +65,7 @@ function CreateQuizPopup({
       setIsActive(initialValues?.is_active ?? true);
       setTimeLimitSeconds(String(initialValues?.time_limit_seconds ?? 900));
       setQuestionCount(String(initialValues?.question_count ?? 10));
-      setMaxAttempts(String(initialValues?.max_attempts ?? 3));
+      setMaxAttempts(initialValues ? String(initialValues.max_attempts ?? 0) : "3");
       setPassingScorePercentage(String(initialValues?.passing_score_percentage ?? 50));
       setAnswerReviewMode(initialValues?.answer_review_mode === "at_end" ? "at_end" : "immediate");
       setShuffleQuestions(initialValues?.shuffle_questions ?? true);
@@ -141,7 +141,13 @@ function CreateQuizPopup({
         is_active: isActive,
         time_limit_seconds: parsePositiveInteger(timeLimitSeconds, "Time limit"),
         question_count: parsePositiveInteger(questionCount, "Question count"),
-        max_attempts: parsePositiveInteger(maxAttempts, "Max attempts"),
+        max_attempts: (() => {
+          const parsedMaxAttempts = parsePositiveInteger(maxAttempts, "Max attempts", {
+            min: 0,
+          });
+
+          return parsedMaxAttempts === 0 ? null : parsedMaxAttempts;
+        })(),
         passing_score_percentage: parsePositiveInteger(
           passingScorePercentage,
           "Passing score percentage",
@@ -266,7 +272,7 @@ function CreateQuizPopup({
                 <input
                   id="quizMaxAttempts"
                   type="number"
-                  min={1}
+                  min={0}
                   step={1}
                   value={maxAttempts}
                   onChange={(event) => setMaxAttempts(event.target.value)}
