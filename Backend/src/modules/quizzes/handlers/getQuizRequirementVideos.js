@@ -31,21 +31,50 @@ export async function getQuizRequirementVideosInternal(object, userId = null) {
       qar.rule_type,
       qar.required_percentage::float AS required_percentage,
       qar.required_seconds,
+      COALESCE(wp.total_watch_seconds, 0) AS total_watch_seconds,
+      CASE
+        WHEN COALESCE(v.duration_seconds, 0) <= 0 THEN 0
+        ELSE LEAST(
+          (COALESCE(wp.total_watch_seconds, 0)::numeric / v.duration_seconds) * 100,
+          100
+        )::float
+      END AS requirement_percentage_watched,
       CASE
         WHEN qar.rule_type = 'video_watch_percentage' THEN
-          GREATEST(qar.required_percentage - COALESCE(wp.percentage_watched, 0), 0)::float
+          GREATEST(
+            qar.required_percentage -
+              CASE
+                WHEN COALESCE(v.duration_seconds, 0) <= 0 THEN 0
+                ELSE LEAST(
+                  (COALESCE(wp.total_watch_seconds, 0)::numeric / v.duration_seconds) * 100,
+                  100
+                )
+              END,
+            0
+          )::float
         ELSE NULL
       END AS missing_percentage,
       CASE
         WHEN qar.rule_type = 'video_watch_seconds' THEN
-          GREATEST(qar.required_seconds - COALESCE(wp.progress_seconds, 0), 0)
+          GREATEST(qar.required_seconds - COALESCE(wp.total_watch_seconds, 0), 0)
+        WHEN qar.rule_type = 'video_watch_percentage' THEN
+          GREATEST(
+            CEIL((qar.required_percentage / 100) * COALESCE(v.duration_seconds, 0))
+              - COALESCE(wp.total_watch_seconds, 0),
+            0
+          )::int
         ELSE NULL
       END AS missing_seconds,
       CASE
         WHEN qar.rule_type = 'video_watch_percentage' THEN
-          COALESCE(wp.percentage_watched, 0) >= qar.required_percentage
+          CASE
+            WHEN COALESCE(v.duration_seconds, 0) <= 0 THEN false
+            ELSE
+              (COALESCE(wp.total_watch_seconds, 0)::numeric / v.duration_seconds) * 100
+              >= qar.required_percentage
+          END
         WHEN qar.rule_type = 'video_watch_seconds' THEN
-          COALESCE(wp.progress_seconds, 0) >= qar.required_seconds
+          COALESCE(wp.total_watch_seconds, 0) >= qar.required_seconds
         ELSE false
       END AS has_met_requirement
     ${buildVideoCardJoins({

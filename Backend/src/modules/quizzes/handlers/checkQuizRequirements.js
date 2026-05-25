@@ -34,13 +34,20 @@ export async function checkQuizRequirementsInternal(object, userId = null) {
           BOOL_AND(
             CASE
               WHEN qar.rule_type = 'video_watch_percentage' THEN
-                COALESCE(wp.percentage_watched, 0) >= qar.required_percentage
+                CASE
+                  WHEN COALESCE(v.duration_seconds, 0) <= 0 THEN false
+                  ELSE
+                    (COALESCE(wp.total_watch_seconds, 0)::numeric / v.duration_seconds) * 100
+                    >= qar.required_percentage
+                END
               WHEN qar.rule_type = 'video_watch_seconds' THEN
-                COALESCE(wp.progress_seconds, 0) >= qar.required_seconds
+                COALESCE(wp.total_watch_seconds, 0) >= qar.required_seconds
               ELSE false
             END
           ) AS has_met_requirements
         FROM quiz_access_rules qar
+        JOIN videos v
+          ON v.id = qar.video_id
         LEFT JOIN watch_progress wp
           ON wp.user_id = $2
          AND wp.video_id = qar.video_id
