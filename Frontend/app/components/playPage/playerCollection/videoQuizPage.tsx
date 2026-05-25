@@ -120,6 +120,7 @@ type QuizRequirementVideo = {
   progress_seconds?: number | string | null;
   total_watch_seconds?: number | string | null;
   percentage_watched?: number | string | null;
+  requirement_percentage_watched?: number | string | null;
   rule_type?: string | null;
   required_percentage?: number | string | null;
   required_seconds?: number | string | null;
@@ -234,12 +235,13 @@ function formatDurationLabel(value: QuizRequirementVideo["duration_seconds"]) {
 
 function getRequirementProgressText(video: QuizRequirementVideo) {
   const watchedPercentage = Number(video.percentage_watched);
+  const requirementWatchedPercentage = Number(video.requirement_percentage_watched);
   const requiredPercentage = Number(video.required_percentage);
   const totalWatchSeconds = Number(video.total_watch_seconds);
   const requiredSeconds = Number(video.required_seconds);
 
   if (video.rule_type === "video_watch_percentage" && Number.isFinite(requiredPercentage) && requiredPercentage > 0) {
-    const watched = Number.isFinite(watchedPercentage) ? Math.round(watchedPercentage) : 0;
+    const watched = Number.isFinite(requirementWatchedPercentage) ? Math.round(requirementWatchedPercentage) : 0;
     return `${watched}% watched of ${Math.round(requiredPercentage)}% required`;
   }
 
@@ -1483,8 +1485,7 @@ function VideoQuizPage() {
                     </button>
                   </div>
 
-                  {areRequirementsOpen ? (
-                    <div className="videoQuizRequirementsPanel">
+                  <div className={`videoQuizRequirementsPanel ${areRequirementsOpen ? "open" : ""}`} aria-hidden={!areRequirementsOpen}>
                       {areRequirementVideosLoading ? (
                         <div className="videoQuizEmptyState">
                           <strong>Loading requirements</strong>
@@ -1537,7 +1538,6 @@ function VideoQuizPage() {
                         </div>
                       )}
                     </div>
-                  ) : null}
                 </div>
               ) : null}
 

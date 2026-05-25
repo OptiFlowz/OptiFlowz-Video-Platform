@@ -2605,13 +2605,39 @@ mux-player::part(menu-item) {
 
 .videoQuizPage .videoQuizRequirementsPanel {
   border-top: 1px solid var(--border1);
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  padding: 0 14px;
+  transform: translateY(-4px);
+  visibility: hidden;
+  transition:
+    max-height 280ms ease,
+    opacity 180ms ease,
+    padding 280ms ease,
+    transform 280ms ease,
+    visibility 0ms linear 280ms;
+}
+
+.videoQuizPage .videoQuizRequirementsPanel.open {
+  max-height: clamp(220px, 48vh, 560px);
+  opacity: 1;
   padding: 14px;
+  transform: translateY(0);
+  visibility: visible;
+  transition-delay: 0ms;
 }
 
 .videoQuizPage .videoQuizRequirementList {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  max-height: clamp(180px, 38vh, 440px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
 }
 
 .videoQuizPage .videoQuizRequirementVideo {
@@ -3537,6 +3563,14 @@ mux-player::part(menu-item) {
 
   .videoQuizPage .videoQuizRequirementDuration {
     text-align: left;
+  }
+
+  .videoQuizPage .videoQuizRequirementsPanel.open {
+    max-height: min(62vh, 560px);
+  }
+
+  .videoQuizPage .videoQuizRequirementList {
+    max-height: min(48vh, 420px);
   }
 
   .videoQuizPage .introStage .videoQuizFooterActions {
