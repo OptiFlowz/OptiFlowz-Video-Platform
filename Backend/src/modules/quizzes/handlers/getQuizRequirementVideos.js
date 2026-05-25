@@ -31,6 +31,7 @@ export async function getQuizRequirementVideosInternal(object, userId = null) {
       qar.rule_type,
       qar.required_percentage::float AS required_percentage,
       qar.required_seconds,
+      COALESCE(wp.watch_duration, 0) AS total_watch_seconds,
       CASE
         WHEN qar.rule_type = 'video_watch_percentage' THEN
           GREATEST(qar.required_percentage - COALESCE(wp.percentage_watched, 0), 0)::float
@@ -38,14 +39,14 @@ export async function getQuizRequirementVideosInternal(object, userId = null) {
       END AS missing_percentage,
       CASE
         WHEN qar.rule_type = 'video_watch_seconds' THEN
-          GREATEST(qar.required_seconds - COALESCE(wp.progress_seconds, 0), 0)
+          GREATEST(qar.required_seconds - COALESCE(wp.watch_duration, 0), 0)
         ELSE NULL
       END AS missing_seconds,
       CASE
         WHEN qar.rule_type = 'video_watch_percentage' THEN
           COALESCE(wp.percentage_watched, 0) >= qar.required_percentage
         WHEN qar.rule_type = 'video_watch_seconds' THEN
-          COALESCE(wp.progress_seconds, 0) >= qar.required_seconds
+          COALESCE(wp.watch_duration, 0) >= qar.required_seconds
         ELSE false
       END AS has_met_requirement
     ${buildVideoCardJoins({

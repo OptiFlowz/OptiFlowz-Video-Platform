@@ -36,7 +36,7 @@ export async function checkQuizRequirementsInternal(object, userId = null) {
               WHEN qar.rule_type = 'video_watch_percentage' THEN
                 COALESCE(wp.percentage_watched, 0) >= qar.required_percentage
               WHEN qar.rule_type = 'video_watch_seconds' THEN
-                COALESCE(wp.progress_seconds, 0) >= qar.required_seconds
+                COALESCE(wp.watch_duration, 0) >= qar.required_seconds
               ELSE false
             END
           ) AS has_met_requirements

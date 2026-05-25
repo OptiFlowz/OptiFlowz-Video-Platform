@@ -118,6 +118,7 @@ type QuizRequirementVideo = {
   view_count?: number | string | null;
   uploader_name?: string | null;
   progress_seconds?: number | string | null;
+  total_watch_seconds?: number | string | null;
   percentage_watched?: number | string | null;
   rule_type?: string | null;
   required_percentage?: number | string | null;
@@ -234,7 +235,7 @@ function formatDurationLabel(value: QuizRequirementVideo["duration_seconds"]) {
 function getRequirementProgressText(video: QuizRequirementVideo) {
   const watchedPercentage = Number(video.percentage_watched);
   const requiredPercentage = Number(video.required_percentage);
-  const progressSeconds = Number(video.progress_seconds);
+  const totalWatchSeconds = Number(video.total_watch_seconds);
   const requiredSeconds = Number(video.required_seconds);
 
   if (video.rule_type === "video_watch_percentage" && Number.isFinite(requiredPercentage) && requiredPercentage > 0) {
@@ -243,7 +244,7 @@ function getRequirementProgressText(video: QuizRequirementVideo) {
   }
 
   if (video.rule_type === "video_watch_seconds" && Number.isFinite(requiredSeconds) && requiredSeconds > 0) {
-    const watched = Number.isFinite(progressSeconds) ? Math.round(progressSeconds) : 0;
+    const watched = Number.isFinite(totalWatchSeconds) ? Math.round(totalWatchSeconds) : 0;
     return `${formatTime(watched)} watched of ${formatTime(Math.round(requiredSeconds))} required`;
   }
 
@@ -914,12 +915,13 @@ function VideoQuizPage() {
   }, [stage]);
 
   const handleExit = () => {
-    if (quizSummary?.video_id) {
-      navigate(`/video/${quizSummary.video_id}`);
+    if (stage !== "intro") {
+      setStage("intro");
+      setDeadline(null);
       return;
     }
 
-    navigate(-1);
+    navigate("/");
   };
 
   const beginAttemptFlow = (attempt: AttemptRecord) => {
