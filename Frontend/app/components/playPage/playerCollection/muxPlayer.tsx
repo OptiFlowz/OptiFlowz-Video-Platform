@@ -22,8 +22,8 @@ interface VideoPlayerProps {
   accentColor?: string;
   currentTimee?: number;
   style?: React.CSSProperties;
-  view_id: string;
-  last_seq: number;
+  view_id?: string;
+  last_seq?: number;
   chapters: ChapterT[];
   onProgressSaved?: (seconds: number) => void;
 }
@@ -249,7 +249,8 @@ export default function VideoPlayer({
   const hbLastSentPlayingRef = useRef<boolean | null>(null);
 
   // ključ: seq nikad unazad
-  const hbSeqRef = useRef<number>(0);
+  const hbSeqRef = useRef<number>(Number.isFinite(last_seq) ? last_seq ?? 0 : 0);
+  const hbViewIdRef = useRef<string | null>(view_id ?? null);
 
   // cache token
   const hbTokenRef = useRef<string | null>(null);
@@ -257,10 +258,19 @@ export default function VideoPlayer({
     hbTokenRef.current = getToken() ?? null;
   }, []);
 
-  // sync sa server last_seq ali samo kao MAX (nikad unazad)
+  // sync sa server last_seq: reset za novi view, ali u istom view-u nikad unazad
   useEffect(() => {
-    hbSeqRef.current = last_seq;
-  }, [last_seq]);
+    const serverSeq =
+      typeof last_seq === "number" && Number.isFinite(last_seq) ? last_seq : 0;
+
+    if (hbViewIdRef.current !== view_id) {
+      hbViewIdRef.current = view_id ?? null;
+      hbSeqRef.current = serverSeq;
+      hbLastSentPlayingRef.current = null;
+      return;
+    }
+    hbSeqRef.current = Math.max(hbSeqRef.current, serverSeq);
+  }, [last_seq, view_id]);
 
   const stopHeartbeat = useCallback(() => {
     if (hbIntervalRef.current != null) {
@@ -278,6 +288,7 @@ export default function VideoPlayer({
 
       const token = hbTokenRef.current ?? getToken();
       if (!token) return;
+      if (!view_id) return;
       hbTokenRef.current = token;
 
       const nextSeq = (hbSeqRef.current || 0) + 1;
@@ -316,9 +327,10 @@ export default function VideoPlayer({
   // cleanup
   useEffect(() => {
     return () => {
+      const wasPlaying = hbIsPlayingRef.current;
       stopHeartbeat();
       hbIsPlayingRef.current = false;
-      void sendHeartbeat(false, true); // force jednom na izlazu
+      if (wasPlaying) void sendHeartbeat(false, true); // force jednom na izlazu
     };
   }, [sendHeartbeat, stopHeartbeat]);
 

@@ -66,6 +66,7 @@ function PlayerCollection({
         </div>
       ) : (
       <VideoPlayer
+        key={props?.view?.view_id ?? props?.id ?? streamUrl}
         playbackId={streamUrl}
         currentTimee={
           startTimeOverride != null

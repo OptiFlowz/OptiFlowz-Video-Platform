@@ -104,11 +104,11 @@ function PlayPage(){
         return h;
     }, [token]);
 
-    const { data, isLoading } = useQuery({
+    const { data, isFetchedAfterMount, isLoading } = useQuery({
         queryKey: ["video", videoId],
         enabled: Boolean(videoId),
         staleTime: 4 * 60 * 1000,
-        refetchOnMount: false,
+        refetchOnMount: "always",
         refetchOnWindowFocus: false,
         queryFn: ({ signal }) =>
             fetchFn({
@@ -203,7 +203,8 @@ function PlayPage(){
         enabled: !!videoId
     });
 
-    const videoData = data as VideoT;
+    const videoData = (isFetchedAfterMount ? data : undefined) as VideoT | undefined;
+    const isVideoLoading = isLoading || !isFetchedAfterMount;
     const resolvedSimilarData = similarData as SimilarT | undefined;
     const hasSimilarVideos = (resolvedSimilarData?.videos?.length ?? 0) > 0;
     const hasRelevantPanelsOpen = showChapters || showComments || !!playlistId;
@@ -219,7 +220,7 @@ function PlayPage(){
 
                         <VideoInfo
                             props={videoData}
-                            isLoading={isLoading}
+                            isLoading={isVideoLoading}
                             onOpenChapter={openChapters}
                             onOpenComments={ isMobileCommentsDrawer ? openComments : undefined }
                         />
@@ -230,7 +231,7 @@ function PlayPage(){
                     </div>
 
                     <div className={`relevant flex flex-col gap-7 ${isCompactRelevant ? "relevant--compact" : ""}`}>
-                        {showChapters && data ? <div ref={chaptersRef}><VideoChapters props={videoData} onClose={() => handleCloseChapters()} /></div> : ""}
+                        {showChapters && videoData ? <div ref={chaptersRef}><VideoChapters props={videoData} onClose={() => handleCloseChapters()} /></div> : ""}
                         {showComments && videoId ? <CommentsSection videoId={videoId} variant="drawer" onClose={() => handleCloseComments()} /> : ""}
                         {playlistId ? <div ref={playlistRef}><PlayingPlaylist playlistId={playlistId} videoId={videoId || ""} onClose={() => handleClose()} /></div> : ""}
                         <Similar props={resolvedSimilarData} isLoading={isLoadingSimilar} />
@@ -238,11 +239,11 @@ function PlayPage(){
                 </>
                 : <>
                     <div className="flex flex-col gap-5 overflow-x-hidden mx-auto">
-                        <PlayerCollection props={{...videoData, class: "theater"}} startTimeOverride={startTimeOverride} />
+                        <PlayerCollection props={videoData ? {...videoData, class: "theater"} : undefined} startTimeOverride={startTimeOverride} />
                         
                         <div className="flex gap-5 overflow-x-hidden">
                             <div className="flex flex-col gap-5 overflow-x-hidden">
-                                <VideoInfo props={videoData} isLoading={isLoading} onOpenChapter={openChapters} />
+                                <VideoInfo props={videoData} isLoading={isVideoLoading} onOpenChapter={openChapters} />
 
                                 {videoData?.playlists && <InPlaylist props={videoData?.playlists} />}
 
@@ -250,7 +251,7 @@ function PlayPage(){
                             </div>
 
                             <div className={`relevant flex flex-col gap-7 ${isCompactRelevant ? "relevant--compact" : "min-w-110"}`}>
-                                {showChapters && data ? <div ref={chaptersRef}><VideoChapters props={videoData} onClose={() => handleCloseChapters()} /></div> : ""}
+                                {showChapters && videoData ? <div ref={chaptersRef}><VideoChapters props={videoData} onClose={() => handleCloseChapters()} /></div> : ""}
                                 {playlistId ? <div ref={playlistRef}><PlayingPlaylist playlistId={playlistId} videoId={videoId || ""} onClose={() => handleClose()} /></div> : ""}
                                 <Similar props={resolvedSimilarData} isLoading={isLoadingSimilar} />
                             </div> 
