@@ -278,14 +278,10 @@ function getRequirementProgressText(video: QuizRequirementVideo) {
 
 function mapAttemptQuestion(question: AttemptQuizQuestion): QuizQuestion {
   if (question.question_type === "matching") {
-    const sortedLeftItems = [...(question.left_items ?? [])].sort(
-      (a, b) => Number(a.position || 0) - Number(b.position || 0)
-    );
-    const sortedRightItems = [...(question.right_items ?? [])].sort(
-      (a, b) => Number(a.position || 0) - Number(b.position || 0)
-    );
+    const leftItems = question.left_items ?? [];
+    const rightItems = question.right_items ?? [];
 
-    const choices = sortedRightItems.map((item) => ({
+    const choices = rightItems.map((item) => ({
       id: item.id,
       label: item.right_text,
     }));
@@ -297,7 +293,7 @@ function mapAttemptQuestion(question: AttemptQuizQuestion): QuizQuestion {
       explanation: "",
       type: "match",
       choices,
-      pairs: sortedLeftItems.map((item) => ({
+      pairs: leftItems.map((item) => ({
         id: item.id,
         label: item.left_text,
         correctChoiceId: item.id,
@@ -305,9 +301,7 @@ function mapAttemptQuestion(question: AttemptQuizQuestion): QuizQuestion {
     };
   }
 
-  const sortedOptions = [...(question.options ?? [])].sort(
-    (a, b) => Number(a.position || 0) - Number(b.position || 0)
-  );
+  const options = question.options ?? [];
 
   return {
     id: question.question_id,
@@ -315,7 +309,7 @@ function mapAttemptQuestion(question: AttemptQuizQuestion): QuizQuestion {
     prompt: question.question_text,
     explanation: "",
     type: question.question_type === "multiple_choice" ? "multiple" : "single",
-    options: sortedOptions.map((option) => ({
+    options: options.map((option) => ({
       id: option.id,
       label: option.option_text,
     })),
