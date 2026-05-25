@@ -9,7 +9,7 @@ function prerequisites(object, userId) {
     description: z.string().trim().max(5000).optional().nullable(),
     is_active: z.boolean().optional().default(true),
     time_limit_seconds: z.coerce.number().int().min(1).nullable().optional().default(null),
-    question_count: z.coerce.number().int().min(1).max(100).optional().default(10),
+    question_count: z.coerce.number().int().min(1).optional().default(10),
     max_attempts: z.coerce.number().int().min(1).nullable().optional().default(null),
     passing_score_percentage: z.coerce.number().min(0).max(100).optional().default(50),
     shuffle_questions: z.boolean().optional().default(true),

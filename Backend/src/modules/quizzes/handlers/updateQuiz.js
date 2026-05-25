@@ -12,7 +12,7 @@ function prerequisites(object, userId) {
     is_active: z.boolean().optional(),
 
     time_limit_seconds: z.coerce.number().int().min(1).nullable().optional(),
-    question_count: z.coerce.number().int().min(1).max(100).optional(),
+    question_count: z.coerce.number().int().min(1).optional(),
     max_attempts: z.coerce.number().int().min(1).nullable().optional(),
 
     passing_score_percentage: z.coerce.number().min(0).max(100).optional(),
