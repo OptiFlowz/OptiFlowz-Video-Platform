@@ -213,9 +213,28 @@ type SaveDirtyAnswersResult = {
 
 function formatTime(secondsLeft: number) {
   const safeSeconds = Math.max(0, secondsLeft);
-  const minutes = Math.floor(safeSeconds / 60);
+  const hours = Math.floor(safeSeconds / 3600);
+  const minutes = Math.floor((safeSeconds % 3600) / 60);
   const seconds = safeSeconds % 60;
+
+  if (hours > 0) {
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  }
+
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function formatQuizTimeLimitLabel(seconds: number) {
+  const totalMinutes = Math.max(1, Math.round(Math.max(0, seconds) / 60));
+  const hours = Math.floor(totalMinutes / 60);
+  const remainingMinutes = totalMinutes % 60;
+
+  if (hours > 0) {
+    const hourLabel = `${hours} ${hours === 1 ? "hour" : "hours"}`;
+    return remainingMinutes > 0 ? `${hourLabel} ${remainingMinutes} min` : hourLabel;
+  }
+
+  return `${totalMinutes} ${totalMinutes === 1 ? "minute" : "minutes"}`;
 }
 
 function formatDurationLabel(value: QuizRequirementVideo["duration_seconds"]) {
@@ -255,23 +274,6 @@ function getRequirementProgressText(video: QuizRequirementVideo) {
   }
 
   return "Watch requirement";
-}
-
-function getRequirementMissingText(video: QuizRequirementVideo) {
-  if (video.has_met_requirement) return "Requirement met";
-
-  const missingPercentage = Number(video.missing_percentage);
-  const missingSeconds = Number(video.missing_seconds);
-
-  if (Number.isFinite(missingPercentage) && missingPercentage > 0) {
-    return `${Math.ceil(missingPercentage)}% more needed`;
-  }
-
-  if (Number.isFinite(missingSeconds) && missingSeconds > 0) {
-    return `${formatTime(Math.ceil(missingSeconds))} more needed`;
-  }
-
-  return "More watch progress needed";
 }
 
 function mapAttemptQuestion(question: AttemptQuizQuestion): QuizQuestion {
@@ -1392,7 +1394,7 @@ function VideoQuizPage() {
             <span>
               <h2>{quizDisplayTitle}</h2>
               <p>
-                Certificate when completed • {displayedQuestionCount} questions • {Math.max(1, Math.round(quizTimeLimitSeconds / 60))} minutes
+                Certificate when completed • {displayedQuestionCount} questions • {formatQuizTimeLimitLabel(quizTimeLimitSeconds)}
               </p>
             </span>
           </div>
@@ -1511,7 +1513,6 @@ function VideoQuizPage() {
                               <div className="videoQuizRequirementVideoText">
                                 <strong>{video.title || "Required video"}</strong>
                                 <p>{getRequirementProgressText(video)}</p>
-                                <span>{getRequirementMissingText(video)}</span>
                               </div>
 
                               <div className="videoQuizRequirementVideoActions">
