@@ -1054,7 +1054,7 @@ export async function heartbeatWatchDuration(viewId, { seq, isPlaying = true, us
     const { rows } = await client.query(
       `
       WITH prev AS (
-        SELECT id, user_id, last_heartbeat_at, last_seq, watch_duration
+        SELECT id, user_id, video_id, last_heartbeat_at, last_seq, watch_duration
         FROM video_views
         WHERE id = $1
           AND user_id = $5
@@ -1089,10 +1089,11 @@ export async function heartbeatWatchDuration(viewId, { seq, isPlaying = true, us
             c.last_seq IS NULL
             OR $3::bigint = c.last_seq + 1
           )
-        RETURNING v.id, v.watch_duration, c.delta AS counted_delta
+        RETURNING v.id, v.video_id, v.watch_duration, c.delta AS counted_delta
       )
       SELECT
         u.id,
+        u.video_id,
         u.watch_duration,
         u.counted_delta,
         false AS ignored,
@@ -1103,6 +1104,7 @@ export async function heartbeatWatchDuration(viewId, { seq, isPlaying = true, us
 
       SELECT
         p.id,
+        p.video_id,
         p.watch_duration,
         0::bigint AS counted_delta,
         true AS ignored,
@@ -1120,6 +1122,25 @@ export async function heartbeatWatchDuration(viewId, { seq, isPlaying = true, us
     if (rows.length === 0) {
       await client.query('ROLLBACK');
       return null; // view ne postoji ili nije user-ov
+    }
+
+    if (userId && rows[0].video_id && Number(rows[0].counted_delta) > 0) {
+      await client.query(
+        `
+        INSERT INTO watch_progress (
+          user_id,
+          video_id,
+          total_watch_seconds,
+          last_watched_at
+        )
+        VALUES ($1::uuid, $2::uuid, $3::int, NOW())
+        ON CONFLICT (user_id, video_id)
+        DO UPDATE SET
+          total_watch_seconds = COALESCE(watch_progress.total_watch_seconds, 0) + EXCLUDED.total_watch_seconds,
+          last_watched_at = NOW()
+        `,
+        [userId, rows[0].video_id, Number(rows[0].counted_delta)]
+      );
     }
 
     await client.query('COMMIT');
