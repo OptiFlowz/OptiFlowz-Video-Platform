@@ -136,8 +136,6 @@ function Analytics() {
             </div>
           </div>
 
-          <h2 className="mobileTitle">{t("navAnalytics")}</h2>
-
           <section className="analyticsSimple">
             <div className="analyticsSimpleRow">
               <label className="analyticsSimpleField">

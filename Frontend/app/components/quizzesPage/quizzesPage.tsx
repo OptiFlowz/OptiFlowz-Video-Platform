@@ -1,7 +1,16 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
-import { AddSVG, FilterSVG, QuizSVG } from "~/constants";
+import { createPortal } from "react-dom";
+import {
+  AddSVG,
+  DeleteSVG,
+  EditSVG,
+  FilterSVG,
+  PlaySVG,
+  QuizSVG,
+  ThreeDotMenuSVG,
+} from "~/constants";
 import { fetchFn } from "~/API";
 import { getToken } from "~/functions";
 import Sidebar from "~/components/myVideosPage/sidebar/sidebar";
@@ -103,6 +112,7 @@ function QuizzesPage() {
   const [isDeletingQuizId, setIsDeletingQuizId] = useState<string | null>(null);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [quizModalError, setQuizModalError] = useState<string | null>(null);
+  const [mobileMenuQuiz, setMobileMenuQuiz] = useState<QuizData | null>(null);
   const { confirm, dialogProps } = useConfirm();
 
   useLayoutEffect(() => {
@@ -114,6 +124,14 @@ function QuizzesPage() {
     headersRef.current.set("Content-Type", "application/json");
     headersRef.current.set("Authorization", `Bearer ${userToken}`);
   }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = mobileMenuQuiz ? "hidden" : "";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileMenuQuiz]);
 
   const {
     data: quizzesResponse,
@@ -303,6 +321,8 @@ function QuizzesPage() {
   };
 
   const handleDeleteQuiz = async (quiz: QuizData) => {
+    setMobileMenuQuiz(null);
+
     const confirmed = await confirm({
       title: `Delete quiz "${quiz.title}"?`,
       message: "This will permanently remove the quiz and all of its questions.",
@@ -343,6 +363,16 @@ function QuizzesPage() {
     } finally {
       setIsDeletingQuizId(null);
     }
+  };
+
+  const handleOpenQuiz = (quiz: QuizData) => {
+    setMobileMenuQuiz(null);
+    window.location.href = `/quiz/${quiz.id}`;
+  };
+
+  const handleEditQuiz = async (quiz: QuizData) => {
+    setMobileMenuQuiz(null);
+    await openEditModal(quiz);
   };
 
   const handleOpenQuestionsFromModal = () => {
@@ -624,7 +654,7 @@ function QuizzesPage() {
                   filteredQuizzes.map((quiz) => (
                     <tr key={quiz.id}>
                       <td>
-                        <div className="flex min-w-[240px] items-center gap-3 py-2">
+                        <div className="quizRowInfo flex min-w-[240px] items-center gap-3 py-2">
                           <input
                             className="appearance-none rounded-lg! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
                             type="checkbox"
@@ -642,6 +672,14 @@ function QuizzesPage() {
                               {quiz.description || "No description"}
                             </span>
                           </div>
+                          <button
+                            type="button"
+                            className="quizMobileOptionsButton"
+                            aria-label="Quiz options"
+                            onClick={() => setMobileMenuQuiz(quiz)}
+                          >
+                            {ThreeDotMenuSVG}
+                          </button>
                         </div>
                       </td>
                       <td>
@@ -703,6 +741,83 @@ function QuizzesPage() {
               </tbody>
             </table>
           </div>
+          {mobileMenuQuiz &&
+            typeof document !== "undefined" &&
+            createPortal(
+              <div
+                className="fixed inset-0 z-100 flex items-end justify-center"
+                onClick={() => setMobileMenuQuiz(null)}
+              >
+                <div className="absolute inset-0 bg-black/50" />
+
+                <div
+                  className="rowActionSheet relative w-full max-w-lg animate-slide-up rounded-t-3xl bg-(--background1) pb-safe"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div className="flex justify-center py-3">
+                    <div className="h-1 w-10 rounded-full bg-(--border1)" />
+                  </div>
+
+                  <div className="flex items-center gap-3 px-4 pb-3 border-b border-(--border1)">
+                    <div className="rounded-xl bg-(--background2) p-2 text-(--accentBlue)">
+                      {QuizSVG}
+                    </div>
+                    <p className="text-sm font-medium line-clamp-2 flex-1">
+                      {mobileMenuQuiz.title}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col py-2">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenQuiz(mobileMenuQuiz)}
+                      className="flex items-center gap-4 px-4 py-3 text-left hover:bg-(--background2) active:bg-(--background3) transition-colors cursor-pointer"
+                    >
+                      <span className="w-6 h-6 flex items-center justify-center playSvg">
+                        {PlaySVG}
+                      </span>
+                      <span>Open Quiz</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => void handleEditQuiz(mobileMenuQuiz)}
+                      className="flex items-center gap-4 px-4 py-3 text-left hover:bg-(--background2) active:bg-(--background3) transition-colors cursor-pointer"
+                    >
+                      <span className="w-6 h-6 flex items-center justify-center">
+                        {EditSVG}
+                      </span>
+                      <span>Edit Quiz</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => void handleDeleteQuiz(mobileMenuQuiz)}
+                      disabled={isDeletingQuizId === mobileMenuQuiz.id || isBulkDeleting}
+                      className="flex items-center gap-4 px-4 py-3 text-left hover:bg-(--background2) active:bg-(--background3) transition-colors cursor-pointer disabled:opacity-60"
+                    >
+                      <span className="w-6 h-6 flex items-center justify-center">
+                        {DeleteSVG}
+                      </span>
+                      <span>
+                        {isDeletingQuizId === mobileMenuQuiz.id ? "Deleting..." : "Delete Quiz"}
+                      </span>
+                    </button>
+                  </div>
+
+                  <div className="px-4 pb-4 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setMobileMenuQuiz(null)}
+                      className="w-full rounded-full border border-(--border1) bg-(--background2) py-3 font-medium hover:bg-(--background3) transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>,
+              document.body
+            )}
           {quizModalError ? (
             <div className="errorBanner mt-4">
               <p>{quizModalError}</p>

@@ -205,7 +205,7 @@ function Header(){
                         <img 
                             className="accountImg rounded-full w-9 h-9 aspect-square object-cover"
                             src={headerUserData?.user?.image_url || DefaultProfile}
-                            alt="Profile Photo"
+                            alt={t("profilePhotoAlt")}
                             onError={e => {
                                 e.currentTarget.src = DefaultProfile;
                             }}
@@ -220,7 +220,7 @@ function Header(){
                                 onClick={() => setAccountMenuOpen((prev) => !prev)}
                                 aria-haspopup="menu"
                                 aria-expanded={accountMenuOpen}
-                                aria-label="Open account menu"
+                                aria-label={t("accountMenuAria")}
                             >
                                 {!isAdmin ? (
                                     <p className="mr-2.5 font-medium max-[1075px]:hidden">
@@ -230,7 +230,7 @@ function Header(){
                                 <img 
                                     className="accountImg rounded-full w-9 h-9 aspect-square object-cover"
                                     src={headerUserData?.user?.image_url || DefaultProfile}
-                                    alt="Profile Photo"
+                                    alt={t("profilePhotoAlt")}
                                     onError={e => {
                                         e.currentTarget.src = DefaultProfile;
                                     }}
@@ -283,7 +283,7 @@ function Header(){
                             <img 
                                 className="accountImg rounded-full w-9 h-9 aspect-square object-cover"
                                 src={DefaultProfile}
-                                alt="Profile Photo"
+                                alt={t("profilePhotoAlt")}
                             />
                         </Link>
                     )}
@@ -371,6 +371,18 @@ function Header(){
                     : ""}
                     {isAdmin ? 
                     <NavLink 
+                        to="/quizzes" 
+                        end 
+                        className={({ isActive }) => `p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
+                        onClick={() => {
+                            closeMobileMenu();
+                        }}
+                    >
+                        {t("navQuizzes")}
+                    </NavLink>
+                    : ""}
+                    {isAdmin ? 
+                    <NavLink 
                         to="/speakers-chairs" 
                         end 
                         className={({ isActive }) => `p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
@@ -427,7 +439,7 @@ function Header(){
                             closeMobileMenu();
                         }}
                     >
-                        <img className="accountImg rounded-full w-8 h-8 aspect-square object-cover shrink-0 border-2!" src={headerUserData?.user?.image_url || DefaultProfile} alt="Profile Photo" />
+                        <img className="accountImg rounded-full w-8 h-8 aspect-square object-cover shrink-0 border-2!" src={headerUserData?.user?.image_url || DefaultProfile} alt={t("profilePhotoAlt")} />
                         <span>{t("footerAccount")}</span>
                     </NavLink>
                 </nav>

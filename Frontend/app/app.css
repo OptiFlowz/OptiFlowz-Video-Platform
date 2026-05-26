@@ -6196,18 +6196,33 @@ select.disabled {
   }
 
   .quizPopupActions {
-    flex-direction: column-reverse;
+    flex-direction: row;
+    justify-content: flex-end;
   }
 
   .quizPopupManageActions {
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
   }
 
   .quizPopupManageActions .saveCaptionsBtn,
-  .quizPopupManageActions .deleteCaptionsBtn,
+  .quizPopupManageActions .deleteCaptionsBtn {
+    width: 100%;
+    min-height: 42px;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.95rem;
+    justify-content: center;
+  }
+
   .quizPopupActions .cancelBtn,
   .quizPopupActions .saveCaptionsBtn {
-    width: 100%;
+    width: auto;
+    min-width: 118px;
+    min-height: 44px;
+    padding: 0.65rem 1rem;
+    font-size: 0.95rem;
+    justify-content: center;
   }
 }
 
@@ -7051,6 +7066,30 @@ main.myVideos table td .videoInfo .mobileOptionsButton svg{
   height: 22px;
 }
 main.myVideos table td .videoInfo .mobileOptionsButton svg path{
+  stroke-width: 2;
+  stroke: var(--accentBlue2);
+}
+main.quizzesPage .quizRowInfo {
+  position: relative;
+}
+main.quizzesPage .quizMobileOptionsButton {
+  display: none;
+  margin-left: auto;
+  padding: 5px;
+  background-color: var(--background2);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color .2s ease;
+}
+main.quizzesPage .quizMobileOptionsButton:hover {
+  background-color: var(--background3);
+}
+main.quizzesPage .quizMobileOptionsButton svg {
+  opacity: 0.5;
+  width: 22px;
+  height: 22px;
+}
+main.quizzesPage .quizMobileOptionsButton svg path {
   stroke-width: 2;
   stroke: var(--accentBlue2);
 }
@@ -8641,7 +8680,43 @@ main.playlist .videoHolder .playlistOrderNumber {
 
   main.quizzesPage table th:nth-child(4),
   main.quizzesPage table td:nth-child(4) {
-    display: table-cell;
+    display: none;
+  }
+
+  main.quizzesPage .quizRowInfo {
+    min-width: 0;
+    width: 100%;
+    padding-right: 44px;
+  }
+
+  main.quizzesPage .quizRowInfo > div:last-of-type {
+    min-width: 0;
+  }
+
+  main.quizzesPage .quizMobileOptionsButton {
+    display: block;
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+  }
+
+  .speakersChairsPersonActions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .speakersChairsPersonActions button {
+    background: #ffffff;
+  }
+
+  .speakersChairsPersonActions button:nth-child(2) {
+    background: var(--accentRed);
+    border-color: var(--accentRed);
+  }
+
+  .speakersChairsPersonActions button:nth-child(2) svg path {
+    stroke: #ffffff;
   }
 }
 
