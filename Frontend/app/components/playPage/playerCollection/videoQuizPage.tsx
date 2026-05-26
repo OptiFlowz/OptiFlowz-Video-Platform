@@ -4,6 +4,9 @@ import { useNavigate, useParams } from "react-router";
 import { fetchFn } from "~/API";
 import { ArrowSVG, CloseSVG, IconChevron, QuizSVG } from "~/constants";
 import { getToken } from "~/functions";
+import { useI18n } from "~/i18n";
+
+type TranslateFn = ReturnType<typeof useI18n>["t"];
 
 type QuizQuestionType = "single" | "multiple" | "match";
 
@@ -224,17 +227,17 @@ function formatTime(secondsLeft: number) {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
-function formatQuizTimeLimitLabel(seconds: number) {
+function formatQuizTimeLimitLabel(seconds: number, t: TranslateFn) {
   const totalMinutes = Math.max(1, Math.round(Math.max(0, seconds) / 60));
   const hours = Math.floor(totalMinutes / 60);
   const remainingMinutes = totalMinutes % 60;
 
   if (hours > 0) {
-    const hourLabel = `${hours} ${hours === 1 ? "hour" : "hours"}`;
-    return remainingMinutes > 0 ? `${hourLabel} ${remainingMinutes} min` : hourLabel;
+    const hourLabel = t(hours === 1 ? "quizHour" : "quizHours", { count: hours });
+    return remainingMinutes > 0 ? `${hourLabel} ${t("quizMinutesShort", { count: remainingMinutes })}` : hourLabel;
   }
 
-  return `${totalMinutes} ${totalMinutes === 1 ? "minute" : "minutes"}`;
+  return t(totalMinutes === 1 ? "quizMinute" : "quizMinutes", { count: totalMinutes });
 }
 
 function formatDurationLabel(value: QuizRequirementVideo["duration_seconds"]) {
@@ -252,7 +255,7 @@ function formatDurationLabel(value: QuizRequirementVideo["duration_seconds"]) {
   return `${minutes}:${String(remainder).padStart(2, "0")}`;
 }
 
-function getRequirementProgressText(video: QuizRequirementVideo) {
+function getRequirementProgressText(video: QuizRequirementVideo, t: TranslateFn) {
   const watchedPercentage = Number(video.percentage_watched);
   const requirementWatchedPercentage = Number(video.requirement_percentage_watched);
   const requiredPercentage = Number(video.required_percentage);
@@ -261,19 +264,19 @@ function getRequirementProgressText(video: QuizRequirementVideo) {
 
   if (video.rule_type === "video_watch_percentage" && Number.isFinite(requiredPercentage) && requiredPercentage > 0) {
     const watched = Number.isFinite(requirementWatchedPercentage) ? Math.round(requirementWatchedPercentage) : 0;
-    return `${watched}% watched of ${Math.round(requiredPercentage)}% required`;
+    return t("quizRequirementPercentProgress", { watched, required: Math.round(requiredPercentage) });
   }
 
   if (video.rule_type === "video_watch_seconds" && Number.isFinite(requiredSeconds) && requiredSeconds > 0) {
     const watched = Number.isFinite(totalWatchSeconds) ? Math.round(totalWatchSeconds) : 0;
-    return `${formatTime(watched)} watched of ${formatTime(Math.round(requiredSeconds))} required`;
+    return t("quizRequirementTimeProgress", { watched: formatTime(watched), required: formatTime(Math.round(requiredSeconds)) });
   }
 
   if (Number.isFinite(watchedPercentage)) {
-    return `${Math.round(watchedPercentage)}% watched`;
+    return t("quizRequirementWatchedPercent", { watched: Math.round(watchedPercentage) });
   }
 
-  return "Watch requirement";
+  return t("quizWatchRequirement");
 }
 
 function mapAttemptQuestion(question: AttemptQuizQuestion): QuizQuestion {
@@ -401,32 +404,32 @@ function isQuestionAnswered(question: QuizQuestion, answer: QuizAnswers[string])
   return question.pairs.every((pair) => typeof answer[pair.id] === "string" && answer[pair.id].length > 0);
 }
 
-function getAnswerSummary(question: QuizQuestion, answer: QuizAnswers[string]) {
-  if (!answer) return "You haven't answered this question yet";
+function getAnswerSummary(question: QuizQuestion, answer: QuizAnswers[string], t: TranslateFn) {
+  if (!answer) return t("quizNotAnsweredYet");
 
   if (question.type === "single") {
     const option = question.options.find((item) => item.id === answer);
-    return option ? `Answered ${option.label}` : "You haven't answered this question yet";
+    return option ? t("quizAnsweredValue", { value: option.label }) : t("quizNotAnsweredYet");
   }
 
   if (question.type === "multiple") {
     if (!Array.isArray(answer) || answer.length === 0) {
-      return "You haven't answered this question yet";
+      return t("quizNotAnsweredYet");
     }
 
     const selected = question.options
       .filter((item) => answer.includes(item.id))
       .map((item) => item.label);
 
-    return selected.length > 0 ? `Answered ${selected.join(", ")}` : "You haven't answered this question yet";
+    return selected.length > 0 ? t("quizAnsweredValue", { value: selected.join(", ") }) : t("quizNotAnsweredYet");
   }
 
   if (typeof answer !== "object" || Array.isArray(answer)) {
-    return "You haven't answered this question yet";
+    return t("quizNotAnsweredYet");
   }
 
   if (question.type !== "match") {
-    return "You haven't answered this question yet";
+    return t("quizNotAnsweredYet");
   }
 
   const matched = question.pairs
@@ -436,15 +439,11 @@ function getAnswerSummary(question: QuizQuestion, answer: QuizAnswers[string]) {
     })
     .filter(Boolean);
 
-  return matched.length > 0 ? matched.join(" • ") : "You haven't answered this question yet";
+  return matched.length > 0 ? t("quizAnsweredValue", { value: matched.join(" • ") }) : t("quizNotAnsweredYet");
 }
 
 function getAnsweredSummaryText(answerSummary: string) {
-  if (answerSummary.startsWith("Answered") || answerSummary.startsWith("You haven't")) {
-    return answerSummary;
-  }
-
-  return `Answered ${answerSummary}`;
+  return answerSummary;
 }
 
 function getAttemptScoreText(attempt: AttemptRecord) {
@@ -496,19 +495,19 @@ function getCorrectAnswerPairs(question: QuizQuestion, review: SaveAnswerReview 
     .filter((pair): pair is CorrectAnswerPair => Boolean(pair));
 }
 
-function getReviewScoreSummary(review: SaveAnswerReview | null | undefined) {
+function getReviewScoreSummary(review: SaveAnswerReview | null | undefined, t: TranslateFn) {
   if (!review) return "";
-  return `${review.awarded_points ?? 0}/${review.max_points ?? "-"} points`;
+  return t("quizPointsScore", { score: review.awarded_points ?? 0, total: review.max_points ?? "-" });
 }
 
-function getReviewStatusLabel(status: "correct" | "partial" | "incorrect" | null) {
-  if (status === "correct") return "Correct";
-  if (status === "partial") return "Partially correct";
-  if (status === "incorrect") return "Incorrect";
-  return "Not checked";
+function getReviewStatusLabel(status: "correct" | "partial" | "incorrect" | null, t: TranslateFn) {
+  if (status === "correct") return t("quizCorrect");
+  if (status === "partial") return t("quizPartiallyCorrect");
+  if (status === "incorrect") return t("quizIncorrect");
+  return t("quizNotChecked");
 }
 
-function parseExplanation(explanation: string) {
+function parseExplanation(explanation: string, t: TranslateFn) {
   const links: ExplanationLink[] = [];
   const textParts: string[] = [];
   const linkPattern = /\[([^\]]+)\]\(([^)]+)\)/g;
@@ -521,7 +520,7 @@ function parseExplanation(explanation: string) {
     }
 
     links.push({
-      label: match[1].trim() || "Explanation",
+      label: match[1].trim() || t("quizExplanation"),
       url: match[2].trim(),
     });
     lastIndex = match.index + match[0].length;
@@ -537,13 +536,13 @@ function parseExplanation(explanation: string) {
   };
 }
 
-function QuizExplanation({ explanation }: { explanation?: string | null }) {
+function QuizExplanation({ explanation, t }: { explanation?: string | null; t: TranslateFn }) {
   const normalizedExplanation = explanation?.trim();
   if (!normalizedExplanation) return null;
 
-  const { text, links } = parseExplanation(normalizedExplanation);
+  const { text, links } = parseExplanation(normalizedExplanation, t);
   const getExplanationLinkLabel = (label: string) =>
-    label.toLowerCase() === "explanation" ? "Watch explanation segment" : label;
+    label.toLowerCase() === "explanation" ? t("quizWatchExplanationSegment") : label;
 
   return (
     <div className="videoQuizExplanation">
@@ -568,16 +567,18 @@ function QuizExplanation({ explanation }: { explanation?: string | null }) {
 function QuizCorrectAnswer({
   summary,
   pairs,
+  t,
 }: {
   summary: string;
   pairs?: CorrectAnswerPair[];
+  t: TranslateFn;
 }) {
   const matchingPairs = pairs ?? [];
 
   if (matchingPairs.length > 0) {
     return (
       <div className="videoQuizCorrectAnswerBlock">
-        <span className="videoQuizCorrectAnswerLabel">Correct matches:</span>
+        <span className="videoQuizCorrectAnswerLabel">{t("quizCorrectMatches")}</span>
         {matchingPairs.map((pair, index) => (
           <span className="videoQuizCorrectAnswerPair" key={`${pair.left}-${pair.right}-${index}`}>
             <span className="videoQuizCorrectAnswerPrompt">{pair.left}</span>
@@ -591,13 +592,14 @@ function QuizCorrectAnswer({
 
   if (!summary) return null;
 
-  return <p className="videoQuizCorrectAnswer">Correct answer: {summary}</p>;
+  return <p className="videoQuizCorrectAnswer">{t("quizCorrectAnswerValue", { value: summary })}</p>;
 }
 
 function buildQuestionResults(
   questions: QuizQuestion[],
   answers: QuizAnswers,
-  questionReviews: Record<string, SaveAnswerReview>
+  questionReviews: Record<string, SaveAnswerReview>,
+  t: TranslateFn
 ) {
   return questions.map((question) => {
     const answer = answers[question.id];
@@ -606,11 +608,11 @@ function buildQuestionResults(
     return {
       questionId: question.id,
       prompt: question.prompt,
-      answerSummary: getAnswerSummary(question, answer),
+      answerSummary: getAnswerSummary(question, answer, t),
       isAnswered: isQuestionAnswered(question, answer),
       isCorrect: reviewStatus ? reviewStatus === "correct" : null,
       reviewStatus,
-      scoreSummary: getReviewScoreSummary(review),
+      scoreSummary: getReviewScoreSummary(review, t),
       correctAnswerSummary: getCorrectAnswerSummary(question, review),
       correctAnswerPairs: getCorrectAnswerPairs(question, review),
       explanation: review?.explanation ?? question.explanation,
@@ -691,6 +693,7 @@ function AnimatedTimer({ secondsLeft }: { secondsLeft: number }) {
 }
 
 function VideoQuizPage() {
+  const { t } = useI18n();
   const { quizId = "" } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -850,7 +853,7 @@ function VideoQuizPage() {
   const quizMaxAttempts = Math.max(0, Number(quizSummary?.max_attempts) || 0);
   const summaryQuestionCount = Math.max(0, Number(quizSummary?.question_count) || 0);
   const displayedQuestionCount = stage === "intro" ? summaryQuestionCount : questions.length || summaryQuestionCount;
-  const quizDisplayTitle = quizSummary?.title || "Quiz";
+  const quizDisplayTitle = quizSummary?.title || t("quizDefaultTitle");
   const attemptsLeft = Math.max(0, quizMaxAttempts - attempts.length);
   const hasMetQuizRequirements = requirementsStatus?.hasMetRequirements === true;
   const isRequirementsBlocking = requirementsStatus?.hasMetRequirements === false;
@@ -868,8 +871,8 @@ function VideoQuizPage() {
   const currentQuestionReview = currentQuestion ? questionReviews[currentQuestion.id] : undefined;
   const isQuizLoading = isQuizSummaryLoading || areAttemptsLoading || (stage !== "intro" && areQuestionsLoading);
   const summaryQuestionResults = useMemo(
-    () => buildQuestionResults(questions, answers, questionReviews),
-    [answers, questionReviews, questions]
+    () => buildQuestionResults(questions, answers, questionReviews, t),
+    [answers, questionReviews, questions, t]
   );
 
   useEffect(() => {
@@ -943,7 +946,7 @@ function VideoQuizPage() {
     if ((quizMaxAttempts > 0 && attemptsLeft <= 0) || !quizSummary || isStartingAttempt || isRequirementsBlocking) {
       if (isRequirementsBlocking) {
         setAreRequirementsOpen(true);
-        setQuizFlowError("Complete the quiz requirements before starting an attempt.");
+        setQuizFlowError(t("quizCompleteRequirementsBeforeStarting"));
       }
       return;
     }
@@ -963,7 +966,7 @@ function VideoQuizPage() {
       await queryClient.invalidateQueries({ queryKey: ["quiz-page-attempts", quizId] });
       beginAttemptFlow(response.attempt);
     } catch (error) {
-      setQuizFlowError(error instanceof Error ? error.message : "Failed to start quiz attempt.");
+      setQuizFlowError(error instanceof Error ? error.message : t("quizFailedStartAttempt"));
     } finally {
       setIsStartingAttempt(false);
     }
@@ -1015,7 +1018,7 @@ function VideoQuizPage() {
 
       return response;
     } catch (error) {
-      setQuizFlowError(error instanceof Error ? error.message : "Failed to save answer.");
+      setQuizFlowError(error instanceof Error ? error.message : t("quizFailedSaveAnswer"));
       return null;
     } finally {
       setSavingQuestionId(null);
@@ -1193,13 +1196,13 @@ function VideoQuizPage() {
         percentage: refreshedAttempt.score_percentage ?? latestSaveResponse?.score?.score_percentage ?? null,
         passed: refreshedAttempt.passed,
         attemptNumber: refreshedAttempt.attempt_number,
-        questionResults: buildQuestionResults(submittedQuizQuestions, submittedAnswers, submittedQuestionReviews),
+        questionResults: buildQuestionResults(submittedQuizQuestions, submittedAnswers, submittedQuestionReviews, t),
       });
       setDirtyQuestionIds(new Set());
       await queryClient.invalidateQueries({ queryKey: ["quiz-page-attempts", quizId] });
       setStage("results");
     } catch (error) {
-      setQuizFlowError(error instanceof Error ? error.message : "Failed to submit quiz attempt.");
+      setQuizFlowError(error instanceof Error ? error.message : t("quizFailedSubmitAttempt"));
     } finally {
       setIsSubmittingAttempt(false);
     }
@@ -1316,7 +1319,7 @@ function VideoQuizPage() {
                     handleMatchSelect(currentQuestion.id, pair.id, event.target.value)
                   }
                 >
-                  <option value="">Choose an answer</option>
+                  <option value="">{t("quizChooseAnswer")}</option>
                   {currentQuestion.choices.map((choice) => (
                     <option key={choice.id} value={choice.id}>
                       {choice.label}
@@ -1388,7 +1391,7 @@ function VideoQuizPage() {
             <span>
               <h2>{quizDisplayTitle}</h2>
               <p>
-                Certificate when completed • {displayedQuestionCount} questions • {formatQuizTimeLimitLabel(quizTimeLimitSeconds)}
+                {t("quizCertificateMeta", { count: displayedQuestionCount, time: formatQuizTimeLimitLabel(quizTimeLimitSeconds, t) })}
               </p>
             </span>
           </div>
@@ -1396,11 +1399,11 @@ function VideoQuizPage() {
           <div className="videoQuizTopActions">
             {(stage === "question" || stage === "review") && !isReadOnlyAttempt && (
               <span className={`videoQuizTimer ${secondsLeft <= 60 ? "urgent" : ""}`}>
-                <span>Time left:</span> <AnimatedTimer secondsLeft={secondsLeft} />
+                <span>{t("quizTimeLeft")}</span> <AnimatedTimer secondsLeft={secondsLeft} />
               </span>
             )}
 
-            <button type="button" onClick={handleExit} className="videoQuizCloseButton" aria-label="Close quiz">
+            <button type="button" onClick={handleExit} className="videoQuizCloseButton" aria-label={t("quizCloseQuiz")}>
               {CloseSVG}
             </button>
           </div>
@@ -1410,14 +1413,14 @@ function VideoQuizPage() {
           {stage === "intro" ? (
             <div className="videoQuizIntro">
               <div className="videoQuizSectionTitle">
-                <h3>Your last attempts</h3>
-                <p>{quizMaxAttempts > 0 ? `${attemptsLeft} attempts left` : "Attempts will appear here"}</p>
+                <h3>{t("quizYourLastAttempts")}</h3>
+                <p>{quizMaxAttempts > 0 ? t("quizAttemptsLeft", { count: attemptsLeft }) : t("quizAttemptsAppearHere")}</p>
               </div>
 
               {isQuizLoading ? (
                 <div className="videoQuizEmptyState">
-                  <strong>Loading quiz</strong>
-                  <p>Questions are being prepared for this video.</p>
+                  <strong>{t("quizLoadingQuiz")}</strong>
+                  <p>{t("quizQuestionsPreparing")}</p>
                 </div>
               ) : attempts.length > 0 ? (
                 <div className="videoQuizAttemptList">
@@ -1429,11 +1432,11 @@ function VideoQuizPage() {
                       />
 
                       <div className="videoQuizAttemptText">
-                        <strong>Attempt {attempt.attempt_number}</strong>
+                        <strong>{t("quizAttemptNumber", { count: attempt.attempt_number })}</strong>
                         <p>
                           {attempt.status === "in_progress"
-                            ? "In progress"
-                            : `You scored ${getAttemptScoreText(attempt)}`}
+                            ? t("quizInProgress")
+                            : t("quizYouScored", { score: getAttemptScoreText(attempt) })}
                         </p>
                       </div>
 
@@ -1443,15 +1446,15 @@ function VideoQuizPage() {
                         onClick={() => attempt.status === "in_progress" ? beginAttemptFlow(attempt) : viewAttempt(attempt)}
                         disabled={isQuizLoading}
                       >
-                        {attempt.status === "in_progress" ? "Continue" : "View"}
+                        {attempt.status === "in_progress" ? t("quizContinue") : t("quizView")}
                       </button>
                     </div>
                   ))}
                 </div>
               ) : !isRequirementsBlocking ? (
                 <div className="videoQuizEmptyState">
-                  <strong>No attempts yet</strong>
-                  <p>Start your first quiz attempt when you are ready.</p>
+                  <strong>{t("quizNoAttemptsYet")}</strong>
+                  <p>{t("quizStartFirstAttempt")}</p>
                 </div>
               ) : null}
 
@@ -1459,15 +1462,15 @@ function VideoQuizPage() {
                 <div className={`videoQuizRequirementsCard ${isRequirementsBlocking ? "blocked" : ""}`}>
                   <div className="videoQuizRequirementsSummary">
                     <div>
-                      <strong>Quiz requirements</strong>
+                      <strong>{t("quizRequirements")}</strong>
                       <p>
                         {areRequirementsLoading
-                          ? "Checking your eligibility..."
+                          ? t("quizCheckingEligibility")
                           : hasRequirementsStatusError
-                            ? "We could not check the requirements right now."
+                            ? t("quizCouldNotCheckRequirements")
                             : isRequirementsBlocking
-                              ? "Complete the required videos before starting."
-                              : "Open requirements to see what is needed."}
+                              ? t("quizCompleteRequiredVideos")
+                              : t("quizOpenRequirementsHint")}
                       </p>
                     </div>
 
@@ -1477,20 +1480,20 @@ function VideoQuizPage() {
                       onClick={() => setAreRequirementsOpen((current) => !current)}
                       disabled={areRequirementsLoading && !areRequirementsOpen}
                     >
-                      {areRequirementsOpen ? "Hide requirements" : "View requirements"}
+                      {areRequirementsOpen ? t("quizHideRequirements") : t("quizViewRequirements")}
                     </button>
                   </div>
 
                   <div className={`videoQuizRequirementsPanel ${areRequirementsOpen ? "open" : ""}`} aria-hidden={!areRequirementsOpen}>
                       {areRequirementVideosLoading ? (
                         <div className="videoQuizEmptyState">
-                          <strong>Loading requirements</strong>
-                          <p>Checking the videos linked to this quiz.</p>
+                          <strong>{t("quizLoadingRequirements")}</strong>
+                          <p>{t("quizCheckingLinkedVideos")}</p>
                         </div>
                       ) : hasRequirementVideosError ? (
                         <div className="videoQuizUnlockNotice error">
-                          <strong>Could not load requirements</strong>
-                          <p>Please try opening the requirements again.</p>
+                          <strong>{t("quizCouldNotLoadRequirements")}</strong>
+                          <p>{t("quizTryOpeningRequirementsAgain")}</p>
                         </div>
                       ) : requirementVideos.length > 0 ? (
                         <div className="videoQuizRequirementList">
@@ -1505,8 +1508,8 @@ function VideoQuizPage() {
                               )}
 
                               <div className="videoQuizRequirementVideoText">
-                                <strong>{video.title || "Required video"}</strong>
-                                <p>{getRequirementProgressText(video)}</p>
+                                <strong>{video.title || t("quizRequiredVideo")}</strong>
+                                <p>{getRequirementProgressText(video, t)}</p>
                               </div>
 
                               <div className="videoQuizRequirementVideoActions">
@@ -1520,7 +1523,7 @@ function VideoQuizPage() {
                                   className="videoQuizInlineButton"
                                   onClick={() => navigate(`/video/${video.id}`)}
                                 >
-                                  Watch
+                                  {t("quizWatch")}
                                 </button>
                               </div>
                             </div>
@@ -1528,8 +1531,8 @@ function VideoQuizPage() {
                         </div>
                       ) : (
                         <div className="videoQuizEmptyState">
-                          <strong>No requirement videos</strong>
-                          <p>There are no required videos listed for this quiz.</p>
+                          <strong>{t("quizNoRequirementVideos")}</strong>
+                          <p>{t("quizNoRequiredVideosListed")}</p>
                         </div>
                       )}
                     </div>
@@ -1538,35 +1541,35 @@ function VideoQuizPage() {
 
               {!isQuizLoading && !quizSummary ? (
                 <div className="videoQuizUnlockNotice">
-                  <strong>No quiz available</strong>
-                  <p>This video does not have a quiz yet.</p>
+                  <strong>{t("quizNoQuizAvailable")}</strong>
+                  <p>{t("quizVideoNoQuizYet")}</p>
                 </div>
               ) : null}
 
               {!isQuizLoading && quizSummary && !hasQuizQuestions ? (
                 <div className="videoQuizUnlockNotice">
-                  <strong>No questions yet</strong>
-                  <p>The quiz exists, but questions have not been added yet.</p>
+                  <strong>{t("quizNoQuestionsYet")}</strong>
+                  <p>{t("quizQuestionsNotAddedYet")}</p>
                 </div>
               ) : null}
 
               {quizMaxAttempts > 0 && attemptsLeft === 0 ? (
                 <div className="videoQuizUnlockNotice">
-                  <strong>No attempts left</strong>
-                  <p>You have used all {quizMaxAttempts} attempts for this quiz.</p>
+                  <strong>{t("quizNoAttemptsLeft")}</strong>
+                  <p>{t("quizUsedAllAttempts", { count: quizMaxAttempts })}</p>
                 </div>
               ) : null}
 
               {quizFlowError ? (
                 <div className="videoQuizUnlockNotice error">
-                  <strong>Quiz error</strong>
+                  <strong>{t("quizError")}</strong>
                   <p>{quizFlowError}</p>
                 </div>
               ) : null}
 
               <div className="videoQuizFooterActions">
                 <button type="button" className="videoQuizGhostButton" onClick={handleExit}>
-                  Cancel
+                  {t("cancel")}
                 </button>
                 <button
                   type="button"
@@ -1574,7 +1577,7 @@ function VideoQuizPage() {
                   onClick={startAttempt}
                   disabled={isQuizLoading || areRequirementsLoading || isStartingAttempt || !quizSummary || !hasQuizQuestions || isRequirementsBlocking || (quizMaxAttempts > 0 && attemptsLeft <= 0)}
                 >
-                  {isStartingAttempt ? "Starting..." : "Attempt"} {ArrowSVG}
+                  {isStartingAttempt ? t("quizStarting") : t("quizAttempt")} {ArrowSVG}
                 </button>
               </div>
             </div>
@@ -1584,9 +1587,9 @@ function VideoQuizPage() {
             <div className={`videoQuizShell ${stage === "review" ? "summaryShell" : ""}`}>
               {stage === "question" ? (
               <aside className="videoQuizSidebar">
-                <h3>Questions</h3>
+                <h3>{t("quizQuestions")}</h3>
                 <p>
-                  {answeredCount}/{questions.length} answered
+                  {t("quizAnsweredCount", { answered: answeredCount, total: questions.length })}
                 </p>
 
                 <div className="videoQuizGrid">
@@ -1614,7 +1617,7 @@ function VideoQuizPage() {
                   disabled={savingQuestionId === currentQuestion?.id}
                   onClick={handleOpenReview}
                 >
-                  {isReadOnlyAttempt ? "Attempt summary" : "Finish Attempt..."}
+                  {isReadOnlyAttempt ? t("quizAttemptSummary") : t("quizFinishAttemptEllipsis")}
                 </button>
               </aside>
               ) : null}
@@ -1622,8 +1625,8 @@ function VideoQuizPage() {
               {stage === "question" && !currentQuestion ? (
                 <section className="videoQuizQuestionPanel">
                   <div className="videoQuizEmptyState">
-                    <strong>Loading questions</strong>
-                    <p>Your attempt is being prepared.</p>
+                    <strong>{t("quizLoadingQuestions")}</strong>
+                    <p>{t("quizAttemptPreparing")}</p>
                   </div>
                 </section>
               ) : stage === "question" && currentQuestion ? (
@@ -1636,7 +1639,7 @@ function VideoQuizPage() {
                       <span className="videoQuizQuestionNumber">{currentQuestionIndex + 1}</span>
                       <div>
                         <h3>{currentQuestion.prompt}</h3>
-                        <p>{currentQuestion.type === "single" ? "Single choice" : currentQuestion.type === "multiple" ? "Multiple choice" : "Match concepts"}</p>
+                        <p>{currentQuestion.type === "single" ? t("quizSingleChoice") : currentQuestion.type === "multiple" ? t("quizMultipleChoice") : t("quizMatchConcepts")}</p>
                       </div>
                     </div>
 
@@ -1644,7 +1647,7 @@ function VideoQuizPage() {
 
                     {quizFlowError ? (
                       <div className="videoQuizFeedbackCard error">
-                        <strong>Could not save answer</strong>
+                        <strong>{t("quizCouldNotSaveAnswer")}</strong>
                         <p>{quizFlowError}</p>
                       </div>
                     ) : null}
@@ -1653,18 +1656,19 @@ function VideoQuizPage() {
                       <div className={`videoQuizFeedbackCard ${getReviewStatus(currentQuestionReview) ?? "incorrect"}`}>
                         <strong>
                           {getReviewStatus(currentQuestionReview) === "correct"
-                            ? "Correct answer"
+                            ? t("quizCorrectAnswer")
                             : getReviewStatus(currentQuestionReview) === "partial"
-                              ? "Partially correct"
-                              : "Not quite right"}
+                              ? t("quizPartiallyCorrect")
+                              : t("quizNotQuiteRight")}
                         </strong>
                         <p>
-                          {currentQuestionReview.awarded_points ?? 0}/{currentQuestionReview.max_points ?? "-"} points
+                          {t("quizPointsScore", { score: currentQuestionReview.awarded_points ?? 0, total: currentQuestionReview.max_points ?? "-" })}
                         </p>
-                        <QuizExplanation explanation={currentQuestionReview.explanation} />
+                        <QuizExplanation explanation={currentQuestionReview.explanation} t={t} />
                         <QuizCorrectAnswer
                           summary={getCorrectAnswerSummary(currentQuestion, currentQuestionReview)}
                           pairs={getCorrectAnswerPairs(currentQuestion, currentQuestionReview)}
+                          t={t}
                         />
                       </div>
                     ) : null}
@@ -1678,7 +1682,7 @@ function VideoQuizPage() {
                         disabled={savingQuestionId === currentQuestion.id}
                         onClick={() => handleQuestionNavigation(Math.max(0, currentQuestionIndex - 1))}
                       >
-                        Previous Question
+                        {t("quizPreviousQuestion")}
                       </button>
                     ) : null}
 
@@ -1690,10 +1694,10 @@ function VideoQuizPage() {
                         onClick={handleNextQuestion}
                       >
                         {savingQuestionId === currentQuestion.id
-                          ? "Saving..."
+                          ? t("saving")
                           : !isReadOnlyAttempt && isImmediateReview && !currentQuestionReview
-                            ? "Check answer"
-                            : "Next Question"} {ArrowSVG}
+                            ? t("quizCheckAnswer")
+                            : t("quizNextQuestion")} {ArrowSVG}
                       </button>
                     ) : (
                       <button
@@ -1703,17 +1707,17 @@ function VideoQuizPage() {
                         onClick={() => void handleLastQuestionAction()}
                       >
                         {savingQuestionId === currentQuestion.id
-                          ? "Saving..."
+                          ? t("saving")
                           : !isReadOnlyAttempt && isImmediateReview && !currentQuestionReview
-                            ? "Check answer"
-                            : "Review Attempt"} {ArrowSVG}
+                            ? t("quizCheckAnswer")
+                            : t("quizReviewAttempt")} {ArrowSVG}
                       </button>
                     )}
                   </div>
                 </section>
               ) : (
                 <section className="videoQuizReviewPanel">
-                  <h3>{isReadOnlyAttempt ? `Attempt ${activeAttempt?.attempt_number ?? ""} review` : "Answered all questions?"}</h3>
+                  <h3>{isReadOnlyAttempt ? t("quizAttemptReviewTitle", { count: activeAttempt?.attempt_number ?? "" }) : t("quizAnsweredAllQuestions")}</h3>
 
                   <div className="videoQuizReviewList">
                     {summaryQuestionResults.map((result, index) => {
@@ -1735,7 +1739,7 @@ function VideoQuizPage() {
                               {shouldShowReviewDetails ? (
                                 <div className="videoQuizReviewMeta">
                                   <span className={`videoQuizReviewStatus ${result.reviewStatus ?? ""}`}>
-                                    {getReviewStatusLabel(result.reviewStatus)}
+                                    {getReviewStatusLabel(result.reviewStatus, t)}
                                   </span>
                                   {result.scoreSummary ? (
                                     <span className="videoQuizScoreChip">{result.scoreSummary}</span>
@@ -1747,9 +1751,10 @@ function VideoQuizPage() {
                               <QuizCorrectAnswer
                                 summary={result.correctAnswerSummary}
                                 pairs={result.correctAnswerPairs}
+                                t={t}
                               />
                             ) : null}
-                            {shouldShowReviewDetails ? <QuizExplanation explanation={result.explanation} /> : null}
+                            {shouldShowReviewDetails ? <QuizExplanation explanation={result.explanation} t={t} /> : null}
                           </div>
                         </div>
                       );
@@ -1763,15 +1768,15 @@ function VideoQuizPage() {
                       onClick={isReadOnlyAttempt ? () => handleQuestionNavigation(0) : goToFirstIncomplete}
                       disabled={isSubmittingAttempt || questions.length === 0}
                     >
-                      {isReadOnlyAttempt ? "View questions" : "Back to quiz"}
+                      {isReadOnlyAttempt ? t("quizViewQuestions") : t("quizBackToQuiz")}
                     </button>
                     {isReadOnlyAttempt ? (
                       <button type="button" className="videoQuizPrimaryButton" onClick={() => setStage("intro")}>
-                        Back to attempts
+                        {t("quizBackToAttempts")}
                       </button>
                     ) : (
                       <button type="button" className="videoQuizPrimaryButton" onClick={finishAttemptAction} disabled={isSubmittingAttempt}>
-                        {isSubmittingAttempt ? "Submitting..." : "Finish attempt"}
+                        {isSubmittingAttempt ? t("quizSubmitting") : t("quizFinishAttempt")}
                       </button>
                     )}
                   </div>
@@ -1783,9 +1788,9 @@ function VideoQuizPage() {
           {stage === "results" && latestResult ? (
             <div className="videoQuizResults">
               <div className="videoQuizResultHeadline">
-                <h3>{latestResult.passed === true ? "Congrats!" : "Quiz complete"}</h3>
+                <h3>{latestResult.passed === true ? t("quizCongrats") : t("quizComplete")}</h3>
                 <p>
-                  Current score: {latestResult.score ?? "-"}/{latestResult.total ?? "-"}
+                  {t("quizCurrentScore", { score: latestResult.score ?? "-", total: latestResult.total ?? "-" })}
                   {latestResult.percentage ? ` (${latestResult.percentage}%)` : ""}
                 </p>
               </div>
@@ -1808,10 +1813,11 @@ function VideoQuizPage() {
                       <QuizCorrectAnswer
                         summary={result.correctAnswerSummary}
                         pairs={result.correctAnswerPairs}
+                        t={t}
                       />
 
                       {result.isCorrect === false && result.explanation ? (
-                        <QuizExplanation explanation={result.explanation} />
+                        <QuizExplanation explanation={result.explanation} t={t} />
                       ) : null}
                     </div>
                   </div>
@@ -1820,7 +1826,7 @@ function VideoQuizPage() {
 
               <div className="videoQuizFooterActions">
                 <button type="button" className="videoQuizGhostButton" onClick={handleExit}>
-                  Close quiz
+                  {t("quizCloseQuiz")}
                 </button>
                 <button
                   type="button"
@@ -1828,7 +1834,7 @@ function VideoQuizPage() {
                   onClick={startAttempt}
                   disabled={isQuizLoading || isStartingAttempt || !quizSummary || (quizMaxAttempts > 0 && attempts.length >= quizMaxAttempts)}
                 >
-                  Attempt again {ArrowSVG}
+                  {t("quizAttemptAgain")} {ArrowSVG}
                 </button>
               </div>
             </div>
