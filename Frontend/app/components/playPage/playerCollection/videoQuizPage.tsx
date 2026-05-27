@@ -649,7 +649,7 @@ function buildAnswerPayload(question: QuizQuestion, answer: QuizAnswers[string])
 }
 
 function QuizStatusIcon({ passed, status }: { passed?: boolean; status?: "correct" | "partial" | "incorrect" | "in_progress" | null }) {
-  const iconStatus = status ?? (passed ? "correct" : "incorrect");
+  const iconStatus = status ?? (typeof passed === "boolean" ? (passed ? "correct" : "incorrect") : "not_checked");
 
   return (
     <span className={`videoQuizStatusIcon ${iconStatus === "correct" ? "passed" : iconStatus}`}>
@@ -663,6 +663,8 @@ function QuizStatusIcon({ passed, status }: { passed?: boolean; status?: "correc
             <path d="M12 7V12L15.5 14" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
             <path d="M20 12A8 8 0 1 1 4 12A8 8 0 0 1 20 12Z" stroke="currentColor" strokeWidth="2.2" />
           </>
+        ) : iconStatus === "not_checked" ? (
+          <path d="M7 12H17" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
         ) : (
           <>
             <path d="M8 8L16 16" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />

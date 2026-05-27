@@ -2746,6 +2746,11 @@ mux-player::part(menu-item) {
   background: rgba(245, 158, 11, 0.16);
 }
 
+.videoQuizPage .videoQuizStatusIcon.not_checked {
+  color: var(--text2);
+  background: rgba(148, 163, 184, 0.18);
+}
+
 .videoQuizPage .videoQuizStatusIcon.incorrect,
 .videoQuizPage .videoQuizStatusIcon.failed {
   color: #ff9a9a;
@@ -2954,6 +2959,8 @@ mux-player::part(menu-item) {
 }
 
 .videoQuizPage .videoQuizReviewPanel {
+  display: flex;
+  flex-direction: column;
   padding-top: 10px;
 }
 
@@ -3397,6 +3404,11 @@ mux-player::part(menu-item) {
 }
 
 @media screen and (max-width: 980px) {
+  .videoQuizPage {
+    padding: 16px;
+    padding-top: calc(var(--headerHeight, 90px) + 22px);
+  }
+
   .videoQuizPage .videoQuizPageContent {
     padding: 20px;
   }
@@ -3410,8 +3422,39 @@ mux-player::part(menu-item) {
     width: min(680px, calc(100vw - 28px));
   }
 
+  .videoQuizPage .videoQuizAttemptCard {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .videoQuizPage .videoQuizAttemptViewButton {
+    width: auto;
+    min-width: 112px;
+  }
+
   .videoQuizPage .videoQuizPageContent.flowStage {
     min-height: 0;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizTop {
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizHeading h2 {
+    font-size: clamp(1.3rem, 3vw, 1.75rem);
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizHeading p {
+    font-size: 0.95rem;
+    line-height: 1.25;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizBadge {
+    width: 54px;
+    height: 54px;
+    border-radius: 14px;
   }
 
   .videoQuizPage .videoQuizShell {
@@ -3493,6 +3536,11 @@ mux-player::part(menu-item) {
 }
 
 @media screen and (max-width: 720px) {
+  .videoQuizPage {
+    padding: 12px;
+    padding-top: calc(var(--headerHeight, 90px) + 18px);
+  }
+
   .videoQuizPage .videoQuizPageContent {
     width: calc(100vw - 16px);
     max-height: calc(100vh - 16px);
@@ -3507,21 +3555,119 @@ mux-player::part(menu-item) {
     padding: 0;
   }
 
+  .videoQuizPage .videoQuizPageContent.introStage {
+    width: 100%;
+  }
+
   .videoQuizPage .videoQuizTop {
     flex-direction: column;
     align-items: stretch;
     padding-bottom: 20px;
     position: relative;
-    padding-right: 74px;
+    padding-right: 0;
   }
 
   .videoQuizPage .videoQuizHeading {
+    flex-direction: column;
     align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .videoQuizPage .videoQuizHeading > span:last-child {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .videoQuizPage .videoQuizHeading h2 {
+    font-size: clamp(1.35rem, 7vw, 1.8rem);
+  }
+
+  .videoQuizPage .videoQuizHeading p {
+    font-size: 0.95rem;
+    line-height: 1.35;
   }
 
   .videoQuizPage .videoQuizBadge {
     width: 52px;
     height: 52px;
+  }
+
+  .videoQuizPage .videoQuizAttemptCard {
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    gap: 0.8rem;
+    padding: 14px;
+  }
+
+  .videoQuizPage .videoQuizAttemptViewButton {
+    width: auto;
+    min-width: 100px;
+    padding: 0 18px;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizTop {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 0 0 14px;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizHeading {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+    min-width: 0;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizHeading > span:last-child {
+    min-width: 0;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizHeading h2 {
+    font-size: clamp(1.22rem, 6vw, 1.55rem);
+    line-height: 1.08;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizHeading p {
+    margin-top: 0.35rem;
+    font-size: 0.88rem;
+    line-height: 1.25;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizBadge {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizBadge svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizTopActions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizTimer {
+    align-self: flex-start;
+    min-height: 40px;
+    padding: 8px 13px;
+    font-size: 0.88rem;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizCloseButton {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    padding: 0;
   }
 
   .videoQuizPage .videoQuizTopActions,
@@ -3556,6 +3702,40 @@ mux-player::part(menu-item) {
 
   .videoQuizPage .videoQuizQuestionPanel .videoQuizActionRow {
     margin-bottom: 1.25rem;
+  }
+
+  .videoQuizPage .videoQuizReviewPanel h3 {
+    order: 1;
+  }
+
+  .videoQuizPage .videoQuizReviewPanel .videoQuizActionRow {
+    order: 2;
+    margin-top: 0;
+    margin-bottom: 1rem;
+  }
+
+  .videoQuizPage .videoQuizReviewPanel .videoQuizReviewList {
+    order: 3;
+  }
+
+  .videoQuizPage .videoQuizReviewCard {
+    position: relative;
+    display: block;
+    padding-right: 56px;
+  }
+
+  .videoQuizPage .videoQuizReviewCard > .videoQuizStatusIcon {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+  }
+
+  .videoQuizPage .videoQuizReviewCard > .videoQuizStatusIcon svg {
+    width: 18px;
+    height: 18px;
   }
 
   .videoQuizPage .videoQuizQuestionHeader {
@@ -3631,6 +3811,59 @@ mux-player::part(menu-item) {
     max-height: min(48vh, 420px);
   }
 
+  .videoQuizPage .introStage .videoQuizFooterActions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media screen and (max-width: 450px) {
+  .videoQuizPage .videoQuizPageContent {
+    width: 100%;
+    padding: 14px;
+    border-radius: 22px;
+  }
+
+  .videoQuizPage .videoQuizAttemptCard {
+    grid-template-columns: 42px minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .videoQuizPage .videoQuizAttemptCard .videoQuizStatusIcon {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .videoQuizPage .videoQuizAttemptViewButton {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    min-width: 0;
+    margin-top: 0.25rem;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizTop {
+    gap: 12px;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizHeading h2 {
+    font-size: 1.18rem;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizHeading p {
+    font-size: 0.82rem;
+  }
+
+  .videoQuizPage .videoQuizQuestionHeader {
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+  }
+
+  .videoQuizPage .videoQuizQuestionHeader h3 {
+    font-size: 1.25rem;
+  }
+}
+
+@media screen and (max-width: 380px) {
   .videoQuizPage .introStage .videoQuizFooterActions {
     grid-template-columns: 1fr;
   }
