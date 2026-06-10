@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { fetchFn } from "~/API";
 import { ArrowSVG, CloseSVG, IconChevron, QuizSVG } from "~/constants";
-import { getToken } from "~/functions";
+import { appendFromQuizParam, getToken, QUIZ_RETURN_PATH_STORAGE_KEY } from "~/functions";
 import { useI18n } from "~/i18n";
 
 type TranslateFn = ReturnType<typeof useI18n>["t"];
@@ -543,6 +543,18 @@ function QuizExplanation({ explanation, t }: { explanation?: string | null; t: T
   const { text, links } = parseExplanation(normalizedExplanation, t);
   const getExplanationLinkLabel = (label: string) =>
     label.toLowerCase() === "explanation" ? t("quizWatchExplanationSegment") : label;
+  const handleExplanationLinkClick = () => {
+    if (typeof window === "undefined") return;
+
+    try {
+      window.localStorage.setItem(
+        QUIZ_RETURN_PATH_STORAGE_KEY,
+        `${window.location.pathname}${window.location.search}${window.location.hash}`
+      );
+    } catch {
+      // The video page can still fall back to browser history if storage is unavailable.
+    }
+  };
 
   return (
     <div className="videoQuizExplanation">
@@ -553,7 +565,7 @@ function QuizExplanation({ explanation, t }: { explanation?: string | null; t: T
             <span key={`${link.url}-${index}`}>
               {text || index > 0 ? " " : ""}
               {index > 0 ? "• " : ""}
-              <a href={link.url} target="_blank" rel="noreferrer">
+              <a href={appendFromQuizParam(link.url)} target="_blank" rel="noopener noreferrer" onClick={handleExplanationLinkClick}>
                 {getExplanationLinkLabel(link.label)}
               </a>
             </span>

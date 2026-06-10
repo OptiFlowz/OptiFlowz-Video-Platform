@@ -8,9 +8,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { SimilarT, VideoT } from "~/types";
 import InPlaylist from "./inPlaylist";
 import PlayingPlaylist from "./playerCollection/playingPlaylist";
-import { getToken } from "~/functions";
+import { getToken, QUIZ_RETURN_PATH_STORAGE_KEY } from "~/functions";
 import VideoChapters from "./playerCollection/videoChapters";
 import CommentsSection from "./commentsSection";
+import { useI18n } from "~/i18n";
 
 function parseVideoSearch(search: string) {
     const params = new URLSearchParams(search);
@@ -19,6 +20,7 @@ function parseVideoSearch(search: string) {
 
     return {
         playlistId: params.get("p"),
+        isFromQuiz: params.get("from_quiz") === "true",
         startTimeOverride: rawTime != null && parsedTime != null && Number.isFinite(parsedTime) && parsedTime >= 0 ? parsedTime : null,
     };
 }
@@ -27,6 +29,7 @@ function PlayPage(){
     const {videoId} = useParams();
     const navigate = useNavigate();
     const location = useLocation();
+    const { t } = useI18n();
     const queryClient = useQueryClient();
     const [showChapters, setShowChapters] = useState(false);
     const [showComments, setShowComments] = useState(false);
@@ -35,7 +38,7 @@ function PlayPage(){
     const theaterEnabled = useRef(true);
     const chaptersRef = useRef<HTMLDivElement | null>(null);
     const playlistRef = useRef<HTMLDivElement | null>(null);
-    const { playlistId, startTimeOverride } = useMemo(
+    const { playlistId, isFromQuiz, startTimeOverride } = useMemo(
         () => parseVideoSearch(location.search),
         [location.search]
     );
@@ -82,6 +85,25 @@ function PlayPage(){
 
     const handleCloseComments = () => {
         setShowComments(false);
+    };
+
+    const handleBackToQuiz = () => {
+        if (typeof window !== "undefined") {
+            let quizReturnPath: string | null = null;
+
+            try {
+                quizReturnPath = window.localStorage.getItem(QUIZ_RETURN_PATH_STORAGE_KEY);
+            } catch {
+                quizReturnPath = null;
+            }
+
+            if (quizReturnPath?.startsWith("/quiz/")) {
+                navigate(quizReturnPath);
+                return;
+            }
+        }
+
+        navigate(-1);
     };
 
     function openChapters() {
@@ -209,6 +231,11 @@ function PlayPage(){
     const hasSimilarVideos = (resolvedSimilarData?.videos?.length ?? 0) > 0;
     const hasRelevantPanelsOpen = showChapters || showComments || !!playlistId;
     const isCompactRelevant = !isLoadingSimilar && !hasSimilarVideos && !hasRelevantPanelsOpen;
+    const backToQuizButton = isFromQuiz ? (
+        <button type="button" className="backToQuizButton" onClick={handleBackToQuiz}>
+            {t("quizBackToQuiz")}
+        </button>
+    ) : null;
 
     return <>
         <main className={`play ${isTheater ? "theater pt-23!" : ""} px-0 py-7.5`}>
@@ -216,6 +243,7 @@ function PlayPage(){
                 !isTheater 
                 ? <>
                     <div className="flex flex-col gap-5 overflow-x-hidden">
+                        {backToQuizButton}
                         <PlayerCollection props={videoData} startTimeOverride={startTimeOverride} />
 
                         <VideoInfo
@@ -239,6 +267,7 @@ function PlayPage(){
                 </>
                 : <>
                     <div className="flex flex-col gap-5 overflow-x-hidden mx-auto">
+                        {backToQuizButton}
                         <PlayerCollection props={videoData ? {...videoData, class: "theater"} : undefined} startTimeOverride={startTimeOverride} />
                         
                         <div className="flex gap-5 overflow-x-hidden">

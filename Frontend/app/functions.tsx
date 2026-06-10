@@ -45,6 +45,32 @@ export function formatDuration(duration: number): string{
     return (hours ? (hours + ':') : '') + minutes + ':' + seconds;
 }
 
+export const QUIZ_RETURN_PATH_STORAGE_KEY = "optiflowzQuizReturnPath";
+
+export function appendFromQuizParam(url: string): string {
+  const trimmedUrl = url.trim();
+  if (!trimmedUrl) return url;
+
+  try {
+    const isAbsoluteUrl = /^[a-z][a-z\d+\-.]*:\/\//i.test(trimmedUrl);
+    const baseUrl =
+      typeof window !== "undefined" && window.location?.origin
+        ? window.location.origin
+        : "https://videoplatform.optiflowz.com";
+    const parsedUrl = new URL(trimmedUrl, baseUrl);
+
+    parsedUrl.searchParams.set("from_quiz", "true");
+
+    if (isAbsoluteUrl) {
+      return parsedUrl.toString();
+    }
+
+    return `${parsedUrl.pathname}${parsedUrl.search}${parsedUrl.hash}`;
+  } catch {
+    return trimmedUrl;
+  }
+}
+
 const displayTimeout: {[id: string]: ReturnType<typeof setTimeout>} = {};
 export function changeElementClass(props: {element: HTMLElement | null, show?: boolean, timeout?: number}){
     if(!props.element) return;

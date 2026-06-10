@@ -1615,6 +1615,22 @@ main.play .relevant.relevant--compact {
   max-width: 18%;
 }
 
+main.play .backToQuizButton {
+  width: fit-content;
+  padding: 0.85rem 1.35rem;
+  border-radius: 999px;
+  background-color: var(--accentBlue);
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 10px 24px rgba(59, 130, 246, 0.2);
+  transition: 0.2s ease;
+}
+
+main.play .backToQuizButton:hover {
+  background-color: var(--accentBlue2);
+  transform: translateY(-1px);
+}
+
 main.play .player {
   background-color: black;
   border-radius: 1rem;
