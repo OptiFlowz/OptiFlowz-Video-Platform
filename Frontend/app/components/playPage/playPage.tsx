@@ -243,7 +243,6 @@ function PlayPage(){
                 !isTheater 
                 ? <>
                     <div className="flex flex-col gap-5 overflow-x-hidden">
-                        {backToQuizButton}
                         <PlayerCollection props={videoData} startTimeOverride={startTimeOverride} />
 
                         <VideoInfo
@@ -251,6 +250,7 @@ function PlayPage(){
                             isLoading={isVideoLoading}
                             onOpenChapter={openChapters}
                             onOpenComments={ isMobileCommentsDrawer ? openComments : undefined }
+                            topAction={backToQuizButton}
                         />
 
                         {videoData?.playlists && <InPlaylist props={videoData?.playlists} />}
@@ -267,12 +267,11 @@ function PlayPage(){
                 </>
                 : <>
                     <div className="flex flex-col gap-5 overflow-x-hidden mx-auto">
-                        {backToQuizButton}
                         <PlayerCollection props={videoData ? {...videoData, class: "theater"} : undefined} startTimeOverride={startTimeOverride} />
                         
                         <div className="flex gap-5 overflow-x-hidden">
                             <div className="flex flex-col gap-5 overflow-x-hidden">
-                                <VideoInfo props={videoData} isLoading={isVideoLoading} onOpenChapter={openChapters} />
+                                <VideoInfo props={videoData} isLoading={isVideoLoading} onOpenChapter={openChapters} topAction={backToQuizButton} />
 
                                 {videoData?.playlists && <InPlaylist props={videoData?.playlists} />}
 

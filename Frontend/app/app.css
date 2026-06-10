@@ -1616,7 +1616,11 @@ main.play .relevant.relevant--compact {
 }
 
 main.play .backToQuizButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: fit-content;
+  margin-bottom: 1rem;
   padding: 0.85rem 1.35rem;
   border-radius: 999px;
   background-color: var(--accentBlue);

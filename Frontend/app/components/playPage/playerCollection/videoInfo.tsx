@@ -4,6 +4,7 @@ import { fetchFn } from "~/API";
 import { env } from "~/env";
 import { formatDate, formatViews, formatDescription, getToken } from "~/functions";
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { ReactNode } from "react";
 import type { FetchCommentRepliesT, FetchVideoCommentsT, VideoT } from "~/types";
 import { Link, useLocation } from "react-router";
 import ChairPopup from "./chairPopup";
@@ -190,11 +191,13 @@ function VideoInfo({
     isLoading,
     onOpenChapter,
     onOpenComments,
+    topAction,
 }: {
     props?: VideoT,
     isLoading?: boolean,
     onOpenChapter: () => void,
-    onOpenComments?: () => void
+    onOpenComments?: () => void,
+    topAction?: ReactNode,
 }) {
     const { t } = useI18n();
     const location = useLocation();
@@ -449,6 +452,7 @@ function VideoInfo({
 
     return <>
         <div className="videoInfo">
+            {topAction}
             <span className="videoTitleHolder flex items-start justify-between">
                 <span>
                     <h2 className="text-xl font-medium max-[500px]:text-lg">{props?.title}</h2>
