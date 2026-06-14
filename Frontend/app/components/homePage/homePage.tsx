@@ -3,12 +3,41 @@ import HeroLarge from "../../../assets/Slider1.webp";
 import HeroMedium from "../../../assets/Slider2.webp";
 import HeroSmall from "../../../assets/Slider3.webp";
 import Slider from "./slider/slider";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useI18n } from "~/i18n";
+import { useSearchParams } from "react-router";
+import MessagePopup from "../messagePopup/messagePopup";
 
 function HomePage(){
     const { t } = useI18n();
     const paragraphRef = useRef<HTMLDivElement>(null);
+    const [searchParams] = useSearchParams();
+    const registeredStatus = searchParams.get("registered");
+    const hasHandledRegisteredPopup = useRef(false);
+    const [popupState, setPopupState] = useState({
+        open: false,
+        message: "",
+        autoCloseMs: 2000,
+    });
+
+    useEffect(() => {
+        if (registeredStatus !== "success" || hasHandledRegisteredPopup.current) return;
+
+        hasHandledRegisteredPopup.current = true;
+
+        setPopupState({
+            open: true,
+            message: t("registeredSuccessfully"),
+            autoCloseMs: 2000,
+        });
+
+        const nextParams = new URLSearchParams(searchParams);
+        nextParams.delete("registered");
+        const nextSearch = nextParams.toString();
+        const nextUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ""}${window.location.hash}`;
+
+        window.history.replaceState(null, "", nextUrl);
+    }, [registeredStatus, searchParams, t]);
 
     return <>
         <main className="homePage pb-10">
@@ -49,6 +78,12 @@ function HomePage(){
             <ItemSlider props={{type: 2}} />
             <ItemSlider props={{type: 1}} />
         </main>
+        <MessagePopup
+            open={popupState.open}
+            message={popupState.message}
+            autoCloseMs={popupState.autoCloseMs}
+            onClose={() => setPopupState((prev) => ({ ...prev, open: false }))}
+        />
     </>;
 }
 

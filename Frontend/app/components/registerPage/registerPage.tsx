@@ -1,6 +1,6 @@
 import { passwordHideSVG, passwordShowSVG } from "~/constants";
 import { useLayoutEffect, useRef, useState, useEffect } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { Link, useNavigate } from "react-router";
 import type { AuthFetchT } from "~/types";
 import { fetchFn } from "~/API";
 import OptiFlowzLogo from "../../../assets/OptiFlowzLogo.webp";
@@ -42,9 +42,6 @@ function SetupWizardPage() {
         message: "",
     });
 
-    const [searchParams] = useSearchParams();
-    const redirect = searchParams.get("redirect");
-    
     const email = useRef<HTMLInputElement>(null);
     const password = useRef<HTMLInputElement>(null);
     const firstName = useRef<HTMLInputElement>(null);
@@ -119,9 +116,16 @@ function SetupWizardPage() {
                 openMessagePopup(t("invalidCredentials"), false);
             
             if("token" in res && res.token){
-                const fallback = "/login";
-                const redirectTo = redirect ? `/login?redirect=${redirect}` : false || fallback;
-                navigate(redirectTo);
+                localStorage.removeItem("user");
+                sessionStorage.removeItem("user");
+                localStorage.setItem("rememberMe", "true");
+                localStorage.setItem("user", JSON.stringify(res));
+                localStorage.autoplay = "true";
+
+                const params = new URLSearchParams();
+                params.set("registered", "success");
+
+                navigate(`/?${params.toString()}`);
             }
         })
         .catch((err) => {
@@ -222,9 +226,7 @@ function SetupWizardPage() {
                                 </button>
                             </span>
                             <Link
-                                to={`/login${
-                                redirect ? `?redirect=${redirect}` : ""
-                                }`}
+                                to="/login"
                                 className="button text-(--accentOrange) mt-4! block"
                             >
                                 {t("alreadyHaveAccount")}
