@@ -243,7 +243,11 @@ function PlayPage(){
                 !isTheater 
                 ? <>
                     <div className="flex flex-col gap-5 overflow-x-hidden">
-                        <PlayerCollection props={videoData} startTimeOverride={startTimeOverride} />
+                        <PlayerCollection
+                            props={videoData}
+                            startTimeOverride={startTimeOverride}
+                            forceAutoplay={isFromQuiz}
+                        />
 
                         <VideoInfo
                             props={videoData}
@@ -267,7 +271,11 @@ function PlayPage(){
                 </>
                 : <>
                     <div className="flex flex-col gap-5 overflow-x-hidden mx-auto">
-                        <PlayerCollection props={videoData ? {...videoData, class: "theater"} : undefined} startTimeOverride={startTimeOverride} />
+                        <PlayerCollection
+                            props={videoData ? {...videoData, class: "theater"} : undefined}
+                            startTimeOverride={startTimeOverride}
+                            forceAutoplay={isFromQuiz}
+                        />
                         
                         <div className="flex gap-5 overflow-x-hidden">
                             <div className="flex flex-col gap-5 overflow-x-hidden">

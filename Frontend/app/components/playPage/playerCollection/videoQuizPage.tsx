@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useLocation, useNavigate, useParams } from "react-router";
 import { fetchFn } from "~/API";
 import { ArrowSVG, CloseSVG, IconChevron, QuizSVG } from "~/constants";
 import { appendFromQuizParam, getToken, QUIZ_RETURN_PATH_STORAGE_KEY } from "~/functions";
@@ -536,7 +536,15 @@ function parseExplanation(explanation: string, t: TranslateFn) {
   };
 }
 
-function QuizExplanation({ explanation, t }: { explanation?: string | null; t: TranslateFn }) {
+function QuizExplanation({
+  explanation,
+  returnPath,
+  t,
+}: {
+  explanation?: string | null;
+  returnPath?: string;
+  t: TranslateFn;
+}) {
   const normalizedExplanation = explanation?.trim();
   if (!normalizedExplanation) return null;
 
@@ -549,7 +557,7 @@ function QuizExplanation({ explanation, t }: { explanation?: string | null; t: T
     try {
       window.localStorage.setItem(
         QUIZ_RETURN_PATH_STORAGE_KEY,
-        `${window.location.pathname}${window.location.search}${window.location.hash}`
+        returnPath ?? `${window.location.pathname}${window.location.search}${window.location.hash}`
       );
     } catch {
       // The video page can still fall back to browser history if storage is unavailable.
@@ -709,6 +717,7 @@ function AnimatedTimer({ secondsLeft }: { secondsLeft: number }) {
 function VideoQuizPage() {
   const { t } = useI18n();
   const { quizId = "" } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [stage, setStage] = useState<"intro" | "question" | "review" | "results">("intro");
@@ -730,6 +739,9 @@ function VideoQuizPage() {
   const finishAttemptRef = useRef<() => void>(() => {});
   const saveDirtyAnswersRef = useRef<() => void>(() => {});
   const dirtyAnswersSavePromiseRef = useRef<Promise<SaveDirtyAnswersResult> | null>(null);
+  const pendingReturnQuestionIdRef = useRef<string | null>(null);
+  const pendingReturnAttemptIdRef = useRef<string | null>(null);
+  const handledReturnPathRef = useRef("");
   const requestHeaders = useMemo(() => {
     const headers = new Headers();
     headers.set("Content-Type", "application/json");
@@ -889,6 +901,20 @@ function VideoQuizPage() {
     [answers, questionReviews, questions, t]
   );
 
+  const buildReturnPathForQuestion = (questionId: string) => {
+    const params = new URLSearchParams(location.search);
+    params.set("return_question_id", questionId);
+
+    if (activeAttempt?.id) {
+      params.set("return_attempt_id", activeAttempt.id);
+    } else {
+      params.delete("return_attempt_id");
+    }
+
+    const search = params.toString();
+    return `${location.pathname}${search ? `?${search}` : ""}${location.hash}`;
+  };
+
   useEffect(() => {
     setStage("intro");
     setAnswers({});
@@ -902,7 +928,53 @@ function VideoQuizPage() {
     setIsSubmittingAttempt(false);
     setQuizFlowError("");
     setAreRequirementsOpen(false);
+    pendingReturnQuestionIdRef.current = null;
+    pendingReturnAttemptIdRef.current = null;
+    handledReturnPathRef.current = "";
   }, [quizId, quizTimeLimitSeconds]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const returnQuestionId = params.get("return_question_id");
+    const returnAttemptId = params.get("return_attempt_id");
+    const returnKey = `${quizId}:${returnAttemptId ?? ""}:${returnQuestionId ?? ""}`;
+
+    if (!returnQuestionId || handledReturnPathRef.current === returnKey || attempts.length === 0) return;
+
+    const attempt =
+      attempts.find((item) => item.id === returnAttemptId) ??
+      attempts.find((item) => item.status === "in_progress") ??
+      attempts[attempts.length - 1];
+
+    if (!attempt) return;
+
+    pendingReturnQuestionIdRef.current = returnQuestionId;
+    pendingReturnAttemptIdRef.current = attempt.id;
+    handledReturnPathRef.current = returnKey;
+
+    if (attempt.status === "in_progress") {
+      beginAttemptFlow(attempt);
+    } else {
+      viewAttempt(attempt);
+      setStage("question");
+    }
+  }, [attempts, location.search, quizId]);
+
+  useEffect(() => {
+    const pendingQuestionId = pendingReturnQuestionIdRef.current;
+    const pendingAttemptId = pendingReturnAttemptIdRef.current;
+
+    if (!pendingQuestionId || !pendingAttemptId || activeAttempt?.id !== pendingAttemptId || questions.length === 0) return;
+
+    const questionIndex = questions.findIndex((question) => question.id === pendingQuestionId);
+    if (questionIndex < 0) return;
+
+    setQuestionMotionDirection(questionIndex >= currentQuestionIndex ? "forward" : "backward");
+    setCurrentQuestionIndex(questionIndex);
+    setStage("question");
+    pendingReturnQuestionIdRef.current = null;
+    pendingReturnAttemptIdRef.current = null;
+  }, [activeAttempt?.id, currentQuestionIndex, questions]);
 
   useEffect(() => {
     if (!deadline || (stage !== "question" && stage !== "review")) return;
@@ -1678,7 +1750,11 @@ function VideoQuizPage() {
                         <p>
                           {t("quizPointsScore", { score: currentQuestionReview.awarded_points ?? 0, total: currentQuestionReview.max_points ?? "-" })}
                         </p>
-                        <QuizExplanation explanation={currentQuestionReview.explanation} t={t} />
+                        <QuizExplanation
+                          explanation={currentQuestionReview.explanation}
+                          returnPath={buildReturnPathForQuestion(currentQuestion.id)}
+                          t={t}
+                        />
                         <QuizCorrectAnswer
                           summary={getCorrectAnswerSummary(currentQuestion, currentQuestionReview)}
                           pairs={getCorrectAnswerPairs(currentQuestion, currentQuestionReview)}
@@ -1768,7 +1844,13 @@ function VideoQuizPage() {
                                 t={t}
                               />
                             ) : null}
-                            {shouldShowReviewDetails ? <QuizExplanation explanation={result.explanation} t={t} /> : null}
+                            {shouldShowReviewDetails ? (
+                              <QuizExplanation
+                                explanation={result.explanation}
+                                returnPath={buildReturnPathForQuestion(result.questionId)}
+                                t={t}
+                              />
+                            ) : null}
                           </div>
                         </div>
                       );
@@ -1831,7 +1913,11 @@ function VideoQuizPage() {
                       />
 
                       {result.isCorrect === false && result.explanation ? (
-                        <QuizExplanation explanation={result.explanation} t={t} />
+                        <QuizExplanation
+                          explanation={result.explanation}
+                          returnPath={buildReturnPathForQuestion(result.questionId)}
+                          t={t}
+                        />
                       ) : null}
                     </div>
                   </div>

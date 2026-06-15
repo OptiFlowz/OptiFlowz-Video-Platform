@@ -26,6 +26,7 @@ interface VideoPlayerProps {
   last_seq?: number;
   chapters: ChapterT[];
   onProgressSaved?: (seconds: number) => void;
+  forceAutoplay?: boolean;
 }
 
 const EMPTY_STYLE: React.CSSProperties = {};
@@ -43,6 +44,7 @@ export default function VideoPlayer({
   last_seq,
   chapters,
   onProgressSaved,
+  forceAutoplay = false,
 }: VideoPlayerProps) {
   const playerRef = useRef<MuxPlayerElement | null>(null);
 
@@ -52,6 +54,7 @@ export default function VideoPlayer({
   const [metadataLoaded, setMetadataLoaded] = useState(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [isThemeReady, setIsThemeReady] = useState(false);
+  const [isAutoplayMuted, setIsAutoplayMuted] = useState(false);
   const didInitialSeek = useRef(false);
 
   useEffect(() => {
@@ -71,8 +74,41 @@ export default function VideoPlayer({
   useEffect(() => {
     setMetadataLoaded(false);
     setIsPlayerReady(false);
+    setIsAutoplayMuted(false);
     didInitialSeek.current = false;
   }, [playbackId]);
+
+  useEffect(() => {
+    const el = playerRef.current;
+    if (!el || !metadataLoaded || !isPlayerReady || (!autoplay && !forceAutoplay)) return;
+
+    let cancelled = false;
+
+    const tryAutoplay = async () => {
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      if (cancelled) return;
+
+      try {
+        await el.play?.();
+      } catch {
+        if (!forceAutoplay || cancelled) return;
+
+        try {
+          el.muted = true;
+          setIsAutoplayMuted(true);
+          await el.play?.();
+        } catch {
+          // Browser autoplay policy can still require a user gesture.
+        }
+      }
+    };
+
+    void tryAutoplay();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [autoplay, forceAutoplay, isPlayerReady, metadataLoaded, playbackId]);
 
   // External seek listener
   useEffect(() => {
@@ -387,7 +423,8 @@ export default function VideoPlayer({
             setIsPlayerReady(true);
           }}
           playbackId={playbackId}
-          autoPlay={autoplay}
+          autoPlay={autoplay || forceAutoplay}
+          muted={isAutoplayMuted}
           playsInline
           accentColor={accentColor}
           volume={0.1}

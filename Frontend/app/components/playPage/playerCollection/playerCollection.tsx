@@ -5,9 +5,11 @@ import VideoPlayer from "./muxPlayer";
 function PlayerCollection({
   props,
   startTimeOverride,
+  forceAutoplay = false,
 }: {
   props?: VideoT & { class?: string };
   startTimeOverride?: number | null;
+  forceAutoplay?: boolean;
 }) {
   const streamUrl = props?.mux_playback_id;
 
@@ -80,6 +82,7 @@ function PlayerCollection({
         view_id={props?.view?.view_id}
         last_seq={props?.view?.last_seq}
         chapters={props?.chapters}
+        forceAutoplay={forceAutoplay}
       />
       )}
     </div>
