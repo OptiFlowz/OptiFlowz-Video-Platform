@@ -349,7 +349,7 @@ export async function startQuizAttemptInternal(object, userId = null) {
           $2,
           $3,
           CASE
-            WHEN $4::int IS NULL THEN NULL
+            WHEN $4::int IS NULL OR $4::int <= 0 THEN NULL
             ELSE now() + ($4::int * interval '1 second')
           END,
           $5,

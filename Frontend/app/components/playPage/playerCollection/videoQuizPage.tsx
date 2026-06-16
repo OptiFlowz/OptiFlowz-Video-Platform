@@ -228,6 +228,8 @@ function formatTime(secondsLeft: number) {
 }
 
 function formatQuizTimeLimitLabel(seconds: number, t: TranslateFn) {
+  if (seconds <= 0) return "No time limit";
+
   const totalMinutes = Math.max(1, Math.round(Math.max(0, seconds) / 60));
   const hours = Math.floor(totalMinutes / 60);
   const remainingMinutes = totalMinutes % 60;
@@ -875,7 +877,12 @@ function VideoQuizPage() {
         .map(mapAttemptQuestion),
     [attemptQuestions]
   );
-  const quizTimeLimitSeconds = Math.max(1, Number(quizSummary?.time_limit_seconds) || DEFAULT_QUIZ_TIME_LIMIT_SECONDS);
+  const rawQuizTimeLimitSeconds = Number(quizSummary?.time_limit_seconds);
+  const quizTimeLimitSeconds =
+    quizSummary && Number.isFinite(rawQuizTimeLimitSeconds)
+      ? Math.max(0, Math.round(rawQuizTimeLimitSeconds))
+      : DEFAULT_QUIZ_TIME_LIMIT_SECONDS;
+  const hasQuizTimeLimit = quizTimeLimitSeconds > 0;
   const quizMaxAttempts = Math.max(0, Number(quizSummary?.max_attempts) || 0);
   const summaryQuestionCount = Math.max(0, Number(quizSummary?.question_count) || 0);
   const displayedQuestionCount = stage === "intro" ? summaryQuestionCount : questions.length || summaryQuestionCount;
@@ -1012,6 +1019,21 @@ function VideoQuizPage() {
   };
 
   const beginAttemptFlow = (attempt: AttemptRecord) => {
+    if (!hasQuizTimeLimit) {
+      setActiveAttempt(attempt);
+      setQuestionMotionDirection("forward");
+      setAnswers({});
+      setCurrentQuestionIndex(0);
+      setLatestResult(null);
+      setQuestionReviews({});
+      setDirtyQuestionIds(new Set());
+      setQuizFlowError("");
+      setStage("question");
+      setDeadline(null);
+      setSecondsLeft(0);
+      return;
+    }
+
     const expiresAt = attempt.expires_at ? new Date(attempt.expires_at).getTime() : Date.now() + quizTimeLimitSeconds * 1000;
     const nextSecondsLeft = Math.max(1, Math.ceil((expiresAt - Date.now()) / 1000));
 
@@ -1483,7 +1505,7 @@ function VideoQuizPage() {
           </div>
 
           <div className="videoQuizTopActions">
-            {(stage === "question" || stage === "review") && !isReadOnlyAttempt && (
+            {(stage === "question" || stage === "review") && !isReadOnlyAttempt && hasQuizTimeLimit && (
               <span className={`videoQuizTimer ${secondsLeft <= 60 ? "urgent" : ""}`}>
                 <span>{t("quizTimeLeft")}</span> <AnimatedTimer secondsLeft={secondsLeft} />
               </span>
@@ -1682,12 +1704,13 @@ function VideoQuizPage() {
                   {questions.map((question, index) => {
                     const answered = isQuestionAnswered(question, answers[question.id]);
                     const isCurrent = index === currentQuestionIndex && stage === "question";
+                    const reviewStatus = isImmediateReview ? getReviewStatus(questionReviews[question.id]) : null;
 
                     return (
                       <button
                         key={question.id}
                         type="button"
-                        className={`videoQuizGridButton ${answered ? "answered" : ""} ${isCurrent ? "current" : ""}`}
+                        className={`videoQuizGridButton ${answered ? "answered" : ""} ${isCurrent ? "current" : ""} ${reviewStatus ?? ""}`}
                         disabled={savingQuestionId === currentQuestion?.id}
                         onClick={() => handleQuestionNavigation(index)}
                       >

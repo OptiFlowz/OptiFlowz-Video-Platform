@@ -11,7 +11,7 @@ function prerequisites(object, userId) {
     description: z.string().trim().max(5000).nullable().optional(),
     is_active: z.boolean().optional(),
 
-    time_limit_seconds: z.coerce.number().int().min(1).nullable().optional(),
+    time_limit_seconds: z.coerce.number().int().min(0).nullable().optional(),
     question_count: z.coerce.number().int().min(1).optional(),
     max_attempts: z.coerce.number().int().min(1).nullable().optional(),
 

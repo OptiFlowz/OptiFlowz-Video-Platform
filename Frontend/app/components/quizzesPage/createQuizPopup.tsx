@@ -139,7 +139,9 @@ function CreateQuizPopup({
         title: normalizedTitle,
         description: normalizedDescription,
         is_active: isActive,
-        time_limit_seconds: parsePositiveInteger(timeLimitSeconds, "Time limit"),
+        time_limit_seconds: parsePositiveInteger(timeLimitSeconds, "Time limit", {
+          min: 0,
+        }),
         question_count: parsePositiveInteger(questionCount, "Question count"),
         max_attempts: (() => {
           const parsedMaxAttempts = parsePositiveInteger(maxAttempts, "Max attempts", {
@@ -244,13 +246,14 @@ function CreateQuizPopup({
                 <input
                   id="quizTimeLimit"
                   type="number"
-                  min={1}
+                  min={0}
                   step={1}
                   value={timeLimitSeconds}
                   onChange={(event) => setTimeLimitSeconds(event.target.value)}
                   disabled={isSubmitting}
                   className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
                 />
+                <p className="quizPopupHint">Use 0 for no time limit.</p>
               </div>
 
               <div className="formGroup">

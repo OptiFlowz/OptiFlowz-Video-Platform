@@ -2963,6 +2963,45 @@ mux-player::part(menu-item) {
   color: white;
 }
 
+.videoQuizPage .videoQuizGridButton.correct {
+  background: rgba(42, 201, 106, 0.14);
+  border-color: rgba(42, 201, 106, 0.5);
+  color: #137a3e;
+}
+
+.videoQuizPage .videoQuizGridButton.incorrect {
+  background: rgba(188, 57, 57, 0.14);
+  border-color: rgba(188, 57, 57, 0.5);
+  color: #a92f2f;
+}
+
+.videoQuizPage .videoQuizGridButton.partial {
+  background: rgba(245, 158, 11, 0.16);
+  border-color: rgba(245, 158, 11, 0.54);
+  color: #a15c00;
+}
+
+.videoQuizPage .videoQuizGridButton.current.correct,
+.videoQuizPage .videoQuizGridButton.current.incorrect,
+.videoQuizPage .videoQuizGridButton.current.partial {
+  color: white;
+}
+
+.videoQuizPage .videoQuizGridButton.current.correct {
+  background: #18a957;
+  border-color: #18a957;
+}
+
+.videoQuizPage .videoQuizGridButton.current.incorrect {
+  background: #bc3939;
+  border-color: #bc3939;
+}
+
+.videoQuizPage .videoQuizGridButton.current.partial {
+  background: #d88400;
+  border-color: #d88400;
+}
+
 .videoQuizPage .videoQuizReviewLink {
   width: max-content;
   color: var(--accentBlue2);
@@ -6339,6 +6378,12 @@ select.disabled {
 
 .quizPopupForm .formGroup label {
   font-size: 1rem;
+}
+
+.quizPopupHint {
+  margin-top: 0.4rem;
+  color: var(--text2);
+  font-size: 0.82rem;
 }
 
 .quizPopupForm select {
