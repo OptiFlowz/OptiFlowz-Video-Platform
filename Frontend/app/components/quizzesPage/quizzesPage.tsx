@@ -543,8 +543,12 @@ function QuizzesPage() {
         question_count: Number(activeQuizModalQuiz.question_count),
         max_attempts: Number(activeQuizModalQuiz.max_attempts),
         passing_score_percentage: Number(activeQuizModalQuiz.passing_score_percentage),
+        scoring: activeQuizModalQuiz.scoring === "partial" ? "partial" : "strict",
         answer_review_mode:
-          activeQuizModalQuiz.answer_review_mode === "at_end" ? "at_end" : "immediate",
+          activeQuizModalQuiz.answer_review_mode === "at_end" ||
+          activeQuizModalQuiz.answer_review_mode === "assignment"
+            ? activeQuizModalQuiz.answer_review_mode
+            : "immediate",
         shuffle_questions: activeQuizModalQuiz.shuffle_questions,
         shuffle_options: activeQuizModalQuiz.shuffle_options,
       }

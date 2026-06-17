@@ -2790,6 +2790,7 @@ mux-player::part(menu-item) {
 .videoQuizPage .videoQuizGhostButton,
 .videoQuizPage .videoQuizPrimaryButton,
 .videoQuizPage .videoQuizInlineButton,
+.videoQuizPage .videoQuizDangerButton,
 .videoQuizPage .videoQuizGridButton,
 .videoQuizPage .videoQuizReviewLink {
   transition: all 0.18s ease;
@@ -2797,7 +2798,8 @@ mux-player::part(menu-item) {
 
 .videoQuizPage .videoQuizGhostButton,
 .videoQuizPage .videoQuizPrimaryButton,
-.videoQuizPage .videoQuizInlineButton {
+.videoQuizPage .videoQuizInlineButton,
+.videoQuizPage .videoQuizDangerButton {
   min-height: 50px;
   border-radius: 999px;
   padding: 0 22px;
@@ -2840,14 +2842,83 @@ mux-player::part(menu-item) {
   background: var(--accentBlue3);
 }
 
+.videoQuizPage .videoQuizDangerButton {
+  border: 1px solid rgba(255, 92, 92, 0.5);
+  background: rgba(206, 57, 57, 0.92);
+  color: white;
+}
+
+.videoQuizPage .videoQuizDangerButton:hover {
+  background: rgba(224, 71, 71, 0.98);
+}
+
 .videoQuizPage .videoQuizPrimaryButton:disabled,
-.videoQuizPage .videoQuizGhostButton:disabled {
+.videoQuizPage .videoQuizGhostButton:disabled,
+.videoQuizPage .videoQuizDangerButton:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
 
 .videoQuizPage .videoQuizPrimaryButton svg path {
   stroke: white;
+}
+
+.videoQuizPage .videoQuizConfirmOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.68);
+  backdrop-filter: blur(10px);
+}
+
+.videoQuizPage .videoQuizConfirmDialog {
+  width: min(100%, 520px);
+  display: grid;
+  gap: 1.25rem;
+  padding: 28px;
+  border-radius: 22px;
+  border: 1px solid var(--border1);
+  background: var(--background2);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+}
+
+.videoQuizPage .videoQuizConfirmIcon {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  border: 1px solid var(--border1);
+  background: var(--background3);
+}
+
+.videoQuizPage .videoQuizConfirmIcon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.videoQuizPage .videoQuizConfirmDialog h3 {
+  margin: 0;
+  color: var(--text1);
+  font-size: 1.45rem;
+  line-height: 1.15;
+}
+
+.videoQuizPage .videoQuizConfirmDialog p {
+  margin-top: 0.65rem;
+  color: var(--text2);
+  line-height: 1.5;
+}
+
+.videoQuizPage .videoQuizConfirmActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.85rem;
 }
 
 .videoQuizPage .videoQuizShell {
@@ -2872,7 +2943,7 @@ mux-player::part(menu-item) {
   border-radius: 22px;
   border: 1px solid var(--border1);
   background: var(--background2);
-  min-height: 0;
+  min-height: 220px;
   max-height: min(760px, calc(100vh - var(--headerHeight, 90px) - 120px));
   overflow: hidden;
   position: sticky;
@@ -2901,6 +2972,7 @@ mux-player::part(menu-item) {
   align-content: start;
   justify-content: start;
   gap: 0.6rem;
+  min-height: var(--videoQuizGridCellSize);
   max-height: min(650px, calc(100vh - var(--headerHeight, 90px) - 260px));
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -3525,7 +3597,7 @@ mux-player::part(menu-item) {
   .videoQuizPage .videoQuizSidebar {
     order: 2;
     width: min(100%, 520px);
-    min-height: 0;
+    min-height: 220px;
     max-height: min(560px, 70vh);
     position: static;
     margin-top: 0.75rem;

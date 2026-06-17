@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import type { CreateQuizPayload } from "./quizTypes";
+import type { AnswerReviewMode, CreateQuizPayload, ScoringMode } from "./quizTypes";
 
 type Props = {
   open: boolean;
@@ -15,6 +15,12 @@ type Props = {
 };
 
 const DEFAULT_DESCRIPTION = "Test your knowledge after watching the video";
+
+const normalizeAnswerReviewMode = (value?: string | null): AnswerReviewMode =>
+  value === "at_end" || value === "assignment" ? value : "immediate";
+
+const normalizeScoringMode = (value?: string | null): ScoringMode =>
+  value === "partial" ? "partial" : "strict";
 
 function CreateQuizPopup({
   open,
@@ -37,7 +43,8 @@ function CreateQuizPopup({
   const [questionCount, setQuestionCount] = useState("10");
   const [maxAttempts, setMaxAttempts] = useState("3");
   const [passingScorePercentage, setPassingScorePercentage] = useState("50");
-  const [answerReviewMode, setAnswerReviewMode] = useState<"immediate" | "at_end">("immediate");
+  const [scoring, setScoring] = useState<ScoringMode>("strict");
+  const [answerReviewMode, setAnswerReviewMode] = useState<AnswerReviewMode>("immediate");
   const [shuffleQuestions, setShuffleQuestions] = useState(true);
   const [shuffleOptions, setShuffleOptions] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +74,8 @@ function CreateQuizPopup({
       setQuestionCount(String(initialValues?.question_count ?? 10));
       setMaxAttempts(initialValues ? String(initialValues.max_attempts ?? 0) : "3");
       setPassingScorePercentage(String(initialValues?.passing_score_percentage ?? 50));
-      setAnswerReviewMode(initialValues?.answer_review_mode === "at_end" ? "at_end" : "immediate");
+      setScoring(normalizeScoringMode(initialValues?.scoring));
+      setAnswerReviewMode(normalizeAnswerReviewMode(initialValues?.answer_review_mode));
       setShuffleQuestions(initialValues?.shuffle_questions ?? true);
       setShuffleOptions(initialValues?.shuffle_options ?? true);
       setError(null);
@@ -155,6 +163,7 @@ function CreateQuizPopup({
           "Passing score percentage",
           { min: 0, max: 100 }
         ),
+        scoring,
         answer_review_mode: answerReviewMode,
         shuffle_questions: shuffleQuestions,
         shuffle_options: shuffleOptions,
@@ -305,13 +314,28 @@ function CreateQuizPopup({
                   id="quizAnswerReviewMode"
                   value={answerReviewMode}
                   onChange={(event) =>
-                    setAnswerReviewMode(event.target.value === "at_end" ? "at_end" : "immediate")
+                    setAnswerReviewMode(normalizeAnswerReviewMode(event.target.value))
                   }
                   disabled={isSubmitting}
                   className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
                 >
                   <option value="immediate">Immediate</option>
                   <option value="at_end">At end</option>
+                  <option value="assignment">Assignment</option>
+                </select>
+              </div>
+
+              <div className="formGroup">
+                <label htmlFor="quizScoring">Scoring</label>
+                <select
+                  id="quizScoring"
+                  value={scoring}
+                  onChange={(event) => setScoring(normalizeScoringMode(event.target.value))}
+                  disabled={isSubmitting}
+                  className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
+                >
+                  <option value="strict">Strict</option>
+                  <option value="partial">Partial</option>
                 </select>
               </div>
             </div>

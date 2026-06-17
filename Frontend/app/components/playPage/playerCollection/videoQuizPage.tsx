@@ -52,7 +52,8 @@ type AttemptRecord = {
   started_at: string;
   submitted_at: string | null;
   expires_at: string | null;
-  answer_review_mode: "immediate" | "at_end" | "attempt_review" | string;
+  answer_review_mode: "immediate" | "at_end" | "attempt_review" | "assignment" | string;
+  deleted?: boolean;
 };
 
 type AttemptQuestionResult = {
@@ -211,6 +212,7 @@ type SubmitAttemptResponse = {
 
 type SaveDirtyAnswersResult = {
   latestSaveResponse: SaveAnswerResponse | null;
+  savedReviews: Record<string, SaveAnswerReview>;
   failed: boolean;
 };
 
@@ -460,6 +462,14 @@ function getReviewStatus(review: SaveAnswerReview | null | undefined): "correct"
     return review.result;
   }
   return "incorrect";
+}
+
+function getReviewStatusForMode(
+  review: SaveAnswerReview | null | undefined,
+  reviewMode?: string
+): "correct" | "partial" | "incorrect" | null {
+  const status = getReviewStatus(review);
+  return reviewMode === "assignment" && status === "partial" ? "incorrect" : status;
 }
 
 function getReviewIsCorrect(review: SaveAnswerReview | null | undefined) {
@@ -718,13 +728,22 @@ function AnimatedTimer({ secondsLeft }: { secondsLeft: number }) {
 
 function VideoQuizPage() {
   const { t } = useI18n();
-  const { quizId = "" } = useParams();
+  const routeParams = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [stage, setStage] = useState<"intro" | "question" | "review" | "results">("intro");
+  const quizPathMatch = location.pathname.match(/^\/quiz\/([^/]+)(?:\/question\/([^/]+))?/);
+  const quizId = routeParams.quizId ?? quizPathMatch?.[1] ?? "";
+  const questionNumber = routeParams.questionNumber ?? quizPathMatch?.[2];
+  const requestedQuestionIndex = (() => {
+    const parsed = Number.parseInt(questionNumber ?? "", 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed - 1 : null;
+  })();
+  const [stage, setStage] = useState<"intro" | "question" | "review" | "results">(
+    requestedQuestionIndex === null ? "intro" : "question"
+  );
   const [answers, setAnswers] = useState<QuizAnswers>({});
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(requestedQuestionIndex ?? 0);
   const [deadline, setDeadline] = useState<number | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(DEFAULT_QUIZ_TIME_LIMIT_SECONDS);
   const [latestResult, setLatestResult] = useState<AttemptResult | null>(null);
@@ -734,6 +753,7 @@ function VideoQuizPage() {
   const [savingQuestionId, setSavingQuestionId] = useState<string | null>(null);
   const [isStartingAttempt, setIsStartingAttempt] = useState(false);
   const [isSubmittingAttempt, setIsSubmittingAttempt] = useState(false);
+  const [showAssignmentSubmitConfirm, setShowAssignmentSubmitConfirm] = useState(false);
   const [quizFlowError, setQuizFlowError] = useState("");
   const [areRequirementsOpen, setAreRequirementsOpen] = useState(false);
   const [questionMotionDirection, setQuestionMotionDirection] = useState<"forward" | "backward">("forward");
@@ -744,6 +764,7 @@ function VideoQuizPage() {
   const pendingReturnQuestionIdRef = useRef<string | null>(null);
   const pendingReturnAttemptIdRef = useRef<string | null>(null);
   const handledReturnPathRef = useRef("");
+  const handledQuestionPathRef = useRef("");
   const requestHeaders = useMemo(() => {
     const headers = new Headers();
     headers.set("Content-Type", "application/json");
@@ -860,7 +881,10 @@ function VideoQuizPage() {
           setActiveAttempt(nextAttempt);
         }
         const nextReviewMode = nextAttempt.answer_review_mode ?? "immediate";
-        const canRevealReviews = nextAttempt.status !== "in_progress" || nextReviewMode === "immediate";
+        const canRevealReviews =
+          nextAttempt.status !== "in_progress" ||
+          nextReviewMode === "immediate" ||
+          nextReviewMode === "assignment";
         setAnswers(buildInitialAnswers(response.questions ?? []));
         setQuestionReviews(canRevealReviews ? buildQuestionReviews(response.questions ?? []) : {});
         setDirtyQuestionIds(new Set());
@@ -899,14 +923,45 @@ function VideoQuizPage() {
   );
   const activeReviewMode = activeAttempt?.answer_review_mode ?? selectedActiveAttempt?.answer_review_mode ?? "immediate";
   const isImmediateReview = activeReviewMode === "immediate";
-  const isDeferredReview = activeReviewMode === "at_end" || activeReviewMode === "attempt_review";
+  const isAssignmentReview = activeReviewMode === "assignment";
+  const isAnswerByAnswerReview = isImmediateReview || isAssignmentReview;
+  const isDeferredReview =
+    activeReviewMode === "at_end" ||
+    activeReviewMode === "attempt_review";
   const isReadOnlyAttempt = Boolean(activeAttempt && activeAttempt.status !== "in_progress");
   const currentQuestionReview = currentQuestion ? questionReviews[currentQuestion.id] : undefined;
+  const currentQuestionReviewStatus = getReviewStatusForMode(currentQuestionReview, activeReviewMode);
+  const canReviseCurrentAnswer = isAssignmentReview && currentQuestionReviewStatus !== "correct";
+  const shouldLockCurrentAnswer = isReadOnlyAttempt || Boolean(currentQuestionReview && !canReviseCurrentAnswer);
+  const shouldShowCurrentCorrectAnswer = !isAssignmentReview || currentQuestionReviewStatus === "correct";
   const isQuizLoading = isQuizSummaryLoading || areAttemptsLoading || (stage !== "intro" && areQuestionsLoading);
   const summaryQuestionResults = useMemo(
-    () => buildQuestionResults(questions, answers, questionReviews, t),
-    [answers, questionReviews, questions, t]
+    () =>
+      buildQuestionResults(questions, answers, questionReviews, t).map((result) =>
+        isAssignmentReview && result.reviewStatus === "partial"
+          ? { ...result, isCorrect: false, reviewStatus: "incorrect" as const }
+          : result
+      ),
+    [answers, isAssignmentReview, questionReviews, questions, t]
   );
+  const latestQuestionResults = useMemo(
+    () =>
+      (latestResult?.questionResults ?? []).map((result) =>
+        isAssignmentReview && result.reviewStatus === "partial"
+          ? { ...result, isCorrect: false, reviewStatus: "incorrect" as const }
+          : result
+      ),
+    [isAssignmentReview, latestResult?.questionResults]
+  );
+  const getFirstIncompleteAssignmentQuestionIndex = (
+    reviews: Record<string, SaveAnswerReview> = questionReviews
+  ) =>
+    questions.findIndex((question) => {
+      const answer = answers[question.id];
+      const reviewStatus = getReviewStatusForMode(reviews[question.id], "assignment");
+
+      return !isQuestionAnswered(question, answer) || reviewStatus !== "correct";
+    });
 
   const buildReturnPathForQuestion = (questionId: string) => {
     const params = new URLSearchParams(location.search);
@@ -919,26 +974,92 @@ function VideoQuizPage() {
     }
 
     const search = params.toString();
-    return `${location.pathname}${search ? `?${search}` : ""}${location.hash}`;
+    const currentPathname =
+      typeof window === "undefined" ? location.pathname : window.location.pathname;
+    const currentHash =
+      typeof window === "undefined" ? location.hash : window.location.hash;
+
+    return `${currentPathname}${search ? `?${search}` : ""}${currentHash}`;
+  };
+
+  const buildQuizPath = (nextQuestionIndex?: number) => {
+    const basePath = `/quiz/${quizId}`;
+    const questionPath =
+      typeof nextQuestionIndex === "number"
+        ? `${basePath}/question/${nextQuestionIndex + 1}`
+        : basePath;
+
+    return `${questionPath}${location.search}${location.hash}`;
+  };
+
+  const replaceBrowserUrl = (nextPath: string) => {
+    if (typeof window === "undefined") return;
+
+    const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (currentPath !== nextPath) {
+      window.history.replaceState(window.history.state, "", nextPath);
+    }
+  };
+
+  const syncQuestionUrl = (nextQuestionIndex: number) => {
+    if (!quizId) return;
+
+    handledQuestionPathRef.current = `${quizId}:${nextQuestionIndex + 1}`;
+    const nextPath = buildQuizPath(nextQuestionIndex);
+    replaceBrowserUrl(nextPath);
   };
 
   useEffect(() => {
-    setStage("intro");
+    const initialQuestionIndex = requestedQuestionIndex ?? 0;
+
+    setStage(requestedQuestionIndex === null ? "intro" : "question");
     setAnswers({});
-    setCurrentQuestionIndex(0);
+    setCurrentQuestionIndex(initialQuestionIndex);
     setDeadline(null);
-    setSecondsLeft(quizTimeLimitSeconds);
+    setSecondsLeft(DEFAULT_QUIZ_TIME_LIMIT_SECONDS);
     setLatestResult(null);
     setActiveAttempt(null);
     setQuestionReviews({});
     setDirtyQuestionIds(new Set());
     setIsSubmittingAttempt(false);
+    setShowAssignmentSubmitConfirm(false);
     setQuizFlowError("");
     setAreRequirementsOpen(false);
     pendingReturnQuestionIdRef.current = null;
     pendingReturnAttemptIdRef.current = null;
     handledReturnPathRef.current = "";
-  }, [quizId, quizTimeLimitSeconds]);
+    handledQuestionPathRef.current = "";
+  }, [quizId]);
+
+  useEffect(() => {
+    if (requestedQuestionIndex === null || attempts.length === 0) return;
+
+    const questionPathKey = `${quizId}:${questionNumber}`;
+    if (handledQuestionPathRef.current === questionPathKey && activeAttempt) return;
+
+    const attempt =
+      attempts.find((item) => item.status === "in_progress") ??
+      activeAttempt ??
+      attempts[attempts.length - 1];
+
+    if (!attempt) return;
+
+    handledQuestionPathRef.current = questionPathKey;
+
+    if (attempt.status === "in_progress") {
+      beginAttemptFlow(attempt, requestedQuestionIndex);
+    } else {
+      viewAttempt(attempt, requestedQuestionIndex);
+      setStage("question");
+    }
+  }, [activeAttempt, attempts, questionNumber, quizId, requestedQuestionIndex]);
+
+  useEffect(() => {
+    if (requestedQuestionIndex === null || areAttemptsLoading || attempts.length > 0 || activeAttempt) return;
+
+    setStage("intro");
+    navigate(buildQuizPath(), { replace: true });
+  }, [activeAttempt, areAttemptsLoading, attempts.length, requestedQuestionIndex]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -979,9 +1100,18 @@ function VideoQuizPage() {
     setQuestionMotionDirection(questionIndex >= currentQuestionIndex ? "forward" : "backward");
     setCurrentQuestionIndex(questionIndex);
     setStage("question");
+    syncQuestionUrl(questionIndex);
     pendingReturnQuestionIdRef.current = null;
     pendingReturnAttemptIdRef.current = null;
   }, [activeAttempt?.id, currentQuestionIndex, questions]);
+
+  useEffect(() => {
+    if (stage !== "question" || questions.length === 0 || currentQuestionIndex < questions.length) return;
+
+    const nextQuestionIndex = questions.length - 1;
+    setCurrentQuestionIndex(nextQuestionIndex);
+    syncQuestionUrl(nextQuestionIndex);
+  }, [currentQuestionIndex, questions.length, stage]);
 
   useEffect(() => {
     if (!deadline || (stage !== "question" && stage !== "review")) return;
@@ -1012,23 +1142,27 @@ function VideoQuizPage() {
     if (stage !== "intro") {
       setStage("intro");
       setDeadline(null);
+      navigate(buildQuizPath(), { replace: true });
       return;
     }
 
     navigate("/");
   };
 
-  const beginAttemptFlow = (attempt: AttemptRecord) => {
+  const beginAttemptFlow = (attempt: AttemptRecord, initialQuestionIndex = 0) => {
+    const nextQuestionIndex = Math.max(0, initialQuestionIndex);
+
     if (!hasQuizTimeLimit) {
       setActiveAttempt(attempt);
       setQuestionMotionDirection("forward");
       setAnswers({});
-      setCurrentQuestionIndex(0);
+      setCurrentQuestionIndex(nextQuestionIndex);
       setLatestResult(null);
       setQuestionReviews({});
       setDirtyQuestionIds(new Set());
       setQuizFlowError("");
       setStage("question");
+      syncQuestionUrl(nextQuestionIndex);
       setDeadline(null);
       setSecondsLeft(0);
       return;
@@ -1040,12 +1174,13 @@ function VideoQuizPage() {
     setActiveAttempt(attempt);
     setQuestionMotionDirection("forward");
     setAnswers({});
-    setCurrentQuestionIndex(0);
+    setCurrentQuestionIndex(nextQuestionIndex);
     setLatestResult(null);
     setQuestionReviews({});
     setDirtyQuestionIds(new Set());
     setQuizFlowError("");
     setStage("question");
+    syncQuestionUrl(nextQuestionIndex);
     setDeadline(Date.now() + nextSecondsLeft * 1000);
     setSecondsLeft(nextSecondsLeft);
   };
@@ -1080,11 +1215,13 @@ function VideoQuizPage() {
     }
   };
 
-  const viewAttempt = (attempt: AttemptRecord) => {
+  const viewAttempt = (attempt: AttemptRecord, initialQuestionIndex = 0) => {
+    const nextQuestionIndex = Math.max(0, initialQuestionIndex);
+
     setActiveAttempt(attempt);
     setQuestionMotionDirection("forward");
     setAnswers({});
-    setCurrentQuestionIndex(0);
+    setCurrentQuestionIndex(nextQuestionIndex);
     setLatestResult(null);
     setQuestionReviews({});
     setDirtyQuestionIds(new Set());
@@ -1111,7 +1248,7 @@ function VideoQuizPage() {
         },
       });
 
-      if (response.review && isImmediateReview) {
+      if (response.review && isAnswerByAnswerReview) {
         setQuestionReviews((current) => ({
           ...current,
           [question.id]: response.review!,
@@ -1142,6 +1279,7 @@ function VideoQuizPage() {
     setQuestionMotionDirection(nextIndex >= currentQuestionIndex ? "forward" : "backward");
     setCurrentQuestionIndex(nextIndex);
     setStage("question");
+    syncQuestionUrl(nextIndex);
   };
 
   const handleNextQuestion = async () => {
@@ -1152,7 +1290,7 @@ function VideoQuizPage() {
       return;
     }
 
-    if (isImmediateReview && currentQuestionReview) {
+    if (isAnswerByAnswerReview && currentQuestionReview) {
       moveToQuestion(Math.min(questions.length - 1, currentQuestionIndex + 1));
       return;
     }
@@ -1160,7 +1298,7 @@ function VideoQuizPage() {
     const response = await saveCurrentAnswer();
     if (!response) return;
 
-    if (isImmediateReview && response.review) {
+    if (isAnswerByAnswerReview && response.review) {
       return;
     }
 
@@ -1195,6 +1333,7 @@ function VideoQuizPage() {
     }
 
     setStage("review");
+    replaceBrowserUrl(buildQuizPath());
   };
 
   const handleLastQuestionAction = async () => {
@@ -1203,7 +1342,7 @@ function VideoQuizPage() {
       return;
     }
 
-    if (isImmediateReview && !currentQuestionReview) {
+    if (isAnswerByAnswerReview && !currentQuestionReview) {
       await saveCurrentAnswer();
       return;
     }
@@ -1218,23 +1357,27 @@ function VideoQuizPage() {
 
     const savePromise = (async (): Promise<SaveDirtyAnswersResult> => {
       if (!activeAttempt) {
-        return { latestSaveResponse: null, failed: false };
+        return { latestSaveResponse: null, savedReviews: {}, failed: false };
       }
 
       const dirtyQuestions = questions.filter(
         (question) => dirtyQuestionIds.has(question.id) && isQuestionAnswered(question, answers[question.id])
       );
       let latestSaveResponse: SaveAnswerResponse | null = null;
+      const savedReviews: Record<string, SaveAnswerReview> = {};
 
       for (const question of dirtyQuestions) {
         const response = await saveAnswerForQuestion(question);
         if (!response) {
-          return { latestSaveResponse, failed: true };
+          return { latestSaveResponse, savedReviews, failed: true };
         }
         latestSaveResponse = response;
+        if (response.review) {
+          savedReviews[question.id] = response.review;
+        }
       }
 
-      return { latestSaveResponse, failed: false };
+      return { latestSaveResponse, savedReviews, failed: false };
     })();
 
     dirtyAnswersSavePromiseRef.current = savePromise;
@@ -1247,7 +1390,7 @@ function VideoQuizPage() {
     return savePromise;
   };
 
-  const finishAttempt = async () => {
+  const finishAttempt = async ({ forceSubmit = false }: { forceSubmit?: boolean } = {}) => {
     if (!activeAttempt || isSubmittingAttempt) return;
 
     setIsSubmittingAttempt(true);
@@ -1256,10 +1399,12 @@ function VideoQuizPage() {
     try {
       let latestSaveResponse: SaveAnswerResponse | null = null;
       const pendingSave = dirtyAnswersSavePromiseRef.current;
+      let pendingSavedReviews: Record<string, SaveAnswerReview> = {};
 
       if (pendingSave) {
         const pendingResult = await pendingSave;
         latestSaveResponse = pendingResult.latestSaveResponse;
+        pendingSavedReviews = pendingResult.savedReviews;
 
         if (pendingResult.failed) {
           setIsSubmittingAttempt(false);
@@ -1267,10 +1412,22 @@ function VideoQuizPage() {
         }
       }
 
-      const { latestSaveResponse: finalSaveResponse, failed } = await saveDirtyAnswers();
+      const { latestSaveResponse: finalSaveResponse, savedReviews, failed } = await saveDirtyAnswers();
       latestSaveResponse = finalSaveResponse ?? latestSaveResponse;
 
       if (failed) {
+        setIsSubmittingAttempt(false);
+        return;
+      }
+
+      const latestReviews = {
+        ...questionReviews,
+        ...pendingSavedReviews,
+        ...savedReviews,
+      };
+
+      if (isAssignmentReview && !forceSubmit && getFirstIncompleteAssignmentQuestionIndex(latestReviews) >= 0) {
+        setShowAssignmentSubmitConfirm(true);
         setIsSubmittingAttempt(false);
         return;
       }
@@ -1283,6 +1440,21 @@ function VideoQuizPage() {
         },
       });
       const submittedAttempt = submitResponse.attempt;
+
+      if (submittedAttempt.deleted || submittedAttempt.status === "deleted") {
+        setActiveAttempt(null);
+        setLatestResult(null);
+        setQuestionReviews({});
+        setDirtyQuestionIds(new Set());
+        setDeadline(null);
+        setStage("intro");
+        setShowAssignmentSubmitConfirm(false);
+        navigate(buildQuizPath(), { replace: true });
+        await queryClient.invalidateQueries({ queryKey: ["quiz-page-attempts", quizId] });
+        setIsSubmittingAttempt(false);
+        return;
+      }
+
       const submittedQuestionsResponse = await fetchAttemptQuestions(activeAttempt.id);
       const submittedQuestions = submittedQuestionsResponse.questions ?? [];
       const submittedAnswers = buildInitialAnswers(submittedQuestions);
@@ -1309,6 +1481,7 @@ function VideoQuizPage() {
       setDirtyQuestionIds(new Set());
       await queryClient.invalidateQueries({ queryKey: ["quiz-page-attempts", quizId] });
       setStage("results");
+      setShowAssignmentSubmitConfirm(false);
     } catch (error) {
       setQuizFlowError(error instanceof Error ? error.message : t("quizFailedSubmitAttempt"));
     } finally {
@@ -1318,6 +1491,16 @@ function VideoQuizPage() {
 
   const finishAttemptAction = () => {
     void finishAttempt();
+  };
+
+  const continueAssignmentAttempt = () => {
+    setShowAssignmentSubmitConfirm(false);
+    moveToQuestion(0);
+  };
+
+  const abandonAssignmentAttempt = () => {
+    setShowAssignmentSubmitConfirm(false);
+    void finishAttempt({ forceSubmit: true });
   };
 
   finishAttemptRef.current = () => {
@@ -1397,9 +1580,12 @@ function VideoQuizPage() {
 
   const goToFirstIncomplete = () => {
     const firstIncompleteIndex = questions.findIndex((question) => !isQuestionAnswered(question, answers[question.id]));
+    const nextQuestionIndex = firstIncompleteIndex >= 0 ? firstIncompleteIndex : 0;
+
     setQuestionMotionDirection("backward");
-    setCurrentQuestionIndex(firstIncompleteIndex >= 0 ? firstIncompleteIndex : 0);
+    setCurrentQuestionIndex(nextQuestionIndex);
     setStage("question");
+    syncQuestionUrl(nextQuestionIndex);
   };
 
   const renderQuestionContent = () => {
@@ -1422,7 +1608,7 @@ function VideoQuizPage() {
               <label className="videoQuizSelect">
                 <select
                   value={selectedMap[pair.id] ?? ""}
-                  disabled={isReadOnlyAttempt || Boolean(currentQuestionReview) || savingQuestionId === currentQuestion.id}
+                  disabled={shouldLockCurrentAnswer || savingQuestionId === currentQuestion.id}
                   onChange={(event) =>
                     handleMatchSelect(currentQuestion.id, pair.id, event.target.value)
                   }
@@ -1459,7 +1645,7 @@ function VideoQuizPage() {
               type="button"
               key={option.id}
               className={`videoQuizOption ${isSelected ? "selected" : ""}`}
-              disabled={isReadOnlyAttempt || Boolean(currentQuestionReview) || savingQuestionId === currentQuestion.id}
+              disabled={shouldLockCurrentAnswer || savingQuestionId === currentQuestion.id}
               onClick={() =>
                 currentQuestion.type === "single"
                   ? handleSingleChoiceSelect(currentQuestion.id, option.id)
@@ -1704,7 +1890,9 @@ function VideoQuizPage() {
                   {questions.map((question, index) => {
                     const answered = isQuestionAnswered(question, answers[question.id]);
                     const isCurrent = index === currentQuestionIndex && stage === "question";
-                    const reviewStatus = isImmediateReview ? getReviewStatus(questionReviews[question.id]) : null;
+                    const reviewStatus = isAnswerByAnswerReview
+                      ? getReviewStatusForMode(questionReviews[question.id], activeReviewMode)
+                      : null;
 
                     return (
                       <button
@@ -1762,11 +1950,11 @@ function VideoQuizPage() {
                     ) : null}
 
                     {currentQuestionReview ? (
-                      <div className={`videoQuizFeedbackCard ${getReviewStatus(currentQuestionReview) ?? "incorrect"}`}>
+                      <div className={`videoQuizFeedbackCard ${currentQuestionReviewStatus ?? "incorrect"}`}>
                         <strong>
-                          {getReviewStatus(currentQuestionReview) === "correct"
+                          {currentQuestionReviewStatus === "correct"
                             ? t("quizCorrectAnswer")
-                            : getReviewStatus(currentQuestionReview) === "partial"
+                            : currentQuestionReviewStatus === "partial"
                               ? t("quizPartiallyCorrect")
                               : t("quizNotQuiteRight")}
                         </strong>
@@ -1778,11 +1966,13 @@ function VideoQuizPage() {
                           returnPath={buildReturnPathForQuestion(currentQuestion.id)}
                           t={t}
                         />
-                        <QuizCorrectAnswer
-                          summary={getCorrectAnswerSummary(currentQuestion, currentQuestionReview)}
-                          pairs={getCorrectAnswerPairs(currentQuestion, currentQuestionReview)}
-                          t={t}
-                        />
+                        {shouldShowCurrentCorrectAnswer ? (
+                          <QuizCorrectAnswer
+                            summary={getCorrectAnswerSummary(currentQuestion, currentQuestionReview)}
+                            pairs={getCorrectAnswerPairs(currentQuestion, currentQuestionReview)}
+                            t={t}
+                          />
+                        ) : null}
                       </div>
                     ) : null}
                   </div>
@@ -1808,7 +1998,7 @@ function VideoQuizPage() {
                       >
                         {savingQuestionId === currentQuestion.id
                           ? t("saving")
-                          : !isReadOnlyAttempt && isImmediateReview && !currentQuestionReview
+                          : !isReadOnlyAttempt && isAnswerByAnswerReview && !currentQuestionReview
                             ? t("quizCheckAnswer")
                             : t("quizNextQuestion")} {ArrowSVG}
                       </button>
@@ -1821,7 +2011,7 @@ function VideoQuizPage() {
                       >
                         {savingQuestionId === currentQuestion.id
                           ? t("saving")
-                          : !isReadOnlyAttempt && isImmediateReview && !currentQuestionReview
+                          : !isReadOnlyAttempt && isAnswerByAnswerReview && !currentQuestionReview
                             ? t("quizCheckAnswer")
                             : t("quizReviewAttempt")} {ArrowSVG}
                       </button>
@@ -1860,7 +2050,7 @@ function VideoQuizPage() {
                                 </div>
                               ) : null}
                             </div>
-                            {shouldShowReviewDetails ? (
+                            {shouldShowReviewDetails && (!isAssignmentReview || result.reviewStatus === "correct") ? (
                               <QuizCorrectAnswer
                                 summary={result.correctAnswerSummary}
                                 pairs={result.correctAnswerPairs}
@@ -1915,7 +2105,7 @@ function VideoQuizPage() {
               </div>
 
               <div className="videoQuizResultList">
-                {latestResult.questionResults.map((result, index) => (
+                {latestQuestionResults.map((result, index) => (
                   <div
                     key={result.questionId}
                     className={`videoQuizResultCard ${result.reviewStatus ?? ""}`}
@@ -1929,11 +2119,13 @@ function VideoQuizPage() {
 
                       <p>{getAnsweredSummaryText(result.answerSummary)}</p>
 
-                      <QuizCorrectAnswer
-                        summary={result.correctAnswerSummary}
-                        pairs={result.correctAnswerPairs}
-                        t={t}
-                      />
+                      {!isAssignmentReview || result.reviewStatus === "correct" ? (
+                        <QuizCorrectAnswer
+                          summary={result.correctAnswerSummary}
+                          pairs={result.correctAnswerPairs}
+                          t={t}
+                        />
+                      ) : null}
 
                       {result.isCorrect === false && result.explanation ? (
                         <QuizExplanation
@@ -1962,10 +2154,48 @@ function VideoQuizPage() {
               </div>
             </div>
           ) : null}
-        </div>
-      </div>
-    </main>
-  );
-}
+	        </div>
+	      </div>
+	      {showAssignmentSubmitConfirm ? (
+	        <div className="videoQuizConfirmOverlay" role="presentation">
+	          <div
+	            className="videoQuizConfirmDialog"
+	            role="dialog"
+	            aria-modal="true"
+	            aria-labelledby="videoQuizAssignmentSubmitTitle"
+	          >
+	            <div className="videoQuizConfirmIcon">{QuizSVG}</div>
+	            <div>
+	              <h3 id="videoQuizAssignmentSubmitTitle">Assignment attempt is not complete</h3>
+	              <p>
+	                You must answer every question correctly before you can submit this assignment attempt.
+	                Continue the quiz to revise your answers, or abandon the attempt. If you abandon the
+	                attempt, your progress will be deleted.
+	              </p>
+	            </div>
+	            <div className="videoQuizConfirmActions">
+	              <button
+	                type="button"
+	                className="videoQuizGhostButton"
+	                onClick={continueAssignmentAttempt}
+	                disabled={isSubmittingAttempt}
+	              >
+	                Continue quiz
+	              </button>
+	              <button
+	                type="button"
+	                className="videoQuizDangerButton"
+	                onClick={abandonAssignmentAttempt}
+	                disabled={isSubmittingAttempt}
+	              >
+	                {isSubmittingAttempt ? t("quizSubmitting") : "Abandon attempt"}
+	              </button>
+	            </div>
+	          </div>
+	        </div>
+	      ) : null}
+	    </main>
+	  );
+	}
 
 export default VideoQuizPage;
