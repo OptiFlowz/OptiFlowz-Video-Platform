@@ -24,7 +24,8 @@ export async function getUserCertificatesInternal(object, userId = null) {
       WITH earliest_passed_attempts AS (
         SELECT DISTINCT ON (quiz_id)
           id,
-          quiz_id
+          quiz_id,
+          submitted_at
         FROM quiz_attempts
         WHERE user_id = $1
           AND passed = true
@@ -37,7 +38,8 @@ export async function getUserCertificatesInternal(object, userId = null) {
       SELECT
         q.id AS quiz_id,
         q.title AS quiz_title,
-        epa.id AS attempt_id
+        epa.id AS attempt_id,
+        epa.submitted_at AS date_of_completion
       FROM earliest_passed_attempts epa
       JOIN quizzes q
         ON q.id = epa.quiz_id
