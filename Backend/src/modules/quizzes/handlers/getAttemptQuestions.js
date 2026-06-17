@@ -79,6 +79,7 @@ function normalizeAssignmentReview(review) {
 
   return {
     result: 'incorrect',
+    max_points: review.max_points,
     explanation: review.explanation || null,
   };
 }
@@ -184,6 +185,7 @@ function buildMatchingQuestion(attempt, attemptQuestion, pairs) {
   } else if (revealReview) {
     response.review = normalizeAssignmentReview({
       result: attemptQuestion.result,
+      max_points: attemptQuestion.points,
       explanation: attemptQuestion.explanation || null,
     });
   }

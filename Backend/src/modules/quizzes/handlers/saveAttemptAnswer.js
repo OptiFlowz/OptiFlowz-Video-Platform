@@ -130,6 +130,7 @@ function normalizeAssignmentReview(review) {
   return {
     result: 'incorrect',
     points: review.max_points,
+    max_points: review.max_points,
     explanation: review.explanation || null,
   };
 }
