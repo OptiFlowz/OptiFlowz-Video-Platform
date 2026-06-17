@@ -24,6 +24,7 @@ import { deleteQuizQuestionSourceInternal } from './handlers/deleteQuizQuestionS
 import { getQuizQuestionSourcesInternal } from './handlers/getQuizQuestionSources.js';
 
 import { getUserQuizAttemptsInternal } from './handlers/getUserQuizAttempts.js';
+import { getUserCertificatesInternal } from './handlers/getUserCertificates.js';
 import { startQuizAttemptInternal } from './handlers/startQuizAttempt.js';
 import { saveAttemptAnswerInternal } from './handlers/saveAttemptAnswer.js';
 import { getAttemptQuestionsInternal } from './handlers/getAttemptQuestions.js';
@@ -292,6 +293,16 @@ export async function getUserQuizAttempts(req, res) {
     return sendSuccess(res, { attempts }, 200);
   } catch (error) {
     console.error('Error fetching user quiz attempts:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function getUserCertificates(req, res) {
+  try {
+    const certificates = await getUserCertificatesInternal({}, req.user?.sub || null);
+    return sendSuccess(res, { certificates }, 200);
+  } catch (error) {
+    console.error('Error fetching user certificates:', error);
     return sendError(res, error.message, error.status || 500);
   }
 }

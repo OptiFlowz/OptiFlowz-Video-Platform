@@ -1,0 +1,199 @@
+:root {
+  --orange: #f1843b;
+  --blue: #13274a;
+  --muted: #788397;
+
+  /* 1492 x 1054 design ratio. Every overlay value scales from the same unit. */
+  --cert-width: min(100vw, 141.556vh);
+  --cert-height: min(100vh, 70.643vw);
+  --x98: min(6.568vw, 9.298vh);
+  --y262: min(17.560vw, 24.858vh);
+  --y470: min(31.501vw, 44.592vh);
+  --y826: min(55.362vw, 78.368vh);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  background: #eef0f4;
+  font-family: "Montserrat", Arial, sans-serif;
+}
+
+.page {
+  width: var(--cert-width);
+  height: var(--cert-height);
+  padding: 0;
+}
+
+.certificate {
+  position: relative;
+  width: var(--cert-width);
+  height: var(--cert-height);
+  overflow: hidden;
+  background-image: url("Video Corner Certificate.webp");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  color: var(--blue);
+}
+
+.certificate__content {
+  position: absolute;
+  inset: 0;
+}
+
+.heading,
+.details {
+  position: absolute;
+  left: var(--x98);
+  width: min(58.043vw, 82.164vh);
+}
+
+.heading {
+  top: var(--y262);
+}
+
+.heading h1 {
+  margin: 0;
+  color: var(--orange);
+  font-size: min(5.898vw, 8.349vh);
+  font-weight: 500;
+  line-height: 0.95;
+  letter-spacing: 0;
+}
+
+.heading p {
+  margin: min(1.340vw, 1.898vh) 0 0;
+  color: var(--blue);
+  font-size: min(2.346vw, 3.321vh);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.recipient {
+  margin: 0;
+}
+
+.details {
+  top: var(--y470);
+}
+
+.intro,
+.description p,
+.footer-caption {
+  color: var(--muted);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.intro {
+  margin: 0 0 min(0.536vw, 0.759vh);
+  font-size: min(1.742vw, 2.467vh);
+  line-height: 1.25;
+}
+
+.name {
+  margin: 0;
+  color: var(--blue);
+  max-width: min(50vw, 70.778vh);
+  font-size: min(3.954vw, 5.598vh);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0;
+  text-wrap: balance;
+}
+
+.rule {
+  width: min(43.968vw, 62.239vh);
+  height: min(0.134vw, 0.190vh);
+  margin-top: min(0.938vw, 1.328vh);
+  background: var(--orange);
+}
+
+.description {
+  margin-top: min(1.474vw, 2.087vh);
+}
+
+.description p {
+  margin: 0;
+  font-size: min(1.608vw, 2.277vh);
+  line-height: 1.42;
+}
+
+.description p + p {
+  margin-top: min(0.402vw, 0.569vh);
+}
+
+.description .course {
+  color: var(--orange);
+  font-size: min(2.480vw, 3.511vh);
+  font-weight: 600;
+  line-height: 1.18;
+  white-space: nowrap;
+}
+
+.footer {
+  position: absolute;
+  left: var(--x98);
+  top: var(--y826);
+  display: grid;
+  grid-template-columns: min(17.426vw, 24.668vh) 1fr;
+  gap: min(7.038vw, 9.962vh);
+  align-items: end;
+  width: min(57.105vw, 80.835vh);
+}
+
+.signature {
+  display: block;
+  width: min(13.070vw, 18.501vh);
+  height: auto;
+  margin: 0 0 min(0.938vw, 1.328vh);
+}
+
+.footer-title {
+  margin: 0;
+  color: var(--blue);
+  font-size: min(1.407vw, 1.993vh);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.footer-caption {
+  margin: min(0.335vw, 0.474vh) 0 0;
+  font-size: min(1.139vw, 1.613vh);
+  line-height: 1.25;
+}
+
+@media print {
+  @page {
+    size: 1492px 1054px;
+    margin: 0;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .page {
+    width: 1492px;
+    height: 1054px;
+  }
+
+  .certificate {
+    width: 1492px;
+    height: 1054px;
+  }
+}
