@@ -5,6 +5,7 @@ import ItemSlider from "../itemSlider/itemSlider";
 import { useState } from "react";
 import EditAccountPopup from "./editAccountPopup";
 import SettingsPopup from "./settingsPopup";
+import AccountCertificates from "./accountCertificates";
 import { useI18n } from "~/i18n";
 import backgroundImage from "../../../assets/LoginBackground.webp";
 
@@ -21,6 +22,7 @@ function AccountPage(){
         4: "loading",
         6: "loading",
     });
+    const [certificateState, setCertificateState] = useState<SliderStatus>("loading");
 
     const setSliderState = (type: number, state: SliderStatus) => {
         setSliderStates((prev) => {
@@ -30,6 +32,7 @@ function AccountPage(){
     };
 
     const allAccountSlidersEmpty = accountSliderTypes.every((type) => sliderStates[type] === "empty");
+    const isAccountContentEmpty = allAccountSlidersEmpty && certificateState === "empty";
 
     const logoutHandle = () => {
         localStorage.removeItem("user");
@@ -65,11 +68,12 @@ function AccountPage(){
                     </div>
                 </div>
 
+                <AccountCertificates onDataStateChange={setCertificateState} />
                 <ItemSlider props={{type: 3, onDataStateChange: (state) => setSliderState(3, state)}} />
                 <ItemSlider props={{type: 4, onDataStateChange: (state) => setSliderState(4, state)}} />
                 <ItemSlider props={{type: 6, onDataStateChange: (state) => setSliderState(6, state)}} />
 
-                {allAccountSlidersEmpty && (
+                {isAccountContentEmpty && (
                     <p className="watchToRecommend mt-5">{t("likeWatchSaveVideos")}</p>
                 )}
             </main>

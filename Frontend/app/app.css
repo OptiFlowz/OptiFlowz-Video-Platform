@@ -4710,6 +4710,179 @@ main.account .info .userInfo p svg {
   flex-shrink: 0;
 }
 
+.accountCertificates {
+  width: 100%;
+}
+
+.accountCertificatesGrid {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.accountCertificatesGrid::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.certificateCard {
+  flex-shrink: 0;
+  width: calc(100% / 3.15 - 0.75rem - 20px);
+  min-width: 0;
+}
+
+.certificatePreview {
+  position: relative;
+  aspect-ratio: 443 / 246;
+  overflow: hidden;
+  border: 0;
+  border-radius: 20px;
+  background-image: url("/video-corner-certificate-bg.webp");
+  background-position: center;
+  background-size: cover;
+  box-shadow: 0 14px 34px rgba(8, 28, 64, 0.12);
+}
+
+.certificatePreviewText {
+  position: absolute;
+  top: 9%;
+  left: 6%;
+  max-width: 62%;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.02;
+  pointer-events: none;
+}
+
+.certificatePreviewText strong {
+  color: var(--accentOrange);
+  font-size: clamp(1.15rem, 2.6vw, 1.85rem);
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.certificatePreviewText span {
+  color: var(--accentBlue);
+  font-size: clamp(0.8rem, 1.8vw, 1.15rem);
+  font-weight: 800;
+  letter-spacing: 0;
+  margin-top: 0.25rem;
+}
+
+.certificatePreviewText p {
+  color: #7f8ba3;
+  font-size: clamp(0.72rem, 1.4vw, 0.925rem);
+  font-weight: 500;
+  line-height: 1.15;
+  margin-top: 0.35rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.certificateDownloadButton {
+  position: absolute;
+  left: 6%;
+  bottom: 7%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-height: 34px;
+  padding: 0.52rem 0.85rem;
+  border: 0;
+  border-radius: 12px;
+  background: var(--accentBlue);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.certificateDownloadButton:hover {
+  background: var(--accentBlue2);
+  transform: translateY(-1px);
+}
+
+.certificateDownloadButton svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.certificateDownloadButton:disabled {
+  cursor: wait;
+  opacity: 0.75;
+  transform: none;
+}
+
+.certificateDownloadSpinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #ffffff;
+  border-radius: 999px;
+  animation: certificate-download-spin 0.7s linear infinite;
+}
+
+@keyframes certificate-download-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.certificateCard h3 {
+  color: var(--text1);
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.2;
+  margin-top: 8px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.certificateDate {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--background2);
+  color: var(--text1);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.skeletonCertificateCard {
+  aspect-ratio: 443 / 246;
+  border-radius: 20px;
+  background: linear-gradient(90deg, var(--background2) 25%, var(--background3) 50%, var(--background2) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+}
+
+@media screen and (max-width: 1420px) {
+  .certificateCard {
+    width: calc(100% / 3.2 - 0.75rem - 20px);
+  }
+}
+
+@media screen and (max-width: 1075px) {
+  .certificateCard {
+    width: calc(100% / 1.05 - 0.75rem - 20px);
+  }
+}
+
 /* EDIT ACCOUNT */
 
 .editAccountPopup section {
