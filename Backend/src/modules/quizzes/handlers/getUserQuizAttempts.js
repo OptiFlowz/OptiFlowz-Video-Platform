@@ -58,7 +58,8 @@ export async function getUserQuizAttemptsInternal(object, userId = null) {
           max_points,
           score_percentage,
           passed,
-          answer_review_mode
+          answer_review_mode,
+          scoring
         FROM quiz_attempts
         WHERE quiz_id = $1
           AND user_id = $2

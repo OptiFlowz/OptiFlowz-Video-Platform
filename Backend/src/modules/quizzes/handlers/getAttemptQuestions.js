@@ -105,6 +105,7 @@ function buildChoiceQuestion(attempt, attemptQuestion, options) {
             question: attemptQuestion,
             answer: attemptQuestion.answer?.response,
             options,
+            scoring: attempt.scoring,
           });
 
     response.review = review;
@@ -157,6 +158,7 @@ function buildMatchingQuestion(attempt, attemptQuestion, pairs) {
             question: attemptQuestion,
             answer: attemptQuestion.answer?.response,
             pairs,
+            scoring: attempt.scoring,
           });
   }
 
@@ -197,7 +199,8 @@ export async function getAttemptQuestionsInternal(object, userId = null) {
           max_points,
           score_percentage,
           passed,
-          answer_review_mode
+          answer_review_mode,
+          scoring
         FROM quiz_attempts
         WHERE id = $1
           AND user_id = $2

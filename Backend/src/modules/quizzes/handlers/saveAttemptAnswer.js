@@ -49,6 +49,7 @@ async function getAttemptQuestion(client, attemptId, questionId, userId) {
         qa.status,
         qa.expires_at,
         qa.answer_review_mode,
+        qa.scoring,
         qq.id AS question_id,
         qq.question_type,
         qq.explanation,
@@ -186,6 +187,7 @@ export async function saveAttemptAnswerInternal(object, userId = null) {
       answer,
       options,
       pairs,
+      scoring: attemptQuestion.scoring,
     });
 
     await client.query(

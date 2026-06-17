@@ -112,6 +112,7 @@ export async function finalizeQuizAttempt(client, attemptId, userId = null) {
             answer: question.answer?.response,
             options: optionsByQuestionId[question.question_id] || [],
             pairs: pairsByQuestionId[question.question_id] || [],
+            scoring: attempt.scoring,
           });
 
     await client.query(
