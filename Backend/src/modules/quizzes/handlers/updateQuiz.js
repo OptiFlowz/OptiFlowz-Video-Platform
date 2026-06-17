@@ -20,6 +20,7 @@ function prerequisites(object, userId) {
     shuffle_options: z.boolean().optional(),
     answer_review_mode: z.enum(['immediate', 'at_end','assignment']).optional(),
     scoring: z.enum(['strict', 'partial']).optional(),
+    has_certificate: z.boolean().optional(),
   });
 
 
@@ -55,7 +56,8 @@ export async function updateQuizInternal(object, userId = null) {
         shuffle_questions = CASE WHEN $16 THEN $17 ELSE shuffle_questions END,
         shuffle_options = CASE WHEN $18 THEN $19 ELSE shuffle_options END,
         answer_review_mode = CASE WHEN $20 THEN $21 ELSE answer_review_mode END,
-        scoring = CASE WHEN $22 THEN $23 ELSE scoring END
+        scoring = CASE WHEN $22 THEN $23 ELSE scoring END,
+        has_certificate = CASE WHEN $24 THEN $25 ELSE has_certificate END
       WHERE id = $1
       RETURNING *
     `,
@@ -94,6 +96,9 @@ export async function updateQuizInternal(object, userId = null) {
 
       hasField(data, 'scoring'),
       data.scoring,
+
+      hasField(data, 'has_certificate'),
+      data.has_certificate,
     ]
   );
 

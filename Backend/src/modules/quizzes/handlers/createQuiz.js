@@ -16,6 +16,7 @@ function prerequisites(object, userId) {
     shuffle_options: z.boolean().optional().default(true),
     answer_review_mode: z.enum(['immediate', 'at_end','assignment']).optional().default('immediate'),
     scoring: z.enum(['strict', 'partial']).optional().default('partial'),
+    has_certificate: z.boolean().optional().default(false),
   });
 
   if (!userId) {
@@ -44,9 +45,10 @@ export async function createQuizInternal(object, userId = null) {
         shuffle_options,
         answer_review_mode,
         scoring,
+        has_certificate,
         created_by
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
       RETURNING *
     `,
     [
@@ -61,6 +63,7 @@ export async function createQuizInternal(object, userId = null) {
       data.shuffle_options,
       data.answer_review_mode,
       data.scoring,
+      data.has_certificate,
       userId
     ]
   );
