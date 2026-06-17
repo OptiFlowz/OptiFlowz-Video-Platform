@@ -57,15 +57,35 @@ function orderByIds(items, orderedIds) {
 }
 
 function shouldRevealReview(attempt, attemptQuestion) {
-  if (attempt.answer_review_mode === 'immediate') {
+  if (attempt.answer_review_mode === 'immediate' || attempt.answer_review_mode === 'assignment') {
     return attemptQuestion.result != null;
   }
 
   return attempt.answer_review_mode === 'at_end' && attempt.status === 'submitted';
 }
 
+function shouldHideCorrectFeedback(attempt, attemptQuestion) {
+  return (
+    attempt.answer_review_mode === 'assignment' &&
+    attemptQuestion.result != null &&
+    attemptQuestion.result !== 'correct'
+  );
+}
+
+function normalizeAssignmentReview(review) {
+  if (review.result === 'correct') {
+    return review;
+  }
+
+  return {
+    result: 'incorrect',
+    explanation: review.explanation || null,
+  };
+}
+
 function buildChoiceQuestion(attempt, attemptQuestion, options) {
   const revealReview = shouldRevealReview(attempt, attemptQuestion);
+  const hideCorrectFeedback = shouldHideCorrectFeedback(attempt, attemptQuestion);
   const selectedOptionIds = new Set(getSelectedOptionIds(attemptQuestion.answer));
   const orderedOptions = orderByIds(options, attemptQuestion.answer?.option_order);
 
@@ -80,7 +100,7 @@ function buildChoiceQuestion(attempt, attemptQuestion, options) {
         selected: selectedOptionIds.has(String(option.id)),
       };
 
-      if (revealReview) {
+      if (revealReview && !hideCorrectFeedback) {
         mapped.is_correct = option.is_correct;
       }
 
@@ -108,7 +128,7 @@ function buildChoiceQuestion(attempt, attemptQuestion, options) {
             scoring: attempt.scoring,
           });
 
-    response.review = review;
+    response.review = hideCorrectFeedback ? normalizeAssignmentReview(review) : review;
   }
 
   return response;
@@ -116,6 +136,7 @@ function buildChoiceQuestion(attempt, attemptQuestion, options) {
 
 function buildMatchingQuestion(attempt, attemptQuestion, pairs) {
   const revealReview = shouldRevealReview(attempt, attemptQuestion);
+  const hideCorrectFeedback = shouldHideCorrectFeedback(attempt, attemptQuestion);
   const selectedPairs = getSelectedPairs(attemptQuestion.answer);
   const rightItems = orderByIds(pairs, attemptQuestion.answer?.pair_order);
 
@@ -134,7 +155,7 @@ function buildMatchingQuestion(attempt, attemptQuestion, pairs) {
     })),
   };
 
-  if (revealReview) {
+  if (revealReview && !hideCorrectFeedback) {
     response.pairs = pairs.map((pair) => ({
       id: pair.id,
       left_text: pair.left_text,
@@ -160,6 +181,11 @@ function buildMatchingQuestion(attempt, attemptQuestion, pairs) {
             pairs,
             scoring: attempt.scoring,
           });
+  } else if (revealReview) {
+    response.review = normalizeAssignmentReview({
+      result: attemptQuestion.result,
+      explanation: attemptQuestion.explanation || null,
+    });
   }
 
   return response;

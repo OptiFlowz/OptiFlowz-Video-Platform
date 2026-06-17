@@ -119,6 +119,21 @@ async function updateAttemptScore(client, attemptId) {
   return rows[0] || null;
 }
 
+function normalizeAssignmentReview(review) {
+  if (review.result === 'correct') {
+    return {
+      ...review,
+      points: review.max_points,
+    };
+  }
+
+  return {
+    result: 'incorrect',
+    points: review.max_points,
+    explanation: review.explanation || null,
+  };
+}
+
 function assertAttemptCanReceiveAnswer(attemptQuestion) {
   if (!attemptQuestion) {
     const error = new Error('Attempt question not found');
@@ -133,6 +148,12 @@ function assertAttemptCanReceiveAnswer(attemptQuestion) {
   }
 
   if (attemptQuestion.answer_review_mode === 'immediate' && attemptQuestion.existing_result != null) {
+    const error = new Error('Answer has already been submitted and reviewed.');
+    error.status = 409;
+    throw error;
+  }
+
+  if (attemptQuestion.answer_review_mode === 'assignment' && attemptQuestion.existing_result === 'correct') {
     const error = new Error('Answer has already been submitted and reviewed.');
     error.status = 409;
     throw error;
@@ -189,6 +210,10 @@ export async function saveAttemptAnswerInternal(object, userId = null) {
       pairs,
       scoring: attemptQuestion.scoring,
     });
+    const storedResult =
+      attemptQuestion.answer_review_mode === 'assignment' && review.result !== 'correct'
+        ? 'incorrect'
+        : review.result;
 
     await client.query(
       `
@@ -202,7 +227,7 @@ export async function saveAttemptAnswerInternal(object, userId = null) {
       [
         attemptQuestion.attempt_question_id,
         JSON.stringify(storedAnswer),
-        review.result,
+        storedResult,
         review.awarded_points,
       ]
     );
@@ -214,7 +239,10 @@ export async function saveAttemptAnswerInternal(object, userId = null) {
 
     return {
       saved: true,
-      review,
+      review:
+        attemptQuestion.answer_review_mode === 'assignment'
+          ? normalizeAssignmentReview(review)
+          : review,
       score,
     };
   } catch (error) {
