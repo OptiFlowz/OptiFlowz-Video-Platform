@@ -4729,9 +4729,11 @@ main.account .info .userInfo p svg {
 }
 
 .certificateCard {
-  flex-shrink: 0;
-  width: calc(100% / 3.15 - 0.75rem - 20px);
+  flex: 0 0 clamp(300px, calc(100% / 2.325 - 0.75rem - 20px), 443px);
+  width: clamp(300px, calc(100% / 2.325 - 0.75rem - 20px), 443px);
   min-width: 0;
+  cursor: pointer;
+  outline: none;
 }
 
 .certificatePreview {
@@ -4743,7 +4745,7 @@ main.account .info .userInfo p svg {
   background-image: url("/video-corner-certificate-bg.webp");
   background-position: center;
   background-size: cover;
-  box-shadow: 0 14px 34px rgba(8, 28, 64, 0.12);
+  box-shadow: none;
 }
 
 .certificatePreviewText {
@@ -4810,6 +4812,12 @@ main.account .info .userInfo p svg {
   transform: translateY(-1px);
 }
 
+.certificateCard:hover .certificateDownloadButton,
+.certificateCard:focus-visible .certificateDownloadButton {
+  background: var(--accentBlue2);
+  transform: translateY(-1px);
+}
+
 .certificateDownloadButton svg {
   width: 1rem;
   height: 1rem;
@@ -4869,18 +4877,6 @@ main.account .info .userInfo p svg {
   background: linear-gradient(90deg, var(--background2) 25%, var(--background3) 50%, var(--background2) 75%);
   background-size: 200% 100%;
   animation: skeleton-loading 1.5s infinite;
-}
-
-@media screen and (max-width: 1420px) {
-  .certificateCard {
-    width: calc(100% / 3.2 - 0.75rem - 20px);
-  }
-}
-
-@media screen and (max-width: 1075px) {
-  .certificateCard {
-    width: calc(100% / 1.05 - 0.75rem - 20px);
-  }
 }
 
 /* EDIT ACCOUNT */

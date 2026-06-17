@@ -56,8 +56,8 @@ function AccountCertificates({ onDataStateChange }: Props) {
     return nextHeaders;
   }, [token]);
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["quizCertificates"],
+  const { data, isLoading, isFetching, isError } = useQuery({
+    queryKey: ["quizCertificates", token],
     queryFn: () =>
       fetchFn<CertificatesResponse>({
         route: "api/quizzes/certificates",
@@ -67,20 +67,21 @@ function AccountCertificates({ onDataStateChange }: Props) {
         },
       }),
     enabled: !!token,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: "always",
     refetchOnWindowFocus: false,
   });
 
   const certificates = data?.certificates ?? [];
 
   useEffect(() => {
-    if (isLoading) {
+    if (isLoading || (isFetching && certificates.length === 0)) {
       onDataStateChange?.("loading");
       return;
     }
 
     onDataStateChange?.(certificates.length > 0 ? "has-data" : "empty");
-  }, [certificates.length, isLoading, onDataStateChange]);
+  }, [certificates.length, isFetching, isLoading, onDataStateChange]);
 
   const handleDownloadCertificate = async (certificate: Certificate) => {
     if (!token || downloadingAttemptId) return;
@@ -121,7 +122,7 @@ function AccountCertificates({ onDataStateChange }: Props) {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || (isFetching && certificates.length === 0)) {
     return (
       <section className="accountCertificates contentSection mt-8 max-[450px]:mt-3" aria-label={t("accountCertificatesTitle")}>
         <span className="collection-header">
@@ -154,7 +155,21 @@ function AccountCertificates({ onDataStateChange }: Props) {
           const title = certificate.quiz_title || t("quizDefaultTitle");
 
           return (
-            <article className="certificateCard" key={certificate.attempt_id}>
+            <article
+              className="certificateCard"
+              key={certificate.attempt_id}
+              role="button"
+              tabIndex={0}
+              onClick={() => handleDownloadCertificate(certificate)}
+              onKeyDown={(event) => {
+                if (event.target !== event.currentTarget) return;
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  handleDownloadCertificate(certificate);
+                }
+              }}
+              aria-label={t("certificateDownload")}
+            >
               <div className="certificatePreview">
                 <div className="certificatePreviewText">
                   <strong>CERTIFICATE</strong>
@@ -165,7 +180,10 @@ function AccountCertificates({ onDataStateChange }: Props) {
                   type="button"
                   className="certificateDownloadButton"
                   aria-label={t("certificateDownload")}
-                  onClick={() => handleDownloadCertificate(certificate)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleDownloadCertificate(certificate);
+                  }}
                   disabled={downloadingAttemptId === certificate.attempt_id}
                 >
                   {downloadingAttemptId === certificate.attempt_id ? (
