@@ -43,7 +43,19 @@ function buildResult(isCorrect, awardedPoints) {
   return awardedPoints > 0 ? 'partial' : 'incorrect';
 }
 
-export function gradeQuizAnswer({ question, answer, options = [], pairs = [] }) {
+function applyScoringMode(review, scoring, isCorrect) {
+  if (scoring !== 'strict' || isCorrect) {
+    return review;
+  }
+
+  return {
+    ...review,
+    result: 'incorrect',
+    awarded_points: 0,
+  };
+}
+
+export function gradeQuizAnswer({ question, answer, options = [], pairs = [], scoring = 'partial' }) {
   const maxPoints = Number(question.points || 0);
 
   if (question.question_type === 'single_choice') {
@@ -52,7 +64,7 @@ export function gradeQuizAnswer({ question, answer, options = [], pairs = [] }) 
     const isCorrect = selectedOptionIds.length === 1 && selectedOptionIds[0] === String(correctOption?.id);
     const awardedPoints = isCorrect ? maxPoints : 0;
 
-    return {
+    const review = {
       result: buildResult(isCorrect, awardedPoints),
       awarded_points: awardedPoints,
       max_points: maxPoints,
@@ -60,6 +72,8 @@ export function gradeQuizAnswer({ question, answer, options = [], pairs = [] }) 
       selected_option_ids: selectedOptionIds,
       explanation: question.explanation || null,
     };
+
+    return applyScoringMode(review, scoring, isCorrect);
   }
 
   if (question.question_type === 'multiple_choice') {
@@ -78,7 +92,7 @@ export function gradeQuizAnswer({ question, answer, options = [], pairs = [] }) 
       correctOptionIds.length === selectedOptionIds.length &&
       correctOptionIds.every((id) => selectedOptionIdSet.has(id));
 
-    return {
+    const review = {
       result: buildResult(isCorrect, awardedPoints),
       awarded_points: awardedPoints,
       max_points: maxPoints,
@@ -86,6 +100,8 @@ export function gradeQuizAnswer({ question, answer, options = [], pairs = [] }) 
       selected_option_ids: selectedOptionIds,
       explanation: question.explanation || null,
     };
+
+    return applyScoringMode(review, scoring, isCorrect);
   }
 
   if (question.question_type === 'matching') {
@@ -95,7 +111,7 @@ export function gradeQuizAnswer({ question, answer, options = [], pairs = [] }) 
     const awardedPoints = Number((maxPoints * scoreRatio).toFixed(2));
     const isCorrect = pairs.length > 0 && correctCount === pairs.length;
 
-    return {
+    const review = {
       result: buildResult(isCorrect, awardedPoints),
       awarded_points: awardedPoints,
       max_points: maxPoints,
@@ -105,6 +121,8 @@ export function gradeQuizAnswer({ question, answer, options = [], pairs = [] }) 
       })),
       explanation: question.explanation || null,
     };
+
+    return applyScoringMode(review, scoring, isCorrect);
   }
 
   return {

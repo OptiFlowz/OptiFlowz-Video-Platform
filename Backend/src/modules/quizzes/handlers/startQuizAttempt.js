@@ -110,7 +110,8 @@ async function getQuiz(client, quizId) {
         max_attempts,
         shuffle_questions,
         shuffle_options,
-        answer_review_mode
+        answer_review_mode,
+        scoring
       FROM quizzes
       WHERE id = $1
         AND is_active = true
@@ -342,7 +343,8 @@ export async function startQuizAttemptInternal(object, userId = null) {
           attempt_number,
           expires_at,
           max_points,
-          answer_review_mode
+          answer_review_mode,
+          scoring
         )
         VALUES (
           $1,
@@ -353,7 +355,8 @@ export async function startQuizAttemptInternal(object, userId = null) {
             ELSE now() + ($4::int * interval '1 second')
           END,
           $5,
-          $6
+          $6,
+          $7
         )
         RETURNING *;
       `,
@@ -364,6 +367,7 @@ export async function startQuizAttemptInternal(object, userId = null) {
         quiz.time_limit_seconds,
         maxPoints,
         quiz.answer_review_mode || 'immediate',
+        quiz.scoring || 'partial',
       ]
     );
 
