@@ -25,6 +25,7 @@ import { getQuizQuestionSourcesInternal } from './handlers/getQuizQuestionSource
 
 import { getUserQuizAttemptsInternal } from './handlers/getUserQuizAttempts.js';
 import { getUserCertificatesInternal } from './handlers/getUserCertificates.js';
+import { generateCertificateInternal } from './handlers/generateCertificate.js';
 import { startQuizAttemptInternal } from './handlers/startQuizAttempt.js';
 import { saveAttemptAnswerInternal } from './handlers/saveAttemptAnswer.js';
 import { getAttemptQuestionsInternal } from './handlers/getAttemptQuestions.js';
@@ -303,6 +304,22 @@ export async function getUserCertificates(req, res) {
     return sendSuccess(res, { certificates }, 200);
   } catch (error) {
     console.error('Error fetching user certificates:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function generateCertificate(req, res) {
+  try {
+    const { pdfBuffer, filename } = await generateCertificateInternal(
+      { ...req.params, ...req.query, ...req.body },
+      req.user?.sub || null
+    );
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    return res.send(pdfBuffer);
+  } catch (error) {
+    console.error('Error generating certificate:', error);
     return sendError(res, error.message, error.status || 500);
   }
 }
