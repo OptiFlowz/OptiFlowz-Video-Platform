@@ -832,6 +832,30 @@ header .searchPanel.focus-armed .search:has(input:focus) svg path {
   stroke: var(--text1);
 }
 
+.videoQuizSectionTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.viewQuizCertificate {
+  border-radius: 999px;
+  padding: 10px 20px;
+  display: grid;
+  place-items: center;
+  background: var(--accentBlue);
+  color: white;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all .18s ease;
+}
+.viewQuizCertificate:hover {
+  background: var(--accentBlue2);
+}
+
 header .search button {
   background-image: linear-gradient(135deg, var(--accentBlue), var(--accentBlue2));
   padding: 0 18px;
@@ -4729,8 +4753,8 @@ main.account .info .userInfo p svg {
 }
 
 .certificateCard {
-  flex: 0 0 clamp(300px, calc(100% / 2.325 - 0.75rem - 20px), 443px);
-  width: clamp(300px, calc(100% / 2.325 - 0.75rem - 20px), 443px);
+  flex-basis: calc(100% / 3.2 - 0.75rem - 20px);
+  width: calc(100% / 3.2 - 0.75rem - 20px);
   min-width: 0;
   cursor: pointer;
   outline: none;
@@ -4738,6 +4762,7 @@ main.account .info .userInfo p svg {
 
 .certificatePreview {
   position: relative;
+  width: 100%;
   aspect-ratio: 443 / 246;
   overflow: hidden;
   border: 0;
@@ -9292,6 +9317,11 @@ main.playlist .videoHolder .playlistOrderNumber {
     min-width: calc(100% / 2.325 - 0.75rem - 20px);
   }
 
+  .certificateCard {
+    flex-basis: calc(100% / 2.325 - 0.75rem - 20px);
+    width: calc(100% / 2.325 - 0.75rem - 20px);
+  }
+
   main .collection.notscrollable {
     grid-template-columns: 1fr 1fr;
   }
@@ -9397,6 +9427,12 @@ main.playlist .videoHolder .playlistOrderNumber {
   .featuredColl .skeleton-item{
     min-width: calc(100% / 1.75 - 0.75rem - 20px);
   }
+
+  .certificateCard {
+    flex-basis: calc(100% / 1.4 - 0.75rem - 20px);
+    width: calc(100% / 1.4 - 0.75rem - 20px);
+  }
+
   main.login > div > svg {
     width: 100px;
     height: 100px;
@@ -9923,6 +9959,12 @@ footer > span.footerCopyright {
   main.play {
     padding-top: calc(110px + 56.25dvw);
   }
+
+  .certificateCard {
+    flex-basis: calc(100% / 1.05 - 0.75rem - 20px);
+    width: calc(100% / 1.05 - 0.75rem - 20px);
+  }
+
   main.play .player {
     position: fixed;
     top: 90px;

@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router";
+import { useLocation, useNavigate, useParams, Link } from "react-router";
 import { fetchFn } from "~/API";
 import { ArrowSVG, CloseSVG, IconChevron, QuizSVG } from "~/constants";
 import { appendFromQuizParam, getToken, QUIZ_RETURN_PATH_STORAGE_KEY } from "~/functions";
@@ -1443,6 +1443,8 @@ function VideoQuizPage() {
       });
       const submittedAttempt = submitResponse.attempt;
 
+      await queryClient.refetchQueries({ queryKey: ["quiz-page-summary", quizId] });
+
       if (submittedAttempt.deleted || submittedAttempt.status === "deleted") {
         setActiveAttempt(null);
         setLatestResult(null);
@@ -1709,8 +1711,14 @@ function VideoQuizPage() {
           {stage === "intro" ? (
             <div className="videoQuizIntro">
               <div className="videoQuizSectionTitle">
-                <h3>{t("quizYourLastAttempts")}</h3>
-                <p>{quizMaxAttempts > 0 ? t("quizAttemptsLeft", { count: attemptsLeft }) : t("quizAttemptsAppearHere")}</p>
+                <span>
+                  <h3>{t("quizYourLastAttempts")}</h3>
+                  <p>{quizMaxAttempts > 0 ? t("quizAttemptsLeft", { count: attemptsLeft }) : t("quizAttemptsAppearHere")}</p>
+                </span>
+
+                {quizSummary?.has_certificate && attempts.some((attempt) => attempt.passed) &&
+                  <Link to="/account" className="viewQuizCertificate">{t("quizViewCertificates")}</Link>
+                }
               </div>
 
               {isQuizLoading ? (
@@ -2190,7 +2198,7 @@ function VideoQuizPage() {
 	                onClick={abandonAssignmentAttempt}
 	                disabled={isSubmittingAttempt}
 	              >
-	                {isSubmittingAttempt ? t("quizSubmitting") : "Abandon attempt"}
+	                {isSubmittingAttempt ? t("quizSubmitting") : t("quizAbandonAttempt")}
 	              </button>
 	            </div>
 	          </div>
