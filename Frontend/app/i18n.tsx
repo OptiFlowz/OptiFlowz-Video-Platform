@@ -259,6 +259,7 @@ const enBase: TranslationMap = {
   quizFailedSubmitAttempt: "Failed to submit quiz attempt.",
   quizChooseAnswer: "Choose an answer",
   quizCertificateMeta: (params?: Params) => `Certificate when completed • ${getParam(params, "count")} questions • ${getParam(params, "time")}`,
+  quizPlainMeta: (params?: Params) => `${getParam(params, "count")} questions • ${getParam(params, "time")}`,
   quizTimeLeft: "Time left:",
   quizCloseQuiz: "Close quiz",
   quizYourLastAttempts: "Your last attempts",

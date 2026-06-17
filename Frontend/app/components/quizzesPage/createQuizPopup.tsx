@@ -39,6 +39,7 @@ function CreateQuizPopup({
   const [quizTitle, setQuizTitle] = useState("");
   const [description, setDescription] = useState(DEFAULT_DESCRIPTION);
   const [isActive, setIsActive] = useState(true);
+  const [hasCertificate, setHasCertificate] = useState(false);
   const [timeLimitSeconds, setTimeLimitSeconds] = useState("900");
   const [questionCount, setQuestionCount] = useState("10");
   const [maxAttempts, setMaxAttempts] = useState("3");
@@ -70,6 +71,7 @@ function CreateQuizPopup({
       );
       setDescription(initialValues?.description ?? DEFAULT_DESCRIPTION);
       setIsActive(initialValues?.is_active ?? true);
+      setHasCertificate(initialValues?.has_certificate ?? false);
       setTimeLimitSeconds(String(initialValues?.time_limit_seconds ?? 900));
       setQuestionCount(String(initialValues?.question_count ?? 10));
       setMaxAttempts(initialValues ? String(initialValues.max_attempts ?? 0) : "3");
@@ -147,6 +149,7 @@ function CreateQuizPopup({
         title: normalizedTitle,
         description: normalizedDescription,
         is_active: isActive,
+        has_certificate: hasCertificate,
         time_limit_seconds: parsePositiveInteger(timeLimitSeconds, "Time limit", {
           min: 0,
         }),
@@ -277,6 +280,7 @@ function CreateQuizPopup({
                   disabled={isSubmitting}
                   className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
                 />
+                <p className="quizPopupHint">Use 0 for unlimited attempts.</p>
               </div>
 
               <div className="formGroup">
@@ -351,6 +355,21 @@ function CreateQuizPopup({
                   type="checkbox"
                   checked={isActive}
                   onChange={(event) => setIsActive(event.target.checked)}
+                  disabled={isSubmitting}
+                  className="quizPopupCheckbox appearance-none rounded-[6px]! p-2.25! border-2 cursor-pointer checked:bg-(--accentOrange)! transition-colors relative checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
+                />
+              </label>
+
+              <label className="quizPopupToggleRow" htmlFor="quizHasCertificate">
+                <div>
+                  <strong>Has Certificate</strong>
+                  <span>Issue a certificate when the quiz is completed.</span>
+                </div>
+                <input
+                  id="quizHasCertificate"
+                  type="checkbox"
+                  checked={hasCertificate}
+                  onChange={(event) => setHasCertificate(event.target.checked)}
                   disabled={isSubmitting}
                   className="quizPopupCheckbox appearance-none rounded-[6px]! p-2.25! border-2 cursor-pointer checked:bg-(--accentOrange)! transition-colors relative checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
                 />

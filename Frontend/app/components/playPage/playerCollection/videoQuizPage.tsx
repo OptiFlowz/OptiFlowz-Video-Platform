@@ -99,6 +99,7 @@ type VideoQuizSummary = {
   title: string;
   description: string;
   is_active: boolean;
+  has_certificate?: boolean;
   time_limit_seconds: number;
   question_count: number;
   max_attempts: number;
@@ -911,6 +912,7 @@ function VideoQuizPage() {
   const summaryQuestionCount = Math.max(0, Number(quizSummary?.question_count) || 0);
   const displayedQuestionCount = stage === "intro" ? summaryQuestionCount : questions.length || summaryQuestionCount;
   const quizDisplayTitle = quizSummary?.title || t("quizDefaultTitle");
+  const quizMetaKey = quizSummary?.has_certificate ? "quizCertificateMeta" : "quizPlainMeta";
   const attemptsLeft = Math.max(0, quizMaxAttempts - attempts.length);
   const hasMetQuizRequirements = requirementsStatus?.hasMetRequirements === true;
   const isRequirementsBlocking = requirementsStatus?.hasMetRequirements === false;
@@ -1685,7 +1687,7 @@ function VideoQuizPage() {
             <span>
               <h2>{quizDisplayTitle}</h2>
               <p>
-                {t("quizCertificateMeta", { count: displayedQuestionCount, time: formatQuizTimeLimitLabel(quizTimeLimitSeconds, t) })}
+                {t(quizMetaKey, { count: displayedQuestionCount, time: formatQuizTimeLimitLabel(quizTimeLimitSeconds, t) })}
               </p>
             </span>
           </div>

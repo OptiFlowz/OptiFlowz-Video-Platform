@@ -539,6 +539,7 @@ function QuizzesPage() {
         title: activeQuizModalQuiz.title,
         description: activeQuizModalQuiz.description,
         is_active: activeQuizModalQuiz.is_active,
+        has_certificate: activeQuizModalQuiz.has_certificate ?? false,
         time_limit_seconds: Number(activeQuizModalQuiz.time_limit_seconds),
         question_count: Number(activeQuizModalQuiz.question_count),
         max_attempts: Number(activeQuizModalQuiz.max_attempts),
