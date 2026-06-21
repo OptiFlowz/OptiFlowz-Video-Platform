@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams, Link } from "react-router";
 import { fetchFn } from "~/API";
 import { ArrowSVG, CloseSVG, IconChevron, QuizSVG } from "~/constants";
-import { appendFromQuizParam, getToken, QUIZ_RETURN_PATH_STORAGE_KEY } from "~/functions";
+import { appendFromQuizParam, formatDescription, getToken, QUIZ_RETURN_PATH_STORAGE_KEY } from "~/functions";
 import { useI18n } from "~/i18n";
 
 type TranslateFn = ReturnType<typeof useI18n>["t"];
@@ -912,6 +912,7 @@ function VideoQuizPage() {
   const summaryQuestionCount = Math.max(0, Number(quizSummary?.question_count) || 0);
   const displayedQuestionCount = stage === "intro" ? summaryQuestionCount : questions.length || summaryQuestionCount;
   const quizDisplayTitle = quizSummary?.title || t("quizDefaultTitle");
+  const quizDescription = quizSummary?.description?.trim() ?? "";
   const quizMetaKey = quizSummary?.has_certificate ? "quizCertificateMeta" : "quizPlainMeta";
   const attemptsLeft = Math.max(0, quizMaxAttempts - attempts.length);
   const hasMetQuizRequirements = requirementsStatus?.hasMetRequirements === true;
@@ -1684,27 +1685,33 @@ function VideoQuizPage() {
         tabIndex={-1}
       >
         <div className="videoQuizTop">
-          <div className="videoQuizHeading">
-            <span className="videoQuizBadge">{QuizSVG}</span>
-            <span>
-              <h2>{quizDisplayTitle}</h2>
-              <p>
-                {t(quizMetaKey, { count: displayedQuestionCount, time: formatQuizTimeLimitLabel(quizTimeLimitSeconds, t) })}
-              </p>
-            </span>
-          </div>
-
-          <div className="videoQuizTopActions">
-            {(stage === "question" || stage === "review") && !isReadOnlyAttempt && hasQuizTimeLimit && (
-              <span className={`videoQuizTimer ${secondsLeft <= 60 ? "urgent" : ""}`}>
-                <span>{t("quizTimeLeft")}</span> <AnimatedTimer secondsLeft={secondsLeft} />
+          <div className="videoQuizHeaderRow">
+            <div className="videoQuizHeading">
+              <span className="videoQuizBadge">{QuizSVG}</span>
+              <span>
+                <h2>{quizDisplayTitle}</h2>
+                <p>
+                  {t(quizMetaKey, { count: displayedQuestionCount, time: formatQuizTimeLimitLabel(quizTimeLimitSeconds, t) })}
+                </p>
               </span>
-            )}
+            </div>
 
-            <button type="button" onClick={handleExit} className="videoQuizCloseButton" aria-label={t("quizCloseQuiz")}>
-              {CloseSVG}
-            </button>
+            <div className="videoQuizTopActions">
+              {(stage === "question" || stage === "review") && !isReadOnlyAttempt && hasQuizTimeLimit && (
+                <span className={`videoQuizTimer ${secondsLeft <= 60 ? "urgent" : ""}`}>
+                  <span>{t("quizTimeLeft")}</span> <AnimatedTimer secondsLeft={secondsLeft} />
+                </span>
+              )}
+
+              <button type="button" onClick={handleExit} className="videoQuizCloseButton" aria-label={t("quizCloseQuiz")}>
+                {CloseSVG}
+              </button>
+            </div>
           </div>
+
+          {stage === "intro" && quizDescription ? (
+            <p className="videoQuizDescription">{formatDescription(quizDescription)}</p>
+          ) : null}
         </div>
 
         <div key={stage} className="videoQuizStageTransition">
@@ -1713,7 +1720,7 @@ function VideoQuizPage() {
               <div className="videoQuizSectionTitle">
                 <span>
                   <h3>{t("quizYourLastAttempts")}</h3>
-                  <p>{quizMaxAttempts > 0 ? t("quizAttemptsLeft", { count: attemptsLeft }) : t("quizAttemptsAppearHere")}</p>
+                  {quizMaxAttempts > 0 ? <p>{t("quizAttemptsLeft", { count: attemptsLeft })}</p> : null}
                 </span>
 
                 {quizSummary?.has_certificate && attempts.some((attempt) => attempt.passed) &&
@@ -1755,12 +1762,12 @@ function VideoQuizPage() {
                     </div>
                   ))}
                 </div>
-              ) : !isRequirementsBlocking ? (
+              ) : (
                 <div className="videoQuizEmptyState">
-                  <strong>{t("quizNoAttemptsYet")}</strong>
+                  <strong>{t("quizAttemptsAppearHere")}</strong>
                   <p>{t("quizStartFirstAttempt")}</p>
                 </div>
-              ) : null}
+              )}
 
               {!hasMetQuizRequirements ? (
                 <div className={`videoQuizRequirementsCard ${isRequirementsBlocking ? "blocked" : ""}`}>
@@ -1822,13 +1829,22 @@ function VideoQuizPage() {
                                     {formatDurationLabel(video.duration_seconds)}
                                   </span>
                                 ) : null}
-                                <button
-                                  type="button"
-                                  className="videoQuizInlineButton"
-                                  onClick={() => navigate(`/video/${video.id}`)}
-                                >
-                                  {t("quizWatch")}
-                                </button>
+                                {video.has_met_requirement ? (
+                                  <span className="videoQuizRequirementMetBadge" aria-label="Requirement complete" title="Requirement complete">
+                                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                      <path d="M5 12.5L9.5 17L19 7.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                    <span>Complete</span>
+                                  </span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="videoQuizInlineButton"
+                                    onClick={() => navigate(`/video/${video.id}`)}
+                                  >
+                                    {t("quizWatch")}
+                                  </button>
+                                )}
                               </div>
                             </div>
                           ))}

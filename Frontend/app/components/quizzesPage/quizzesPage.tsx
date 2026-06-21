@@ -12,7 +12,7 @@ import {
   ThreeDotMenuSVG,
 } from "~/constants";
 import { fetchFn } from "~/API";
-import { getToken } from "~/functions";
+import { formatDescription, getToken } from "~/functions";
 import Sidebar from "~/components/myVideosPage/sidebar/sidebar";
 import CreateQuizPopup from "~/components/quizzesPage/createQuizPopup";
 import EditQuizQuestionsPopup from "~/components/quizzesPage/editQuizQuestionsPopup";
@@ -380,7 +380,6 @@ function QuizzesPage() {
 
     setQuestionsQuiz(selectedQuiz);
     setIsQuizModalOpen(false);
-    setSelectedQuiz(null);
   };
 
   const handleOpenRulesFromModal = () => {
@@ -388,7 +387,6 @@ function QuizzesPage() {
 
     setRulesQuiz(selectedQuiz);
     setIsQuizModalOpen(false);
-    setSelectedQuiz(null);
   };
 
   const handleOpenSourcesFromModal = () => {
@@ -396,7 +394,16 @@ function QuizzesPage() {
 
     setSourcesQuiz(selectedQuiz);
     setIsQuizModalOpen(false);
-    setSelectedQuiz(null);
+  };
+
+  const returnToQuizModal = () => {
+    setQuestionsQuiz(null);
+    setRulesQuiz(null);
+    setSourcesQuiz(null);
+
+    if (selectedQuiz) {
+      setIsQuizModalOpen(true);
+    }
   };
 
   const handleDeleteSelectedQuizzes = useCallback(async () => {
@@ -671,10 +678,10 @@ function QuizzesPage() {
                           <div className="rounded-xl bg-(--background2) p-2 text-(--accentBlue)">
                             {QuizSVG}
                           </div>
-                          <div className="flex flex-col gap-1">
-                            <strong className="text-(--text1)">{quiz.title}</strong>
-                            <span className="text-sm opacity-75">
-                              {quiz.description || "No description"}
+                          <div className="quizRowText flex flex-col gap-1">
+                            <strong className="quizRowTitle text-(--text1)">{quiz.title}</strong>
+                            <span className="quizRowDescription text-sm opacity-75">
+                              {quiz.description ? formatDescription(quiz.description) : "No description"}
                             </span>
                           </div>
                           <button
@@ -851,7 +858,7 @@ function QuizzesPage() {
         quizId={questionsQuiz?.id ?? ""}
         quizTitle={questionsQuiz?.title ?? ""}
         requestHeaders={headersRef.current}
-        onClose={() => setQuestionsQuiz(null)}
+        onClose={returnToQuizModal}
         onSubmit={handleCreateQuizQuestion}
       />
 
@@ -860,7 +867,7 @@ function QuizzesPage() {
         quizId={rulesQuiz?.id ?? ""}
         quizTitle={rulesQuiz?.title ?? ""}
         requestHeaders={headersRef.current}
-        onClose={() => setRulesQuiz(null)}
+        onClose={returnToQuizModal}
         onSubmit={handleCreateQuizRule}
       />
 
@@ -869,7 +876,7 @@ function QuizzesPage() {
         quizId={sourcesQuiz?.id ?? ""}
         quizTitle={sourcesQuiz?.title ?? ""}
         requestHeaders={headersRef.current}
-        onClose={() => setSourcesQuiz(null)}
+        onClose={returnToQuizModal}
         onSubmit={handleCreateQuizSource}
       />
     </main>
