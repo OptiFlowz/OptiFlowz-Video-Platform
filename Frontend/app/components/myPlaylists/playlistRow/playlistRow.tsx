@@ -29,6 +29,7 @@ import type { FetchMyPlaylistsT, MyPlaylistT } from "~/types";
 import { fetchFn } from "~/API";
 import { ConfirmDialog } from "~/components/confirmPopup/confirmDialog";
 import { useConfirm } from "~/components/confirmPopup/useConfirm";
+import { useI18n } from "~/i18n";
 
 function PlaylistRow({
   props,
@@ -39,6 +40,7 @@ function PlaylistRow({
   isSelected: boolean;
   setSelectedPlaylists: Dispatch<SetStateAction<MyPlaylistT[]>>;
 }) {
+  const { t } = useI18n();
   const [isHidden, setIsHidden] = useState(false);
   const [visOpen, setVisOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -201,10 +203,10 @@ function PlaylistRow({
     setMobileMenuOpen(false);
 
     const ok = await confirm({
-      title: `Delete playlist "${props?.title}"?`,
-      message: "This action cannot be undone.",
-      yesText: "Delete",
-      noText: "Cancel",
+      title: t("adminDeletePlaylistTitle", { title: props?.title ?? "" }),
+      message: t("adminActionCannotBeUndone"),
+      yesText: t("adminDelete"),
+      noText: t("adminCancel"),
     });
 
     if (!ok) return;
@@ -279,19 +281,19 @@ function PlaylistRow({
             <span className="flex flex-col gap-0.5 rounded-none!">
               <h3>{props?.title}</h3>
               <h5 className="line-clamp-2 font-light!">
-                {formatDescription(props?.description || "No description")}
+                {formatDescription(props?.description || t("adminNoDescription"))}
               </h5>
               <div className="videoActions">
-                <Link to={`/playlist/${props?.id}`} title="Open Playlist">
+                <Link to={`/playlist/${props?.id}`} title={t("adminOpenPlaylist")}>
                   {PlaySVG}
                 </Link>
                 <Link
                   to={`/edit-playlist?playlist=${props?.id}&status=${props?.status}`}
-                  title="Edit Playlist"
+                  title={t("adminEditPlaylist")}
                 >
                   {EditSVG}
                 </Link>
-                <button onClick={handleDelete} title="Delete Playlist">
+                <button onClick={handleDelete} title={t("adminDeletePlaylist")}>
                   {DeleteSVG}
                 </button>
               </div>
@@ -342,7 +344,7 @@ function PlaylistRow({
                     <span className="w-6 h-6 flex items-center justify-center playSvg">
                       {PlaySVG}
                     </span>
-                    <span>Open Playlist</span>
+                    <span>{t("adminOpenPlaylist")}</span>
                   </button>
 
                   <button
@@ -352,7 +354,7 @@ function PlaylistRow({
                     <span className="w-6 h-6 flex items-center justify-center">
                       {EditSVG}
                     </span>
-                    <span>Edit Playlist</span>
+                    <span>{t("adminEditPlaylist")}</span>
                   </button>
 
                   <button
@@ -362,7 +364,7 @@ function PlaylistRow({
                     <span className="w-6 h-6 flex items-center justify-center">
                       {DeleteSVG}
                     </span>
-                    <span>Delete Playlist</span>
+                    <span>{t("adminDeletePlaylist")}</span>
                   </button>
                 </div>
 
@@ -371,7 +373,7 @@ function PlaylistRow({
                     onClick={() => setMobileMenuOpen(false)}
                     className="w-full rounded-full border border-(--border1) bg-(--background2) py-3 font-medium hover:bg-(--background3) transition-colors cursor-pointer"
                   >
-                    Cancel
+                    {t("adminCancel")}
                   </button>
                 </div>
               </div>
@@ -392,7 +394,7 @@ function PlaylistRow({
             aria-expanded={visOpen}
           >
             {props?.status == "public" ? PublicSVG : PrivateSVG}
-            &nbsp;{capitalizeFirstLetter(props?.status)}
+            &nbsp;{props?.status === "public" ? t("adminPublic") : t("adminPrivate")}
           </button>
 
           {visOpen &&
@@ -412,7 +414,7 @@ function PlaylistRow({
                       <div className="h-1 w-10 rounded-full bg-(--border1)" />
                     </div>
                     <div className="px-4 pb-2">
-                      <h3 className="text-base font-semibold">Change visibility</h3>
+                      <h3 className="text-base font-semibold">{t("adminChangeVisibility")}</h3>
                     </div>
 
                     <div className="flex flex-col gap-2 px-4 py-2">
@@ -426,7 +428,7 @@ function PlaylistRow({
                           className="appearance-none rounded-full! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative
                               checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
                         />
-                        Public
+                        {t("adminPublic")}
                       </label>
 
                       <label className="flex items-center gap-2 cursor-pointer">
@@ -439,7 +441,7 @@ function PlaylistRow({
                           className="appearance-none rounded-full! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative
                               checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
                         />
-                        Private
+                        {t("adminPrivate")}
                       </label>
                     </div>
 
@@ -449,7 +451,7 @@ function PlaylistRow({
                         onClick={cancelVisibility}
                         className="flex-1 rounded-full border border-(--border1) bg-(--background2) py-3 font-medium hover:bg-(--background3) transition-colors cursor-pointer"
                       >
-                        Cancel
+                        {t("adminCancel")}
                       </button>
 
                       <button
@@ -457,7 +459,7 @@ function PlaylistRow({
                         onClick={saveVisibility}
                         className="flex-1 rounded-full text-white bg-(--accentBlue) hover:bg-(--accentBlue2) py-3 font-medium transition-colors cursor-pointer"
                       >
-                        Save
+                        {t("adminSave")}
                       </button>
                     </div>
                   </div>
@@ -466,7 +468,7 @@ function PlaylistRow({
                 <div
                   ref={visPopupRef}
                   role="dialog"
-                  aria-label="Change visibility"
+                  aria-label={t("adminChangeVisibility")}
                   style={visPopupStyle}
                   className="rowVisibilityPopup z-50 rounded-2xl border! border-(--border1)! bg-(--background1) p-3 shadow-2xl"
                   onClick={(e) => e.stopPropagation()}
@@ -482,7 +484,7 @@ function PlaylistRow({
                         className="appearance-none rounded-full! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative
                             checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
                       />
-                      Public
+                      {t("adminPublic")}
                     </label>
 
                     <label className="flex items-center gap-2 cursor-pointer">
@@ -495,7 +497,7 @@ function PlaylistRow({
                         className="appearance-none rounded-full! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative
                             checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
                       />
-                      Private
+                      {t("adminPrivate")}
                     </label>
                   </div>
 
@@ -505,7 +507,7 @@ function PlaylistRow({
                       onClick={cancelVisibility}
                       className="rounded-full border border-(--border1) duration-200 bg-(--background2) hover:bg-(--background3) px-4 py-1.5 text-sm cursor-pointer"
                     >
-                      Cancel
+                      {t("adminCancel")}
                     </button>
 
                     <button
@@ -513,7 +515,7 @@ function PlaylistRow({
                       onClick={saveVisibility}
                       className="rounded-full text-white bg-(--accentBlue) duration-200 hover:bg-(--accentBlue2) px-4 py-1.5 text-sm cursor-pointer"
                     >
-                      Save
+                      {t("adminSave")}
                     </button>
                   </div>
                 </div>
@@ -543,7 +545,3 @@ function PlaylistRow({
 }
 
 export default memo(PlaylistRow);
-
-function capitalizeFirstLetter(str: string): string {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}

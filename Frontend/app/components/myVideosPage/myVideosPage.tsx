@@ -114,8 +114,8 @@ function MyVideos() {
     const ok = await confirm({
       title: `Change video visibility?`,
       message: "This action cannot be undone.",
-      yesText: "Change",
-      noText: "Cancel",
+      yesText: t("adminChangeVisibility"),
+      noText: t("adminCancel"),
     });
     if(!ok) return;
 
@@ -215,8 +215,8 @@ function MyVideos() {
     const ok = await confirm({
       title: `Delete ${len} ${len === 1 ? "video" : "videos"}?`,
       message: "This action cannot be undone.",
-      yesText: "Delete",
-      noText: "Cancel",
+      yesText: t("adminDelete"),
+      noText: t("adminCancel"),
     });
     if(!ok) return;
 
@@ -326,24 +326,24 @@ function MyVideos() {
                       checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
                       type="checkbox"
                     />
-                    <p className="py-3">Video</p>
+                    <p className="py-3">{t("adminTableVideo")}</p>
                     {selectedVideos.length > 0 && 
                       <span id="selectedButtons">
                         <button
                           className="button bg-(--accentRed) text-white"
                           onClick={deleteAll}
-                        >Delete All</button>
+                        >{t("adminDeleteAll")}</button>
                         {selectedVideos.some(video => video.visibility !== "private") && 
                           <button 
                             onClick={() => saveVisibility("private")}
                             className="button bg-(--background2) text-(--text1)!"
-                          >Make Private</button>
+                          >{t("adminMakePrivate")}</button>
                         }
                         {selectedVideos.some(video => video.visibility !== "public") && 
                           <button
                             onClick={() => saveVisibility("public")}
                             className="button bg-(--background2) text-(--text1)!"
-                          >Make Public</button>
+                          >{t("adminMakePublic")}</button>
                         } 
                       </span>
                     }
@@ -353,26 +353,26 @@ function MyVideos() {
                   className={`sortable ${sortColumn === "visibility" ? "active" : ""}`}
                   onClick={() => handleSort("visibility")}
                 >
-                  Visibility <SortIndicator sortColumn={sortColumn} sortDirection={sortDirection} column="visibility" />
+                  {t("adminTableVisibility")} <SortIndicator sortColumn={sortColumn} sortDirection={sortDirection} column="visibility" />
                 </th>
                 <th
                   className={`sortable ${sortColumn === "date" ? "active" : ""}`}
                   onClick={() => handleSort("date")}
                 >
-                  Date <SortIndicator sortColumn={sortColumn} sortDirection={sortDirection} column="date" />
+                  {t("adminTableDate")} <SortIndicator sortColumn={sortColumn} sortDirection={sortDirection} column="date" />
                 </th>
                 <th
                   className={`sortable ${sortColumn === "views" ? "active" : ""}`}
                   onClick={() => handleSort("views")}
                 >
-                  Views <SortIndicator sortColumn={sortColumn} sortDirection={sortDirection} column="views" />
+                  {t("adminTableViews")} <SortIndicator sortColumn={sortColumn} sortDirection={sortDirection} column="views" />
                 </th>
-                <th className="notHoverable">Comments</th>
+                <th className="notHoverable">{t("adminTableComments")}</th>
                 <th
                   className={`sortable ${sortColumn === "likes" ? "active" : ""}`}
                   onClick={() => handleSort("likes")}
                 >
-                  Likes <SortIndicator sortColumn={sortColumn} sortDirection={sortDirection} column="likes" />
+                  {t("adminTableLikes")} <SortIndicator sortColumn={sortColumn} sortDirection={sortDirection} column="likes" />
                 </th>
               </tr>
             </thead>
@@ -383,7 +383,7 @@ function MyVideos() {
 
           <div className="pagination">
             <span>
-              <p>Rows per page:</p>
+              <p>{t("adminRowsPerPage")}</p>
               <select
                 name="rowsPerPage"
                 value={limit}
@@ -398,7 +398,7 @@ function MyVideos() {
             </span>
 
             <p>
-              {total > 0 ? `${startIndex}-${endIndex} of ${total}` : "0 results"}
+              {total > 0 ? t("adminPaginationRange", { start: startIndex, end: endIndex, total }) : t("adminZeroResults")}
             </p>
 
             <span className="pageNumbers">

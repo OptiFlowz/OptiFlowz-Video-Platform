@@ -342,7 +342,7 @@ function SearchPage() {
                   <div className="flex flex-col gap-2">
                     <h3 className="text-2xl font-semibold">{person.name}</h3>
                     <p className="text-md opacity-70 pr-2">
-                      {person.description || t("noBiography")}
+                      {person.description || t("noBioPerson")}
                     </p>
                     <p className="mt-1 text-md text-white font-medium bg-(--accentOrange) w-fit py-1.5 px-5 rounded-full">
                       {t("videosLabel", { count: person.total_video_count })}
@@ -359,4 +359,3 @@ function SearchPage() {
 }
 
 export default SearchPage;
-

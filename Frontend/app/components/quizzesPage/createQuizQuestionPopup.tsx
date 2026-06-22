@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchFn } from "~/API";
+import { useI18n } from "~/i18n";
 import type { PlaylistSearchRes, SearchT } from "~/types";
 import type {
   ChoiceOption,
@@ -31,12 +32,6 @@ type PlaylistDetailsResponse =
       success?: boolean;
     };
 
-const QUESTION_TYPE_OPTIONS: Array<{ value: QuestionType; label: string }> = [
-  { value: "single_choice", label: "Single choice" },
-  { value: "multiple_choice", label: "Multiple choice" },
-  { value: "matching", label: "Matching" },
-];
-
 const createEmptyOption = (): ChoiceOption => ({
   option_text: "",
   is_correct: false,
@@ -63,6 +58,15 @@ function CreateQuizQuestionPopup({
   onClose,
   onSubmit,
 }: Props) {
+  const { t } = useI18n();
+  const questionTypeOptions = useMemo<Array<{ value: QuestionType; label: string }>>(
+    () => [
+      { value: "single_choice", label: t("quizSingleChoice") },
+      { value: "multiple_choice", label: t("quizMultipleChoice") },
+      { value: "matching", label: t("quizMatching") },
+    ],
+    [t]
+  );
   const DURATION = 200;
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -469,7 +473,7 @@ function CreateQuizQuestionPopup({
         <div className="quizPopupHeader">
           <div>
             <h3 className="text-xl font-semibold">
-              {isEditMode ? "Edit Question" : "Add Question"}
+              {isEditMode ? t("quizEditQuestion") : t("quizAddQuestion")}
             </h3>
             <p className="mt-2 text-sm opacity-80">
               {isEditMode
@@ -491,7 +495,7 @@ function CreateQuizQuestionPopup({
                   disabled={isSubmitting}
                   className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
                 >
-                  {QUESTION_TYPE_OPTIONS.map((option) => (
+                  {questionTypeOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -898,9 +902,9 @@ function CreateQuizQuestionPopup({
                   Saving...
                 </>
               ) : isEditMode ? (
-                "Save Question"
+                t("quizSaveQuestion")
               ) : (
-                "Add Question"
+                t("quizAddQuestion")
               )}
             </button>
           </div>

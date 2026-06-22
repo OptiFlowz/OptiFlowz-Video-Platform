@@ -6,6 +6,7 @@ import { fetchFn } from "~/API";
 import CreateQuizRulePopup from "~/components/quizzesPage/createQuizRulePopup";
 import { ConfirmDialog } from "~/components/confirmPopup/confirmDialog";
 import { useConfirm } from "~/components/confirmPopup/useConfirm";
+import { useI18n } from "~/i18n";
 import type {
   CreateQuizRulePayload,
   QuizRule,
@@ -90,6 +91,7 @@ function EditQuizRulesPopup({
   onClose,
   onSubmit,
 }: Props) {
+  const { t } = useI18n();
   const DURATION = 200;
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -196,10 +198,10 @@ function EditQuizRulesPopup({
 
   const handleDeleteRule = async (rule: QuizRule) => {
     const confirmed = await confirm({
-      title: `Delete rule "${getRuleTypeLabel(rule.rule_type)}"?`,
-      message: "This will permanently remove the access rule from the quiz.",
-      yesText: "Delete",
-      noText: "Cancel",
+      title: t("quizDeleteRuleTitle", { type: getRuleTypeLabel(rule.rule_type) }),
+      message: t("quizDeleteRuleMessage"),
+      yesText: t("adminDelete"),
+      noText: t("adminCancel"),
     });
     if (!confirmed) return;
 
@@ -242,7 +244,7 @@ function EditQuizRulesPopup({
           onMouseDown={(event) => event.stopPropagation()}
         >
           <div className="mb-5">
-            <h3 className="text-xl font-semibold">Quiz Rules</h3>
+            <h3 className="text-xl font-semibold">{t("quizRulesTitle")}</h3>
             <p className="mt-2 text-sm opacity-80">
               Add and manage access rules for <strong>{quizTitle || "this quiz"}</strong>.
             </p>
@@ -272,7 +274,7 @@ function EditQuizRulesPopup({
                           rule.is_active ? "font-medium text-green-600" : "font-medium text-red-500"
                         }
                       >
-                        {rule.is_active ? "Active" : "Inactive"}
+                        {rule.is_active ? t("adminActive") : t("adminInactive")}
                       </span>
                     </div>
 
@@ -307,14 +309,14 @@ function EditQuizRulesPopup({
                             setEditingRule(rule);
                           }}
                         >
-                          Edit
+                          {t("adminEdit")}
                         </button>
                         <button
                           type="button"
                           className="cursor-pointer rounded-full border border-[rgba(220,38,38,0.35)] bg-[rgba(220,38,38,0.12)] px-3 py-1.5 text-sm text-red-400 transition-colors hover:bg-[rgba(220,38,38,0.18)]"
                           onClick={() => void handleDeleteRule(rule)}
                         >
-                          Delete
+                          {t("adminDelete")}
                         </button>
                       </div>
                     </div>
@@ -337,7 +339,7 @@ function EditQuizRulesPopup({
                 }}
               >
                 <span className="[&>svg_path]:stroke-(--text1)">{AddSVG}</span>
-                <span>Add Rule</span>
+                <span>{t("quizAddRule")}</span>
               </button>
             </div>
 

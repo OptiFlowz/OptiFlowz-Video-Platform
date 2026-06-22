@@ -324,10 +324,10 @@ function QuizzesPage() {
     setMobileMenuQuiz(null);
 
     const confirmed = await confirm({
-      title: `Delete quiz "${quiz.title}"?`,
-      message: "This will permanently remove the quiz and all of its questions.",
-      yesText: "Delete",
-      noText: "Cancel",
+      title: t("quizDeleteTitle", { title: quiz.title }),
+      message: t("quizDeleteMessage"),
+      yesText: t("adminDelete"),
+      noText: t("adminCancel"),
     });
     if (!confirmed) return false;
 
@@ -411,10 +411,10 @@ function QuizzesPage() {
     if (!count) return;
 
     const confirmed = await confirm({
-      title: `Delete ${count} ${count === 1 ? "quiz" : "quizzes"}?`,
-      message: "This will permanently remove the selected quizzes and all of their questions.",
-      yesText: "Delete",
-      noText: "Cancel",
+      title: t("quizDeleteManyTitle", { count }),
+      message: t("quizDeleteManyMessage"),
+      yesText: t("adminDelete"),
+      noText: t("adminCancel"),
     });
     if (!confirmed) return;
 
@@ -458,7 +458,7 @@ function QuizzesPage() {
 
   const handleCreateQuizQuestion = async (payload: CreateQuizQuestionPayload) => {
     if (!questionsQuiz?.id) {
-      throw new Error("Open a quiz before creating questions.");
+      throw new Error(t("quizOpenBeforeQuestions"));
     }
 
     const response = await fetchFn<{
@@ -476,7 +476,7 @@ function QuizzesPage() {
     await refetch();
 
     if (!response?.question) {
-      throw new Error("Failed to create quiz question.");
+      throw new Error(t("quizFailedCreateQuestion"));
     }
 
     return {
@@ -490,7 +490,7 @@ function QuizzesPage() {
 
   const handleCreateQuizRule = async (payload: CreateQuizRulePayload) => {
     if (!rulesQuiz?.id) {
-      throw new Error("Open a quiz before creating rules.");
+      throw new Error(t("quizOpenBeforeRules"));
     }
 
     const response = await fetchFn<{
@@ -508,7 +508,7 @@ function QuizzesPage() {
     await refetch();
 
     if (!response?.rule?.id && !response?.rule?.rule_id) {
-      throw new Error("Failed to create quiz rule.");
+      throw new Error(t("quizFailedCreateRule"));
     }
 
     return response.rule;
@@ -516,7 +516,7 @@ function QuizzesPage() {
 
   const handleCreateQuizSource = async (payload: CreateQuizSourcePayload) => {
     if (!sourcesQuiz?.id) {
-      throw new Error("Open a quiz before creating sources.");
+      throw new Error(t("quizOpenBeforeSources"));
     }
 
     const response = await fetchFn<{
@@ -534,7 +534,7 @@ function QuizzesPage() {
     await refetch();
 
     if (!response?.source?.id && !response?.source?.source_id) {
-      throw new Error("Failed to create quiz source.");
+      throw new Error(t("quizFailedCreateSource"));
     }
 
     return response.source;
@@ -621,7 +621,7 @@ function QuizzesPage() {
                         className="appearance-none rounded-lg! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
                         type="checkbox"
                       />
-                      <p className="py-3">Quiz</p>
+                      <p className="py-3">{t("adminTableQuiz")}</p>
                       {selectedQuizzes.length > 0 && (
                         <span id="selectedButtons">
                           <button
@@ -629,15 +629,15 @@ function QuizzesPage() {
                             onClick={() => void handleDeleteSelectedQuizzes()}
                             disabled={isBulkDeleting}
                           >
-                            {isBulkDeleting ? "Deleting..." : "Delete All"}
+                            {isBulkDeleting ? t("adminDeleting") : t("adminDeleteAll")}
                           </button>
                         </span>
                       )}
                     </span>
                   </th>
-                  <th>Status</th>
-                  <th>Questions</th>
-                  <th>Actions</th>
+                  <th>{t("adminTableStatus")}</th>
+                  <th>{t("adminTableQuestions")}</th>
+                  <th>{t("adminTableActions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -646,7 +646,7 @@ function QuizzesPage() {
                     <td colSpan={4}>
                       <div className="flex items-center gap-3 py-6">
                         <div className="uploadSpinner tiny" />
-                        <span>Loading quizzes...</span>
+                        <span>{t("adminLoadingQuizzes")}</span>
                       </div>
                     </td>
                   </tr>
@@ -657,7 +657,7 @@ function QuizzesPage() {
                         <p>
                           {error instanceof Error
                             ? error.message
-                            : "Failed to load quizzes."}
+                            : t("adminFailedLoadQuizzes")}
                         </p>
                       </div>
                     </td>
@@ -681,13 +681,13 @@ function QuizzesPage() {
                           <div className="quizRowText flex flex-col gap-1">
                             <strong className="quizRowTitle text-(--text1)">{quiz.title}</strong>
                             <span className="quizRowDescription text-sm opacity-75">
-                              {quiz.description ? formatDescription(quiz.description) : "No description"}
+                              {quiz.description ? formatDescription(quiz.description) : t("adminNoDescription")}
                             </span>
                           </div>
                           <button
                             type="button"
                             className="quizMobileOptionsButton"
-                            aria-label="Quiz options"
+                            aria-label={t("adminQuizOptions")}
                             onClick={() => setMobileMenuQuiz(quiz)}
                           >
                             {ThreeDotMenuSVG}
@@ -702,7 +702,7 @@ function QuizzesPage() {
                               : "bg-slate-200 text-slate-600"
                           }`}
                         >
-                          {quiz.is_active ? "Active" : "Inactive"}
+                          {quiz.is_active ? t("adminActive") : t("adminInactive")}
                         </span>
                       </td>
                       <td>{quiz.question_count}</td>
@@ -712,14 +712,14 @@ function QuizzesPage() {
                             to={`/quiz/${quiz.id}`}
                             className="saveCaptionsBtn"
                           >
-                            Open
+                            {t("adminOpen")}
                           </Link>
                           <button
                             type="button"
                             className="saveCaptionsBtn"
                             onClick={() => void openEditModal(quiz)}
                           >
-                            Edit
+                            {t("adminEdit")}
                           </button>
                           <button
                             type="button"
@@ -727,7 +727,7 @@ function QuizzesPage() {
                             onClick={() => void handleDeleteQuiz(quiz)}
                             disabled={isDeletingQuizId === quiz.id || isBulkDeleting}
                           >
-                            {isDeletingQuizId === quiz.id ? "Deleting..." : "Delete"}
+                            {isDeletingQuizId === quiz.id ? t("adminDeleting") : t("adminDelete")}
                           </button>
                         </div>
                       </td>
@@ -741,9 +741,9 @@ function QuizzesPage() {
                           {QuizSVG}
                         </div>
                         <div>
-                          <p className="font-semibold">No quizzes found</p>
+                          <p className="font-semibold">{t("adminNoQuizzesFound")}</p>
                           <p className="text-sm">
-                            Create your first quiz here or adjust the current filter.
+                            {t("adminCreateFirstQuizOrAdjustFilter")}
                           </p>
                         </div>
                       </div>
@@ -788,7 +788,7 @@ function QuizzesPage() {
                       <span className="w-6 h-6 flex items-center justify-center playSvg">
                         {PlaySVG}
                       </span>
-                      <span>Open Quiz</span>
+                      <span>{t("adminOpenQuiz")}</span>
                     </button>
 
                     <button
@@ -799,7 +799,7 @@ function QuizzesPage() {
                       <span className="w-6 h-6 flex items-center justify-center">
                         {EditSVG}
                       </span>
-                      <span>Edit Quiz</span>
+                      <span>{t("adminEditQuiz")}</span>
                     </button>
 
                     <button
@@ -812,7 +812,7 @@ function QuizzesPage() {
                         {DeleteSVG}
                       </span>
                       <span>
-                        {isDeletingQuizId === mobileMenuQuiz.id ? "Deleting..." : "Delete Quiz"}
+                        {isDeletingQuizId === mobileMenuQuiz.id ? t("adminDeleting") : t("adminDeleteQuiz")}
                       </span>
                     </button>
                   </div>
@@ -823,7 +823,7 @@ function QuizzesPage() {
                       onClick={() => setMobileMenuQuiz(null)}
                       className="w-full rounded-full border border-(--border1) bg-(--background2) py-3 font-medium hover:bg-(--background3) transition-colors cursor-pointer"
                     >
-                      Cancel
+                      {t("adminCancel")}
                     </button>
                   </div>
                 </div>

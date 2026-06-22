@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchFn } from "~/API";
+import { useI18n } from "~/i18n";
 import type { SearchT } from "~/types";
 import type {
   CreateQuizRulePayload,
@@ -41,6 +42,7 @@ function CreateQuizRulePopup({
   onClose,
   onSubmit,
 }: Props) {
+  const { t } = useI18n();
   const DURATION = 200;
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -276,7 +278,7 @@ function CreateQuizRulePopup({
         <div className="quizPopupHeader">
           <div>
             <h3 className="text-xl font-semibold">
-              {isEditMode ? "Edit Rule" : "Add Rule"}
+              {isEditMode ? t("quizEditRule") : t("quizAddRule")}
             </h3>
             <p className="mt-2 text-sm opacity-80">
               {isEditMode
@@ -465,9 +467,9 @@ function CreateQuizRulePopup({
                   Saving...
                 </>
               ) : isEditMode ? (
-                "Save Rule"
+                t("quizSaveRule")
               ) : (
-                "Add Rule"
+                t("quizAddRule")
               )}
             </button>
           </div>

@@ -129,10 +129,10 @@ function MyPlaylistsPage() {
     if (len === 0) return;
 
     const ok = await confirm({
-      title: `Change playlist visibility?`,
-      message: "This action cannot be undone.",
-      yesText: "Change",
-      noText: "Cancel",
+      title: t("adminChangePlaylistVisibilityTitle"),
+      message: t("adminActionCannotBeUndone"),
+      yesText: t("adminChangeVisibility"),
+      noText: t("adminCancel"),
     });
     if (!ok) return;
 
@@ -182,10 +182,10 @@ function MyPlaylistsPage() {
     if (len === 0) return;
 
     const ok = await confirm({
-      title: `Delete ${len} ${len === 1 ? "playlist" : "playlists"}?`,
-      message: "This action cannot be undone.",
-      yesText: "Delete",
-      noText: "Cancel",
+      title: t("adminDeletePlaylistsTitle", { count: len }),
+      message: t("adminActionCannotBeUndone"),
+      yesText: t("adminDelete"),
+      noText: t("adminCancel"),
     });
     if (!ok) return;
 
@@ -389,14 +389,14 @@ function MyPlaylistsPage() {
                       checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
                         type="checkbox"
                       />
-                      <p className="py-3">Playlist</p>
+                      <p className="py-3">{t("adminTablePlaylist")}</p>
                       {selectedPlaylists.length > 0 && (
                         <span id="selectedButtons">
                           <button
                             className="button bg-(--accentRed) text-white"
                             onClick={deleteAll}
                           >
-                            Delete All
+                            {t("adminDeleteAll")}
                           </button>
                           {selectedPlaylists.some(
                             (playlist) => playlist.status !== "private"
@@ -405,7 +405,7 @@ function MyPlaylistsPage() {
                               onClick={() => saveVisibility("private")}
                               className="button bg-(--background2) text-(--text1)!"
                             >
-                              Make Private
+                              {t("adminMakePrivate")}
                             </button>
                           )}
                           {selectedPlaylists.some(
@@ -415,32 +415,32 @@ function MyPlaylistsPage() {
                               onClick={() => saveVisibility("public")}
                               className="button bg-(--background2) text-(--text1)!"
                             >
-                              Make Public
+                              {t("adminMakePublic")}
                             </button>
                           )}
                         </span>
                       )}
                     </span>
                   </th>
-                  <th className="notHoverable">Status</th>
+                  <th className="notHoverable">{t("adminTableStatus")}</th>
                   <th
                     className={`sortable ${sortColumn === "created_at" ? "active" : ""}`}
                     onClick={() => handleSort("created_at")}
                   >
-                    Date <SortIndicator sortColumn={sortColumn} sortDirection={sortDirection} column="created_at" />
+                    {t("adminTableDate")} <SortIndicator sortColumn={sortColumn} sortDirection={sortDirection} column="created_at" />
                   </th>
                   <th
                     className={`sortable ${sortColumn === "view_count" ? "active" : ""}`}
                     onClick={() => handleSort("view_count")}
                   >
-                    Views <SortIndicator sortColumn={sortColumn} sortDirection={sortDirection} column="view_count" />
+                    {t("adminTableViews")} <SortIndicator sortColumn={sortColumn} sortDirection={sortDirection} column="view_count" />
                   </th>
-                  <th className="notHoverable">Videos</th>
+                  <th className="notHoverable">{t("adminTableVideos")}</th>
                   <th
                     className={`sortable ${sortColumn === "save_count" ? "active" : ""}`}
                     onClick={() => handleSort("save_count")}
                   >
-                    Saves <SortIndicator sortColumn={sortColumn} sortDirection={sortDirection} column="save_count" />
+                    {t("adminTableSaves")} <SortIndicator sortColumn={sortColumn} sortDirection={sortDirection} column="save_count" />
                   </th>
                 </tr>
               </thead>
@@ -451,7 +451,7 @@ function MyPlaylistsPage() {
 
           <div className="pagination">
             <span>
-              <p>Rows per page:</p>
+              <p>{t("adminRowsPerPage")}</p>
               <select
                 name="rowsPerPage"
                 value={limit}
@@ -466,7 +466,7 @@ function MyPlaylistsPage() {
             </span>
 
             <p>
-              {total > 0 ? `${startIndex}-${endIndex} of ${total}` : "0 results"}
+              {total > 0 ? t("adminPaginationRange", { start: startIndex, end: endIndex, total }) : t("adminZeroResults")}
             </p>
 
             <span className="pageNumbers">

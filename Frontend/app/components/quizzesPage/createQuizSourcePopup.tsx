@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchFn } from "~/API";
+import { useI18n } from "~/i18n";
 import type { PlaylistSearchRes, SearchT } from "~/types";
 import type {
   CreateQuizSourcePayload,
@@ -87,6 +88,7 @@ function CreateQuizSourcePopup({
   onClose,
   onSubmit,
 }: Props) {
+  const { t } = useI18n();
   const DURATION = 200;
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -397,7 +399,7 @@ function CreateQuizSourcePopup({
         <div className="quizPopupHeader">
           <div>
             <h3 className="text-xl font-semibold">
-              {isEditMode ? "Edit Source" : "Add Source"}
+              {isEditMode ? t("quizEditSource") : t("quizAddSource")}
             </h3>
             <p className="mt-2 text-sm opacity-80">
               Choose a playlist or video source for generated quiz questions.
@@ -643,9 +645,9 @@ function CreateQuizSourcePopup({
                   Saving...
                 </>
               ) : isEditMode ? (
-                "Save Source"
+                t("quizSaveSource")
               ) : (
-                "Add Source"
+                t("quizAddSource")
               )}
             </button>
           </div>

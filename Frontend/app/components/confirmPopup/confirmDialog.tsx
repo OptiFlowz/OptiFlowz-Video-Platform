@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useI18n } from "~/i18n";
 
 type Props = {
   open: boolean;
@@ -13,21 +14,22 @@ type Props = {
 
 export function ConfirmDialog({
   open,
-  title = "Confirm",
-  message = "Are you sure?",
-  yesText = "Yes",
-  noText = "No",
+  title,
+  message,
+  yesText,
+  noText,
   onYes,
   onNo,
 }: Props) {
+  const { t } = useI18n();
   const DURATION = 200;
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
-  const t = useRef<number | null>(null);
+  const closeTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     return () => {
-      if (t.current) window.clearTimeout(t.current);
+      if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
     };
   }, []);
 
@@ -44,7 +46,7 @@ export function ConfirmDialog({
 
     setVisible(false);
 
-    t.current = window.setTimeout(() => setMounted(false), DURATION);
+    closeTimerRef.current = window.setTimeout(() => setMounted(false), DURATION);
   }, [open]);
 
   if (!mounted) return null;
@@ -71,8 +73,8 @@ export function ConfirmDialog({
         ${visible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"}`}
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <h3 className="text-lg font-semibold">{title}</h3>
-        <p className="mt-2">{message}</p>
+        <h3 className="text-lg font-semibold">{title ?? t("adminConfirmTitle")}</h3>
+        <p className="mt-2">{message ?? t("adminConfirmMessage")}</p>
 
         <div className="mt-5 flex justify-end gap-2">
           <button
@@ -80,14 +82,14 @@ export function ConfirmDialog({
             onClick={onNo}
             className="button px-4 py-2 cursor-pointer rounded-full bg-(--background2) hover:bg-(--background3)"
           >
-            {noText}
+            {noText ?? t("adminNo")}
           </button>
           <button
             type="button"
             onClick={onYes}
             className="button px-4 py-2 cursor-pointer rounded-full bg-(--accentRed) text-white"
           >
-            {yesText}
+            {yesText ?? t("adminYes")}
           </button>
         </div>
       </div>

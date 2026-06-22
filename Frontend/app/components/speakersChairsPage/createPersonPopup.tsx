@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import DefaultProfile from "../../../assets/DefaultProfile.webp";
 import { CloseSVG, UploadSVG } from "~/constants";
+import { useI18n } from "~/i18n";
 
 export type CreatePersonPayload = {
   first_name: string;
@@ -40,6 +41,7 @@ function CreatePersonPopup({
   initialValues,
   mode = "create",
 }: Props) {
+  const { t } = useI18n();
   const DURATION = 200;
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -116,7 +118,7 @@ function CreatePersonPopup({
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      setError("Please select an image file.");
+      setError(t("personSelectImageFile"));
       event.target.value = "";
       setPreviewUrl((old) => {
         revokePreviewUrl(old);
@@ -128,7 +130,7 @@ function CreatePersonPopup({
 
     const maxBytes = 4 * 1024 * 1024;
     if (file.size > maxBytes) {
-      setError("Image must be smaller than 4MB.");
+      setError(t("imageTooLargeAlert"));
       event.target.value = "";
       setPreviewUrl((old) => {
         revokePreviewUrl(old);
@@ -173,7 +175,7 @@ function CreatePersonPopup({
     const last_name = form.last_name.trim();
 
     if (!first_name || !last_name) {
-      setError("First name and last name are required.");
+      setError(t("personNameRequired"));
       return;
     }
 
@@ -191,7 +193,7 @@ function CreatePersonPopup({
       setForm(emptyForm);
     } catch (err) {
       console.error("Error creating person:", err);
-      setError("Failed to create person.");
+      setError(t("personCreateFailed"));
       setIsSubmitting(false);
     }
   };
@@ -205,7 +207,7 @@ function CreatePersonPopup({
       }`}
       role="dialog"
       aria-modal="true"
-      aria-label={mode === "edit" ? "Edit person" : "Create person"}
+      aria-label={mode === "edit" ? t("adminEditPerson") : t("personCreate")}
       onMouseDown={() => {
         if (!isSubmitting) onClose();
       }}
@@ -225,12 +227,12 @@ function CreatePersonPopup({
         <div className="flex items-start justify-between gap-4">
           <div>
             <h3 className="text-xl font-semibold">
-              {mode === "edit" ? "Edit person" : "Add person"}
+              {mode === "edit" ? t("adminEditPerson") : t("personAdd")}
             </h3>
             <p className="mt-2 text-sm opacity-80">
               {mode === "edit"
-                ? "Update this person record. Role assignment will still be handled later on the video itself."
-                : "Create a person record that can later be assigned on videos as speaker, chair, or another role."}
+                ? t("personEditDescription")
+                : t("personCreateDescription")}
             </p>
           </div>
         </div>
@@ -240,7 +242,7 @@ function CreatePersonPopup({
             <label htmlFor="personPictureInput">
               <img
                 src={previewUrl || DefaultProfile}
-                alt="Profile pic"
+                alt={t("personProfilePicAlt")}
                 onError={(e) => {
                   e.currentTarget.src = DefaultProfile;
                 }}
@@ -266,13 +268,13 @@ function CreatePersonPopup({
 
           <div className="grid grid-cols-2 gap-4 max-[640px]:grid-cols-1">
             <label className="flex flex-col gap-2">
-              <span className="text-sm font-medium">First name</span>
+              <span className="text-sm font-medium">{t("firstName")}</span>
               <input
                 ref={firstNameRef}
                 type="text"
                 value={form.first_name}
                 onChange={(event) => setField("first_name", event.target.value)}
-                placeholder="First name"
+                placeholder={t("firstName")}
                 className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
                 maxLength={80}
                 disabled={isSubmitting}
@@ -280,12 +282,12 @@ function CreatePersonPopup({
             </label>
 
             <label className="flex flex-col gap-2">
-              <span className="text-sm font-medium">Last name</span>
+              <span className="text-sm font-medium">{t("lastName")}</span>
               <input
                 type="text"
                 value={form.last_name}
                 onChange={(event) => setField("last_name", event.target.value)}
-                placeholder="Last name"
+                placeholder={t("lastName")}
                 className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
                 maxLength={80}
                 disabled={isSubmitting}
@@ -294,11 +296,11 @@ function CreatePersonPopup({
           </div>
 
           <label className="flex flex-col gap-2">
-            <span className="text-sm font-medium">Biography</span>
+            <span className="text-sm font-medium">{t("biography")}</span>
             <textarea
               value={form.biography}
               onChange={(event) => setField("biography", event.target.value)}
-              placeholder="Short biography"
+              placeholder={t("personShortBioPlaceholder")}
               className="min-h-36 w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
               maxLength={2000}
               disabled={isSubmitting}
@@ -314,7 +316,7 @@ function CreatePersonPopup({
               disabled={isSubmitting}
               className="button cursor-pointer rounded-full bg-(--background2) px-5 py-2.5 hover:bg-(--background3)"
             >
-              Cancel
+              {t("adminCancel")}
             </button>
             <button
               type="submit"
@@ -323,11 +325,11 @@ function CreatePersonPopup({
             >
               {isSubmitting
                 ? mode === "edit"
-                  ? "Saving..."
-                  : "Creating..."
+                  ? t("saving")
+                  : t("creating")
                 : mode === "edit"
-                  ? "Save"
-                  : "Create"}
+                  ? t("adminSave")
+                  : t("create")}
             </button>
           </div>
         </form>

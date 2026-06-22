@@ -6,6 +6,7 @@ import { fetchFn } from "~/API";
 import CreateQuizQuestionPopup from "~/components/quizzesPage/createQuizQuestionPopup";
 import { useConfirm } from "~/components/confirmPopup/useConfirm";
 import { ConfirmDialog } from "~/components/confirmPopup/confirmDialog";
+import { useI18n } from "~/i18n";
 import type {
   CreateQuizQuestionPayload,
   QuestionDraftValues,
@@ -47,6 +48,7 @@ function EditQuizQuestionsPopup({
   onClose,
   onSubmit,
 }: Props) {
+  const { t } = useI18n();
   const DURATION = 200;
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -254,10 +256,10 @@ function EditQuizQuestionsPopup({
 
   const handleDeleteQuestion = async (question: QuizQuestion) => {
     const confirmed = await confirm({
-      title: `Delete question #${question.position}?`,
-      message: "This will permanently remove the question from the quiz.",
-      yesText: "Delete",
-      noText: "Cancel",
+      title: t("quizDeleteQuestionTitle", { position: question.position }),
+      message: t("quizDeleteQuestionMessage"),
+      yesText: t("adminDelete"),
+      noText: t("adminCancel"),
     });
     if (!confirmed) return;
 
@@ -276,11 +278,11 @@ function EditQuizQuestionsPopup({
   const getQuestionTypeLabel = (type: QuestionType) => {
     switch (type) {
       case "single_choice":
-        return "Single choice";
+        return t("quizSingleChoice");
       case "multiple_choice":
-        return "Multiple choice";
+        return t("quizMultipleChoice");
       case "matching":
-        return "Matching";
+        return t("quizMatching");
       default:
         return type;
     }
@@ -423,7 +425,7 @@ function EditQuizQuestionsPopup({
         >
           <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h3 className="text-xl font-semibold">Edit Questions</h3>
+              <h3 className="text-xl font-semibold">{t("quizEditQuestions")}</h3>
               <p className="mt-2 text-sm opacity-80">
                 Add new questions to <strong>{quizTitle || "this quiz"}</strong>.
               </p>
@@ -440,7 +442,7 @@ function EditQuizQuestionsPopup({
               disabled={isReordering}
             >
               <span className="[&>svg_path]:stroke-(--text1)">{AddSVG}</span>
-              <span>Add Question</span>
+              <span>{t("quizAddQuestion")}</span>
             </button>
           </div>
 
@@ -506,7 +508,7 @@ function EditQuizQuestionsPopup({
                           }}
                           disabled={isReordering}
                         >
-                          Edit
+                          {t("adminEdit")}
                         </button>
                         <button
                           type="button"
@@ -514,7 +516,7 @@ function EditQuizQuestionsPopup({
                           onClick={() => void handleDeleteQuestion(question)}
                           disabled={isReordering}
                         >
-                          Delete
+                          {t("adminDelete")}
                         </button>
                       </div>
                       </div>
@@ -546,7 +548,7 @@ function EditQuizQuestionsPopup({
               className="cancelBtn cursor-pointer min-w-[140px]"
               onClick={onClose}
             >
-              Close
+              {t("adminCancel")}
             </button>
           </div>
         </div>

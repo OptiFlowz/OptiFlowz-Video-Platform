@@ -191,7 +191,7 @@ function AccountCertificates({ onDataStateChange }: Props) {
                   ) : (
                     DownloadIcon
                   )}
-                  <span>{downloadingAttemptId === certificate.attempt_id ? "Downloading" : t("certificateDownload")}</span>
+                  <span>{downloadingAttemptId === certificate.attempt_id ? t("certificateDownloading") : t("certificateDownload")}</span>
                 </button>
               </div>
               <h3>{t("certificateFor", { title })}</h3>

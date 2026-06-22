@@ -6,6 +6,7 @@ import { fetchFn } from "~/API";
 import CreateQuizSourcePopup from "~/components/quizzesPage/createQuizSourcePopup";
 import { ConfirmDialog } from "~/components/confirmPopup/confirmDialog";
 import { useConfirm } from "~/components/confirmPopup/useConfirm";
+import { useI18n } from "~/i18n";
 import type {
   CreateQuizSourcePayload,
   QuizQuestionSource,
@@ -83,6 +84,7 @@ function EditQuizSourcesPopup({
   onClose,
   onSubmit,
 }: Props) {
+  const { t } = useI18n();
   const DURATION = 200;
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -189,10 +191,10 @@ function EditQuizSourcesPopup({
 
   const handleDeleteSource = async (source: QuizQuestionSource) => {
     const confirmed = await confirm({
-      title: `Delete source "${getSourceTitle(source)}"?`,
-      message: "This will permanently remove the question source from the quiz.",
-      yesText: "Delete",
-      noText: "Cancel",
+      title: t("quizDeleteSourceTitle", { title: getSourceTitle(source) }),
+      message: t("quizDeleteSourceMessage"),
+      yesText: t("adminDelete"),
+      noText: t("adminCancel"),
     });
     if (!confirmed) return;
 
@@ -254,7 +256,7 @@ function EditQuizSourcesPopup({
           onMouseDown={(event) => event.stopPropagation()}
         >
           <div className="mb-5">
-            <h3 className="text-xl font-semibold">Question Sources</h3>
+            <h3 className="text-xl font-semibold">{t("quizQuestionSources")}</h3>
             <p className="mt-2 text-sm opacity-80">
               Add and manage source material for <strong>{quizTitle || "this quiz"}</strong>.
             </p>
@@ -277,7 +279,11 @@ function EditQuizSourcesPopup({
                     className="rounded-3xl border border-(--border1) bg-(--background2) px-5 py-4"
                   >
                     <div className="flex flex-wrap items-center gap-2 text-sm opacity-75">
-                      <span>{getSourceTypeLabel(source)}</span>
+                      <span>
+                        {source.source_type === "playlist"
+                          ? t("adminTablePlaylist")
+                          : t("adminTableVideo")}
+                      </span>
                       <span>•</span>
                       <span>{source.percentage ?? 0}%</span>
                       {source.fixed_question_count ? (
@@ -317,14 +323,14 @@ function EditQuizSourcesPopup({
                             setEditingSource(source);
                           }}
                         >
-                          Edit
+                          {t("adminEdit")}
                         </button>
                         <button
                           type="button"
                           className="cursor-pointer rounded-full border border-[rgba(220,38,38,0.35)] bg-[rgba(220,38,38,0.12)] px-3 py-1.5 text-sm text-red-400 transition-colors hover:bg-[rgba(220,38,38,0.18)]"
                           onClick={() => void handleDeleteSource(source)}
                         >
-                          Delete
+                          {t("adminDelete")}
                         </button>
                       </div>
                     </div>
@@ -347,7 +353,7 @@ function EditQuizSourcesPopup({
                 }}
               >
                 <span className="[&>svg_path]:stroke-(--text1)">{AddSVG}</span>
-                <span>Add Source</span>
+                <span>{t("quizAddSource")}</span>
               </button>
             </div>
 
@@ -356,7 +362,7 @@ function EditQuizSourcesPopup({
 
           <div className="quizPopupActions mt-4">
             <button type="button" className="cancelBtn cursor-pointer min-w-[140px]" onClick={onClose}>
-              Close
+              {t("adminCancel")}
             </button>
           </div>
         </div>

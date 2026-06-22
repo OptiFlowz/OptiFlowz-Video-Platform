@@ -19,6 +19,7 @@ import { EUROPEAN_LANGUAGES } from "~/constants";
 import { loadMediaTheme } from "../playPage/playerCollection/loadMediaTheme";
 import Sidebar from "../myVideosPage/sidebar/sidebar";
 import { useConstrainedSticky } from "../shared/useConstrainedSticky";
+import { useI18n } from "~/i18n";
 
 interface Contributor {
   id: string;
@@ -300,6 +301,7 @@ function VideoPreview({
   chapters: Chapter[];
   thumbnailUrl?: string | null;
 }) {
+  const { t } = useI18n();
   const [isThemeReady, setIsThemeReady] = useState(false);
   const [metadataLoaded, setMetadataLoaded] = useState(false);
   const playerRef = useRef<MuxPlayerElement | null>(null);
@@ -347,7 +349,7 @@ function VideoPreview({
       <div className="videoPreviewContainer">
         <div className="videoPreviewLoading">
           <div className="uploadSpinner" />
-          <p>Loading video preview...</p>
+          <p>{t("loadingVideoPreview")}</p>
         </div>
       </div>
     );
@@ -369,7 +371,7 @@ function VideoPreview({
             <polygon points="23 7 16 12 23 17 23 7" />
             <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
           </svg>
-          <p>Video preview unavailable</p>
+          <p>{t("videoPreviewUnavailable")}</p>
         </div>
       </div>
     );
@@ -398,7 +400,7 @@ function VideoPreview({
         ) : (
           <div className="videoPreviewLoading">
             <div className="uploadSpinner" />
-            <p>Loading video preview...</p>
+            <p>{t("loadingVideoPreview")}</p>
           </div>
         )}
       </div>
@@ -425,6 +427,7 @@ function VideoPreview({
 }
 
 function UploadPage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [isDragging, setIsDragging] = useState(false);
@@ -1543,11 +1546,11 @@ function UploadPage() {
         <div
           className={`uploadSide ${currentStep > 1 ? "max-w-325 w-full" : ""}`}
         >
-          <h1>Upload new video</h1>
+          <h1>{t("videoUploadTitle")}</h1>
           <p className="mt-3 links">
             By submitting videos to this platform, you agree to our{" "}
-            <Link to="/termsOfUse">Terms of Use</Link> and{" "}
-            <Link to="/privacyPolicy">Privacy Policy</Link>.
+            <Link to="/termsOfUse">{t("termsOfUse")}</Link> and{" "}
+            <Link to="/privacyPolicy">{t("privacyPolicy")}</Link>.
           </p>
 
           {/* Step Indicator */}
@@ -1703,7 +1706,7 @@ function UploadPage() {
                 ) : (
                   <div className="uploadPrompt">
                     {UploadSVG}
-                    <p>Drag and drop video file here</p>
+                    <p>{t("dragDropVideoFile")}</p>
                     <span>or</span>
                     <button type="button" className="selectFileBtn">
                       Select file
@@ -1712,13 +1715,13 @@ function UploadPage() {
                 )}
               </div>
               <div className="formGroup mt-7.5">
-                <label htmlFor="muxTitle">Title</label>
+                <label htmlFor="muxTitle">{t("title")}</label>
                 <input
                   type="text"
                   id="muxTitle"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Enter mux title"
+                  placeholder={t("muxTitlePlaceholder")}
                   maxLength={100}
                   disabled={isUploaded}
                   className={isUploaded ? "disabled" : ""}
@@ -1733,7 +1736,7 @@ function UploadPage() {
                     handleContributorAdd({ new: contributor })
                   }
                   onRemove={(id) => handleContributorRemove({ id: id })}
-                  placeholder="Search for speakers..."
+                  placeholder={t("searchSpeakersPlaceholder")}
                 />
 
                 <ContributorSearch
@@ -1745,11 +1748,11 @@ function UploadPage() {
                   onRemove={(id) =>
                     handleContributorRemove({ type: true, id: id })
                   }
-                  placeholder="Search for chairs..."
+                  placeholder={t("searchChairsPlaceholder")}
                 />
               </div>
               <div className="formGroup mt-2">
-                <label htmlFor="captionLanguage">Spoken language</label>
+                <label htmlFor="captionLanguage">{t("spokenLanguage")}</label>
                 <div className="captionsInputRow">
                   <select
                     id="captionLanguage"
@@ -1825,14 +1828,14 @@ function UploadPage() {
                     {captionStatus === "loading" && (
                       <div className="captionsLoadingState">
                         <div className="uploadSpinner small" />
-                        <p>Checking for captions...</p>
+                        <p>{t("checkingCaptions")}</p>
                       </div>
                     )}
 
                     {captionStatus === "generating" && (
                       <div className="captionsLoadingState">
                         <div className="uploadSpinner small" />
-                        <p>Generating captions...</p>
+                        <p>{t("generatingCaptions")}</p>
                       </div>
                     )}
 
@@ -1857,7 +1860,7 @@ function UploadPage() {
                           id="videoCaptions"
                           value={captions}
                           onChange={(e) => handleCaptionsChange(e.target.value)}
-                          placeholder="Enter captions in VTT format"
+                          placeholder={t("captionsPlaceholder")}
                           rows={8}
                         />
                         <div className="captionsActions">
@@ -1915,7 +1918,7 @@ function UploadPage() {
                         handleContributorAdd({ new: contributor })
                       }
                       onRemove={(id) => handleContributorRemove({ id: id })}
-                      placeholder="Search for speakers..."
+                      placeholder={t("searchSpeakersPlaceholder")}
                     />
 
                     <ContributorSearch
@@ -1927,7 +1930,7 @@ function UploadPage() {
                       onRemove={(id) =>
                         handleContributorRemove({ type: true, id: id })
                       }
-                      placeholder="Search for chairs..."
+                      placeholder={t("searchChairsPlaceholder")}
                     />
 
                     <div className="captionsActions">
@@ -2001,7 +2004,7 @@ function UploadPage() {
                               onChange={(e) =>
                                 updateChapter(index, "title", e.target.value)
                               }
-                              placeholder="Chapter title"
+                              placeholder={t("chapterTitlePlaceholder")}
                             />
                             <button
                               type="button"
@@ -2070,7 +2073,7 @@ function UploadPage() {
               <div className="stepContentMain">
                 <div className="videoDetailsForm">
                   <div className="formGroup editSection">
-                    <h2 className="editSectionTitle">Thumbnail</h2>
+                    <h2 className="editSectionTitle">{t("thumbnail")}</h2>
 
                     <div className="thumbnailSourceActions">
                       <div className="thumbnailSourceHeading">
@@ -2127,8 +2130,8 @@ function UploadPage() {
                         ) : (
                           <div className="uploadPrompt">
                             {UploadSVG}
-                            <p>Select thumbnail image</p>
-                            <span>PNG, JPG, WEBP and similar image formats</span>
+                            <p>{t("selectThumbnailImage")}</p>
+                            <span>{t("imageFormatsHint")}</span>
                             <button type="button" className="selectFileBtn">
                               Select file
                             </button>
@@ -2149,18 +2152,18 @@ function UploadPage() {
                           ) : (
                             <div className="thumbnailPickerPreviewPlaceholder">
                               <div className="uploadSpinner tiny" />
-                              <span>Preparing frame preview...</span>
+                              <span>{t("loadingVideoPreview")}</span>
                             </div>
                           )}
                         </div>
 
                         <div className="thumbnailPickerControls">
                           <div className="thumbnailPickerTimeRow">
-                            <span>Selected frame</span>
+                            <span>{t("thumbnail")}</span>
                             <strong>{formatThumbnailPickerTime(selectedThumbnailTime)}</strong>
                           </div>
                           <div className="thumbnailPickerTimeInputRow">
-                            <label htmlFor="uploadThumbnailFrameTime">Jump to time</label>
+                            <label htmlFor="uploadThumbnailFrameTime">{t("jumpToTime")}</label>
                             <input
                               id="uploadThumbnailFrameTime"
                               type="text"
@@ -2279,7 +2282,7 @@ function UploadPage() {
                       id="videoTitle"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      placeholder="Enter video title"
+                      placeholder={t("enterVideoTitle")}
                       maxLength={100}
                     />
                     <span className="charCount">{title.length}/100</span>
@@ -2304,7 +2307,7 @@ function UploadPage() {
                       id="videoDescription"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Enter video description"
+                      placeholder={t("enterVideoDescription")}
                       rows={5}
                       maxLength={5000}
                     />
@@ -2353,7 +2356,7 @@ function UploadPage() {
                   </div>
 
                   <div className="formGroup editSection">
-                    <label htmlFor="videoVisibility">Visibility</label>
+                    <label htmlFor="videoVisibility">{t("visibility")}</label>
                     <select
                       id="videoVisibility"
                       value={visibility}
@@ -2362,8 +2365,8 @@ function UploadPage() {
                       }
                       className="visibilitySelect"
                     >
-                      <option value="public">Public</option>
-                      <option value="private">Private</option>
+                      <option value="public">{t("adminPublic")}</option>
+                      <option value="private">{t("adminPrivate")}</option>
                     </select>
                     <p className="formHint">
                       {visibility === "public"

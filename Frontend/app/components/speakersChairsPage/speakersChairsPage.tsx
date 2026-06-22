@@ -330,10 +330,10 @@ function SpeakersChairsPage() {
 
     const fullName = `${person.first_name} ${person.last_name}`.trim();
     const ok = await confirm({
-      title: `Delete person "${fullName}"?`,
-      message: "This action cannot be undone.",
-      yesText: "Delete",
-      noText: "Cancel",
+      title: t("adminDeletePersonTitle", { name: fullName }),
+      message: t("adminActionCannotBeUndone"),
+      yesText: t("adminDelete"),
+      noText: t("adminCancel"),
     });
 
     if (!ok) return;
@@ -426,13 +426,13 @@ function SpeakersChairsPage() {
           <section className="speakersChairsPeopleGrid">
             {isLoading ? (
               <div className="speakersChairsEmptyState">
-                Loading people...
+                {t("adminLoadingPeople")}
               </div>
             ) : null}
 
             {isError ? (
               <div className="speakersChairsEmptyState">
-                Failed to load people from the API.
+                {t("adminFailedLoadPeople")}
               </div>
             ) : null}
 
@@ -445,8 +445,7 @@ function SpeakersChairsPage() {
                   <div className="speakersChairsPersonBody">
                     <h3>{fullName}</h3>
                     <p className="speakersChairsMeta">
-                      {person.total_video_count} video
-                      {person.total_video_count === 1 ? "" : "s"}
+                      {t("videosLabel", { count: person.total_video_count })}
                     </p>
                     <p className="speakersChairsBio">{person.biography}</p>
                   </div>
@@ -454,16 +453,16 @@ function SpeakersChairsPage() {
                     <button
                       type="button"
                       onClick={() => setEditingPersonId(person.id)}
-                      title="Edit person"
-                      aria-label="Edit person"
+                      title={t("adminEditPerson")}
+                      aria-label={t("adminEditPerson")}
                     >
                       {EditSVG}
                     </button>
                     <button
                       type="button"
                       onClick={() => void handleDeletePerson(person)}
-                      title="Delete person"
-                      aria-label="Delete person"
+                      title={t("adminDeletePerson")}
+                      aria-label={t("adminDeletePerson")}
                     >
                       {DeleteSVG}
                     </button>
@@ -474,21 +473,21 @@ function SpeakersChairsPage() {
 
             {!isLoading && !isError && filteredPeople.length === 0 ? (
               <div className="speakersChairsEmptyState">
-                No people added.
+                {t("adminNoPeopleAdded")}
               </div>
             ) : null}
           </section>
 
           <div className="pagination">
             <span>
-              <p>Rows per page:</p>
+              <p>{t("adminRowsPerPage")}</p>
               <select name="rowsPerPage" value={PEOPLE_PER_PAGE} disabled>
                 <option value={PEOPLE_PER_PAGE}>{PEOPLE_PER_PAGE}</option>
               </select>
             </span>
 
             <p>
-              {total > 0 ? `${startIndex}-${endIndex} of ${total}` : "0 results"}
+              {total > 0 ? t("adminPaginationRange", { start: startIndex, end: endIndex, total }) : t("adminZeroResults")}
             </p>
 
             <span className="pageNumbers">

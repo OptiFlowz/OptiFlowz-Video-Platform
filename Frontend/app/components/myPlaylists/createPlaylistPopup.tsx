@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useI18n } from "~/i18n";
 
 type Props = {
   open: boolean;
@@ -8,6 +9,7 @@ type Props = {
 };
 
 function CreatePlaylistPopup({ open, onClose, onCreate }: Props) {
+  const { t } = useI18n();
   const DURATION = 200;
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -64,7 +66,7 @@ function CreatePlaylistPopup({ open, onClose, onCreate }: Props) {
 
     const normalizedTitle = title.trim();
     if (!normalizedTitle) {
-      setError("Playlist title is required.");
+      setError(t("playlistTitleRequired"));
       return;
     }
 
@@ -76,7 +78,7 @@ function CreatePlaylistPopup({ open, onClose, onCreate }: Props) {
       setTitle("");
     } catch (err) {
       console.error("Error creating playlist:", err);
-      setError("Failed to create playlist.");
+      setError(t("playlistCreateFailed"));
       setIsSubmitting(false);
     }
   };
@@ -90,7 +92,7 @@ function CreatePlaylistPopup({ open, onClose, onCreate }: Props) {
       }`}
       role="dialog"
       aria-modal="true"
-      aria-label="Create playlist"
+      aria-label={t("createPlaylist")}
       onMouseDown={() => {
         if (!isSubmitting) onClose();
       }}
@@ -109,22 +111,22 @@ function CreatePlaylistPopup({ open, onClose, onCreate }: Props) {
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-xl font-semibold">Create playlist</h3>
+            <h3 className="text-xl font-semibold">{t("createPlaylist")}</h3>
             <p className="mt-2 text-sm opacity-80">
-              Enter a title and create a new playlist.
+              {t("playlistCreateDescription")}
             </p>
           </div>
         </div>
 
         <form className="mt-5 flex flex-col gap-4" onSubmit={handleSubmit}>
           <label className="flex flex-col gap-2">
-            <span className="text-sm font-medium">Title</span>
+            <span className="text-sm font-medium">{t("title")}</span>
             <input
               ref={inputRef}
               type="text"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              placeholder="Playlist title"
+              placeholder={t("playlistTitlePlaceholder")}
               className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
               maxLength={120}
               disabled={isSubmitting}
@@ -140,14 +142,14 @@ function CreatePlaylistPopup({ open, onClose, onCreate }: Props) {
               disabled={isSubmitting}
               className="button cursor-pointer rounded-full bg-(--background2) px-5 py-2.5 hover:bg-(--background3)"
             >
-              Cancel
+              {t("adminCancel")}
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
               className="button cursor-pointer rounded-full bg-(--accentBlue) px-5 py-2.5 text-white hover:bg-(--accentBlue2) disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {isSubmitting ? "Creating..." : "Create"}
+              {isSubmitting ? t("creating") : t("create")}
             </button>
           </div>
         </form>

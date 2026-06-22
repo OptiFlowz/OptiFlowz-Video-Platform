@@ -21,8 +21,10 @@ import type { fetchVideo, VideoT } from "~/types";
 import { ConfirmDialog } from "~/components/confirmPopup/confirmDialog";
 import { useConfirm } from "~/components/confirmPopup/useConfirm";
 import { fetchFn } from "~/API";
+import { useI18n } from "~/i18n";
 
 function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatch<React.SetStateAction<VideoT[]>>}}) {
+  const { t } = useI18n();
   const [isHidden, setIsHidden] = useState(false);
   const { confirm, dialogProps } = useConfirm();
   const queryClient = useQueryClient();
@@ -191,8 +193,8 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
     const ok = await confirm({
       title: `Delete video "${props?.title}"?`,
       message: "This action cannot be undone.",
-      yesText: "Delete",
-      noText: "Cancel",
+      yesText: t("adminDelete"),
+      noText: t("adminCancel"),
     });
 
     if (!ok) return;
@@ -247,17 +249,17 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
             <span className="flex flex-col gap-0.5 rounded-none!">
               <h3>{props?.title}</h3>
               <h5 className="line-clamp-2 font-light!">
-                {formatDescription(props?.description || "No description")}
+                {formatDescription(props?.description || t("adminNoDescription"))}
               </h5>
               <div className="videoActions">
                 <Link
                   to={`/video/${props?.id}`}
-                  title="Play Video"
+                  title={t("adminWatchVideo")}
                 >
                   {PlaySVG}
                 </Link>
-                <Link to={`/edit?video=${props?.id}`}  title="Edit Video">{EditSVG}</Link>
-                <button onClick={handleDelete} title="Delete Video">
+                <Link to={`/edit?video=${props?.id}`}  title={t("adminEditVideo")}>{EditSVG}</Link>
+                <button onClick={handleDelete} title={t("adminDeleteVideo")}>
                   {DeleteSVG}
                 </button>
               </div>
@@ -309,7 +311,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                     <span className="w-6 h-6 flex items-center justify-center playSvg">
                       {PlaySVG}
                     </span>
-                    <span>Watch Video</span>
+                  <span>{t("adminWatchVideo")}</span>
                   </button>
 
                   <button
@@ -319,7 +321,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                     <span className="w-6 h-6 flex items-center justify-center">
                       {EditSVG}
                     </span>
-                    <span>Edit Video</span>
+                  <span>{t("adminEditVideo")}</span>
                   </button>
 
                   <button
@@ -329,7 +331,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                     <span className="w-6 h-6 flex items-center justify-center">
                       {DeleteSVG}
                     </span>
-                    <span>Delete Video</span>
+                  <span>{t("adminDeleteVideo")}</span>
                   </button>
                 </div>
 
@@ -338,7 +340,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                     onClick={() => setMobileMenuOpen(false)}
                     className="w-full rounded-full border border-(--border1) bg-(--background2) py-3 font-medium hover:bg-(--background3) transition-colors cursor-pointer"
                   >
-                    Cancel
+                  {t("adminCancel")}
                   </button>
                 </div>
               </div>
@@ -359,7 +361,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
             aria-expanded={visOpen}
           >
             {props?.visibility == "public" ? PublicSVG : PrivateSVG}
-            &nbsp;{capitalizeFirstLetter(props?.visibility)}
+            &nbsp;{props?.visibility === "public" ? t("adminPublic") : t("adminPrivate")}
           </button>
 
           {visOpen &&
@@ -432,7 +434,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                 <div
                   ref={visPopupRef}
                   role="dialog"
-                  aria-label="Change visibility"
+              aria-label={t("adminChangeVisibility")}
                   style={visPopupStyle}
                   className="rowVisibilityPopup z-50 border! border-(--border1)! rounded-2xl bg-(--background1) p-3 shadow-2xl"
                   onClick={(e) => e.stopPropagation()}
@@ -448,7 +450,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                         className="appearance-none rounded-full! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative
                             checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
                       />
-                      Public
+                  {t("adminPublic")}
                     </label>
 
                     <label className="flex items-center gap-2 cursor-pointer">
@@ -461,7 +463,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                         className="appearance-none rounded-full! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative
                             checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
                       />
-                      Private
+                  {t("adminPrivate")}
                     </label>
                   </div>
 
@@ -471,7 +473,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                       onClick={cancelVisibility}
                       className="rounded-full border border-(--border1) duration-200 bg-(--background2) hover:bg-(--background3) px-4 py-1.5 text-sm cursor-pointer"
                     >
-                      Cancel
+                  {t("adminCancel")}
                     </button>
 
                     <button
@@ -479,7 +481,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                       onClick={saveVisibility}
                       className="rounded-full text-white bg-(--accentBlue) duration-200 hover:bg-(--accentBlue2) px-4 py-1.5 text-sm cursor-pointer"
                     >
-                      Save
+                  {t("adminSave")}
                     </button>
                   </div>
                 </div>
@@ -520,7 +522,3 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
 }
 
 export default memo(VideoRow);
-
-function capitalizeFirstLetter(str: string): string {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}

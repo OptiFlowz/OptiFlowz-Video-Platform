@@ -21,6 +21,7 @@ import type {
 import Sidebar from "../myVideosPage/sidebar/sidebar";
 import DefaultThumbnail from "../../../assets/DefaultThumbnail.webp";
 import { useConstrainedSticky } from "~/components/shared/useConstrainedSticky";
+import { useI18n } from "~/i18n";
 
 function reorderPlaylistVideos(
   videos: PlaylistVideoT[],
@@ -69,6 +70,7 @@ function PlaylistVideoRowContent({
 }
 
 function EditPlaylistPage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const playlistId = searchParams.get("playlist");
@@ -320,7 +322,7 @@ function EditPlaylistPage() {
       });
 
       if (!response?.success) {
-        setError("Failed to save playlist details.");
+        setError(t("playlistSaveDetailsFailed"));
         return;
       }
 
@@ -331,7 +333,7 @@ function EditPlaylistPage() {
       setOldFeatured(featured);
     } catch (err) {
       console.error("Error saving playlist details:", err);
-      setError("Failed to save playlist details.");
+      setError(t("playlistSaveDetailsFailed"));
     } finally {
       setIsSavingDetails(false);
     }
@@ -363,7 +365,7 @@ function EditPlaylistPage() {
       });
 
       if (!response?.success) {
-        setError("Failed to upload playlist thumbnail.");
+        setError(t("playlistUploadThumbnailFailed"));
         return;
       }
 
@@ -374,7 +376,7 @@ function EditPlaylistPage() {
       setThumbnailMarkedForRemoval(false);
     } catch (err) {
       console.error("Error uploading playlist thumbnail:", err);
-      setError("Failed to upload playlist thumbnail.");
+      setError(t("playlistUploadThumbnailFailed"));
     } finally {
       setIsUploadingThumbnail(false);
       if (fileInputRef.current) {
@@ -433,7 +435,7 @@ function EditPlaylistPage() {
         });
 
         if (!response?.success) {
-          setError("Failed to remove playlist thumbnail.");
+          setError(t("playlistRemoveThumbnailFailed"));
           return;
         }
 
@@ -441,7 +443,7 @@ function EditPlaylistPage() {
         resetThumbnailSelection();
       } catch (err) {
         console.error("Error removing playlist thumbnail:", err);
-        setError("Failed to remove playlist thumbnail.");
+        setError(t("playlistRemoveThumbnailFailed"));
       } finally {
         setIsRemovingThumbnail(false);
       }
@@ -570,7 +572,7 @@ function EditPlaylistPage() {
     }).catch((err) => {
       console.error("Error reordering playlist videos:", err);
       setPlaylistVideos(previousVideos);
-      setError("Failed to reorder playlist videos.");
+      setError(t("playlistReorderVideosFailed"));
     }).finally(() => {
       setIsReorderingPlaylistVideos(false);
     });
@@ -605,7 +607,7 @@ function EditPlaylistPage() {
       });
 
       if (!response?.success) {
-        setError("Failed to add video to playlist.");
+        setError(t("playlistAddVideoFailed"));
         return;
       }
 
@@ -614,7 +616,7 @@ function EditPlaylistPage() {
       setDebouncedPlaylistVideoSearch("");
     } catch (err) {
       console.error("Error adding video to playlist:", err);
-      setError("Failed to add video to playlist.");
+      setError(t("playlistAddVideoFailed"));
     } finally {
       setIsAddingVideoId(null);
     }
@@ -641,12 +643,12 @@ function EditPlaylistPage() {
 
       if (!response?.success) {
         setPlaylistVideos(previousVideos);
-        setError("Failed to delete video from playlist.");
+        setError(t("playlistDeleteVideoFailed"));
       }
     } catch (err) {
       console.error("Error deleting video from playlist:", err);
       setPlaylistVideos(previousVideos);
-      setError("Failed to delete video from playlist.");
+      setError(t("playlistDeleteVideoFailed"));
     } finally {
       setIsDeletingVideoId(null);
     }
@@ -657,8 +659,8 @@ function EditPlaylistPage() {
       <main className="uploadMain">
         <Sidebar />
         <div className="uploadSide max-w-full! w-full">
-          <h1>Edit Playlist</h1>
-          <p className="mt-1 mb-3 links">Playlist id is missing.</p>
+          <h1>{t("playlistEditTitle")}</h1>
+          <p className="mt-1 mb-3 links">{t("playlistMissingId")}</p>
           <button
             type="button"
             className="cancelBtn mt-4"
@@ -676,8 +678,8 @@ function EditPlaylistPage() {
       <main className="uploadMain">
         <Sidebar />
         <div className="uploadSide max-w-full! w-full">
-          <h1>Edit Playlist</h1>
-          <p className="mt-1 mb-3 links">Failed to load playlist data.</p>
+          <h1>{t("playlistEditTitle")}</h1>
+          <p className="mt-1 mb-3 links">{t("playlistLoadFailed")}</p>
           <button
             type="button"
             className="cancelBtn mt-4"
@@ -694,7 +696,7 @@ function EditPlaylistPage() {
     <main className="uploadMain">
       <Sidebar />
       <div className="uploadSide max-w-full! w-full">
-        <h1>Edit Playlist</h1>
+        <h1>{t("playlistEditTitle")}</h1>
         <p className="mt-1 mb-3 links">
           Make changes to your playlist details and thumbnail.
         </p>
@@ -715,7 +717,7 @@ function EditPlaylistPage() {
         {isLoading ? (
           <div className="loadingContainer">
             <div className="uploadSpinner" />
-            <p>Loading playlist data...</p>
+            <p>{t("playlistLoading")}</p>
           </div>
         ) : (
           <div className="stepContentWithPreview">
@@ -729,7 +731,7 @@ function EditPlaylistPage() {
                   <div className="videoPreviewWrapper">
                     <img
                       src={displayedThumbnailUrl}
-                      alt="Playlist thumbnail"
+                      alt={t("playlistThumbnail")}
                       style={{
                         width: "100%",
                         aspectRatio: "16 / 9",
@@ -742,7 +744,7 @@ function EditPlaylistPage() {
                   <div className="videoPreviewWrapper">
                     <img
                       src={DefaultThumbnail}
-                      alt="Default playlist thumbnail"
+                      alt={t("playlistDefaultThumbnail")}
                       style={{
                         width: "100%",
                         aspectRatio: "16 / 9",
@@ -770,7 +772,7 @@ function EditPlaylistPage() {
             <div className="stepContentMain">
               <div className="videoDetailsForm">
                 <section className="editSection">
-                  <h2 className="editSectionTitle">Thumbnail</h2>
+                  <h2 className="editSectionTitle">{t("thumbnail")}</h2>
 
                   <div
                     className={`uploadZone ${pendingThumbnailFile ? "hasFile" : ""}`}
@@ -809,8 +811,8 @@ function EditPlaylistPage() {
                     ) : (
                       <div className="uploadPrompt">
                         {UploadSVG}
-                        <p>Select thumbnail image</p>
-                        <span>PNG, JPG, WEBP and similar image formats</span>
+                        <p>{t("selectThumbnailImage")}</p>
+                        <span>{t("imageFormatsHint")}</span>
                         <button type="button" className="selectFileBtn">
                           Select file
                         </button>
@@ -836,7 +838,7 @@ function EditPlaylistPage() {
                             {thumbnailMarkedForRemoval ? "Saving..." : "Uploading..."}
                           </>
                         ) : (
-                          "Save Thumbnail"
+                          t("saveThumbnail")
                         )}
                       </button>
                       <button
@@ -849,7 +851,7 @@ function EditPlaylistPage() {
                         }
                         className="deleteCaptionsBtn"
                       >
-                        {pendingThumbnailFile ? "Clear Selection" : "Remove Thumbnail"}
+                        {pendingThumbnailFile ? t("clearSelection") : t("removeThumbnail")}
                       </button>
                       {thumbnailModified && (
                         <button
@@ -867,35 +869,35 @@ function EditPlaylistPage() {
                           • Unsaved thumbnail changes
                         </span>
                       ) : (
-                        "Select a new image, then save it explicitly."
+                        t("selectNewImageHint")
                       )}
                     </p>
                   </div>
                 </section>
 
                 <section className="editSection">
-                  <h2 className="editSectionTitle">Playlist Details</h2>
+                  <h2 className="editSectionTitle">{t("playlistDetails")}</h2>
 
                   <div className="formGroup">
-                    <label htmlFor="playlistTitle">Title</label>
+                    <label htmlFor="playlistTitle">{t("title")}</label>
                     <input
                       id="playlistTitle"
                       type="text"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      placeholder="Enter playlist title"
+                      placeholder={t("enterPlaylistTitle")}
                       maxLength={100}
                     />
                     <span className="charCount">{title.length}/100</span>
                   </div>
 
                   <div className="formGroup">
-                    <label htmlFor="playlistDescription">Description</label>
+                    <label htmlFor="playlistDescription">{t("description")}</label>
                     <textarea
                       id="playlistDescription"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Enter playlist description"
+                      placeholder={t("enterPlaylistDescription")}
                       rows={5}
                       maxLength={5000}
                     />
@@ -903,7 +905,7 @@ function EditPlaylistPage() {
                   </div>
 
                   <div className="formGroup">
-                    <label htmlFor="playlistTags">Tags</label>
+                    <label htmlFor="playlistTags">{t("tags")}</label>
                     <div className="tagsContainer">
                       {tags.map((tag) => (
                         <span key={tag} className="tag">
@@ -925,14 +927,14 @@ function EditPlaylistPage() {
                         onKeyDown={handleTagKeyDown}
                         onBlur={addTag}
                         placeholder={
-                          tags.length === 0 ? "Press Enter to add tags" : ""
+                          tags.length === 0 ? t("pressEnterToAddTags") : ""
                         }
                       />
                     </div>
                   </div>
 
                   <div className="formGroup mt-7.5 mb-5">
-                    <label htmlFor="playlistStatus">Visibility</label>
+                    <label htmlFor="playlistStatus">{t("visibility")}</label>
                     <select
                       id="playlistStatus"
                       value={status}
@@ -941,18 +943,18 @@ function EditPlaylistPage() {
                       }
                       className="visibilitySelect"
                     >
-                      <option value="public">Public</option>
-                      <option value="private">Private</option>
+                      <option value="public">{t("adminPublic")}</option>
+                      <option value="private">{t("adminPrivate")}</option>
                     </select>
                     <p className="formHint">
                       {status === "public"
-                        ? "Anyone can view this playlist."
-                        : "Only users with access can view this playlist."}
+                        ? t("publicVisibilityHelp")
+                        : t("privateVisibilityHelp")}
                     </p>
                   </div>
 
                   <div className="formGroup mt-7.5 mb-5">
-                    <label htmlFor="playlistFeatured">Featured</label>
+                    <label htmlFor="playlistFeatured">{t("featured")}</label>
                     <select
                       id="playlistFeatured"
                       value={featured ? "true" : "false"}
@@ -960,7 +962,7 @@ function EditPlaylistPage() {
                       className="visibilitySelect"
                     >
                       <option value="false">No</option>
-                      <option value="true">Yes</option>
+                      <option value="true">{t("adminYes")}</option>
                     </select>
                     <p className="formHint">
                       Featured playlists can be highlighted in the app.
@@ -996,24 +998,24 @@ function EditPlaylistPage() {
                 </section>
 
                 <section className="editSection">
-                  <h2 className="editSectionTitle">Playlist Videos</h2>
+                  <h2 className="editSectionTitle">{t("playlistVideos")}</h2>
 
                   <div className="formGroup">
-                    <label htmlFor="playlistVideoSearch">Add video</label>
+                    <label htmlFor="playlistVideoSearch">{t("addVideo")}</label>
                     <input
                       id="playlistVideoSearch"
                       type="text"
                       className="playlistVideoSearchInput"
                       value={playlistVideoSearch}
                       onChange={(e) => setPlaylistVideoSearch(e.target.value)}
-                      placeholder="Search videos to add to this playlist"
+                      placeholder={t("searchVideosAddPlaylist")}
                     />
 
                     <div className="playlistVideoSearchBlock">
                       {debouncedPlaylistVideoSearch && (
                         <div className="playlistVideoSearchResults">
                           {isSearchingPlaylistVideos ? (
-                            <p className="formHint">Searching videos...</p>
+                            <p className="formHint">{t("searchingVideos")}</p>
                           ) : filteredSearchVideos.length ? (
                             filteredSearchVideos.map((video) => (
                               <div
@@ -1155,7 +1157,7 @@ function EditPlaylistPage() {
                         </div>
                       </>
                     ) : (
-                      <p className="formHint">This playlist has no videos.</p>
+                      <p className="formHint">{t("playlistNoVideos")}</p>
                     )}
                   </div>
                 </section>

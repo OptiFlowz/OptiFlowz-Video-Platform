@@ -18,6 +18,7 @@ import { EUROPEAN_LANGUAGES } from "~/constants";
 import { loadMediaTheme } from "../playPage/playerCollection/loadMediaTheme";
 import Sidebar from "../myVideosPage/sidebar/sidebar";
 import { useConstrainedSticky } from "~/components/shared/useConstrainedSticky";
+import { useI18n } from "~/i18n";
 
 interface Contributor {
   id: string;
@@ -273,6 +274,7 @@ const VideoPreview = ({
   chapters,
   thumbnailUrl,
 }: VideoPreviewProps) => {
+  const { t } = useI18n();
   const [isThemeReady, setIsThemeReady] = useState(false);
   const [metadataLoaded, setMetadataLoaded] = useState(false);
   const playerRef = useRef<MuxPlayerElement | null>(null);
@@ -320,7 +322,7 @@ const VideoPreview = ({
       <div className="videoPreviewContainer">
         <div className="videoPreviewLoading">
           <div className="uploadSpinner" />
-          <p>Loading video preview...</p>
+          <p>{t("loadingVideoPreview")}</p>
         </div>
       </div>
     );
@@ -342,7 +344,7 @@ const VideoPreview = ({
             <polygon points="23 7 16 12 23 17 23 7" />
             <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
           </svg>
-          <p>Video preview unavailable</p>
+          <p>{t("videoPreviewUnavailable")}</p>
         </div>
       </div>
     );
@@ -371,7 +373,7 @@ const VideoPreview = ({
         ) : (
           <div className="videoPreviewLoading">
             <div className="uploadSpinner" />
-            <p>Loading video preview...</p>
+            <p>{t("loadingVideoPreview")}</p>
           </div>
         )}
       </div>
@@ -399,6 +401,7 @@ const VideoPreview = ({
 // ─────────────────────────────────────────────────────────────────────────────
 
 function EditVideoPage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const videoId = searchParams.get("video");
@@ -925,12 +928,12 @@ function EditVideoPage() {
         setCaptionStatus("available");
         setCaptionsModified(true);
       } else {
-        setError("Failed to generate captions. Please try again.");
+        setError(t("videoGenerateCaptionsFailed"));
         setCaptionStatus("not_available");
       }
     } catch (err) {
       console.error("Error generating captions:", err);
-      setError("Failed to generate captions. Please try again.");
+      setError(t("videoGenerateCaptionsFailed"));
       setCaptionStatus("not_available");
     }
   };
@@ -1005,15 +1008,15 @@ function EditVideoPage() {
         setOldCaptions(captions);
         setCaptionsModified(false);
       } else if (response.status === 502) {
-        setError("Mux track is not ready yet. Please try again later.");
+        setError(t("muxTrackNotReady"));
       } else if (response.status === 404) {
-        setError("Video not found.");
+        setError(t("videoNotFound"));
       } else {
-        setError("Failed to save captions.");
+        setError(t("captionsSaveFailed"));
       }
     } catch (err) {
       console.error("Error saving captions:", err);
-      setError("Failed to save captions.");
+      setError(t("captionsSaveFailed"));
     } finally {
       setIsSavingCaptions(false);
     }
@@ -1044,11 +1047,11 @@ function EditVideoPage() {
         setCaptionStatus("not_available");
         setCaptionsModified(false);
       } else {
-        setError("Failed to delete captions.");
+        setError(t("captionsDeleteFailed"));
       }
     } catch (err) {
       console.error("Error deleting captions:", err);
-      setError("Failed to delete captions.");
+      setError(t("captionsDeleteFailed"));
     } finally {
       setIsDeletingCaptions(false);
     }
@@ -1129,11 +1132,11 @@ function EditVideoPage() {
         setOldChairs([...chairs]);
         setSpeakersOrChairsModified(false);
       } else {
-        setError("Failed to save speakers and chairs.");
+        setError(t("contributorsSaveFailed"));
       }
     } catch (err) {
       console.error("Error saving contributors:", err);
-      setError("Failed to save speakers and chairs.");
+      setError(t("contributorsSaveFailed"));
     } finally {
       setIsSavingContributors(false);
     }
@@ -1163,11 +1166,11 @@ function EditVideoPage() {
         setOldChapters([...chapters]);
         setChaptersModified(false);
       } else {
-        setError("Failed to save chapters.");
+        setError(t("chaptersSaveFailed"));
       }
     } catch (err) {
       console.error("Error saving chapters:", err);
-      setError("Failed to save chapters.");
+      setError(t("chaptersSaveFailed"));
     } finally {
       setIsSavingChapters(false);
     }
@@ -1205,7 +1208,7 @@ function EditVideoPage() {
       }
     } catch (err) {
       console.error("Error generating chapters:", err);
-      setError("Failed to generate chapters.");
+      setError(t("chaptersGenerateFailed"));
     } finally {
       setIsGeneratingChapters(false);
     }
@@ -1270,11 +1273,11 @@ function EditVideoPage() {
         setOldVisibility(visibility);
         setDetailsModified(false);
       } else {
-        setError("Failed to save video details.");
+        setError(t("videoDetailsSaveFailed"));
       }
     } catch (err) {
       console.error("Error saving video:", err);
-      setError("Failed to save video details.");
+      setError(t("videoDetailsSaveFailed"));
     } finally {
       setIsSavingDetails(false);
     }
@@ -1302,9 +1305,9 @@ function EditVideoPage() {
       <main className="uploadMain">
         <Sidebar />
         <div className="uploadSide max-w-full! w-full">
-          <h1>Edit Video</h1>
+          <h1>{t("videoEditTitle")}</h1>
           <div className="errorBanner">
-            <p>No video ID provided. Please select a video to edit.</p>
+            <p>{t("videoMissingId")}</p>
           </div>
           <button
             type="button"
@@ -1324,9 +1327,9 @@ function EditVideoPage() {
       <main className="uploadMain">
         <Sidebar />
         <div className="uploadSide max-w-full! w-full">
-          <h1>Edit Video</h1>
+          <h1>{t("videoEditTitle")}</h1>
           <div className="errorBanner">
-            <p>Video not found or you don't have permission to edit it.</p>
+            <p>{t("videoNotFoundOrNoPermission")}</p>
           </div>
           <button
             type="button"
@@ -1344,7 +1347,7 @@ function EditVideoPage() {
     <main className="uploadMain">
       <Sidebar />
       <div className="uploadSide max-w-full! w-full">
-        <h1>Edit Video</h1>
+        <h1>{t("videoEditTitle")}</h1>
         <p className="mt-1 mb-3 links">
           Make changes to your video's details, captions, and chapters.
         </p>
@@ -1366,7 +1369,7 @@ function EditVideoPage() {
         {isVideoLoading ? (
           <div className="loadingContainer">
             <div className="uploadSpinner" />
-            <p>Loading video data...</p>
+            <p>{t("videoLoadingData")}</p>
           </div>
         ) : (
           <div className="stepContentWithPreview">
@@ -1385,7 +1388,7 @@ function EditVideoPage() {
               <div className="videoDetailsForm">
                 {/* Video Details Section */}
                 <section className="editSection">
-                  <h2 className="editSectionTitle">Thumbnail</h2>
+                  <h2 className="editSectionTitle">{t("thumbnail")}</h2>
 
                   <div className="thumbnailSourceActions">
                     <div className="thumbnailSourceHeading">
@@ -1442,8 +1445,8 @@ function EditVideoPage() {
                       ) : (
                         <div className="uploadPrompt">
                           {UploadSVG}
-                          <p>Select thumbnail image</p>
-                          <span>PNG, JPG, WEBP and similar image formats</span>
+                          <p>{t("selectThumbnailImage")}</p>
+                          <span>{t("imageFormatsHint")}</span>
                           <button type="button" className="selectFileBtn">
                             Select file
                           </button>
@@ -1464,18 +1467,18 @@ function EditVideoPage() {
                         ) : (
                           <div className="thumbnailPickerPreviewPlaceholder">
                             <div className="uploadSpinner tiny" />
-                            <span>Preparing frame preview...</span>
+                            <span>{t("loadingVideoPreview")}</span>
                           </div>
                         )}
                       </div>
 
                       <div className="thumbnailPickerControls">
                         <div className="thumbnailPickerTimeRow">
-                          <span>Selected frame</span>
+                          <span>{t("thumbnail")}</span>
                           <strong>{formatThumbnailPickerTime(selectedThumbnailTime)}</strong>
                         </div>
                         <div className="thumbnailPickerTimeInputRow">
-                          <label htmlFor="thumbnailFrameTime">Jump to time</label>
+                          <label htmlFor="thumbnailFrameTime">{t("jumpToTime")}</label>
                           <input
                             id="thumbnailFrameTime"
                             type="text"
@@ -1575,7 +1578,7 @@ function EditVideoPage() {
                 </section>
 
                 <section className="editSection">
-                  <h2 className="editSectionTitle">Video Details</h2>
+                  <h2 className="editSectionTitle">{t("videoDetails")}</h2>
 
                   <div className="formGroup">
                     <label htmlFor="videoTitle">
@@ -1597,7 +1600,7 @@ function EditVideoPage() {
                       id="videoTitle"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      placeholder="Enter video title"
+                      placeholder={t("enterVideoTitle")}
                       maxLength={100}
                     />
                     <span className="charCount">{title.length}/100</span>
@@ -1622,7 +1625,7 @@ function EditVideoPage() {
                       id="videoDescription"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Enter video description"
+                      placeholder={t("enterVideoDescription")}
                       rows={5}
                       maxLength={5000}
                     />
@@ -1671,7 +1674,7 @@ function EditVideoPage() {
                   </div>
 
                   <div className="formGroup mt-7.5 mb-5">
-                    <label htmlFor="videoVisibility">Visibility</label>
+                    <label htmlFor="videoVisibility">{t("visibility")}</label>
                     <select
                       id="videoVisibility"
                       value={visibility}
@@ -1680,8 +1683,8 @@ function EditVideoPage() {
                       }
                       className="visibilitySelect"
                     >
-                      <option value="public">Public</option>
-                      <option value="private">Private</option>
+                      <option value="public">{t("adminPublic")}</option>
+                      <option value="private">{t("adminPrivate")}</option>
                     </select>
                     <p className="formHint">
                       {visibility === "public"
@@ -1720,7 +1723,7 @@ function EditVideoPage() {
 
                 {/* Captions Section */}
                 <section className="editSection">
-                  <h2 className="editSectionTitle">Captions</h2>
+                  <h2 className="editSectionTitle">{t("captions")}</h2>
 
                   <div className="formGroup">
                     <label htmlFor="videoCaptions">
@@ -1762,14 +1765,14 @@ function EditVideoPage() {
                     {captionStatus === "loading" && (
                       <div className="captionsLoadingState">
                         <div className="uploadSpinner small" />
-                        <p>Checking for captions...</p>
+                        <p>{t("checkingCaptions")}</p>
                       </div>
                     )}
 
                     {captionStatus === "generating" && (
                       <div className="captionsLoadingState">
                         <div className="uploadSpinner small" />
-                        <p>Generating captions...</p>
+                        <p>{t("generatingCaptions")}</p>
                       </div>
                     )}
 
@@ -1779,7 +1782,7 @@ function EditVideoPage() {
                           id="videoCaptions"
                           value={captions}
                           onChange={(e) => handleCaptionsChange(e.target.value)}
-                          placeholder="Enter captions in VTT format"
+                          placeholder={t("captionsPlaceholder")}
                           rows={8}
                         />
                         <div className="captionsActions">
@@ -1832,7 +1835,7 @@ function EditVideoPage() {
 
                 {/* Contributors Section */}
                 <section className="editSection">
-                  <h2 className="editSectionTitle">Contributors</h2>
+                  <h2 className="editSectionTitle">{t("contributors")}</h2>
 
                   <div className="formGroup">
                     <ContributorSearch
@@ -1842,7 +1845,7 @@ function EditVideoPage() {
                         handleContributorAdd({ new: contributor })
                       }
                       onRemove={(id) => handleContributorRemove({ id: id })}
-                      placeholder="Search for speakers..."
+                      placeholder={t("searchSpeakersPlaceholder")}
                     />
 
                     <ContributorSearch
@@ -1854,7 +1857,7 @@ function EditVideoPage() {
                       onRemove={(id) =>
                         handleContributorRemove({ type: true, id: id })
                       }
-                      placeholder="Search for chairs..."
+                      placeholder={t("searchChairsPlaceholder")}
                     />
 
                     <div className="captionsActions">
@@ -1891,7 +1894,7 @@ function EditVideoPage() {
 
                 {/* Chapters Section */}
                 <section className="editSection">
-                  <h2 className="editSectionTitle">Chapters</h2>
+                  <h2 className="editSectionTitle">{t("chapters")}</h2>
 
                   <div className="formGroup">
                     <label>
@@ -1936,7 +1939,7 @@ function EditVideoPage() {
                               onChange={(e) =>
                                 updateChapter(index, "title", e.target.value)
                               }
-                              placeholder="Chapter title"
+                              placeholder={t("chapterTitlePlaceholder")}
                             />
                             <button
                               type="button"

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useI18n } from "~/i18n";
 import type { AnswerReviewMode, CreateQuizPayload, ScoringMode } from "./quizTypes";
 
 type Props = {
@@ -33,6 +34,7 @@ function CreateQuizPopup({
   onOpenRules,
   onOpenSources,
 }: Props) {
+  const { t } = useI18n();
   const DURATION = 200;
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -120,15 +122,15 @@ function CreateQuizPopup({
     const max = options?.max;
 
     if (!Number.isFinite(parsed) || Number.isNaN(parsed)) {
-      throw new Error(`${label} is required.`);
+      throw new Error(t("quizFieldRequired", { label }));
     }
 
     if (parsed < min) {
-      throw new Error(`${label} must be at least ${min}.`);
+      throw new Error(t("quizFieldMin", { label, min }));
     }
 
     if (typeof max === "number" && parsed > max) {
-      throw new Error(`${label} must be ${max} or less.`);
+      throw new Error(t("quizFieldMax", { label, max }));
     }
 
     return parsed;
@@ -142,7 +144,7 @@ function CreateQuizPopup({
       const normalizedDescription = description.trim();
 
       if (!normalizedTitle) {
-        throw new Error("Quiz title is required.");
+        throw new Error(t("quizTitleRequired"));
       }
 
       const payload: CreateQuizPayload = {
@@ -177,7 +179,7 @@ function CreateQuizPopup({
       await onSubmit(payload);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to create quiz.";
+        err instanceof Error ? err.message : t("quizCreateFailed");
       setError(message);
       setIsSubmitting(false);
     }
@@ -192,7 +194,7 @@ function CreateQuizPopup({
       }`}
       role="dialog"
       aria-modal="true"
-      aria-label="Create quiz"
+      aria-label={isEditMode ? t("quizEditTitle") : t("quizCreateTitle")}
       onMouseDown={() => {
         if (!isSubmitting) onClose();
       }}
@@ -211,12 +213,12 @@ function CreateQuizPopup({
         <div className="quizPopupHeader">
           <div>
             <h3 className="text-xl font-semibold">
-              {isEditMode ? "Edit Quiz" : "Create Quiz"}
+              {isEditMode ? t("quizEditTitle") : t("quizCreateTitle")}
             </h3>
             <p className="mt-2 text-sm opacity-80">
               {isEditMode
-                ? "Update the quiz details. Only changed values will be sent to the API."
-                : "Set the quiz details. You can adjust timing, score, attempts, and shuffle behavior before creating it."}
+                ? t("quizEditDescription")
+                : t("quizCreateDescription")}
             </p>
           </div>
         </div>
@@ -224,14 +226,14 @@ function CreateQuizPopup({
         <form className="quizPopupForm" onSubmit={handleSubmit}>
           <div className="quizPopupBody">
             <div className="formGroup">
-              <label htmlFor="quizTitle">Title</label>
+              <label htmlFor="quizTitle">{t("title")}</label>
               <input
                 ref={titleInputRef}
                 id="quizTitle"
                 type="text"
                 value={quizTitle}
                 onChange={(event) => setQuizTitle(event.target.value)}
-                placeholder="Enter quiz title"
+                placeholder={t("quizTitlePlaceholder")}
                 maxLength={120}
                 disabled={isSubmitting}
                 className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
@@ -239,12 +241,12 @@ function CreateQuizPopup({
             </div>
 
             <div className="formGroup">
-              <label htmlFor="quizDescription">Description</label>
+              <label htmlFor="quizDescription">{t("description")}</label>
               <textarea
                 id="quizDescription"
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
-                placeholder="Enter quiz description"
+                placeholder={t("quizDescriptionPlaceholder")}
                 rows={4}
                 maxLength={500}
                 disabled={isSubmitting}
@@ -254,7 +256,7 @@ function CreateQuizPopup({
 
             <div className="quizPopupGrid">
               <div className="formGroup">
-                <label htmlFor="quizTimeLimit">Time Limit (seconds)</label>
+                <label htmlFor="quizTimeLimit">{t("quizTimeLimitSeconds")}</label>
                 <input
                   id="quizTimeLimit"
                   type="number"
@@ -265,11 +267,11 @@ function CreateQuizPopup({
                   disabled={isSubmitting}
                   className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
                 />
-                <p className="quizPopupHint">Use 0 for no time limit.</p>
+                <p className="quizPopupHint">{t("quizNoTimeLimitHint")}</p>
               </div>
 
               <div className="formGroup">
-                <label htmlFor="quizQuestionCount">Question Count</label>
+                <label htmlFor="quizQuestionCount">{t("quizQuestionCount")}</label>
                 <input
                   id="quizQuestionCount"
                   type="number"
@@ -280,11 +282,11 @@ function CreateQuizPopup({
                   disabled={isSubmitting}
                   className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
                 />
-                <p className="quizPopupHint">Use 0 for unlimited attempts.</p>
+                <p className="quizPopupHint">{t("quizUnlimitedAttemptsHint")}</p>
               </div>
 
               <div className="formGroup">
-                <label htmlFor="quizMaxAttempts">Max Attempts</label>
+                <label htmlFor="quizMaxAttempts">{t("quizMaxAttempts")}</label>
                 <input
                   id="quizMaxAttempts"
                   type="number"
@@ -298,7 +300,7 @@ function CreateQuizPopup({
               </div>
 
               <div className="formGroup">
-                <label htmlFor="quizPassingScore">Passing Score (%)</label>
+                <label htmlFor="quizPassingScore">{t("quizPassingScore")}</label>
                 <input
                   id="quizPassingScore"
                   type="number"
@@ -313,7 +315,7 @@ function CreateQuizPopup({
               </div>
 
               <div className="formGroup">
-                <label htmlFor="quizAnswerReviewMode">Answer Review Mode</label>
+                <label htmlFor="quizAnswerReviewMode">{t("quizAnswerReviewMode")}</label>
                 <select
                   id="quizAnswerReviewMode"
                   value={answerReviewMode}
@@ -323,14 +325,14 @@ function CreateQuizPopup({
                   disabled={isSubmitting}
                   className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
                 >
-                  <option value="immediate">Immediate</option>
-                  <option value="at_end">At end</option>
-                  <option value="assignment">Assignment</option>
+                  <option value="immediate">{t("quizReviewImmediate")}</option>
+                  <option value="at_end">{t("quizReviewAtEnd")}</option>
+                  <option value="assignment">{t("quizReviewAssignment")}</option>
                 </select>
               </div>
 
               <div className="formGroup">
-                <label htmlFor="quizScoring">Scoring</label>
+                <label htmlFor="quizScoring">{t("quizScoring")}</label>
                 <select
                   id="quizScoring"
                   value={scoring}
@@ -338,8 +340,8 @@ function CreateQuizPopup({
                   disabled={isSubmitting}
                   className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
                 >
-                  <option value="strict">Strict</option>
-                  <option value="partial">Partial</option>
+                  <option value="strict">{t("quizScoringStrict")}</option>
+                  <option value="partial">{t("quizScoringPartial")}</option>
                 </select>
               </div>
             </div>
@@ -347,8 +349,8 @@ function CreateQuizPopup({
             <div className="quizPopupToggleList">
               <label className="quizPopupToggleRow" htmlFor="quizIsActive">
                 <div>
-                  <strong>Is Quiz Active</strong>
-                  <span>If unchecked, the quiz will not be available for users.</span>
+                  <strong>{t("quizIsActive")}</strong>
+                  <span>{t("quizIsActiveHelp")}</span>
                 </div>
                 <input
                   id="quizIsActive"
@@ -362,8 +364,8 @@ function CreateQuizPopup({
 
               <label className="quizPopupToggleRow" htmlFor="quizHasCertificate">
                 <div>
-                  <strong>Has Certificate</strong>
-                  <span>Issue a certificate when the quiz is completed.</span>
+                  <strong>{t("quizHasCertificate")}</strong>
+                  <span>{t("quizHasCertificateHelp")}</span>
                 </div>
                 <input
                   id="quizHasCertificate"
@@ -377,8 +379,8 @@ function CreateQuizPopup({
 
               <label className="quizPopupToggleRow" htmlFor="quizShuffleQuestions">
                 <div>
-                  <strong>Shuffle Questions</strong>
-                  <span>Randomize question order for each attempt.</span>
+                  <strong>{t("quizShuffleQuestions")}</strong>
+                  <span>{t("quizShuffleQuestionsHelp")}</span>
                 </div>
                 <input
                   id="quizShuffleQuestions"
@@ -392,8 +394,8 @@ function CreateQuizPopup({
 
               <label className="quizPopupToggleRow" htmlFor="quizShuffleOptions">
                 <div>
-                  <strong>Shuffle Options</strong>
-                  <span>Randomize answer options inside each question.</span>
+                  <strong>{t("quizShuffleOptions")}</strong>
+                  <span>{t("quizShuffleOptionsHelp")}</span>
                 </div>
                 <input
                   id="quizShuffleOptions"
@@ -417,7 +419,7 @@ function CreateQuizPopup({
                 onClick={onOpenQuestions}
                 disabled={isSubmitting}
               >
-                Questions
+                {t("quizQuestionsButton")}
               </button>
               <button
                 type="button"
@@ -425,7 +427,7 @@ function CreateQuizPopup({
                 onClick={onOpenRules}
                 disabled={isSubmitting}
               >
-                Rules
+                {t("quizRulesButton")}
               </button>
               <button
                 type="button"
@@ -433,7 +435,7 @@ function CreateQuizPopup({
                 onClick={onOpenSources}
                 disabled={isSubmitting}
               >
-                Sources
+                {t("quizSourcesButton")}
               </button>
             </div>
           ) : null}
@@ -445,7 +447,7 @@ function CreateQuizPopup({
               onClick={onClose}
               disabled={isSubmitting}
             >
-              Cancel
+              {t("adminCancel")}
             </button>
             <button
               type="submit"
@@ -455,10 +457,10 @@ function CreateQuizPopup({
               {isSubmitting ? (
                 <>
                   <div className="uploadSpinner tiny" />
-                  {isEditMode ? "Saving..." : "Creating..."}
+                  {isEditMode ? t("saving") : t("creating")}
                 </>
               ) : (
-                isEditMode ? "Save Quiz" : "Create Quiz"
+                isEditMode ? t("quizSaveQuiz") : t("quizCreateQuiz")
               )}
             </button>
           </div>
