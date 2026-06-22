@@ -124,6 +124,13 @@ main.uemsPage {
   border: 1px solid var(--border1) !important;
 }
 
+body.quiz-attempt-in-progress #optiflowz-chat,
+body.quiz-attempt-in-progress #optiflowz-chat-open,
+body.quiz-attempt-in-progress .optiflowz-chat-wrapper {
+  display: none !important;
+  pointer-events: none !important;
+}
+
 header {
   background: transparent !important;
   box-shadow: none !important;
@@ -748,7 +755,7 @@ header nav a:hover{
 .adminAvatarDropdown a {
   display: block;
   padding: 0.8rem 0.95rem;
-  border-radius: 12px;
+  border-radius: 10px;
   color: var(--text1);
   font-weight: 600;
   text-decoration: none;
@@ -2361,12 +2368,13 @@ mux-player::part(menu-item) {
 }
 
 .videoQuizPage {
+  --videoQuizContentWidth: 1120px;
   width: 100%;
   display: flex;
   align-items: flex-start;
   justify-content: center;
   padding: 20px;
-  padding-top: 100px;
+  padding-top: 120px;
   position: relative;
   z-index: 2;
   background: transparent;
@@ -2379,7 +2387,7 @@ mux-player::part(menu-item) {
 
 .videoQuizPage .videoQuizPageContent {
   position: relative;
-  width: min(1020px, calc(100vw - 32px));
+  width: min(var(--videoQuizContentWidth), calc(100vw - 56px));
   max-height: none;
   overflow-y: visible;
   overflow-x: hidden;
@@ -2398,8 +2406,8 @@ mux-player::part(menu-item) {
 }
 
 .videoQuizPage .videoQuizPageContent.flowStage {
-  width: 100%;
-  max-width: var(--contentWidth);
+  width: min(var(--videoQuizContentWidth), calc(100vw - 56px));
+  max-width: none;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -3040,7 +3048,7 @@ mux-player::part(menu-item) {
   border: 1px solid var(--border1);
   background: var(--background2);
   min-height: 220px;
-  max-height: min(760px, calc(100vh - var(--headerHeight, 90px) - 120px));
+  max-height: min(540px, calc(100vh - var(--headerHeight, 90px) - 120px));
   overflow: hidden;
   position: sticky;
   top: calc(var(--headerHeight, 90px) + 24px);
@@ -3061,15 +3069,15 @@ mux-player::part(menu-item) {
 }
 
 .videoQuizPage .videoQuizGrid {
-  --videoQuizGridCellSize: clamp(42px, calc((100% - 1.8rem) / 4), 52px);
-  display: grid;
-  grid-template-columns: repeat(4, var(--videoQuizGridCellSize));
-  grid-auto-rows: var(--videoQuizGridCellSize);
+  --videoQuizGridCellSize: clamp(36px, calc((100% - 2rem) / 5), 44px);
+  display: flex;
+  flex-wrap: wrap;
   align-content: start;
   justify-content: start;
-  gap: 0.6rem;
+  flex-shrink: 0;
+  gap: 0.5rem;
   min-height: var(--videoQuizGridCellSize);
-  max-height: min(650px, calc(100vh - var(--headerHeight, 90px) - 260px));
+  max-height: min(360px, calc(100vh - var(--headerHeight, 90px) - 360px));
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-right: 4px;
@@ -3102,15 +3110,21 @@ mux-player::part(menu-item) {
 }
 
 .videoQuizPage .videoQuizGridButton {
-  width: 100%;
-  height: 100%;
+  display: grid;
+  place-items: center;
+  flex: 0 0 var(--videoQuizGridCellSize);
+  width: var(--videoQuizGridCellSize);
+  max-width: var(--videoQuizGridCellSize);
+  height: var(--videoQuizGridCellSize);
+  aspect-ratio: 1 / 1;
   min-height: 0;
+  padding: 0;
   border-radius: 12px;
   border: 1px solid var(--border1);
   background: transparent;
   color: var(--text2);
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 0.95rem;
   cursor: pointer;
 }
 
@@ -3840,14 +3854,13 @@ mux-player::part(menu-item) {
   }
 
   .videoQuizPage .videoQuizPageContent.flowStage .videoQuizHeading {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.6rem;
-    min-width: 0;
+    display: contents;
   }
 
   .videoQuizPage .videoQuizPageContent.flowStage .videoQuizHeading > span:last-child {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
     min-width: 0;
   }
 
@@ -3863,6 +3876,8 @@ mux-player::part(menu-item) {
   }
 
   .videoQuizPage .videoQuizPageContent.flowStage .videoQuizBadge {
+    grid-column: 1;
+    grid-row: 1;
     width: 44px;
     height: 44px;
     border-radius: 12px;
@@ -3874,22 +3889,25 @@ mux-player::part(menu-item) {
   }
 
   .videoQuizPage .videoQuizPageContent.flowStage .videoQuizTopActions {
+    grid-column: 2;
+    grid-row: 1;
     display: flex;
     flex-direction: row;
     align-items: center;
+    justify-content: flex-end;
+    justify-self: end;
+    gap: 0.65rem;
   }
 
   .videoQuizPage .videoQuizPageContent.flowStage .videoQuizTimer {
-    align-self: flex-start;
+    align-self: center;
     min-height: 40px;
     padding: 8px 13px;
     font-size: 0.88rem;
   }
 
   .videoQuizPage .videoQuizPageContent.flowStage .videoQuizCloseButton {
-    position: absolute;
-    top: 0;
-    right: 0;
+    position: static;
     width: 44px;
     height: 44px;
     display: grid;
@@ -3914,6 +3932,22 @@ mux-player::part(menu-item) {
 
   .videoQuizPage .videoQuizTimer {
     justify-content: center;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizHeaderRow {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 0.75rem;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizTopActions {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizCloseButton {
+    position: static;
   }
 
   .videoQuizPage .videoQuizGrid {

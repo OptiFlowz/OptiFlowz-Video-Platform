@@ -932,6 +932,7 @@ function VideoQuizPage() {
     activeReviewMode === "at_end" ||
     activeReviewMode === "attempt_review";
   const isReadOnlyAttempt = Boolean(activeAttempt && activeAttempt.status !== "in_progress");
+  const isTakingQuiz = Boolean(activeAttempt?.status === "in_progress" && (stage === "question" || stage === "review"));
   const currentQuestionReview = currentQuestion ? questionReviews[currentQuestion.id] : undefined;
   const currentQuestionReviewStatus = getReviewStatusForMode(currentQuestionReview, activeReviewMode);
   const canReviseCurrentAnswer = isAssignmentReview && currentQuestionReviewStatus !== "correct";
@@ -1136,6 +1137,23 @@ function VideoQuizPage() {
     const intervalId = window.setInterval(tick, 1000);
     return () => window.clearInterval(intervalId);
   }, [deadline, stage]);
+
+  useEffect(() => {
+    document.body.classList.toggle("quiz-attempt-in-progress", isTakingQuiz);
+
+    if (isTakingQuiz) {
+      const chat = document.getElementById("optiflowz-chat");
+      const openButton = document.getElementById("optiflowz-chat-open");
+
+      if (chat?.classList.contains("chat-open") && openButton instanceof HTMLElement) {
+        openButton.click();
+      }
+    }
+
+    return () => {
+      document.body.classList.remove("quiz-attempt-in-progress");
+    };
+  }, [isTakingQuiz]);
 
   useEffect(() => {
     requestAnimationFrame(() => pageRef.current?.focus());
@@ -2169,14 +2187,21 @@ function VideoQuizPage() {
                 <button type="button" className="videoQuizGhostButton" onClick={handleExit}>
                   {t("quizCloseQuiz")}
                 </button>
-                <button
-                  type="button"
-                  className="videoQuizPrimaryButton"
-                  onClick={startAttempt}
-                  disabled={isQuizLoading || isStartingAttempt || !quizSummary || (quizMaxAttempts > 0 && attempts.length >= quizMaxAttempts)}
-                >
-                  {t("quizAttemptAgain")} {ArrowSVG}
-                </button>
+                {latestResult.passed === true ? (
+                  <Link to="/account" className="videoQuizPrimaryButton">
+                    {t("quizViewCertificate")}
+                  </Link>
+                ) : null}
+                {quizMaxAttempts <= 0 || attempts.length < quizMaxAttempts ? (
+                  <button
+                    type="button"
+                    className="videoQuizPrimaryButton"
+                    onClick={startAttempt}
+                    disabled={isQuizLoading || isStartingAttempt || !quizSummary}
+                  >
+                    {t("quizAttemptAgain")} {ArrowSVG}
+                  </button>
+                ) : null}
               </div>
             </div>
           ) : null}
