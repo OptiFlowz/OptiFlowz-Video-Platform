@@ -2370,6 +2370,7 @@ mux-player::part(menu-item) {
 .videoQuizPage {
   --videoQuizContentWidth: 1120px;
   width: 100%;
+  min-height: 780px;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -3036,7 +3037,7 @@ mux-player::part(menu-item) {
 
 .videoQuizPage .videoQuizShell.summaryShell {
   display: block;
-  min-height: 0;
+  min-height: 560px;
 }
 
 .videoQuizPage .videoQuizSidebar {
@@ -3701,6 +3702,11 @@ mux-player::part(menu-item) {
   .videoQuizPage .videoQuizShell {
     grid-template-columns: 1fr;
     gap: 36px;
+    min-height: 0;
+  }
+
+  .videoQuizPage .videoQuizShell.summaryShell,
+  .videoQuizPage {
     min-height: 0;
   }
 
