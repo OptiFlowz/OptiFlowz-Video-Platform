@@ -346,18 +346,18 @@ function MyPlaylistsPage() {
           <div className="libraryHeader">
             <div className="libraryHeading">
               <h1>{t("navMyPlaylists")}</h1>
-              <p>Group sessions into curated sets and manage playlist visibility from one place.</p>
+              <p>{t("adminMyPlaylistsDescription")}</p>
             </div>
             <div className="libraryActions">
               <div className="filter">
                 {FilterSVG}
-                <input type="text" placeholder="Filter playlists" />
+                <input type="text" placeholder={t("filterPlaylists")} />
               </div>
               <button
                 type="button"
                 className="playlistAddBtn"
-                title="Create playlist"
-                aria-label="Create playlist"
+                title={t("createPlaylist")}
+                aria-label={t("createPlaylist")}
                 onClick={() => setIsCreatePopupOpen(true)}
               >
                 {AddSVG}
@@ -369,8 +369,8 @@ function MyPlaylistsPage() {
             <button
               type="button"
               className="playlistAddBtn mobile"
-              title="Create playlist"
-              aria-label="Create playlist"
+              title={t("createPlaylist")}
+              aria-label={t("createPlaylist")}
               onClick={() => setIsCreatePopupOpen(true)}
             >
               {AddSVG}

@@ -383,9 +383,7 @@ function SpeakersChairsPage() {
           <div className="libraryHeader">
             <div className="libraryHeading">
               <h1>{t("navSpeakersChairs")}</h1>
-              <p>
-                Manage the shared person records used across videos.
-              </p>
+              <p>{t("adminSpeakersChairsDescription")}</p>
             </div>
             <div className="libraryActions">
               <div className="filter">

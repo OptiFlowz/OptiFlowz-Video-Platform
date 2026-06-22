@@ -231,7 +231,7 @@ function formatTime(secondsLeft: number) {
 }
 
 function formatQuizTimeLimitLabel(seconds: number, t: TranslateFn) {
-  if (seconds <= 0) return "No time limit";
+  if (seconds <= 0) return t("quizNoTimeLimit");
 
   const totalMinutes = Math.max(1, Math.round(Math.max(0, seconds) / 60));
   const hours = Math.floor(totalMinutes / 60);
@@ -1848,11 +1848,15 @@ function VideoQuizPage() {
                                   </span>
                                 ) : null}
                                 {video.has_met_requirement ? (
-                                  <span className="videoQuizRequirementMetBadge" aria-label="Requirement complete" title="Requirement complete">
+                                  <span
+                                    className="videoQuizRequirementMetBadge"
+                                    aria-label={t("quizRequirementComplete")}
+                                    title={t("quizRequirementComplete")}
+                                  >
                                     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                       <path d="M5 12.5L9.5 17L19 7.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>
-                                    <span>Complete</span>
+                                    <span>{t("quizRequirementComplete")}</span>
                                   </span>
                                 ) : (
                                   <button
@@ -2217,12 +2221,8 @@ function VideoQuizPage() {
 	          >
 	            <div className="videoQuizConfirmIcon">{QuizSVG}</div>
 	            <div>
-	              <h3 id="videoQuizAssignmentSubmitTitle">Assignment attempt is not complete</h3>
-	              <p>
-	                You must answer every question correctly before you can submit this assignment attempt.
-	                Continue the quiz to revise your answers, or abandon the attempt. If you abandon the
-	                attempt, your progress will be deleted.
-	              </p>
+	              <h3 id="videoQuizAssignmentSubmitTitle">{t("quizAssignmentSubmitTitle")}</h3>
+	              <p>{t("quizAssignmentSubmitDescription")}</p>
 	            </div>
 	            <div className="videoQuizConfirmActions">
 	              <button
@@ -2231,7 +2231,7 @@ function VideoQuizPage() {
 	                onClick={continueAssignmentAttempt}
 	                disabled={isSubmittingAttempt}
 	              >
-	                Continue quiz
+	                {t("quizContinueQuiz")}
 	              </button>
 	              <button
 	                type="button"

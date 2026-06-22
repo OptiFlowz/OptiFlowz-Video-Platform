@@ -20,10 +20,10 @@ function Analytics() {
 
   const validationMessage = useMemo(() => {
     if (!isCustomRange) return "";
-    if (!from || !to) return "Choose both dates for custom range.";
-    if (from > to) return "From date must be before To date.";
+    if (!from || !to) return t("analyticsChooseBothDates");
+    if (from > to) return t("analyticsFromBeforeTo");
     return "";
-  }, [from, isCustomRange, to]);
+  }, [from, isCustomRange, t, to]);
 
   const reportUrl = useMemo(() => {
     const url = new URL(`${env.apiBaseUrl}/api/reports/video-analytics.pdf`);
@@ -132,29 +132,29 @@ function Analytics() {
           <div className="libraryHeader">
             <div className="libraryHeading">
               <h1>{t("navAnalytics")}</h1>
-              <p>Generate your video analytics PDF report.</p>
+              <p>{t("analyticsDescription")}</p>
             </div>
           </div>
 
           <section className="analyticsSimple">
             <div className="analyticsSimpleRow">
               <label className="analyticsSimpleField">
-                <span>Range</span>
+                <span>{t("analyticsRange")}</span>
                 <select value={range} onChange={(event) => setRange(event.target.value as AnalyticsRange)}>
-                  <option value="last30">Last 30 days</option>
-                  <option value="last90">Last 90 days</option>
-                  <option value="last365">Last 365 days</option>
-                  <option value="all">All time</option>
-                  <option value="custom">Custom</option>
+                  <option value="last30">{t("analyticsLast30Days")}</option>
+                  <option value="last90">{t("analyticsLast90Days")}</option>
+                  <option value="last365">{t("analyticsLast365Days")}</option>
+                  <option value="all">{t("analyticsAllTime")}</option>
+                  <option value="custom">{t("analyticsCustom")}</option>
                 </select>
               </label>
 
               <label className="analyticsSimpleField">
-                <span>Group By</span>
+                <span>{t("analyticsGroupBy")}</span>
                 <select value={groupBy} onChange={(event) => setGroupBy(event.target.value as AnalyticsGroupBy)}>
-                  <option value="day">Day</option>
-                  <option value="week">Week</option>
-                  <option value="month">Month</option>
+                  <option value="day">{t("analyticsDay")}</option>
+                  <option value="week">{t("analyticsWeek")}</option>
+                  <option value="month">{t("analyticsMonth")}</option>
                 </select>
               </label>
             </div>
@@ -162,12 +162,12 @@ function Analytics() {
             {isCustomRange && (
               <div className="analyticsSimpleRow">
                 <label className="analyticsSimpleField">
-                  <span>From</span>
+                  <span>{t("analyticsFrom")}</span>
                   <input type="date" value={from} onChange={(event) => setFrom(event.target.value)} />
                 </label>
 
                 <label className="analyticsSimpleField">
-                  <span>To</span>
+                  <span>{t("analyticsTo")}</span>
                   <input type="date" value={to} onChange={(event) => setTo(event.target.value)} />
                 </label>
               </div>
@@ -180,7 +180,7 @@ function Analytics() {
                 disabled={isGeneratingReport || !!validationMessage}
                 className="button analyticsSimpleButton"
               >
-                {isGeneratingReport ? "Generating PDF..." : "Download PDF"}
+                {isGeneratingReport ? t("analyticsGeneratingPdf") : t("analyticsDownloadPdf")}
               </button>
 
               {validationMessage ? (

@@ -280,18 +280,18 @@ function MyVideos() {
           <div className="libraryHeader">
             <div className="libraryHeading">
               <h1>{t("navMyVideos")}</h1>
-              <p>Review uploads, update visibility, and keep your channel organized.</p>
+              <p>{t("adminMyVideosDescription")}</p>
             </div>
             <div className="libraryActions">
               <div className="filter">
                 {FilterSVG}
-                <input type="text" placeholder="Filter videos" />
+                <input type="text" placeholder={t("filterVideos")} />
               </div>
               <button
                 type="button"
                 className="playlistAddBtn"
-                title="Upload video"
-                aria-label="Upload video"
+                title={t("uploadVideoAction")}
+                aria-label={t("uploadVideoAction")}
                 onClick={() => {
                   window.location.href = "/upload";
                 }}
@@ -305,8 +305,8 @@ function MyVideos() {
             <button
               type="button"
               className="playlistAddBtn mobile"
-              title="Upload video"
-              aria-label="Upload video"
+              title={t("uploadVideoAction")}
+              aria-label={t("uploadVideoAction")}
               onClick={() => {
                 window.location.href = "/upload";
               }}

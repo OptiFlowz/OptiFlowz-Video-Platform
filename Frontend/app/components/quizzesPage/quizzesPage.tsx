@@ -572,14 +572,14 @@ function QuizzesPage() {
           <div className="libraryHeader">
             <div className="libraryHeading">
               <h1>{t("navQuizzes")}</h1>
-              <p>Create, edit, and organize quizzes independently from videos.</p>
+              <p>{t("adminQuizzesDescription")}</p>
             </div>
             <div className="libraryActions">
               <div className="filter">
                 {FilterSVG}
                 <input
                   type="text"
-                  placeholder="Filter quizzes"
+                  placeholder={t("filterQuizzes")}
                   value={filterValue}
                   onChange={(event) => setFilterValue(event.target.value)}
                 />
@@ -587,8 +587,8 @@ function QuizzesPage() {
               <button
                 type="button"
                 className="playlistAddBtn"
-                title="Create quiz"
-                aria-label="Create quiz"
+                title={t("createQuiz")}
+                aria-label={t("createQuiz")}
                 onClick={openCreateModal}
               >
                 {AddSVG}
@@ -601,8 +601,8 @@ function QuizzesPage() {
             <button
               type="button"
               className="playlistAddBtn mobile"
-              title="Create quiz"
-              aria-label="Create quiz"
+              title={t("createQuiz")}
+              aria-label={t("createQuiz")}
               onClick={openCreateModal}
             >
               {AddSVG}
