@@ -761,6 +761,101 @@ header nav a:hover{
   text-decoration: none;
 }
 
+.adminAvatarLanguageSelect {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+  position: relative;
+  padding: 0.8rem 0.95rem;
+  border-radius: 10px;
+  color: var(--text1);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.adminAvatarLanguageText {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.adminAvatarLanguageText strong {
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.adminAvatarLanguageText small {
+  overflow: hidden;
+  color: color-mix(in srgb, var(--text1) 72%, transparent);
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adminAvatarLanguageChevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text1);
+  pointer-events: none;
+  transform: rotate(90deg);
+}
+
+.adminAvatarLanguageChevron svg {
+  display: block;
+  width: 0.55rem;
+  height: 0.9rem;
+}
+
+.adminAvatarLanguageChevron svg path {
+  stroke: currentColor;
+}
+
+.adminAvatarLanguageSelect select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.mobileLanguageSelect {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+  position: relative;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  color: var(--text1);
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.mobileLanguageSelect:hover {
+  background: var(--background2);
+}
+
+.mobileLanguageSelect select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  opacity: 0;
+  cursor: pointer;
+}
+
 .adminAvatarDropdown button {
   width: 100%;
   text-align: left;
@@ -773,6 +868,7 @@ header nav a:hover{
 }
 
 .adminAvatarDropdown a:hover,
+.adminAvatarLanguageSelect:hover,
 .adminAvatarDropdown button:hover {
   background: rgba(255, 255, 255, 0.08);
 }

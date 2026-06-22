@@ -1,16 +1,16 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { Link, NavLink, useNavigate, useParams } from "react-router";
-import { SearchSVG, SearchSVGWhite, CloseSVG, MenuSVG, EditModeSVG } from "~/constants";
+import { ArrowSVG, SearchSVG, SearchSVGWhite, CloseSVG, MenuSVG, EditModeSVG } from "~/constants";
 import DefaultProfile from "../../../assets/DefaultProfile.webp";
 import OptiFlowzLogo from "../../../assets/OptiFlowzLogo.webp";
 import { getToken } from "~/functions";
 import type { AuthFetchT } from "~/types";
-import { useI18n } from "~/i18n";
+import { LANGUAGE_OPTIONS, useI18n, type Locale } from "~/i18n";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchFn } from "~/API";
 
 function Header(){
-    const { t } = useI18n();
+    const { locale, setLocale, t } = useI18n();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
     const [searchFocusArmed, setSearchFocusArmed] = useState(false);
@@ -246,6 +246,30 @@ function Header(){
                                     >
                                         {t("footerAccount")}
                                     </Link>
+                                    <label
+                                        className="adminAvatarLanguageSelect"
+                                        onMouseDown={(event) => event.stopPropagation()}
+                                        onClick={(event) => event.stopPropagation()}
+                                    >
+                                        <span className="adminAvatarLanguageText">
+                                            <strong>{t("accountLanguage")}</strong>
+                                            <small>
+                                                {LANGUAGE_OPTIONS.find((option) => option.value === locale)?.label}
+                                            </small>
+                                        </span>
+                                        <select
+                                            value={locale}
+                                            aria-label={t("accountLanguage")}
+                                            onChange={(event) => setLocale(event.target.value as Locale)}
+                                        >
+                                            {LANGUAGE_OPTIONS.map((option) => (
+                                                <option key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <span className="adminAvatarLanguageChevron" aria-hidden="true">{ArrowSVG}</span>
+                                    </label>
                                     {isAdmin ? (
                                         <Link
                                             to="/my-videos"
@@ -431,6 +455,26 @@ function Header(){
                     >
                         OptiFlowz
                     </Link>
+                    <label className="mobileLanguageSelect">
+                        <span className="adminAvatarLanguageText">
+                            <strong>{t("accountLanguage")}</strong>
+                            <small>
+                                {LANGUAGE_OPTIONS.find((option) => option.value === locale)?.label}
+                            </small>
+                        </span>
+                        <select
+                            value={locale}
+                            aria-label={t("accountLanguage")}
+                            onChange={(event) => setLocale(event.target.value as Locale)}
+                        >
+                            {LANGUAGE_OPTIONS.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </select>
+                        <span className="adminAvatarLanguageChevron" aria-hidden="true">{ArrowSVG}</span>
+                    </label>
                     <NavLink
                         to="/account"
                         end
