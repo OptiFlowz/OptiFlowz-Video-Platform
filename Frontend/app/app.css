@@ -124,6 +124,13 @@ main.uemsPage {
   border: 1px solid var(--border1) !important;
 }
 
+body.quiz-attempt-in-progress #optiflowz-chat,
+body.quiz-attempt-in-progress #optiflowz-chat-open,
+body.quiz-attempt-in-progress .optiflowz-chat-wrapper {
+  display: none !important;
+  pointer-events: none !important;
+}
+
 header {
   background: transparent !important;
   box-shadow: none !important;
@@ -748,10 +755,35 @@ header nav a:hover{
 .adminAvatarDropdown a {
   display: block;
   padding: 0.8rem 0.95rem;
-  border-radius: 12px;
+  border-radius: 10px;
   color: var(--text1);
   font-weight: 600;
   text-decoration: none;
+}
+
+.adminAvatarLanguageSelect {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+  position: relative;
+  padding: 0.8rem 0.95rem;
+  border-radius: 10px;
+  color: var(--text1);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.adminAvatarLanguageText {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.adminAvatarLanguageText strong {
+  font-size: 1rem;
+  line-height: 1.2;
 }
 
 .adminAvatarDropdown button {
@@ -766,6 +798,7 @@ header nav a:hover{
 }
 
 .adminAvatarDropdown a:hover,
+.adminAvatarLanguageSelect:hover,
 .adminAvatarDropdown button:hover {
   background: rgba(255, 255, 255, 0.08);
 }
