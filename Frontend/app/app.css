@@ -124,13 +124,6 @@ main.uemsPage {
   border: 1px solid var(--border1) !important;
 }
 
-body.quiz-attempt-in-progress #optiflowz-chat,
-body.quiz-attempt-in-progress #optiflowz-chat-open,
-body.quiz-attempt-in-progress .optiflowz-chat-wrapper {
-  display: none !important;
-  pointer-events: none !important;
-}
-
 header {
   background: transparent !important;
   box-shadow: none !important;
@@ -755,105 +748,10 @@ header nav a:hover{
 .adminAvatarDropdown a {
   display: block;
   padding: 0.8rem 0.95rem;
-  border-radius: 10px;
+  border-radius: 12px;
   color: var(--text1);
   font-weight: 600;
   text-decoration: none;
-}
-
-.adminAvatarLanguageSelect {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.9rem;
-  position: relative;
-  padding: 0.8rem 0.95rem;
-  border-radius: 10px;
-  color: var(--text1);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.adminAvatarLanguageText {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.adminAvatarLanguageText strong {
-  font-size: 1rem;
-  line-height: 1.2;
-}
-
-.adminAvatarLanguageText small {
-  overflow: hidden;
-  color: color-mix(in srgb, var(--text1) 72%, transparent);
-  font-size: 0.88rem;
-  font-weight: 600;
-  line-height: 1.2;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.adminAvatarLanguageChevron {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text1);
-  pointer-events: none;
-  transform: rotate(90deg);
-}
-
-.adminAvatarLanguageChevron svg {
-  display: block;
-  width: 0.55rem;
-  height: 0.9rem;
-}
-
-.adminAvatarLanguageChevron svg path {
-  stroke: currentColor;
-}
-
-.adminAvatarLanguageSelect select {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  appearance: none;
-  -webkit-appearance: none;
-  background: transparent;
-  opacity: 0;
-  cursor: pointer;
-}
-
-.mobileLanguageSelect {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.9rem;
-  position: relative;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
-  color: var(--text1);
-  cursor: pointer;
-  transition: background-color 0.15s ease-in-out;
-}
-
-.mobileLanguageSelect:hover {
-  background: var(--background2);
-}
-
-.mobileLanguageSelect select {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  appearance: none;
-  -webkit-appearance: none;
-  background: transparent;
-  opacity: 0;
-  cursor: pointer;
 }
 
 .adminAvatarDropdown button {
@@ -868,7 +766,6 @@ header nav a:hover{
 }
 
 .adminAvatarDropdown a:hover,
-.adminAvatarLanguageSelect:hover,
 .adminAvatarDropdown button:hover {
   background: rgba(255, 255, 255, 0.08);
 }
@@ -1957,6 +1854,9 @@ mux-player::part(menu-item) {
   cursor: pointer;
   transition: all 0.2s ease;
 }
+.sidePlaylists .playlistHeader button:hover{
+  background-color: rgba(255, 255, 255, 0.3);
+}
 
 .sidePlaylists .playlistHeader button svg {
   width: 30px;
@@ -2052,14 +1952,14 @@ mux-player::part(menu-item) {
 .sidePlaylists .similar .playCard.active::after {
   content: "Playing";
   position: absolute;
-  top: 5px;
-  left: 3px;
-  padding: 5px 20px;
+  top: -2px;
+  left: -2px;
+  padding: 4px 20px;
   background-color: var(--foreground);
   color: var(--accentBlue);
   border: 1px solid var(--accentBlue);
   font-weight: 600;
-  border-radius: 8px;
+  border-radius: 999px;
   z-index: 2;
 }
 
@@ -2464,14 +2364,12 @@ mux-player::part(menu-item) {
 }
 
 .videoQuizPage {
-  --videoQuizContentWidth: 1120px;
   width: 100%;
-  min-height: 780px;
   display: flex;
   align-items: flex-start;
   justify-content: center;
   padding: 20px;
-  padding-top: 120px;
+  padding-top: 100px;
   position: relative;
   z-index: 2;
   background: transparent;
@@ -2484,7 +2382,7 @@ mux-player::part(menu-item) {
 
 .videoQuizPage .videoQuizPageContent {
   position: relative;
-  width: min(var(--videoQuizContentWidth), calc(100vw - 56px));
+  width: min(1020px, calc(100vw - 32px));
   max-height: none;
   overflow-y: visible;
   overflow-x: hidden;
@@ -2503,8 +2401,8 @@ mux-player::part(menu-item) {
 }
 
 .videoQuizPage .videoQuizPageContent.flowStage {
-  width: min(var(--videoQuizContentWidth), calc(100vw - 56px));
-  max-width: none;
+  width: 100%;
+  max-width: var(--contentWidth);
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -3133,7 +3031,7 @@ mux-player::part(menu-item) {
 
 .videoQuizPage .videoQuizShell.summaryShell {
   display: block;
-  min-height: 560px;
+  min-height: 0;
 }
 
 .videoQuizPage .videoQuizSidebar {
@@ -3145,7 +3043,7 @@ mux-player::part(menu-item) {
   border: 1px solid var(--border1);
   background: var(--background2);
   min-height: 220px;
-  max-height: min(540px, calc(100vh - var(--headerHeight, 90px) - 120px));
+  max-height: min(760px, calc(100vh - var(--headerHeight, 90px) - 120px));
   overflow: hidden;
   position: sticky;
   top: calc(var(--headerHeight, 90px) + 24px);
@@ -3166,15 +3064,15 @@ mux-player::part(menu-item) {
 }
 
 .videoQuizPage .videoQuizGrid {
-  --videoQuizGridCellSize: clamp(36px, calc((100% - 2rem) / 5), 44px);
-  display: flex;
-  flex-wrap: wrap;
+  --videoQuizGridCellSize: clamp(42px, calc((100% - 1.8rem) / 4), 52px);
+  display: grid;
+  grid-template-columns: repeat(4, var(--videoQuizGridCellSize));
+  grid-auto-rows: var(--videoQuizGridCellSize);
   align-content: start;
   justify-content: start;
-  flex-shrink: 0;
-  gap: 0.5rem;
+  gap: 0.6rem;
   min-height: var(--videoQuizGridCellSize);
-  max-height: min(360px, calc(100vh - var(--headerHeight, 90px) - 360px));
+  max-height: min(650px, calc(100vh - var(--headerHeight, 90px) - 260px));
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-right: 4px;
@@ -3207,21 +3105,15 @@ mux-player::part(menu-item) {
 }
 
 .videoQuizPage .videoQuizGridButton {
-  display: grid;
-  place-items: center;
-  flex: 0 0 var(--videoQuizGridCellSize);
-  width: var(--videoQuizGridCellSize);
-  max-width: var(--videoQuizGridCellSize);
-  height: var(--videoQuizGridCellSize);
-  aspect-ratio: 1 / 1;
+  width: 100%;
+  height: 100%;
   min-height: 0;
-  padding: 0;
   border-radius: 12px;
   border: 1px solid var(--border1);
   background: transparent;
   color: var(--text2);
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 1rem;
   cursor: pointer;
 }
 
@@ -3801,11 +3693,6 @@ mux-player::part(menu-item) {
     min-height: 0;
   }
 
-  .videoQuizPage .videoQuizShell.summaryShell,
-  .videoQuizPage {
-    min-height: 0;
-  }
-
   .videoQuizPage .videoQuizSidebar {
     order: 2;
     width: min(100%, 520px);
@@ -3956,13 +3843,14 @@ mux-player::part(menu-item) {
   }
 
   .videoQuizPage .videoQuizPageContent.flowStage .videoQuizHeading {
-    display: contents;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+    min-width: 0;
   }
 
   .videoQuizPage .videoQuizPageContent.flowStage .videoQuizHeading > span:last-child {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    width: 100%;
     min-width: 0;
   }
 
@@ -3978,8 +3866,6 @@ mux-player::part(menu-item) {
   }
 
   .videoQuizPage .videoQuizPageContent.flowStage .videoQuizBadge {
-    grid-column: 1;
-    grid-row: 1;
     width: 44px;
     height: 44px;
     border-radius: 12px;
@@ -3991,25 +3877,22 @@ mux-player::part(menu-item) {
   }
 
   .videoQuizPage .videoQuizPageContent.flowStage .videoQuizTopActions {
-    grid-column: 2;
-    grid-row: 1;
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: flex-end;
-    justify-self: end;
-    gap: 0.65rem;
   }
 
   .videoQuizPage .videoQuizPageContent.flowStage .videoQuizTimer {
-    align-self: center;
+    align-self: flex-start;
     min-height: 40px;
     padding: 8px 13px;
     font-size: 0.88rem;
   }
 
   .videoQuizPage .videoQuizPageContent.flowStage .videoQuizCloseButton {
-    position: static;
+    position: absolute;
+    top: 0;
+    right: 0;
     width: 44px;
     height: 44px;
     display: grid;
@@ -4034,22 +3917,6 @@ mux-player::part(menu-item) {
 
   .videoQuizPage .videoQuizTimer {
     justify-content: center;
-  }
-
-  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizHeaderRow {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: start;
-    gap: 0.75rem;
-  }
-
-  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizTopActions {
-    flex-direction: row;
-    align-items: center;
-  }
-
-  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizCloseButton {
-    position: static;
   }
 
   .videoQuizPage .videoQuizGrid {
@@ -4616,12 +4483,12 @@ mux-player::part(menu-item) {
   max-width: 500px;
   max-height: calc(100vh - 175px);
   background-color: var(--background1);
-  padding: 20px;
+  padding: 24px;
   border: 1px solid var(--border2);
-  border-radius: 24px;
+  border-radius: 18px;
   display: flex;
   flex-direction: column;
-  transition: transform 0.2s ease;
+  animation: popupExit 0.2s ease-in-out forwards;
   will-change: transform;
   gap: 1rem;
 }
@@ -4630,7 +4497,7 @@ mux-player::part(menu-item) {
   background-color: var(--background2);
   border-radius: 24px;
   padding: 10px;
-  font-size: 0.95rem;
+  font-size: 0.94rem;
   line-height: 1.4;
 }
 .editAccountPopup .popup-content {
@@ -4708,15 +4575,38 @@ mux-player::part(menu-item) {
   border-radius: 999px;
 }
 .active .popup-content {
-  transform: translateY(20px);
+  animation: popupEnter 0.2s ease-in-out forwards;
 }
+@keyframes popupEnter {
+  0% {
+    transform: translateY(0);
+  }
+  60% {
+    transform: translateY(28px);
+  }
+  100% {
+      transform: translateY(20px);
+  }
+}
+@keyframes popupExit {
+  0% {
+    transform: translateY(20px);
+  }
+  40% {
+    transform: translateY(30px);
+  }
+  100% {
+      transform: translateY(0);
+  }
+}
+
 .popup-content h2 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   line-height: 1.3;
-  font-weight: 600;
+  font-weight: 500;
   margin-bottom: 1rem;
 }
 .popup-content h2 button {
@@ -5359,7 +5249,7 @@ main.login .background{
   pointer-events: none;
 }
 
-main.login > div {
+main.login > div:not(.loader) {
   display: flex;
   height: 100vh;
   z-index: 1;
@@ -9137,6 +9027,7 @@ main.analyticsPage .analyticsSimpleError{
 }
 .loader.show {
   opacity: 1;
+  z-index: 999;
 }
 
 .pageLoader {
@@ -9174,10 +9065,10 @@ main.analyticsPage .analyticsSimpleError{
   stroke-linecap: round;
   transform-origin: 50% 50%;
   transition: all 0.15s ease-in-out 0s;
-  animation: 2s linear 0s infinite normal none running loading-spinner;
+  animation: 2s linear 0s infinite normal none running loader-spinner;
 }
 
-@keyframes loading-spinner {
+@keyframes loader-spinner {
   0% {
     stroke-dasharray: 0.01px, 10.97px;
     transform: rotate(0);
