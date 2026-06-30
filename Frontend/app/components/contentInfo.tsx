@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { formatDate, formatViews } from "~/functions";
-import { useI18n } from "~/i18n";
+import { translateContentTitle, useI18n } from "~/i18n";
 
 type Props = {
     title: string,
@@ -12,9 +12,11 @@ type Props = {
 
 function ContentInfo({props}: {props: Props}){
     const { t } = useI18n();
+    const title = translateContentTitle(props?.title);
+
     return (
         <div className="info">
-            <h2 title={props?.title}>{props?.title}</h2>
+            <h2 title={title}>{title}</h2>
             <p className="author">{props?.author || props?.uploader_name || t("unknownSpeakers")}</p>
 
             <span className="flex gap-1.5">

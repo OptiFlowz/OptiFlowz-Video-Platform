@@ -47,9 +47,9 @@ function PlaylistItem({props, featured}: {props: VideoPlaylistT, featured?:boole
 
                     <p>{t("videosLabel", { count: props.video_count })}</p>
                     {props.status === "private" && (
-                        <p aria-label="Private playlist" title="Private playlist" className="flex items-center gap-1.5">
+                        <p aria-label={t("adminPrivate")} title={t("adminPrivate")} className="flex items-center gap-1.5">
                             {LockSVG}
-                            <span>Private</span>
+                            <span>{t("adminPrivate")}</span>
                         </p>
                     )}
                 </span>
