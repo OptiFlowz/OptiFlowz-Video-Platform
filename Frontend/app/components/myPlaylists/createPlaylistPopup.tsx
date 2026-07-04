@@ -98,7 +98,7 @@ function CreatePlaylistPopup({ open, onClose, onCreate }: Props) {
       }}
     >
       <div
-        className={`absolute inset-0 bg-black/55 transition-opacity duration-200 ${
+        className={`absolute inset-0 bg-(--backgroundC2) transition-opacity duration-200 ${
           visible ? "opacity-100" : "opacity-0"
         }`}
       />
@@ -147,7 +147,7 @@ function CreatePlaylistPopup({ open, onClose, onCreate }: Props) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="button cursor-pointer rounded-full bg-(--accentBlue) px-5 py-2.5 text-white hover:bg-(--accentBlue2) disabled:cursor-not-allowed disabled:opacity-70"
+              className="button cursor-pointer rounded-full bg-(--accentBlue) px-5 py-2.5 text-(--text1) hover:bg-(--accentBlue2) disabled:cursor-not-allowed disabled:opacity-70"
             >
               {isSubmitting ? t("creating") : t("create")}
             </button>

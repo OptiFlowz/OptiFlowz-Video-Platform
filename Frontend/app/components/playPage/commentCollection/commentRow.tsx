@@ -115,7 +115,7 @@ function CommentRow({
               value={editValue}
               onChange={(e) => onEditChange(e.target.value)}
               rows={3}
-              className="block w-full rounded-xl bg-(--background2)! px-3 py-2 text-[15px] leading-6 outline-none resize-y min-h-16 max-h-40 border border-white/15"
+              className="block w-full rounded-xl bg-(--background2)! px-3 py-2 text-[15px] leading-6 outline-none resize-y min-h-16 max-h-40 border border-(--borderC1)"
             />
 
             <div className="mt-2 flex items-center gap-1.5">
@@ -130,7 +130,7 @@ function CommentRow({
               <button
                 type="button"
                 onClick={() => onEditConfirm(comment)}
-                className="reply rounded-full bg-(--accentBlue)! hover:bg-(--accentBlue2)! transition-colors cursor-pointer text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-(--accentBlue)!"
+                className="reply rounded-full bg-(--accentBlue)! hover:bg-(--accentBlue2)! transition-colors cursor-pointer text-(--text1) disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-(--accentBlue)!"
                 disabled={!trimmedEditValue || trimmedEditValue === comment.content.trim() || isEditPending}
               >
                 {isEditPending ? t("saving") : t("confirm")}

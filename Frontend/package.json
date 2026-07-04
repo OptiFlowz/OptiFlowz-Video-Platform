@@ -2,7 +2,7 @@
   "name": "optiflowz-video-platform-frontend",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
+    "dev": "next dev --turbopack",
     "build": "next build --webpack",
     "start": "next start",
     "typecheck": "tsc --noEmit"

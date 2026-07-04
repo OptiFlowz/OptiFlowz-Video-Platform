@@ -200,7 +200,7 @@ function PlaylistPage(){
                     </p>
 
                     <span className="buttonHolder">
-                        <button className="play rounded-full! flex! bg-(--accentBlue)! text-white! font-semibold!" onClick={playPlaylist}>{PlaySVG}&nbsp;{t("playAll")}</button>
+                        <button className="play rounded-full! flex! bg-(--accentBlue)! text-(--text1)! font-semibold!" onClick={playPlaylist}>{PlaySVG}&nbsp;{t("playAll")}</button>
 
                         <button className={`${isSaved ? "saved" : ""} clickable bg-(--background2) hover:bg-(--background3) rounded-full flex`} onClick={toggleSave}>{BookmarkSVG}&nbsp;{isSaved ? t("saved") : t("save")}</button>
                         <button onClick={e => sharePlaylistLink(e)} className="clickable bg-(--background2) hover:bg-(--background3) rounded-full flex">{ShareSVG}&nbsp;{t("share")}</button>

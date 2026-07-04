@@ -87,7 +87,7 @@ export default function GoogleCallbackPage() {
 
   return (
     <main className="login fixed! inset-0 w-[100vw]! h-[100vh]! p-0!">
-      {error ? <p className="text-white">{error}</p> : <Loader ref={loaderRef} classes="pageLoader show" />}
+      {error ? <p className="text-[var(--text1)]">{error}</p> : <Loader ref={loaderRef} classes="pageLoader show" />}
     </main>
   );
 }

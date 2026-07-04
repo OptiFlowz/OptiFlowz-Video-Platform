@@ -63,7 +63,7 @@ function AccountPage(){
                         </span>
                         <button className="logOut button" onClick={logoutHandle}>
                             {LogOutSVG}
-                            <p className="text-white">{t("accountLogout")}</p>
+                            <p className="text-(--text1)">{t("accountLogout")}</p>
                         </button>
                     </div>
                 </div>

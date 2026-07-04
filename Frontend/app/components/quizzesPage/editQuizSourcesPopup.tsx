@@ -245,7 +245,7 @@ function EditQuizSourcesPopup({
         }}
       >
         <div
-          className={`absolute inset-0 bg-black/55 transition-opacity duration-200 ${
+          className={`absolute inset-0 bg-(--backgroundC2) transition-opacity duration-200 ${
             visible ? "opacity-100" : "opacity-0"
           }`}
         />
@@ -327,7 +327,7 @@ function EditQuizSourcesPopup({
                         </button>
                         <button
                           type="button"
-                          className="cursor-pointer rounded-full border border-[rgba(220,38,38,0.35)] bg-[rgba(220,38,38,0.12)] px-3 py-1.5 text-sm text-red-400 transition-colors hover:bg-[rgba(220,38,38,0.18)]"
+                          className="cursor-pointer rounded-full border border-(--accentRed) bg-(--background15) px-3 py-1.5 text-sm text-(--accentRed2) transition-colors"
                           onClick={() => void handleDeleteSource(source)}
                         >
                           {t("adminDelete")}
@@ -357,7 +357,7 @@ function EditQuizSourcesPopup({
               </button>
             </div>
 
-            {successMessage ? <p className="mt-4 text-sm text-green-600">{successMessage}</p> : null}
+            {successMessage ? <p className="mt-4 text-sm text-(--accentGreen2)">{successMessage}</p> : null}
           </div>
 
           <div className="quizPopupActions mt-4">

@@ -260,7 +260,7 @@ function ForgotPasswordPage() {
                             <p className="weakText text-[.95rem] mt-2 mb-7.5">
                                 {t("resetPasswordIntro")}
                             </p>
-                            <input ref={email} className="mt-2 text-white" type="email" placeholder={t("emailAddress")} defaultValue={userEmail ? userEmail : ""} />
+                            <input ref={email} className="mt-2 text-(--text1)" type="email" placeholder={t("emailAddress")} defaultValue={userEmail ? userEmail : ""} />
 
                             <Link
                                 to="/login"
@@ -270,7 +270,7 @@ function ForgotPasswordPage() {
                             </Link>
 
                             <button
-                                className="button w-full bg-(--accentOrange) text-white rounded-xl py-3 font-semibold mt-12 max-[800px]:mt-16 max-[420px]:mt-8 disabled:opacity-60 disabled:cursor-not-allowed"
+                                className="button w-full bg-(--accentOrange) text-(--text1) rounded-xl py-3 font-semibold mt-12 max-[800px]:mt-16 max-[420px]:mt-8 disabled:opacity-60 disabled:cursor-not-allowed"
                                 onClick={sendPasswordResetEmail}
                                 disabled={cooldown > 0}
                             >
@@ -283,7 +283,7 @@ function ForgotPasswordPage() {
                             <p className="weakText text-[.95rem] mt-2 mb-7.5 opacity-70">
                                 {t("resetCodeIntro")}
                             </p>
-                            <input ref={resetCode} className="mt-2 text-white" type="text" placeholder={t("resetCode")} />
+                            <input ref={resetCode} className="mt-2 text-(--text1)" type="text" placeholder={t("resetCode")} />
 
                             <div className="flex gap-3 mt-12 max-[800px]:mt-16">
                                 <button
@@ -293,7 +293,7 @@ function ForgotPasswordPage() {
                                     {t("previous")}
                                 </button>
                                 <button
-                                    className="button flex-1 bg-(--accentOrange) text-white rounded-xl py-3 font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
+                                    className="button flex-1 bg-(--accentOrange) text-(--text1) rounded-xl py-3 font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
                                     onClick={checkResetCode}
                                     disabled={cooldown > 0}
                                 >
@@ -326,7 +326,7 @@ function ForgotPasswordPage() {
                                     {t("previous")}
                                 </button>
                                 <button
-                                    className="button flex-1 bg-(--accentOrange) text-white rounded-xl py-3 font-semibold"
+                                    className="button flex-1 bg-(--accentOrange) text-(--text1) rounded-xl py-3 font-semibold"
                                     onClick={handleFinish}
                                 >
                                     {t("changePassword")}

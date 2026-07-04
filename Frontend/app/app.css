@@ -4,7 +4,9 @@
   --font-sans:
     "Gabarito", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
     "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
 
+:root {
   --background: #090a0b;
   --foreground: #ededed;
 
@@ -15,9 +17,6 @@
 
   --bR: calc(infinity * 1px);
 
-  --borderC1: rgba(255, 255, 255, 0.14);
-  --borderC2: rgba(255, 255, 255, 0.035);
-
   --backgroundC1: rgba(255, 255, 255, 0.1);
   --backgroundC2: rgba(39, 41, 53, 0.6);
 
@@ -26,9 +25,6 @@
   --blueAccent3: #4c9aff;
 
   --blueButtonGradient: linear-gradient(-45deg, var(--blueAccent1), var(--blueAccent2), var(--blueAccent3));
-
-  --textC1: rgba(255, 255, 255, 0.6);
-  --textC2: rgba(255, 255, 255, 0.7);
 
   --background1: var(--background);
   --background2: var(--backgroundC1);
@@ -41,9 +37,16 @@
   --seethroughtBlack: rgba(0, 0, 0, 0.6);
   --seeThroughtWhite: rgba(255, 255, 255, 0.92);
 
+  --borderC1: rgba(255, 255, 255, 0.14);
+  --borderC2: rgba(255, 255, 255, 0.035);
+
   --border1: var(--borderC1);
   --border2: var(--borderC2);
   --border3: rgba(255, 255, 255, 0.06);
+  --borderWhite: rgba(255, 255, 255, 1);
+
+  --textC1: rgba(255, 255, 255, 0.6);
+  --textC2: rgba(255, 255, 255, 0.7);
 
   --text1: var(--foreground);
   --text2: var(--textC1);
@@ -57,7 +60,10 @@
   --accentOrange: var(--blueAccent2);
   --accentOrange2: var(--blueAccent3);
   --accentGray: rgba(255, 255, 255, 0.5);
-  --accentRed: #bc3939;
+  --accentRed: rgb(188, 57, 57);
+  --accentRed2: rgba(188, 57, 57, 0.5);
+  --accentGreen1: rgb(208, 250, 229);
+  --accentGreen2: rgb(126, 184, 75);
   --progressAccentOrange: var(--blueAccent2);
 
   --playButtonBg1: rgba(0, 0, 0, 0.6);
@@ -387,6 +393,10 @@ main.play > div > div:nth-child(3),
 main.play > div > div:nth-child(4) {
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: linear-gradient(180deg, rgba(24, 28, 38, 0.7), rgba(18, 21, 30, 0.72));
+}
+
+main.play{
+  overscroll-behavior: contain;
 }
 
 footer {

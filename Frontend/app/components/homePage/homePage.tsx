@@ -44,7 +44,7 @@ function HomePage(){
             <div className="hero">
                 <span className="titles relative">
                     <p className="heroEyebrow">{t("heroEyebrow")}</p>
-                    <h2 className="heroHeadline w-fit font-bold text-white text-5xl max-[1300px]:text-[2.2rem] max-[1160px]:text-[2rem] max-[800px]:text-[2rem] max-[500px]:text-2xl">
+                    <h2 className="heroHeadline w-fit font-bold text-(--text1) text-5xl max-[1300px]:text-[2.2rem] max-[1160px]:text-[2rem] max-[800px]:text-[2rem] max-[500px]:text-2xl">
                         {t("heroTitle")}
                     </h2>
 

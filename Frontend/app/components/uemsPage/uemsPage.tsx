@@ -115,7 +115,7 @@ function UemsReadingList() {
         <main className="homePage py-10">
             <div className="hero">
                 <span className="titles">
-                    <h2 className="relative w-fit font-bold text-white text-5xl max-[1300px]:text-[2.2rem] max-[1160px]:text-[2rem] max-[800px]:text-[2rem] max-[500px]:text-2xl">UEMS<br />Reading List</h2>
+                    <h2 className="relative w-fit font-bold text-(--text1) text-5xl max-[1300px]:text-[2.2rem] max-[1160px]:text-[2rem] max-[800px]:text-[2rem] max-[500px]:text-2xl">UEMS<br />Reading List</h2>
 
                     <div ref={paragraphRef} className="paragraphHolder">
                         <p className="paragraph paragraph0 selected mt-5 mb-7.5 max-[800px]:mb-0 font-medium text-lg max-[1300px]:text-[1rem] max-[1160px]:text-[0.85rem] max-[500px]:mt-3 max-[450px]:text-[.85rem] text-(--text1)">

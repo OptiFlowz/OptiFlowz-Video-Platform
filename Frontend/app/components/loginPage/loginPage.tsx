@@ -222,7 +222,7 @@ function LoginPage() {
               <span>{t("emailAddress")}</span>
               <input
                 ref={email}
-                className="mt-2 text-white"
+                className="mt-2 text-(--text1)"
                 type="email"
                 placeholder="example@gmail.com"
                 onKeyDown={handleEnterKey}
@@ -243,7 +243,7 @@ function LoginPage() {
               <span className="passwordInput mt-2!">
                 <input
                   ref={password}
-                  className="text-white"
+                  className="text-(--text1)"
                   type={showPassword ? "text" : "password"}
                   placeholder={t("password")}
                   onKeyDown={handleEnterKey}
@@ -264,7 +264,7 @@ function LoginPage() {
                 <input
                   ref={rememberMeRef}
                   className="appearance-none rounded-[6px]! p-2.25! border-2 cursor-pointer checked:bg-(--accentOrange)! transition-colors relative
-                  checked:after:content-['✓'] checked:after:absolute checked:after:text-white
+                  checked:after:content-['✓'] checked:after:absolute checked:after:text-(--text1)
                   checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2
                   checked:after:-translate-x-1/2 checked:after:-translate-y-1/2 max-[420px]:p-2! max-[420px]:rounded-md!"
                   type="checkbox"
@@ -287,7 +287,7 @@ function LoginPage() {
               type="button"
               disabled={isLoading}
               onClick={handleSubmit}
-              className={`button w-full bg-(--accentOrange) text-white rounded-[12px] py-3 font-semibold mt-12 max-[500px]:mt-6 ${
+              className={`button w-full bg-(--accentOrange) text-(--text1) rounded-[12px] py-3 font-semibold mt-12 max-[500px]:mt-6 ${
                 isLoading
                   ? "opacity-60 cursor-not-allowed"
                   : ""

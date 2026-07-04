@@ -618,14 +618,14 @@ function QuizzesPage() {
                       <input
                         ref={selectAllRef}
                         onChange={toggleSelectAll}
-                        className="appearance-none rounded-lg! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
+                        className="appearance-none rounded-lg! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative checked:after:content-['✓'] checked:after:absolute checked:after:text-(--text1) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
                         type="checkbox"
                       />
                       <p className="py-3">{t("adminTableQuiz")}</p>
                       {selectedQuizzes.length > 0 && (
                         <span id="selectedButtons">
                           <button
-                            className="button bg-(--accentRed) text-white"
+                            className="button bg-(--accentRed) text-(--text1)"
                             onClick={() => void handleDeleteSelectedQuizzes()}
                             disabled={isBulkDeleting}
                           >
@@ -668,7 +668,7 @@ function QuizzesPage() {
                       <td>
                         <div className="quizRowInfo flex min-w-[240px] items-center gap-3 py-2">
                           <input
-                            className="appearance-none rounded-lg! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
+                            className="appearance-none rounded-lg! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative checked:after:content-['✓'] checked:after:absolute checked:after:text-(--text1) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
                             type="checkbox"
                             checked={selectedQuizzes.some((selected) => selected.id === quiz.id)}
                             onChange={(event) =>
@@ -760,7 +760,7 @@ function QuizzesPage() {
                 className="fixed inset-0 z-100 flex items-end justify-center"
                 onClick={() => setMobileMenuQuiz(null)}
               >
-                <div className="absolute inset-0 bg-black/50" />
+                <div className="absolute inset-0 bg-(--backgroundC2)" />
 
                 <div
                   className="rowActionSheet relative w-full max-w-lg animate-slide-up rounded-t-3xl bg-(--background1) pb-safe"

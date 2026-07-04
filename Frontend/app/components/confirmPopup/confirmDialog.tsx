@@ -87,7 +87,7 @@ export function ConfirmDialog({
           <button
             type="button"
             onClick={onYes}
-            className="button px-4 py-2 cursor-pointer rounded-full bg-(--accentRed) text-white"
+            className="button px-4 py-2 cursor-pointer rounded-full bg-(--accentRed) text-(--text1)"
           >
             {yesText ?? t("adminYes")}
           </button>

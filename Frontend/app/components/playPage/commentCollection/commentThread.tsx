@@ -254,7 +254,7 @@ export function CommentThread({
             {totalReplies > 0 && (
               <div className={`comment-replies-shell ${isOpen ? "open" : ""}`} aria-hidden={!isOpen}>
                 <div className="comment-replies-inner">
-                  <div className="comment-replies-panel mt-3 ml-7 pl-6 border-l border-white/20">
+                  <div className="comment-replies-panel mt-3 ml-7 pl-6 border-l border-(--borderC1)">
                     {repliesLoadingByParent[comment.id] ? (
                       <p className="text-sm opacity-70">{t("loadingReplies")}</p>
                     ) : replies.length > 0 ? (

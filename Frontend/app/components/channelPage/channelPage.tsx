@@ -226,7 +226,7 @@ function ChannelPage() {
                     </p>
 
                     <span className="buttonHolder">
-                        <button className="play rounded-full! flex! bg-(--accentBlue)! text-white! font-semibold!" onClick={playChannel}>
+                        <button className="play rounded-full! flex! bg-(--accentBlue)! text-(--text1)! font-semibold!" onClick={playChannel}>
                             {PlaySVG}&nbsp;{t("playAll")}
                         </button>
 
