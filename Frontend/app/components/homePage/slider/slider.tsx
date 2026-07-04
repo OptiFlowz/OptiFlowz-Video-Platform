@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useMemo, useRef } from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 type Props = {
     additionalClass?: string,
@@ -9,6 +9,7 @@ type Props = {
 function Slider({props}: {props: Props}){
     const sliderHolderRef = useRef<HTMLDivElement>(null);
     const autoSlideRef = useRef<ReturnType<typeof setInterval>>(null);
+    const [selectedIndex, setSelectedIndex] = useState(0);
 
     const changeSelectedParagraph = (index: number, animate?: boolean) => {
         const paragraphHolder = props.paragraphs!.current;
@@ -32,6 +33,7 @@ function Slider({props}: {props: Props}){
 
     const dotHandle = useCallback((index: number) => {   
         if(sliderHolderRef.current){
+            const nextIndex = index === props.images.length ? 0 : index;
             const imageToSet = sliderHolderRef.current.querySelector(`.photo-large${index}`) as HTMLImageElement;
             const imageParent = imageToSet.parentElement;
 
@@ -42,18 +44,23 @@ function Slider({props}: {props: Props}){
                 changeSelectedParagraph(index, true);
             } 
 
+            setSelectedIndex(nextIndex);
+
             animateScroll(
                 container,
                 targetLeft,
                 700,
                 () => {
-                    if(index === 3){
+                    if(index === props.images.length){
                         container.scrollTo({
                             behavior: "auto",
                             left: 0
                         });
 
-                        changeSelectedParagraph(0);
+                        if(props.paragraphs?.current){
+                            changeSelectedParagraph(0);
+                        }
+                        setSelectedIndex(0);
                     }
                 }
             );   
@@ -95,11 +102,15 @@ function Slider({props}: {props: Props}){
 
             dotHandle(index);
         }, 5000)
-    }, []);
+    }, [dotHandle, props.images.length]);
 
     useLayoutEffect(() => {
         autoSlide(0);
-    }, []);
+        return () => {
+            if(autoSlideRef.current)
+                clearInterval(autoSlideRef.current);
+        };
+    }, [autoSlide]);
 
     //OBSERVER WINDOW SIZE
     // const removeAutoSlide = useCallback(() => {
@@ -143,6 +154,21 @@ function Slider({props}: {props: Props}){
             <div className="background"></div>
             <div className="image-grid">
                 {imagesElement}
+            </div>
+            <div className="heroSlideControls" aria-label="Hero slides">
+                {props.images.map((_, index) => (
+                    <button
+                        key={`heroSlideControl${index}`}
+                        type="button"
+                        className={index === selectedIndex ? "selected" : ""}
+                        aria-label={`Show hero slide ${index + 1}`}
+                        aria-current={index === selectedIndex ? "true" : undefined}
+                        onClick={() => {
+                            dotHandle(index);
+                            autoSlide(index);
+                        }}
+                    />
+                ))}
             </div>
         </div>
     );

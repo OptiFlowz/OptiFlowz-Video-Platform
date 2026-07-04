@@ -11177,3 +11177,246 @@ footer > span.footerCopyright {
     object-position: center top !important;
   }
 }
+
+/* POLISHED HOME HERO */
+main.homePage .hero {
+  --homeHeroRadius: 22px;
+  isolation: isolate;
+  min-height: clamp(390px, 33vw, 500px) !important;
+  max-height: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: var(--homeHeroRadius) !important;
+  background:
+    linear-gradient(135deg, rgba(9, 13, 22, 0.98), rgba(13, 32, 54, 0.9)),
+    rgba(8, 13, 24, 0.96) !important;
+  box-shadow:
+    0 28px 80px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+main.homePage .hero::before {
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--background1) 58%, transparent) 0%,
+      color-mix(in srgb, var(--background1) 44%, transparent) 28%,
+      color-mix(in srgb, var(--background1) 18%, transparent) 50%,
+      transparent 74%,
+      color-mix(in srgb, var(--background1) 8%, transparent) 100%
+    ),
+    radial-gradient(circle at 28% 82%, color-mix(in srgb, var(--accentBlue3) 10%, transparent), transparent 24%),
+    radial-gradient(circle at 82% 14%, color-mix(in srgb, var(--accentBlue2) 8%, transparent), transparent 20%) !important;
+}
+
+main.homePage .hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--seeThroughtWhite) 4%, transparent), transparent 32%),
+    radial-gradient(circle at 72% 80%, color-mix(in srgb, var(--accentBlue2) 7%, transparent), transparent 30%);
+}
+
+main.homePage .hero .titles {
+  max-width: 620px !important;
+  padding: clamp(2rem, 3.5vw, 3.4rem) clamp(1.5rem, 3vw, 3rem) !important;
+  justify-content: center !important;
+}
+
+.heroEyebrow {
+  width: fit-content;
+  margin-bottom: 0.9rem !important;
+  padding: 0.42rem 0.68rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-size: 0.75rem !important;
+  line-height: 1;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase;
+  backdrop-filter: blur(14px);
+}
+
+.heroHeadline {
+  display: block !important;
+  max-width: 15.6ch !important;
+  font-size: clamp(2.1rem, 3.45vw, 3.28rem) !important;
+  line-height: 1.03 !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  text-wrap: balance !important;
+  text-shadow: 0 14px 34px rgba(0, 0, 0, 0.32);
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.heroHeadline .heroTitleSentence {
+  display: block;
+}
+
+.heroHeadline .heroTitleSentenceLast {
+  white-space: nowrap;
+}
+
+.heroHeadline .heroBrandGlow {
+  color: var(--text1) !important;
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+main.homePage .sliderHolder {
+  overflow: hidden !important;
+}
+
+main.homePage .hero .image-grid {
+  min-height: clamp(390px, 33vw, 500px) !important;
+  border-radius: inherit !important;
+  clip-path: none !important;
+  filter: saturate(1.18) contrast(1.03) brightness(1.08);
+}
+
+main.homePage .hero .image-grid img {
+  object-position: 68% center !important;
+}
+
+main.homePage .heroSlideControls {
+  position: absolute;
+  right: clamp(1.1rem, 2vw, 1.7rem);
+  bottom: clamp(1rem, 1.6vw, 1.4rem);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 0.48rem;
+  padding: 0.42rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(5, 8, 14, 0.48);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(16px);
+}
+
+main.homePage .heroSlideControls button {
+  width: 0.58rem;
+  height: 0.58rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.42);
+  cursor: pointer;
+  transition: width 0.22s ease, background-color 0.22s ease, opacity 0.22s ease;
+}
+
+main.homePage .heroSlideControls button:hover,
+main.homePage .heroSlideControls button.selected {
+  width: 1.7rem;
+  background: var(--blueButtonGradient);
+  opacity: 1;
+}
+
+@media screen and (max-width: 900px) {
+  main.homePage .hero {
+    min-height: 270px !important;
+    height: 270px !important;
+    --homeHeroRadius: 18px;
+    border-radius: var(--homeHeroRadius) !important;
+  }
+
+  main.homePage .hero::before {
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--background1) 42%, transparent) 0%,
+        color-mix(in srgb, var(--background1) 28%, transparent) 44%,
+        color-mix(in srgb, var(--background1) 10%, transparent) 76%,
+        transparent 100%
+      ) !important;
+  }
+
+  main.homePage .hero::after {
+    border-radius: inherit;
+  }
+
+  main.homePage .hero .titles {
+    justify-content: center !important;
+    padding: 1.7rem 1.25rem !important;
+    min-height: 100% !important;
+    height: 100% !important;
+  }
+
+  .heroHeadline {
+    max-width: 15.2ch !important;
+    font-size: clamp(1.32rem, 4.6vw, 1.85rem) !important;
+  }
+
+  main.homePage .hero .image-grid,
+  main.homePage .sliderHolder {
+    min-height: 270px !important;
+    height: 270px !important;
+    border-radius: inherit !important;
+  }
+
+  main.homePage .hero .image-grid img {
+    object-position: 64% center !important;
+  }
+}
+
+@media screen and (max-width: 640px) {
+  main.homePage {
+    padding-top: 96px !important;
+  }
+
+  main.homePage .hero {
+    min-height: 270px !important;
+    height: 270px !important;
+  }
+
+  main.homePage .sliderHolder {
+    position: absolute !important;
+    inset: 0 !important;
+  }
+
+  main.homePage .hero .titles {
+    position: absolute !important;
+    inset: 0 !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center;
+    min-height: 100% !important;
+    height: 100% !important;
+    padding: 0.85rem 0.9rem 2.5rem !important;
+  }
+
+  .heroEyebrow {
+    font-size: 0.56rem !important;
+    margin-bottom: 0.55rem !important;
+    padding: 0.32rem 0.5rem;
+  }
+
+  .heroHeadline {
+    max-width: 100% !important;
+    font-size: clamp(1.12rem, 5.35vw, 1.45rem) !important;
+    line-height: 1.02 !important;
+  }
+
+  main.homePage .hero .image-grid,
+  main.homePage .sliderHolder {
+    min-height: 270px !important;
+    height: 270px !important;
+    border-radius: inherit !important;
+  }
+
+  main.homePage .hero .image-grid img {
+    object-position: 64% top !important;
+  }
+
+  main.homePage .heroSlideControls {
+    right: 0.85rem;
+    bottom: 0.75rem;
+  }
+}

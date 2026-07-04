@@ -10,7 +10,9 @@ import MessagePopup from "../messagePopup/messagePopup";
 
 function HomePage(){
     const { t } = useI18n();
-    const paragraphRef = useRef<HTMLDivElement>(null);
+    const heroTitleSentences = t("heroTitle")
+        .split(". ")
+        .map((sentence, index, sentences) => index < sentences.length - 1 && !sentence.endsWith(".") ? `${sentence}.` : sentence);
     const [searchParams] = useSearchParams();
     const registeredStatus = searchParams.get("registered");
     const hasHandledRegisteredPopup = useRef(false);
@@ -45,31 +47,25 @@ function HomePage(){
                 <span className="titles relative">
                     <p className="heroEyebrow">{t("heroEyebrow")}</p>
                     <h2 className="heroHeadline w-fit font-bold text-(--text1) text-5xl max-[1300px]:text-[2.2rem] max-[1160px]:text-[2rem] max-[800px]:text-[2rem] max-[500px]:text-2xl">
-                        {t("heroTitle")}
+                        {heroTitleSentences.map((sentence, index) => (
+                            <span
+                                key={`heroTitleSentence${index}`}
+                                className={index === heroTitleSentences.length - 1 ? "heroTitleSentence heroTitleSentenceLast" : "heroTitleSentence"}
+                            >
+                                {index === heroTitleSentences.length - 1 && sentence.includes("OptiFlowz") ? (
+                                    <>
+                                        {sentence.split("OptiFlowz")[0]}
+                                        <span className="heroBrandGlow">OptiFlowz</span>
+                                        {sentence.split("OptiFlowz")[1]}
+                                    </>
+                                ) : sentence}
+                            </span>
+                        ))}
                     </h2>
-
-                    <div ref={paragraphRef} className={`paragraphHolder`}>
-                        <p className={`relative paragraph paragraph0 selected mt-5 mb-7.5 max-[800px]:mb-0 font-medium text-lg max-[1300px]:text-[1rem] max-[1160px]:text-[0.85rem] max-[500px]:mt-3 max-[450px]:text-[.85rem] text-(--text1)`}>
-                            {t("heroParagraph1")}
-                        </p>
-
-                        <p className={`relative paragraph paragraph1 mt-5 mb-7.5 max-[800px]:mb-0 font-medium text-lg max-[1300px]:text-[1rem] max-[1160px]:text-[0.85rem] max-[500px]:mt-3 max-[450px]:text-[.85rem] text-(--text1)`}>
-                            {t("heroParagraph2")}
-                        </p>
-
-                        <p className={`relative paragraph paragraph2 mt-5 mb-7.5 max-[800px]:mb-0 font-medium text-lg max-[1300px]:text-[1rem] max-[1160px]:text-[0.85rem] max-[500px]:mt-3 max-[450px]:text-[.85rem] text-(--text1)`}>
-                            {t("heroParagraph3")}
-                        </p>
-
-                        <p className={`relative paragraph paragraph3 mt-5 mb-7.5 max-[800px]:mb-0 max-[650px]:mr-5 font-medium text-lg max-[1300px]:text-[1rem] max-[1160px]:text-[0.85rem] max-[500px]:mt-3 max-[450px]:text-[.85rem] text-(--text1)`}>
-                            {t("heroParagraph1")}
-                        </p>
-                    </div>
                 </span>
                 
                 <Slider props={{
-                    images: [HeroLarge, HeroMedium, HeroSmall],
-                    paragraphs: paragraphRef
+                    images: [HeroLarge, HeroMedium, HeroSmall]
                 }} />
             </div>
 
