@@ -1654,6 +1654,8 @@ function VideoQuizPage() {
     const selectedValue = answers[currentQuestion.id];
     const selectedValues = Array.isArray(selectedValue) ? selectedValue : [];
 
+    console.log("Current Question:", currentQuestionReview);
+
     return (
       <div className="videoQuizOptions">
         {currentQuestion.options.map((option, optionIndex) => {
@@ -2007,7 +2009,7 @@ function VideoQuizPage() {
                               : t("quizNotQuiteRight")}
                         </strong>
                         <p>
-                          {t("quizPointsScore", { score: currentQuestionReview.awarded_points ?? 0, total: currentQuestionReview.max_points ?? "-" })}
+                          {t("quizPointsScore", { score: (currentQuestionReview.result === "correct" && currentQuestionReview.awarded_points) ? (Number.isInteger(currentQuestionReview.max_points) ? Number(currentQuestionReview.awarded_points) : currentQuestionReview.awarded_points) : 0, total: currentQuestionReview.max_points ?? "-" })}
                         </p>
                         <QuizExplanation
                           explanation={currentQuestionReview.explanation}

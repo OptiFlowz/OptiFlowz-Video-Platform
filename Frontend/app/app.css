@@ -54,6 +54,8 @@
 
   --threadC1: #495153;
 
+  --accentRedC1: rgb(255, 46, 46, 0.5);
+
   --accentBlue: var(--blueAccent1);
   --accentBlue2: var(--blueAccent2);
   --accentBlue3: var(--blueAccent3);
@@ -62,6 +64,7 @@
   --accentGray: rgba(255, 255, 255, 0.5);
   --accentRed: rgb(188, 57, 57);
   --accentRed2: rgba(188, 57, 57, 0.5);
+  --accentRed3: rgb(241, 57, 57);
   --accentGreen1: rgb(208, 250, 229);
   --accentGreen2: rgb(126, 184, 75);
   --progressAccentOrange: var(--blueAccent2);
@@ -3177,14 +3180,16 @@ mux-player::part(menu-item) {
 }
 
 .videoQuizPage .videoQuizGrid {
-  --videoQuizGridCellSize: clamp(42px, calc((100% - 1.8rem) / 4), 52px);
+  --videoQuizGridCellInlineSize: 44px;
+
+  grid-template-columns: repeat(4, var(--videoQuizGridCellInlineSize));
+  grid-auto-rows: var(--videoQuizGridCellInlineSize);
+  min-height: var(--videoQuizGridCellInlineSize);
+
   display: grid;
-  grid-template-columns: repeat(4, var(--videoQuizGridCellSize));
-  grid-auto-rows: var(--videoQuizGridCellSize);
   align-content: start;
   justify-content: start;
   gap: 0.6rem;
-  min-height: var(--videoQuizGridCellSize);
   max-height: min(650px, calc(100vh - var(--headerHeight, 90px) - 260px));
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -3250,13 +3255,13 @@ mux-player::part(menu-item) {
 .videoQuizPage .videoQuizGridButton.correct {
   background: rgba(42, 201, 106, 0.14);
   border-color: rgba(42, 201, 106, 0.5);
-  color: #137a3e;
+  color: var(--accentGreen1);
 }
 
 .videoQuizPage .videoQuizGridButton.incorrect {
   background: rgba(188, 57, 57, 0.14);
-  border-color: rgba(188, 57, 57, 0.5);
-  color: #a92f2f;
+  border-color: var(--accentRedC1);
+  color: var(--accentRed3);
 }
 
 .videoQuizPage .videoQuizGridButton.partial {
