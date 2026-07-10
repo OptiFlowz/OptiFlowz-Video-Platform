@@ -2,12 +2,12 @@ import { memo, useEffect, useRef, useState } from "react";
 import { Link, NavLink, useNavigate, useParams } from "react-router";
 import { ArrowSVG, SearchSVG, SearchSVGWhite, CloseSVG, MenuSVG, EditModeSVG } from "~/constants";
 import DefaultProfile from "../../../assets/DefaultProfile.webp";
-import OptiFlowzLogo from "../../../assets/OptiFlowzLogo.webp";
 import { getToken } from "~/functions";
 import type { AuthFetchT } from "~/types";
 import { LANGUAGE_OPTIONS, useI18n, type Locale } from "~/i18n";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchFn } from "~/API";
+import { LOGO, BRAND_NAME, MARKETING_WEBSITE_URL } from "~/changeables";
 
 function Header(){
     const { locale, setLocale, t } = useI18n();
@@ -156,19 +156,19 @@ function Header(){
                 {/* Logo - Klikabilan */}
                 <Link to="/" className="logo flex gap-3 items-center cursor-pointer hover:opacity-80 transition-opacity">
                     <img
-                        src={OptiFlowzLogo}
-                        alt="OptiFlowz Logo"
+                        src={LOGO}
+                        alt={BRAND_NAME + " Logo"}
                         className="w-9 h-9 object-contain shrink-0"
                     />
                     <span className="p-0">
-                        <h3 className="font-medium text-xl -mb-1.25">OptiFlowz</h3>
+                        <h3 className="font-medium text-xl -mb-1.25">{BRAND_NAME}</h3>
                         <p className="font-light text-sm">{t("appName")}</p>
                     </span>
                 </Link>
 
                 {/* Desktop Navigation */}
                 <nav className="flex gap-2 font-regular max-[800px]:hidden">
-                    <Link to="https://optiflowz.com/">OptiFlowz</Link>
+                    <Link to={MARKETING_WEBSITE_URL}>{BRAND_NAME}</Link>
                     <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : "")}>{t("navHome")}</NavLink>
                     <NavLink to="/videos/1" end className={({ isActive }) => (isActive ? "active" : "")}>{t("navRecommended")}</NavLink>
                     <NavLink to="/videos/2" end className={({ isActive }) => (isActive ? "active" : "")}>{t("navTrending")}</NavLink>
@@ -450,10 +450,10 @@ function Header(){
                         {t("navTrending")}
                     </NavLink>
                     <Link 
-                        to="https://optiflowz.com/"
+                        to={MARKETING_WEBSITE_URL}
                         className={`p-3 rounded-lg transition-colors hover:bg-(--background2)`}
                     >
-                        OptiFlowz
+                        {BRAND_NAME}
                     </Link>
                     <label className="mobileLanguageSelect">
                         <span className="adminAvatarLanguageText">

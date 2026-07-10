@@ -1,3 +1,5 @@
+import { BRAND_NAME, PLATFORM_NAME, OFFICE_EMAIL, LEGAL_ENTITY_NAME } from "~/changeables";
+
 function TermsOfUsePage(){
     return (
         <main className="textFilledMain">
@@ -5,8 +7,8 @@ function TermsOfUsePage(){
             <p className="mt-3"><strong>Effective date:</strong> January 3, 2026</p>
 
             <p>
-                Welcome to <strong>OptiFlowz Video Platform</strong> (the “<strong>Platform</strong>”), an educational video platform provided by
-                <strong>OptiFlowz</strong> (“<strong>we</strong>”, “<strong>us</strong>”, “<strong>our</strong>”).
+                Welcome to <strong>{PLATFORM_NAME}</strong> (the “<strong>Platform</strong>”), an educational video platform provided by
+                <strong>{BRAND_NAME}</strong> (“<strong>we</strong>”, “<strong>us</strong>”, “<strong>our</strong>”).
                 These Terms of Use (“<strong>Terms</strong>”) govern your access to and use of the Platform, including videos, playlists,
                 recommendations, and related features.
             </p>
@@ -182,7 +184,7 @@ function TermsOfUsePage(){
             <section aria-labelledby="liability">
                 <h2 id="liability">13) Limitation of liability</h2>
                 <p>
-                To the fullest extent permitted by law, OptiFlowz will not be liable for indirect, incidental, special, consequential, or punitive damages,
+                To the fullest extent permitted by law, {BRAND_NAME} will not be liable for indirect, incidental, special, consequential, or punitive damages,
                 or for loss of profits, data, goodwill, or other intangible losses, arising out of or related to your use of (or inability to use) the Platform.
                 </p>
             </section>
@@ -198,9 +200,9 @@ function TermsOfUsePage(){
             <section aria-labelledby="contact">
                 <h2 id="contact">15) Contact</h2>
                 <p>
-                <strong>OptiFlowz LLC</strong><br />
+                <strong>{LEGAL_ENTITY_NAME}</strong><br />
                 30 N Gould St Ste R, Sheridan, WY 82801, USA<br />
-                Email: <a href="mailto:office@optiflowz.com">office@optiflowz.com</a><br />
+                Email: <a href={`mailto:${OFFICE_EMAIL}`}>{OFFICE_EMAIL}</a><br />
                 Monday-Friday 09:00-17:00
                 </p>
             </section>

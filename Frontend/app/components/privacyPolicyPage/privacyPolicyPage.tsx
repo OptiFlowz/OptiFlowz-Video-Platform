@@ -1,3 +1,5 @@
+import { BRAND_NAME, MARKETING_WEBSITE_URL, OFFICE_EMAIL, PLATFORM_NAME } from "~/changeables";
+
 function PrivacyPolicyPage(){
     return (
         <main className="textFilledMain">
@@ -5,8 +7,8 @@ function PrivacyPolicyPage(){
             <p className="mt-3"><strong>Effective date:</strong> January 3, 2026</p>
 
             <p className="mb-5">
-                This Privacy Policy explains how <strong>OptiFlowz</strong> (“<strong>OptiFlowz</strong>”, “<strong>we</strong>”, “<strong>us</strong>”, “<strong>our</strong>”)
-                collects, uses, shares, and protects personal data when you use <strong>OptiFlowz Video Platform</strong> (the “<strong>Platform</strong>”).
+                This Privacy Policy explains how <strong>{BRAND_NAME}</strong> (“<strong>{BRAND_NAME}</strong>”, “<strong>we</strong>”, “<strong>us</strong>”, “<strong>our</strong>”)
+                collects, uses, shares, and protects personal data when you use <strong>{PLATFORM_NAME}</strong> (the “<strong>Platform</strong>”).
                 The Platform is an educational video environment for surgeons and surgical teams, including accounts, watch-time tracking, playlists,
                 likes/saves, sharing, and personalized recommendations.
             </p>
@@ -14,12 +16,12 @@ function PrivacyPolicyPage(){
             <section aria-labelledby="controller">
                 <h2 id="controller">1) Who is responsible for your data</h2>
                 <p>
-                <strong>Data Controller:</strong> OptiFlowz (the operator of the Platform).
+                <strong>Data Controller:</strong> {BRAND_NAME} (the operator of the Platform).
                 </p>
                 <p>
-                <strong>Contact:</strong> OptiFlowz<br />
-                Website: <a href="https://optiflowz.com">optiflowz.com</a><br />
-                Email: <a href="mailto:office@optiflowz.com">office@optiflowz.com</a>
+                <strong>Contact:</strong> {BRAND_NAME}<br />
+                Website: <a href={MARKETING_WEBSITE_URL}>{MARKETING_WEBSITE_URL?.split("https://")[1] ?? "optiflowz.com"}</a><br />
+                Email: <a href={`mailto:${OFFICE_EMAIL}`}>{OFFICE_EMAIL}</a>
                 </p>
             </section>
 
@@ -130,7 +132,7 @@ function PrivacyPolicyPage(){
                 <li><strong>Security logs</strong> may be retained for a limited period to protect the Platform and investigate issues.</li>
                 </ul>
                 <p>
-                You can request account deletion at <a href="mailto:office@optiflowz.com">office@optiflowz.com</a>.
+                You can request account deletion at <a href={`mailto:${OFFICE_EMAIL}`}>{OFFICE_EMAIL}</a>.
                 </p>
             </section>
 
@@ -165,7 +167,7 @@ function PrivacyPolicyPage(){
                 object to processing, and receive a copy of certain data (portability). Where processing is based on consent, you can withdraw consent.
                 </p>
                 <p>
-                To exercise your rights, contact <a href="mailto:office@optiflowz.com">office@optiflowz.com</a>.
+                To exercise your rights, contact <a href={`mailto:${OFFICE_EMAIL}`}>{OFFICE_EMAIL}</a>.
                 You may also have the right to lodge a complaint with your local data protection authority.
                 </p>
             </section>

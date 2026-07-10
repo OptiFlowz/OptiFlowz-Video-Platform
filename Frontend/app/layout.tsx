@@ -3,6 +3,7 @@ import "./app.css";
 import type { Metadata } from "next";
 import Providers from "./providers";
 import { defaultMetadata } from "./metadata";
+import { FAVICON } from "./changeables"; 
 
 export const metadata: Metadata = defaultMetadata;
 
@@ -11,7 +12,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/x-icon" href={FAVICON} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

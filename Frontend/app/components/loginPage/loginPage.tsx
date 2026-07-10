@@ -12,8 +12,7 @@ import { changeElementClass, getStoredUser } from "~/functions";
 import { CurrentNavContext } from "~/context";
 import Loader from "../loaders/loader";
 import MessagePopup from "../messagePopup/messagePopup";
-import OptiFlowzLogo from "../../../assets/OptiFlowzLogo.webp";
-import backgroundImage from "../../../assets/LoginBackground.webp";
+import { LOGO, BRAND_NAME, MARKETING_WEBSITE_URL, LOGIN_BACKGROUND_IMAGE, SUPPORT_EMAIL } from "~/changeables";
 import { useI18n } from "~/i18n";
 import GoogleLoginButton from "./googleLoginButton";
 
@@ -197,17 +196,17 @@ function LoginPage() {
     <main className="login max-w-full!">
       <div>
         <div className="background">
-          <img className="w-full h-full" src={backgroundImage} alt="Background" />
+          <img className="w-full h-full" src={LOGIN_BACKGROUND_IMAGE} alt="Background" />
         </div>
         
         <Link to="/" className="logoDiv flex gap-5 items-center cursor-pointer hover:opacity-80 transition-opacity">
             <img
-              src={OptiFlowzLogo}
-              alt="OptiFlowz Logo"
+              src={LOGO}
+              alt={BRAND_NAME + " Logo"}
               className="w-10 h-10 object-contain shrink-0"
             />
             <span className="p-0">
-                <h3 className="font-medium text-[1.3rem] max-[500px]:text-[1.2rem] -mb-1.25 text-(--text1)">OptiFlowz</h3>
+                <h3 className="font-medium text-[1.3rem] max-[500px]:text-[1.2rem] -mb-1.25 text-(--text1)">{BRAND_NAME}</h3>
                 <p className="font-medium text-sm text-(--text2)">{t("appName")}</p>
             </span>
         </Link>
@@ -322,7 +321,7 @@ function LoginPage() {
 
         <span className="links mx-auto mb-auto w-fit weakText text-[.85rem] text-center max-w-[calc(100vw-60px)] max-[550px]:text-[.75rem]">
           <span>
-              <a href="mailto:support@optiflowz.com">
+              <a href={`mailto:${SUPPORT_EMAIL}`}>
                 {t("support")}
               </a>
               ·
@@ -339,7 +338,7 @@ function LoginPage() {
               </Link>
           </span>
 
-          <Link className="logo" to="https://optiflowz.com" target="_blank">{t("footerPoweredBy")}&nbsp;<img loading="lazy" src={OptiFlowzLogo} alt="OptiFlowz Logo" /></Link>
+          <Link className="logo" to={MARKETING_WEBSITE_URL} target="_blank">{t("footerPoweredBy")}&nbsp;<img loading="lazy" src={LOGO} alt={BRAND_NAME + " Logo"} /></Link>
         </span>
       </div>
 

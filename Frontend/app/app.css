@@ -177,6 +177,10 @@ header nav a.active, nav a.active {
   text-underline-offset: 10px;
 }
 
+header .logo {
+  transition: all .18s ease-in-out !important;
+}
+
 header .logo h3,
 header .logo p,
 header .darkSVG,
@@ -5931,13 +5935,14 @@ main.textFilledMain h2 {
 }
 
 main.textFilledMain a {
-  color: var(--accentBlue);
+  color: var(--accentOrange);
   font-weight: 600;
   font-style: italic;
+  transition: all .18s ease-in-out;
 }
 
 main.textFilledMain a:hover {
-  color: var(--accentOrange);
+  opacity: 0.8;
 }
 
 main.textFilledMain section {
