@@ -54,7 +54,7 @@ type DonutItem = {
   color: string;
 };
 
-function DonutChart({ items, total }: { items: DonutItem[]; total: number }) {
+function DonutChart({ items, total, viewsLabel }: { items: DonutItem[]; total: number; viewsLabel: string }) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const chartItems = items.filter((item) => item.value > 0);
   const data = chartItems.length
@@ -104,12 +104,12 @@ function DonutChart({ items, total }: { items: DonutItem[]; total: number }) {
             <>
               <small>{activeItem.label}</small>
               <strong>{activeItem.value}</strong>
-              <span>{activePercentage}% · views</span>
+              <span>{activePercentage}% · {viewsLabel}</span>
             </>
           ) : (
             <>
               <strong>{total}</strong>
-              <span>views</span>
+              <span>{viewsLabel}</span>
             </>
           )}
         </div>
@@ -379,11 +379,11 @@ function VideoAnalyticsPage() {
               <div className="videoAnalyticsAudienceGrid">
                 <article className="videoAnalyticsChartCard">
                   <h3>{t("videoAnalyticsDeviceSplit")}</h3>
-                  <DonutChart items={deviceItems} total={deviceSplit.totalViews} />
+                  <DonutChart items={deviceItems} total={deviceSplit.totalViews} viewsLabel={t("videoAnalyticsViews")} />
                 </article>
                 <article className="videoAnalyticsChartCard">
                   <h3>{t("videoAnalyticsOperatingSystems")}</h3>
-                  <DonutChart items={operatingSystemItems} total={operatingSystemSplit.totalViews} />
+                  <DonutChart items={operatingSystemItems} total={operatingSystemSplit.totalViews} viewsLabel={t("videoAnalyticsViews")} />
                 </article>
               </div>
             )}
