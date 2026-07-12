@@ -1,6 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
+import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import { fetchFn } from "~/API";
 import { FilterSVG } from "~/constants";
 import { formatDate, formatDuration, formatViews, getToken } from "~/functions";
@@ -22,6 +23,92 @@ type VideoOverviewResponse = {
     avgWatchTimePerViewer: number;
   };
 };
+
+type DeviceSplitResponse = {
+  success: boolean;
+  deviceSplit: {
+    totalViews: number;
+    desktop: number;
+    phone: number;
+    tablet: number;
+    other: number;
+  };
+};
+
+type OperatingSystemSplitResponse = {
+  success: boolean;
+  operatingSystemSplit: {
+    totalViews: number;
+    windows: number;
+    macOS: number;
+    android: number;
+    iOS: number;
+    linux: number;
+    other: number;
+  };
+};
+
+type DonutItem = {
+  label: string;
+  value: number;
+  color: string;
+};
+
+function DonutChart({ items, total }: { items: DonutItem[]; total: number }) {
+  const chartItems = items.filter((item) => item.value > 0);
+  const data = chartItems.length
+    ? chartItems
+    : [{ label: "No data", value: 1, color: "var(--background3)" }];
+
+  return (
+    <div className="videoAnalyticsDonutLayout">
+      <div className="videoAnalyticsDonut">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              dataKey="value"
+              nameKey="label"
+              cx="50%"
+              cy="50%"
+              innerRadius="58%"
+              outerRadius="92%"
+              paddingAngle={chartItems.length > 1 ? 1.5 : 0}
+              cornerRadius={chartItems.length > 1 ? 3 : 0}
+              stroke="var(--background2)"
+              strokeWidth={2}
+              isAnimationActive
+              animationDuration={500}
+            >
+              {data.map((item) => (
+                <Cell fill={item.color} key={item.label} />
+              ))}
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
+        <div className="videoAnalyticsDonutCenter">
+          <strong>{total}</strong>
+          <span>views</span>
+        </div>
+      </div>
+
+      <div className="videoAnalyticsLegend">
+        {items.map((item) => {
+          const percentage = total > 0 ? Math.round((item.value / total) * 100) : 0;
+          return (
+            <div className="videoAnalyticsLegendItem" key={item.label}>
+              <i style={{ backgroundColor: item.color }} />
+              <span>
+                <strong>{item.label}</strong>
+                <small>{item.value} · {percentage}%</small>
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 function formatWatchTime(totalSeconds: number, alwaysShowHours = false) {
   const safeSeconds = Math.max(0, Math.floor(totalSeconds || 0));
@@ -112,6 +199,59 @@ function VideoAnalyticsPage() {
       ]
     : [];
 
+  const {
+    data: audienceData,
+    isLoading: isAudienceLoading,
+    isError: isAudienceError,
+  } = useQuery({
+    queryKey: ["video-analytics-audience", videoId, range],
+    queryFn: async () => {
+      const [device, operatingSystem] = await Promise.all([
+        fetchFn<DeviceSplitResponse>({
+          route: `api/analytics/${videoId}/device-split${dateRangeQuery}`,
+          options: { method: "GET", headers: headers.current },
+        }),
+        fetchFn<OperatingSystemSplitResponse>({
+          route: `api/analytics/${videoId}/operating-system-split${dateRangeQuery}`,
+          options: { method: "GET", headers: headers.current },
+        }),
+      ]);
+
+      return { device, operatingSystem };
+    },
+    enabled: !!token && !!videoId,
+    refetchOnWindowFocus: false,
+  });
+
+  const deviceSplit = audienceData?.device.deviceSplit;
+  const operatingSystemSplit = audienceData?.operatingSystem.operatingSystemSplit;
+  const chartColors = [
+    "var(--analyticsChart1)",
+    "var(--analyticsChart2)",
+    "var(--analyticsChart3)",
+    "var(--analyticsChart4)",
+    "var(--analyticsChart5)",
+    "var(--analyticsChart6)",
+  ];
+  const deviceItems: DonutItem[] = deviceSplit
+    ? [
+        { label: t("videoAnalyticsDesktop"), value: deviceSplit.desktop, color: chartColors[0] },
+        { label: t("videoAnalyticsPhone"), value: deviceSplit.phone, color: chartColors[1] },
+        { label: t("videoAnalyticsTablet"), value: deviceSplit.tablet, color: chartColors[2] },
+        { label: t("videoAnalyticsOther"), value: deviceSplit.other, color: chartColors[3] },
+      ]
+    : [];
+  const operatingSystemItems: DonutItem[] = operatingSystemSplit
+    ? [
+        { label: "Windows", value: operatingSystemSplit.windows, color: chartColors[0] },
+        { label: "macOS", value: operatingSystemSplit.macOS, color: chartColors[1] },
+        { label: "Android", value: operatingSystemSplit.android, color: chartColors[2] },
+        { label: "iOS", value: operatingSystemSplit.iOS, color: chartColors[3] },
+        { label: "Linux", value: operatingSystemSplit.linux, color: chartColors[4] },
+        { label: t("videoAnalyticsOther"), value: operatingSystemSplit.other, color: chartColors[5] },
+      ]
+    : [];
+
   return (
     <main className="myVideos videoAnalyticsPage">
       <Sidebar />
@@ -198,6 +338,30 @@ function VideoAnalyticsPage() {
                     <p>{card.description}</p>
                   </article>
                 ))}
+              </div>
+            )}
+          </section>
+
+          <section className="videoAnalyticsAudience">
+            <h2>{t("videoAnalyticsAudienceBreakdown")}</h2>
+
+            {isAudienceLoading ? (
+              <div className="videoAnalyticsAudienceGrid" aria-label={t("videoAnalyticsAudienceLoading")}>
+                <div className="videoAnalyticsChartCard loading" />
+                <div className="videoAnalyticsChartCard loading" />
+              </div>
+            ) : isAudienceError || !deviceSplit || !operatingSystemSplit ? (
+              <p className="videoAnalyticsOverviewError">{t("videoAnalyticsAudienceFailed")}</p>
+            ) : (
+              <div className="videoAnalyticsAudienceGrid">
+                <article className="videoAnalyticsChartCard">
+                  <h3>{t("videoAnalyticsDeviceSplit")}</h3>
+                  <DonutChart items={deviceItems} total={deviceSplit.totalViews} />
+                </article>
+                <article className="videoAnalyticsChartCard">
+                  <h3>{t("videoAnalyticsOperatingSystems")}</h3>
+                  <DonutChart items={operatingSystemItems} total={operatingSystemSplit.totalViews} />
+                </article>
               </div>
             )}
           </section>
