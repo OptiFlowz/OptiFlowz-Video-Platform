@@ -8,6 +8,7 @@ import videoRoutes from '../modules/videos/video.routes.js';
 import commentRoutes from '../modules/comments/comments.routes.js';
 import channelRoutes from '../modules/channels/channel.routes.js';
 import quizzesRoutes from '../modules/quizzes/quiz.routes.js';
+import analyticsRoutes from '../modules/analytics/analytics.routes.js';
 
 export function registerRoutes(app) {
   app.get('/health', (_req, res) => res.json({ ok: true }));
@@ -22,4 +23,5 @@ export function registerRoutes(app) {
   app.use('/api/comments',commentRoutes);
   app.use('/api/channels',channelRoutes);
   app.use('/api/quizzes',quizzesRoutes);
+  app.use('/api/analytics',analyticsRoutes);
 }
