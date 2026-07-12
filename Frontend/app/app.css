@@ -8726,10 +8726,37 @@ main.videoAnalyticsPage .videoAnalyticsDonutCenter strong{
   line-height: 1;
 }
 
+main.videoAnalyticsPage .videoAnalyticsDonutCenter small{
+  width: 80%;
+  overflow: hidden;
+  color: var(--text2);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.1;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 main.videoAnalyticsPage .videoAnalyticsDonutCenter span{
   margin-top: 0.35rem;
   color: var(--text2);
   font-size: 0.85rem;
+}
+
+main.videoAnalyticsPage .videoAnalyticsDonutSegment,
+main.videoAnalyticsPage .recharts-pie-sector path{
+  cursor: pointer;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: filter 0.4s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: filter, transform;
+}
+
+main.videoAnalyticsPage .videoAnalyticsDonutSegment:hover,
+main.videoAnalyticsPage .recharts-pie-sector:hover path{
+  filter: brightness(1.08);
+  transform: scale(1.035);
 }
 
 main.videoAnalyticsPage .videoAnalyticsLegend{

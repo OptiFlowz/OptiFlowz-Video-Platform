@@ -55,10 +55,17 @@ type DonutItem = {
 };
 
 function DonutChart({ items, total }: { items: DonutItem[]; total: number }) {
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const chartItems = items.filter((item) => item.value > 0);
   const data = chartItems.length
     ? chartItems
     : [{ label: "No data", value: 1, color: "var(--background3)" }];
+  const activeItem = activeIndex === null || !chartItems.length
+    ? null
+    : chartItems[activeIndex];
+  const activePercentage = activeItem && total > 0
+    ? Math.round((activeItem.value / total) * 100)
+    : 0;
 
   return (
     <div className="videoAnalyticsDonutLayout">
@@ -79,16 +86,32 @@ function DonutChart({ items, total }: { items: DonutItem[]; total: number }) {
               strokeWidth={2}
               isAnimationActive
               animationDuration={500}
+              onMouseEnter={(_, index) => setActiveIndex(index)}
+              onMouseLeave={() => setActiveIndex(null)}
             >
-              {data.map((item) => (
-                <Cell fill={item.color} key={item.label} />
+              {data.map((item, index) => (
+                <Cell
+                  className="videoAnalyticsDonutSegment"
+                  fill={item.color}
+                  key={item.label}
+                />
               ))}
             </Pie>
           </PieChart>
         </ResponsiveContainer>
         <div className="videoAnalyticsDonutCenter">
-          <strong>{total}</strong>
-          <span>views</span>
+          {activeItem ? (
+            <>
+              <small>{activeItem.label}</small>
+              <strong>{activeItem.value}</strong>
+              <span>{activePercentage}% · views</span>
+            </>
+          ) : (
+            <>
+              <strong>{total}</strong>
+              <span>views</span>
+            </>
+          )}
         </div>
       </div>
 
