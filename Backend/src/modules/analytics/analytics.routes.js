@@ -4,6 +4,6 @@ import * as analyticsController from './analytics.controller.js'
 
 const router = express.Router();
 
-router.get(':videoId/overview',requireAuth,requireAdmin);
+router.get('/:videoId/overview', requireAuth, requireAdmin, analyticsController.getOverviewVideoAnalytics);
 
 export default router;
