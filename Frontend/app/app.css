@@ -69,6 +69,13 @@
   --accentGreen2: rgb(126, 184, 75);
   --progressAccentOrange: var(--blueAccent2);
 
+  --analyticsChart1: #2148ad;
+  --analyticsChart2: #2859df;
+  --analyticsChart3: #4d75e5;
+  --analyticsChart4: #7093e8;
+  --analyticsChart5: #9bb4dc;
+  --analyticsChart6: #c5d1e5;
+
   --playButtonBg1: rgba(0, 0, 0, 0.6);
 
   --headerHeight: 90px;
@@ -8434,6 +8441,447 @@ main.analyticsPage .analyticsSimpleHint{
 main.analyticsPage .analyticsSimpleError{
   color: var(--accentRed);
   font-weight: 600;
+}
+
+/* VIDEO ANALYTICS PAGE */
+
+main.videoAnalyticsPage .videoAnalyticsShell{
+  gap: 1.25rem;
+}
+
+main.videoAnalyticsPage .videoAnalyticsCard{
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 168px;
+  padding: 1rem;
+  border: 1px solid var(--border1);
+  border-radius: 22px;
+  background-color: var(--background2);
+}
+
+main.videoAnalyticsPage .videoAnalyticsThumbnail{
+  position: relative;
+  flex: 0 0 250px;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 14px;
+  background-color: var(--background1);
+}
+
+main.videoAnalyticsPage .videoAnalyticsThumbnail img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+main.videoAnalyticsPage .videoAnalyticsThumbnail span{
+  position: absolute;
+  right: 0.55rem;
+  bottom: 0.5rem;
+  padding: 0.22rem 0.48rem;
+  border-radius: 999px;
+  background-color: var(--background1);
+  color: var(--text1);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+main.videoAnalyticsPage .videoAnalyticsInfo{
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+main.videoAnalyticsPage .videoAnalyticsInfo h2{
+  color: var(--text1);
+  font-size: clamp(1.2rem, 2vw, 1.65rem);
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+main.videoAnalyticsPage .videoAnalyticsInfo > p{
+  color: var(--text2);
+  font-size: 1rem;
+}
+
+main.videoAnalyticsPage .videoAnalyticsMeta,
+main.videoAnalyticsPage .videoAnalyticsFilters{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+main.videoAnalyticsPage .videoAnalyticsMeta{
+  margin-top: 0.2rem;
+}
+
+main.videoAnalyticsPage .videoAnalyticsMeta span,
+main.videoAnalyticsPage .videoAnalyticsSelect{
+  border: 1px solid var(--border1);
+  border-radius: 999px;
+  background-color: var(--background3);
+  color: var(--text1);
+}
+
+main.videoAnalyticsPage .videoAnalyticsMeta span{
+  padding: 0.42rem 0.8rem;
+}
+
+main.videoAnalyticsPage .videoAnalyticsSelect{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.42rem 0.55rem 0.42rem 0.72rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+main.videoAnalyticsPage .videoAnalyticsSelect svg{
+  width: 19px;
+  height: 19px;
+  flex: 0 0 auto;
+}
+
+main.videoAnalyticsPage .videoAnalyticsSelect svg path{
+  stroke: var(--text1);
+}
+
+main.videoAnalyticsPage .videoAnalyticsSelect select{
+  width: auto;
+  min-width: 0;
+  padding: 0.18rem 1.7rem 0.18rem 0.3rem;
+  border: 0;
+  outline: 0;
+  background-color: transparent;
+  color: var(--text1);
+  font: inherit;
+  cursor: pointer;
+}
+
+main.videoAnalyticsPage .videoAnalyticsOverview{
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  margin-top: 0.2rem;
+  padding: 1.6rem;
+  border: 1px solid var(--border1);
+  border-radius: 22px;
+  background-color: var(--background2);
+}
+
+main.videoAnalyticsPage .videoAnalyticsOverview > h2{
+  color: var(--text1);
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+main.videoAnalyticsPage .videoAnalyticsOverviewGrid{
+  display: grid;
+  grid-template-columns: repeat(13, minmax(0, 1fr));
+  gap: 1.15rem;
+  margin-top: 0.3rem;
+}
+
+main.videoAnalyticsPage .videoAnalyticsOverviewCard{
+  display: flex;
+  grid-column: span 3;
+  min-height: 145px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.9rem 1.15rem;
+  border: 1px solid var(--border1);
+  border-radius: 20px;
+  background-color: var(--background3);
+  box-shadow: 0 2px 6px var(--background15);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+main.videoAnalyticsPage .videoAnalyticsOverviewCard:hover{
+  box-shadow: 0 6px 14px var(--background15);
+  transform: translateY(-1px);
+}
+
+main.videoAnalyticsPage .videoAnalyticsOverviewCard:nth-child(2),
+main.videoAnalyticsPage .videoAnalyticsOverviewCard:nth-child(6){
+  grid-column: span 4;
+}
+
+main.videoAnalyticsPage .videoAnalyticsOverviewCard:nth-child(5),
+main.videoAnalyticsPage .videoAnalyticsOverviewCard:nth-child(7){
+  grid-column: span 3;
+}
+
+main.videoAnalyticsPage .videoAnalyticsOverviewCard h3{
+  color: var(--text2);
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+main.videoAnalyticsPage .videoAnalyticsOverviewCard strong{
+  color: var(--text1);
+  font-size: clamp(2rem, 3vw, 2.65rem);
+  font-weight: 700;
+  line-height: 1;
+}
+
+main.videoAnalyticsPage .videoAnalyticsOverviewCard p{
+  color: var(--text2);
+  font-size: 0.9rem;
+  line-height: 1.25;
+}
+
+main.videoAnalyticsPage .videoAnalyticsOverviewCard.loading{
+  background: var(--backgroundGradient1);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+main.videoAnalyticsPage .videoAnalyticsOverviewError{
+  color: var(--accentRed);
+}
+
+main.videoAnalyticsPage .videoAnalyticsAudience{
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  padding: 1.6rem;
+  border: 1px solid var(--border1);
+  border-radius: 22px;
+  background-color: var(--background2);
+}
+
+main.videoAnalyticsPage .videoAnalyticsAudience > h2{
+  color: var(--text1);
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+main.videoAnalyticsPage .videoAnalyticsAudienceGrid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.15rem;
+}
+
+main.videoAnalyticsPage .videoAnalyticsChartCard{
+  min-width: 0;
+  padding: 1.25rem;
+  border: 1px solid var(--border1);
+  border-radius: 20px;
+  background-color: var(--background3);
+  box-shadow: 0 2px 6px var(--background15);
+}
+
+main.videoAnalyticsPage .videoAnalyticsChartCard > h3{
+  color: var(--text1);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+main.videoAnalyticsPage .videoAnalyticsDonutLayout{
+  display: grid;
+  grid-template-columns: minmax(190px, 0.9fr) minmax(150px, 1fr);
+  align-items: center;
+  gap: 1.5rem;
+  min-height: 310px;
+  padding-top: 1rem;
+}
+
+main.videoAnalyticsPage .videoAnalyticsDonut{
+  position: relative;
+  display: grid;
+  width: min(100%, 250px);
+  aspect-ratio: 1;
+  place-items: center;
+  justify-self: center;
+  border-radius: 50%;
+}
+
+main.videoAnalyticsPage .videoAnalyticsDonutCenter{
+  position: absolute;
+  inset: 50% auto auto 50%;
+  z-index: 1;
+  display: flex;
+  width: 52%;
+  aspect-ratio: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border1);
+  border-radius: 50%;
+  background-color: var(--background1);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+main.videoAnalyticsPage .videoAnalyticsDonutCenter strong{
+  color: var(--text1);
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  line-height: 1;
+}
+
+main.videoAnalyticsPage .videoAnalyticsDonutCenter small{
+  width: 80%;
+  overflow: hidden;
+  color: var(--text2);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.1;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+main.videoAnalyticsPage .videoAnalyticsDonutCenter span{
+  margin-top: 0.35rem;
+  color: var(--text2);
+  font-size: 0.85rem;
+}
+
+main.videoAnalyticsPage .videoAnalyticsDonutSegment,
+main.videoAnalyticsPage .recharts-pie-sector path{
+  cursor: pointer;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: filter 0.4s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: filter, transform;
+}
+
+main.videoAnalyticsPage .videoAnalyticsDonutSegment:hover,
+main.videoAnalyticsPage .recharts-pie-sector:hover path{
+  filter: brightness(1.08);
+  transform: scale(1.035);
+}
+
+main.videoAnalyticsPage .videoAnalyticsLegend{
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+main.videoAnalyticsPage .videoAnalyticsLegendItem{
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+main.videoAnalyticsPage .videoAnalyticsLegendItem > i{
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  border: 1px solid var(--border1);
+  border-radius: 5px;
+}
+
+main.videoAnalyticsPage .videoAnalyticsLegendItem > span{
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+main.videoAnalyticsPage .videoAnalyticsLegendItem strong{
+  overflow: hidden;
+  color: var(--text1);
+  font-size: 0.92rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+main.videoAnalyticsPage .videoAnalyticsLegendItem small{
+  color: var(--text2);
+  font-size: 0.82rem;
+}
+
+main.videoAnalyticsPage .videoAnalyticsChartCard.loading{
+  min-height: 380px;
+  background: var(--backgroundGradient1);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+main.videoAnalyticsPage .videoAnalyticsCardLoading{
+  background: var(--backgroundGradient1);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+main.videoAnalyticsPage .videoAnalyticsMessage{
+  padding: 1rem;
+  border: 1px solid var(--border1);
+  border-radius: 14px;
+  background-color: var(--background2);
+  color: var(--text2);
+}
+
+@media (max-width: 700px){
+  main.videoAnalyticsPage .videoAnalyticsCard{
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  main.videoAnalyticsPage .videoAnalyticsThumbnail{
+    width: 100%;
+    flex-basis: auto;
+  }
+
+  main.videoAnalyticsPage .videoAnalyticsOverview{
+    padding: 1rem;
+  }
+
+  main.videoAnalyticsPage .videoAnalyticsAudience{
+    padding: 1rem;
+  }
+
+  main.videoAnalyticsPage .videoAnalyticsOverviewGrid{
+    grid-template-columns: 1fr;
+  }
+
+  main.videoAnalyticsPage .videoAnalyticsOverviewCard,
+  main.videoAnalyticsPage .videoAnalyticsOverviewCard:nth-child(2),
+  main.videoAnalyticsPage .videoAnalyticsOverviewCard:nth-child(5),
+  main.videoAnalyticsPage .videoAnalyticsOverviewCard:nth-child(6),
+  main.videoAnalyticsPage .videoAnalyticsOverviewCard:nth-child(7){
+    grid-column: auto;
+  }
+
+  main.videoAnalyticsPage .videoAnalyticsAudienceGrid,
+  main.videoAnalyticsPage .videoAnalyticsDonutLayout{
+    grid-template-columns: 1fr;
+  }
+
+  main.videoAnalyticsPage .videoAnalyticsDonutLayout{
+    min-height: 0;
+  }
+
+  main.videoAnalyticsPage .videoAnalyticsLegend{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 701px) and (max-width: 1180px){
+  main.videoAnalyticsPage .videoAnalyticsOverviewGrid{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  main.videoAnalyticsPage .videoAnalyticsOverviewCard,
+  main.videoAnalyticsPage .videoAnalyticsOverviewCard:nth-child(2),
+  main.videoAnalyticsPage .videoAnalyticsOverviewCard:nth-child(5),
+  main.videoAnalyticsPage .videoAnalyticsOverviewCard:nth-child(6),
+  main.videoAnalyticsPage .videoAnalyticsOverviewCard:nth-child(7){
+    grid-column: auto;
+  }
+
+  main.videoAnalyticsPage .videoAnalyticsAudienceGrid{
+    grid-template-columns: 1fr;
+  }
 }
 
 /* MY VIDEOS PAGE */
