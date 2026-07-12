@@ -19,6 +19,7 @@ const nextConfig: NextConfig = {
 
     config.resolve.alias = {
       ...(config.resolve.alias ?? {}),
+      "~": path.resolve(__dirname, "app"),
       "react-router": path.resolve(__dirname, "next/react-router.tsx"),
     };
 
