@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router";
 import { createPortal } from "react-dom";
 import {
+  AnalyticsSVG,
   DeleteSVG,
   EditSVG,
   PlaySVG,
@@ -220,6 +221,11 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
     window.location.href = `/edit?video=${props?.id}`;
   };
 
+  const handleAnalytics = () => {
+    setMobileMenuOpen(false);
+    window.location.href = `/video-analytics?video=${props?.id}`;
+  };
+
   if (isHidden) return null;
 
   return (
@@ -259,6 +265,9 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                   {PlaySVG}
                 </Link>
                 <Link to={`/edit?video=${props?.id}`}  title={t("adminEditVideo")}>{EditSVG}</Link>
+                <Link to={`/video-analytics?video=${props?.id}`} title={t("adminVideoAnalytics")}>
+                  {AnalyticsSVG}
+                </Link>
                 <button onClick={handleDelete} title={t("adminDeleteVideo")}>
                   {DeleteSVG}
                 </button>
@@ -322,6 +331,16 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                       {EditSVG}
                     </span>
                   <span>{t("adminEditVideo")}</span>
+                  </button>
+
+                  <button
+                    onClick={handleAnalytics}
+                    className="flex items-center gap-4 px-4 py-3 text-left hover:bg-(--background2) active:bg-(--background3) transition-colors cursor-pointer"
+                  >
+                    <span className="w-6 h-6 flex items-center justify-center">
+                      {AnalyticsSVG}
+                    </span>
+                    <span>{t("adminVideoAnalytics")}</span>
                   </button>
 
                   <button
