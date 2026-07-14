@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@mux/mux-player-react": "^3.11.4",
+    "@svg-maps/world": "^2.0.0",
     "@tanstack/react-query": "^5.90.5",
     "isbot": "^5",
     "next": "^16.0.1",

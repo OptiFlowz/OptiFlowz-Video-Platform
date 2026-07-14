@@ -8559,6 +8559,12 @@ main.videoAnalyticsPage .videoAnalyticsSelect select{
   color: var(--text1);
   font: inherit;
   cursor: pointer;
+  color-scheme: dark;
+}
+
+main.videoAnalyticsPage .videoAnalyticsSelect select option{
+  background-color: var(--background1);
+  color: var(--text1);
 }
 
 main.videoAnalyticsPage .videoAnalyticsOverview{
@@ -8806,6 +8812,313 @@ main.videoAnalyticsPage .videoAnalyticsChartCard.loading{
   animation: shimmer 2s infinite;
 }
 
+main.videoAnalyticsPage .videoAnalyticsGeographic{
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  padding: 1.6rem;
+  border: 1px solid var(--border1);
+  border-radius: 22px;
+  background-color: var(--background2);
+}
+
+main.videoAnalyticsPage .videoAnalyticsGeographic > h2{
+  color: var(--text1);
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+main.videoAnalyticsPage .videoAnalyticsGeographic > p,
+main.videoAnalyticsPage .videoAnalyticsGridLabel{
+  color: var(--text2);
+  font-size: 1rem;
+}
+
+main.videoAnalyticsPage .videoAnalyticsMap{
+  position: relative;
+  width: 100%;
+  min-height: 440px;
+  overflow: hidden;
+  border: 1px solid var(--border1);
+  border-radius: 20px;
+  background-color: var(--background1);
+  cursor: grab;
+  touch-action: none;
+  overscroll-behavior: contain;
+}
+
+main.videoAnalyticsPage .videoAnalyticsMap.dragging{
+  cursor: grabbing;
+}
+
+main.videoAnalyticsPage .videoAnalyticsMap > svg{
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 440px;
+}
+
+main.videoAnalyticsPage .videoAnalyticsMap path{
+  stroke: var(--border1);
+  stroke-width: 0.7;
+  vector-effect: non-scaling-stroke;
+  cursor: pointer;
+  transition: filter 0.18s ease, fill-opacity 0.18s ease;
+}
+
+main.videoAnalyticsPage .videoAnalyticsMap path:hover{
+  filter: brightness(1.18);
+}
+
+main.videoAnalyticsPage .videoAnalyticsMap.loading{
+  background: var(--backgroundGradient1);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+main.videoAnalyticsPage .videoAnalyticsMapTooltip{
+  position: absolute;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 130px;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border1);
+  border-radius: 10px;
+  background-color: var(--background3);
+  color: var(--text1);
+  box-shadow: 0 4px 12px var(--background15);
+  pointer-events: none;
+  transform: translate(12px, calc(-100% - 12px));
+}
+
+main.videoAnalyticsPage .videoAnalyticsMapTooltip span{
+  color: var(--text2);
+  font-size: 0.8rem;
+}
+
+main.videoAnalyticsPage .videoAnalyticsMapControls{
+  position: absolute;
+  right: 0.8rem;
+  bottom: 0.8rem;
+  z-index: 3;
+  display: flex;
+  overflow: hidden;
+  border: 1px solid var(--border1);
+  border-radius: 999px;
+  background-color: var(--background3);
+  user-select: none;
+}
+
+main.videoAnalyticsPage .videoAnalyticsMapControls button{
+  width: 38px;
+  height: 38px;
+  color: var(--text1);
+  font-size: 1.15rem;
+  cursor: pointer;
+}
+
+main.videoAnalyticsPage .videoAnalyticsMapControls button:hover{
+  background-color: var(--background2);
+}
+
+main.videoAnalyticsPage .videoAnalyticsCountryGrid{
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+main.videoAnalyticsPage .videoAnalyticsCountryGrid button{
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.8rem;
+  min-height: 78px;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border1);
+  border-radius: 14px;
+  background-color: var(--background3);
+  color: var(--text1);
+  text-align: left;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+main.videoAnalyticsPage .videoAnalyticsCountryGrid button:hover{
+  box-shadow: 0 5px 14px var(--background15);
+  transform: translateY(-1px);
+}
+
+main.videoAnalyticsPage .videoAnalyticsCountryGrid button > span{
+  font-size: 2rem;
+  line-height: 1;
+}
+
+main.videoAnalyticsPage .videoAnalyticsCountryGrid strong{
+  overflow: hidden;
+  color: var(--text1);
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+main.videoAnalyticsPage .videoAnalyticsCountryGrid b{
+  grid-column: 3;
+  grid-row: 1;
+  display: grid;
+  place-items: center;
+}
+
+main.videoAnalyticsPage .videoAnalyticsCountryGrid b svg path{
+  stroke: var(--text1);
+}
+
+.videoAnalyticsCityBackdrop{
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background-color: var(--backgroundC2);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.videoAnalyticsCityBackdrop.visible{
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.videoAnalyticsCityPopup{
+  display: flex;
+  width: min(560px, 92vw);
+  max-height: min(680px, calc(100vh - 32px));
+  overflow: hidden;
+  flex-direction: column;
+  border: 1px solid var(--border1);
+  border-radius: 24px;
+  background-color: var(--background1);
+  box-shadow: 0 24px 70px var(--seethroughtBlack);
+  opacity: 0;
+  transform: translateY(24px);
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+  will-change: transform, opacity;
+}
+
+.videoAnalyticsCityBackdrop.visible .videoAnalyticsCityPopup{
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.videoAnalyticsCityPopup > header{
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border1);
+}
+
+.videoAnalyticsCityPopup > header > div{
+  min-width: 0;
+  max-width: none;
+  padding: 0 !important;
+  border: 0;
+  border-radius: 0;
+  background: none !important;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.videoAnalyticsCityPopup > header > div::before{
+  content: none;
+}
+
+.videoAnalyticsCityPopup > header > span{
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.videoAnalyticsCityPopup h2{
+  color: var(--text1);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.videoAnalyticsCityPopup header p,
+.videoAnalyticsCityPopupBody > p{
+  color: var(--text2);
+}
+
+.videoAnalyticsCityPopup header p{
+  margin-top: 0.2rem;
+  font-size: 0.9rem;
+}
+
+.videoAnalyticsCityPopup button{
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 12px;
+  background-color: var(--accentRed);
+  color: var(--text1);
+  cursor: pointer;
+  transition: filter 0.15s ease-in-out, transform 0.15s ease-in-out;
+}
+
+.videoAnalyticsCityPopup button:hover{
+  filter: brightness(0.85);
+  transform: scale(1.03);
+}
+
+.videoAnalyticsCityPopup button svg path{
+  stroke: var(--text1);
+}
+
+.videoAnalyticsCityPopupBody{
+  overflow: auto;
+  padding: 1.5rem;
+}
+
+.videoAnalyticsCityPopupBody > p{
+  margin-bottom: 0.8rem;
+  font-weight: 500;
+}
+
+.videoAnalyticsCityGrid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.videoAnalyticsCityGrid article{
+  display: flex;
+  justify-content: space-between;
+  gap: 0.7rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border1);
+  border-radius: 16px;
+  background-color: var(--background2);
+  color: var(--text1);
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+
+.videoAnalyticsCityGrid article:hover{
+  border-color: var(--border2);
+  background-color: var(--background3);
+}
+
+.videoAnalyticsCityGrid span{
+  color: var(--text2);
+  white-space: nowrap;
+}
+
 main.videoAnalyticsPage .videoAnalyticsCardLoading{
   background: var(--backgroundGradient1);
   background-size: 200% 100%;
@@ -8839,6 +9152,10 @@ main.videoAnalyticsPage .videoAnalyticsMessage{
     padding: 1rem;
   }
 
+  main.videoAnalyticsPage .videoAnalyticsGeographic{
+    padding: 1rem;
+  }
+
   main.videoAnalyticsPage .videoAnalyticsOverviewGrid{
     grid-template-columns: 1fr;
   }
@@ -8864,6 +9181,16 @@ main.videoAnalyticsPage .videoAnalyticsMessage{
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  main.videoAnalyticsPage .videoAnalyticsMap,
+  main.videoAnalyticsPage .videoAnalyticsMap > svg{
+    min-height: 300px;
+  }
+
+  main.videoAnalyticsPage .videoAnalyticsCountryGrid,
+  .videoAnalyticsCityGrid{
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (min-width: 701px) and (max-width: 1180px){
@@ -8881,6 +9208,10 @@ main.videoAnalyticsPage .videoAnalyticsMessage{
 
   main.videoAnalyticsPage .videoAnalyticsAudienceGrid{
     grid-template-columns: 1fr;
+  }
+
+  main.videoAnalyticsPage .videoAnalyticsCountryGrid{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

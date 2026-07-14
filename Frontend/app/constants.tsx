@@ -1,4 +1,43 @@
-﻿export const EUROPEAN_LANGUAGES = [
+﻿import worldMap from "@svg-maps/world";
+
+export type WorldMapCountry = { id: string; name: string; path: string };
+
+export function WorldMapSVG({
+  transform,
+  getFill,
+  getFillOpacity,
+  onCountryEnter,
+  onCountryMove,
+  onCountryLeave,
+}: {
+  transform?: string;
+  getFill: (country: WorldMapCountry) => string;
+  getFillOpacity: (country: WorldMapCountry) => number;
+  onCountryEnter: (country: WorldMapCountry, event: React.MouseEvent<SVGPathElement>) => void;
+  onCountryMove: (country: WorldMapCountry, event: React.MouseEvent<SVGPathElement>) => void;
+  onCountryLeave: () => void;
+}) {
+  return (
+    <svg viewBox={worldMap.viewBox} role="img" aria-label={worldMap.label}>
+      <g transform={transform}>
+        {(worldMap.locations as WorldMapCountry[]).map((country) => (
+          <path
+            key={country.id}
+            data-country={country.id.toUpperCase()}
+            d={country.path}
+            fill={getFill(country)}
+            fillOpacity={getFillOpacity(country)}
+            onMouseEnter={(event) => onCountryEnter(country, event)}
+            onMouseMove={(event) => onCountryMove(country, event)}
+            onMouseLeave={onCountryLeave}
+          />
+        ))}
+      </g>
+    </svg>
+  );
+}
+
+export const EUROPEAN_LANGUAGES = [
   { code: "en", name: "English" },
   { code: "sq", name: "Albanian" },
   { code: "be", name: "Belarusian" },
