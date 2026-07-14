@@ -78,7 +78,26 @@ export function getTotalDislikes(videoId, fromDate, toDate) {
 export async function getTotalComments(videoId, fromDate, toDate) {
   const filter = buildDateFilter('vc', fromDate, toDate);
   return getScalar(
-    `SELECT COUNT(*) AS value FROM video_comments vc WHERE vc.video_id = $1 AND vc.is_deleted = false${filter.sql}`,
+    `
+      WITH RECURSIVE visible_comments AS (
+        SELECT vc.id, vc.created_at
+        FROM video_comments vc
+        WHERE vc.video_id = $1
+          AND vc.parent_id IS NULL
+          AND vc.is_deleted = false
+
+        UNION ALL
+
+        SELECT child.id, child.created_at
+        FROM video_comments child
+        INNER JOIN visible_comments parent ON parent.id = child.parent_id
+        WHERE child.video_id = $1
+          AND child.is_deleted = false
+      )
+      SELECT COUNT(*) AS value
+      FROM visible_comments vc
+      WHERE true${filter.sql}
+    `,
     [videoId, ...filter.values],
     'value',
   );

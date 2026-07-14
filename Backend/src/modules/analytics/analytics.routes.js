@@ -12,5 +12,11 @@ router.get(
   requireAdmin,
   analyticsController.getOperatingSystemSplit,
 );
+router.get(
+  '/:videoId/geographic-breakdown',
+  requireAuth,
+  requireAdmin,
+  analyticsController.getGeographicBreakdown,
+);
 
 export default router;
