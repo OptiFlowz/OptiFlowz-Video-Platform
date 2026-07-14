@@ -8862,11 +8862,20 @@ main.videoAnalyticsPage .videoAnalyticsMap path{
   stroke: var(--border1);
   stroke-width: 0.7;
   vector-effect: non-scaling-stroke;
-  cursor: pointer;
+  cursor: grab;
   transition: filter 0.18s ease, fill-opacity 0.18s ease;
 }
 
-main.videoAnalyticsPage .videoAnalyticsMap path:hover{
+main.videoAnalyticsPage .videoAnalyticsMap path.interactive{
+  cursor: pointer;
+}
+
+main.videoAnalyticsPage .videoAnalyticsMap.dragging path{
+  cursor: grabbing;
+}
+
+main.videoAnalyticsPage .videoAnalyticsMap path.interactive:hover,
+main.videoAnalyticsPage .videoAnalyticsMap path.interactive:focus{
   filter: brightness(1.18);
 }
 
@@ -8951,8 +8960,12 @@ main.videoAnalyticsPage .videoAnalyticsCountryGrid button:hover{
 }
 
 main.videoAnalyticsPage .videoAnalyticsCountryGrid button > span{
-  font-size: 2rem;
-  line-height: 1;
+  width: 28px;
+  height: 21px;
+  flex: none;
+  border-radius: 3px;
+  background-color: var(--background2);
+  box-shadow: 0 0 0 1px var(--border1);
 }
 
 main.videoAnalyticsPage .videoAnalyticsCountryGrid strong{
@@ -9040,8 +9053,11 @@ main.videoAnalyticsPage .videoAnalyticsCountryGrid b svg path{
 }
 
 .videoAnalyticsCityPopup > header > span{
-  font-size: 2rem;
-  line-height: 1;
+  width: 40px;
+  height: 30px;
+  border-radius: 4px;
+  background-color: var(--background2);
+  box-shadow: 0 0 0 1px var(--border1);
 }
 
 .videoAnalyticsCityPopup h2{

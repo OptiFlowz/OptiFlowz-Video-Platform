@@ -9,6 +9,8 @@ export function WorldMapSVG({
   onCountryEnter,
   onCountryMove,
   onCountryLeave,
+  isCountryInteractive,
+  onCountryActivate,
 }: {
   transform?: string;
   getFill: (country: WorldMapCountry) => string;
@@ -16,22 +18,36 @@ export function WorldMapSVG({
   onCountryEnter: (country: WorldMapCountry, event: React.MouseEvent<SVGPathElement>) => void;
   onCountryMove: (country: WorldMapCountry, event: React.MouseEvent<SVGPathElement>) => void;
   onCountryLeave: () => void;
+  isCountryInteractive?: (country: WorldMapCountry) => boolean;
+  onCountryActivate?: (country: WorldMapCountry) => void;
 }) {
   return (
     <svg viewBox={worldMap.viewBox} role="img" aria-label={worldMap.label}>
       <g transform={transform}>
-        {(worldMap.locations as WorldMapCountry[]).map((country) => (
-          <path
-            key={country.id}
-            data-country={country.id.toUpperCase()}
-            d={country.path}
-            fill={getFill(country)}
-            fillOpacity={getFillOpacity(country)}
-            onMouseEnter={(event) => onCountryEnter(country, event)}
-            onMouseMove={(event) => onCountryMove(country, event)}
-            onMouseLeave={onCountryLeave}
-          />
-        ))}
+        {(worldMap.locations as WorldMapCountry[]).map((country) => {
+          const isInteractive = isCountryInteractive?.(country) ?? false;
+          return (
+            <path
+              key={country.id}
+              className={isInteractive ? "interactive" : undefined}
+              data-country={country.id.toUpperCase()}
+              d={country.path}
+              fill={getFill(country)}
+              fillOpacity={getFillOpacity(country)}
+              role={isInteractive ? "button" : undefined}
+              tabIndex={isInteractive ? 0 : undefined}
+              aria-label={isInteractive ? country.name : undefined}
+              onKeyDown={isInteractive ? (event) => {
+                if (event.key !== "Enter" && event.key !== " ") return;
+                event.preventDefault();
+                onCountryActivate?.(country);
+              } : undefined}
+              onMouseEnter={(event) => onCountryEnter(country, event)}
+              onMouseMove={(event) => onCountryMove(country, event)}
+              onMouseLeave={onCountryLeave}
+            />
+          );
+        })}
       </g>
     </svg>
   );

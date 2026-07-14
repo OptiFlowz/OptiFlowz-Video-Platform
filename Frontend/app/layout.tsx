@@ -1,4 +1,5 @@
 import Script from "next/script";
+import "flag-icons/css/flag-icons.min.css";
 import "./app.css";
 import type { Metadata } from "next";
 import Providers from "./providers";

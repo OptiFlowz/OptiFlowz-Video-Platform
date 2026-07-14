@@ -192,9 +192,14 @@ function getDateRange(range: AnalyticsRange) {
   return `?${params.toString()}`;
 }
 
-function countryFlag(code: string) {
-  if (!/^[A-Z]{2}$/.test(code)) return "🌐";
-  return String.fromCodePoint(...code.split("").map((letter) => 127397 + letter.charCodeAt(0)));
+function CountryFlag({ code }: { code: string }) {
+  const normalizedCode = /^[A-Z]{2}$/i.test(code) ? code.toLowerCase() : "";
+  return (
+    <span
+      className={`videoAnalyticsCountryFlag${normalizedCode ? ` fi fi-${normalizedCode}` : ""}`}
+      aria-hidden="true"
+    />
+  );
 }
 
 function VideoAnalyticsPage() {
@@ -206,11 +211,18 @@ function VideoAnalyticsPage() {
   const [range, setRange] = useState<AnalyticsRange>("last7");
   const [groupBy, setGroupBy] = useState("day");
   const [mapView, setMapView] = useState({ zoom: MIN_MAP_ZOOM, x: 0, y: 0 });
-  const [mapDrag, setMapDrag] = useState<{ x: number; y: number; originX: number; originY: number } | null>(null);
+  const [mapDrag, setMapDrag] = useState<{
+    x: number;
+    y: number;
+    originX: number;
+    originY: number;
+    countryCode: string | null;
+  } | null>(null);
   const [mapTooltip, setMapTooltip] = useState<{ name: string; views: number; x: number; y: number } | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<{ code: string; data: GeographicCountry } | null>(null);
   const [isCountryPopupVisible, setIsCountryPopupVisible] = useState(false);
   const mapRef = useRef<HTMLDivElement | null>(null);
+  const mapDidDragRef = useRef(false);
   const countryPopupTimerRef = useRef<number | null>(null);
 
   useLayoutEffect(() => {
@@ -545,20 +557,39 @@ function VideoAnalyticsPage() {
                   onPointerDown={(event) => {
                     const point = getMapPoint(event.currentTarget, event.clientX, event.clientY);
                     if (!point) return;
+                    mapDidDragRef.current = false;
                     event.currentTarget.setPointerCapture(event.pointerId);
-                    setMapDrag({ x: point.x, y: point.y, originX: mapView.x, originY: mapView.y });
+                    const target = event.target instanceof Element ? event.target : null;
+                    const countryCode = target?.closest("path.interactive")?.getAttribute("data-country") ?? null;
+                    setMapDrag({
+                      x: point.x,
+                      y: point.y,
+                      originX: mapView.x,
+                      originY: mapView.y,
+                      countryCode,
+                    });
                   }}
                   onPointerMove={(event) => {
                     if (!mapDrag) return;
                     const point = getMapPoint(event.currentTarget, event.clientX, event.clientY);
                     if (!point) return;
+                    if (Math.hypot(point.x - mapDrag.x, point.y - mapDrag.y) > 3) {
+                      mapDidDragRef.current = true;
+                    }
                     setMapView((current) => ({
                       ...current,
                       x: mapDrag.originX + point.x - mapDrag.x,
                       y: mapDrag.originY + point.y - mapDrag.y,
                     }));
                   }}
-                  onPointerUp={() => setMapDrag(null)}
+                  onPointerUp={() => {
+                    const countryCode = mapDidDragRef.current ? null : mapDrag?.countryCode;
+                    setMapDrag(null);
+                    if (!countryCode) return;
+                    const countryData = geographicBreakdown[countryCode];
+                    if (!countryData || countryData.totalViews <= 0) return;
+                    openCountryPopup(countryCode, countryData);
+                  }}
                   onPointerCancel={() => setMapDrag(null)}
                 >
                   <WorldMapSVG
@@ -571,6 +602,15 @@ function VideoAnalyticsPage() {
                     onCountryEnter={updateMapTooltip}
                     onCountryMove={updateMapTooltip}
                     onCountryLeave={() => setMapTooltip(null)}
+                    isCountryInteractive={(country) => (
+                      (geographicBreakdown[country.id.toUpperCase()]?.totalViews ?? 0) > 0
+                    )}
+                    onCountryActivate={(country) => {
+                      const code = country.id.toUpperCase();
+                      const countryData = geographicBreakdown[code];
+                      if (!countryData || countryData.totalViews <= 0) return;
+                      openCountryPopup(code, countryData);
+                    }}
                   />
                   {mapTooltip && (
                     <div className="videoAnalyticsMapTooltip" style={{ left: mapTooltip.x, top: mapTooltip.y }}>
@@ -603,7 +643,7 @@ function VideoAnalyticsPage() {
                       aria-label={`${country.name}: ${country.totalViews} ${t("videoAnalyticsViews")}`}
                       onClick={() => openCountryPopup(code, country)}
                     >
-                      <span aria-hidden="true">{countryFlag(code)}</span>
+                      <CountryFlag code={code} />
                       <strong>{country.totalViews} {t("videoAnalyticsViews")}</strong>
                       <b>{ArrowSVG}</b>
                     </button>
@@ -623,7 +663,7 @@ function VideoAnalyticsPage() {
             >
               <section className="videoAnalyticsCityPopup" onMouseDown={(event) => event.stopPropagation()}>
                 <header>
-                  <span aria-hidden="true">{countryFlag(selectedCountry.code)}</span>
+                  <CountryFlag code={selectedCountry.code} />
                   <div>
                     <h2>{selectedCountry.data.name}</h2>
                     <p>{selectedCountry.data.totalViews} {t("videoAnalyticsViews")}</p>
