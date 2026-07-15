@@ -850,8 +850,16 @@ header nav a:hover{
   appearance: none;
   -webkit-appearance: none;
   background: transparent;
+  color: var(--text1);
+  color-scheme: dark;
   opacity: 0;
   cursor: pointer;
+}
+
+.adminAvatarLanguageSelect select option,
+.mobileLanguageSelect select option {
+  background-color: var(--background1);
+  color: var(--text1);
 }
 
 .mobileLanguageSelect {
@@ -879,6 +887,8 @@ header nav a:hover{
   appearance: none;
   -webkit-appearance: none;
   background: transparent;
+  color: var(--text1);
+  color-scheme: dark;
   opacity: 0;
   cursor: pointer;
 }
