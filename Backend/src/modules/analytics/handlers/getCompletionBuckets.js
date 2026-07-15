@@ -36,23 +36,28 @@ export async function getCompletionBucketsInternal(object, userId = null) {
 
   await assertVideoOwner(videoId, validatedUserId);
 
-  const filter = buildDateFilter(
-    'wp',
-    fromDate,
-    toDate,
-    1,
-    'last_watched_at',
-  );
+  const filter = buildDateFilter('vv', fromDate, toDate);
   const { rows } = await readPool.query(
     `
-      WITH completion AS (
+      WITH watchings AS (
         SELECT
-          100.0 * COALESCE(wp.total_watch_seconds, 0)
-            / NULLIF(v.duration_seconds, 0) AS percentage
-        FROM watch_progress wp
-        INNER JOIN videos v ON v.id = wp.video_id
-        WHERE wp.video_id = $1${filter.sql}
+          COALESCE(SUM(vv.watch_duration), 0) AS total_watch_seconds,
+          v.duration_seconds
+        FROM video_views vv
+        INNER JOIN videos v ON v.id = vv.video_id
+        WHERE vv.video_id = $1${filter.sql}
           AND v.duration_seconds > 0
+        GROUP BY
+          vv.user_id,
+          CASE WHEN vv.user_id IS NULL THEN vv.ip_address END,
+          CASE WHEN vv.user_id IS NULL THEN vv.user_agent END,
+          v.duration_seconds
+      ),
+      completion AS (
+        SELECT
+          100.0 * total_watch_seconds
+            / NULLIF(duration_seconds, 0) AS percentage
+        FROM watchings
       )
       SELECT
         COUNT(*) FILTER (WHERE percentage < 25) AS less_than_25,
