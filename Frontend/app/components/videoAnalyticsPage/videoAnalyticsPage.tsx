@@ -274,6 +274,39 @@ function useAnimatedPercentage(targetValue: number, resetKey: string, duration =
   return animatedValue;
 }
 
+function EngagementMeter({
+  percentage,
+  resetKey,
+  label,
+}: {
+  percentage: number;
+  resetKey: string;
+  label: string;
+}) {
+  const animatedPercentage = useAnimatedPercentage(percentage, resetKey);
+  const labelPosition = Math.min(97, Math.max(3, animatedPercentage));
+
+  return (
+    <div className="videoAnalyticsEngagementMeter">
+      <div className="videoAnalyticsEngagementValueRow">
+        <strong style={{ left: `${labelPosition}%` }}>
+          {Math.round(animatedPercentage)}%
+        </strong>
+      </div>
+      <div
+        className="videoAnalyticsEngagementTrack"
+        role="progressbar"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(percentage)}
+      >
+        <i style={{ transform: `scaleX(${animatedPercentage / 100})` }} />
+      </div>
+    </div>
+  );
+}
+
 function getDateRange(range: AnalyticsRange) {
   if (range === "all") return "";
 
@@ -468,8 +501,6 @@ function VideoAnalyticsPage() {
     refetchOnWindowFocus: false,
   });
   const engagementPercentage = Math.min(100, Math.max(0, (engagementData?.engagement ?? 0) * 100));
-  const animatedEngagementPercentage = useAnimatedPercentage(engagementPercentage, range);
-  const engagementLabelPosition = Math.min(97, Math.max(3, animatedEngagementPercentage));
 
   const overview = overviewData?.overview;
   const overviewCards = overview
@@ -835,23 +866,11 @@ function VideoAnalyticsPage() {
             ) : isEngagementError || !engagementData ? (
               <p className="videoAnalyticsOverviewError">{t("videoAnalyticsEngagementFailed")}</p>
             ) : (
-              <div className="videoAnalyticsEngagementMeter">
-                <div className="videoAnalyticsEngagementValueRow">
-                  <strong style={{ left: `${engagementLabelPosition}%` }}>
-                    {Math.round(animatedEngagementPercentage)}%
-                  </strong>
-                </div>
-                <div
-                  className="videoAnalyticsEngagementTrack"
-                  role="progressbar"
-                  aria-label={t("videoAnalyticsEngagement")}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-valuenow={Math.round(engagementPercentage)}
-                >
-                  <i style={{ width: `${animatedEngagementPercentage}%` }} />
-                </div>
-              </div>
+              <EngagementMeter
+                percentage={engagementPercentage}
+                resetKey={range}
+                label={t("videoAnalyticsEngagement")}
+              />
             )}
           </section>
 
