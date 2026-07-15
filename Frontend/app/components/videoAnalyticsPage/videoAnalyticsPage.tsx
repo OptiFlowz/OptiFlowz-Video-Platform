@@ -550,9 +550,9 @@ function VideoAnalyticsPage() {
     isLoading: isCompletionBucketsLoading,
     isError: isCompletionBucketsError,
   } = useQuery<CompletionBucketsResponse>({
-    queryKey: ["video-analytics-completion-buckets", videoId],
+    queryKey: ["video-analytics-completion-buckets", videoId, range],
     queryFn: () => fetchFn<CompletionBucketsResponse>({
-      route: `api/analytics/${videoId}/completion-buckets`,
+      route: `api/analytics/${videoId}/completion-buckets${dateRangeQuery}`,
       options: { method: "GET", headers: headers.current },
     }),
     enabled: !!token && !!videoId,
