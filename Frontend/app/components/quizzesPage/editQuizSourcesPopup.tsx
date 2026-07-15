@@ -46,22 +46,10 @@ function normalizeSource(source: QuizQuestionSourceApiResponse): QuizQuestionSou
   };
 }
 
-function getSourceTitle(source: QuizQuestionSource) {
-  if (source.source_type === "playlist") {
-    return source.playlist_title || source.playlist_id || "Selected playlist";
-  }
-
-  return source.video_title || source.video_id || "Selected video";
-}
-
 function getSourceThumbnail(source: QuizQuestionSource) {
   return source.source_type === "playlist"
     ? source.playlist_thumbnail
     : source.video_thumbnail;
-}
-
-function getSourceTypeLabel(source: QuizQuestionSource) {
-  return source.source_type === "playlist" ? "Playlist" : "Video";
 }
 
 function getSourceDraftValues(source: QuizQuestionSource): SourceDraftValues {
@@ -94,9 +82,16 @@ function EditQuizSourcesPopup({
   const closeTimeoutRef = useRef<number | null>(null);
   const { confirm, dialogProps } = useConfirm();
 
+  const getSourceTitle = (source: QuizQuestionSource) => {
+    if (source.source_type === "playlist") {
+      return source.playlist_title || source.playlist_id || t("adminTablePlaylist");
+    }
+    return source.video_title || source.video_id || t("adminTableVideo");
+  };
+
   const modalLabel = useMemo(
-    () => `Edit sources for ${quizTitle || "this quiz"}`,
-    [quizTitle]
+    () => t("quizSourcesDescription", { title: quizTitle || t("quizThisQuiz") }),
+    [quizTitle, t]
   );
 
   const {
@@ -169,7 +164,7 @@ function EditQuizSourcesPopup({
   const handleCreateSource = async (payload: CreateQuizSourcePayload) => {
     await onSubmit(payload);
     await refetchSources();
-    setSuccessMessage("Source created successfully.");
+    setSuccessMessage(t("quizSourceCreated"));
   };
 
   const handleUpdateSource = async (payload: CreateQuizSourcePayload) => {
@@ -186,7 +181,7 @@ function EditQuizSourcesPopup({
 
     await refetchSources();
     setEditingSource(null);
-    setSuccessMessage("Source updated successfully.");
+    setSuccessMessage(t("quizSourceUpdated"));
   };
 
   const handleDeleteSource = async (source: QuizQuestionSource) => {
@@ -207,7 +202,7 @@ function EditQuizSourcesPopup({
     });
 
     await refetchSources();
-    setSuccessMessage("Source deleted successfully.");
+    setSuccessMessage(t("quizSourceDeleted"));
   };
 
   const renderThumbnail = (source: QuizQuestionSource) => {
@@ -215,7 +210,7 @@ function EditQuizSourcesPopup({
     if (!thumbnail) {
       return (
         <div className="flex h-14 w-24 shrink-0 items-center justify-center rounded-xl bg-(--background1) text-xs opacity-70">
-          No thumb
+          {t("quizNoThumbnail")}
         </div>
       );
     }
@@ -258,19 +253,19 @@ function EditQuizSourcesPopup({
           <div className="mb-5">
             <h3 className="text-xl font-semibold">{t("quizQuestionSources")}</h3>
             <p className="mt-2 text-sm opacity-80">
-              Add and manage source material for <strong>{quizTitle || "this quiz"}</strong>.
+              {t("quizSourcesDescription", { title: quizTitle || t("quizThisQuiz") })}
             </p>
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
             <div className="flex items-center gap-4">
-              <h4 className="text-base font-semibold">Sources</h4>
+              <h4 className="text-base font-semibold">{t("quizSourcesButton")}</h4>
             </div>
 
             <div className="mt-5 flex flex-col gap-3">
               {isSourcesLoading ? (
                 <div className="rounded-3xl border border-dashed border-(--border1) bg-(--background2) px-5 py-6 text-sm opacity-75">
-                  Loading sources...
+                  {t("quizLoadingSources")}
                 </div>
               ) : sources.length ? (
                 sources.map((source) => (
@@ -289,13 +284,13 @@ function EditQuizSourcesPopup({
                       {source.fixed_question_count ? (
                         <>
                           <span>•</span>
-                          <span>{source.fixed_question_count} fixed questions</span>
+                          <span>{t("quizFixedQuestionsCount", { count: source.fixed_question_count })}</span>
                         </>
                       ) : null}
                       {source.question_count ? (
                         <>
                           <span>•</span>
-                          <span>{source.question_count} questions</span>
+                          <span>{t("quizQuestionsCount", { count: source.question_count })}</span>
                         </>
                       ) : null}
                     </div>
@@ -308,8 +303,8 @@ function EditQuizSourcesPopup({
                           <p className="font-medium">{getSourceTitle(source)}</p>
                           <p className="mt-1 text-sm opacity-75">
                             {source.include_general_questions
-                              ? "Includes general questions"
-                              : "Specific questions only"}
+                              ? t("quizIncludesGeneralQuestions")
+                              : t("quizSpecificQuestionsOnly")}
                           </p>
                         </div>
                       </div>
@@ -338,15 +333,15 @@ function EditQuizSourcesPopup({
                 ))
               ) : (
                 <div className="rounded-3xl border border-dashed border-(--border1) bg-(--background2) px-5 py-6 text-sm opacity-75">
-                  No sources yet.
+                  {t("quizNoSourcesYet")}
                 </div>
               )}
 
               <button
                 type="button"
                 className="flex cursor-pointer items-center gap-3 self-start rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 text-sm font-medium transition-colors hover:bg-(--background3)"
-                title="Add source"
-                aria-label="Add source"
+                title={t("quizAddSource")}
+                aria-label={t("quizAddSource")}
                 onClick={() => {
                   setSuccessMessage(null);
                   setIsCreateSourceOpen(true);

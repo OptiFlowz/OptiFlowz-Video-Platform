@@ -21,19 +21,6 @@ type Props = {
 
 type SearchVideo = SearchT["videos"][number];
 
-const RULE_TYPE_OPTIONS: Array<{ value: QuizRuleType; label: string; description: string }> = [
-  {
-    value: "video_watch_percentage",
-    label: "Video Watch Percentage",
-    description: "Require users to watch a percentage of a selected video.",
-  },
-  {
-    value: "video_watch_seconds",
-    label: "Video Watch Seconds",
-    description: "Require users to watch a fixed number of seconds of a selected video.",
-  },
-];
-
 function CreateQuizRulePopup({
   open,
   requestHeaders,
@@ -58,6 +45,21 @@ function CreateQuizRulePopup({
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const closeTimeoutRef = useRef<number | null>(null);
   const isEditMode = mode === "edit";
+  const ruleTypeOptions = useMemo<Array<{ value: QuizRuleType; label: string; description: string }>>(
+    () => [
+      {
+        value: "video_watch_percentage",
+        label: t("quizVideoWatchPercentage"),
+        description: t("quizVideoWatchPercentageHelp"),
+      },
+      {
+        value: "video_watch_seconds",
+        label: t("quizVideoWatchSeconds"),
+        description: t("quizVideoWatchSecondsHelp"),
+      },
+    ],
+    [t]
+  );
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -183,7 +185,7 @@ function CreateQuizRulePopup({
     [searchVideos, selectedVideoId]
   );
 
-  const selectedRuleType = RULE_TYPE_OPTIONS.find((option) => option.value === ruleType);
+  const selectedRuleType = ruleTypeOptions.find((option) => option.value === ruleType);
 
   const parsePositiveInteger = (
     value: string,
@@ -195,15 +197,15 @@ function CreateQuizRulePopup({
     const max = options?.max;
 
     if (!Number.isFinite(parsed) || Number.isNaN(parsed)) {
-      throw new Error(`${label} is required.`);
+      throw new Error(t("quizFieldRequired", { label }));
     }
 
     if (parsed < min) {
-      throw new Error(`${label} must be at least ${min}.`);
+      throw new Error(t("quizFieldMin", { label, min }));
     }
 
     if (typeof max === "number" && parsed > max) {
-      throw new Error(`${label} must be ${max} or less.`);
+      throw new Error(t("quizFieldMax", { label, max }));
     }
 
     return parsed;
@@ -214,7 +216,7 @@ function CreateQuizRulePopup({
 
     try {
       if (!selectedVideoId) {
-        throw new Error("Select a video for this rule.");
+        throw new Error(t("quizSelectVideoForRule"));
       }
 
       const payload: CreateQuizRulePayload = {
@@ -226,7 +228,7 @@ function CreateQuizRulePopup({
       if (ruleType === "video_watch_percentage") {
         payload.required_percentage = parsePositiveInteger(
           requiredPercentage,
-          "Required percentage",
+          t("quizRequiredPercentage"),
           { min: 1, max: 100 }
         );
       }
@@ -234,7 +236,7 @@ function CreateQuizRulePopup({
       if (ruleType === "video_watch_seconds") {
         payload.required_seconds = parsePositiveInteger(
           requiredSeconds,
-          "Required seconds",
+          t("quizRequiredSeconds"),
           { min: 1 }
         );
       }
@@ -244,7 +246,7 @@ function CreateQuizRulePopup({
       await onSubmit(payload);
       onClose();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to save rule.";
+      const message = err instanceof Error ? err.message : t("quizFailedCreateRule");
       setError(message);
       setIsSubmitting(false);
     }
@@ -259,7 +261,7 @@ function CreateQuizRulePopup({
       }`}
       role="dialog"
       aria-modal="true"
-      aria-label={isEditMode ? "Edit rule" : "Create rule"}
+      aria-label={isEditMode ? t("quizEditRule") : t("quizAddRule")}
       onMouseDown={() => {
         if (!isSubmitting) onClose();
       }}
@@ -282,8 +284,8 @@ function CreateQuizRulePopup({
             </h3>
             <p className="mt-2 text-sm opacity-80">
               {isEditMode
-                ? "Update the rule fields and save your changes."
-                : "Set up a quiz access rule using the same API structure you shared."}
+                ? t("quizRuleEditDescription")
+                : t("quizRuleCreateDescription")}
             </p>
           </div>
         </div>
@@ -292,7 +294,7 @@ function CreateQuizRulePopup({
           <div className="quizPopupBody">
             <div className="quizPopupGrid">
               <div className="formGroup">
-                <label htmlFor="quizRuleType">Rule Type</label>
+                <label htmlFor="quizRuleType">{t("quizRuleType")}</label>
                 <select
                   id="quizRuleType"
                   value={ruleType}
@@ -300,7 +302,7 @@ function CreateQuizRulePopup({
                   disabled={isSubmitting}
                   className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
                 >
-                  {RULE_TYPE_OPTIONS.map((option) => (
+                  {ruleTypeOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -310,7 +312,7 @@ function CreateQuizRulePopup({
 
               {ruleType === "video_watch_percentage" ? (
                 <div className="formGroup">
-                  <label htmlFor="quizRulePercentage">Required Percentage</label>
+                  <label htmlFor="quizRulePercentage">{t("quizRequiredPercentage")}</label>
                   <input
                     id="quizRulePercentage"
                     type="number"
@@ -325,7 +327,7 @@ function CreateQuizRulePopup({
                 </div>
               ) : (
                 <div className="formGroup">
-                  <label htmlFor="quizRuleSeconds">Required Seconds</label>
+                  <label htmlFor="quizRuleSeconds">{t("quizRequiredSeconds")}</label>
                   <input
                     id="quizRuleSeconds"
                     type="number"
@@ -341,11 +343,11 @@ function CreateQuizRulePopup({
             </div>
 
             <div className="rounded-3xl border border-(--border1) bg-(--background2) px-4 py-3 text-sm opacity-80">
-              {selectedRuleType?.description ?? "Configure this rule type."}
+              {selectedRuleType?.description ?? t("quizConfigureRule")}
             </div>
 
             <div className="formGroup">
-              <label htmlFor="quizRuleVideoSearch">Rule Video</label>
+              <label htmlFor="quizRuleVideoSearch">{t("quizRuleVideo")}</label>
               <div className="mt-3 rounded-3xl border border-(--border1) bg-(--background2) p-4">
                 <input
                   ref={searchInputRef}
@@ -353,7 +355,7 @@ function CreateQuizRulePopup({
                   type="text"
                   value={videoSearch}
                   onChange={(event) => setVideoSearch(event.target.value)}
-                  placeholder="Search videos to use in this rule"
+                  placeholder={t("quizSearchVideosForRule")}
                   disabled={isSubmitting}
                   className="w-full rounded-2xl border border-(--border1) bg-(--background1) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
                 />
@@ -379,23 +381,23 @@ function CreateQuizRulePopup({
                       onClick={() => setSelectedVideoId(null)}
                       disabled={isSubmitting}
                     >
-                      Remove
+                      {t("quizRemove")}
                     </button>
                   </div>
                 ) : selectedVideoId ? (
                   <div className="mt-3 rounded-2xl border border-(--border1) bg-(--background1) px-4 py-3 text-sm opacity-75">
-                    Loading selected video...
+                    {t("quizLoadingSelectedVideo")}
                   </div>
                 ) : (
                   <div className="mt-3 rounded-2xl border border-dashed border-(--border1) bg-(--background1) px-4 py-3 text-sm opacity-75">
-                    No video selected.
+                    {t("quizNoVideoSelected")}
                   </div>
                 )}
 
                 {debouncedVideoSearch ? (
                   <div className="mt-3 grid gap-3">
                     {isSearchingVideos ? (
-                      <p className="text-sm opacity-75">Searching videos...</p>
+                      <p className="text-sm opacity-75">{t("searchingVideos")}</p>
                     ) : filteredSearchVideos.length ? (
                       filteredSearchVideos.map((video) => (
                         <div
@@ -424,12 +426,12 @@ function CreateQuizRulePopup({
                             }}
                             disabled={isSubmitting}
                           >
-                            Select
+                            {t("quizSelect")}
                           </button>
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm opacity-75">No videos found.</p>
+                      <p className="text-sm opacity-75">{t("quizNoVideosFound")}</p>
                     )}
                   </div>
                 ) : null}
@@ -439,8 +441,8 @@ function CreateQuizRulePopup({
             <div className="quizPopupToggleList">
               <label className="quizPopupToggleRow" htmlFor="quizRuleIsActive">
                 <div>
-                  <strong>Is Rule Active</strong>
-                  <span>Inactive rules stay saved but will not be enforced.</span>
+                  <strong>{t("quizRuleActive")}</strong>
+                  <span>{t("quizRuleActiveHelp")}</span>
                 </div>
                 <input
                   id="quizRuleIsActive"
@@ -458,13 +460,13 @@ function CreateQuizRulePopup({
 
           <div className="quizPopupActions">
             <button type="button" className="cancelBtn" onClick={onClose} disabled={isSubmitting}>
-              Cancel
+              {t("adminCancel")}
             </button>
             <button type="submit" className="saveCaptionsBtn" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <div className="uploadSpinner tiny" />
-                  Saving...
+                  {t("saving")}
                 </>
               ) : isEditMode ? (
                 t("quizSaveRule")

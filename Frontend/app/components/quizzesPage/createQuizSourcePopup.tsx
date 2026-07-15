@@ -38,23 +38,6 @@ type VideoDetailsResponse =
       uploader_name?: string;
     };
 
-const SOURCE_TYPE_OPTIONS: Array<{
-  value: QuizQuestionSourceType;
-  label: string;
-  description: string;
-}> = [
-  {
-    value: "playlist",
-    label: "Playlist",
-    description: "Generate quiz questions from a selected playlist.",
-  },
-  {
-    value: "video",
-    label: "Video",
-    description: "Generate quiz questions from a selected video.",
-  },
-];
-
 function normalizePlaylistDetails(response: PlaylistDetailsResponse | undefined) {
   if (!response) return null;
   if ("playlist" in response && response.playlist) return response.playlist;
@@ -105,6 +88,25 @@ function CreateQuizSourcePopup({
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const closeTimeoutRef = useRef<number | null>(null);
   const isEditMode = mode === "edit";
+  const sourceTypeOptions = useMemo<Array<{
+    value: QuizQuestionSourceType;
+    label: string;
+    description: string;
+  }>>(
+    () => [
+      {
+        value: "playlist",
+        label: t("adminTablePlaylist"),
+        description: t("quizPlaylistSourceHelp"),
+      },
+      {
+        value: "video",
+        label: t("adminTableVideo"),
+        description: t("quizVideoSourceHelp"),
+      },
+    ],
+    [t]
+  );
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -283,18 +285,18 @@ function CreateQuizSourcePopup({
     [searchVideos, selectedVideoId]
   );
 
-  const selectedSourceType = SOURCE_TYPE_OPTIONS.find((option) => option.value === sourceType);
+  const selectedSourceType = sourceTypeOptions.find((option) => option.value === sourceType);
   const isSearchingSources = sourceType === "playlist" ? isSearchingPlaylists : isSearchingVideos;
 
   const parsePercentage = (value: string) => {
     const parsed = Number.parseFloat(value);
 
     if (!Number.isFinite(parsed) || Number.isNaN(parsed)) {
-      throw new Error("Percentage is required.");
+      throw new Error(t("quizFieldRequired", { label: t("quizPercentage") }));
     }
 
     if (parsed < 1 || parsed > 100) {
-      throw new Error("Percentage must be between 1 and 100.");
+      throw new Error(t("quizPercentageBetween"));
     }
 
     return parsed;
@@ -306,7 +308,7 @@ function CreateQuizSourcePopup({
 
     const parsed = Number.parseInt(normalized, 10);
     if (!Number.isFinite(parsed) || Number.isNaN(parsed) || parsed < 1) {
-      throw new Error("Fixed question count must be at least 1.");
+      throw new Error(t("quizFieldMin", { label: t("quizFixedQuestionCount"), min: 1 }));
     }
 
     return parsed;
@@ -325,11 +327,11 @@ function CreateQuizSourcePopup({
 
     try {
       if (sourceType === "playlist" && !selectedPlaylistId) {
-        throw new Error("Select a playlist source.");
+        throw new Error(t("quizSelectPlaylistSource"));
       }
 
       if (sourceType === "video" && !selectedVideoId) {
-        throw new Error("Select a video source.");
+        throw new Error(t("quizSelectVideoSource"));
       }
 
       const payload: CreateQuizSourcePayload = {
@@ -353,7 +355,7 @@ function CreateQuizSourcePopup({
       await onSubmit(payload);
       onClose();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to save source.";
+      const message = err instanceof Error ? err.message : t("quizFailedCreateSource");
       setError(message);
       setIsSubmitting(false);
     }
@@ -363,7 +365,7 @@ function CreateQuizSourcePopup({
     if (!src) {
       return (
         <div className="flex h-14 w-24 shrink-0 items-center justify-center rounded-xl bg-(--background1) text-xs opacity-70">
-          No thumb
+          {t("quizNoThumbnail")}
         </div>
       );
     }
@@ -380,7 +382,7 @@ function CreateQuizSourcePopup({
       }`}
       role="dialog"
       aria-modal="true"
-      aria-label={isEditMode ? "Edit source" : "Create source"}
+      aria-label={isEditMode ? t("quizEditSource") : t("quizAddSource")}
       onMouseDown={() => {
         if (!isSubmitting) onClose();
       }}
@@ -402,7 +404,7 @@ function CreateQuizSourcePopup({
               {isEditMode ? t("quizEditSource") : t("quizAddSource")}
             </h3>
             <p className="mt-2 text-sm opacity-80">
-              Choose a playlist or video source for generated quiz questions.
+              {isEditMode ? t("quizSourceEditDescription") : t("quizSourceCreateDescription")}
             </p>
           </div>
         </div>
@@ -411,7 +413,7 @@ function CreateQuizSourcePopup({
           <div className="quizPopupBody">
             <div className="quizPopupGrid">
               <div className="formGroup">
-                <label htmlFor="quizSourceType">Source Type</label>
+                <label htmlFor="quizSourceType">{t("quizSourceType")}</label>
                 <select
                   id="quizSourceType"
                   value={sourceType}
@@ -421,7 +423,7 @@ function CreateQuizSourcePopup({
                   disabled={isSubmitting}
                   className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
                 >
-                  {SOURCE_TYPE_OPTIONS.map((option) => (
+                  {sourceTypeOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -430,7 +432,7 @@ function CreateQuizSourcePopup({
               </div>
 
               <div className="formGroup">
-                <label htmlFor="quizSourcePercentage">Percentage</label>
+                <label htmlFor="quizSourcePercentage">{t("quizPercentage")}</label>
                 <input
                   id="quizSourcePercentage"
                   type="number"
@@ -446,12 +448,12 @@ function CreateQuizSourcePopup({
             </div>
 
             <div className="rounded-3xl border border-(--border1) bg-(--background2) px-4 py-3 text-sm opacity-80">
-              {selectedSourceType?.description ?? "Configure this source."}
+              {selectedSourceType?.description ?? t("quizConfigureSource")}
             </div>
 
             <div className="formGroup">
               <label htmlFor="quizSourceSearch">
-                {sourceType === "playlist" ? "Source Playlist" : "Source Video"}
+                {sourceType === "playlist" ? t("quizSourcePlaylist") : t("quizSourceVideo")}
               </label>
               <div className="mt-3 rounded-3xl border border-(--border1) bg-(--background2) p-4">
                 <input
@@ -462,8 +464,8 @@ function CreateQuizSourcePopup({
                   onChange={(event) => setSourceSearch(event.target.value)}
                   placeholder={
                     sourceType === "playlist"
-                      ? "Search playlists to use as a source"
-                      : "Search videos to use as a source"
+                      ? t("quizSearchPlaylistsForSource")
+                      : t("quizSearchVideosForSource")
                   }
                   disabled={isSubmitting}
                   className="w-full rounded-2xl border border-(--border1) bg-(--background1) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
@@ -477,7 +479,7 @@ function CreateQuizSourcePopup({
                         <span className="flex min-w-0 flex-col gap-1">
                           <strong className="line-clamp-2">{selectedPlaylist.title}</strong>
                           <span className="text-sm opacity-80">
-                            {selectedPlaylist.video_count} videos
+                            {t("videosLabel", { count: selectedPlaylist.video_count })}
                           </span>
                         </span>
                       </div>
@@ -487,12 +489,12 @@ function CreateQuizSourcePopup({
                         onClick={() => setSelectedPlaylistId(null)}
                         disabled={isSubmitting}
                       >
-                        Remove
+                        {t("quizRemove")}
                       </button>
                     </div>
                   ) : (
                     <div className="mt-3 rounded-2xl border border-dashed border-(--border1) bg-(--background1) px-4 py-3 text-sm opacity-75">
-                      No playlist selected.
+                      {t("quizNoPlaylistSelected")}
                     </div>
                   )
                 ) : selectedVideo ? (
@@ -512,12 +514,12 @@ function CreateQuizSourcePopup({
                       onClick={() => setSelectedVideoId(null)}
                       disabled={isSubmitting}
                     >
-                      Remove
+                      {t("quizRemove")}
                     </button>
                   </div>
                 ) : (
                   <div className="mt-3 rounded-2xl border border-dashed border-(--border1) bg-(--background1) px-4 py-3 text-sm opacity-75">
-                    No video selected.
+                    {t("quizNoVideoSelected")}
                   </div>
                 )}
 
@@ -525,7 +527,7 @@ function CreateQuizSourcePopup({
                   <div className="mt-3 grid gap-3">
                     {isSearchingSources ? (
                       <p className="text-sm opacity-75">
-                        Searching {sourceType === "playlist" ? "playlists" : "videos"}...
+                        {sourceType === "playlist" ? t("quizSearchingPlaylists") : t("searchingVideos")}
                       </p>
                     ) : sourceType === "playlist" ? (
                       filteredSearchPlaylists.length ? (
@@ -539,7 +541,7 @@ function CreateQuizSourcePopup({
                               <span className="flex min-w-0 flex-col gap-1">
                                 <strong className="line-clamp-2">{playlist.title}</strong>
                                 <span className="text-sm opacity-80">
-                                  {playlist.video_count} videos
+                                  {t("videosLabel", { count: playlist.video_count })}
                                 </span>
                               </span>
                             </div>
@@ -554,12 +556,12 @@ function CreateQuizSourcePopup({
                               }}
                               disabled={isSubmitting}
                             >
-                              Select
+                              {t("quizSelect")}
                             </button>
                           </div>
                         ))
                       ) : (
-                        <p className="text-sm opacity-75">No playlists found.</p>
+                        <p className="text-sm opacity-75">{t("quizNoPlaylistsFound")}</p>
                       )
                     ) : filteredSearchVideos.length ? (
                       filteredSearchVideos.map((video) => (
@@ -585,12 +587,12 @@ function CreateQuizSourcePopup({
                             }}
                             disabled={isSubmitting}
                           >
-                            Select
+                            {t("quizSelect")}
                           </button>
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm opacity-75">No videos found.</p>
+                      <p className="text-sm opacity-75">{t("quizNoVideosFound")}</p>
                     )}
                   </div>
                 ) : null}
@@ -599,7 +601,7 @@ function CreateQuizSourcePopup({
 
             <div className="quizPopupGrid">
               <div className="formGroup">
-                <label htmlFor="quizSourceFixedQuestionCount">Fixed Question Count</label>
+                <label htmlFor="quizSourceFixedQuestionCount">{t("quizFixedQuestionCount")}</label>
                 <input
                   id="quizSourceFixedQuestionCount"
                   type="number"
@@ -607,7 +609,7 @@ function CreateQuizSourcePopup({
                   step={1}
                   value={fixedQuestionCount}
                   onChange={(event) => setFixedQuestionCount(event.target.value)}
-                  placeholder="Optional"
+                  placeholder={t("quizOptional")}
                   disabled={isSubmitting}
                   className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
                 />
@@ -617,8 +619,8 @@ function CreateQuizSourcePopup({
             <div className="quizPopupToggleList">
               <label className="quizPopupToggleRow" htmlFor="quizSourceIncludeGeneralQuestions">
                 <div>
-                  <strong>Include General Questions</strong>
-                  <span>Allow generated questions that are not tied to a specific timestamp or source item.</span>
+                  <strong>{t("quizIncludeGeneralQuestions")}</strong>
+                  <span>{t("quizIncludeGeneralQuestionsHelp")}</span>
                 </div>
                 <input
                   id="quizSourceIncludeGeneralQuestions"
@@ -636,13 +638,13 @@ function CreateQuizSourcePopup({
 
           <div className="quizPopupActions">
             <button type="button" className="cancelBtn" onClick={onClose} disabled={isSubmitting}>
-              Cancel
+              {t("adminCancel")}
             </button>
             <button type="submit" className="saveCaptionsBtn" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <div className="uploadSpinner tiny" />
-                  Saving...
+                  {t("saving")}
                 </>
               ) : isEditMode ? (
                 t("quizSaveSource")

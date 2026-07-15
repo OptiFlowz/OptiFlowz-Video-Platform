@@ -331,11 +331,11 @@ function CreateQuizQuestionPopup({
     const min = options?.min ?? 1;
 
     if (!Number.isFinite(parsed) || Number.isNaN(parsed)) {
-      throw new Error(`${label} is required.`);
+      throw new Error(t("quizFieldRequired", { label }));
     }
 
     if (parsed < min) {
-      throw new Error(`${label} must be at least ${min}.`);
+      throw new Error(t("quizFieldMin", { label, min }));
     }
 
     return parsed;
@@ -367,17 +367,17 @@ function CreateQuizQuestionPopup({
 
   const validatePayload = (payload: CreateQuizQuestionPayload) => {
     if (!payload.question_text.trim()) {
-      throw new Error("Question text is required.");
+      throw new Error(t("quizFieldRequired", { label: t("quizQuestionText") }));
     }
 
     if (payload.question_type === "matching") {
       if (!payload.pairs.length) {
-        throw new Error("Add at least one matching pair.");
+        throw new Error(t("quizAddMatchingPairRequired"));
       }
 
       payload.pairs.forEach((pair, index) => {
         if (!pair.left_text.trim() || !pair.right_text.trim()) {
-          throw new Error(`Matching pair ${index + 1} must have both values.`);
+          throw new Error(t("quizMatchingPairValuesRequired", { number: index + 1 }));
         }
       });
 
@@ -385,21 +385,21 @@ function CreateQuizQuestionPopup({
     }
 
     if (payload.options.length < 2) {
-      throw new Error("Add at least two options.");
+      throw new Error(t("quizAddTwoOptionsRequired"));
     }
 
     const trimmedOptions = payload.options.map((option) => option.option_text.trim());
     if (trimmedOptions.some((optionText) => !optionText)) {
-      throw new Error("Each option must have text.");
+      throw new Error(t("quizOptionTextRequired"));
     }
 
     const correctOptionCount = payload.options.filter((option) => option.is_correct).length;
     if (payload.question_type === "single_choice" && correctOptionCount !== 1) {
-      throw new Error("Single choice questions must have exactly one correct answer.");
+      throw new Error(t("quizSingleCorrectRequired"));
     }
 
     if (payload.question_type === "multiple_choice" && correctOptionCount < 1) {
-      throw new Error("Multiple choice questions must have at least one correct answer.");
+      throw new Error(t("quizMultipleCorrectRequired"));
     }
   };
 
@@ -413,7 +413,7 @@ function CreateQuizQuestionPopup({
         video_id: selectedVideoId,
         playlist_id: selectedPlaylistId,
         explanation: explanation.trim(),
-        points: parsePositiveInteger(points, "Points"),
+        points: parsePositiveInteger(points, t("quizPoints")),
         position: nextPosition,
         is_active: true,
         options: usesOptions
@@ -439,7 +439,7 @@ function CreateQuizQuestionPopup({
       onClose();
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to create question.";
+        err instanceof Error ? err.message : t("quizFailedCreateQuestion");
       setError(message);
       setIsSubmitting(false);
     }
@@ -454,7 +454,7 @@ function CreateQuizQuestionPopup({
       }`}
       role="dialog"
       aria-modal="true"
-      aria-label="Create question"
+      aria-label={isEditMode ? t("quizEditQuestion") : t("quizAddQuestion")}
       onMouseDown={() => {
         if (!isSubmitting) onClose();
       }}
@@ -477,8 +477,8 @@ function CreateQuizQuestionPopup({
             </h3>
             <p className="mt-2 text-sm opacity-80">
               {isEditMode
-                ? "Update the question fields and save your changes."
-                : "Choose a question type and fill in the fields required by the API."}
+                ? t("quizQuestionEditDescription")
+                : t("quizQuestionCreateDescription")}
             </p>
           </div>
         </div>
@@ -487,7 +487,7 @@ function CreateQuizQuestionPopup({
           <div className="quizPopupBody">
             <div className="quizPopupGrid">
               <div className="formGroup">
-                <label htmlFor="quizQuestionType">Question Type</label>
+                <label htmlFor="quizQuestionType">{t("quizQuestionType")}</label>
                 <select
                   id="quizQuestionType"
                   value={questionType}
@@ -504,7 +504,7 @@ function CreateQuizQuestionPopup({
               </div>
 
               <div className="formGroup">
-                <label htmlFor="quizQuestionPoints">Points</label>
+                <label htmlFor="quizQuestionPoints">{t("quizPoints")}</label>
                 <input
                   id="quizQuestionPoints"
                   type="number"
@@ -519,28 +519,28 @@ function CreateQuizQuestionPopup({
             </div>
 
             <div className="formGroup">
-              <label htmlFor="quizQuestionText">Question Text</label>
+              <label htmlFor="quizQuestionText">{t("quizQuestionText")}</label>
               <input
                 ref={questionInputRef}
                 id="quizQuestionText"
                 type="text"
                 value={questionText}
                 onChange={(event) => setQuestionText(event.target.value)}
-                placeholder="Enter question text"
+                placeholder={t("quizQuestionTextPlaceholder")}
                 disabled={isSubmitting}
                 className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
               />
             </div>
 
             <div className="formGroup">
-              <label htmlFor="quizQuestionVideoSearch">Connected video</label>
+              <label htmlFor="quizQuestionVideoSearch">{t("quizConnectedVideo")}</label>
               <div className="mt-3 rounded-3xl border border-(--border1) bg-(--background2) p-4">
                 <input
                   id="quizQuestionVideoSearch"
                   type="text"
                   value={videoSearch}
                   onChange={(event) => setVideoSearch(event.target.value)}
-                  placeholder="Search videos to attach this question to"
+                  placeholder={t("quizSearchVideosForQuestion")}
                   disabled={isSubmitting}
                   className="w-full rounded-2xl border border-(--border1) bg-(--background1) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
                 />
@@ -566,23 +566,23 @@ function CreateQuizQuestionPopup({
                       onClick={() => setSelectedVideoId(null)}
                       disabled={isSubmitting}
                     >
-                      Remove
+                      {t("quizRemove")}
                     </button>
                   </div>
                 ) : selectedVideoId ? (
                   <div className="mt-3 rounded-2xl border border-(--border1) bg-(--background1) px-4 py-3 text-sm opacity-75">
-                    Loading selected video...
+                    {t("quizLoadingSelectedVideo")}
                   </div>
                 ) : (
                   <div className="mt-3 rounded-2xl border border-dashed border-(--border1) bg-(--background1) px-4 py-3 text-sm opacity-75">
-                    No video selected.
+                    {t("quizNoVideoSelected")}
                   </div>
                 )}
 
                 {debouncedVideoSearch ? (
                   <div className="mt-3 grid gap-3">
                     {isSearchingVideos ? (
-                      <p className="text-sm opacity-75">Searching videos...</p>
+                      <p className="text-sm opacity-75">{t("searchingVideos")}</p>
                     ) : filteredSearchVideos.length ? (
                       filteredSearchVideos.map((video) => (
                         <div
@@ -611,12 +611,12 @@ function CreateQuizQuestionPopup({
                             }}
                             disabled={isSubmitting}
                           >
-                            Select
+                            {t("quizSelect")}
                           </button>
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm opacity-75">No videos found.</p>
+                      <p className="text-sm opacity-75">{t("quizNoVideosFound")}</p>
                     )}
                   </div>
                 ) : null}
@@ -624,14 +624,14 @@ function CreateQuizQuestionPopup({
             </div>
 
             <div className="formGroup">
-              <label htmlFor="quizQuestionPlaylistSearch">Connected playlist</label>
+              <label htmlFor="quizQuestionPlaylistSearch">{t("quizConnectedPlaylist")}</label>
               <div className="mt-3 rounded-3xl border border-(--border1) bg-(--background2) p-4">
                 <input
                   id="quizQuestionPlaylistSearch"
                   type="text"
                   value={playlistSearch}
                   onChange={(event) => setPlaylistSearch(event.target.value)}
-                  placeholder="Search playlists to attach this question to"
+                  placeholder={t("quizSearchPlaylistsForQuestion")}
                   disabled={isSubmitting}
                   className="w-full rounded-2xl border border-(--border1) bg-(--background1) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
                 />
@@ -647,13 +647,13 @@ function CreateQuizQuestionPopup({
                         />
                       ) : (
                         <div className="flex h-14 w-24 items-center justify-center rounded-xl bg-(--background2) text-xs opacity-70">
-                          No thumb
+                          {t("quizNoThumbnail")}
                         </div>
                       )}
                       <span className="flex min-w-0 flex-col gap-1">
                         <strong className="line-clamp-2">{selectedPlaylist.title}</strong>
                         <span className="text-sm opacity-80">
-                          {selectedPlaylist.video_count} videos
+                          {t("videosLabel", { count: selectedPlaylist.video_count })}
                         </span>
                       </span>
                     </div>
@@ -663,23 +663,23 @@ function CreateQuizQuestionPopup({
                       onClick={() => setSelectedPlaylistId(null)}
                       disabled={isSubmitting}
                     >
-                      Remove
+                      {t("quizRemove")}
                     </button>
                   </div>
                 ) : selectedPlaylistId ? (
                   <div className="mt-3 rounded-2xl border border-(--border1) bg-(--background1) px-4 py-3 text-sm opacity-75">
-                    Loading selected playlist...
+                    {t("quizLoadingSelectedPlaylist")}
                   </div>
                 ) : (
                   <div className="mt-3 rounded-2xl border border-dashed border-(--border1) bg-(--background1) px-4 py-3 text-sm opacity-75">
-                    No playlist selected.
+                    {t("quizNoPlaylistSelected")}
                   </div>
                 )}
 
                 {debouncedPlaylistSearch ? (
                   <div className="mt-3 grid gap-3">
                     {isSearchingPlaylists ? (
-                      <p className="text-sm opacity-75">Searching playlists...</p>
+                      <p className="text-sm opacity-75">{t("quizSearchingPlaylists")}</p>
                     ) : filteredSearchPlaylists.length ? (
                       filteredSearchPlaylists.map((playlist) => (
                         <div
@@ -695,13 +695,13 @@ function CreateQuizQuestionPopup({
                               />
                             ) : (
                               <div className="flex h-14 w-24 items-center justify-center rounded-xl bg-(--background2) text-xs opacity-70">
-                                No thumb
+                                {t("quizNoThumbnail")}
                               </div>
                             )}
                             <span className="flex min-w-0 flex-col gap-1">
                               <strong className="line-clamp-2">{playlist.title}</strong>
                               <span className="text-sm opacity-80">
-                                {playlist.video_count} videos
+                                {t("videosLabel", { count: playlist.video_count })}
                               </span>
                             </span>
                           </div>
@@ -716,12 +716,12 @@ function CreateQuizQuestionPopup({
                             }}
                             disabled={isSubmitting}
                           >
-                            Select
+                            {t("quizSelect")}
                           </button>
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm opacity-75">No playlists found.</p>
+                      <p className="text-sm opacity-75">{t("quizNoPlaylistsFound")}</p>
                     )}
                   </div>
                 ) : null}
@@ -729,12 +729,12 @@ function CreateQuizQuestionPopup({
             </div>
 
             <div className="formGroup">
-              <label htmlFor="quizQuestionExplanation">Explanation</label>
+              <label htmlFor="quizQuestionExplanation">{t("quizExplanation")}</label>
               <textarea
                 id="quizQuestionExplanation"
                 value={explanation}
                 onChange={(event) => setExplanation(event.target.value)}
-                placeholder="Optional explanation shown after the answer"
+                placeholder={t("quizExplanationPlaceholder")}
                 rows={3}
                 disabled={isSubmitting}
                 className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
@@ -745,11 +745,11 @@ function CreateQuizQuestionPopup({
               <div className="rounded-3xl border border-(--border1) bg-(--background2) p-4">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <h4 className="font-semibold">Options</h4>
+                    <h4 className="font-semibold">{t("quizOptions")}</h4>
                     <p className="mt-1 text-sm opacity-75">
                       {questionType === "single_choice"
-                        ? "Mark exactly one option as correct."
-                        : "Mark one or more correct options."}
+                        ? t("quizSingleCorrectHelp")
+                        : t("quizMultipleCorrectHelp")}
                     </p>
                   </div>
                   <button
@@ -760,7 +760,7 @@ function CreateQuizQuestionPopup({
                     }
                     disabled={isSubmitting}
                   >
-                    Add Option
+                    {t("quizAddOption")}
                   </button>
                 </div>
 
@@ -776,7 +776,7 @@ function CreateQuizQuestionPopup({
                         onChange={(event) =>
                           handleOptionChange(index, "option_text", event.target.value)
                         }
-                        placeholder={`Option ${index + 1}`}
+                        placeholder={t("quizOptionNumber", { number: index + 1 })}
                         disabled={isSubmitting}
                         className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
                       />
@@ -801,7 +801,7 @@ function CreateQuizQuestionPopup({
                           disabled={isSubmitting}
                           className="appearance-none rounded-lg! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative checked:after:content-['✓'] checked:after:absolute checked:after:text-(--text1) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
                         />
-                        Correct
+                        {t("quizCorrect")}
                       </label>
                       <button
                         type="button"
@@ -815,7 +815,7 @@ function CreateQuizQuestionPopup({
                         }
                         disabled={isSubmitting || options.length <= 2}
                       >
-                        Remove
+                        {t("quizRemove")}
                       </button>
                     </div>
                   ))}
@@ -825,9 +825,9 @@ function CreateQuizQuestionPopup({
               <div className="rounded-3xl border border-(--border1) bg-(--background2) p-4">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <h4 className="font-semibold">Matching Pairs</h4>
+                    <h4 className="font-semibold">{t("quizMatchingPairs")}</h4>
                     <p className="mt-1 text-sm opacity-75">
-                      Each pair is sent as `left_text` and `right_text`.
+                      {t("quizMatchingPairsHelp")}
                     </p>
                   </div>
                   <button
@@ -838,7 +838,7 @@ function CreateQuizQuestionPopup({
                     }
                     disabled={isSubmitting}
                   >
-                    Add Pair
+                    {t("quizAddPair")}
                   </button>
                 </div>
 
@@ -854,7 +854,7 @@ function CreateQuizQuestionPopup({
                         onChange={(event) =>
                           handlePairChange(index, "left_text", event.target.value)
                         }
-                        placeholder={`Left text ${index + 1}`}
+                        placeholder={t("quizLeftTextNumber", { number: index + 1 })}
                         disabled={isSubmitting}
                         className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
                       />
@@ -864,7 +864,7 @@ function CreateQuizQuestionPopup({
                         onChange={(event) =>
                           handlePairChange(index, "right_text", event.target.value)
                         }
-                        placeholder={`Right text ${index + 1}`}
+                        placeholder={t("quizRightTextNumber", { number: index + 1 })}
                         disabled={isSubmitting}
                         className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
                       />
@@ -880,7 +880,7 @@ function CreateQuizQuestionPopup({
                         }
                         disabled={isSubmitting || pairs.length <= 1}
                       >
-                        Remove
+                        {t("quizRemove")}
                       </button>
                     </div>
                   ))}
@@ -893,13 +893,13 @@ function CreateQuizQuestionPopup({
 
           <div className="quizPopupActions">
             <button type="button" className="cancelBtn" onClick={onClose} disabled={isSubmitting}>
-              Cancel
+              {t("adminCancel")}
             </button>
             <button type="submit" className="saveCaptionsBtn" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <div className="uploadSpinner tiny" />
-                  Saving...
+                  {t("saving")}
                 </>
               ) : isEditMode ? (
                 t("quizSaveQuestion")

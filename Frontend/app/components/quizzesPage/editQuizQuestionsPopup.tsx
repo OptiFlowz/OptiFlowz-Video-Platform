@@ -65,8 +65,8 @@ function EditQuizQuestionsPopup({
   const { confirm, dialogProps } = useConfirm();
 
   const modalLabel = useMemo(
-    () => `Edit questions for ${quizTitle || "this quiz"}`,
-    [quizTitle]
+    () => t("quizQuestionsDescription", { title: quizTitle || t("quizThisQuiz") }),
+    [quizTitle, t]
   );
 
   const {
@@ -234,7 +234,7 @@ function EditQuizQuestionsPopup({
   const handleCreateQuestion = async (payload: CreateQuizQuestionPayload) => {
     await onSubmit(payload);
     await refetchQuestions();
-    setSuccessMessage("Question created successfully.");
+    setSuccessMessage(t("quizQuestionCreated"));
   };
 
   const handleUpdateQuestion = async (payload: CreateQuizQuestionPayload) => {
@@ -251,7 +251,7 @@ function EditQuizQuestionsPopup({
 
     await refetchQuestions();
     setEditingQuestion(null);
-    setSuccessMessage("Question updated successfully.");
+    setSuccessMessage(t("quizQuestionUpdated"));
   };
 
   const handleDeleteQuestion = async (question: QuizQuestion) => {
@@ -272,7 +272,7 @@ function EditQuizQuestionsPopup({
     });
 
     await refetchQuestions();
-    setSuccessMessage("Question deleted successfully.");
+    setSuccessMessage(t("quizQuestionDeleted"));
   };
 
   const getQuestionTypeLabel = (type: QuestionType) => {
@@ -387,7 +387,7 @@ function EditQuizQuestionsPopup({
       );
 
       await refetchQuestions();
-      setSuccessMessage("Question order updated successfully.");
+      setSuccessMessage(t("quizQuestionOrderUpdated"));
     } catch (err) {
       await refetchQuestions();
       setSuccessMessage(null);
@@ -427,14 +427,14 @@ function EditQuizQuestionsPopup({
             <div>
               <h3 className="text-xl font-semibold">{t("quizEditQuestions")}</h3>
               <p className="mt-2 text-sm opacity-80">
-                Add new questions to <strong>{quizTitle || "this quiz"}</strong>.
+                {t("quizQuestionsDescription", { title: quizTitle || t("quizThisQuiz") })}
               </p>
             </div>
             <button
               type="button"
               className="flex cursor-pointer items-center gap-3 rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 text-sm font-medium transition-colors hover:bg-(--background3) disabled:cursor-not-allowed"
-              title="Add question"
-              aria-label="Add question"
+              title={t("quizAddQuestion")}
+              aria-label={t("quizAddQuestion")}
               onClick={() => {
                 setSuccessMessage(null);
                 setIsCreateQuestionOpen(true);
@@ -448,13 +448,13 @@ function EditQuizQuestionsPopup({
 
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
             <div className="flex items-center gap-4">
-              <h4 className="text-base font-semibold">Questions</h4>
+              <h4 className="text-base font-semibold">{t("adminTableQuestions")}</h4>
             </div>
 
             <div className="mt-5 flex flex-col gap-3">
               {isQuestionsLoading ? (
                 <div className="rounded-3xl border border-dashed border-(--border1) bg-(--background2) px-5 py-6 text-sm opacity-75">
-                  Loading questions...
+                  {t("quizLoadingQuestions")}
                 </div>
               ) : orderedQuestions.length ? (
                 orderedQuestions.map((question) => (
@@ -478,21 +478,21 @@ function EditQuizQuestionsPopup({
                       <span>•</span>
                       <span>{getQuestionTypeLabel(question.question_type)}</span>
                       <span>•</span>
-                      <span>{question.points} pts</span>
+                      <span>{t("quizPointsShort", { count: question.points })}</span>
                       <span>•</span>
-                      <span>{question.video_id ? "Video attached" : "No video"}</span>
+                      <span>{question.video_id ? t("quizVideoAttached") : t("quizNoVideo")}</span>
                       <span>•</span>
-                      <span>{question.playlist_id ? "Playlist attached" : "No playlist"}</span>
+                      <span>{question.playlist_id ? t("quizPlaylistAttached") : t("quizNoPlaylist")}</span>
                       <span>•</span>
-                      <span>Drag to reorder</span>
+                      <span>{t("quizDragToReorder")}</span>
                     </div>
                     <div className="mt-2 flex items-center justify-between gap-4">
                       <p className="font-medium">{question.question_text}</p>
                       <div className="flex items-center gap-3">
                         <span
                           className="inline-flex cursor-grab flex-col gap-1 active:cursor-grabbing"
-                          aria-label={`Drag question ${question.position}`}
-                          title="Drag to reorder"
+                          aria-label={t("quizDragQuestion", { position: question.position })}
+                          title={t("quizDragToReorder")}
                         >
                           <span className="block h-[2px] w-4 rounded-full bg-(--text2)" />
                           <span className="block h-[2px] w-4 rounded-full bg-(--text2)" />
@@ -525,7 +525,7 @@ function EditQuizQuestionsPopup({
                 ))
               ) : (
                 <div className="rounded-3xl border border-dashed border-(--border1) bg-(--background2) px-5 py-6 text-sm opacity-75">
-                  No questions yet.
+                  {t("quizNoQuestionsYet")}
                 </div>
               )}
 
@@ -533,7 +533,7 @@ function EditQuizQuestionsPopup({
 
               {isFetchingNextPage ? (
                 <div className="rounded-3xl border border-dashed border-(--border1) bg-(--background2) px-5 py-4 text-sm opacity-75">
-                  Loading more questions...
+                  {t("quizLoadingMoreQuestions")}
                 </div>
               ) : null}
 

@@ -29,11 +29,6 @@ type QuizRulesResponse = {
   rules?: QuizRuleApiResponse[];
 };
 
-const ruleTypeLabels: Record<string, string> = {
-  video_watch_percentage: "Video Watch Percentage",
-  video_watch_seconds: "Video Watch Seconds",
-};
-
 function normalizeRule(rule: QuizRuleApiResponse): QuizRule {
   return {
     id: rule.id ?? rule.rule_id ?? "",
@@ -50,26 +45,6 @@ function normalizeRule(rule: QuizRuleApiResponse): QuizRule {
     playlist_title: rule.playlist_title ?? null,
     playlist_thumbnail: rule.playlist_thumbnail ?? null,
   };
-}
-
-function getRuleTypeLabel(ruleType: QuizRuleType) {
-  return ruleTypeLabels[ruleType] ?? ruleType.replaceAll("_", " ");
-}
-
-function getRuleSummary(rule: QuizRule) {
-  const videoName = rule.video_title || rule.video_id || "selected video";
-
-  if (rule.rule_type === "video_watch_percentage") {
-    const percentage = rule.required_percentage ?? "0";
-    return `Watch ${percentage}% of ${videoName}`;
-  }
-
-  if (rule.rule_type === "video_watch_seconds") {
-    const seconds = rule.required_seconds ?? "0";
-    return `Watch ${seconds} seconds of ${videoName}`;
-  }
-
-  return "Rule details available for supported types only.";
 }
 
 function getRuleDraftValues(rule: QuizRule): RuleDraftValues {
@@ -101,9 +76,32 @@ function EditQuizRulesPopup({
   const closeTimeoutRef = useRef<number | null>(null);
   const { confirm, dialogProps } = useConfirm();
 
+  const getRuleTypeLabel = (ruleType: QuizRuleType) => {
+    if (ruleType === "video_watch_percentage") return t("quizVideoWatchPercentage");
+    if (ruleType === "video_watch_seconds") return t("quizVideoWatchSeconds");
+    return ruleType.replaceAll("_", " ");
+  };
+
+  const getRuleSummary = (rule: QuizRule) => {
+    const video = rule.video_title || rule.video_id || t("quizSelectedVideo");
+    if (rule.rule_type === "video_watch_percentage") {
+      return t("quizWatchPercentageSummary", {
+        percentage: rule.required_percentage ?? "0",
+        video,
+      });
+    }
+    if (rule.rule_type === "video_watch_seconds") {
+      return t("quizWatchSecondsSummary", {
+        seconds: rule.required_seconds ?? "0",
+        video,
+      });
+    }
+    return t("quizRuleSummaryUnavailable");
+  };
+
   const modalLabel = useMemo(
-    () => `Edit rules for ${quizTitle || "this quiz"}`,
-    [quizTitle]
+    () => t("quizRulesDescription", { title: quizTitle || t("quizThisQuiz") }),
+    [quizTitle, t]
   );
 
   const {
@@ -176,7 +174,7 @@ function EditQuizRulesPopup({
   const handleCreateRule = async (payload: CreateQuizRulePayload) => {
     await onSubmit(payload);
     await refetchRules();
-    setSuccessMessage("Rule created successfully.");
+    setSuccessMessage(t("quizRuleCreated"));
   };
 
   const handleUpdateRule = async (payload: CreateQuizRulePayload) => {
@@ -193,7 +191,7 @@ function EditQuizRulesPopup({
 
     await refetchRules();
     setEditingRule(null);
-    setSuccessMessage("Rule updated successfully.");
+    setSuccessMessage(t("quizRuleUpdated"));
   };
 
   const handleDeleteRule = async (rule: QuizRule) => {
@@ -214,7 +212,7 @@ function EditQuizRulesPopup({
     });
 
     await refetchRules();
-    setSuccessMessage("Rule deleted successfully.");
+    setSuccessMessage(t("quizRuleDeleted"));
   };
 
   if (!mounted) return null;
@@ -246,19 +244,19 @@ function EditQuizRulesPopup({
           <div className="mb-5">
             <h3 className="text-xl font-semibold">{t("quizRulesTitle")}</h3>
             <p className="mt-2 text-sm opacity-80">
-              Add and manage access rules for <strong>{quizTitle || "this quiz"}</strong>.
+              {t("quizRulesDescription", { title: quizTitle || t("quizThisQuiz") })}
             </p>
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
             <div className="flex items-center gap-4">
-              <h4 className="text-base font-semibold">Rules</h4>
+              <h4 className="text-base font-semibold">{t("quizRulesButton")}</h4>
             </div>
 
             <div className="mt-5 flex flex-col gap-3">
               {isRulesLoading ? (
                 <div className="rounded-3xl border border-dashed border-(--border1) bg-(--background2) px-5 py-6 text-sm opacity-75">
-                  Loading rules...
+                  {t("quizLoadingRules")}
                 </div>
               ) : rules.length ? (
                 rules.map((rule) => (
@@ -283,19 +281,19 @@ function EditQuizRulesPopup({
                         {rule.video_thumbnail ? (
                           <img
                             src={rule.video_thumbnail}
-                            alt={rule.video_title || "Rule video"}
+                            alt={rule.video_title || t("quizRuleVideo")}
                             className="h-14 w-24 rounded-xl object-cover"
                           />
                         ) : (
                           <div className="flex h-14 w-24 items-center justify-center rounded-xl bg-(--background1) text-xs opacity-70">
-                            No thumb
+                            {t("quizNoThumbnail")}
                           </div>
                         )}
 
                         <div className="min-w-0">
                           <p className="font-medium">{getRuleSummary(rule)}</p>
                           <p className="mt-1 text-sm opacity-75">
-                            {rule.video_title || rule.video_id || "No video selected"}
+                            {rule.video_title || rule.video_id || t("quizNoVideoSelected")}
                           </p>
                         </div>
                       </div>
@@ -324,15 +322,15 @@ function EditQuizRulesPopup({
                 ))
               ) : (
                 <div className="rounded-3xl border border-dashed border-(--border1) bg-(--background2) px-5 py-6 text-sm opacity-75">
-                  No rules yet.
+                  {t("quizNoRulesYet")}
                 </div>
               )}
 
               <button
                 type="button"
                 className="flex cursor-pointer items-center gap-3 self-start rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 text-sm font-medium transition-colors hover:bg-(--background3)"
-                title="Add rule"
-                aria-label="Add rule"
+                title={t("quizAddRule")}
+                aria-label={t("quizAddRule")}
                 onClick={() => {
                   setSuccessMessage(null);
                   setIsCreateRuleOpen(true);
@@ -348,7 +346,7 @@ function EditQuizRulesPopup({
 
           <div className="quizPopupActions mt-4">
             <button type="button" className="cancelBtn cursor-pointer min-w-[140px]" onClick={onClose}>
-              Close
+              {t("close")}
             </button>
           </div>
         </div>
