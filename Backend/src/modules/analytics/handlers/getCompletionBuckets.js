@@ -76,6 +76,6 @@ export async function getCompletionBucketsInternal(object, userId = null) {
     '25-50%': Number(result.from_25_to_50 ?? 0),
     '50-75%': Number(result.from_50_to_75 ?? 0),
     '75-95%': Number(result.from_75_to_95 ?? 0),
-    '95%>': Number(result.at_least_95 ?? 0),
+    '>95%': Number(result.at_least_95 ?? 0),
   };
 }
