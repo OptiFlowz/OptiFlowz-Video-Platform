@@ -99,27 +99,18 @@ export async function handleInitiateUpload(req, res) {
 export async function handleHeartbeat(req, res) {
     try {
         const userId = req.user?.sub || null;
-        if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
         const { view_id, seq, is_playing = false } = req.body;
 
-        // IP (radi i iza proxy-ja ako imaš trust proxy podešen)
-        const xff = req.headers['x-forwarded-for'];
-        const ipFromXff = Array.isArray(xff) ? xff[0] : (xff ? xff.split(',')[0].trim() : null);
-
-        const ip =
-        ipFromXff ||
-        req.headers['x-real-ip'] ||
-        req.ip ||
-        req.socket?.remoteAddress ||
-        null;
+        // Koristi isti IP izvor kao incrementViewCount, da anonimni hash bude isti.
+        const ip = getClientIp(req);
 
         // Origin / Referer (browser šalje origin za CORS/fetch, ali nekad ga nema)
         const origin = req.headers.origin || null;
         const referer = req.headers.referer || null;
 
         // User-Agent
-        const userAgent = req.headers['user-agent'] || null;
+        const userAgent = req.headers['user-agent'] || '';
 
         // Korisno za debug: host, sec-fetch-site, accept-language...
         const host = req.headers.host || null;
@@ -145,6 +136,8 @@ export async function handleHeartbeat(req, res) {
             seq,
             isPlaying: is_playing,
             userId,
+            ip,
+            userAgent,
         });
 
         if (!updated) {

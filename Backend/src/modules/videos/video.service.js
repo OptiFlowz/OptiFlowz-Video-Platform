@@ -1036,17 +1036,21 @@ export async function getPersonalizedRecommendations(userId, limit = 20, page = 
 }
 
 
-export async function heartbeatWatchDuration(viewId, { seq, isPlaying = true, userId }) {
+export async function heartbeatWatchDuration(
+  viewId,
+  { seq, isPlaying = true, userId = null, ip = null, userAgent = '' },
+) {
   const client = await writePool.connect();
   
   try {
     await client.query('BEGIN');
 
     if (!viewId) throw new Error('Missing viewId');
-    if (!userId) throw new Error('Missing userId');
-    
+
     const s = Number(seq);
     if (!Number.isFinite(s) || s <= 0) throw new Error('Invalid seq');
+
+    const hashedIp = userId ? null : hashIp(normalizeIp(ip));
 
     const HEARTBEAT_INTERVAL_SEC = 10;
     const MAX_DELTA_SEC = Math.floor(HEARTBEAT_INTERVAL_SEC * 1.5); // 15s
@@ -1057,7 +1061,15 @@ export async function heartbeatWatchDuration(viewId, { seq, isPlaying = true, us
         SELECT id, user_id, video_id, last_heartbeat_at, last_seq, watch_duration
         FROM video_views
         WHERE id = $1
-          AND user_id = $5
+          AND (
+            ($5::uuid IS NOT NULL AND user_id = $5::uuid)
+            OR (
+              $5::uuid IS NULL
+              AND user_id IS NULL
+              AND ip_address IS NOT DISTINCT FROM $6::text
+              AND user_agent IS NOT DISTINCT FROM $7::text
+            )
+          )
         FOR UPDATE
       ),
       calc AS (
@@ -1115,7 +1127,7 @@ export async function heartbeatWatchDuration(viewId, { seq, isPlaying = true, us
       FROM prev p
       WHERE NOT EXISTS (SELECT 1 FROM updated)
       `,
-      [viewId, isPlaying, s, MAX_DELTA_SEC, userId]
+      [viewId, isPlaying, s, MAX_DELTA_SEC, userId, hashedIp, userAgent]
     );
 
 
@@ -1148,7 +1160,7 @@ export async function heartbeatWatchDuration(viewId, { seq, isPlaying = true, us
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('Heartbeat watch_duration failed:', err);
-    throw "Greska";
+    throw err;
   } finally {
     client.release();
   }
