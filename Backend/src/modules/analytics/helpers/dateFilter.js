@@ -10,6 +10,7 @@ export function buildDateFilter(
   fromDate,
   toDate,
   precedingParameterCount = 1,
+  dateColumn = 'created_at',
 ) {
   const conditions = [];
   const values = [];
@@ -17,14 +18,14 @@ export function buildDateFilter(
   if (fromDate) {
     values.push(fromDate);
     conditions.push(
-      `${alias}.created_at >= $${precedingParameterCount + values.length}`,
+      `${alias}.${dateColumn} >= $${precedingParameterCount + values.length}`,
     );
   }
 
   if (toDate) {
     values.push(toDate);
     conditions.push(
-      `${alias}.created_at <= $${precedingParameterCount + values.length}`,
+      `${alias}.${dateColumn} <= $${precedingParameterCount + values.length}`,
     );
   }
 

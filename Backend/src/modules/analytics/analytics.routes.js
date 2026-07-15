@@ -30,5 +30,17 @@ router.get(
   requireAdmin,
   analyticsController.getWatchTimeOverTime,
 );
+router.get(
+  '/:videoId/completion-buckets',
+  requireAuth,
+  requireAdmin,
+  analyticsController.getCompletionBuckets,
+);
+router.get(
+  '/:videoId/engagement',
+  requireAuth,
+  requireAdmin,
+  analyticsController.getEngagement,
+);
 
 export default router;

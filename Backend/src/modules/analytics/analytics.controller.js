@@ -5,6 +5,8 @@ import { getOperatingSystemSplitInternal } from './handlers/getOperatingSystemSp
 import { getGeographicBreakdownInternal } from './handlers/getGeographicBreakdown.js';
 import { getViewsOverTimeInternal } from './handlers/getViewsOverTime.js';
 import { getWatchTimeOverTimeInternal } from './handlers/getWatchTimeOverTime.js';
+import { getCompletionBucketsInternal } from './handlers/getCompletionBuckets.js';
+import { getEngagementInternal } from './handlers/getEngagement.js';
 
 
 
@@ -79,6 +81,32 @@ export async function getWatchTimeOverTime(req, res) {
     return sendSuccess(res, { watchTimeOverTime }, 200);
   } catch (error) {
     console.error('Error getting video watch time over time:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function getCompletionBuckets(req, res) {
+  try {
+    const completionBuckets = await getCompletionBucketsInternal(
+      { ...req.params, ...req.body, ...req.query },
+      req.user?.sub || null,
+    );
+    return sendSuccess(res, { completionBuckets }, 200);
+  } catch (error) {
+    console.error('Error getting video completion buckets:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function getEngagement(req, res) {
+  try {
+    const engagement = await getEngagementInternal(
+      { ...req.params, ...req.body, ...req.query },
+      req.user?.sub || null,
+    );
+    return sendSuccess(res, { engagement }, 200);
+  } catch (error) {
+    console.error('Error getting video engagement:', error);
     return sendError(res, error.message, error.status || 500);
   }
 }
