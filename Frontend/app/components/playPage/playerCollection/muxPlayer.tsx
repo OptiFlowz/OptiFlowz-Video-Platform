@@ -323,22 +323,22 @@ export default function VideoPlayer({
       }
 
       const token = hbTokenRef.current ?? getToken();
-      if (!token) return;
       if (!view_id) return;
-      hbTokenRef.current = token;
+      if (token) hbTokenRef.current = token;
 
       const nextSeq = (hbSeqRef.current || 0) + 1;
       hbSeqRef.current = nextSeq;
 
       const payload = { view_id, seq: nextSeq, is_playing: isPlaying };
+      const heartbeatHeaders = new Headers({
+        "Content-Type": "application/json",
+      });
+      if (token) heartbeatHeaders.set("Authorization", `Bearer ${token}`);
 
       try {
         await fetch(`${apiBaseUrl}/api/videos/heartbeat`, {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+          headers: heartbeatHeaders,
           body: JSON.stringify(payload),
           keepalive: true,
         });
