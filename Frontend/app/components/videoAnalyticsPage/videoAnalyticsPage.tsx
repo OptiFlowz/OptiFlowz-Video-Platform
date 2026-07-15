@@ -2,7 +2,21 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
-import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+  type TooltipContentProps,
+} from "recharts";
 import { fetchFn } from "~/API";
 import { ArrowSVG, CloseSVG, FilterSVG, WorldMapSVG, type WorldMapCountry } from "~/constants";
 import { formatDate, formatDuration, formatViews, getToken } from "~/functions";
@@ -11,6 +25,8 @@ import type { VideoT } from "~/types";
 import Sidebar from "~/components/myVideosPage/sidebar/sidebar";
 
 type AnalyticsRange = "last7" | "last30" | "last90" | "last365" | "all";
+type AnalyticsGroupBy = "day" | "week" | "month";
+type TimeSeriesMetric = "watchTime" | "views";
 
 type VideoOverviewResponse = {
   success: boolean;
@@ -23,6 +39,11 @@ type VideoOverviewResponse = {
     totalComments: number;
     avgWatchTimePerViewer: number;
   };
+};
+
+type EngagementResponse = {
+  success: boolean;
+  engagement: number;
 };
 
 type DeviceSplitResponse = {
@@ -58,6 +79,44 @@ type GeographicCountry = {
 type GeographicBreakdownResponse = {
   success: boolean;
   geographicBreakdown: Record<string, GeographicCountry>;
+};
+
+type ViewsOverTimeResponse = {
+  success: boolean;
+  viewsOverTime: Array<{
+    periodStart: string;
+    views: number;
+  }>;
+};
+
+type WatchTimeOverTimeResponse = {
+  success: boolean;
+  watchTimeOverTime: Array<{
+    periodStart: string;
+    watchTime: number;
+  }>;
+};
+
+type CompletionBucketsResponse = {
+  success: boolean;
+  completionBuckets: {
+    "<25%": number;
+    "25-50%": number;
+    "50-75%": number;
+    "75-95%": number;
+    ">95%": number;
+  };
+};
+
+type TimeSeriesPoint = {
+  periodStart: string;
+  watchTime?: number;
+  views?: number;
+};
+
+type CompletionBucketPoint = {
+  bucket: string;
+  viewers: number;
 };
 
 type DonutItem = {
@@ -174,6 +233,47 @@ function formatWatchTime(totalSeconds: number, alwaysShowHours = false) {
   return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 }
 
+function useAnimatedPercentage(targetValue: number, resetKey: string, duration = 900) {
+  const safeTarget = Math.min(100, Math.max(0, Number.isFinite(targetValue) ? targetValue : 0));
+  const [animatedValue, setAnimatedValue] = useState(0);
+  const currentValueRef = useRef(0);
+  const resetKeyRef = useRef(resetKey);
+
+  useEffect(() => {
+    if (resetKeyRef.current !== resetKey) {
+      resetKeyRef.current = resetKey;
+      currentValueRef.current = 0;
+      setAnimatedValue(0);
+    }
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      currentValueRef.current = safeTarget;
+      setAnimatedValue(safeTarget);
+      return;
+    }
+
+    const startValue = currentValueRef.current;
+    const difference = safeTarget - startValue;
+    const startTime = performance.now();
+    let animationFrame = 0;
+
+    const animate = (currentTime: number) => {
+      const progress = Math.min(1, (currentTime - startTime) / duration);
+      const easedProgress = 1 - Math.pow(1 - progress, 3);
+      const nextValue = startValue + difference * easedProgress;
+      currentValueRef.current = nextValue;
+      setAnimatedValue(nextValue);
+
+      if (progress < 1) animationFrame = requestAnimationFrame(animate);
+    };
+
+    animationFrame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationFrame);
+  }, [duration, resetKey, safeTarget]);
+
+  return animatedValue;
+}
+
 function getDateRange(range: AnalyticsRange) {
   if (range === "all") return "";
 
@@ -192,6 +292,90 @@ function getDateRange(range: AnalyticsRange) {
   return `?${params.toString()}`;
 }
 
+function getGroupedDateRange(range: AnalyticsRange, groupBy: AnalyticsGroupBy) {
+  const params = new URLSearchParams(getDateRange(range).replace(/^\?/, ""));
+  params.set("groupBy", groupBy);
+  return `?${params.toString()}`;
+}
+
+function formatPeriodLabel(periodStart: string, groupBy: AnalyticsGroupBy, locale: string, detailed = false) {
+  const date = new Date(periodStart);
+  if (Number.isNaN(date.getTime())) return periodStart;
+
+  if (detailed) {
+    return new Intl.DateTimeFormat(locale, {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      timeZone: "UTC",
+    }).format(date);
+  }
+
+  return new Intl.DateTimeFormat(locale, groupBy === "month"
+    ? { month: "short", year: "2-digit", timeZone: "UTC" }
+    : { day: "numeric", month: "short", timeZone: "UTC" }).format(date);
+}
+
+function TimeSeriesTooltip({
+  active,
+  payload,
+  label,
+  groupBy,
+  locale,
+  viewsLabel,
+  watchTimeLabel,
+}: TooltipContentProps & {
+  groupBy: AnalyticsGroupBy;
+  locale: string;
+  viewsLabel: string;
+  watchTimeLabel: string;
+}) {
+  if (!active || !payload?.length) return null;
+
+  return (
+    <div className="videoAnalyticsLineTooltip">
+      <span className="videoAnalyticsLineTooltipDate">
+        {formatPeriodLabel(String(label ?? ""), groupBy, locale, true)}
+      </span>
+      {payload.map((entry) => {
+        const metric: TimeSeriesMetric = String(entry.dataKey) === "watchTime" ? "watchTime" : "views";
+        const value = Number(entry.value ?? 0);
+        return (
+          <div className={`videoAnalyticsLineTooltipValue ${metric}`} key={metric}>
+            <i aria-hidden="true" />
+            <span>{metric === "watchTime" ? watchTimeLabel : viewsLabel}</span>
+            <strong>{metric === "watchTime" ? formatWatchTime(value, true) : value.toLocaleString(locale)}</strong>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function CompletionBucketsTooltip({
+  active,
+  payload,
+  label,
+  locale,
+  viewersLabel,
+}: TooltipContentProps & {
+  locale: string;
+  viewersLabel: string;
+}) {
+  if (!active || !payload?.length) return null;
+
+  return (
+    <div className="videoAnalyticsLineTooltip">
+      <span className="videoAnalyticsLineTooltipDate">{String(label ?? "")}</span>
+      <div className="videoAnalyticsLineTooltipValue completionBuckets">
+        <i aria-hidden="true" />
+        <span>{viewersLabel}</span>
+        <strong>{Number(payload[0]?.value ?? 0).toLocaleString(locale)}</strong>
+      </div>
+    </div>
+  );
+}
+
 function CountryFlag({ code }: { code: string }) {
   const normalizedCode = /^[A-Z]{2}$/i.test(code) ? code.toLowerCase() : "";
   return (
@@ -203,13 +387,18 @@ function CountryFlag({ code }: { code: string }) {
 }
 
 function VideoAnalyticsPage() {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const [searchParams] = useSearchParams();
   const videoId = searchParams.get("video");
   const headers = useRef(new Headers());
   const [token, setToken] = useState("");
   const [range, setRange] = useState<AnalyticsRange>("last7");
-  const [groupBy, setGroupBy] = useState("day");
+  const [groupBy, setGroupBy] = useState<AnalyticsGroupBy>("day");
+  const [activeTimeSeries, setActiveTimeSeries] = useState<Record<TimeSeriesMetric, boolean>>({
+    watchTime: true,
+    views: true,
+  });
+  const [isCompletionBucketsActive, setIsCompletionBucketsActive] = useState(true);
   const [mapView, setMapView] = useState({ zoom: MIN_MAP_ZOOM, x: 0, y: 0 });
   const [mapDrag, setMapDrag] = useState<{
     x: number;
@@ -265,6 +454,23 @@ function VideoAnalyticsPage() {
     refetchOnWindowFocus: false,
   });
 
+  const {
+    data: engagementData,
+    isLoading: isEngagementLoading,
+    isError: isEngagementError,
+  } = useQuery<EngagementResponse>({
+    queryKey: ["video-analytics-engagement", videoId, range],
+    queryFn: () => fetchFn<EngagementResponse>({
+      route: `api/analytics/${videoId}/engagement`,
+      options: { method: "GET", headers: headers.current },
+    }),
+    enabled: !!token && !!videoId,
+    refetchOnWindowFocus: false,
+  });
+  const engagementPercentage = Math.min(100, Math.max(0, (engagementData?.engagement ?? 0) * 100));
+  const animatedEngagementPercentage = useAnimatedPercentage(engagementPercentage, range);
+  const engagementLabelPosition = Math.min(97, Math.max(3, animatedEngagementPercentage));
+
   const overview = overviewData?.overview;
   const overviewCards = overview
     ? [
@@ -277,6 +483,110 @@ function VideoAnalyticsPage() {
         { label: t("videoAnalyticsTotalComments"), value: overview.totalComments, description: t("videoAnalyticsTotalCommentsHelp") },
       ]
     : [];
+
+  const groupedDateRangeQuery = useMemo(
+    () => getGroupedDateRange(range, groupBy),
+    [groupBy, range],
+  );
+  const {
+    data: viewsOverTimeData,
+    isLoading: isViewsOverTimeLoading,
+    isError: isViewsOverTimeError,
+  } = useQuery<ViewsOverTimeResponse>({
+    queryKey: ["video-analytics-views-over-time", videoId, range, groupBy],
+    queryFn: () => fetchFn<ViewsOverTimeResponse>({
+      route: `api/analytics/${videoId}/views-over-time${groupedDateRangeQuery}`,
+      options: { method: "GET", headers: headers.current },
+    }),
+    enabled: !!token && !!videoId,
+    refetchOnWindowFocus: false,
+  });
+  const {
+    data: watchTimeOverTimeData,
+    isLoading: isWatchTimeOverTimeLoading,
+    isError: isWatchTimeOverTimeError,
+  } = useQuery<WatchTimeOverTimeResponse>({
+    queryKey: ["video-analytics-watch-time-over-time", videoId, range, groupBy],
+    queryFn: () => fetchFn<WatchTimeOverTimeResponse>({
+      route: `api/analytics/${videoId}/watch-time-over-time${groupedDateRangeQuery}`,
+      options: { method: "GET", headers: headers.current },
+    }),
+    enabled: !!token && !!videoId,
+    refetchOnWindowFocus: false,
+  });
+  const {
+    data: completionBucketsData,
+    isLoading: isCompletionBucketsLoading,
+    isError: isCompletionBucketsError,
+  } = useQuery<CompletionBucketsResponse>({
+    queryKey: ["video-analytics-completion-buckets", videoId],
+    queryFn: () => fetchFn<CompletionBucketsResponse>({
+      route: `api/analytics/${videoId}/completion-buckets`,
+      options: { method: "GET", headers: headers.current },
+    }),
+    enabled: !!token && !!videoId,
+    refetchOnWindowFocus: false,
+  });
+  const completionBuckets = completionBucketsData?.completionBuckets;
+  const completionBucketChartData: CompletionBucketPoint[] = completionBuckets
+    ? [
+        { bucket: "<25%", viewers: completionBuckets["<25%"] },
+        { bucket: "25–50%", viewers: completionBuckets["25-50%"] },
+        { bucket: "50–75%", viewers: completionBuckets["50-75%"] },
+        { bucket: "75–95%", viewers: completionBuckets["75-95%"] },
+        { bucket: ">95%", viewers: completionBuckets[">95%"] },
+      ]
+    : [];
+  const completionBucketMax = Math.max(
+    1,
+    ...completionBucketChartData.map((point) => point.viewers),
+  );
+  const completionBucketTickStep = completionBucketMax <= 5
+    ? 1
+    : Math.ceil(completionBucketMax / 4);
+  const completionBucketAxisMax = Math.ceil(
+    completionBucketMax / completionBucketTickStep,
+  ) * completionBucketTickStep;
+  const completionBucketTicks = Array.from(
+    { length: completionBucketAxisMax / completionBucketTickStep + 1 },
+    (_, index) => index * completionBucketTickStep,
+  );
+  const timeSeriesData = useMemo(() => {
+    const points = new Map<string, TimeSeriesPoint>();
+
+    if (activeTimeSeries.watchTime) {
+      for (const point of watchTimeOverTimeData?.watchTimeOverTime ?? []) {
+        points.set(point.periodStart, {
+          ...points.get(point.periodStart),
+          periodStart: point.periodStart,
+          watchTime: point.watchTime,
+        });
+      }
+    }
+
+    if (activeTimeSeries.views) {
+      for (const point of viewsOverTimeData?.viewsOverTime ?? []) {
+        points.set(point.periodStart, {
+          ...points.get(point.periodStart),
+          periodStart: point.periodStart,
+          views: point.views,
+        });
+      }
+    }
+
+    return Array.from(points.values()).sort(
+      (a, b) => new Date(a.periodStart).getTime() - new Date(b.periodStart).getTime(),
+    );
+  }, [activeTimeSeries, viewsOverTimeData, watchTimeOverTimeData]);
+  const hasActiveTimeSeries = activeTimeSeries.watchTime || activeTimeSeries.views;
+  const isTimeSeriesLoading = hasActiveTimeSeries && (
+    (activeTimeSeries.watchTime && isWatchTimeOverTimeLoading)
+    || (activeTimeSeries.views && isViewsOverTimeLoading)
+  );
+  const isTimeSeriesError = hasActiveTimeSeries && (
+    (activeTimeSeries.watchTime && isWatchTimeOverTimeError)
+    || (activeTimeSeries.views && isViewsOverTimeError)
+  );
 
   const {
     data: audienceData,
@@ -483,7 +793,7 @@ function VideoAnalyticsPage() {
               {FilterSVG}
               <select
                 value={groupBy}
-                onChange={(event) => setGroupBy(event.target.value)}
+                onChange={(event) => setGroupBy(event.target.value as AnalyticsGroupBy)}
                 aria-label={t("analyticsGroupBy")}
               >
                 <option value="day">{t("analyticsDay")}</option>
@@ -514,6 +824,245 @@ function VideoAnalyticsPage() {
                   </article>
                 ))}
               </div>
+            )}
+          </section>
+
+          <section className="videoAnalyticsEngagement">
+            <h2>{t("videoAnalyticsEngagement")}</h2>
+
+            {isEngagementLoading ? (
+              <div className="videoAnalyticsEngagementLoading loading" aria-label={t("videoAnalyticsEngagementLoading")} />
+            ) : isEngagementError || !engagementData ? (
+              <p className="videoAnalyticsOverviewError">{t("videoAnalyticsEngagementFailed")}</p>
+            ) : (
+              <div className="videoAnalyticsEngagementMeter">
+                <div className="videoAnalyticsEngagementValueRow">
+                  <strong style={{ left: `${engagementLabelPosition}%` }}>
+                    {Math.round(animatedEngagementPercentage)}%
+                  </strong>
+                </div>
+                <div
+                  className="videoAnalyticsEngagementTrack"
+                  role="progressbar"
+                  aria-label={t("videoAnalyticsEngagement")}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.round(engagementPercentage)}
+                >
+                  <i style={{ width: `${animatedEngagementPercentage}%` }} />
+                </div>
+              </div>
+            )}
+          </section>
+
+          <section className="videoAnalyticsGraphs">
+            <h2>{t("videoAnalyticsAudienceGraphs")}</h2>
+
+            <div className="videoAnalyticsGraphTabs" aria-label={t("videoAnalyticsAudienceGraphs")}>
+              <button
+                className="watchTime"
+                type="button"
+                aria-pressed={activeTimeSeries.watchTime}
+                onClick={() => setActiveTimeSeries((current) => ({
+                  ...current,
+                  watchTime: !current.watchTime,
+                }))}
+              >
+                <i aria-hidden="true" />
+                {t("videoAnalyticsWatchTimeOverTime")}
+              </button>
+              <button
+                className="views"
+                type="button"
+                aria-pressed={activeTimeSeries.views}
+                onClick={() => setActiveTimeSeries((current) => ({
+                  ...current,
+                  views: !current.views,
+                }))}
+              >
+                <i aria-hidden="true" />
+                {t("videoAnalyticsViewsOverTime")}
+              </button>
+            </div>
+
+            {isTimeSeriesLoading ? (
+              <div className="videoAnalyticsLineChart loading" aria-label={t("videoAnalyticsGraphsLoading")} />
+            ) : isTimeSeriesError ? (
+              <p className="videoAnalyticsOverviewError">{t("videoAnalyticsGraphsFailed")}</p>
+            ) : !hasActiveTimeSeries ? (
+              null
+            ) : !timeSeriesData.length ? (
+              <p className="videoAnalyticsGraphEmpty">{t("videoAnalyticsGraphsEmpty")}</p>
+            ) : (
+              <div className="videoAnalyticsLineChart">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={timeSeriesData} margin={{ top: 12, right: 8, bottom: 4, left: 4 }}>
+                    <CartesianGrid
+                      yAxisId={activeTimeSeries.watchTime ? "watchTime" : "views"}
+                      stroke="var(--border1)"
+                      strokeDasharray="4 4"
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="periodStart"
+                      tickFormatter={(value) => formatPeriodLabel(String(value), groupBy, locale)}
+                      tick={{ fill: "var(--text2)", fontSize: 13 }}
+                      tickLine={false}
+                      axisLine={{ stroke: "var(--border1)" }}
+                      minTickGap={28}
+                    />
+                    {activeTimeSeries.watchTime && (
+                      <YAxis
+                        yAxisId="watchTime"
+                        width={72}
+                        tickFormatter={(value) => formatWatchTime(Number(value))}
+                        tick={{ fill: "var(--text2)", fontSize: 13 }}
+                        tickLine={false}
+                        axisLine={false}
+                        allowDecimals={false}
+                      />
+                    )}
+                    {activeTimeSeries.views && (
+                      <YAxis
+                        yAxisId="views"
+                        orientation={activeTimeSeries.watchTime ? "right" : "left"}
+                        width={48}
+                        tickFormatter={(value) => Number(value).toLocaleString(locale)}
+                        tick={{ fill: "var(--text2)", fontSize: 13 }}
+                        tickLine={false}
+                        axisLine={false}
+                        allowDecimals={false}
+                      />
+                    )}
+                    <Tooltip
+                      cursor={{ stroke: "var(--border1)", strokeDasharray: "4 4" }}
+                      content={(props) => (
+                        <TimeSeriesTooltip
+                          {...props}
+                          groupBy={groupBy}
+                          locale={locale}
+                          viewsLabel={t("videoAnalyticsViewsOverTime")}
+                          watchTimeLabel={t("videoAnalyticsWatchTimeOverTime")}
+                        />
+                      )}
+                    />
+                    {activeTimeSeries.watchTime && (
+                      <Line
+                        yAxisId="watchTime"
+                        type="monotone"
+                        dataKey="watchTime"
+                        name={t("videoAnalyticsWatchTimeOverTime")}
+                        stroke="var(--analyticsWatchTimeOverTime)"
+                        strokeWidth={3}
+                        dot={timeSeriesData.length <= 20
+                          ? { r: 3, fill: "var(--analyticsWatchTimeOverTime)", stroke: "var(--background1)", strokeWidth: 2 }
+                          : false}
+                        activeDot={{ r: 5, fill: "var(--analyticsWatchTimeOverTime)", stroke: "var(--background1)", strokeWidth: 2 }}
+                        isAnimationActive
+                        animationDuration={500}
+                      />
+                    )}
+                    {activeTimeSeries.views && (
+                      <Line
+                        yAxisId="views"
+                        type="monotone"
+                        dataKey="views"
+                        name={t("videoAnalyticsViewsOverTime")}
+                        stroke="var(--analyticsViewsOverTime)"
+                        strokeWidth={3}
+                        dot={timeSeriesData.length <= 20
+                          ? { r: 3, fill: "var(--analyticsViewsOverTime)", stroke: "var(--background1)", strokeWidth: 2 }
+                          : false}
+                        activeDot={{ r: 5, fill: "var(--analyticsViewsOverTime)", stroke: "var(--background1)", strokeWidth: 2 }}
+                        isAnimationActive
+                        animationDuration={500}
+                      />
+                    )}
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            <div
+              className="videoAnalyticsGraphTabs videoAnalyticsCompletionToggle"
+              aria-label={t("videoAnalyticsCompletionBuckets")}
+            >
+              <button
+                className="completionBuckets"
+                type="button"
+                aria-pressed={isCompletionBucketsActive}
+                onClick={() => setIsCompletionBucketsActive((current) => !current)}
+              >
+                <i aria-hidden="true" />
+                {t("videoAnalyticsCompletionBuckets")}
+              </button>
+            </div>
+
+            {isCompletionBucketsActive && (
+              isCompletionBucketsLoading ? (
+                <div className="videoAnalyticsLineChart loading" aria-label={t("videoAnalyticsGraphsLoading")} />
+              ) : isCompletionBucketsError || !completionBuckets ? (
+                <p className="videoAnalyticsOverviewError">{t("videoAnalyticsCompletionBucketsFailed")}</p>
+              ) : (
+                <div className="videoAnalyticsLineChart videoAnalyticsCompletionChart">
+                  <div className="videoAnalyticsCompletionAxisLabels" aria-hidden="true">
+                    {completionBucketTicks.map((tick) => (
+                      <span
+                        key={tick}
+                        style={{ bottom: `${(tick / (completionBucketAxisMax * 1.08)) * 100}%` }}
+                      >
+                        {tick.toLocaleString(locale)}
+                      </span>
+                    ))}
+                  </div>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={completionBucketChartData} margin={{ top: 12, right: 12, bottom: 4, left: 4 }}>
+                      <CartesianGrid stroke="var(--border1)" strokeDasharray="4 4" vertical={false} />
+                      <XAxis
+                        dataKey="bucket"
+                        tick={{ fill: "var(--text2)", fontSize: 13 }}
+                        tickLine={false}
+                        axisLine={{ stroke: "var(--border1)" }}
+                      />
+                      <YAxis
+                        width={52}
+                        domain={[0, completionBucketAxisMax * 1.08]}
+                        ticks={completionBucketTicks}
+                        interval={0}
+                        tickFormatter={(value) => Number(value).toLocaleString(locale)}
+                        tick={false}
+                        tickLine={false}
+                        axisLine={false}
+                        allowDecimals={false}
+                        allowDataOverflow
+                      />
+                      <Tooltip
+                        cursor={{ fill: "var(--background2)" }}
+                        content={(props) => (
+                          <CompletionBucketsTooltip
+                            {...props}
+                            locale={locale}
+                            viewersLabel={t("videoAnalyticsViewers")}
+                          />
+                        )}
+                      />
+                      <Bar
+                        dataKey="viewers"
+                        name={t("videoAnalyticsViewers")}
+                        fill="var(--analyticsCompletionBuckets)"
+                        radius={[8, 8, 0, 0]}
+                        maxBarSize={90}
+                        isAnimationActive
+                        animationDuration={500}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )
+            )}
+
+            {!hasActiveTimeSeries && !isCompletionBucketsActive && (
+              <p className="videoAnalyticsGraphEmpty">{t("videoAnalyticsGraphsNoneSelected")}</p>
             )}
           </section>
 

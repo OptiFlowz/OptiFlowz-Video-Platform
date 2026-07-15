@@ -136,6 +136,19 @@ const enBase: TranslationMap = {
   videoAnalyticsAudienceBreakdown: "Audience breakdown",
   videoAnalyticsAudienceLoading: "Loading audience breakdown...",
   videoAnalyticsAudienceFailed: "The audience breakdown could not be loaded.",
+  videoAnalyticsEngagement: "Engagement",
+  videoAnalyticsEngagementLoading: "Loading engagement...",
+  videoAnalyticsEngagementFailed: "Engagement could not be loaded.",
+  videoAnalyticsAudienceGraphs: "Audience graphs",
+  videoAnalyticsWatchTimeOverTime: "Watch time over time",
+  videoAnalyticsViewsOverTime: "Views over time",
+  videoAnalyticsCompletionBuckets: "Completion buckets",
+  videoAnalyticsCompletionBucketsFailed: "Completion buckets could not be loaded.",
+  videoAnalyticsViewers: "Viewers",
+  videoAnalyticsGraphsLoading: "Loading audience graphs...",
+  videoAnalyticsGraphsFailed: "The audience graphs could not be loaded.",
+  videoAnalyticsGraphsEmpty: "No data is available for the selected period.",
+  videoAnalyticsGraphsNoneSelected: "Select at least one graph to display.",
   videoAnalyticsDeviceSplit: "Device split",
   videoAnalyticsOperatingSystems: "Operating systems",
   videoAnalyticsDesktop: "Desktop",
@@ -11267,10 +11280,28 @@ const analyticsLocaleOverrides = Object.fromEntries(
   })
 ) as unknown as Record<Locale, Partial<TranslationMap>>;
 
+const timeSeriesAnalyticsLocaleOverrides: Partial<Record<Locale, Partial<TranslationMap>>> = {
+  sr: {
+    videoAnalyticsEngagement: "Angažovanje",
+    videoAnalyticsEngagementLoading: "Učitavanje angažovanja...",
+    videoAnalyticsEngagementFailed: "Angažovanje nije moglo da se učita.",
+    videoAnalyticsAudienceGraphs: "Grafici publike",
+    videoAnalyticsWatchTimeOverTime: "Vreme gledanja kroz vreme",
+    videoAnalyticsViewsOverTime: "Pregledi kroz vreme",
+    videoAnalyticsCompletionBuckets: "Grupe završenosti",
+    videoAnalyticsCompletionBucketsFailed: "Grupe završenosti nisu mogle da se učitaju.",
+    videoAnalyticsViewers: "Gledaoci",
+    videoAnalyticsGraphsLoading: "Učitavanje grafika publike...",
+    videoAnalyticsGraphsFailed: "Grafici publike nisu mogli da se učitaju.",
+    videoAnalyticsGraphsEmpty: "Nema podataka za izabrani period.",
+    videoAnalyticsGraphsNoneSelected: "Izaberite bar jedan grafik za prikaz.",
+  },
+};
+
 const buildTranslations = () => {
   const result = {} as Record<Locale, TranslationMap>;
   for (const locale of SUPPORTED_LOCALES) {
-    result[locale] = { ...enBase, ...localeOverrides[locale], ...adminCrudOverrides[locale], ...completeLocaleOverrides[locale], ...analyticsLocaleOverrides[locale], ...geographicAnalyticsLocaleOverrides[locale], ...quizPopupLocaleOverrides[locale] } as TranslationMap;
+    result[locale] = { ...enBase, ...localeOverrides[locale], ...adminCrudOverrides[locale], ...completeLocaleOverrides[locale], ...analyticsLocaleOverrides[locale], ...geographicAnalyticsLocaleOverrides[locale], ...(timeSeriesAnalyticsLocaleOverrides[locale] ?? {}), ...quizPopupLocaleOverrides[locale] } as TranslationMap;
   }
   return result;
 };
