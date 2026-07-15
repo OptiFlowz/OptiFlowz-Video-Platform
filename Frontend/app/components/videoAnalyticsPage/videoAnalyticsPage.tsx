@@ -1,4 +1,13 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
@@ -81,6 +90,20 @@ type GeographicBreakdownResponse = {
   geographicBreakdown: Record<string, GeographicCountry>;
 };
 
+type MapView = { zoom: number; x: number; y: number };
+
+type MapDrag = {
+  x: number;
+  y: number;
+  originX: number;
+  originY: number;
+  countryCode: string | null;
+};
+
+type CountryPopupHandle = {
+  open: (code: string, data: GeographicCountry) => void;
+};
+
 type ViewsOverTimeResponse = {
   success: boolean;
   viewsOverTime: Array<{
@@ -125,20 +148,13 @@ type DonutItem = {
   color: string;
 };
 
-const WORLD_MAP_CENTER = { x: 505, y: 333 };
 const MIN_MAP_ZOOM = 1;
 const MAX_MAP_ZOOM = 3.5;
 const COUNTRY_POPUP_DURATION = 200;
 
 function getMapPoint(map: HTMLDivElement, clientX: number, clientY: number) {
-  const svg = map.querySelector("svg");
-  const screenMatrix = svg?.getScreenCTM();
-  if (!svg || !screenMatrix) return null;
-
-  const point = svg.createSVGPoint();
-  point.x = clientX;
-  point.y = clientY;
-  return point.matrixTransform(screenMatrix.inverse());
+  const rect = map.getBoundingClientRect();
+  return { x: clientX - rect.left, y: clientY - rect.top };
 }
 
 function DonutChart({ items, total, viewsLabel }: { items: DonutItem[]; total: number; viewsLabel: string }) {
@@ -419,6 +435,77 @@ function CountryFlag({ code }: { code: string }) {
   );
 }
 
+const CountryPopup = forwardRef<CountryPopupHandle, {
+  viewsLabel: string;
+  citiesLabel: string;
+  closeLabel: string;
+}>(function CountryPopup({ viewsLabel, citiesLabel, closeLabel }, ref) {
+  const [selectedCountry, setSelectedCountry] = useState<{ code: string; data: GeographicCountry } | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const closeTimerRef = useRef<number | null>(null);
+
+  const close = useCallback(() => {
+    setIsVisible(false);
+    if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = window.setTimeout(
+      () => setSelectedCountry(null),
+      COUNTRY_POPUP_DURATION,
+    );
+  }, []);
+
+  const open = useCallback((code: string, data: GeographicCountry) => {
+    if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
+    setSelectedCountry({ code, data });
+    setIsVisible(false);
+    requestAnimationFrame(() => requestAnimationFrame(() => setIsVisible(true)));
+  }, []);
+
+  useImperativeHandle(ref, () => ({ open }), [open]);
+
+  useEffect(() => {
+    if (!selectedCountry) return;
+    const handleKeyDown = (event: KeyboardEvent) => event.key === "Escape" && close();
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [close, selectedCountry]);
+
+  useEffect(() => () => {
+    if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
+  }, []);
+
+  if (!selectedCountry) return null;
+
+  return createPortal(
+    <div
+      className={`videoAnalyticsCityBackdrop${isVisible ? " visible" : ""}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label={selectedCountry.data.name}
+      onMouseDown={close}
+    >
+      <section className="videoAnalyticsCityPopup" onMouseDown={(event) => event.stopPropagation()}>
+        <header>
+          <CountryFlag code={selectedCountry.code} />
+          <div>
+            <h2>{selectedCountry.data.name}</h2>
+            <p>{selectedCountry.data.totalViews} {viewsLabel}</p>
+          </div>
+          <button type="button" aria-label={closeLabel} onClick={close}>{CloseSVG}</button>
+        </header>
+        <div className="videoAnalyticsCityPopupBody">
+          <p>{citiesLabel}</p>
+          <div className="videoAnalyticsCityGrid">
+            {Object.entries(selectedCountry.data.cities).sort(([, a], [, b]) => b - a).map(([city, views]) => (
+              <article key={city}><strong>{city}</strong><span>{views} {viewsLabel}</span></article>
+            ))}
+          </div>
+        </div>
+      </section>
+    </div>,
+    document.body,
+  );
+});
+
 function VideoAnalyticsPage() {
   const { locale, t } = useI18n();
   const [searchParams] = useSearchParams();
@@ -432,20 +519,16 @@ function VideoAnalyticsPage() {
     views: true,
   });
   const [isCompletionBucketsActive, setIsCompletionBucketsActive] = useState(true);
-  const [mapView, setMapView] = useState({ zoom: MIN_MAP_ZOOM, x: 0, y: 0 });
-  const [mapDrag, setMapDrag] = useState<{
-    x: number;
-    y: number;
-    originX: number;
-    originY: number;
-    countryCode: string | null;
-  } | null>(null);
-  const [mapTooltip, setMapTooltip] = useState<{ name: string; views: number; x: number; y: number } | null>(null);
-  const [selectedCountry, setSelectedCountry] = useState<{ code: string; data: GeographicCountry } | null>(null);
-  const [isCountryPopupVisible, setIsCountryPopupVisible] = useState(false);
   const mapRef = useRef<HTMLDivElement | null>(null);
+  const mapViewRef = useRef<MapView>({ zoom: MIN_MAP_ZOOM, x: 0, y: 0 });
+  const mapDragRef = useRef<MapDrag | null>(null);
+  const mapTooltipRef = useRef<HTMLDivElement | null>(null);
+  const mapTooltipNameRef = useRef<HTMLElement | null>(null);
+  const mapTooltipViewsRef = useRef<HTMLSpanElement | null>(null);
   const mapDidDragRef = useRef(false);
-  const countryPopupTimerRef = useRef<number | null>(null);
+  const mapPanFrameRef = useRef<number | null>(null);
+  const pendingMapViewRef = useRef<MapView | null>(null);
+  const countryPopupRef = useRef<CountryPopupHandle | null>(null);
 
   useLayoutEffect(() => {
     const userToken = getToken();
@@ -457,7 +540,7 @@ function VideoAnalyticsPage() {
   }, []);
 
   useEffect(() => () => {
-    if (countryPopupTimerRef.current) window.clearTimeout(countryPopupTimerRef.current);
+    if (mapPanFrameRef.current != null) window.cancelAnimationFrame(mapPanFrameRef.current);
   }, []);
 
   const { data: video, isLoading, isError } = useQuery<VideoT | null>({
@@ -691,6 +774,46 @@ function VideoAnalyticsPage() {
     .sort(([, a], [, b]) => b.totalViews - a.totalViews);
   const maxCountryViews = Math.max(1, ...geographicCountries.map(([, country]) => country.totalViews));
 
+  const applyMapView = useCallback((view: MapView) => {
+    const svg = mapRef.current?.querySelector("svg");
+    const mapLayer = svg?.querySelector("g");
+    if (!svg || !mapLayer) return;
+
+    const viewBox = svg.viewBox.baseVal;
+    const screenScale = Math.min(
+      svg.clientWidth / viewBox.width,
+      svg.clientHeight / viewBox.height,
+    );
+    const x = screenScale > 0 ? view.x / screenScale : 0;
+    const y = screenScale > 0 ? view.y / screenScale : 0;
+    const centerX = viewBox.x + viewBox.width / 2;
+    const centerY = viewBox.y + viewBox.height / 2;
+
+    svg.style.removeProperty("transform");
+    mapLayer.setAttribute(
+      "transform",
+      `translate(${x} ${y}) translate(${centerX} ${centerY}) scale(${view.zoom}) translate(${-centerX} ${-centerY})`,
+    );
+  }, []);
+
+  const scheduleMapView = useCallback((view: MapView) => {
+    mapViewRef.current = view;
+    pendingMapViewRef.current = view;
+    if (mapPanFrameRef.current != null) return;
+
+    mapPanFrameRef.current = window.requestAnimationFrame(() => {
+      const nextView = pendingMapViewRef.current;
+      pendingMapViewRef.current = null;
+      mapPanFrameRef.current = null;
+      if (nextView) applyMapView(nextView);
+    });
+  }, [applyMapView]);
+
+  useLayoutEffect(() => {
+    if (isGeographicLoading || isGeographicError) return;
+    applyMapView(mapViewRef.current);
+  }, [applyMapView, isGeographicError, isGeographicLoading]);
+
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -699,22 +822,21 @@ function VideoAnalyticsPage() {
       event.preventDefault();
       event.stopPropagation();
 
-      const focalPoint = getMapPoint(map, event.clientX, event.clientY) ?? WORLD_MAP_CENTER;
+      const focalPoint = getMapPoint(map, event.clientX, event.clientY);
+      const center = { x: map.clientWidth / 2, y: map.clientHeight / 2 };
       const sensitivity = event.ctrlKey ? 0.008 : 0.0025;
+      const current = mapViewRef.current;
+      const nextZoom = Math.min(
+        MAX_MAP_ZOOM,
+        Math.max(MIN_MAP_ZOOM, current.zoom * Math.exp(-event.deltaY * sensitivity)),
+      );
+      if (nextZoom === current.zoom) return;
 
-      setMapView((current) => {
-        const nextZoom = Math.min(
-          MAX_MAP_ZOOM,
-          Math.max(MIN_MAP_ZOOM, current.zoom * Math.exp(-event.deltaY * sensitivity)),
-        );
-        if (nextZoom === current.zoom) return current;
-
-        const zoomRatio = nextZoom / current.zoom;
-        return {
-          zoom: nextZoom,
-          x: focalPoint.x - WORLD_MAP_CENTER.x - zoomRatio * (focalPoint.x - current.x - WORLD_MAP_CENTER.x),
-          y: focalPoint.y - WORLD_MAP_CENTER.y - zoomRatio * (focalPoint.y - current.y - WORLD_MAP_CENTER.y),
-        };
+      const zoomRatio = nextZoom / current.zoom;
+      scheduleMapView({
+        zoom: nextZoom,
+        x: focalPoint.x - center.x - zoomRatio * (focalPoint.x - current.x - center.x),
+        y: focalPoint.y - center.y - zoomRatio * (focalPoint.y - current.y - center.y),
       });
     };
 
@@ -731,42 +853,33 @@ function VideoAnalyticsPage() {
       map.removeEventListener("gesturechange", preventBrowserGesture);
       map.removeEventListener("gestureend", preventBrowserGesture);
     };
-  }, [isGeographicLoading, isGeographicError]);
+  }, [isGeographicLoading, isGeographicError, scheduleMapView]);
 
   const updateMapTooltip = (country: WorldMapCountry, event: React.MouseEvent<SVGPathElement>) => {
     const rect = mapRef.current?.getBoundingClientRect();
-    if (!rect) return;
+    const tooltip = mapTooltipRef.current;
+    if (!rect || !tooltip) return;
     const data = geographicBreakdown[country.id.toUpperCase()];
-    setMapTooltip({
-      name: data?.name || country.name,
-      views: data?.totalViews || 0,
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
-    });
+    if (mapTooltipNameRef.current) mapTooltipNameRef.current.textContent = data?.name || country.name;
+    if (mapTooltipViewsRef.current) {
+      mapTooltipViewsRef.current.textContent = `${data?.totalViews || 0} ${t("videoAnalyticsViews")}`;
+    }
+    tooltip.style.left = `${event.clientX - rect.left}px`;
+    tooltip.style.top = `${event.clientY - rect.top}px`;
+    tooltip.dataset.visible = "true";
   };
 
-  const openCountryPopup = (code: string, data: GeographicCountry) => {
-    if (countryPopupTimerRef.current) window.clearTimeout(countryPopupTimerRef.current);
-    setSelectedCountry({ code, data });
-    setIsCountryPopupVisible(false);
-    requestAnimationFrame(() => requestAnimationFrame(() => setIsCountryPopupVisible(true)));
+  const moveMapTooltip = (_country: WorldMapCountry, event: React.MouseEvent<SVGPathElement>) => {
+    const rect = mapRef.current?.getBoundingClientRect();
+    const tooltip = mapTooltipRef.current;
+    if (!rect || !tooltip) return;
+
+    tooltip.style.left = `${event.clientX - rect.left}px`;
+    tooltip.style.top = `${event.clientY - rect.top}px`;
   };
 
-  const closeCountryPopup = () => {
-    setIsCountryPopupVisible(false);
-    if (countryPopupTimerRef.current) window.clearTimeout(countryPopupTimerRef.current);
-    countryPopupTimerRef.current = window.setTimeout(
-      () => setSelectedCountry(null),
-      COUNTRY_POPUP_DURATION,
-    );
-  };
-
-  useEffect(() => {
-    if (!selectedCountry) return;
-    const close = (event: KeyboardEvent) => event.key === "Escape" && closeCountryPopup();
-    window.addEventListener("keydown", close);
-    return () => window.removeEventListener("keydown", close);
-  }, [selectedCountry]);
+  const hideMapTooltip = () => mapTooltipRef.current?.removeAttribute("data-visible");
+  const openCountryPopup = (code: string, data: GeographicCountry) => countryPopupRef.current?.open(code, data);
 
   return (
     <main className="myVideos videoAnalyticsPage">
@@ -1123,55 +1236,64 @@ function VideoAnalyticsPage() {
               <>
                 <div
                   ref={mapRef}
-                  className={`videoAnalyticsMap${mapDrag ? " dragging" : ""}`}
+                  className="videoAnalyticsMap"
                   onPointerDown={(event) => {
                     const point = getMapPoint(event.currentTarget, event.clientX, event.clientY);
-                    if (!point) return;
                     mapDidDragRef.current = false;
                     event.currentTarget.setPointerCapture(event.pointerId);
+                    event.currentTarget.classList.add("dragging");
                     const target = event.target instanceof Element ? event.target : null;
                     const countryCode = target?.closest("path.interactive")?.getAttribute("data-country") ?? null;
-                    setMapDrag({
+                    mapDragRef.current = {
                       x: point.x,
                       y: point.y,
-                      originX: mapView.x,
-                      originY: mapView.y,
+                      originX: mapViewRef.current.x,
+                      originY: mapViewRef.current.y,
                       countryCode,
-                    });
+                    };
                   }}
                   onPointerMove={(event) => {
+                    const mapDrag = mapDragRef.current;
                     if (!mapDrag) return;
                     const point = getMapPoint(event.currentTarget, event.clientX, event.clientY);
-                    if (!point) return;
                     if (Math.hypot(point.x - mapDrag.x, point.y - mapDrag.y) > 3) {
                       mapDidDragRef.current = true;
+                      hideMapTooltip();
                     }
-                    setMapView((current) => ({
-                      ...current,
+
+                    scheduleMapView({
+                      zoom: mapViewRef.current.zoom,
                       x: mapDrag.originX + point.x - mapDrag.x,
                       y: mapDrag.originY + point.y - mapDrag.y,
-                    }));
+                    });
                   }}
-                  onPointerUp={() => {
-                    const countryCode = mapDidDragRef.current ? null : mapDrag?.countryCode;
-                    setMapDrag(null);
+                  onPointerUp={(event) => {
+                    const countryCode = mapDidDragRef.current ? null : mapDragRef.current?.countryCode;
+                    mapDragRef.current = null;
+                    event.currentTarget.classList.remove("dragging");
                     if (!countryCode) return;
                     const countryData = geographicBreakdown[countryCode];
                     if (!countryData || countryData.totalViews <= 0) return;
                     openCountryPopup(countryCode, countryData);
                   }}
-                  onPointerCancel={() => setMapDrag(null)}
+                  onPointerCancel={(event) => {
+                    mapDragRef.current = null;
+                    event.currentTarget.classList.remove("dragging");
+                  }}
                 >
                   <WorldMapSVG
-                    transform={`translate(${mapView.x} ${mapView.y}) translate(${WORLD_MAP_CENTER.x} ${WORLD_MAP_CENTER.y}) scale(${mapView.zoom}) translate(${-WORLD_MAP_CENTER.x} ${-WORLD_MAP_CENTER.y})`}
-                    getFill={(country) => geographicBreakdown[country.id.toUpperCase()] ? "var(--accentBlue2)" : "var(--background3)"}
+                    getFill={(country) => (
+                      (geographicBreakdown[country.id.toUpperCase()]?.totalViews ?? 0) > 0
+                        ? "var(--accentBlue2)"
+                        : "var(--background3)"
+                    )}
                     getFillOpacity={(country) => {
                       const views = geographicBreakdown[country.id.toUpperCase()]?.totalViews || 0;
                       return views ? 0.25 + 0.75 * (views / maxCountryViews) : 1;
                     }}
                     onCountryEnter={updateMapTooltip}
-                    onCountryMove={updateMapTooltip}
-                    onCountryLeave={() => setMapTooltip(null)}
+                    onCountryMove={moveMapTooltip}
+                    onCountryLeave={hideMapTooltip}
                     isCountryInteractive={(country) => (
                       (geographicBreakdown[country.id.toUpperCase()]?.totalViews ?? 0) > 0
                     )}
@@ -1182,24 +1304,28 @@ function VideoAnalyticsPage() {
                       openCountryPopup(code, countryData);
                     }}
                   />
-                  {mapTooltip && (
-                    <div className="videoAnalyticsMapTooltip" style={{ left: mapTooltip.x, top: mapTooltip.y }}>
-                      <strong>{mapTooltip.name}</strong>
-                      <span>{mapTooltip.views} {t("videoAnalyticsViews")}</span>
-                    </div>
-                  )}
+                  <div ref={mapTooltipRef} className="videoAnalyticsMapTooltip" aria-hidden="true">
+                    <strong ref={mapTooltipNameRef} />
+                    <span ref={mapTooltipViewsRef} />
+                  </div>
                   <div className="videoAnalyticsMapControls" onPointerDown={(event) => event.stopPropagation()}>
                     <button
                       type="button"
-                      onClick={() => setMapView((current) => ({ ...current, zoom: Math.min(MAX_MAP_ZOOM, current.zoom + 0.35) }))}
+                      onClick={() => scheduleMapView({
+                        ...mapViewRef.current,
+                        zoom: Math.min(MAX_MAP_ZOOM, mapViewRef.current.zoom + 0.35),
+                      })}
                     >+</button>
                     <button
                       type="button"
-                      onClick={() => setMapView({ zoom: MIN_MAP_ZOOM, x: 0, y: 0 })}
+                      onClick={() => scheduleMapView({ zoom: MIN_MAP_ZOOM, x: 0, y: 0 })}
                     >↺</button>
                     <button
                       type="button"
-                      onClick={() => setMapView((current) => ({ ...current, zoom: Math.max(MIN_MAP_ZOOM, current.zoom - 0.35) }))}
+                      onClick={() => scheduleMapView({
+                        ...mapViewRef.current,
+                        zoom: Math.max(MIN_MAP_ZOOM, mapViewRef.current.zoom - 0.35),
+                      })}
                     >−</button>
                   </div>
                 </div>
@@ -1223,35 +1349,12 @@ function VideoAnalyticsPage() {
             )}
           </section>
 
-          {selectedCountry && createPortal(
-            <div
-              className={`videoAnalyticsCityBackdrop${isCountryPopupVisible ? " visible" : ""}`}
-              role="dialog"
-              aria-modal="true"
-              aria-label={selectedCountry.data.name}
-              onMouseDown={closeCountryPopup}
-            >
-              <section className="videoAnalyticsCityPopup" onMouseDown={(event) => event.stopPropagation()}>
-                <header>
-                  <CountryFlag code={selectedCountry.code} />
-                  <div>
-                    <h2>{selectedCountry.data.name}</h2>
-                    <p>{selectedCountry.data.totalViews} {t("videoAnalyticsViews")}</p>
-                  </div>
-                  <button type="button" aria-label={t("close")} onClick={closeCountryPopup}>{CloseSVG}</button>
-                </header>
-                <div className="videoAnalyticsCityPopupBody">
-                  <p>{t("videoAnalyticsCities")}</p>
-                  <div className="videoAnalyticsCityGrid">
-                    {Object.entries(selectedCountry.data.cities).sort(([, a], [, b]) => b - a).map(([city, views]) => (
-                      <article key={city}><strong>{city}</strong><span>{views} {t("videoAnalyticsViews")}</span></article>
-                    ))}
-                  </div>
-                </div>
-              </section>
-            </div>,
-            document.body,
-          )}
+          <CountryPopup
+            ref={countryPopupRef}
+            viewsLabel={t("videoAnalyticsViews")}
+            citiesLabel={t("videoAnalyticsCities")}
+            closeLabel={t("close")}
+          />
         </div>
       </div>
     </main>

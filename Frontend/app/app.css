@@ -9113,7 +9113,7 @@ main.videoAnalyticsPage .videoAnalyticsMap path{
   stroke-width: 0.7;
   vector-effect: non-scaling-stroke;
   cursor: grab;
-  transition: filter 0.18s ease, fill-opacity 0.18s ease;
+  transition: fill-opacity 0.18s ease, stroke 0.12s ease;
 }
 
 main.videoAnalyticsPage .videoAnalyticsMap path.interactive{
@@ -9126,7 +9126,7 @@ main.videoAnalyticsPage .videoAnalyticsMap.dragging path{
 
 main.videoAnalyticsPage .videoAnalyticsMap path.interactive:hover,
 main.videoAnalyticsPage .videoAnalyticsMap path.interactive:focus{
-  filter: brightness(1.18);
+  stroke: var(--text1);
 }
 
 main.videoAnalyticsPage .videoAnalyticsMap.loading{
@@ -9148,8 +9148,15 @@ main.videoAnalyticsPage .videoAnalyticsMapTooltip{
   background-color: var(--background3);
   color: var(--text1);
   box-shadow: 0 4px 12px var(--background15);
+  visibility: hidden;
+  opacity: 0;
   pointer-events: none;
   transform: translate(12px, calc(-100% - 12px));
+}
+
+main.videoAnalyticsPage .videoAnalyticsMapTooltip[data-visible="true"]{
+  visibility: visible;
+  opacity: 1;
 }
 
 main.videoAnalyticsPage .videoAnalyticsMapTooltip span{
