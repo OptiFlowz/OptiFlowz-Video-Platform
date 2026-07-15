@@ -935,6 +935,7 @@ function VideoAnalyticsPage() {
                       />
                     )}
                     <Tooltip
+                      isAnimationActive={false}
                       cursor={{ stroke: "var(--border1)", strokeDasharray: "4 4" }}
                       content={(props) => (
                         <TimeSeriesTooltip
@@ -1037,6 +1038,7 @@ function VideoAnalyticsPage() {
                         allowDataOverflow
                       />
                       <Tooltip
+                        isAnimationActive={false}
                         cursor={{ fill: "var(--background2)" }}
                         content={(props) => (
                           <CompletionBucketsTooltip

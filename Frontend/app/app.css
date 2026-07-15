@@ -8836,12 +8836,18 @@ main.videoAnalyticsPage .videoAnalyticsLineTooltip{
   display: flex;
   min-width: 130px;
   flex-direction: column;
-  gap: 0.55rem;
-  padding: 0.65rem 0.8rem;
+  gap: 0.45rem;
+  padding: 0.55rem 0.7rem;
   border: 1px solid var(--border1);
-  border-radius: 12px;
-  background-color: var(--background1);
-  box-shadow: 0 5px 16px var(--background15);
+  border-radius: 10px;
+  background-color: var(--background3);
+  color: var(--text1);
+  box-shadow: 0 4px 12px var(--background15);
+  pointer-events: none;
+}
+
+main.videoAnalyticsPage .recharts-tooltip-wrapper{
+  transition: none !important;
 }
 
 main.videoAnalyticsPage .videoAnalyticsLineTooltipDate{
