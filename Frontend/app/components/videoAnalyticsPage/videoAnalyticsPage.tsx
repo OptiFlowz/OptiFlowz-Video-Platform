@@ -772,7 +772,12 @@ function VideoAnalyticsPage() {
   const geographicCountries = Object.entries(geographicBreakdown)
     .filter(([, country]) => country.totalViews > 0)
     .sort(([, a], [, b]) => b.totalViews - a.totalViews);
-  const maxCountryViews = Math.max(1, ...geographicCountries.map(([, country]) => country.totalViews));
+  const maxCountryViews = Math.max(
+    1,
+    ...geographicCountries
+      .filter(([code]) => code.toUpperCase() !== "OTHER")
+      .map(([, country]) => country.totalViews),
+  );
 
   const applyMapView = useCallback((view: MapView) => {
     const svg = mapRef.current?.querySelector("svg");
