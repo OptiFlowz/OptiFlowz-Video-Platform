@@ -3,6 +3,8 @@ import { getOverviewVideoAnalyticsInternal } from './handlers/getOverviewVideoAn
 import { getDeviceSplitInternal } from './handlers/getDeviceSplit.js';
 import { getOperatingSystemSplitInternal } from './handlers/getOperatingSystemSplit.js';
 import { getGeographicBreakdownInternal } from './handlers/getGeographicBreakdown.js';
+import { getViewsOverTimeInternal } from './handlers/getViewsOverTime.js';
+import { getWatchTimeOverTimeInternal } from './handlers/getWatchTimeOverTime.js';
 
 
 
@@ -51,6 +53,32 @@ export async function getGeographicBreakdown(req, res) {
     return sendSuccess(res, { geographicBreakdown }, 200);
   } catch (error) {
     console.error('Error getting video geographic breakdown:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function getViewsOverTime(req, res) {
+  try {
+    const viewsOverTime = await getViewsOverTimeInternal(
+      { ...req.params, ...req.body, ...req.query },
+      req.user?.sub || null,
+    );
+    return sendSuccess(res, { viewsOverTime }, 200);
+  } catch (error) {
+    console.error('Error getting video views over time:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function getWatchTimeOverTime(req, res) {
+  try {
+    const watchTimeOverTime = await getWatchTimeOverTimeInternal(
+      { ...req.params, ...req.body, ...req.query },
+      req.user?.sub || null,
+    );
+    return sendSuccess(res, { watchTimeOverTime }, 200);
+  } catch (error) {
+    console.error('Error getting video watch time over time:', error);
     return sendError(res, error.message, error.status || 500);
   }
 }

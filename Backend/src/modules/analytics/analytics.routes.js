@@ -18,5 +18,17 @@ router.get(
   requireAdmin,
   analyticsController.getGeographicBreakdown,
 );
+router.get(
+  '/:videoId/views-over-time',
+  requireAuth,
+  requireAdmin,
+  analyticsController.getViewsOverTime,
+);
+router.get(
+  '/:videoId/watch-time-over-time',
+  requireAuth,
+  requireAdmin,
+  analyticsController.getWatchTimeOverTime,
+);
 
 export default router;
