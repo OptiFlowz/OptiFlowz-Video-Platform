@@ -311,7 +311,7 @@ const captionStyles = `
   }
 
   #${CAPTION_OVERLAY_ID}[data-controls-visible="true"] {
-    bottom: 12%;
+    bottom: var(--optiflowz-caption-controls-bottom, max(12%, 48px));
   }
 
   #${CAPTION_OVERLAY_ID} .optiflowz-caption-cue {
@@ -389,7 +389,8 @@ export function loadMediaTheme() {
 /**
  * Mux Player nests the native video in a second shadow root, so document-level
  * ::cue rules cannot reach it. Install the caption treatment beside that video
- * instead; this also keeps it active when the player enters fullscreen.
+ * instead. iOS native fullscreen temporarily falls back to Safari's native
+ * cue renderer because custom DOM overlays are not included in that player.
  */
 export function styleMuxPlayerCaptions(player: MuxPlayerElement | null) {
   if (player) setupCaptionPreferenceMenus(player);
@@ -401,11 +402,14 @@ export function styleMuxPlayerCaptions(player: MuxPlayerElement | null) {
     return;
   }
 
-  if (!mediaRoot.getElementById(CAPTION_STYLE_ID)) {
-    const style = document.createElement("style");
-    style.id = CAPTION_STYLE_ID;
-    style.textContent = captionStyles;
-    mediaRoot.append(style);
+  let captionStyle = mediaRoot.getElementById(
+    CAPTION_STYLE_ID,
+  ) as HTMLStyleElement | null;
+  if (!captionStyle) {
+    captionStyle = document.createElement("style");
+    captionStyle.id = CAPTION_STYLE_ID;
+    captionStyle.textContent = captionStyles;
+    mediaRoot.append(captionStyle);
   }
 
   const overlay = document.createElement("div");
@@ -585,17 +589,48 @@ export function styleMuxPlayerCaptions(player: MuxPlayerElement | null) {
   video.textTracks.addEventListener("removetrack", syncTextTracks);
   video.textTracks.addEventListener("change", syncTextTracks);
 
+  const controller = player?.mediaController;
+  const syncCaptionPosition = () => {
+    const controlsVisible = overlay.dataset.controlsVisible === "true";
+    if (!controlsVisible) return;
+
+    const controlBar = controller?.querySelector<HTMLElement>(
+      "media-control-bar",
+    );
+    const controllerRect = controller?.getBoundingClientRect();
+    const controlBarRect = controlBar?.getBoundingClientRect();
+    const isCompactPlayer = video.clientWidth <= 768;
+    const fallbackClearance = Math.max(
+      video.clientHeight * (isCompactPlayer ? 0.24 : 0.12),
+      isCompactPlayer ? 56 : 40,
+    );
+    const measuredClearance =
+      controllerRect && controlBarRect
+        ? controllerRect.bottom - controlBarRect.top + 12
+        : 0;
+    const clearance = Math.min(
+      Math.max(measuredClearance, fallbackClearance),
+      video.clientHeight * 0.42,
+    );
+
+    overlay.style.setProperty(
+      "--optiflowz-caption-controls-bottom",
+      `${clearance}px`,
+    );
+  };
+
   const resizeObserver = new ResizeObserver(() => {
     applyCaptionPreferences(captionPreferences);
+    syncCaptionPosition();
   });
   resizeObserver.observe(video);
 
-  const controller = player?.mediaController;
   const syncControlVisibility = () => {
     const controlsVisible =
       controller?.hasAttribute("mediapaused") ||
       !controller?.hasAttribute("userinactive");
     overlay.dataset.controlsVisible = String(controlsVisible);
+    syncCaptionPosition();
   };
 
   const controlVisibilityObserver = new MutationObserver(syncControlVisibility);
@@ -611,6 +646,19 @@ export function styleMuxPlayerCaptions(player: MuxPlayerElement | null) {
     applyCaptionPreferences(preferences ?? getCaptionPreferences());
   };
   window.addEventListener(CAPTION_PREFERENCES_EVENT, handleCaptionPreferences);
+
+  const enterNativeFullscreen = () => {
+    captionStyle.disabled = true;
+    overlay.hidden = true;
+  };
+  const exitNativeFullscreen = () => {
+    captionStyle.disabled = false;
+    overlay.hidden = false;
+    syncControlVisibility();
+    renderCaptions();
+  };
+  video.addEventListener("webkitbeginfullscreen", enterNativeFullscreen);
+  video.addEventListener("webkitendfullscreen", exitNativeFullscreen);
 
   applyCaptionPreferences(captionPreferences);
   syncControlVisibility();
