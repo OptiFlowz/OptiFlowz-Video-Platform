@@ -442,17 +442,18 @@ if (template) {
           --media-menu-transform-in: translateY(0) scale(1);
           --media-menu-transform-out: translateY(15px) scale(1);
           padding-block: calc(0.15 * var(--base));
-          background-color: rgba(0, 0, 0, 0.68);
+          background-color: rgba(12, 12, 12, 0.94);
           will-change: transform, opacity, height;
           border: 1px solid rgba(255, 255, 255, 0.12);
           margin-right: 18px;
           margin-bottom: 8px;
           border-radius: 24px;
-          z-index: 2;
+          z-index: 20;
           user-select: none;
         }
 
         media-settings-menu-item,
+        media-chrome-menu-item,
         [role='menu']::part(menu-item) {
           --media-icon-color: var(--_primary-color);
           margin-inline: calc(0.45 * var(--base));
@@ -462,7 +463,9 @@ if (template) {
           padding: 0;
           padding-left: calc(0.5 * var(--base));
           padding-right: calc(0.2 * var(--base));
-          border-radius: 999px;
+          box-sizing: border-box;
+          overflow: hidden;
+          border-radius: 999px !important;
           border: 1px solid transparent;
           text-shadow: none;
           flex-shrink: 0;
@@ -471,7 +474,13 @@ if (template) {
 
         [slot='submenu']::part(back button) {
           font-size: calc(0.6 * var(--base));
-          padding-top: calc(0.6 * var(--base));
+          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+          width: 100%;
+          height: calc(1.6 * var(--base));
+          padding: 0 calc(0.5 * var(--base));
+          line-height: 1;
           transition: background .2s ease;
         }
 
@@ -484,6 +493,23 @@ if (template) {
           color: var(--_primary-color);
           background: rgba(255, 255, 255, 0.1);
           border-color: rgba(255, 255, 255, 0.18);
+        }
+
+        media-chrome-menu-item:hover,
+        media-chrome-menu-item[aria-checked='true'] {
+          --media-icon-color: var(--_primary-color);
+          color: var(--_primary-color);
+          background: rgba(255, 255, 255, 0.1);
+          border-color: rgba(255, 255, 255, 0.18);
+        }
+
+        /*
+         * The settings menu fades its own items while a submenu is open by
+         * inheriting --media-settings-menu-item-opacity: 0. Reset it on our
+         * nested menu so Size, Text Color and Background remain readable.
+         */
+        .caption-settings-menu {
+          --media-settings-menu-item-opacity: 1;
         }
 
         media-settings-menu-item:hover [slot='submenu']::part(menu-item),
@@ -536,6 +562,41 @@ if (template) {
           <media-captions-menu slot="submenu" hidden>
             <div slot="title">Subtitles/CC</div>
           </media-captions-menu>
+        </media-settings-menu-item>
+        <media-settings-menu-item class="caption-settings-item">
+          Subtitle Settings
+          <media-chrome-menu class="caption-settings-menu" slot="submenu" hidden>
+            <div slot="title">Subtitle Settings</div>
+            <media-settings-menu-item class="caption-setting-item">
+              Size
+              <media-chrome-menu class="caption-size-menu" slot="submenu" hidden>
+                <div slot="title">Subtitle Size</div>
+                <media-chrome-menu-item type="radio" value="small" part="menu-item">Small</media-chrome-menu-item>
+                <media-chrome-menu-item type="radio" value="medium" checked part="menu-item">Medium</media-chrome-menu-item>
+                <media-chrome-menu-item type="radio" value="large" part="menu-item">Large</media-chrome-menu-item>
+              </media-chrome-menu>
+            </media-settings-menu-item>
+            <media-settings-menu-item class="caption-setting-item">
+              Text Color
+              <media-chrome-menu class="caption-color-menu" slot="submenu" hidden>
+                <div slot="title">Text Color</div>
+                <media-chrome-menu-item type="radio" value="red" part="menu-item">Red</media-chrome-menu-item>
+                <media-chrome-menu-item type="radio" value="blue" part="menu-item">Blue</media-chrome-menu-item>
+                <media-chrome-menu-item type="radio" value="white" checked part="menu-item">White</media-chrome-menu-item>
+                <media-chrome-menu-item type="radio" value="green" part="menu-item">Green</media-chrome-menu-item>
+                <media-chrome-menu-item type="radio" value="purple" part="menu-item">Purple</media-chrome-menu-item>
+              </media-chrome-menu>
+            </media-settings-menu-item>
+            <media-settings-menu-item class="caption-setting-item">
+              Background
+              <media-chrome-menu class="caption-background-menu" slot="submenu" hidden>
+                <div slot="title">Background</div>
+                <media-chrome-menu-item type="radio" value="transparent" part="menu-item">Transparent</media-chrome-menu-item>
+                <media-chrome-menu-item type="radio" value="black" checked part="menu-item">Black</media-chrome-menu-item>
+                <media-chrome-menu-item type="radio" value="white" part="menu-item">White</media-chrome-menu-item>
+              </media-chrome-menu>
+            </media-settings-menu-item>
+          </media-chrome-menu>
         </media-settings-menu-item>
       </media-settings-menu>
 
@@ -1097,6 +1158,45 @@ class MediaCurrentChapter extends HTMLElement {
 }
 globalThis.customElements.define('media-current-chapter', MediaCurrentChapter);
 
+const CAPTION_PREFERENCES_KEY = 'optiflowz-caption-preferences';
+const CAPTION_PREFERENCES_EVENT = 'optiflowz-caption-preferences-change';
+const DEFAULT_CAPTION_PREFERENCES = {
+  size: 'medium',
+  color: 'white',
+  background: 'black',
+};
+const CAPTION_PREFERENCE_VALUES = {
+  size: ['small', 'medium', 'large'],
+  color: ['red', 'blue', 'white', 'green', 'purple'],
+  background: ['transparent', 'black', 'white'],
+};
+
+function readCaptionPreferences() {
+  try {
+    const stored = JSON.parse(globalThis.localStorage?.getItem(CAPTION_PREFERENCES_KEY) || '{}');
+    return Object.fromEntries(
+      Object.entries(DEFAULT_CAPTION_PREFERENCES).map(([key, fallback]) => [
+        key,
+        CAPTION_PREFERENCE_VALUES[key].includes(stored[key]) ? stored[key] : fallback,
+      ]),
+    );
+  } catch {
+    return { ...DEFAULT_CAPTION_PREFERENCES };
+  }
+}
+
+function saveCaptionPreferences(preferences) {
+  try {
+    globalThis.localStorage?.setItem(CAPTION_PREFERENCES_KEY, JSON.stringify(preferences));
+  } catch {
+    // Preferences still apply for the current page when storage is unavailable.
+  }
+
+  globalThis.dispatchEvent(
+    new CustomEvent(CAPTION_PREFERENCES_EVENT, { detail: preferences }),
+  );
+}
+
 class MediaThemeOptiflowzElement extends MediaThemeElement {
   static template = template;
 
@@ -1105,6 +1205,44 @@ class MediaThemeOptiflowzElement extends MediaThemeElement {
 
     const controller = this.shadowRoot?.querySelector('media-controller');
     const settingsButton = this.shadowRoot?.querySelector('media-settings-menu-button');
+    const captionPreferenceMenus = [
+      ['size', this.shadowRoot?.querySelector('.caption-size-menu')],
+      ['color', this.shadowRoot?.querySelector('.caption-color-menu')],
+      ['background', this.shadowRoot?.querySelector('.caption-background-menu')],
+    ];
+    const captionPreferenceCleanups = [];
+    const captionPreferences = readCaptionPreferences();
+
+    this.shadowRoot
+      ?.querySelectorAll('.caption-settings-item, .caption-setting-item')
+      .forEach((item) => {
+        const openSubmenu = () => {
+          const submenu = item.querySelector(':scope > [slot="submenu"]');
+          if (submenu?.hidden) submenu.hidden = false;
+        };
+        item.addEventListener('click', openSubmenu);
+        captionPreferenceCleanups.push(() => {
+          item.removeEventListener('click', openSubmenu);
+        });
+      });
+
+    captionPreferenceMenus.forEach(([key, menu]) => {
+      if (!menu) return;
+      menu.value = captionPreferences[key];
+
+      const handlePreferenceChange = () => {
+        const preferences = {
+          ...readCaptionPreferences(),
+          [key]: menu.value,
+        };
+        saveCaptionPreferences(preferences);
+      };
+
+      menu.addEventListener('change', handlePreferenceChange);
+      captionPreferenceCleanups.push(() => {
+        menu.removeEventListener('change', handlePreferenceChange);
+      });
+    });
 
     const closeSettingsMenu = () => {
       if (!settingsButton) return;
@@ -1136,6 +1274,7 @@ class MediaThemeOptiflowzElement extends MediaThemeElement {
     this._cleanupSettingsMenu = () => {
       controller?.removeEventListener('mouseleave', closeSettingsMenu);
       controller?.removeEventListener('focusout', handleFocusOut);
+      captionPreferenceCleanups.forEach((cleanup) => cleanup());
       observer.disconnect();
     };
   }

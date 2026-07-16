@@ -11,7 +11,7 @@ import type MuxPlayerElement from "@mux/mux-player";
 import { env } from "~/env";
 import type { ChapterT } from "~/types";
 import { getToken } from "~/functions";
-import { loadMediaTheme } from "./loadMediaTheme";
+import { loadMediaTheme, styleMuxPlayerCaptions } from "./loadMediaTheme";
 
 interface VideoPlayerProps {
   playbackId: string;
@@ -70,6 +70,18 @@ export default function VideoPlayer({
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!isThemeReady) return;
+
+    const frame = requestAnimationFrame(() => {
+      styleMuxPlayerCaptions(playerRef.current);
+    });
+
+    return () => {
+      cancelAnimationFrame(frame);
+    };
+  }, [isThemeReady, playbackId]);
 
   useEffect(() => {
     setMetadataLoaded(false);
@@ -419,6 +431,7 @@ export default function VideoPlayer({
             chapterLenght: chapters?.length || 0,
           }}
           onLoadedMetadata={() => {
+            styleMuxPlayerCaptions(playerRef.current);
             setMetadataLoaded(true);
             setIsPlayerReady(true);
           }}
