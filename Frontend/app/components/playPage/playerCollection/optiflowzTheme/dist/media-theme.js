@@ -200,6 +200,7 @@ if (template) {
     </style>
 
     <media-controller
+      id="media-controller"
       breakpoints="sm:384 md:480 lg:705 xl:768 xxl:1075"
       defaultsubtitles="{{defaultsubtitles}}"
       defaultduration="{{defaultduration}}"
@@ -376,33 +377,60 @@ if (template) {
             --media-range-thumb-transition: opacity 0.1s linear;
             --media-range-thumb-opacity: 0;
 
-            --media-preview-thumbnail-border: calc(0.125 * var(--base)) solid #fff;
-            --media-preview-thumbnail-border-radius: calc(0.5 * var(--base));
-            --media-preview-thumbnail-min-width: calc(8 * var(--base));
-            --media-preview-thumbnail-max-width: calc(10 * var(--base));
-            --media-preview-thumbnail-min-height: calc(5 * var(--base));
-            --media-preview-thumbnail-max-height: calc(7 * var(--base));
-            --media-preview-box-margin: 0 0 -10px;
+            --preview-card-background: rgba(0, 0, 0, 0.5);
+            --preview-card-border: rgba(255, 255, 255, 0.12);
+            --media-preview-box-margin: 0 0 calc(0.35 * var(--base));
+            --media-box-arrow-background: var(--preview-card-background);
+            --media-box-arrow-width: calc(0.65 * var(--base));
+            --media-box-arrow-height: calc(0.55 * var(--base));
           }
 
-          media-preview-thumbnail {
-            margin-bottom: 5px;
+          .preview-card {
+            box-sizing: border-box;
+            display: flex;
+            width: calc(10 * var(--base));
+            flex-direction: column;
+            align-items: stretch;
+            gap: calc(0.4 * var(--base));
+            padding: calc(0.35 * var(--base));
+            padding-bottom: calc(0.55 * var(--base));
+            overflow: hidden;
+            color: white;
+            background: var(--preview-card-background);
+            border: 1px solid var(--preview-card-border);
+            border-radius: calc(0.8 * var(--base));
+            backdrop-filter: blur(10px);
           }
 
-          media-preview-chapter-display {
-            font-size: calc(0.6 * var(--base));
-            padding-block: 0;
+          .preview-card media-preview-thumbnail {
+            width: 100%;
+            min-width: calc(9.3 * var(--base));
+            max-width: calc(9.3 * var(--base));
+            min-height: calc(5.23 * var(--base));
+            max-height: calc(5.23 * var(--base));
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: calc(0.55 * var(--base));
           }
 
-          media-preview-time-display {
-            font-size: calc(0.65 * var(--base));
-            padding-top: 0;
+          .preview-card media-preview-chapter-display {
+            --media-text-background: transparent;
+            --media-control-padding: 0 calc(0.25 * var(--base));
+            --media-font-size: calc(0.62 * var(--base));
+            --media-text-content-height: 1.25;
+            box-sizing: border-box;
+            width: 100%;
+            min-height: calc(1.8 * var(--base));
+            text-align: center;
+            white-space: normal;
           }
         </style>
         <media-time-range>
-          <media-preview-thumbnail></media-preview-thumbnail>
-          <media-preview-chapter-display></media-preview-chapter-display>
-          <media-preview-time-display></media-preview-time-display>
+          <div class="preview-card" slot="preview">
+            <media-preview-thumbnail mediacontroller="media-controller"></media-preview-thumbnail>
+            <media-preview-chapter-display mediacontroller="media-controller"></media-preview-chapter-display>
+          </div>
+          <div slot="preview" part="arrow" aria-hidden="true"></div>
         </media-time-range>
 
       <!-- Settings Menu -->
