@@ -753,6 +753,7 @@ if (template) {
             <style>
                 media-current-chapter{
                   transition: background-color .2s ease-in-out, border-color .2s ease-in-out, opacity .2s ease-in-out;
+                  position: relative;
                   height: fit-content;
                   display: flex;
                   align-items: center;
@@ -816,7 +817,7 @@ if (template) {
 
               .player-button-group media-tooltip{
                 opacity: 0;
-                transtition: opacity .3s;
+                transition: opacity .3s;
               }
 
               .player-button-group.currentChapter:hover media-tooltip{
@@ -1049,8 +1050,20 @@ class MediaCurrentChapter extends HTMLElement {
       }
     });
 
-    this.querySelector('p').addEventListener("click", () => {
+    const chapterControl = this.parentElement;
+    chapterControl?.setAttribute("role", "button");
+    chapterControl?.setAttribute("tabindex", "0");
+    chapterControl?.setAttribute("aria-label", "Open chapters");
+
+    const openChapterMenu = () => {
       window.dispatchEvent(new CustomEvent('open-chapter-menu', { bubbles: true, composed: true }));
+    };
+
+    chapterControl?.addEventListener("click", openChapterMenu);
+    chapterControl?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      openChapterMenu();
     });
   }
 }
