@@ -16,7 +16,10 @@ import ContributorSearch from "./contributorSearch";
 import { fetchFn } from "~/API";
 import { getToken } from "~/functions";
 import { EUROPEAN_LANGUAGES } from "~/constants";
-import { loadMediaTheme } from "../playPage/playerCollection/loadMediaTheme";
+import {
+  loadMediaTheme,
+  styleMuxPlayerCaptions,
+} from "../playPage/playerCollection/loadMediaTheme";
 import Sidebar from "../myVideosPage/sidebar/sidebar";
 import { useConstrainedSticky } from "../shared/useConstrainedSticky";
 import { useI18n } from "~/i18n";
@@ -389,7 +392,10 @@ function VideoPreview({
             playsInline
             volume={0.1}
             ref={playerRef as any}
-            onLoadedMetadata={() => setMetadataLoaded(true)}
+            onLoadedMetadata={(event) => {
+              styleMuxPlayerCaptions(event.currentTarget as MuxPlayerElement);
+              setMetadataLoaded(true);
+            }}
             style={{
               width: "100%",
               aspectRatio: "16 / 9",
