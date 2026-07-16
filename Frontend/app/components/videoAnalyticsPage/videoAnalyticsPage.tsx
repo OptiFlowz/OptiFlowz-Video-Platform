@@ -431,15 +431,22 @@ function CountryFlag({ code }: { code: string }) {
     <span
       className={`videoAnalyticsCountryFlag${normalizedCode ? ` fi fi-${normalizedCode}` : ""}`}
       aria-hidden="true"
-    />
+    >
+      {normalizedCode ? null : "?"}
+    </span>
   );
+}
+
+function getGeographicLabel(value: string, unknownLabel: string) {
+  return /^(other|unknown)$/i.test(value.trim()) ? unknownLabel : value;
 }
 
 const CountryPopup = forwardRef<CountryPopupHandle, {
   viewsLabel: string;
   citiesLabel: string;
   closeLabel: string;
-}>(function CountryPopup({ viewsLabel, citiesLabel, closeLabel }, ref) {
+  unknownLabel: string;
+}>(function CountryPopup({ viewsLabel, citiesLabel, closeLabel, unknownLabel }, ref) {
   const [selectedCountry, setSelectedCountry] = useState<{ code: string; data: GeographicCountry } | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const closeTimerRef = useRef<number | null>(null);
@@ -475,19 +482,23 @@ const CountryPopup = forwardRef<CountryPopupHandle, {
 
   if (!selectedCountry) return null;
 
+  const countryName = /^[A-Z]{2}$/i.test(selectedCountry.code)
+    ? getGeographicLabel(selectedCountry.data.name, unknownLabel)
+    : unknownLabel;
+
   return createPortal(
     <div
       className={`videoAnalyticsCityBackdrop${isVisible ? " visible" : ""}`}
       role="dialog"
       aria-modal="true"
-      aria-label={selectedCountry.data.name}
+      aria-label={countryName}
       onMouseDown={close}
     >
       <section className="videoAnalyticsCityPopup" onMouseDown={(event) => event.stopPropagation()}>
         <header>
           <CountryFlag code={selectedCountry.code} />
           <div>
-            <h2>{selectedCountry.data.name}</h2>
+            <h2>{countryName}</h2>
             <p>{selectedCountry.data.totalViews} {viewsLabel}</p>
           </div>
           <button type="button" aria-label={closeLabel} onClick={close}>{CloseSVG}</button>
@@ -496,7 +507,7 @@ const CountryPopup = forwardRef<CountryPopupHandle, {
           <p>{citiesLabel}</p>
           <div className="videoAnalyticsCityGrid">
             {Object.entries(selectedCountry.data.cities).sort(([, a], [, b]) => b - a).map(([city, views]) => (
-              <article key={city}><strong>{city}</strong><span>{views} {viewsLabel}</span></article>
+              <article key={city}><strong>{getGeographicLabel(city, unknownLabel)}</strong><span>{views} {viewsLabel}</span></article>
             ))}
           </div>
         </div>
@@ -954,6 +965,7 @@ function VideoAnalyticsPage() {
 
           <section className="videoAnalyticsOverview">
             <h2>{t("videoAnalyticsOverview")}</h2>
+            <p className="videoAnalyticsSectionDescription">{t("videoAnalyticsOverviewDescription")}</p>
 
             {isOverviewLoading ? (
               <div className="videoAnalyticsOverviewGrid" aria-label={t("videoAnalyticsOverviewLoading")}>
@@ -978,6 +990,7 @@ function VideoAnalyticsPage() {
 
           <section className="videoAnalyticsEngagement">
             <h2>{t("videoAnalyticsEngagement")}</h2>
+            <p className="videoAnalyticsSectionDescription">{t("videoAnalyticsEngagementDescription")}</p>
 
             {isEngagementLoading ? (
               <div className="videoAnalyticsEngagementLoading loading" aria-label={t("videoAnalyticsEngagementLoading")} />
@@ -994,6 +1007,7 @@ function VideoAnalyticsPage() {
 
           <section className="videoAnalyticsGraphs">
             <h2>{t("videoAnalyticsAudienceGraphs")}</h2>
+            <p className="videoAnalyticsSectionDescription">{t("videoAnalyticsAudienceGraphsDescription")}</p>
 
             <div className="videoAnalyticsGraphTabs" aria-label={t("videoAnalyticsAudienceGraphs")}>
               <button
@@ -1207,6 +1221,7 @@ function VideoAnalyticsPage() {
 
           <section className="videoAnalyticsAudience">
             <h2>{t("videoAnalyticsAudienceBreakdown")}</h2>
+            <p className="videoAnalyticsSectionDescription">{t("videoAnalyticsAudienceBreakdownDescription")}</p>
 
             {isAudienceLoading ? (
               <div className="videoAnalyticsAudienceGrid" aria-label={t("videoAnalyticsAudienceLoading")}>
@@ -1231,7 +1246,7 @@ function VideoAnalyticsPage() {
 
           <section className="videoAnalyticsGeographic">
             <h2>{t("videoAnalyticsGeographicBreakdown")}</h2>
-            <p>{t("videoAnalyticsViewByMap")}</p>
+            <p className="videoAnalyticsSectionDescription">{t("videoAnalyticsGeographicBreakdownDescription")}</p>
 
             {isGeographicLoading ? (
               <div className="videoAnalyticsMap loading" />
@@ -1335,13 +1350,12 @@ function VideoAnalyticsPage() {
                   </div>
                 </div>
 
-                <p className="videoAnalyticsGridLabel">{t("videoAnalyticsViewByGrid")}</p>
                 <div className="videoAnalyticsCountryGrid">
                   {geographicCountries.map(([code, country]) => (
                     <button
                       type="button"
                       key={code}
-                      aria-label={`${country.name}: ${country.totalViews} ${t("videoAnalyticsViews")}`}
+                      aria-label={`${/^[A-Z]{2}$/i.test(code) ? getGeographicLabel(country.name, t("videoAnalyticsUnknown")) : t("videoAnalyticsUnknown")}: ${country.totalViews} ${t("videoAnalyticsViews")}`}
                       onClick={() => openCountryPopup(code, country)}
                     >
                       <CountryFlag code={code} />
@@ -1359,6 +1373,7 @@ function VideoAnalyticsPage() {
             viewsLabel={t("videoAnalyticsViews")}
             citiesLabel={t("videoAnalyticsCities")}
             closeLabel={t("close")}
+            unknownLabel={t("videoAnalyticsUnknown")}
           />
         </div>
       </div>

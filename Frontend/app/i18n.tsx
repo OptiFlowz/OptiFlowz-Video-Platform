@@ -117,6 +117,7 @@ const enBase: TranslationMap = {
   videoAnalyticsLoadFailed: "Video information could not be loaded.",
   videoAnalyticsFilters: "Analytics filters",
   videoAnalyticsOverview: "Overview",
+  videoAnalyticsOverviewDescription: "A summary of key performance metrics for the selected period, including views, watch time, reactions, comments, and first-time viewers.",
   videoAnalyticsOverviewLoading: "Loading analytics overview...",
   videoAnalyticsOverviewFailed: "The analytics overview could not be loaded.",
   videoAnalyticsTotalViews: "Total views",
@@ -134,12 +135,15 @@ const enBase: TranslationMap = {
   videoAnalyticsTotalComments: "Total comments",
   videoAnalyticsTotalCommentsHelp: "Comments in the selected period",
   videoAnalyticsAudienceBreakdown: "Audience breakdown",
+  videoAnalyticsAudienceBreakdownDescription: "Shows which devices and operating systems your audience used to watch the video.",
   videoAnalyticsAudienceLoading: "Loading audience breakdown...",
   videoAnalyticsAudienceFailed: "The audience breakdown could not be loaded.",
   videoAnalyticsEngagement: "Engagement",
+  videoAnalyticsEngagementDescription: "Shows the percentage of viewers who interacted with the video through likes, dislikes, or comments.",
   videoAnalyticsEngagementLoading: "Loading engagement...",
   videoAnalyticsEngagementFailed: "Engagement could not be loaded.",
   videoAnalyticsAudienceGraphs: "Audience graphs",
+  videoAnalyticsAudienceGraphsDescription: "Tracks how views and watch time change over the selected period and shows how many viewers reached each completion level.",
   videoAnalyticsWatchTimeOverTime: "Watch time over time",
   videoAnalyticsViewsOverTime: "Views over time",
   videoAnalyticsCompletionBuckets: "Completion buckets",
@@ -155,8 +159,10 @@ const enBase: TranslationMap = {
   videoAnalyticsPhone: "Phone",
   videoAnalyticsTablet: "Tablet",
   videoAnalyticsOther: "Other",
+  videoAnalyticsUnknown: "Unknown",
   videoAnalyticsViews: "views",
   videoAnalyticsGeographicBreakdown: "Geographic breakdown",
+  videoAnalyticsGeographicBreakdownDescription: "Shows where viewers watched from: the map highlights activity by country, while the country cards and city details provide a more precise breakdown.",
   videoAnalyticsViewByMap: "View by map",
   videoAnalyticsViewByGrid: "View by grid",
   videoAnalyticsGeographicFailed: "The geographic breakdown could not be loaded.",
@@ -9708,6 +9714,130 @@ const geographicAnalyticsLocaleOverrides: Record<Locale, Partial<TranslationMap>
   },
 };
 
+const videoAnalyticsSectionDescriptionOverrides: Record<Locale, Partial<TranslationMap>> = {
+  en: {},
+  ar: {
+    videoAnalyticsUnknown: "غير معروف",
+    videoAnalyticsOverviewDescription: "ملخص لمقاييس الأداء الرئيسية للفترة المحددة، بما في ذلك المشاهدات ووقت المشاهدة والتفاعلات والتعليقات والمشاهدون لأول مرة.",
+    videoAnalyticsEngagementDescription: "يوضح نسبة المشاهدين الذين تفاعلوا مع الفيديو من خلال الإعجاب أو عدم الإعجاب أو التعليقات.",
+    videoAnalyticsAudienceGraphsDescription: "يتتبع تغير المشاهدات ووقت المشاهدة خلال الفترة المحددة، ويوضح عدد المشاهدين الذين وصلوا إلى كل مستوى من إكمال الفيديو.",
+    videoAnalyticsAudienceBreakdownDescription: "يوضح الأجهزة وأنظمة التشغيل التي استخدمها جمهورك لمشاهدة الفيديو.",
+    videoAnalyticsGeographicBreakdownDescription: "يوضح أماكن مشاهدة الجمهور: تبرز الخريطة النشاط حسب البلد، بينما تقدم بطاقات البلدان وتفاصيل المدن توزيعًا أكثر دقة.",
+  },
+  de: {
+    videoAnalyticsUnknown: "Unbekannt",
+    videoAnalyticsOverviewDescription: "Eine Zusammenfassung der wichtigsten Leistungskennzahlen im ausgewählten Zeitraum, einschließlich Aufrufen, Wiedergabezeit, Reaktionen, Kommentaren und Erstzuschauern.",
+    videoAnalyticsEngagementDescription: "Zeigt den Prozentsatz der Zuschauer, die durch Likes, Dislikes oder Kommentare mit dem Video interagiert haben.",
+    videoAnalyticsAudienceGraphsDescription: "Zeigt die Entwicklung von Aufrufen und Wiedergabezeit im ausgewählten Zeitraum sowie die Anzahl der Zuschauer je erreichtem Abschlussgrad.",
+    videoAnalyticsAudienceBreakdownDescription: "Zeigt, mit welchen Geräten und Betriebssystemen Ihr Publikum das Video angesehen hat.",
+    videoAnalyticsGeographicBreakdownDescription: "Zeigt, woher die Zuschauer kamen: Die Karte hebt Aktivitäten nach Land hervor, während Länderkarten und Städtedetails eine genauere Aufschlüsselung bieten.",
+  },
+  es: {
+    videoAnalyticsUnknown: "Desconocido",
+    videoAnalyticsOverviewDescription: "Resumen de las métricas clave de rendimiento del período seleccionado, incluidas las vistas, el tiempo de reproducción, las reacciones, los comentarios y los espectadores nuevos.",
+    videoAnalyticsEngagementDescription: "Muestra el porcentaje de espectadores que interactuaron con el video mediante Me gusta, No me gusta o comentarios.",
+    videoAnalyticsAudienceGraphsDescription: "Muestra cómo cambian las vistas y el tiempo de reproducción durante el período seleccionado y cuántos espectadores alcanzaron cada nivel de finalización.",
+    videoAnalyticsAudienceBreakdownDescription: "Muestra los dispositivos y sistemas operativos que utilizó tu audiencia para ver el video.",
+    videoAnalyticsGeographicBreakdownDescription: "Muestra desde dónde vieron el video: el mapa destaca la actividad por país, mientras que las tarjetas de países y los detalles de ciudades ofrecen un desglose más preciso.",
+  },
+  fr: {
+    videoAnalyticsUnknown: "Inconnu",
+    videoAnalyticsOverviewDescription: "Résumé des principaux indicateurs de performance pour la période sélectionnée, notamment les vues, la durée de visionnage, les réactions, les commentaires et les nouveaux spectateurs.",
+    videoAnalyticsEngagementDescription: "Indique le pourcentage de spectateurs ayant interagi avec la vidéo via des mentions J’aime, Je n’aime pas ou des commentaires.",
+    videoAnalyticsAudienceGraphsDescription: "Suit l’évolution des vues et de la durée de visionnage sur la période sélectionnée et indique combien de spectateurs ont atteint chaque niveau de complétion.",
+    videoAnalyticsAudienceBreakdownDescription: "Indique les appareils et systèmes d’exploitation utilisés par votre audience pour regarder la vidéo.",
+    videoAnalyticsGeographicBreakdownDescription: "Indique d’où proviennent les spectateurs : la carte met en évidence l’activité par pays, tandis que les fiches pays et les détails par ville offrent une répartition plus précise.",
+  },
+  el: {
+    videoAnalyticsUnknown: "Άγνωστο",
+    videoAnalyticsOverviewDescription: "Σύνοψη των βασικών μετρήσεων απόδοσης για την επιλεγμένη περίοδο, όπως προβολές, χρόνος παρακολούθησης, αντιδράσεις, σχόλια και θεατές για πρώτη φορά.",
+    videoAnalyticsEngagementDescription: "Δείχνει το ποσοστό των θεατών που αλληλεπίδρασαν με το βίντεο μέσω επισημάνσεων Μου αρέσει, Δεν μου αρέσει ή σχολίων.",
+    videoAnalyticsAudienceGraphsDescription: "Παρακολουθεί την εξέλιξη των προβολών και του χρόνου παρακολούθησης στην επιλεγμένη περίοδο και δείχνει πόσοι θεατές έφτασαν σε κάθε επίπεδο ολοκλήρωσης.",
+    videoAnalyticsAudienceBreakdownDescription: "Δείχνει τις συσκευές και τα λειτουργικά συστήματα που χρησιμοποίησε το κοινό σας για να παρακολουθήσει το βίντεο.",
+    videoAnalyticsGeographicBreakdownDescription: "Δείχνει από πού παρακολούθησαν οι θεατές: ο χάρτης επισημαίνει τη δραστηριότητα ανά χώρα, ενώ οι κάρτες χωρών και τα στοιχεία πόλεων παρέχουν πιο ακριβή ανάλυση.",
+  },
+  hi: {
+    videoAnalyticsUnknown: "अज्ञात",
+    videoAnalyticsOverviewDescription: "चुनी गई अवधि के प्रमुख प्रदर्शन मेट्रिक्स का सारांश, जिसमें दृश्य, देखने का समय, प्रतिक्रियाएँ, टिप्पणियाँ और पहली बार देखने वाले दर्शक शामिल हैं।",
+    videoAnalyticsEngagementDescription: "उन दर्शकों का प्रतिशत दिखाता है जिन्होंने पसंद, नापसंद या टिप्पणियों के माध्यम से वीडियो के साथ इंटरैक्ट किया।",
+    videoAnalyticsAudienceGraphsDescription: "चुनी गई अवधि में दृश्यों और देखने के समय में बदलाव को ट्रैक करता है और दिखाता है कि कितने दर्शक पूर्णता के प्रत्येक स्तर तक पहुँचे।",
+    videoAnalyticsAudienceBreakdownDescription: "दिखाता है कि आपके दर्शकों ने वीडियो देखने के लिए किन डिवाइस और ऑपरेटिंग सिस्टम का उपयोग किया।",
+    videoAnalyticsGeographicBreakdownDescription: "दिखाता है कि दर्शकों ने कहाँ से देखा: मानचित्र देश के अनुसार गतिविधि दिखाता है, जबकि देश कार्ड और शहर का विवरण अधिक सटीक विभाजन देते हैं।",
+  },
+  hr: {
+    videoAnalyticsUnknown: "Nepoznato",
+    videoAnalyticsOverviewDescription: "Sažetak ključnih pokazatelja uspješnosti za odabrano razdoblje, uključujući preglede, vrijeme gledanja, reakcije, komentare i nove gledatelje.",
+    videoAnalyticsEngagementDescription: "Prikazuje postotak gledatelja koji su reagirali na videozapis oznakama sviđanja, nesviđanja ili komentarima.",
+    videoAnalyticsAudienceGraphsDescription: "Prati promjene pregleda i vremena gledanja tijekom odabranog razdoblja te prikazuje koliko je gledatelja doseglo svaku razinu dovršenosti.",
+    videoAnalyticsAudienceBreakdownDescription: "Prikazuje uređaje i operacijske sustave koje je publika koristila za gledanje videozapisa.",
+    videoAnalyticsGeographicBreakdownDescription: "Prikazuje odakle su gledatelji gledali: karta ističe aktivnost po državama, a kartice država i detalji gradova daju precizniju raspodjelu.",
+  },
+  it: {
+    videoAnalyticsUnknown: "Sconosciuto",
+    videoAnalyticsOverviewDescription: "Riepilogo delle principali metriche di rendimento per il periodo selezionato, incluse visualizzazioni, tempo di visione, reazioni, commenti e nuovi spettatori.",
+    videoAnalyticsEngagementDescription: "Mostra la percentuale di spettatori che hanno interagito con il video tramite Mi piace, Non mi piace o commenti.",
+    videoAnalyticsAudienceGraphsDescription: "Monitora l’andamento delle visualizzazioni e del tempo di visione nel periodo selezionato e mostra quanti spettatori hanno raggiunto ogni livello di completamento.",
+    videoAnalyticsAudienceBreakdownDescription: "Mostra i dispositivi e i sistemi operativi utilizzati dal pubblico per guardare il video.",
+    videoAnalyticsGeographicBreakdownDescription: "Mostra da dove hanno guardato gli spettatori: la mappa evidenzia l’attività per paese, mentre le schede dei paesi e i dettagli delle città offrono una suddivisione più precisa.",
+  },
+  nl: {
+    videoAnalyticsUnknown: "Onbekend",
+    videoAnalyticsOverviewDescription: "Een overzicht van de belangrijkste prestatiegegevens voor de geselecteerde periode, waaronder weergaven, kijktijd, reacties, opmerkingen en nieuwe kijkers.",
+    videoAnalyticsEngagementDescription: "Toont het percentage kijkers dat via likes, dislikes of opmerkingen op de video heeft gereageerd.",
+    videoAnalyticsAudienceGraphsDescription: "Volgt hoe weergaven en kijktijd in de geselecteerde periode veranderen en toont hoeveel kijkers elk voltooiingsniveau hebben bereikt.",
+    videoAnalyticsAudienceBreakdownDescription: "Toont welke apparaten en besturingssystemen uw publiek gebruikte om de video te bekijken.",
+    videoAnalyticsGeographicBreakdownDescription: "Toont waar kijkers vandaan keken: de kaart markeert activiteit per land, terwijl landkaarten en stadsdetails een nauwkeurigere verdeling geven.",
+  },
+  pl: {
+    videoAnalyticsUnknown: "Nieznane",
+    videoAnalyticsOverviewDescription: "Podsumowanie kluczowych wskaźników wydajności w wybranym okresie, w tym wyświetleń, czasu oglądania, reakcji, komentarzy i nowych widzów.",
+    videoAnalyticsEngagementDescription: "Pokazuje odsetek widzów, którzy weszli w interakcję z filmem poprzez polubienia, negatywne oceny lub komentarze.",
+    videoAnalyticsAudienceGraphsDescription: "Śledzi zmiany liczby wyświetleń i czasu oglądania w wybranym okresie oraz pokazuje, ilu widzów osiągnęło każdy poziom ukończenia.",
+    videoAnalyticsAudienceBreakdownDescription: "Pokazuje urządzenia i systemy operacyjne używane przez odbiorców do oglądania filmu.",
+    videoAnalyticsGeographicBreakdownDescription: "Pokazuje, skąd oglądali widzowie: mapa wyróżnia aktywność według kraju, a karty krajów i szczegóły miast zapewniają dokładniejszy podział.",
+  },
+  pt: {
+    videoAnalyticsUnknown: "Desconhecido",
+    videoAnalyticsOverviewDescription: "Resumo das principais métricas de desempenho do período selecionado, incluindo visualizações, tempo de exibição, reações, comentários e novos espectadores.",
+    videoAnalyticsEngagementDescription: "Mostra a percentagem de espectadores que interagiram com o vídeo através de gostos, não gostos ou comentários.",
+    videoAnalyticsAudienceGraphsDescription: "Acompanha a evolução das visualizações e do tempo de exibição no período selecionado e mostra quantos espectadores atingiram cada nível de conclusão.",
+    videoAnalyticsAudienceBreakdownDescription: "Mostra os dispositivos e sistemas operativos que o público utilizou para ver o vídeo.",
+    videoAnalyticsGeographicBreakdownDescription: "Mostra de onde os espectadores assistiram: o mapa destaca a atividade por país, enquanto os cartões de países e os detalhes das cidades oferecem uma distribuição mais precisa.",
+  },
+  ro: {
+    videoAnalyticsUnknown: "Necunoscut",
+    videoAnalyticsOverviewDescription: "Un rezumat al principalilor indicatori de performanță pentru perioada selectată, inclusiv vizualizări, durata de vizionare, reacții, comentarii și spectatori noi.",
+    videoAnalyticsEngagementDescription: "Arată procentul spectatorilor care au interacționat cu videoclipul prin aprecieri, neaprecieri sau comentarii.",
+    videoAnalyticsAudienceGraphsDescription: "Urmărește evoluția vizualizărilor și a duratei de vizionare în perioada selectată și arată câți spectatori au atins fiecare nivel de finalizare.",
+    videoAnalyticsAudienceBreakdownDescription: "Arată dispozitivele și sistemele de operare folosite de public pentru a viziona videoclipul.",
+    videoAnalyticsGeographicBreakdownDescription: "Arată de unde au vizionat spectatorii: harta evidențiază activitatea pe țări, iar cardurile țărilor și detaliile orașelor oferă o distribuție mai precisă.",
+  },
+  sl: {
+    videoAnalyticsUnknown: "Neznano",
+    videoAnalyticsOverviewDescription: "Povzetek ključnih meritev uspešnosti za izbrano obdobje, vključno z ogledi, časom gledanja, odzivi, komentarji in novimi gledalci.",
+    videoAnalyticsEngagementDescription: "Prikazuje odstotek gledalcev, ki so se na video odzvali z všečki, nevšečki ali komentarji.",
+    videoAnalyticsAudienceGraphsDescription: "Spremlja spreminjanje ogledov in časa gledanja v izbranem obdobju ter prikazuje, koliko gledalcev je doseglo posamezno stopnjo dokončanja.",
+    videoAnalyticsAudienceBreakdownDescription: "Prikazuje naprave in operacijske sisteme, ki jih je občinstvo uporabilo za ogled videa.",
+    videoAnalyticsGeographicBreakdownDescription: "Prikazuje, od kod so gledalci gledali: zemljevid poudari dejavnost po državah, kartice držav in podrobnosti mest pa ponudijo natančnejšo razčlenitev.",
+  },
+  sr: {
+    videoAnalyticsUnknown: "Nepoznato",
+    videoAnalyticsOverviewDescription: "Sažetak ključnih pokazatelja učinka za izabrani period, uključujući preglede, vreme gledanja, reakcije, komentare i gledaoce koji su video pogledali prvi put.",
+    videoAnalyticsEngagementDescription: "Prikazuje procenat gledalaca koji su reagovali na video sviđanjem, nesviđanjem ili komentarom.",
+    videoAnalyticsAudienceGraphsDescription: "Prati promene pregleda i vremena gledanja tokom izabranog perioda i pokazuje koliko je gledalaca dostiglo svaki nivo odgledanosti videa.",
+    videoAnalyticsAudienceBreakdownDescription: "Prikazuje uređaje i operativne sisteme koje je publika koristila za gledanje videa.",
+    videoAnalyticsGeographicBreakdownDescription: "Prikazuje odakle je publika gledala: mapa ističe aktivnost po zemljama, dok kartice zemalja i detalji o gradovima daju precizniju raspodelu.",
+  },
+  tr: {
+    videoAnalyticsUnknown: "Bilinmeyen",
+    videoAnalyticsOverviewDescription: "Seçilen döneme ait görüntülemeler, izlenme süresi, tepkiler, yorumlar ve ilk kez izleyenler dahil temel performans ölçümlerinin özeti.",
+    videoAnalyticsEngagementDescription: "Videoyla beğeni, beğenmeme veya yorum yoluyla etkileşim kuran izleyicilerin yüzdesini gösterir.",
+    videoAnalyticsAudienceGraphsDescription: "Seçilen dönemde görüntülemelerin ve izlenme süresinin nasıl değiştiğini izler ve her tamamlanma düzeyine kaç izleyicinin ulaştığını gösterir.",
+    videoAnalyticsAudienceBreakdownDescription: "Kitlenizin videoyu izlemek için kullandığı cihazları ve işletim sistemlerini gösterir.",
+    videoAnalyticsGeographicBreakdownDescription: "İzleyicilerin nereden izlediğini gösterir: harita ülkeye göre etkinliği vurgularken ülke kartları ve şehir ayrıntıları daha hassas bir dağılım sunar.",
+  },
+};
+
 
 const quizPopupLocaleOverrides: Record<Locale, Partial<TranslationMap>> = {
   en: {},
@@ -11301,7 +11431,7 @@ const timeSeriesAnalyticsLocaleOverrides: Partial<Record<Locale, Partial<Transla
 const buildTranslations = () => {
   const result = {} as Record<Locale, TranslationMap>;
   for (const locale of SUPPORTED_LOCALES) {
-    result[locale] = { ...enBase, ...localeOverrides[locale], ...adminCrudOverrides[locale], ...completeLocaleOverrides[locale], ...analyticsLocaleOverrides[locale], ...geographicAnalyticsLocaleOverrides[locale], ...(timeSeriesAnalyticsLocaleOverrides[locale] ?? {}), ...quizPopupLocaleOverrides[locale] } as TranslationMap;
+    result[locale] = { ...enBase, ...localeOverrides[locale], ...adminCrudOverrides[locale], ...completeLocaleOverrides[locale], ...analyticsLocaleOverrides[locale], ...geographicAnalyticsLocaleOverrides[locale], ...(timeSeriesAnalyticsLocaleOverrides[locale] ?? {}), ...videoAnalyticsSectionDescriptionOverrides[locale], ...quizPopupLocaleOverrides[locale] } as TranslationMap;
   }
   return result;
 };
