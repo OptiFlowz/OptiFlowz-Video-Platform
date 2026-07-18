@@ -1474,8 +1474,11 @@ export async function handleGetMyVideos(req, res) {
     // whitelist: samo ove kolone smeju u ORDER BY
     const SORT_BY_MAP = {
       created_at: "created_at",
+      date: "created_at",
       view_count: "view_count",
+      views: "view_count",
       like_count: "like_count",
+      likes: "like_count",
       visibility: "visibility",
     };
 
@@ -1582,6 +1585,4 @@ export async function handleDeleteVideo(req, res) {
     return res.status(500).json({ message: "Server error" });
   }
 }
-
-
 

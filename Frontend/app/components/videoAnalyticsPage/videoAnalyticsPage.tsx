@@ -667,9 +667,9 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
     isLoading: isBestPerformingVideosLoading,
     isError: isBestPerformingVideosError,
   } = useQuery<fetchVideo>({
-    queryKey: ["channel-analytics-best-performing-videos"],
+    queryKey: ["channel-analytics-best-performing-videos", "view-count-desc"],
     queryFn: () => fetchFn<fetchVideo>({
-      route: "api/video-moderation/my/videos?page=1&limit=3&sort_by=views&sort_dir=desc",
+      route: "api/video-moderation/my/videos?page=1&limit=3&sort_by=view_count&sort_dir=desc",
       options: { method: "GET", headers: headers.current },
     }),
     enabled: !!token && isChannel,
