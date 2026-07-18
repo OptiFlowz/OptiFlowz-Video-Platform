@@ -8744,6 +8744,174 @@ main.videoAnalyticsPage .videoAnalyticsEngagementLoading{
   animation: shimmer 2s infinite;
 }
 
+main.videoAnalyticsPage .channelAnalyticsBestVideos{
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  padding: 1.6rem;
+  border: 1px solid var(--border1);
+  border-radius: 22px;
+  background-color: var(--background2);
+}
+
+main.videoAnalyticsPage .channelAnalyticsBestVideos > h2{
+  color: var(--text1);
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+main.videoAnalyticsPage .channelAnalyticsBestVideoList{
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+main.videoAnalyticsPage .channelAnalyticsBestVideo{
+  display: grid;
+  grid-template-columns: 42px minmax(150px, 190px) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 112px;
+  padding: 0.55rem;
+  border: 1px solid var(--border1);
+  border-radius: 16px;
+  background-color: var(--background3);
+  box-shadow: 0 2px 6px var(--background15);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+main.videoAnalyticsPage .channelAnalyticsBestVideo:not(.loading):hover{
+  box-shadow: 0 6px 14px var(--background15);
+  transform: translateY(-1px);
+}
+
+main.videoAnalyticsPage .channelAnalyticsBestVideo.loading{
+  background: var(--backgroundGradient1);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+main.videoAnalyticsPage .channelAnalyticsBestVideoRank{
+  display: grid;
+  height: 100%;
+  min-height: 92px;
+  place-items: center;
+  border: 1px solid var(--border1);
+  border-radius: 999px;
+  background-color: var(--background1);
+  color: var(--text2);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+main.videoAnalyticsPage .channelAnalyticsBestVideoThumbnail{
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 12px;
+  background-color: var(--background1);
+}
+
+main.videoAnalyticsPage .channelAnalyticsBestVideoThumbnail img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+main.videoAnalyticsPage .channelAnalyticsBestVideoThumbnail span{
+  position: absolute;
+  right: 0.45rem;
+  bottom: 0.4rem;
+  padding: 0.18rem 0.42rem;
+  border: 1px solid var(--border1);
+  border-radius: 999px;
+  background-color: var(--background1);
+  color: var(--text1);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+main.videoAnalyticsPage .channelAnalyticsBestVideoInfo{
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+main.videoAnalyticsPage .channelAnalyticsBestVideoInfo h3{
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--text1);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.2;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+main.videoAnalyticsPage .channelAnalyticsBestVideoDescription{
+  display: -webkit-box;
+  overflow: hidden;
+  max-width: 100%;
+  color: var(--text2);
+  font-size: 0.82rem;
+  line-height: 1.25;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+main.videoAnalyticsPage .channelAnalyticsBestVideoMeta{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.1rem;
+}
+
+main.videoAnalyticsPage .channelAnalyticsBestVideoMeta > span{
+  padding: 0.22rem 0.5rem;
+  border: 1px solid var(--border1);
+  border-radius: 999px;
+  background-color: var(--background2);
+  color: var(--text2);
+  font-size: 0.76rem;
+}
+
+main.videoAnalyticsPage .channelAnalyticsBestVideoAction{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-width: 140px;
+  margin-right: 0.9rem;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--border1);
+  border-radius: 999px;
+  background-color: var(--background2);
+  color: var(--accentBlue3);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+main.videoAnalyticsPage .channelAnalyticsBestVideoAction svg{
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+
+main.videoAnalyticsPage .channelAnalyticsBestVideoAction svg path{
+  stroke: currentColor;
+}
+
+main.videoAnalyticsPage .channelAnalyticsBestVideoAction:hover{
+  background-color: var(--accentBlue);
+  color: var(--text1);
+  transform: translateY(-1px);
+}
+
 main.videoAnalyticsPage .videoAnalyticsGraphs{
   display: flex;
   flex-direction: column;
@@ -9460,6 +9628,25 @@ main.videoAnalyticsPage .videoAnalyticsMessage{
     padding: 1rem;
   }
 
+  main.videoAnalyticsPage .channelAnalyticsBestVideos{
+    padding: 1rem;
+  }
+
+  main.videoAnalyticsPage .channelAnalyticsBestVideo{
+    grid-template-columns: 38px minmax(110px, 145px) minmax(0, 1fr);
+  }
+
+  main.videoAnalyticsPage .channelAnalyticsBestVideoRank{
+    grid-row: 1 / span 2;
+    min-height: 100%;
+  }
+
+  main.videoAnalyticsPage .channelAnalyticsBestVideoAction{
+    grid-column: 2 / -1;
+    width: 100%;
+    margin-right: 0;
+  }
+
   main.videoAnalyticsPage .videoAnalyticsLineChart{
     height: 310px;
     padding-left: 0;
@@ -9508,6 +9695,23 @@ main.videoAnalyticsPage .videoAnalyticsMessage{
   main.videoAnalyticsPage .videoAnalyticsCountryGrid,
   .videoAnalyticsCityGrid{
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px){
+  main.videoAnalyticsPage .channelAnalyticsBestVideo{
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+
+  main.videoAnalyticsPage .channelAnalyticsBestVideoRank{
+    grid-row: 1 / span 3;
+  }
+
+  main.videoAnalyticsPage .channelAnalyticsBestVideoThumbnail,
+  main.videoAnalyticsPage .channelAnalyticsBestVideoInfo,
+  main.videoAnalyticsPage .channelAnalyticsBestVideoAction{
+    grid-column: 2;
   }
 }
 

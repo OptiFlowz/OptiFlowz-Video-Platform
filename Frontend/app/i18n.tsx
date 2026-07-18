@@ -130,7 +130,13 @@ const enBase: TranslationMap = {
   channelAnalyticsTotalDislikesHelp: "Dislikes across all channel videos",
   channelAnalyticsTotalCommentsHelp: "Comments across all channel videos",
   channelAnalyticsAverageEngagement: "Average engagement per video",
-  channelAnalyticsAverageEngagementDescription: "The average share of viewers who reacted to or commented on a channel video.",
+  channelAnalyticsAverageEngagementDescription: "Shows how much of each channel video viewers watch on average.",
+  channelAnalyticsBestVideos: "Best performing videos on the channel",
+  channelAnalyticsBestVideosDescription: "The most viewed videos across your channel.",
+  channelAnalyticsBestVideosLoading: "Loading best performing videos...",
+  channelAnalyticsBestVideosFailed: "The best performing videos could not be loaded.",
+  channelAnalyticsBestVideosEmpty: "There are no channel videos to show yet.",
+  channelAnalyticsViewAnalytics: "View analytics",
   channelAnalyticsGraphsDescription: "Track how channel views and watch time change during the selected period.",
   channelAnalyticsAudienceDescription: "See which devices and operating systems viewers used across the channel.",
   channelAnalyticsGeographicDescription: "See where channel viewers watched from, with country and city details.",
@@ -163,7 +169,7 @@ const enBase: TranslationMap = {
   videoAnalyticsAudienceLoading: "Loading audience breakdown...",
   videoAnalyticsAudienceFailed: "The audience breakdown could not be loaded.",
   videoAnalyticsEngagement: "Engagement",
-  videoAnalyticsEngagementDescription: "Shows the percentage of viewers who interacted with the video through likes, dislikes, or comments.",
+  videoAnalyticsEngagementDescription: "Shows how much of the video viewers watch on average.",
   videoAnalyticsEngagementLoading: "Loading engagement...",
   videoAnalyticsEngagementFailed: "Engagement could not be loaded.",
   videoAnalyticsAudienceGraphs: "Audience graphs",
@@ -9847,7 +9853,7 @@ const videoAnalyticsSectionDescriptionOverrides: Record<Locale, Partial<Translat
   sr: {
     videoAnalyticsUnknown: "Nepoznato",
     videoAnalyticsOverviewDescription: "Sažetak ključnih pokazatelja učinka za izabrani period, uključujući preglede, vreme gledanja, reakcije, komentare i gledaoce koji su video pogledali prvi put.",
-    videoAnalyticsEngagementDescription: "Prikazuje procenat gledalaca koji su reagovali na video sviđanjem, nesviđanjem ili komentarom.",
+    videoAnalyticsEngagementDescription: "Prikazuje koliki deo videa gledaoci odgledaju u proseku.",
     videoAnalyticsAudienceGraphsDescription: "Prati promene pregleda i vremena gledanja tokom izabranog perioda i pokazuje koliko je gledalaca dostiglo svaki nivo odgledanosti videa.",
     videoAnalyticsAudienceBreakdownDescription: "Prikazuje uređaje i operativne sisteme koje je publika koristila za gledanje videa.",
     videoAnalyticsGeographicBreakdownDescription: "Prikazuje odakle je publika gledala: mapa ističe aktivnost po zemljama, dok kartice zemalja i detalji o gradovima daju precizniju raspodelu.",
@@ -9859,6 +9865,73 @@ const videoAnalyticsSectionDescriptionOverrides: Record<Locale, Partial<Translat
     videoAnalyticsAudienceGraphsDescription: "Seçilen dönemde görüntülemelerin ve izlenme süresinin nasıl değiştiğini izler ve her tamamlanma düzeyine kaç izleyicinin ulaştığını gösterir.",
     videoAnalyticsAudienceBreakdownDescription: "Kitlenizin videoyu izlemek için kullandığı cihazları ve işletim sistemlerini gösterir.",
     videoAnalyticsGeographicBreakdownDescription: "İzleyicilerin nereden izlediğini gösterir: harita ülkeye göre etkinliği vurgularken ülke kartları ve şehir ayrıntıları daha hassas bir dağılım sunar.",
+  },
+};
+
+const engagementDescriptionLocaleOverrides: Record<Locale, Partial<TranslationMap>> = {
+  en: {
+    videoAnalyticsEngagementDescription: "Shows how much of the video viewers watch on average.",
+    channelAnalyticsAverageEngagementDescription: "Shows how much of each channel video viewers watch on average.",
+  },
+  ar: {
+    videoAnalyticsEngagementDescription: "يوضح مقدار ما يشاهده الجمهور من الفيديو في المتوسط.",
+    channelAnalyticsAverageEngagementDescription: "يوضح مقدار ما يشاهده الجمهور في المتوسط من كل فيديو على القناة.",
+  },
+  de: {
+    videoAnalyticsEngagementDescription: "Zeigt, wie viel des Videos Zuschauer durchschnittlich ansehen.",
+    channelAnalyticsAverageEngagementDescription: "Zeigt, wie viel Zuschauer durchschnittlich von jedem Video des Kanals ansehen.",
+  },
+  es: {
+    videoAnalyticsEngagementDescription: "Muestra qué parte del vídeo ven los espectadores de media.",
+    channelAnalyticsAverageEngagementDescription: "Muestra qué parte de cada vídeo del canal ven los espectadores de media.",
+  },
+  fr: {
+    videoAnalyticsEngagementDescription: "Indique la part de la vidéo regardée en moyenne par les spectateurs.",
+    channelAnalyticsAverageEngagementDescription: "Indique la part de chaque vidéo de la chaîne regardée en moyenne par les spectateurs.",
+  },
+  el: {
+    videoAnalyticsEngagementDescription: "Δείχνει πόσο από το βίντεο παρακολουθούν κατά μέσο όρο οι θεατές.",
+    channelAnalyticsAverageEngagementDescription: "Δείχνει πόσο από κάθε βίντεο του καναλιού παρακολουθούν κατά μέσο όρο οι θεατές.",
+  },
+  hi: {
+    videoAnalyticsEngagementDescription: "दिखाता है कि दर्शक औसतन वीडियो का कितना हिस्सा देखते हैं।",
+    channelAnalyticsAverageEngagementDescription: "दिखाता है कि दर्शक चैनल के प्रत्येक वीडियो का औसतन कितना हिस्सा देखते हैं।",
+  },
+  hr: {
+    videoAnalyticsEngagementDescription: "Prikazuje koliki dio videozapisa gledatelji prosječno pogledaju.",
+    channelAnalyticsAverageEngagementDescription: "Prikazuje koliki dio svakog videozapisa na kanalu gledatelji prosječno pogledaju.",
+  },
+  it: {
+    videoAnalyticsEngagementDescription: "Mostra quanta parte del video viene guardata in media dagli spettatori.",
+    channelAnalyticsAverageEngagementDescription: "Mostra quanta parte di ogni video del canale viene guardata in media dagli spettatori.",
+  },
+  nl: {
+    videoAnalyticsEngagementDescription: "Toont hoeveel van de video kijkers gemiddeld bekijken.",
+    channelAnalyticsAverageEngagementDescription: "Toont hoeveel kijkers gemiddeld van elke video op het kanaal bekijken.",
+  },
+  pl: {
+    videoAnalyticsEngagementDescription: "Pokazuje, jaką część filmu widzowie oglądają średnio.",
+    channelAnalyticsAverageEngagementDescription: "Pokazuje, jaką część każdego filmu na kanale widzowie oglądają średnio.",
+  },
+  pt: {
+    videoAnalyticsEngagementDescription: "Mostra que parte do vídeo os espectadores veem, em média.",
+    channelAnalyticsAverageEngagementDescription: "Mostra que parte de cada vídeo do canal os espectadores veem, em média.",
+  },
+  ro: {
+    videoAnalyticsEngagementDescription: "Arată cât din videoclip urmăresc spectatorii în medie.",
+    channelAnalyticsAverageEngagementDescription: "Arată cât din fiecare videoclip al canalului urmăresc spectatorii în medie.",
+  },
+  sl: {
+    videoAnalyticsEngagementDescription: "Prikazuje, kolikšen del videa si gledalci v povprečju ogledajo.",
+    channelAnalyticsAverageEngagementDescription: "Prikazuje, kolikšen del vsakega videa na kanalu si gledalci v povprečju ogledajo.",
+  },
+  sr: {
+    videoAnalyticsEngagementDescription: "Prikazuje koliki deo videa gledaoci odgledaju u proseku.",
+    channelAnalyticsAverageEngagementDescription: "Prikazuje koliki deo svakog videa na kanalu gledaoci odgledaju u proseku.",
+  },
+  tr: {
+    videoAnalyticsEngagementDescription: "İzleyicilerin videonun ortalama ne kadarını izlediğini gösterir.",
+    channelAnalyticsAverageEngagementDescription: "İzleyicilerin kanaldaki her videonun ortalama ne kadarını izlediğini gösterir.",
   },
 };
 
@@ -11465,7 +11538,13 @@ const channelAnalyticsLocaleOverrides: Partial<Record<Locale, Partial<Translatio
     channelAnalyticsTotalDislikesHelp: "Nesviđanja na svim videima kanala",
     channelAnalyticsTotalCommentsHelp: "Komentari na svim videima kanala",
     channelAnalyticsAverageEngagement: "Prosečno angažovanje po videu",
-    channelAnalyticsAverageEngagementDescription: "Prosečan udeo gledalaca koji su reagovali na video ili ga komentarisali.",
+    channelAnalyticsAverageEngagementDescription: "Prikazuje koliki deo svakog videa na kanalu gledaoci odgledaju u proseku.",
+    channelAnalyticsBestVideos: "Najuspešniji video sadržaji na kanalu",
+    channelAnalyticsBestVideosDescription: "Video sadržaji sa najviše pregleda na vašem kanalu.",
+    channelAnalyticsBestVideosLoading: "Učitavanje najuspešnijih videa...",
+    channelAnalyticsBestVideosFailed: "Najuspešniji video sadržaji nisu mogli da se učitaju.",
+    channelAnalyticsBestVideosEmpty: "Još nema video sadržaja za prikaz.",
+    channelAnalyticsViewAnalytics: "Prikaži analitiku",
     channelAnalyticsGraphsDescription: "Pratite promene pregleda i vremena gledanja kanala tokom izabranog perioda.",
     channelAnalyticsAudienceDescription: "Pogledajte uređaje i operativne sisteme koje publika koristi na nivou kanala.",
     channelAnalyticsGeographicDescription: "Pogledajte odakle publika prati kanal, uz detalje po državama i gradovima.",
@@ -11484,7 +11563,7 @@ const channelAnalyticsLocaleOverrides: Partial<Record<Locale, Partial<Translatio
 const buildTranslations = () => {
   const result = {} as Record<Locale, TranslationMap>;
   for (const locale of SUPPORTED_LOCALES) {
-    result[locale] = { ...enBase, ...localeOverrides[locale], ...adminCrudOverrides[locale], ...completeLocaleOverrides[locale], ...analyticsLocaleOverrides[locale], ...geographicAnalyticsLocaleOverrides[locale], ...(timeSeriesAnalyticsLocaleOverrides[locale] ?? {}), ...(channelAnalyticsLocaleOverrides[locale] ?? {}), ...videoAnalyticsSectionDescriptionOverrides[locale], ...quizPopupLocaleOverrides[locale] } as TranslationMap;
+    result[locale] = { ...enBase, ...localeOverrides[locale], ...adminCrudOverrides[locale], ...completeLocaleOverrides[locale], ...analyticsLocaleOverrides[locale], ...geographicAnalyticsLocaleOverrides[locale], ...(timeSeriesAnalyticsLocaleOverrides[locale] ?? {}), ...(channelAnalyticsLocaleOverrides[locale] ?? {}), ...videoAnalyticsSectionDescriptionOverrides[locale], ...engagementDescriptionLocaleOverrides[locale], ...quizPopupLocaleOverrides[locale] } as TranslationMap;
   }
   return result;
 };

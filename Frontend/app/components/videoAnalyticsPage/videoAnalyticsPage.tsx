@@ -10,7 +10,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import {
   Bar,
   BarChart,
@@ -27,11 +27,12 @@ import {
   type TooltipContentProps,
 } from "recharts";
 import { fetchFn } from "~/API";
-import { ArrowSVG, CloseSVG, FilterSVG, WorldMapSVG, type WorldMapCountry } from "~/constants";
-import { formatDate, formatDuration, formatViews, getToken } from "~/functions";
+import { AnalyticsSVG, ArrowSVG, CloseSVG, FilterSVG, WorldMapSVG, type WorldMapCountry } from "~/constants";
+import { formatDate, formatDescription, formatDuration, formatViews, getToken } from "~/functions";
 import { useI18n } from "~/i18n";
-import type { VideoT } from "~/types";
+import type { fetchVideo, VideoT } from "~/types";
 import Sidebar from "~/components/myVideosPage/sidebar/sidebar";
+import DefaultThumbnail from "../../../assets/DefaultThumbnail.webp";
 
 type AnalyticsRange = "last7" | "last30" | "last90" | "last365" | "all";
 type AnalyticsGroupBy = "day" | "week" | "month";
@@ -53,11 +54,6 @@ type VideoOverviewResponse = {
 type ChannelOverviewResponse = {
   success: boolean;
   channelOverview: VideoOverviewResponse["overview"];
-};
-
-type EngagementResponse = {
-  success: boolean;
-  engagement: number;
 };
 
 type ChannelEngagementResponse = {
@@ -629,33 +625,64 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
     enabled: !!token && (isChannel || !!videoId),
     refetchOnWindowFocus: false,
   });
+  const overview = overviewData?.overview;
 
   const {
-    data: engagementData,
-    isLoading: isEngagementLoading,
-    isError: isEngagementError,
-  } = useQuery<EngagementResponse>({
-    queryKey: ["analytics-engagement", analyticsScope, range],
-    queryFn: async () => {
-      if (isChannel) {
-        const response = await fetchFn<ChannelEngagementResponse>({
-          route: `${analyticsBaseRoute}/average-engagement-per-video${dateRangeQuery}`,
-          options: { method: "GET", headers: headers.current },
-        });
-        return { success: response.success, engagement: response.averageEngagementPerVideo };
-      }
-
-      return fetchFn<EngagementResponse>({
-        route: `${analyticsBaseRoute}/engagement`,
+    data: channelEngagementData,
+    isLoading: isChannelEngagementLoading,
+    isError: isChannelEngagementError,
+  } = useQuery<ChannelEngagementResponse>({
+    queryKey: ["channel-analytics-average-engagement", range],
+    queryFn: () =>
+      fetchFn<ChannelEngagementResponse>({
+        route: `${analyticsBaseRoute}/average-engagement-per-video${dateRangeQuery}`,
         options: { method: "GET", headers: headers.current },
-      });
-    },
-    enabled: !!token && (isChannel || !!videoId),
+      }),
+    enabled: !!token && isChannel,
     refetchOnWindowFocus: false,
   });
-  const engagementPercentage = Math.min(100, Math.max(0, (engagementData?.engagement ?? 0) * 100));
+  const videoEngagement = !isChannel
+    && overview
+    && video
+    && overview.totalViews > 0
+    && video.duration_seconds > 0
+    ? overview.totalWatchTime / (overview.totalViews * video.duration_seconds)
+    : 0;
+  const engagementValue = isChannel
+    ? channelEngagementData?.averageEngagementPerVideo ?? 0
+    : videoEngagement;
+  const engagementPercentage = Math.min(100, Math.max(0, engagementValue * 100));
+  const isEngagementLoading = isChannel
+    ? isChannelEngagementLoading
+    : isOverviewLoading || isLoading;
+  const isEngagementError = isChannel
+    ? isChannelEngagementError
+    : isOverviewError || isError;
+  const hasEngagementData = isChannel
+    ? !!channelEngagementData
+    : !!overview && !!video;
 
-  const overview = overviewData?.overview;
+  const {
+    data: bestPerformingVideosData,
+    isLoading: isBestPerformingVideosLoading,
+    isError: isBestPerformingVideosError,
+  } = useQuery<fetchVideo>({
+    queryKey: ["channel-analytics-best-performing-videos"],
+    queryFn: () => fetchFn<fetchVideo>({
+      route: "api/video-moderation/my/videos?page=1&limit=3&sort_by=views&sort_dir=desc",
+      options: { method: "GET", headers: headers.current },
+    }),
+    enabled: !!token && isChannel,
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: false,
+  });
+  const bestPerformingVideos = useMemo(
+    () => [...(bestPerformingVideosData?.videos ?? [])]
+      .sort((a, b) => (b.view_count ?? 0) - (a.view_count ?? 0))
+      .slice(0, 3),
+    [bestPerformingVideosData],
+  );
+
   const overviewCards = overview
     ? [
         { label: t("videoAnalyticsTotalViews"), value: overview.totalViews, description: t(isChannel ? "channelAnalyticsTotalViewsHelp" : "videoAnalyticsTotalViewsHelp") },
@@ -1109,7 +1136,7 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
 
             {isEngagementLoading ? (
               <div className="videoAnalyticsEngagementLoading loading" aria-label={t("videoAnalyticsEngagementLoading")} />
-            ) : isEngagementError || !engagementData ? (
+            ) : isEngagementError || !hasEngagementData ? (
               <p className="videoAnalyticsOverviewError">{t("videoAnalyticsEngagementFailed")}</p>
             ) : (
               <EngagementMeter
@@ -1119,6 +1146,65 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
               />
             )}
           </section>
+
+          {isChannel && (
+            <section className="channelAnalyticsBestVideos">
+              <h2>{t("channelAnalyticsBestVideos")}</h2>
+              <p className="videoAnalyticsSectionDescription">{t("channelAnalyticsBestVideosDescription")}</p>
+
+              {isBestPerformingVideosLoading ? (
+                <div className="channelAnalyticsBestVideoList" aria-label={t("channelAnalyticsBestVideosLoading")}>
+                  {Array.from({ length: 3 }, (_, index) => (
+                    <div className="channelAnalyticsBestVideo loading" key={index} />
+                  ))}
+                </div>
+              ) : isBestPerformingVideosError ? (
+                <p className="videoAnalyticsOverviewError">{t("channelAnalyticsBestVideosFailed")}</p>
+              ) : !bestPerformingVideos.length ? (
+                <p className="videoAnalyticsGraphEmpty">{t("channelAnalyticsBestVideosEmpty")}</p>
+              ) : (
+                <div className="channelAnalyticsBestVideoList">
+                  {bestPerformingVideos.map((bestVideo, index) => {
+                    return (
+                      <article className="channelAnalyticsBestVideo" key={bestVideo.id}>
+                        <span className="channelAnalyticsBestVideoRank" aria-label={`${index + 1}`}>
+                          {index + 1}
+                        </span>
+                        <div className="channelAnalyticsBestVideoThumbnail">
+                          <img
+                            src={bestVideo.thumbnail_url || DefaultThumbnail}
+                            alt={bestVideo.title}
+                            loading="lazy"
+                            decoding="async"
+                            onError={(event) => { event.currentTarget.src = DefaultThumbnail; }}
+                          />
+                          <span>{formatDuration(bestVideo.duration_seconds)}</span>
+                        </div>
+                        <div className="channelAnalyticsBestVideoInfo">
+                          <h3>{bestVideo.title}</h3>
+                          <p className="channelAnalyticsBestVideoDescription">
+                            {formatDescription(bestVideo.description || t("adminNoDescription"))}
+                          </p>
+                          <div className="channelAnalyticsBestVideoMeta">
+                            <span>{formatViews(bestVideo.view_count)}</span>
+                            <span>{formatDate(bestVideo.published_at || bestVideo.created_at)}</span>
+                          </div>
+                        </div>
+                        <Link
+                          className="channelAnalyticsBestVideoAction"
+                          to={`/video-analytics?video=${bestVideo.id}`}
+                          aria-label={`${t("channelAnalyticsViewAnalytics")}: ${bestVideo.title}`}
+                        >
+                          {AnalyticsSVG}
+                          {t("channelAnalyticsViewAnalytics")}
+                        </Link>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          )}
 
           <section className="videoAnalyticsGraphs">
             <h2>{t("videoAnalyticsAudienceGraphs")}</h2>
