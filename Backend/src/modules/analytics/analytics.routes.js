@@ -40,6 +40,12 @@ router.get(
   requireAdmin,
   analyticsController.getChannelWatchTimeOverTime,
 );
+router.get(
+  '/channel/average-engagement-per-video',
+  requireAuth,
+  requireAdmin,
+  analyticsController.getChannelAverageEngagementPerVideo,
+);
 router.get('/:videoId/overview', requireAuth, requireAdmin, analyticsController.getOverviewVideoAnalytics);
 router.get('/:videoId/device-split', requireAuth, requireAdmin, analyticsController.getDeviceSplit);
 router.get(

@@ -13,6 +13,7 @@ import { getChannelOperatingSystemSplitInternal } from './handlers/getChannelOpe
 import { getChannelGeographicBreakdownInternal } from './handlers/getChannelGeographicBreakdown.js';
 import { getChannelViewsOverTimeInternal } from './handlers/getChannelViewsOverTime.js';
 import { getChannelWatchTimeOverTimeInternal } from './handlers/getChannelWatchTimeOverTime.js';
+import { getChannelAverageEngagementPerVideoInternal } from './handlers/getChannelAverageEngagementPerVideo.js';
 
 
 
@@ -191,6 +192,19 @@ export async function getChannelWatchTimeOverTime(req, res) {
     return sendSuccess(res, { channelWatchTimeOverTime }, 200);
   } catch (error) {
     console.error('Error getting channel watch time over time:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function getChannelAverageEngagementPerVideo(req, res) {
+  try {
+    const averageEngagementPerVideo = await getChannelAverageEngagementPerVideoInternal(
+      { ...req.params, ...req.body, ...req.query },
+      req.user?.sub || null,
+    );
+    return sendSuccess(res, { averageEngagementPerVideo }, 200);
+  } catch (error) {
+    console.error('Error getting channel average engagement per video:', error);
     return sendError(res, error.message, error.status || 500);
   }
 }
