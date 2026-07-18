@@ -45,6 +45,16 @@ const enBase: TranslationMap = {
   navQuizzes: "Quizzes",
   navMyPlaylists: "My playlists",
   navAnalytics: "Analytics",
+  navChannelAnalytics: "Channel Analytics",
+  navPlatform: "Platform",
+  platformLabel: "Platform",
+  platformSettings: "Platform Settings",
+  platformUsers: "Platform Users",
+  platformAnalytics: "Platform Analytics",
+  platformSettingsDescription: "Manage platform-wide configuration and operational preferences.",
+  platformUsersDescription: "Manage the people who can access and use the platform.",
+  platformSettingsEmpty: "No platform-wide settings have been configured yet.",
+  platformUsersEmpty: "No platform user-management data is available yet.",
   navSpeakersChairs: "Speakers/Chairs",
   navUploadVideo: "Upload video",
   adminMyVideosDescription: "Review uploads, update visibility, and keep your channel organized.",
@@ -110,6 +120,20 @@ const enBase: TranslationMap = {
   adminEditVideo: "Edit Video",
   adminVideoAnalytics: "Video Analytics",
   adminDeleteVideo: "Delete Video",
+  channelAnalyticsTitle: "Channel Analytics",
+  channelAnalyticsDescription: "Review channel performance, engagement, and audience insights.",
+  channelAnalyticsOverviewDescription: "A summary of channel performance for the selected period, including views, watch time, reactions, comments, and first-time viewers.",
+  channelAnalyticsTotalViewsHelp: "Views across all channel videos",
+  channelAnalyticsFirstTimeViewsHelp: "First-time viewers across the channel",
+  channelAnalyticsWatchTimeHelp: "Total watch time across the channel",
+  channelAnalyticsTotalLikesHelp: "Likes across all channel videos",
+  channelAnalyticsTotalDislikesHelp: "Dislikes across all channel videos",
+  channelAnalyticsTotalCommentsHelp: "Comments across all channel videos",
+  channelAnalyticsAverageEngagement: "Average engagement per video",
+  channelAnalyticsAverageEngagementDescription: "The average share of viewers who reacted to or commented on a channel video.",
+  channelAnalyticsGraphsDescription: "Track how channel views and watch time change during the selected period.",
+  channelAnalyticsAudienceDescription: "See which devices and operating systems viewers used across the channel.",
+  channelAnalyticsGeographicDescription: "See where channel viewers watched from, with country and city details.",
   videoAnalyticsTitle: "Analytics for video:",
   videoAnalyticsDescription: "Review performance and engagement for this video.",
   videoAnalyticsMissingVideo: "No video was selected.",
@@ -11428,10 +11452,39 @@ const timeSeriesAnalyticsLocaleOverrides: Partial<Record<Locale, Partial<Transla
   },
 };
 
+const channelAnalyticsLocaleOverrides: Partial<Record<Locale, Partial<TranslationMap>>> = {
+  sr: {
+    navChannelAnalytics: "Analitika kanala",
+    channelAnalyticsTitle: "Analitika kanala",
+    channelAnalyticsDescription: "Pregledajte učinak kanala, angažovanje i strukturu publike.",
+    channelAnalyticsOverviewDescription: "Pregled ključnih rezultata kanala u izabranom periodu, uključujući preglede, vreme gledanja, reakcije, komentare i nove gledaoce.",
+    channelAnalyticsTotalViewsHelp: "Pregledi svih videa na kanalu",
+    channelAnalyticsFirstTimeViewsHelp: "Novi gledaoci na nivou kanala",
+    channelAnalyticsWatchTimeHelp: "Ukupno vreme gledanja na kanalu",
+    channelAnalyticsTotalLikesHelp: "Sviđanja na svim videima kanala",
+    channelAnalyticsTotalDislikesHelp: "Nesviđanja na svim videima kanala",
+    channelAnalyticsTotalCommentsHelp: "Komentari na svim videima kanala",
+    channelAnalyticsAverageEngagement: "Prosečno angažovanje po videu",
+    channelAnalyticsAverageEngagementDescription: "Prosečan udeo gledalaca koji su reagovali na video ili ga komentarisali.",
+    channelAnalyticsGraphsDescription: "Pratite promene pregleda i vremena gledanja kanala tokom izabranog perioda.",
+    channelAnalyticsAudienceDescription: "Pogledajte uređaje i operativne sisteme koje publika koristi na nivou kanala.",
+    channelAnalyticsGeographicDescription: "Pogledajte odakle publika prati kanal, uz detalje po državama i gradovima.",
+    navPlatform: "Platforma",
+    platformLabel: "Platforma",
+    platformSettings: "Podešavanja platforme",
+    platformUsers: "Korisnici platforme",
+    platformAnalytics: "Analitika platforme",
+    platformSettingsDescription: "Upravljajte opštim podešavanjima i načinom rada platforme.",
+    platformUsersDescription: "Upravljajte korisnicima koji imaju pristup platformi.",
+    platformSettingsEmpty: "Podešavanja na nivou platforme još nisu konfigurisana.",
+    platformUsersEmpty: "Podaci za upravljanje korisnicima platforme još nisu dostupni.",
+  },
+};
+
 const buildTranslations = () => {
   const result = {} as Record<Locale, TranslationMap>;
   for (const locale of SUPPORTED_LOCALES) {
-    result[locale] = { ...enBase, ...localeOverrides[locale], ...adminCrudOverrides[locale], ...completeLocaleOverrides[locale], ...analyticsLocaleOverrides[locale], ...geographicAnalyticsLocaleOverrides[locale], ...(timeSeriesAnalyticsLocaleOverrides[locale] ?? {}), ...videoAnalyticsSectionDescriptionOverrides[locale], ...quizPopupLocaleOverrides[locale] } as TranslationMap;
+    result[locale] = { ...enBase, ...localeOverrides[locale], ...adminCrudOverrides[locale], ...completeLocaleOverrides[locale], ...analyticsLocaleOverrides[locale], ...geographicAnalyticsLocaleOverrides[locale], ...(timeSeriesAnalyticsLocaleOverrides[locale] ?? {}), ...(channelAnalyticsLocaleOverrides[locale] ?? {}), ...videoAnalyticsSectionDescriptionOverrides[locale], ...quizPopupLocaleOverrides[locale] } as TranslationMap;
   }
   return result;
 };

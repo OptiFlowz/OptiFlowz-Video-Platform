@@ -281,11 +281,11 @@ function Header(){
                                     ) : null}
                                     {isAdmin ? (
                                         <Link
-                                            to="/analytics"
+                                            to="/platform-analytics"
                                             role="menuitem"
                                             onClick={() => setAccountMenuOpen(false)}
                                         >
-                                            {t("navAnalytics")}
+                                            {t("navPlatform")}
                                         </Link>
                                     ) : null}
                                     <button
@@ -417,16 +417,28 @@ function Header(){
                         {t("navSpeakersChairs")}
                     </NavLink>
                     : ""}
-                    {isAdmin ? 
-                    <NavLink 
-                        to="/analytics" 
-                        end 
+                    {isAdmin ?
+                    <NavLink
+                        to="/channel-analytics"
+                        end
                         className={({ isActive }) => `p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
                         onClick={() => {
                             closeMobileMenu();
                         }}
                     >
-                        {t("navAnalytics")}
+                        {t("navChannelAnalytics")}
+                    </NavLink>
+                    : ""}
+                    {isAdmin ?
+                    <NavLink
+                        to="/platform-analytics"
+                        end
+                        className={({ isActive }) => `p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
+                        onClick={() => {
+                            closeMobileMenu();
+                        }}
+                    >
+                        {t("navPlatform")}
                     </NavLink>
                     : ""}
                     <NavLink 

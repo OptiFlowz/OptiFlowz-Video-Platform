@@ -49,8 +49,8 @@ function Sidebar() {
                     <NavLink to="/quizzes" end className={({ isActive }) => (isActive ? "active" : "")}>
                         {QuizSVG}&nbsp;{t("navQuizzes")}
                     </NavLink>
-                    <NavLink to="/analytics" end className={({ isActive }) => (isActive ? "active" : "")}>
-                        {AnalyticsSVG}&nbsp;{t("navAnalytics")}
+                    <NavLink to="/channel-analytics" end className={({ isActive }) => (isActive ? "active" : "")}>
+                        {AnalyticsSVG}&nbsp;{t("navChannelAnalytics")}
                     </NavLink>
                 </nav>
             </div>

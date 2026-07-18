@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import Sidebar from "../myVideosPage/sidebar/sidebar";
+import PlatformSidebar from "~/components/platformPage/sidebar/platformSidebar";
 import PageLoader from "../loaders/pageLoader";
 import { env } from "~/env";
 import { getToken } from "~/functions";
@@ -87,6 +87,9 @@ function Analytics() {
       const pdfBlob = await response.blob();
       const filename = getFilenameFromDisposition(response.headers.get("content-disposition"));
       const pdfUrl = URL.createObjectURL(new Blob([pdfBlob], { type: "application/pdf" }));
+      const reportBackground = getComputedStyle(document.documentElement)
+        .getPropertyValue("--background1")
+        .trim();
 
       if (reportWindow) {
         reportWindow.document.open();
@@ -96,7 +99,7 @@ function Analytics() {
             html, body {
               margin: 0;
               height: 100%;
-              background: #091c42;
+              background: ${reportBackground};
             }
             iframe {
               border: 0;
@@ -124,14 +127,14 @@ function Analytics() {
 
   return (
     <main className="myVideos analyticsPage">
-      <Sidebar />
+      <PlatformSidebar />
       <PageLoader active={isGeneratingReport} />
 
       <div className="content libraryContent">
         <div className="holder libraryShell">
           <div className="libraryHeader">
             <div className="libraryHeading">
-              <h1>{t("navAnalytics")}</h1>
+              <h1>{t("platformAnalytics")}</h1>
               <p>{t("analyticsDescription")}</p>
             </div>
           </div>

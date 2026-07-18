@@ -50,9 +50,19 @@ type VideoOverviewResponse = {
   };
 };
 
+type ChannelOverviewResponse = {
+  success: boolean;
+  channelOverview: VideoOverviewResponse["overview"];
+};
+
 type EngagementResponse = {
   success: boolean;
   engagement: number;
+};
+
+type ChannelEngagementResponse = {
+  success: boolean;
+  averageEngagementPerVideo: number;
 };
 
 type DeviceSplitResponse = {
@@ -64,6 +74,11 @@ type DeviceSplitResponse = {
     tablet: number;
     other: number;
   };
+};
+
+type ChannelDeviceSplitResponse = {
+  success: boolean;
+  channelDeviceSplit: DeviceSplitResponse["deviceSplit"];
 };
 
 type OperatingSystemSplitResponse = {
@@ -79,6 +94,11 @@ type OperatingSystemSplitResponse = {
   };
 };
 
+type ChannelOperatingSystemSplitResponse = {
+  success: boolean;
+  channelOperatingSystemSplit: OperatingSystemSplitResponse["operatingSystemSplit"];
+};
+
 type GeographicCountry = {
   name: string;
   totalViews: number;
@@ -88,6 +108,11 @@ type GeographicCountry = {
 type GeographicBreakdownResponse = {
   success: boolean;
   geographicBreakdown: Record<string, GeographicCountry>;
+};
+
+type ChannelGeographicBreakdownResponse = {
+  success: boolean;
+  channelGeographicBreakdown: GeographicBreakdownResponse["geographicBreakdown"];
 };
 
 type MapView = { zoom: number; x: number; y: number };
@@ -112,12 +137,22 @@ type ViewsOverTimeResponse = {
   }>;
 };
 
+type ChannelViewsOverTimeResponse = {
+  success: boolean;
+  channelViewsOverTime: ViewsOverTimeResponse["viewsOverTime"];
+};
+
 type WatchTimeOverTimeResponse = {
   success: boolean;
   watchTimeOverTime: Array<{
     periodStart: string;
     watchTime: number;
   }>;
+};
+
+type ChannelWatchTimeOverTimeResponse = {
+  success: boolean;
+  channelWatchTimeOverTime: WatchTimeOverTimeResponse["watchTimeOverTime"];
 };
 
 type CompletionBucketsResponse = {
@@ -517,10 +552,15 @@ const CountryPopup = forwardRef<CountryPopupHandle, {
   );
 });
 
-function VideoAnalyticsPage() {
+function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) {
   const { locale, t } = useI18n();
   const [searchParams] = useSearchParams();
   const videoId = searchParams.get("video");
+  const isChannel = mode === "channel";
+  const analyticsScope = isChannel ? "channel" : videoId;
+  const analyticsBaseRoute = isChannel
+    ? "api/analytics/channel"
+    : `api/analytics/${videoId}`;
   const headers = useRef(new Headers());
   const [token, setToken] = useState("");
   const [range, setRange] = useState<AnalyticsRange>("last7");
@@ -561,7 +601,7 @@ function VideoAnalyticsPage() {
         route: `api/videos/${videoId}`,
         options: { method: "GET", headers: headers.current },
       }),
-    enabled: !!token && !!videoId,
+    enabled: !!token && !!videoId && !isChannel,
     refetchOnWindowFocus: false,
   });
 
@@ -571,13 +611,22 @@ function VideoAnalyticsPage() {
     isLoading: isOverviewLoading,
     isError: isOverviewError,
   } = useQuery<VideoOverviewResponse>({
-    queryKey: ["video-analytics-overview", videoId, range],
-    queryFn: () =>
-      fetchFn<VideoOverviewResponse>({
-        route: `api/analytics/${videoId}/overview${dateRangeQuery}`,
+    queryKey: ["analytics-overview", analyticsScope, range],
+    queryFn: async () => {
+      if (isChannel) {
+        const response = await fetchFn<ChannelOverviewResponse>({
+          route: `${analyticsBaseRoute}/overview${dateRangeQuery}`,
+          options: { method: "GET", headers: headers.current },
+        });
+        return { success: response.success, overview: response.channelOverview };
+      }
+
+      return fetchFn<VideoOverviewResponse>({
+        route: `${analyticsBaseRoute}/overview${dateRangeQuery}`,
         options: { method: "GET", headers: headers.current },
-      }),
-    enabled: !!token && !!videoId,
+      });
+    },
+    enabled: !!token && (isChannel || !!videoId),
     refetchOnWindowFocus: false,
   });
 
@@ -586,12 +635,22 @@ function VideoAnalyticsPage() {
     isLoading: isEngagementLoading,
     isError: isEngagementError,
   } = useQuery<EngagementResponse>({
-    queryKey: ["video-analytics-engagement", videoId, range],
-    queryFn: () => fetchFn<EngagementResponse>({
-      route: `api/analytics/${videoId}/engagement`,
-      options: { method: "GET", headers: headers.current },
-    }),
-    enabled: !!token && !!videoId,
+    queryKey: ["analytics-engagement", analyticsScope, range],
+    queryFn: async () => {
+      if (isChannel) {
+        const response = await fetchFn<ChannelEngagementResponse>({
+          route: `${analyticsBaseRoute}/average-engagement-per-video${dateRangeQuery}`,
+          options: { method: "GET", headers: headers.current },
+        });
+        return { success: response.success, engagement: response.averageEngagementPerVideo };
+      }
+
+      return fetchFn<EngagementResponse>({
+        route: `${analyticsBaseRoute}/engagement`,
+        options: { method: "GET", headers: headers.current },
+      });
+    },
+    enabled: !!token && (isChannel || !!videoId),
     refetchOnWindowFocus: false,
   });
   const engagementPercentage = Math.min(100, Math.max(0, (engagementData?.engagement ?? 0) * 100));
@@ -599,13 +658,13 @@ function VideoAnalyticsPage() {
   const overview = overviewData?.overview;
   const overviewCards = overview
     ? [
-        { label: t("videoAnalyticsTotalViews"), value: overview.totalViews, description: t("videoAnalyticsTotalViewsHelp") },
-        { label: t("videoAnalyticsFirstTimeViews"), value: overview.firstTimeViews, description: t("videoAnalyticsFirstTimeViewsHelp") },
-        { label: t("videoAnalyticsWatchTime"), value: formatWatchTime(overview.totalWatchTime, true), description: t("videoAnalyticsWatchTimeHelp") },
-        { label: t("videoAnalyticsTotalLikes"), value: overview.totalLikes, description: t("videoAnalyticsTotalLikesHelp") },
-        { label: t("videoAnalyticsTotalDislikes"), value: overview.totalDislikes, description: t("videoAnalyticsTotalDislikesHelp") },
+        { label: t("videoAnalyticsTotalViews"), value: overview.totalViews, description: t(isChannel ? "channelAnalyticsTotalViewsHelp" : "videoAnalyticsTotalViewsHelp") },
+        { label: t("videoAnalyticsFirstTimeViews"), value: overview.firstTimeViews, description: t(isChannel ? "channelAnalyticsFirstTimeViewsHelp" : "videoAnalyticsFirstTimeViewsHelp") },
+        { label: t("videoAnalyticsWatchTime"), value: formatWatchTime(overview.totalWatchTime, true), description: t(isChannel ? "channelAnalyticsWatchTimeHelp" : "videoAnalyticsWatchTimeHelp") },
+        { label: t("videoAnalyticsTotalLikes"), value: overview.totalLikes, description: t(isChannel ? "channelAnalyticsTotalLikesHelp" : "videoAnalyticsTotalLikesHelp") },
+        { label: t("videoAnalyticsTotalDislikes"), value: overview.totalDislikes, description: t(isChannel ? "channelAnalyticsTotalDislikesHelp" : "videoAnalyticsTotalDislikesHelp") },
         { label: t("videoAnalyticsAverageWatchTime"), value: formatWatchTime(overview.avgWatchTimePerViewer), description: t("videoAnalyticsAverageWatchTimeHelp") },
-        { label: t("videoAnalyticsTotalComments"), value: overview.totalComments, description: t("videoAnalyticsTotalCommentsHelp") },
+        { label: t("videoAnalyticsTotalComments"), value: overview.totalComments, description: t(isChannel ? "channelAnalyticsTotalCommentsHelp" : "videoAnalyticsTotalCommentsHelp") },
       ]
     : [];
 
@@ -618,12 +677,22 @@ function VideoAnalyticsPage() {
     isLoading: isViewsOverTimeLoading,
     isError: isViewsOverTimeError,
   } = useQuery<ViewsOverTimeResponse>({
-    queryKey: ["video-analytics-views-over-time", videoId, range, groupBy],
-    queryFn: () => fetchFn<ViewsOverTimeResponse>({
-      route: `api/analytics/${videoId}/views-over-time${groupedDateRangeQuery}`,
-      options: { method: "GET", headers: headers.current },
-    }),
-    enabled: !!token && !!videoId,
+    queryKey: ["analytics-views-over-time", analyticsScope, range, groupBy],
+    queryFn: async () => {
+      if (isChannel) {
+        const response = await fetchFn<ChannelViewsOverTimeResponse>({
+          route: `${analyticsBaseRoute}/views-over-time${groupedDateRangeQuery}`,
+          options: { method: "GET", headers: headers.current },
+        });
+        return { success: response.success, viewsOverTime: response.channelViewsOverTime };
+      }
+
+      return fetchFn<ViewsOverTimeResponse>({
+        route: `${analyticsBaseRoute}/views-over-time${groupedDateRangeQuery}`,
+        options: { method: "GET", headers: headers.current },
+      });
+    },
+    enabled: !!token && (isChannel || !!videoId),
     refetchOnWindowFocus: false,
   });
   const {
@@ -631,12 +700,22 @@ function VideoAnalyticsPage() {
     isLoading: isWatchTimeOverTimeLoading,
     isError: isWatchTimeOverTimeError,
   } = useQuery<WatchTimeOverTimeResponse>({
-    queryKey: ["video-analytics-watch-time-over-time", videoId, range, groupBy],
-    queryFn: () => fetchFn<WatchTimeOverTimeResponse>({
-      route: `api/analytics/${videoId}/watch-time-over-time${groupedDateRangeQuery}`,
-      options: { method: "GET", headers: headers.current },
-    }),
-    enabled: !!token && !!videoId,
+    queryKey: ["analytics-watch-time-over-time", analyticsScope, range, groupBy],
+    queryFn: async () => {
+      if (isChannel) {
+        const response = await fetchFn<ChannelWatchTimeOverTimeResponse>({
+          route: `${analyticsBaseRoute}/watch-time-over-time${groupedDateRangeQuery}`,
+          options: { method: "GET", headers: headers.current },
+        });
+        return { success: response.success, watchTimeOverTime: response.channelWatchTimeOverTime };
+      }
+
+      return fetchFn<WatchTimeOverTimeResponse>({
+        route: `${analyticsBaseRoute}/watch-time-over-time${groupedDateRangeQuery}`,
+        options: { method: "GET", headers: headers.current },
+      });
+    },
+    enabled: !!token && (isChannel || !!videoId),
     refetchOnWindowFocus: false,
   });
   const {
@@ -649,7 +728,7 @@ function VideoAnalyticsPage() {
       route: `api/analytics/${videoId}/completion-buckets${dateRangeQuery}`,
       options: { method: "GET", headers: headers.current },
     }),
-    enabled: !!token && !!videoId,
+    enabled: !!token && !!videoId && !isChannel,
     refetchOnWindowFocus: false,
   });
   const completionBuckets = completionBucketsData?.completionBuckets;
@@ -718,22 +797,43 @@ function VideoAnalyticsPage() {
     isLoading: isAudienceLoading,
     isError: isAudienceError,
   } = useQuery({
-    queryKey: ["video-analytics-audience", videoId, range],
+    queryKey: ["analytics-audience", analyticsScope, range],
     queryFn: async () => {
+      if (isChannel) {
+        const [device, operatingSystem] = await Promise.all([
+          fetchFn<ChannelDeviceSplitResponse>({
+            route: `${analyticsBaseRoute}/device-split${dateRangeQuery}`,
+            options: { method: "GET", headers: headers.current },
+          }),
+          fetchFn<ChannelOperatingSystemSplitResponse>({
+            route: `${analyticsBaseRoute}/operating-system-split${dateRangeQuery}`,
+            options: { method: "GET", headers: headers.current },
+          }),
+        ]);
+
+        return {
+          device: { success: device.success, deviceSplit: device.channelDeviceSplit },
+          operatingSystem: {
+            success: operatingSystem.success,
+            operatingSystemSplit: operatingSystem.channelOperatingSystemSplit,
+          },
+        };
+      }
+
       const [device, operatingSystem] = await Promise.all([
         fetchFn<DeviceSplitResponse>({
-          route: `api/analytics/${videoId}/device-split${dateRangeQuery}`,
+          route: `${analyticsBaseRoute}/device-split${dateRangeQuery}`,
           options: { method: "GET", headers: headers.current },
         }),
         fetchFn<OperatingSystemSplitResponse>({
-          route: `api/analytics/${videoId}/operating-system-split${dateRangeQuery}`,
+          route: `${analyticsBaseRoute}/operating-system-split${dateRangeQuery}`,
           options: { method: "GET", headers: headers.current },
         }),
       ]);
 
       return { device, operatingSystem };
     },
-    enabled: !!token && !!videoId,
+    enabled: !!token && (isChannel || !!videoId),
     refetchOnWindowFocus: false,
   });
 
@@ -771,12 +871,25 @@ function VideoAnalyticsPage() {
     isLoading: isGeographicLoading,
     isError: isGeographicError,
   } = useQuery<GeographicBreakdownResponse>({
-    queryKey: ["video-analytics-geographic", videoId, range],
-    queryFn: () => fetchFn<GeographicBreakdownResponse>({
-      route: `api/analytics/${videoId}/geographic-breakdown${dateRangeQuery}`,
-      options: { method: "GET", headers: headers.current },
-    }),
-    enabled: !!token && !!videoId,
+    queryKey: ["analytics-geographic", analyticsScope, range],
+    queryFn: async () => {
+      if (isChannel) {
+        const response = await fetchFn<ChannelGeographicBreakdownResponse>({
+          route: `${analyticsBaseRoute}/geographic-breakdown${dateRangeQuery}`,
+          options: { method: "GET", headers: headers.current },
+        });
+        return {
+          success: response.success,
+          geographicBreakdown: response.channelGeographicBreakdown,
+        };
+      }
+
+      return fetchFn<GeographicBreakdownResponse>({
+        route: `${analyticsBaseRoute}/geographic-breakdown${dateRangeQuery}`,
+        options: { method: "GET", headers: headers.current },
+      });
+    },
+    enabled: !!token && (isChannel || !!videoId),
     refetchOnWindowFocus: false,
   });
   const geographicBreakdown = geographicData?.geographicBreakdown ?? {};
@@ -905,33 +1018,35 @@ function VideoAnalyticsPage() {
         <div className="holder libraryShell videoAnalyticsShell">
           <div className="libraryHeader">
             <div className="libraryHeading">
-              <h1>{t("videoAnalyticsTitle")}</h1>
-              <p>{t("videoAnalyticsDescription")}</p>
+              <h1>{t(isChannel ? "channelAnalyticsTitle" : "videoAnalyticsTitle")}</h1>
+              <p>{t(isChannel ? "channelAnalyticsDescription" : "videoAnalyticsDescription")}</p>
             </div>
           </div>
 
-          {!videoId ? (
-            <p className="videoAnalyticsMessage">{t("videoAnalyticsMissingVideo")}</p>
-          ) : isLoading ? (
-            <div className="videoAnalyticsCard videoAnalyticsCardLoading" aria-label={t("videoAnalyticsLoading")} />
-          ) : isError || !video ? (
-            <p className="videoAnalyticsMessage">{t("videoAnalyticsLoadFailed")}</p>
-          ) : (
-            <section className="videoAnalyticsCard">
-              <div className="videoAnalyticsThumbnail">
-                <img src={video.thumbnail_url} alt={video.title} />
-                <span>{formatDuration(video.duration_seconds)}</span>
-              </div>
-
-              <div className="videoAnalyticsInfo">
-                <h2>{video.title}</h2>
-                <p>{video.uploader_name}</p>
-                <div className="videoAnalyticsMeta">
-                  <span>{formatViews(video.view_count)}</span>
-                  <span>{formatDate(video.published_at || video.created_at)}</span>
+          {!isChannel && (
+            !videoId ? (
+              <p className="videoAnalyticsMessage">{t("videoAnalyticsMissingVideo")}</p>
+            ) : isLoading ? (
+              <div className="videoAnalyticsCard videoAnalyticsCardLoading" aria-label={t("videoAnalyticsLoading")} />
+            ) : isError || !video ? (
+              <p className="videoAnalyticsMessage">{t("videoAnalyticsLoadFailed")}</p>
+            ) : (
+              <section className="videoAnalyticsCard">
+                <div className="videoAnalyticsThumbnail">
+                  <img src={video.thumbnail_url} alt={video.title} />
+                  <span>{formatDuration(video.duration_seconds)}</span>
                 </div>
-              </div>
-            </section>
+
+                <div className="videoAnalyticsInfo">
+                  <h2>{video.title}</h2>
+                  <p>{video.uploader_name}</p>
+                  <div className="videoAnalyticsMeta">
+                    <span>{formatViews(video.view_count)}</span>
+                    <span>{formatDate(video.published_at || video.created_at)}</span>
+                  </div>
+                </div>
+              </section>
+            )
           )}
 
           <div className="videoAnalyticsFilters" aria-label={t("videoAnalyticsFilters")}>
@@ -965,7 +1080,7 @@ function VideoAnalyticsPage() {
 
           <section className="videoAnalyticsOverview">
             <h2>{t("videoAnalyticsOverview")}</h2>
-            <p className="videoAnalyticsSectionDescription">{t("videoAnalyticsOverviewDescription")}</p>
+            <p className="videoAnalyticsSectionDescription">{t(isChannel ? "channelAnalyticsOverviewDescription" : "videoAnalyticsOverviewDescription")}</p>
 
             {isOverviewLoading ? (
               <div className="videoAnalyticsOverviewGrid" aria-label={t("videoAnalyticsOverviewLoading")}>
@@ -989,8 +1104,8 @@ function VideoAnalyticsPage() {
           </section>
 
           <section className="videoAnalyticsEngagement">
-            <h2>{t("videoAnalyticsEngagement")}</h2>
-            <p className="videoAnalyticsSectionDescription">{t("videoAnalyticsEngagementDescription")}</p>
+            <h2>{t(isChannel ? "channelAnalyticsAverageEngagement" : "videoAnalyticsEngagement")}</h2>
+            <p className="videoAnalyticsSectionDescription">{t(isChannel ? "channelAnalyticsAverageEngagementDescription" : "videoAnalyticsEngagementDescription")}</p>
 
             {isEngagementLoading ? (
               <div className="videoAnalyticsEngagementLoading loading" aria-label={t("videoAnalyticsEngagementLoading")} />
@@ -1000,14 +1115,14 @@ function VideoAnalyticsPage() {
               <EngagementMeter
                 percentage={engagementPercentage}
                 resetKey={range}
-                label={t("videoAnalyticsEngagement")}
+                label={t(isChannel ? "channelAnalyticsAverageEngagement" : "videoAnalyticsEngagement")}
               />
             )}
           </section>
 
           <section className="videoAnalyticsGraphs">
             <h2>{t("videoAnalyticsAudienceGraphs")}</h2>
-            <p className="videoAnalyticsSectionDescription">{t("videoAnalyticsAudienceGraphsDescription")}</p>
+            <p className="videoAnalyticsSectionDescription">{t(isChannel ? "channelAnalyticsGraphsDescription" : "videoAnalyticsAudienceGraphsDescription")}</p>
 
             <div className="videoAnalyticsGraphTabs" aria-label={t("videoAnalyticsAudienceGraphs")}>
               <button
@@ -1135,93 +1250,97 @@ function VideoAnalyticsPage() {
               </div>
             )}
 
-            <div
-              className="videoAnalyticsGraphTabs videoAnalyticsCompletionToggle"
-              aria-label={t("videoAnalyticsCompletionBuckets")}
-            >
-              <button
-                className="completionBuckets"
-                type="button"
-                aria-pressed={isCompletionBucketsActive}
-                onClick={() => setIsCompletionBucketsActive((current) => !current)}
-              >
-                <i aria-hidden="true" />
-                {t("videoAnalyticsCompletionBuckets")}
-              </button>
-            </div>
-
-            {isCompletionBucketsActive && (
-              isCompletionBucketsLoading ? (
-                <div className="videoAnalyticsLineChart loading" aria-label={t("videoAnalyticsGraphsLoading")} />
-              ) : isCompletionBucketsError || !completionBuckets ? (
-                <p className="videoAnalyticsOverviewError">{t("videoAnalyticsCompletionBucketsFailed")}</p>
-              ) : (
-                <div className="videoAnalyticsLineChart videoAnalyticsCompletionChart">
-                  <div className="videoAnalyticsCompletionAxisLabels" aria-hidden="true">
-                    {completionBucketTicks.map((tick) => (
-                      <span
-                        key={tick}
-                        style={{ bottom: `${(tick / (completionBucketAxisMax * 1.08)) * 100}%` }}
-                      >
-                        {tick.toLocaleString(locale)}
-                      </span>
-                    ))}
-                  </div>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={completionBucketChartData} margin={{ top: 12, right: 12, bottom: 4, left: 4 }}>
-                      <CartesianGrid stroke="var(--border1)" strokeDasharray="4 4" vertical={false} />
-                      <XAxis
-                        dataKey="bucket"
-                        tick={{ fill: "var(--text2)", fontSize: 13 }}
-                        tickLine={false}
-                        axisLine={{ stroke: "var(--border1)" }}
-                      />
-                      <YAxis
-                        width={52}
-                        domain={[0, completionBucketAxisMax * 1.08]}
-                        ticks={completionBucketTicks}
-                        interval={0}
-                        tickFormatter={(value) => Number(value).toLocaleString(locale)}
-                        tick={false}
-                        tickLine={false}
-                        axisLine={false}
-                        allowDecimals={false}
-                        allowDataOverflow
-                      />
-                      <Tooltip
-                        isAnimationActive={false}
-                        cursor={{ fill: "var(--background2)" }}
-                        content={(props) => (
-                          <CompletionBucketsTooltip
-                            {...props}
-                            locale={locale}
-                            viewersLabel={t("videoAnalyticsViewers")}
-                          />
-                        )}
-                      />
-                      <Bar
-                        dataKey="viewers"
-                        name={t("videoAnalyticsViewers")}
-                        fill="var(--analyticsCompletionBuckets)"
-                        radius={[8, 8, 0, 0]}
-                        maxBarSize={90}
-                        isAnimationActive
-                        animationDuration={500}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+            {!isChannel && (
+              <>
+                <div
+                  className="videoAnalyticsGraphTabs videoAnalyticsCompletionToggle"
+                  aria-label={t("videoAnalyticsCompletionBuckets")}
+                >
+                  <button
+                    className="completionBuckets"
+                    type="button"
+                    aria-pressed={isCompletionBucketsActive}
+                    onClick={() => setIsCompletionBucketsActive((current) => !current)}
+                  >
+                    <i aria-hidden="true" />
+                    {t("videoAnalyticsCompletionBuckets")}
+                  </button>
                 </div>
-              )
+
+                {isCompletionBucketsActive && (
+                  isCompletionBucketsLoading ? (
+                    <div className="videoAnalyticsLineChart loading" aria-label={t("videoAnalyticsGraphsLoading")} />
+                  ) : isCompletionBucketsError || !completionBuckets ? (
+                    <p className="videoAnalyticsOverviewError">{t("videoAnalyticsCompletionBucketsFailed")}</p>
+                  ) : (
+                    <div className="videoAnalyticsLineChart videoAnalyticsCompletionChart">
+                      <div className="videoAnalyticsCompletionAxisLabels" aria-hidden="true">
+                        {completionBucketTicks.map((tick) => (
+                          <span
+                            key={tick}
+                            style={{ bottom: `${(tick / (completionBucketAxisMax * 1.08)) * 100}%` }}
+                          >
+                            {tick.toLocaleString(locale)}
+                          </span>
+                        ))}
+                      </div>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={completionBucketChartData} margin={{ top: 12, right: 12, bottom: 4, left: 4 }}>
+                          <CartesianGrid stroke="var(--border1)" strokeDasharray="4 4" vertical={false} />
+                          <XAxis
+                            dataKey="bucket"
+                            tick={{ fill: "var(--text2)", fontSize: 13 }}
+                            tickLine={false}
+                            axisLine={{ stroke: "var(--border1)" }}
+                          />
+                          <YAxis
+                            width={52}
+                            domain={[0, completionBucketAxisMax * 1.08]}
+                            ticks={completionBucketTicks}
+                            interval={0}
+                            tickFormatter={(value) => Number(value).toLocaleString(locale)}
+                            tick={false}
+                            tickLine={false}
+                            axisLine={false}
+                            allowDecimals={false}
+                            allowDataOverflow
+                          />
+                          <Tooltip
+                            isAnimationActive={false}
+                            cursor={{ fill: "var(--background2)" }}
+                            content={(props) => (
+                              <CompletionBucketsTooltip
+                                {...props}
+                                locale={locale}
+                                viewersLabel={t("videoAnalyticsViewers")}
+                              />
+                            )}
+                          />
+                          <Bar
+                            dataKey="viewers"
+                            name={t("videoAnalyticsViewers")}
+                            fill="var(--analyticsCompletionBuckets)"
+                            radius={[8, 8, 0, 0]}
+                            maxBarSize={90}
+                            isAnimationActive
+                            animationDuration={500}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )
+                )}
+              </>
             )}
 
-            {!hasActiveTimeSeries && !isCompletionBucketsActive && (
+            {!hasActiveTimeSeries && (isChannel || !isCompletionBucketsActive) && (
               <p className="videoAnalyticsGraphEmpty">{t("videoAnalyticsGraphsNoneSelected")}</p>
             )}
           </section>
 
           <section className="videoAnalyticsAudience">
             <h2>{t("videoAnalyticsAudienceBreakdown")}</h2>
-            <p className="videoAnalyticsSectionDescription">{t("videoAnalyticsAudienceBreakdownDescription")}</p>
+            <p className="videoAnalyticsSectionDescription">{t(isChannel ? "channelAnalyticsAudienceDescription" : "videoAnalyticsAudienceBreakdownDescription")}</p>
 
             {isAudienceLoading ? (
               <div className="videoAnalyticsAudienceGrid" aria-label={t("videoAnalyticsAudienceLoading")}>
@@ -1246,7 +1365,7 @@ function VideoAnalyticsPage() {
 
           <section className="videoAnalyticsGeographic">
             <h2>{t("videoAnalyticsGeographicBreakdown")}</h2>
-            <p className="videoAnalyticsSectionDescription">{t("videoAnalyticsGeographicBreakdownDescription")}</p>
+            <p className="videoAnalyticsSectionDescription">{t(isChannel ? "channelAnalyticsGeographicDescription" : "videoAnalyticsGeographicBreakdownDescription")}</p>
 
             {isGeographicLoading ? (
               <div className="videoAnalyticsMap loading" />
