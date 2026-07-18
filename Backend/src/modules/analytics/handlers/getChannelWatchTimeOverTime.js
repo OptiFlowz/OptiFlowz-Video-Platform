@@ -1,0 +1,84 @@
+import { readPool } from '../../../database/index.js';
+import { z } from 'zod';
+import { validateOrThrow } from '../../../common/input.validation.js';
+
+function prerequisites(object, userId) {
+  if (!userId) {
+    const error = new Error('Unauthorized');
+    error.status = 401;
+    throw error;
+  }
+
+  const schema = z
+    .object({
+      userId: z.string().uuid('Invalid user ID'),
+      groupBy: z.enum(['day', 'week', 'month']).default('day'),
+      fromDate: z.coerce.date().optional(),
+      toDate: z.coerce.date().optional(),
+    })
+    .refine(
+      ({ fromDate, toDate }) => !fromDate || !toDate || fromDate <= toDate,
+      { message: 'fromDate must be before or equal to toDate', path: ['fromDate'] },
+    );
+
+  return validateOrThrow(schema.safeParse({ ...object, userId }));
+}
+
+export async function getChannelWatchTimeOverTimeInternal(object, userId = null) {
+  const {
+    userId: validatedUserId,
+    groupBy,
+    fromDate,
+    toDate,
+  } = prerequisites(object, userId);
+
+  const { rows } = await readPool.query(
+    `
+      WITH filtered_views AS (
+        SELECT vv.created_at, vv.watch_duration
+        FROM video_views vv
+        INNER JOIN videos v ON v.id = vv.video_id
+        WHERE v.uploaded_by = $1
+          AND ($3::timestamptz IS NULL OR vv.created_at >= $3)
+          AND ($4::timestamptz IS NULL OR vv.created_at <= $4)
+      ),
+      aggregated_watch_time AS (
+        SELECT
+          DATE_TRUNC($2, created_at) AS period_start,
+          COALESCE(SUM(watch_duration), 0) AS watch_time
+        FROM filtered_views
+        GROUP BY period_start
+      ),
+      bounds AS (
+        SELECT
+          DATE_TRUNC($2, COALESCE($3::timestamptz, MIN(created_at))) AS start_at,
+          DATE_TRUNC($2, COALESCE($4::timestamptz, MAX(created_at))) AS end_at
+        FROM filtered_views
+      ),
+      periods AS (
+        SELECT GENERATE_SERIES(
+          start_at,
+          end_at,
+          CASE $2
+            WHEN 'day' THEN INTERVAL '1 day'
+            WHEN 'week' THEN INTERVAL '1 week'
+            WHEN 'month' THEN INTERVAL '1 month'
+          END
+        ) AS period_start
+        FROM bounds
+      )
+      SELECT
+        periods.period_start,
+        COALESCE(aggregated_watch_time.watch_time, 0) AS watch_time
+      FROM periods
+      LEFT JOIN aggregated_watch_time USING (period_start)
+      ORDER BY periods.period_start ASC
+    `,
+    [validatedUserId, groupBy, fromDate ?? null, toDate ?? null],
+  );
+
+  return rows.map((row) => ({
+    periodStart: row.period_start,
+    watchTime: Number(row.watch_time),
+  }));
+}
