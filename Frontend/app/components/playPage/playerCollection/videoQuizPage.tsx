@@ -284,6 +284,28 @@ function getRequirementProgressText(video: QuizRequirementVideo, t: TranslateFn)
   return t("quizWatchRequirement");
 }
 
+function getRequirementProgressPercent(video: QuizRequirementVideo) {
+  if (video.has_met_requirement) return 100;
+
+  const watchedPercentage = Number(video.percentage_watched);
+  const requirementWatchedPercentage = Number(video.requirement_percentage_watched);
+  const requiredPercentage = Number(video.required_percentage);
+  const totalWatchSeconds = Number(video.total_watch_seconds);
+  const requiredSeconds = Number(video.required_seconds);
+
+  if (video.rule_type === "video_watch_percentage" && Number.isFinite(requiredPercentage) && requiredPercentage > 0) {
+    const watched = Number.isFinite(requirementWatchedPercentage) ? requirementWatchedPercentage : 0;
+    return Math.min(100, Math.max(0, (watched / requiredPercentage) * 100));
+  }
+
+  if (video.rule_type === "video_watch_seconds" && Number.isFinite(requiredSeconds) && requiredSeconds > 0) {
+    const watched = Number.isFinite(totalWatchSeconds) ? totalWatchSeconds : 0;
+    return Math.min(100, Math.max(0, (watched / requiredSeconds) * 100));
+  }
+
+  return Number.isFinite(watchedPercentage) ? Math.min(100, Math.max(0, watchedPercentage)) : 0;
+}
+
 function mapAttemptQuestion(question: AttemptQuizQuestion): QuizQuestion {
   if (question.question_type === "matching") {
     const leftItems = question.left_items ?? [];
@@ -939,6 +961,12 @@ function VideoQuizPage() {
   const shouldLockCurrentAnswer = isReadOnlyAttempt || Boolean(currentQuestionReview && !canReviseCurrentAnswer);
   const shouldShowCurrentCorrectAnswer = !isAssignmentReview || currentQuestionReviewStatus === "correct";
   const isQuizLoading = isQuizSummaryLoading || areAttemptsLoading || (stage !== "intro" && areQuestionsLoading);
+
+  useEffect(() => {
+    if (isRequirementsBlocking) {
+      setAreRequirementsOpen(true);
+    }
+  }, [isRequirementsBlocking]);
   const summaryQuestionResults = useMemo(
     () =>
       buildQuestionResults(questions, answers, questionReviews, t).map((result) =>
@@ -1782,40 +1810,56 @@ function VideoQuizPage() {
                     </div>
                   ))}
                 </div>
-              ) : (
+              ) : hasMetQuizRequirements ? (
                 <div className="videoQuizEmptyState">
                   <strong>{t("quizAttemptsAppearHere")}</strong>
                   <p>{t("quizStartFirstAttempt")}</p>
                 </div>
-              )}
+              ) : null}
 
               {!hasMetQuizRequirements ? (
                 <div className={`videoQuizRequirementsCard ${isRequirementsBlocking ? "blocked" : ""}`}>
                   <div className="videoQuizRequirementsSummary">
-                    <div>
-                      <strong>{t("quizRequirements")}</strong>
-                      <p>
-                        {areRequirementsLoading
-                          ? t("quizCheckingEligibility")
-                          : hasRequirementsStatusError
-                            ? t("quizCouldNotCheckRequirements")
-                            : isRequirementsBlocking
-                              ? t("quizCompleteRequiredVideos")
-                              : t("quizOpenRequirementsHint")}
-                      </p>
+                    <div className="videoQuizRequirementsSummaryText">
+                      <span className="videoQuizRequirementsIcon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none">
+                          <path d="M7.5 10V7.5a4.5 4.5 0 0 1 9 0V10M6 10h12v10H6V10Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="M12 14v2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                        </svg>
+                      </span>
+
+                      <span>
+                        <strong>{t("quizRequirements")}</strong>
+                        <p>
+                          {areRequirementsLoading
+                            ? t("quizCheckingEligibility")
+                            : hasRequirementsStatusError
+                              ? t("quizCouldNotCheckRequirements")
+                              : isRequirementsBlocking
+                                ? t("quizCompleteRequiredVideos")
+                                : t("quizOpenRequirementsHint")}
+                        </p>
+                      </span>
                     </div>
 
                     <button
                       type="button"
-                      className="videoQuizInlineButton"
+                      className="videoQuizRequirementsToggle"
                       onClick={() => setAreRequirementsOpen((current) => !current)}
                       disabled={areRequirementsLoading && !areRequirementsOpen}
+                      aria-expanded={areRequirementsOpen}
+                      aria-controls="quiz-requirements-panel"
                     >
-                      {areRequirementsOpen ? t("quizHideRequirements") : t("quizViewRequirements")}
+                      <span>{areRequirementsOpen ? t("quizHideRequirements") : t("quizViewRequirements")}</span>
+                      <IconChevron className={areRequirementsOpen ? "open" : ""} />
                     </button>
                   </div>
 
-                  <div className={`videoQuizRequirementsPanel ${areRequirementsOpen ? "open" : ""}`} aria-hidden={!areRequirementsOpen}>
+                  <div
+                    id="quiz-requirements-panel"
+                    className={`videoQuizRequirementsPanel ${areRequirementsOpen ? "open" : ""}`}
+                    aria-hidden={!areRequirementsOpen}
+                  >
                       {areRequirementVideosLoading ? (
                         <div className="videoQuizEmptyState">
                           <strong>{t("quizLoadingRequirements")}</strong>
@@ -1830,25 +1874,37 @@ function VideoQuizPage() {
                         <div className="videoQuizRequirementList">
                           {requirementVideos.map((video) => (
                             <div key={video.id} className={`videoQuizRequirementVideo ${video.has_met_requirement ? "met" : ""}`}>
-                              {video.thumbnail_url ? (
-                                <img src={video.thumbnail_url} alt="" loading="lazy" decoding="async" />
-                              ) : (
-                                <div className="videoQuizRequirementThumbFallback" aria-hidden="true">
-                                  {QuizSVG}
-                                </div>
-                              )}
+                              <div className="videoQuizRequirementThumb">
+                                {video.thumbnail_url ? (
+                                  <img src={video.thumbnail_url} alt="" loading="lazy" decoding="async" />
+                                ) : (
+                                  <div className="videoQuizRequirementThumbFallback" aria-hidden="true">
+                                    {QuizSVG}
+                                  </div>
+                                )}
 
-                              <div className="videoQuizRequirementVideoText">
-                                <strong>{video.title || t("quizRequiredVideo")}</strong>
-                                <p>{getRequirementProgressText(video, t)}</p>
-                              </div>
-
-                              <div className="videoQuizRequirementVideoActions">
                                 {formatDurationLabel(video.duration_seconds) ? (
                                   <span className="videoQuizRequirementDuration">
                                     {formatDurationLabel(video.duration_seconds)}
                                   </span>
                                 ) : null}
+                              </div>
+
+                              <div className="videoQuizRequirementVideoText">
+                                <strong>{video.title || t("quizRequiredVideo")}</strong>
+                                <p>{getRequirementProgressText(video, t)}</p>
+                                <div
+                                  className="videoQuizRequirementProgress"
+                                  role="progressbar"
+                                  aria-valuemin={0}
+                                  aria-valuemax={100}
+                                  aria-valuenow={Math.round(getRequirementProgressPercent(video))}
+                                >
+                                  <span style={{ width: `${getRequirementProgressPercent(video)}%` }} />
+                                </div>
+                              </div>
+
+                              <div className="videoQuizRequirementVideoActions">
                                 {video.has_met_requirement ? (
                                   <span
                                     className="videoQuizRequirementMetBadge"
@@ -1863,10 +1919,11 @@ function VideoQuizPage() {
                                 ) : (
                                   <button
                                     type="button"
-                                    className="videoQuizInlineButton"
+                                    className="videoQuizRequirementWatchButton"
                                     onClick={() => navigate(`/video/${video.id}`)}
                                   >
-                                    {t("quizWatch")}
+                                    <span>{t("quizWatch")}</span>
+                                    <IconChevron />
                                   </button>
                                 )}
                               </div>
