@@ -2538,6 +2538,12 @@ mux-player::part(menu-item) {
 
 .videoQuizPage .videoQuizPageContent.introStage {
   width: min(900px, calc(100vw - 56px));
+  max-height: none;
+  overflow-y: visible;
+}
+
+.videoQuizPage .videoQuizPageContent.introStage .videoQuizIntro {
+  overflow-y: visible;
 }
 
 .videoQuizPage .videoQuizPageContent.flowStage {
@@ -2618,11 +2624,18 @@ mux-player::part(menu-item) {
 .videoQuizPage .videoQuizDescription {
   width: 100%;
   margin: 0;
-  padding: 18px 20px;
-  border: 1px solid var(--border1);
-  border-radius: 18px;
-  background: var(--background2);
+}
+
+.videoQuizPage .videoQuizDescription h3 {
+  margin: 0;
   color: var(--text1);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.videoQuizPage .videoQuizDescription p {
+  margin: 0.35rem 0 0;
+  color: var(--text3);
   line-height: 1.55;
   white-space: pre-line;
 }
@@ -2883,7 +2896,7 @@ mux-player::part(menu-item) {
   max-height: 0;
   overflow: hidden;
   opacity: 0;
-  padding: 0 20px;
+  padding: 0 5px 0 20px;
   transform: translateY(-4px);
   visibility: hidden;
   transition:
@@ -2897,7 +2910,7 @@ mux-player::part(menu-item) {
 .videoQuizPage .videoQuizRequirementsPanel.open {
   max-height: clamp(220px, 48vh, 560px);
   opacity: 1;
-  padding: 0 20px;
+  padding: 0 5px 0 20px;
   transform: translateY(0);
   visibility: visible;
   transition-delay: 0ms;
@@ -2909,9 +2922,33 @@ mux-player::part(menu-item) {
   max-height: clamp(180px, 38vh, 440px);
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding-right: 4px;
-  scrollbar-gutter: stable;
+  padding-right: 14px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accentBlue2) transparent;
   -webkit-overflow-scrolling: touch;
+}
+
+.videoQuizPage .videoQuizRequirementList::-webkit-scrollbar {
+  width: 5px;
+}
+
+.videoQuizPage .videoQuizRequirementList::-webkit-scrollbar-track {
+  margin-block: 8px;
+  background: transparent;
+}
+
+.videoQuizPage .videoQuizRequirementList::-webkit-scrollbar-thumb {
+  min-height: 32px;
+  border-radius: var(--bR);
+  background: var(--accentBlue2);
+}
+
+.videoQuizPage .videoQuizRequirementList::-webkit-scrollbar-thumb:hover {
+  background: var(--accentBlue3);
+}
+
+.videoQuizPage .videoQuizRequirementList::-webkit-scrollbar-button {
+  display: none;
 }
 
 .videoQuizPage .videoQuizRequirementVideo {
@@ -3004,10 +3041,16 @@ mux-player::part(menu-item) {
 }
 
 .videoQuizPage .videoQuizRequirementMetBadge {
+  min-width: 104px;
+  min-height: 42px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
+  padding: 0 15px;
+  border: 1px solid var(--accentGreen2);
+  border-radius: var(--bR);
+  background: var(--background2);
   color: var(--accentGreen2);
   font-size: 0.9rem;
   font-weight: 700;
@@ -3033,6 +3076,7 @@ mux-player::part(menu-item) {
 }
 
 .videoQuizPage .videoQuizRequirementWatchButton {
+  min-width: 104px;
   min-height: 42px;
   display: inline-flex;
   align-items: center;
@@ -4281,7 +4325,7 @@ mux-player::part(menu-item) {
 
   .videoQuizPage .videoQuizRequirementsPanel,
   .videoQuizPage .videoQuizRequirementsPanel.open {
-    padding-right: 14px;
+    padding-right: 4px;
     padding-left: 14px;
   }
 

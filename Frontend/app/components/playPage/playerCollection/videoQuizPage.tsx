@@ -1758,7 +1758,10 @@ function VideoQuizPage() {
           </div>
 
           {stage === "intro" && quizDescription ? (
-            <p className="videoQuizDescription">{formatDescription(quizDescription)}</p>
+            <div className="videoQuizDescription">
+              <h3>{t("description")}</h3>
+              <p>{formatDescription(quizDescription)}</p>
+            </div>
           ) : null}
         </div>
 
