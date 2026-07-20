@@ -14,6 +14,17 @@ import { getChannelGeographicBreakdownInternal } from './handlers/getChannelGeog
 import { getChannelViewsOverTimeInternal } from './handlers/getChannelViewsOverTime.js';
 import { getChannelWatchTimeOverTimeInternal } from './handlers/getChannelWatchTimeOverTime.js';
 import { getChannelAverageEngagementPerVideoInternal } from './handlers/getChannelAverageEngagementPerVideo.js';
+import { getPlatformOverviewAnalyticsInternal } from './handlers/getPlatformOverviewAnalytics.js';
+import { getPlatformAverageEngagementPerVideoInternal } from './handlers/getPlatformAverageEngagementPerVideo.js';
+import { getPlatformTopViewedVideosInternal } from './handlers/getPlatformTopViewedVideos.js';
+import { getPlatformTopViewedPlaylistsInternal } from './handlers/getPlatformTopViewedPlaylists.js';
+import { getPlatformDeviceSplitInternal } from './handlers/getPlatformDeviceSplit.js';
+import { getPlatformOperatingSystemSplitInternal } from './handlers/getPlatformOperatingSystemSplit.js';
+import { getPlatformGeographicBreakdownInternal } from './handlers/getPlatformGeographicBreakdown.js';
+import { getPlatformViewsOverTimeInternal } from './handlers/getPlatformViewsOverTime.js';
+import { getPlatformWatchTimeOverTimeInternal } from './handlers/getPlatformWatchTimeOverTime.js';
+import { getPlatformSignupsOverTimeInternal } from './handlers/getPlatformSignupsOverTime.js';
+import { getPlatformActiveUsersOverTimeInternal } from './handlers/getPlatformActiveUsersOverTime.js';
 
 
 
@@ -205,6 +216,149 @@ export async function getChannelAverageEngagementPerVideo(req, res) {
     return sendSuccess(res, { averageEngagementPerVideo }, 200);
   } catch (error) {
     console.error('Error getting channel average engagement per video:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function getPlatformOverviewAnalytics(req, res) {
+  try {
+    const platformOverview = await getPlatformOverviewAnalyticsInternal(
+      { ...req.params, ...req.body, ...req.query },
+      req.user?.sub || null,
+    );
+    return sendSuccess(res, { platformOverview }, 200);
+  } catch (error) {
+    console.error('Error getting platform overview analytics:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function getPlatformAverageEngagementPerVideo(req, res) {
+  try {
+    const averageEngagementPerVideo = await getPlatformAverageEngagementPerVideoInternal(
+      { ...req.params, ...req.body, ...req.query },
+      req.user?.sub || null,
+    );
+    return sendSuccess(res, { averageEngagementPerVideo }, 200);
+  } catch (error) {
+    console.error('Error getting platform average engagement per video:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function getPlatformTopViewedVideos(req, res) {
+  try {
+    const topViewedVideos = await getPlatformTopViewedVideosInternal(
+      { ...req.params, ...req.body, ...req.query },
+      req.user?.sub || null,
+    );
+    return sendSuccess(res, { topViewedVideos }, 200);
+  } catch (error) {
+    console.error('Error getting platform top viewed videos:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function getPlatformTopViewedPlaylists(req, res) {
+  try {
+    const topViewedPlaylists = await getPlatformTopViewedPlaylistsInternal(
+      { ...req.params, ...req.body, ...req.query },
+      req.user?.sub || null,
+    );
+    return sendSuccess(res, { topViewedPlaylists }, 200);
+  } catch (error) {
+    console.error('Error getting platform top viewed playlists:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function getPlatformDeviceSplit(req, res) {
+  try {
+    const platformDeviceSplit = await getPlatformDeviceSplitInternal(
+      { ...req.params, ...req.body, ...req.query },
+      req.user?.sub || null,
+    );
+    return sendSuccess(res, { platformDeviceSplit }, 200);
+  } catch (error) {
+    console.error('Error getting platform device split:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function getPlatformOperatingSystemSplit(req, res) {
+  try {
+    const platformOperatingSystemSplit = await getPlatformOperatingSystemSplitInternal(
+      { ...req.params, ...req.body, ...req.query },
+      req.user?.sub || null,
+    );
+    return sendSuccess(res, { platformOperatingSystemSplit }, 200);
+  } catch (error) {
+    console.error('Error getting platform operating system split:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function getPlatformGeographicBreakdown(req, res) {
+  try {
+    const platformGeographicBreakdown = await getPlatformGeographicBreakdownInternal(
+      { ...req.params, ...req.body, ...req.query },
+      req.user?.sub || null,
+    );
+    return sendSuccess(res, { platformGeographicBreakdown }, 200);
+  } catch (error) {
+    console.error('Error getting platform geographic breakdown:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function getPlatformViewsOverTime(req, res) {
+  try {
+    const platformViewsOverTime = await getPlatformViewsOverTimeInternal(
+      { ...req.params, ...req.body, ...req.query },
+      req.user?.sub || null,
+    );
+    return sendSuccess(res, { platformViewsOverTime }, 200);
+  } catch (error) {
+    console.error('Error getting platform views over time:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function getPlatformWatchTimeOverTime(req, res) {
+  try {
+    const platformWatchTimeOverTime = await getPlatformWatchTimeOverTimeInternal(
+      { ...req.params, ...req.body, ...req.query },
+      req.user?.sub || null,
+    );
+    return sendSuccess(res, { platformWatchTimeOverTime }, 200);
+  } catch (error) {
+    console.error('Error getting platform watch time over time:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function getPlatformSignupsOverTime(req, res) {
+  try {
+    const platformSignupsOverTime = await getPlatformSignupsOverTimeInternal(
+      { ...req.params, ...req.body, ...req.query },
+      req.user?.sub || null,
+    );
+    return sendSuccess(res, { platformSignupsOverTime }, 200);
+  } catch (error) {
+    console.error('Error getting platform signups over time:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function getPlatformActiveUsersOverTime(req, res) {
+  try {
+    const platformActiveUsersOverTime = await getPlatformActiveUsersOverTimeInternal(
+      { ...req.params, ...req.body, ...req.query },
+      req.user?.sub || null,
+    );
+    return sendSuccess(res, { platformActiveUsersOverTime }, 200);
+  } catch (error) {
+    console.error('Error getting platform active users over time:', error);
     return sendError(res, error.message, error.status || 500);
   }
 }

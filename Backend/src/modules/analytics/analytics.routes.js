@@ -1,9 +1,75 @@
 import express from 'express';
-import { optionalAuth, requireAdmin , requireAuth} from '../../middleware/auth.js';
+import { optionalAuth, requireAdmin, requireAuth } from '../../middleware/auth.js';
 import * as analyticsController from './analytics.controller.js'
 
 const router = express.Router();
 
+router.get(
+  '/platform/overview',
+  requireAuth,
+  requireAdmin,
+  analyticsController.getPlatformOverviewAnalytics,
+);
+router.get(
+  '/platform/average-engagement-per-video',
+  requireAuth,
+  requireAdmin,
+  analyticsController.getPlatformAverageEngagementPerVideo,
+);
+router.get(
+  '/platform/top-viewed-videos',
+  requireAuth,
+  requireAdmin,
+  analyticsController.getPlatformTopViewedVideos,
+);
+router.get(
+  '/platform/top-viewed-playlists',
+  requireAuth,
+  requireAdmin,
+  analyticsController.getPlatformTopViewedPlaylists,
+);
+router.get(
+  '/platform/device-split',
+  requireAuth,
+  requireAdmin,
+  analyticsController.getPlatformDeviceSplit,
+);
+router.get(
+  '/platform/operating-system-split',
+  requireAuth,
+  requireAdmin,
+  analyticsController.getPlatformOperatingSystemSplit,
+);
+router.get(
+  '/platform/geographic-breakdown',
+  requireAuth,
+  requireAdmin,
+  analyticsController.getPlatformGeographicBreakdown,
+);
+router.get(
+  '/platform/views-over-time',
+  requireAuth,
+  requireAdmin,
+  analyticsController.getPlatformViewsOverTime,
+);
+router.get(
+  '/platform/watch-time-over-time',
+  requireAuth,
+  requireAdmin,
+  analyticsController.getPlatformWatchTimeOverTime,
+);
+router.get(
+  '/platform/signups-over-time',
+  requireAuth,
+  requireAdmin,
+  analyticsController.getPlatformSignupsOverTime,
+);
+router.get(
+  '/platform/active-users-over-time',
+  requireAuth,
+  requireAdmin,
+  analyticsController.getPlatformActiveUsersOverTime,
+);
 router.get(
   '/channel/overview',
   requireAuth,
