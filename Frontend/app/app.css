@@ -77,6 +77,8 @@
   --analyticsChart6: #c5d1e5;
   --analyticsWatchTimeOverTime: #3f78f0;
   --analyticsViewsOverTime: #f59e0b;
+  --analyticsSignupsOverTime: #10b981;
+  --analyticsActiveUsersOverTime: #a855f7;
   --analyticsCompletionBuckets: #ef4444;
 
   --playButtonBg1: rgba(0, 0, 0, 0.6);
@@ -8702,6 +8704,39 @@ main.videoAnalyticsPage .videoAnalyticsShell{
   gap: 1.25rem;
 }
 
+main.analyticsPage .platformAnalyticsPdfButton{
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  min-height: 44px;
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--border1);
+  border-radius: 14px;
+  background-color: var(--background2);
+  color: var(--text1);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+main.analyticsPage .platformAnalyticsPdfButton:hover:not(:disabled){
+  border-color: var(--border2);
+  background-color: var(--background3);
+  transform: translateY(-1px);
+}
+
+main.analyticsPage .platformAnalyticsPdfButton:disabled{
+  cursor: wait;
+  opacity: 0.7;
+}
+
+main.analyticsPage .platformAnalyticsPdfButton svg{
+  flex: 0 0 auto;
+}
+
 main.videoAnalyticsPage .videoAnalyticsCard{
   display: flex;
   align-items: center;
@@ -9194,6 +9229,16 @@ main.videoAnalyticsPage .videoAnalyticsGraphTabs button.views[aria-pressed="true
   color: var(--analyticsViewsOverTime);
 }
 
+main.videoAnalyticsPage .videoAnalyticsGraphTabs button.signups[aria-pressed="true"]{
+  border-color: var(--analyticsSignupsOverTime);
+  color: var(--analyticsSignupsOverTime);
+}
+
+main.videoAnalyticsPage .videoAnalyticsGraphTabs button.activeUsers[aria-pressed="true"]{
+  border-color: var(--analyticsActiveUsersOverTime);
+  color: var(--analyticsActiveUsersOverTime);
+}
+
 main.videoAnalyticsPage .videoAnalyticsGraphTabs button.completionBuckets[aria-pressed="true"]{
   border-color: var(--analyticsCompletionBuckets);
   color: var(--analyticsCompletionBuckets);
@@ -9312,6 +9357,14 @@ main.videoAnalyticsPage .videoAnalyticsLineTooltipValue.watchTime{
 
 main.videoAnalyticsPage .videoAnalyticsLineTooltipValue.views{
   color: var(--analyticsViewsOverTime);
+}
+
+main.videoAnalyticsPage .videoAnalyticsLineTooltipValue.signups{
+  color: var(--analyticsSignupsOverTime);
+}
+
+main.videoAnalyticsPage .videoAnalyticsLineTooltipValue.activeUsers{
+  color: var(--analyticsActiveUsersOverTime);
 }
 
 main.videoAnalyticsPage .videoAnalyticsLineTooltipValue.completionBuckets{
@@ -9836,6 +9889,10 @@ main.videoAnalyticsPage .videoAnalyticsMessage{
 }
 
 @media (max-width: 700px){
+  main.analyticsPage .platformAnalyticsPdfButton{
+    width: 100%;
+  }
+
   main.videoAnalyticsPage .videoAnalyticsCard{
     align-items: stretch;
     flex-direction: column;
