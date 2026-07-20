@@ -34,7 +34,7 @@ import type { fetchVideo, VideoT } from "~/types";
 import Sidebar from "~/components/myVideosPage/sidebar/sidebar";
 import DefaultThumbnail from "../../../assets/DefaultThumbnail.webp";
 
-type AnalyticsRange = "last7" | "last30" | "last90" | "last365" | "all";
+type AnalyticsRange = "last7" | "last30" | "last90" | "last365" | "all" | "custom";
 type AnalyticsGroupBy = "day" | "week" | "month";
 type TimeSeriesMetric = "watchTime" | "views";
 
@@ -354,15 +354,23 @@ function EngagementMeter({
   );
 }
 
-function getDateRange(range: AnalyticsRange) {
+function getDateRange(range: AnalyticsRange, customFromDate: string, customToDate: string) {
   if (range === "all") return "";
 
-  const days = Number(range.replace("last", ""));
-  const toDate = new Date();
-  const fromDate = new Date(toDate);
-  fromDate.setUTCDate(fromDate.getUTCDate() - days);
-  fromDate.setUTCHours(0, 0, 0, 0);
-  toDate.setUTCHours(23, 59, 59, 999);
+  let fromDate: Date;
+  let toDate: Date;
+
+  if (range === "custom") {
+    fromDate = new Date(`${customFromDate}T00:00:00.000Z`);
+    toDate = new Date(`${customToDate}T23:59:59.999Z`);
+  } else {
+    const days = Number(range.replace("last", ""));
+    toDate = new Date();
+    fromDate = new Date(toDate);
+    fromDate.setUTCDate(fromDate.getUTCDate() - days);
+    fromDate.setUTCHours(0, 0, 0, 0);
+    toDate.setUTCHours(23, 59, 59, 999);
+  }
 
   const params = new URLSearchParams({
     fromDate: fromDate.toISOString(),
@@ -372,8 +380,13 @@ function getDateRange(range: AnalyticsRange) {
   return `?${params.toString()}`;
 }
 
-function getGroupedDateRange(range: AnalyticsRange, groupBy: AnalyticsGroupBy) {
-  const params = new URLSearchParams(getDateRange(range).replace(/^\?/, ""));
+function getGroupedDateRange(
+  range: AnalyticsRange,
+  groupBy: AnalyticsGroupBy,
+  customFromDate: string,
+  customToDate: string,
+) {
+  const params = new URLSearchParams(getDateRange(range, customFromDate, customToDate).replace(/^\?/, ""));
   params.set("groupBy", groupBy);
   return `?${params.toString()}`;
 }
@@ -561,6 +574,12 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
   const [token, setToken] = useState("");
   const [range, setRange] = useState<AnalyticsRange>("last7");
   const [groupBy, setGroupBy] = useState<AnalyticsGroupBy>("day");
+  const [customFromDate, setCustomFromDate] = useState(() => {
+    const date = new Date();
+    date.setUTCDate(date.getUTCDate() - 30);
+    return date.toISOString().slice(0, 10);
+  });
+  const [customToDate, setCustomToDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [activeTimeSeries, setActiveTimeSeries] = useState<Record<TimeSeriesMetric, boolean>>({
     watchTime: true,
     views: true,
@@ -601,13 +620,16 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
     refetchOnWindowFocus: false,
   });
 
-  const dateRangeQuery = useMemo(() => getDateRange(range), [range]);
+  const dateRangeQuery = useMemo(
+    () => getDateRange(range, customFromDate, customToDate),
+    [customFromDate, customToDate, range],
+  );
   const {
     data: overviewData,
     isLoading: isOverviewLoading,
     isError: isOverviewError,
   } = useQuery<VideoOverviewResponse>({
-    queryKey: ["analytics-overview", analyticsScope, range],
+    queryKey: ["analytics-overview", analyticsScope, range, dateRangeQuery],
     queryFn: async () => {
       if (isChannel) {
         const response = await fetchFn<ChannelOverviewResponse>({
@@ -632,7 +654,7 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
     isLoading: isChannelEngagementLoading,
     isError: isChannelEngagementError,
   } = useQuery<ChannelEngagementResponse>({
-    queryKey: ["channel-analytics-average-engagement", range],
+    queryKey: ["channel-analytics-average-engagement", range, dateRangeQuery],
     queryFn: () =>
       fetchFn<ChannelEngagementResponse>({
         route: `${analyticsBaseRoute}/average-engagement-per-video${dateRangeQuery}`,
@@ -696,15 +718,15 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
     : [];
 
   const groupedDateRangeQuery = useMemo(
-    () => getGroupedDateRange(range, groupBy),
-    [groupBy, range],
+    () => getGroupedDateRange(range, groupBy, customFromDate, customToDate),
+    [customFromDate, customToDate, groupBy, range],
   );
   const {
     data: viewsOverTimeData,
     isLoading: isViewsOverTimeLoading,
     isError: isViewsOverTimeError,
   } = useQuery<ViewsOverTimeResponse>({
-    queryKey: ["analytics-views-over-time", analyticsScope, range, groupBy],
+    queryKey: ["analytics-views-over-time", analyticsScope, range, groupBy, groupedDateRangeQuery],
     queryFn: async () => {
       if (isChannel) {
         const response = await fetchFn<ChannelViewsOverTimeResponse>({
@@ -727,7 +749,7 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
     isLoading: isWatchTimeOverTimeLoading,
     isError: isWatchTimeOverTimeError,
   } = useQuery<WatchTimeOverTimeResponse>({
-    queryKey: ["analytics-watch-time-over-time", analyticsScope, range, groupBy],
+    queryKey: ["analytics-watch-time-over-time", analyticsScope, range, groupBy, groupedDateRangeQuery],
     queryFn: async () => {
       if (isChannel) {
         const response = await fetchFn<ChannelWatchTimeOverTimeResponse>({
@@ -750,7 +772,7 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
     isLoading: isCompletionBucketsLoading,
     isError: isCompletionBucketsError,
   } = useQuery<CompletionBucketsResponse>({
-    queryKey: ["video-analytics-completion-buckets", videoId, range],
+    queryKey: ["video-analytics-completion-buckets", videoId, range, dateRangeQuery],
     queryFn: () => fetchFn<CompletionBucketsResponse>({
       route: `api/analytics/${videoId}/completion-buckets${dateRangeQuery}`,
       options: { method: "GET", headers: headers.current },
@@ -824,7 +846,7 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
     isLoading: isAudienceLoading,
     isError: isAudienceError,
   } = useQuery({
-    queryKey: ["analytics-audience", analyticsScope, range],
+    queryKey: ["analytics-audience", analyticsScope, range, dateRangeQuery],
     queryFn: async () => {
       if (isChannel) {
         const [device, operatingSystem] = await Promise.all([
@@ -898,7 +920,7 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
     isLoading: isGeographicLoading,
     isError: isGeographicError,
   } = useQuery<GeographicBreakdownResponse>({
-    queryKey: ["analytics-geographic", analyticsScope, range],
+    queryKey: ["analytics-geographic", analyticsScope, range, dateRangeQuery],
     queryFn: async () => {
       if (isChannel) {
         const response = await fetchFn<ChannelGeographicBreakdownResponse>({
@@ -1089,8 +1111,41 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
                 <option value="last90">{t("analyticsLast90Days")}</option>
                 <option value="last365">{t("analyticsLast365Days")}</option>
                 <option value="all">{t("analyticsAllTime")}</option>
+                <option value="custom">{t("analyticsCustom")}</option>
               </select>
             </label>
+            {range === "custom" && (
+              <>
+                <label className="videoAnalyticsDateField">
+                  <span>{t("analyticsFrom")}</span>
+                  <input
+                    type="date"
+                    value={customFromDate}
+                    max={customToDate}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      if (!value) return;
+                      setCustomFromDate(value);
+                      if (value > customToDate) setCustomToDate(value);
+                    }}
+                  />
+                </label>
+                <label className="videoAnalyticsDateField">
+                  <span>{t("analyticsTo")}</span>
+                  <input
+                    type="date"
+                    value={customToDate}
+                    min={customFromDate}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      if (!value) return;
+                      setCustomToDate(value);
+                      if (value < customFromDate) setCustomFromDate(value);
+                    }}
+                  />
+                </label>
+              </>
+            )}
             <label className="videoAnalyticsSelect">
               {FilterSVG}
               <select

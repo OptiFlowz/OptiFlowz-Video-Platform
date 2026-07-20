@@ -8855,6 +8855,39 @@ main.videoAnalyticsPage .videoAnalyticsSelect select option{
   color: var(--text1);
 }
 
+main.videoAnalyticsPage .videoAnalyticsDateField{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.42rem 0.75rem;
+  border: 1px solid var(--border1);
+  border-radius: 999px;
+  background-color: var(--background3);
+  color: var(--text1);
+  font-weight: 500;
+}
+
+main.videoAnalyticsPage .videoAnalyticsDateField span{
+  color: var(--text2);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+main.videoAnalyticsPage .videoAnalyticsDateField input{
+  width: 8.7rem;
+  min-width: 0;
+  padding: 0.18rem 0;
+  border: 0;
+  outline: 0;
+  background-color: transparent;
+  color: var(--text1);
+  font: inherit;
+  color-scheme: dark;
+  cursor: pointer;
+}
+
 main.videoAnalyticsPage .videoAnalyticsOverview{
   display: flex;
   flex-direction: column;

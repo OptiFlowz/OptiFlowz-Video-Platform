@@ -32,7 +32,7 @@ import GeographicBreakdownSection, {
 } from "./geographicBreakdown";
 import PageLoader from "../loaders/pageLoader";
 
-type AnalyticsRange = "last7" | "last30" | "last90" | "last365" | "all";
+type AnalyticsRange = "last7" | "last30" | "last90" | "last365" | "all" | "custom";
 type AnalyticsGroupBy = "day" | "week" | "month";
 type PlatformTimeSeriesMetric = "watchTime" | "views" | "signups" | "activeUsers";
 
@@ -167,10 +167,18 @@ type DonutItem = {
   color: string;
 };
 
-function getAnalyticsQuery(range: AnalyticsRange, groupBy: AnalyticsGroupBy) {
+function getAnalyticsQuery(
+  range: AnalyticsRange,
+  groupBy: AnalyticsGroupBy,
+  customFromDate: string,
+  customToDate: string,
+) {
   const params = new URLSearchParams({ groupBy });
 
-  if (range !== "all") {
+  if (range === "custom") {
+    params.set("fromDate", new Date(`${customFromDate}T00:00:00.000Z`).toISOString());
+    params.set("toDate", new Date(`${customToDate}T23:59:59.999Z`).toISOString());
+  } else if (range !== "all") {
     const days = Number(range.replace("last", ""));
     const toDate = new Date();
     const fromDate = new Date(toDate);
@@ -446,6 +454,12 @@ function Analytics() {
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [range, setRange] = useState<AnalyticsRange>("last30");
   const [groupBy, setGroupBy] = useState<AnalyticsGroupBy>("day");
+  const [customFromDate, setCustomFromDate] = useState(() => {
+    const date = new Date();
+    date.setUTCDate(date.getUTCDate() - 30);
+    return date.toISOString().slice(0, 10);
+  });
+  const [customToDate, setCustomToDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [activeTimeSeries, setActiveTimeSeries] = useState<Record<PlatformTimeSeriesMetric, boolean>>({
     watchTime: true,
     views: true,
@@ -462,14 +476,17 @@ function Analytics() {
     setToken(userToken);
   }, []);
 
-  const analyticsQuery = useMemo(() => getAnalyticsQuery(range, groupBy), [groupBy, range]);
+  const analyticsQuery = useMemo(
+    () => getAnalyticsQuery(range, groupBy, customFromDate, customToDate),
+    [customFromDate, customToDate, groupBy, range],
+  );
 
   const {
     data: overviewData,
     isLoading: isOverviewLoading,
     isError: isOverviewError,
   } = useQuery<PlatformOverviewResponse>({
-    queryKey: ["platform-analytics-overview", range, groupBy],
+    queryKey: ["platform-analytics-overview", range, groupBy, analyticsQuery],
     queryFn: () => fetchFn<PlatformOverviewResponse>({
       route: `api/analytics/platform/overview${analyticsQuery}`,
       options: { method: "GET", headers: headers.current },
@@ -483,7 +500,7 @@ function Analytics() {
     isLoading: isEngagementLoading,
     isError: isEngagementError,
   } = useQuery<PlatformEngagementResponse>({
-    queryKey: ["platform-analytics-average-engagement", range, groupBy],
+    queryKey: ["platform-analytics-average-engagement", range, groupBy, analyticsQuery],
     queryFn: () => fetchFn<PlatformEngagementResponse>({
       route: `api/analytics/platform/average-engagement-per-video${analyticsQuery}`,
       options: { method: "GET", headers: headers.current },
@@ -497,7 +514,7 @@ function Analytics() {
     isLoading: isViewsOverTimeLoading,
     isError: isViewsOverTimeError,
   } = useQuery<PlatformViewsOverTimeResponse>({
-    queryKey: ["platform-analytics-views-over-time", range, groupBy],
+    queryKey: ["platform-analytics-views-over-time", range, groupBy, analyticsQuery],
     queryFn: () => fetchFn<PlatformViewsOverTimeResponse>({
       route: `api/analytics/platform/views-over-time${analyticsQuery}`,
       options: { method: "GET", headers: headers.current },
@@ -511,7 +528,7 @@ function Analytics() {
     isLoading: isWatchTimeOverTimeLoading,
     isError: isWatchTimeOverTimeError,
   } = useQuery<PlatformWatchTimeOverTimeResponse>({
-    queryKey: ["platform-analytics-watch-time-over-time", range, groupBy],
+    queryKey: ["platform-analytics-watch-time-over-time", range, groupBy, analyticsQuery],
     queryFn: () => fetchFn<PlatformWatchTimeOverTimeResponse>({
       route: `api/analytics/platform/watch-time-over-time${analyticsQuery}`,
       options: { method: "GET", headers: headers.current },
@@ -525,7 +542,7 @@ function Analytics() {
     isLoading: isSignupsOverTimeLoading,
     isError: isSignupsOverTimeError,
   } = useQuery<PlatformSignupsOverTimeResponse>({
-    queryKey: ["platform-analytics-signups-over-time", range, groupBy],
+    queryKey: ["platform-analytics-signups-over-time", range, groupBy, analyticsQuery],
     queryFn: () => fetchFn<PlatformSignupsOverTimeResponse>({
       route: `api/analytics/platform/signups-over-time${analyticsQuery}`,
       options: { method: "GET", headers: headers.current },
@@ -539,7 +556,7 @@ function Analytics() {
     isLoading: isActiveUsersOverTimeLoading,
     isError: isActiveUsersOverTimeError,
   } = useQuery<PlatformActiveUsersOverTimeResponse>({
-    queryKey: ["platform-analytics-active-users-over-time", range, groupBy],
+    queryKey: ["platform-analytics-active-users-over-time", range, groupBy, analyticsQuery],
     queryFn: () => fetchFn<PlatformActiveUsersOverTimeResponse>({
       route: `api/analytics/platform/active-users-over-time${analyticsQuery}`,
       options: { method: "GET", headers: headers.current },
@@ -553,7 +570,7 @@ function Analytics() {
     isLoading: isTopViewedVideosLoading,
     isError: isTopViewedVideosError,
   } = useQuery<TopViewedVideosResponse>({
-    queryKey: ["platform-analytics-top-viewed-videos", range, groupBy],
+    queryKey: ["platform-analytics-top-viewed-videos", range, groupBy, analyticsQuery],
     queryFn: () => fetchFn<TopViewedVideosResponse>({
       route: `api/analytics/platform/top-viewed-videos${analyticsQuery}`,
       options: { method: "GET", headers: headers.current },
@@ -567,7 +584,7 @@ function Analytics() {
     isLoading: isTopViewedPlaylistsLoading,
     isError: isTopViewedPlaylistsError,
   } = useQuery<TopViewedPlaylistsResponse>({
-    queryKey: ["platform-analytics-top-viewed-playlists", range, groupBy],
+    queryKey: ["platform-analytics-top-viewed-playlists", range, groupBy, analyticsQuery],
     queryFn: () => fetchFn<TopViewedPlaylistsResponse>({
       route: `api/analytics/platform/top-viewed-playlists${analyticsQuery}`,
       options: { method: "GET", headers: headers.current },
@@ -581,7 +598,7 @@ function Analytics() {
     isLoading: isAudienceLoading,
     isError: isAudienceError,
   } = useQuery({
-    queryKey: ["platform-analytics-audience", range, groupBy],
+    queryKey: ["platform-analytics-audience", range, groupBy, analyticsQuery],
     queryFn: async () => {
       const [device, operatingSystem] = await Promise.all([
         fetchFn<PlatformDeviceSplitResponse>({
@@ -605,7 +622,7 @@ function Analytics() {
     isLoading: isGeographicLoading,
     isError: isGeographicError,
   } = useQuery<PlatformGeographicBreakdownResponse>({
-    queryKey: ["platform-analytics-geographic", range, groupBy],
+    queryKey: ["platform-analytics-geographic", range, groupBy, analyticsQuery],
     queryFn: () => fetchFn<PlatformGeographicBreakdownResponse>({
       route: `api/analytics/platform/geographic-breakdown${analyticsQuery}`,
       options: { method: "GET", headers: headers.current },
@@ -765,10 +782,15 @@ function Analytics() {
 
   const reportUrl = useMemo(() => {
     const url = new URL(`${env.apiBaseUrl}/api/reports/video-analytics.pdf`);
-    if (range !== "all") url.searchParams.set("range", range);
+    if (range === "custom") {
+      url.searchParams.set("fromDate", new Date(`${customFromDate}T00:00:00.000Z`).toISOString());
+      url.searchParams.set("toDate", new Date(`${customToDate}T23:59:59.999Z`).toISOString());
+    } else if (range !== "all") {
+      url.searchParams.set("range", range);
+    }
     url.searchParams.set("groupBy", groupBy);
     return url.toString();
-  }, [groupBy, range]);
+  }, [customFromDate, customToDate, groupBy, range]);
 
   const getFilenameFromDisposition = (disposition: string | null) => {
     if (!disposition) return "platform-analytics.pdf";
@@ -864,8 +886,41 @@ function Analytics() {
                 <option value="last90">{t("analyticsLast90Days")}</option>
                 <option value="last365">{t("analyticsLast365Days")}</option>
                 <option value="all">{t("analyticsAllTime")}</option>
+                <option value="custom">{t("analyticsCustom")}</option>
               </select>
             </label>
+            {range === "custom" && (
+              <>
+                <label className="videoAnalyticsDateField">
+                  <span>{t("analyticsFrom")}</span>
+                  <input
+                    type="date"
+                    value={customFromDate}
+                    max={customToDate}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      if (!value) return;
+                      setCustomFromDate(value);
+                      if (value > customToDate) setCustomToDate(value);
+                    }}
+                  />
+                </label>
+                <label className="videoAnalyticsDateField">
+                  <span>{t("analyticsTo")}</span>
+                  <input
+                    type="date"
+                    value={customToDate}
+                    min={customFromDate}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      if (!value) return;
+                      setCustomToDate(value);
+                      if (value < customFromDate) setCustomFromDate(value);
+                    }}
+                  />
+                </label>
+              </>
+            )}
             <label className="videoAnalyticsSelect">
               {FilterSVG}
               <select
