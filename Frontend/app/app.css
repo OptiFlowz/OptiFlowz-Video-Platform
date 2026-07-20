@@ -13017,3 +13017,407 @@ main.homePage .heroSlideControls button.selected {
     bottom: 0.75rem;
   }
 }
+
+/* PLATFORM SETTINGS PAGE */
+main.platformSettingsPage .platformSettingsShell{
+  width: 100%;
+  max-width: 1120px;
+  gap: 1rem;
+}
+
+.platformSettingsHeader{
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-inline: 0.1rem;
+}
+
+.platformSettingsTabs{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem;
+  border: 1px solid var(--border1);
+  border-radius: 18px;
+  background: var(--background1);
+}
+
+.platformSettingsTabs a {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0.65rem 0.8rem;
+  border-radius: 12px;
+  background: var(--background2);
+  color: var(--text1);
+  font-size: 0.84rem;
+  font-weight: 500;
+  text-align: center;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.platformSettingsTabs a:hover{
+  background: var(--background3);
+}
+
+.platformSettingsTabs a.active{
+  background: var(--accentBlue);
+  color: var(--text1);
+}
+
+.platformSettingsTabs a svg {
+  flex-shrink: 0;
+}
+
+.platformSettingsTabs a svg path {
+  stroke: var(--text1);
+}
+
+.platformSettingsTabs a.active svg path {
+  stroke: var(--text1);
+}
+
+.platformSettingsTabs a.active:hover{
+  background: var(--accentBlue2);
+}
+
+.platformSettingsTabs a span {
+  flex-shrink: 0;
+}
+
+.platformSettingsTabs svg{
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.platformGuideUpload,
+.platformSettingsCard{
+  border: 1px solid var(--border1);
+  border-radius: 18px;
+  background: var(--background1);
+}
+
+.platformGuideUpload{
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.15rem 1.25rem;
+}
+
+.platformGuideUpload p{
+  margin: 0;
+  color: var(--text1);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.platformGuideUpload input[type="file"]{
+  display: none;
+}
+
+.platformGuideUpload button{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.7rem 1rem;
+  border-radius: 12px;
+  background: var(--background2);
+  color: var(--text1);
+  font-size: 0.86rem;
+  cursor: pointer;
+  transition: background-color 0.18s ease;
+}
+
+.platformGuideUpload button:hover{
+  background: var(--background3);
+}
+
+.platformGuideUpload button svg{
+  width: 22px;
+  height: 22px;
+}
+
+.platformSettingsGrid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 1rem;
+}
+
+.platformSettingsCard{
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  min-width: 0;
+  padding: 1.25rem;
+}
+
+.platformSettingsCard h2{
+  margin: 0;
+  color: var(--text1);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.platformField,
+.platformColorSetting,
+.homepageSectionToggle{
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+  color: var(--text2);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.platformField input,
+.platformField textarea{
+  width: 100%;
+  padding: 0.78rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: var(--background2);
+  color: var(--text1);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 500;
+  resize: vertical;
+  transition: border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.platformField input:focus,
+.platformField textarea:focus{
+  border-color: var(--accentBlue);
+  background: var(--background3);
+}
+
+.platformLogoPreview{
+  display: flex;
+  align-items: center;
+  min-height: 112px;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: var(--background2);
+}
+
+.platformLogoPreview > div{
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.8rem;
+  border-radius: 10px 0 0 10px;
+  background: var(--background3);
+}
+
+.platformLogoPreview img{
+  width: 42px;
+  height: 42px;
+}
+
+.platformLogoPreview strong{
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  justify-content: center;
+  padding-right: 1rem;
+  border-radius: 0 10px 10px 0;
+  background: var(--background3);
+  color: var(--text1);
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.platformLogoPreview small{
+  color: var(--text2);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.appearanceCard{
+  max-width: 100%;
+}
+
+.platformColorSetting > div{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.platformColorChip{
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 11px;
+  background: var(--background2);
+  color: var(--text1);
+  cursor: pointer;
+}
+
+.platformColorChip input{
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.platformColorChip input::-webkit-color-swatch-wrapper{
+  padding: 0;
+}
+
+.platformColorChip input::-webkit-color-swatch{
+  border: 0;
+  border-radius: 5px;
+}
+
+.homepageSectionToggle{
+  gap: 0.5rem;
+}
+
+.homepageToggleControl{
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 48px;
+  padding: 0.65rem 0.8rem;
+  border-radius: 12px;
+  background: var(--background2);
+  color: var(--text1);
+  font-size: 0.85rem;
+}
+
+.homepageToggleControl input{
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--text1);
+  border-radius: 5px;
+  background: var(--background1);
+  cursor: pointer;
+}
+
+.homepageToggleControl input:checked{
+  border-color: var(--accentBlue);
+  background: var(--accentBlue);
+  box-shadow: inset 0 0 0 3px var(--background1);
+}
+
+.heroSliderCard{
+  gap: 0.8rem;
+}
+
+.heroSliderList{
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.heroSliderItem{
+  position: relative;
+  min-height: 126px;
+  overflow: hidden;
+  border: 1px solid var(--border1);
+  border-radius: 12px;
+  background: var(--background2);
+}
+
+.heroSliderItem::after{
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--background3) 0, var(--background15) 28%, transparent 62%);
+  pointer-events: none;
+}
+
+.heroSliderItem img{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.heroDragHandle{
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 1;
+  display: grid;
+  width: 50px;
+  place-items: center;
+  color: var(--text1);
+  cursor: grab;
+}
+
+.heroDragHandle svg{
+  width: 22px;
+  height: 22px;
+}
+
+.platformSettingsPlaceholder{
+  min-height: 220px;
+}
+
+.platformSettingsPlaceholder p{
+  margin: 0;
+  color: var(--text2);
+  font-size: 0.9rem;
+  opacity: 0.72;
+}
+
+@media (max-width: 1200px){
+  .platformSettingsTabs a{
+    gap: 0.45rem;
+    padding-inline: 0.55rem;
+    font-size: 0.76rem;
+  }
+}
+
+@media (max-width: 1050px){
+  .platformSettingsGrid{
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px){
+  main.platformSettingsPage .platformSettingsShell{
+    max-width: none;
+  }
+}
+
+@media (max-width: 600px){
+  main.platformSettingsPage .libraryContent{
+    padding-inline: 0.85rem;
+  }
+
+  .platformSettingsTabs{
+    grid-template-columns: 1fr;
+  }
+
+  .platformSettingsTabs a{
+    font-size: 0.82rem;
+  }
+
+  .platformGuideUpload,
+  .platformSettingsCard{
+    padding: 1rem;
+  }
+}

@@ -87,7 +87,7 @@ const enBase: TranslationMap = {
   platformAnalyticsPeriodViews: (params?: Params) => `${getParam(params, "count")} views in period`,
   platformAnalyticsAudienceDescription: "Shows which devices and operating systems viewers used across the platform.",
   platformAnalyticsGeographicDescription: "Shows where viewers watched from across the platform, with country and city details.",
-  platformSettingsDescription: "Manage platform-wide configuration and operational preferences.",
+  platformSettingsDescription: "Change all platform settings in one place.",
   platformUsersDescription: "Manage the people who can access and use the platform.",
   platformSettingsEmpty: "No platform-wide settings have been configured yet.",
   platformUsersEmpty: "No platform user-management data is available yet.",
