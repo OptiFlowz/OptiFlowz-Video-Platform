@@ -1996,6 +1996,17 @@ function VideoQuizPage() {
                   {t("quizAnsweredCount", { answered: answeredCount, total: questions.length })}
                 </p>
 
+                <div
+                  className="videoQuizSidebarProgress"
+                  role="progressbar"
+                  aria-label={t("quizAnsweredCount", { answered: answeredCount, total: questions.length })}
+                  aria-valuemin={0}
+                  aria-valuemax={questions.length}
+                  aria-valuenow={answeredCount}
+                >
+                  <span style={{ width: `${questions.length > 0 ? (answeredCount / questions.length) * 100 : 0}%` }} />
+                </div>
+
                 <div className="videoQuizGrid">
                   {questions.map((question, index) => {
                     const answered = isQuestionAnswered(question, answers[question.id]);
