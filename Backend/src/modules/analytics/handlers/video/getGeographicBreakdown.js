@@ -1,7 +1,8 @@
-import { readPool } from '../../../database/index.js';
+import { readPool } from '../../../../database/index.js';
 import { z } from 'zod';
-import { validateOrThrow } from '../../../common/input.validation.js';
-import { buildDateFilter } from '../helpers/dateFilter.js';
+import { validateOrThrow } from '../../../../common/input.validation.js';
+import { assertVideoOwner } from '../../../../common/videoOwnership.js';
+import { buildDateFilter } from '../../helpers/dateFilter.js';
 
 function prerequisites(object, userId) {
   if (!userId) {
@@ -12,6 +13,7 @@ function prerequisites(object, userId) {
 
   const schema = z
     .object({
+      videoId: z.string().uuid('Invalid video ID'),
       userId: z.string().uuid('Invalid user ID'),
       fromDate: z.coerce.date().optional(),
       toDate: z.coerce.date().optional(),
@@ -24,12 +26,15 @@ function prerequisites(object, userId) {
   return validateOrThrow(schema.safeParse({ ...object, userId }));
 }
 
-export async function getChannelGeographicBreakdownInternal(object, userId = null) {
+export async function getGeographicBreakdownInternal(object, userId = null) {
   const {
+    videoId,
     userId: validatedUserId,
     fromDate,
     toDate,
   } = prerequisites(object, userId);
+
+  await assertVideoOwner(videoId, validatedUserId);
 
   const filter = buildDateFilter('vv', fromDate, toDate);
   const { rows } = await readPool.query(
@@ -48,8 +53,7 @@ export async function getChannelGeographicBreakdownInternal(object, userId = nul
           END AS country_name,
           COALESCE(NULLIF(BTRIM(vv.city), ''), 'Other') AS city
         FROM video_views vv
-        INNER JOIN videos v ON v.id = vv.video_id
-        WHERE v.uploaded_by = $1${filter.sql}
+        WHERE vv.video_id = $1${filter.sql}
       )
       SELECT
         country_code,
@@ -60,7 +64,7 @@ export async function getChannelGeographicBreakdownInternal(object, userId = nul
       GROUP BY country_code, city
       ORDER BY country_code, view_count DESC, city
     `,
-    [validatedUserId, ...filter.values],
+    [videoId, ...filter.values],
   );
 
   const countries = Object.create(null);

@@ -1,6 +1,6 @@
-import { readPool } from '../../../database/index.js';
+import { readPool } from '../../../../database/index.js';
 import { z } from 'zod';
-import { validateOrThrow } from '../../../common/input.validation.js';
+import { validateOrThrow } from '../../../../common/input.validation.js';
 
 function prerequisites(object, userId) {
   if (!userId) {

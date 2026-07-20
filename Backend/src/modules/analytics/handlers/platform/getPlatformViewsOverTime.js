@@ -1,7 +1,6 @@
-import { readPool } from '../../../database/index.js';
+import { readPool } from '../../../../database/index.js';
 import { z } from 'zod';
-import { validateOrThrow } from '../../../common/input.validation.js';
-import { assertVideoOwner } from '../../../common/videoOwnership.js';
+import { validateOrThrow } from '../../../../common/input.validation.js';
 
 function prerequisites(object, userId) {
   if (!userId) {
@@ -12,7 +11,6 @@ function prerequisites(object, userId) {
 
   const schema = z
     .object({
-      videoId: z.string().uuid('Invalid video ID'),
       userId: z.string().uuid('Invalid user ID'),
       groupBy: z.enum(['day', 'week', 'month']).default('day'),
       fromDate: z.coerce.date().optional(),
@@ -26,44 +24,35 @@ function prerequisites(object, userId) {
   return validateOrThrow(schema.safeParse({ ...object, userId }));
 }
 
-export async function getWatchTimeOverTimeInternal(object, userId = null) {
-  const {
-    videoId,
-    userId: validatedUserId,
-    groupBy,
-    fromDate,
-    toDate,
-  } = prerequisites(object, userId);
-
-  await assertVideoOwner(videoId, validatedUserId);
+export async function getPlatformViewsOverTimeInternal(object, userId = null) {
+  const { groupBy, fromDate, toDate } = prerequisites(object, userId);
 
   const { rows } = await readPool.query(
     `
       WITH filtered_views AS (
-        SELECT vv.created_at, vv.watch_duration
+        SELECT vv.created_at
         FROM video_views vv
-        WHERE vv.video_id = $1
-          AND ($3::timestamptz IS NULL OR vv.created_at >= $3)
-          AND ($4::timestamptz IS NULL OR vv.created_at <= $4)
+        WHERE ($2::timestamptz IS NULL OR vv.created_at >= $2)
+          AND ($3::timestamptz IS NULL OR vv.created_at <= $3)
       ),
-      aggregated_watch_time AS (
+      aggregated_views AS (
         SELECT
-          DATE_TRUNC($2, created_at) AS period_start,
-          COALESCE(SUM(watch_duration), 0) AS watch_time
+          DATE_TRUNC($1, created_at) AS period_start,
+          COUNT(*) AS view_count
         FROM filtered_views
         GROUP BY period_start
       ),
       bounds AS (
         SELECT
-          DATE_TRUNC($2, COALESCE($3::timestamptz, MIN(created_at))) AS start_at,
-          DATE_TRUNC($2, COALESCE($4::timestamptz, MAX(created_at))) AS end_at
+          DATE_TRUNC($1, COALESCE($2::timestamptz, MIN(created_at))) AS start_at,
+          DATE_TRUNC($1, COALESCE($3::timestamptz, MAX(created_at))) AS end_at
         FROM filtered_views
       ),
       periods AS (
         SELECT GENERATE_SERIES(
           start_at,
           end_at,
-          CASE $2
+          CASE $1
             WHEN 'day' THEN INTERVAL '1 day'
             WHEN 'week' THEN INTERVAL '1 week'
             WHEN 'month' THEN INTERVAL '1 month'
@@ -73,16 +62,16 @@ export async function getWatchTimeOverTimeInternal(object, userId = null) {
       )
       SELECT
         periods.period_start,
-        COALESCE(aggregated_watch_time.watch_time, 0) AS watch_time
+        COALESCE(aggregated_views.view_count, 0) AS view_count
       FROM periods
-      LEFT JOIN aggregated_watch_time USING (period_start)
+      LEFT JOIN aggregated_views USING (period_start)
       ORDER BY periods.period_start ASC
     `,
-    [videoId, groupBy, fromDate ?? null, toDate ?? null],
+    [groupBy, fromDate ?? null, toDate ?? null],
   );
 
   return rows.map((row) => ({
     periodStart: row.period_start,
-    watchTime: Number(row.watch_time),
+    views: Number(row.view_count),
   }));
 }

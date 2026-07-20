@@ -1,8 +1,7 @@
-import { readPool } from '../../../database/index.js';
+import { readPool } from '../../../../database/index.js';
 import { z } from 'zod';
-import { validateOrThrow } from '../../../common/input.validation.js';
-import { assertVideoOwner } from '../../../common/videoOwnership.js';
-import { buildDateFilter } from '../helpers/dateFilter.js';
+import { validateOrThrow } from '../../../../common/input.validation.js';
+import { buildDateFilter } from '../../helpers/dateFilter.js';
 
 function prerequisites(object, userId) {
   if (!userId) {
@@ -13,7 +12,6 @@ function prerequisites(object, userId) {
 
   const schema = z
     .object({
-      videoId: z.string().uuid('Invalid video ID'),
       userId: z.string().uuid('Invalid user ID'),
       fromDate: z.coerce.date().optional(),
       toDate: z.coerce.date().optional(),
@@ -26,33 +24,26 @@ function prerequisites(object, userId) {
   return validateOrThrow(schema.safeParse({ ...object, userId }));
 }
 
-export async function getDeviceSplitInternal(object, userId = null) {
-  const {
-    videoId,
-    userId: validatedUserId,
-    fromDate,
-    toDate,
-  } = prerequisites(object, userId);
+export async function getPlatformDeviceSplitInternal(object, userId = null) {
+  const { fromDate, toDate } = prerequisites(object, userId);
 
-  await assertVideoOwner(videoId, validatedUserId);
-
-  const filter = buildDateFilter('vv', fromDate, toDate);
+  const filter = buildDateFilter('vv', fromDate, toDate, 0);
   const { rows } = await readPool.query(
     `
       WITH classified_views AS (
         SELECT
           CASE
-            WHEN user_agent ~* '(ipad|tablet|kindle|silk|playbook)'
-              OR (user_agent ~* 'android' AND user_agent !~* 'mobile')
+            WHEN vv.user_agent ~* '(ipad|tablet|kindle|silk|playbook)'
+              OR (vv.user_agent ~* 'android' AND vv.user_agent !~* 'mobile')
               THEN 'tablet'
-            WHEN user_agent ~* '(mobile|iphone|ipod|android)'
+            WHEN vv.user_agent ~* '(mobile|iphone|ipod|android)'
               THEN 'phone'
-            WHEN user_agent ~* '(windows nt|macintosh|x11|linux|cros)'
+            WHEN vv.user_agent ~* '(windows nt|macintosh|x11|linux|cros)'
               THEN 'desktop'
             ELSE 'other'
           END AS device_type
         FROM video_views vv
-        WHERE vv.video_id = $1${filter.sql}
+        WHERE true${filter.sql}
       )
       SELECT
         COUNT(*) AS total_views,
@@ -62,7 +53,7 @@ export async function getDeviceSplitInternal(object, userId = null) {
         COUNT(*) FILTER (WHERE device_type = 'other') AS other
       FROM classified_views
     `,
-    [videoId, ...filter.values],
+    filter.values,
   );
 
   const result = rows[0] ?? {};

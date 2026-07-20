@@ -1,7 +1,8 @@
-import { readPool } from '../../../database/index.js';
+import { readPool } from '../../../../database/index.js';
 import { z } from 'zod';
-import { validateOrThrow } from '../../../common/input.validation.js';
-import { buildDateFilter } from '../helpers/dateFilter.js';
+import { validateOrThrow } from '../../../../common/input.validation.js';
+import { assertVideoOwner } from '../../../../common/videoOwnership.js';
+import { buildDateFilter } from '../../helpers/dateFilter.js';
 
 function prerequisites(object, userId) {
   if (!userId) {
@@ -12,6 +13,7 @@ function prerequisites(object, userId) {
 
   const schema = z
     .object({
+      videoId: z.string().uuid('Invalid video ID'),
       userId: z.string().uuid('Invalid user ID'),
       fromDate: z.coerce.date().optional(),
       toDate: z.coerce.date().optional(),
@@ -24,24 +26,31 @@ function prerequisites(object, userId) {
   return validateOrThrow(schema.safeParse({ ...object, userId }));
 }
 
-export async function getPlatformOperatingSystemSplitInternal(object, userId = null) {
-  const { fromDate, toDate } = prerequisites(object, userId);
-  const filter = buildDateFilter('vv', fromDate, toDate, 0);
+export async function getOperatingSystemSplitInternal(object, userId = null) {
+  const {
+    videoId,
+    userId: validatedUserId,
+    fromDate,
+    toDate,
+  } = prerequisites(object, userId);
 
+  await assertVideoOwner(videoId, validatedUserId);
+
+  const filter = buildDateFilter('vv', fromDate, toDate);
   const { rows } = await readPool.query(
     `
       WITH classified_views AS (
         SELECT
           CASE
-            WHEN vv.user_agent ~* '(iphone|ipad|ipod)' THEN 'ios'
-            WHEN vv.user_agent ~* 'android' THEN 'android'
-            WHEN vv.user_agent ~* 'windows' THEN 'windows'
-            WHEN vv.user_agent ~* '(macintosh|mac os x)' THEN 'macos'
-            WHEN vv.user_agent ~* '(linux|x11)' THEN 'linux'
+            WHEN user_agent ~* '(iphone|ipad|ipod)' THEN 'ios'
+            WHEN user_agent ~* 'android' THEN 'android'
+            WHEN user_agent ~* 'windows' THEN 'windows'
+            WHEN user_agent ~* '(macintosh|mac os x)' THEN 'macos'
+            WHEN user_agent ~* '(linux|x11)' THEN 'linux'
             ELSE 'other'
           END AS operating_system
         FROM video_views vv
-        WHERE true${filter.sql}
+        WHERE vv.video_id = $1${filter.sql}
       )
       SELECT
         COUNT(*) AS total_views,
@@ -53,7 +62,7 @@ export async function getPlatformOperatingSystemSplitInternal(object, userId = n
         COUNT(*) FILTER (WHERE operating_system = 'other') AS other
       FROM classified_views
     `,
-    filter.values,
+    [videoId, ...filter.values],
   );
 
   const result = rows[0] ?? {};

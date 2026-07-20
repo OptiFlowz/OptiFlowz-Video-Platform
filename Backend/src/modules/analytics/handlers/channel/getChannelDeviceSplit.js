@@ -1,7 +1,7 @@
-import { readPool } from '../../../database/index.js';
+import { readPool } from '../../../../database/index.js';
 import { z } from 'zod';
-import { validateOrThrow } from '../../../common/input.validation.js';
-import { buildDateFilter } from '../helpers/dateFilter.js';
+import { validateOrThrow } from '../../../../common/input.validation.js';
+import { buildDateFilter } from '../../helpers/dateFilter.js';
 
 function prerequisites(object, userId) {
   if (!userId) {
@@ -24,10 +24,14 @@ function prerequisites(object, userId) {
   return validateOrThrow(schema.safeParse({ ...object, userId }));
 }
 
-export async function getPlatformDeviceSplitInternal(object, userId = null) {
-  const { fromDate, toDate } = prerequisites(object, userId);
+export async function getChannelDeviceSplitInternal(object, userId = null) {
+  const {
+    userId: validatedUserId,
+    fromDate,
+    toDate,
+  } = prerequisites(object, userId);
 
-  const filter = buildDateFilter('vv', fromDate, toDate, 0);
+  const filter = buildDateFilter('vv', fromDate, toDate);
   const { rows } = await readPool.query(
     `
       WITH classified_views AS (
@@ -43,7 +47,8 @@ export async function getPlatformDeviceSplitInternal(object, userId = null) {
             ELSE 'other'
           END AS device_type
         FROM video_views vv
-        WHERE true${filter.sql}
+        INNER JOIN videos v ON v.id = vv.video_id
+        WHERE v.uploaded_by = $1${filter.sql}
       )
       SELECT
         COUNT(*) AS total_views,
@@ -53,7 +58,7 @@ export async function getPlatformDeviceSplitInternal(object, userId = null) {
         COUNT(*) FILTER (WHERE device_type = 'other') AS other
       FROM classified_views
     `,
-    filter.values,
+    [validatedUserId, ...filter.values],
   );
 
   const result = rows[0] ?? {};

@@ -1,7 +1,7 @@
-import { readPool } from '../../../database/index.js';
+import { readPool } from '../../../../database/index.js';
 import { z } from 'zod';
-import { validateOrThrow } from '../../../common/input.validation.js';
-import { buildDateFilter } from '../helpers/dateFilter.js';
+import { validateOrThrow } from '../../../../common/input.validation.js';
+import { buildDateFilter } from '../../helpers/dateFilter.js';
 
 function prerequisites(object, userId) {
   if (!userId) {
@@ -24,17 +24,14 @@ function prerequisites(object, userId) {
   return validateOrThrow(schema.safeParse({ ...object, userId }));
 }
 
-export async function getChannelAverageEngagementPerVideoInternal(
+export async function getPlatformAverageEngagementPerVideoInternal(
   object,
   userId = null,
 ) {
-  const {
-    userId: validatedUserId,
-    fromDate,
-    toDate,
-  } = prerequisites(object, userId);
+  const { fromDate, toDate } = prerequisites(object, userId);
 
-  const filter = buildDateFilter('vv', fromDate, toDate);
+  // No parameters precede the optional dates in this query.
+  const filter = buildDateFilter('vv', fromDate, toDate, 0);
   const { rows } = await readPool.query(
     `
       WITH per_video_engagement AS (
@@ -48,14 +45,13 @@ export async function getChannelAverageEngagementPerVideoInternal(
         FROM videos v
         LEFT JOIN video_views vv
           ON vv.video_id = v.id${filter.sql}
-        WHERE v.uploaded_by = $1
-          AND v.duration_seconds > 0
+        WHERE v.duration_seconds > 0
         GROUP BY v.id, v.duration_seconds
       )
       SELECT COALESCE(AVG(engagement), 0) AS average_engagement_per_video
       FROM per_video_engagement
     `,
-    [validatedUserId, ...filter.values],
+    filter.values,
   );
 
   return Number(rows[0]?.average_engagement_per_video ?? 0);

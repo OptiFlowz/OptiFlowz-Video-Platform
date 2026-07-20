@@ -1,12 +1,12 @@
-import { readPool } from '../../../database/index.js';
+import { readPool } from '../../../../database/index.js';
 import { z } from 'zod';
-import { validateOrThrow } from '../../../common/input.validation.js';
+import { validateOrThrow } from '../../../../common/input.validation.js';
 import {
-  buildPlaylistCardSelect,
-  buildPlaylistCardJoins,
-  buildPlaylistCardVisibilityWhere,
-} from '../../../database/sql/playlistCardFragments.js';
-import { buildDateFilter } from '../helpers/dateFilter.js';
+  buildVideoCardSelect,
+  buildVideoCardJoins,
+  buildVideoCardVisibilityWhere,
+} from '../../../../database/sql/videoCardFragments.js';
+import { buildDateFilter } from '../../helpers/dateFilter.js';
 
 function prerequisites(object, userId) {
   if (!userId) {
@@ -29,30 +29,30 @@ function prerequisites(object, userId) {
   return validateOrThrow(schema.safeParse({ ...object, userId }));
 }
 
-export async function getPlatformTopViewedPlaylistsInternal(object, userId = null) {
+export async function getPlatformTopViewedVideosInternal(object, userId = null) {
   const { fromDate, toDate } = prerequisites(object, userId);
 
-  const filter = buildDateFilter('pv', fromDate, toDate, 0);
+  const filter = buildDateFilter('vv', fromDate, toDate, 0);
   const { rows } = await readPool.query(
     `
       WITH period_view_counts AS (
-        SELECT pv.playlist_id, COUNT(*)::int AS period_views
-        FROM playlist_views pv
+        SELECT vv.video_id, COUNT(*)::int AS period_views
+        FROM video_views vv
         WHERE true${filter.sql}
-        GROUP BY pv.playlist_id
+        GROUP BY vv.video_id
       ),
-      playlist_cards AS (
-        ${buildPlaylistCardSelect()},p.description
-        ${buildPlaylistCardJoins()}
-        WHERE ${buildPlaylistCardVisibilityWhere()}
+      video_cards AS (
+        ${buildVideoCardSelect()},v.description
+        ${buildVideoCardJoins()}
+        WHERE ${buildVideoCardVisibilityWhere()}
       )
       SELECT
-        playlist_cards.*,
+        video_cards.*,
         COALESCE(period_view_counts.period_views, 0) AS period_views
-      FROM playlist_cards
+      FROM video_cards
       LEFT JOIN period_view_counts
-        ON period_view_counts.playlist_id = playlist_cards.id
-      ORDER BY period_views DESC, playlist_cards.created_at DESC
+        ON period_view_counts.video_id = video_cards.id
+      ORDER BY period_views DESC, video_cards.created_at DESC
       LIMIT 3
     `,
     filter.values,

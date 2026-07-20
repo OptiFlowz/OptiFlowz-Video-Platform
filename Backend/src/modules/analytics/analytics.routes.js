@@ -4,151 +4,33 @@ import * as analyticsController from './analytics.controller.js'
 
 const router = express.Router();
 
-router.get(
-  '/platform/overview',
-  requireAuth,
-  requireAdmin,
-  analyticsController.getPlatformOverviewAnalytics,
-);
-router.get(
-  '/platform/average-engagement-per-video',
-  requireAuth,
-  requireAdmin,
-  analyticsController.getPlatformAverageEngagementPerVideo,
-);
-router.get(
-  '/platform/top-viewed-videos',
-  requireAuth,
-  requireAdmin,
-  analyticsController.getPlatformTopViewedVideos,
-);
-router.get(
-  '/platform/top-viewed-playlists',
-  requireAuth,
-  requireAdmin,
-  analyticsController.getPlatformTopViewedPlaylists,
-);
-router.get(
-  '/platform/device-split',
-  requireAuth,
-  requireAdmin,
-  analyticsController.getPlatformDeviceSplit,
-);
-router.get(
-  '/platform/operating-system-split',
-  requireAuth,
-  requireAdmin,
-  analyticsController.getPlatformOperatingSystemSplit,
-);
-router.get(
-  '/platform/geographic-breakdown',
-  requireAuth,
-  requireAdmin,
-  analyticsController.getPlatformGeographicBreakdown,
-);
-router.get(
-  '/platform/views-over-time',
-  requireAuth,
-  requireAdmin,
-  analyticsController.getPlatformViewsOverTime,
-);
-router.get(
-  '/platform/watch-time-over-time',
-  requireAuth,
-  requireAdmin,
-  analyticsController.getPlatformWatchTimeOverTime,
-);
-router.get(
-  '/platform/signups-over-time',
-  requireAuth,
-  requireAdmin,
-  analyticsController.getPlatformSignupsOverTime,
-);
-router.get(
-  '/platform/active-users-over-time',
-  requireAuth,
-  requireAdmin,
-  analyticsController.getPlatformActiveUsersOverTime,
-);
-router.get(
-  '/channel/overview',
-  requireAuth,
-  requireAdmin,
-  analyticsController.getChannelOverviewAnalytics,
-);
-router.get(
-  '/channel/device-split',
-  requireAuth,
-  requireAdmin,
-  analyticsController.getChannelDeviceSplit,
-);
-router.get(
-  '/channel/operating-system-split',
-  requireAuth,
-  requireAdmin,
-  analyticsController.getChannelOperatingSystemSplit,
-);
-router.get(
-  '/channel/geographic-breakdown',
-  requireAuth,
-  requireAdmin,
-  analyticsController.getChannelGeographicBreakdown,
-);
-router.get(
-  '/channel/views-over-time',
-  requireAuth,
-  requireAdmin,
-  analyticsController.getChannelViewsOverTime,
-);
-router.get(
-  '/channel/watch-time-over-time',
-  requireAuth,
-  requireAdmin,
-  analyticsController.getChannelWatchTimeOverTime,
-);
-router.get(
-  '/channel/average-engagement-per-video',
-  requireAuth,
-  requireAdmin,
-  analyticsController.getChannelAverageEngagementPerVideo,
-);
+router.get('/platform/overview', requireAuth, requireAdmin, analyticsController.getPlatformOverviewAnalytics);
+router.get('/platform/average-engagement-per-video', requireAuth, requireAdmin, analyticsController.getPlatformAverageEngagementPerVideo);
+router.get('/platform/top-viewed-videos', requireAuth, requireAdmin, analyticsController.getPlatformTopViewedVideos);
+router.get('/platform/top-viewed-playlists', requireAuth, requireAdmin, analyticsController.getPlatformTopViewedPlaylists);
+router.get('/platform/device-split', requireAuth, requireAdmin, analyticsController.getPlatformDeviceSplit);
+router.get('/platform/operating-system-split', requireAuth, requireAdmin, analyticsController.getPlatformOperatingSystemSplit);
+router.get('/platform/geographic-breakdown', requireAuth, requireAdmin, analyticsController.getPlatformGeographicBreakdown);
+router.get('/platform/views-over-time', requireAuth, requireAdmin, analyticsController.getPlatformViewsOverTime);
+router.get('/platform/watch-time-over-time', requireAuth, requireAdmin, analyticsController.getPlatformWatchTimeOverTime);
+router.get('/platform/signups-over-time', requireAuth, requireAdmin, analyticsController.getPlatformSignupsOverTime);
+router.get('/platform/active-users-over-time', requireAuth, requireAdmin, analyticsController.getPlatformActiveUsersOverTime);
+
+router.get('/channel/overview', requireAuth, requireAdmin, analyticsController.getChannelOverviewAnalytics);
+router.get('/channel/device-split', requireAuth, requireAdmin, analyticsController.getChannelDeviceSplit);
+router.get('/channel/operating-system-split', requireAuth, requireAdmin, analyticsController.getChannelOperatingSystemSplit);
+router.get('/channel/geographic-breakdown', requireAuth, requireAdmin, analyticsController.getChannelGeographicBreakdown);
+router.get('/channel/views-over-time', requireAuth, requireAdmin, analyticsController.getChannelViewsOverTime);
+router.get('/channel/watch-time-over-time', requireAuth, requireAdmin, analyticsController.getChannelWatchTimeOverTime);
+router.get('/channel/average-engagement-per-video', requireAuth, requireAdmin, analyticsController.getChannelAverageEngagementPerVideo);
+
 router.get('/:videoId/overview', requireAuth, requireAdmin, analyticsController.getOverviewVideoAnalytics);
 router.get('/:videoId/device-split', requireAuth, requireAdmin, analyticsController.getDeviceSplit);
-router.get(
-  '/:videoId/operating-system-split',
-  requireAuth,
-  requireAdmin,
-  analyticsController.getOperatingSystemSplit,
-);
-router.get(
-  '/:videoId/geographic-breakdown',
-  requireAuth,
-  requireAdmin,
-  analyticsController.getGeographicBreakdown,
-);
-router.get(
-  '/:videoId/views-over-time',
-  requireAuth,
-  requireAdmin,
-  analyticsController.getViewsOverTime,
-);
-router.get(
-  '/:videoId/watch-time-over-time',
-  requireAuth,
-  requireAdmin,
-  analyticsController.getWatchTimeOverTime,
-);
-router.get(
-  '/:videoId/completion-buckets',
-  requireAuth,
-  requireAdmin,
-  analyticsController.getCompletionBuckets,
-);
-router.get(
-  '/:videoId/engagement',
-  requireAuth,
-  requireAdmin,
-  analyticsController.getEngagement,
-);
+router.get('/:videoId/operating-system-split', requireAuth, requireAdmin, analyticsController.getOperatingSystemSplit);
+router.get('/:videoId/geographic-breakdown', requireAuth, requireAdmin, analyticsController.getGeographicBreakdown);
+router.get('/:videoId/views-over-time', requireAuth, requireAdmin, analyticsController.getViewsOverTime);
+router.get('/:videoId/watch-time-over-time', requireAuth, requireAdmin, analyticsController.getWatchTimeOverTime);
+router.get('/:videoId/completion-buckets', requireAuth, requireAdmin, analyticsController.getCompletionBuckets);
+router.get('/:videoId/engagement', requireAuth, requireAdmin, analyticsController.getEngagement);
 
 export default router;

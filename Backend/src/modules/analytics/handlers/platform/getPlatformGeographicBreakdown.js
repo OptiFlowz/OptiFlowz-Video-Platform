@@ -1,8 +1,7 @@
-import { readPool } from '../../../database/index.js';
+import { readPool } from '../../../../database/index.js';
 import { z } from 'zod';
-import { validateOrThrow } from '../../../common/input.validation.js';
-import { assertVideoOwner } from '../../../common/videoOwnership.js';
-import { buildDateFilter } from '../helpers/dateFilter.js';
+import { validateOrThrow } from '../../../../common/input.validation.js';
+import { buildDateFilter } from '../../helpers/dateFilter.js';
 
 function prerequisites(object, userId) {
   if (!userId) {
@@ -13,7 +12,6 @@ function prerequisites(object, userId) {
 
   const schema = z
     .object({
-      videoId: z.string().uuid('Invalid video ID'),
       userId: z.string().uuid('Invalid user ID'),
       fromDate: z.coerce.date().optional(),
       toDate: z.coerce.date().optional(),
@@ -26,17 +24,10 @@ function prerequisites(object, userId) {
   return validateOrThrow(schema.safeParse({ ...object, userId }));
 }
 
-export async function getGeographicBreakdownInternal(object, userId = null) {
-  const {
-    videoId,
-    userId: validatedUserId,
-    fromDate,
-    toDate,
-  } = prerequisites(object, userId);
+export async function getPlatformGeographicBreakdownInternal(object, userId = null) {
+  const { fromDate, toDate } = prerequisites(object, userId);
+  const filter = buildDateFilter('vv', fromDate, toDate, 0);
 
-  await assertVideoOwner(videoId, validatedUserId);
-
-  const filter = buildDateFilter('vv', fromDate, toDate);
   const { rows } = await readPool.query(
     `
       WITH normalized_views AS (
@@ -53,7 +44,7 @@ export async function getGeographicBreakdownInternal(object, userId = null) {
           END AS country_name,
           COALESCE(NULLIF(BTRIM(vv.city), ''), 'Other') AS city
         FROM video_views vv
-        WHERE vv.video_id = $1${filter.sql}
+        WHERE true${filter.sql}
       )
       SELECT
         country_code,
@@ -64,7 +55,7 @@ export async function getGeographicBreakdownInternal(object, userId = null) {
       GROUP BY country_code, city
       ORDER BY country_code, view_count DESC, city
     `,
-    [videoId, ...filter.values],
+    filter.values,
   );
 
   const countries = Object.create(null);
