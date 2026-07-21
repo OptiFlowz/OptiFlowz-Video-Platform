@@ -30,6 +30,13 @@ export async function getPlatformActiveUsersOverTimeInternal(object, userId = nu
   const { rows } = await readPool.query(
     `
       WITH activity AS (
+        SELECT u.id AS user_id, u.created_at
+        FROM users u
+        WHERE ($2::timestamptz IS NULL OR u.created_at >= $2)
+          AND ($3::timestamptz IS NULL OR u.created_at <= $3)
+
+        UNION ALL
+
         SELECT vv.user_id, vv.created_at
         FROM video_views vv
         WHERE vv.user_id IS NOT NULL
