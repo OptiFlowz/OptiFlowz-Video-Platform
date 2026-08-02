@@ -7,7 +7,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "postinstall": "puppeteer browsers install chrome"
+    "postinstall": "puppeteer browsers install chrome",
+    "migrate": "node-pg-migrate --migrations-dir src/database/migrations",
+    "migrate:deploy": "node-pg-migrate up --migrations-dir src/database/migrations --advisory-lock-mode wait"
   },
   "keywords": [],
   "author": "",
@@ -33,13 +35,15 @@
     "obscenity": "^0.4.6",
     "pg": "^8.16.3",
     "puppeteer": "^24.35.0",
-    "sharp": "^0.34.5",
+    "sharp": "^0.35.3",
     "undici": "^7.18.2",
     "uuid": "^13.0.0",
-    "zod": "^4.1.11"
+    "zod": "^4.1.11",
+    "node-pg-migrate": "^9.0.0"
   },
   "devDependencies": {
-    "@flydotio/dockerfile": "^0.7.10",
+    "@flydotio/dockerfile": "^0.7.4",
+    "node-pg-migrate": "^9.0.0",
     "nodemon": "^3.1.10"
   }
 }
