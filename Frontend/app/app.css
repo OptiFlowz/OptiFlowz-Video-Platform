@@ -722,7 +722,7 @@ header > div > a svg path {
 header nav a:hover{
   filter: brightness(0.8);
 }
-nav a.active {
+header nav a.active {
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 10px;
@@ -13113,7 +13113,7 @@ main.platformSettingsPage .platformSettingsShell{
   padding: 0.45rem;
   border: 1px solid var(--border1);
   border-radius: 18px;
-  background: var(--background1);
+  background: var(--background2);
 }
 
 .platformSettingsTabs a {
@@ -13178,7 +13178,7 @@ main.platformSettingsPage .platformSettingsShell{
 .platformSettingsCard{
   border: 1px solid var(--border1);
   border-radius: 18px;
-  background: var(--background1);
+  background: var(--background2);
 }
 
 .platformGuideUpload{
