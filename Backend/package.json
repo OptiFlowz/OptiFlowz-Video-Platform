@@ -18,7 +18,8 @@
   "dependencies": {
     "@2toad/profanity": "^3.3.0",
     "@aws-sdk/client-s3": "^3.965.0",
-    "@mux/ai": "^0.4.0",
+    "@aws-sdk/s3-request-presigner": "^3.1101.0",
+    "@mux/ai": "^0.29.0",
     "@mux/mux-node": "^12.8.0",
     "axios": "^1.12.2",
     "bcrypt": "^6.0.0",
@@ -32,18 +33,21 @@
     "jsonwebtoken": "^9.0.2",
     "maxmind": "^5.0.5",
     "multer": "^2.0.2",
+    "node-pg-migrate": "^9.0.0",
     "obscenity": "^0.4.6",
     "pg": "^8.16.3",
     "puppeteer": "^24.35.0",
     "sharp": "^0.35.3",
-    "undici": "^7.18.2",
+    "undici": "^7.29.0",
     "uuid": "^13.0.0",
-    "zod": "^4.1.11",
-    "node-pg-migrate": "^9.0.0"
+    "workflow": "^4.2.4",
+    "zod": "^4.1.11"
   },
   "devDependencies": {
     "@flydotio/dockerfile": "^0.7.4",
-    "node-pg-migrate": "^9.0.0",
     "nodemon": "^3.1.10"
+  },
+  "overrides": {
+    "undici": "$undici"
   }
 }

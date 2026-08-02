@@ -1,5 +1,5 @@
 # 1) Bazni sloj
-ARG NODE_VERSION=20.19.0
+ARG NODE_VERSION=22.22.3
 FROM node:${NODE_VERSION}-slim AS base
 
 WORKDIR /app
