@@ -248,7 +248,7 @@ function EditQuizRulesPopup({
             </p>
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+          <div className="quizPopupScroll flex min-h-0 flex-1 flex-col overflow-y-auto">
             <div className="flex items-center gap-4">
               <h4 className="text-base font-semibold">{t("quizRulesButton")}</h4>
             </div>

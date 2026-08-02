@@ -7116,7 +7116,47 @@ select.disabled {
   flex-direction: column;
   gap: 1rem;
   overflow-y: auto;
-  padding-right: 0.25rem;
+  padding-right: 14px;
+}
+
+.quizPopupBody,
+.quizPopupBody textarea,
+.quizPopupScroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accentBlue2) transparent;
+}
+
+.quizPopupBody::-webkit-scrollbar,
+.quizPopupBody textarea::-webkit-scrollbar,
+.quizPopupScroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.quizPopupBody::-webkit-scrollbar-track,
+.quizPopupBody textarea::-webkit-scrollbar-track,
+.quizPopupScroll::-webkit-scrollbar-track {
+  margin-block: 8px;
+  background: transparent;
+}
+
+.quizPopupBody::-webkit-scrollbar-thumb,
+.quizPopupBody textarea::-webkit-scrollbar-thumb,
+.quizPopupScroll::-webkit-scrollbar-thumb {
+  min-height: 32px;
+  border-radius: var(--bR);
+  background: var(--accentBlue2);
+}
+
+.quizPopupBody::-webkit-scrollbar-thumb:hover,
+.quizPopupBody textarea::-webkit-scrollbar-thumb:hover,
+.quizPopupScroll::-webkit-scrollbar-thumb:hover {
+  background: var(--accentBlue3);
+}
+
+.quizPopupBody::-webkit-scrollbar-button,
+.quizPopupBody textarea::-webkit-scrollbar-button,
+.quizPopupScroll::-webkit-scrollbar-button {
+  display: none;
 }
 
 .quizPopupForm .formGroup label {
