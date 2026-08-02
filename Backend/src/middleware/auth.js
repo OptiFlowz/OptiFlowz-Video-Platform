@@ -1,41 +1,123 @@
-import jwt from "jsonwebtoken";
+// src/middleware/auth.js
 
-export function requireAuth(req,res, next){
-    const h = req.headers.authorization || "";
-    const token = h.startsWith("Bearer ") ? h.slice(7) : null;
-    if(!token) return res.status(401).json({message: "Missing token"});
+import jwt from 'jsonwebtoken';
+import { writePool } from '../database/index.js';
 
-    try{
-        const payload = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = payload;
-        next();
-    }catch{
-        return res.status(401).json({message: "Invalid token"});
+export async function requireAuth(req, res, next) {
+  const authorizationHeader = req.headers.authorization || '';
+
+  const token = authorizationHeader.startsWith('Bearer ')
+    ? authorizationHeader.slice(7)
+    : null;
+
+  if (!token) {
+    return res.status(401).json({ message: 'Missing token' });
+  }
+
+  try {
+    const payload = jwt.verify(
+      token,
+      process.env.JWT_SECRET,
+    );
+
+    const { rows } = await writePool.query(
+      `
+        SELECT id, status, authz_version
+        FROM users
+        WHERE id = $1
+        LIMIT 1
+      `,
+      [payload.sub],
+    );
+
+    const user = rows[0];
+
+    if (!user || user.status !== 'active') {
+      return res.status(401).json({
+        message: 'Account is not active',
+      });
     }
+
+    if (
+      payload.authzVersion !== undefined
+      && payload.authzVersion !== user.authz_version
+    ) {
+      return res.status(401).json({
+        message: 'Authorization changed; sign in again',
+      });
+    }
+
+    req.user = {
+      sub: user.id,
+      authzVersion: user.authz_version,
+    };
+
+    next();
+  } catch {
+    return res.status(401).json({
+      message: 'Invalid token',
+    });
+  }
 }
 
-export function requireAdmin(req, res, next) {
-    if (req.user.role !== 'admin' && req.user.role !== 'uploader') {
-        return res.status(403).json({ message: 'Insufficient permissions' });
+export async function optionalAuth(req, res, next) {
+  const authorization = req.headers.authorization || '';
+
+  if (!authorization) {
+    req.user = null;
+    return next();
+  }
+
+  if (!authorization.startsWith('Bearer ')) {
+    return res.status(401).json({
+      message: 'Invalid authorization header',
+    });
+  }
+
+  const token = authorization.slice(7);
+
+  try {
+    const payload = jwt.verify(
+      token,
+      process.env.JWT_SECRET,
+    );
+
+    const { rows } = await writePool.query(
+      `
+        SELECT id, status, authz_version
+        FROM users
+        WHERE id = $1
+        LIMIT 1
+      `,
+      [payload.sub],
+    );
+
+    const user = rows[0];
+
+    if (!user || user.status !== 'active') {
+      return res.status(401).json({
+        message: 'Account is not active',
+      });
     }
-    next();
-}
 
-export function optionalAuth(req, res, next) {
-    const h = req.headers.authorization || "";
-    const token = h.startsWith("Bearer ") ? h.slice(7) : null;
-
-    if (!token) {
-        req.user = null;
-        return next();
+    if (payload.authzVersion !== user.authz_version) {
+      return res.status(401).json({
+        message: 'Authorization changed; sign in again',
+      });
     }
 
-    try {
-        const payload = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = payload;
-    } catch {
-        req.user = null; // token postoji ali je loš → tretiraj kao neulogovanog
-    }
+    req.user = {
+      sub: user.id,
+      authzVersion: user.authz_version,
 
-    next();
+      // Temporary, until requireAdmin is removed.
+      role: payload.role,
+    };
+
+    return next();
+  } catch {
+    return res.status(401).json({
+      message: 'Invalid or expired token',
+    });
+  }
 }

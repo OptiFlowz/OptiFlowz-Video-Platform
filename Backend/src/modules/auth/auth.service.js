@@ -1,6 +1,5 @@
 import {  readPool,writePool } from "../../database/index.js";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import { z } from "zod";
 import crypto from 'crypto';
 import axios from "axios";
@@ -13,6 +12,7 @@ import { randomUUID } from "crypto";
 import sharp from "sharp";
 
 import { logEvent } from '../../common/logger.js';
+import { createAccessToken } from './helpers/createAccessToken.js';
 
 import { OAuth2Client } from "google-auth-library";
 
@@ -239,52 +239,93 @@ export const resetVerifyLimiter = rateLimit({
   message: { message: "Too many requests. Try again in 10 seconds." },
 });
 
+async function assignDefaultRole(client, userId) {
+  const { rows: defaultRoles } = await client.query(
+    `
+      SELECT id
+      FROM roles
+      WHERE is_default = true
+      ORDER BY id
+      LIMIT 2
+    `,
+  );
+
+  if (defaultRoles.length !== 1) {
+    throw new Error('Exactly one default role must be configured');
+  }
+
+  await client.query(
+    `
+      INSERT INTO user_roles (user_id, role_id)
+      VALUES ($1, $2)
+      ON CONFLICT (user_id, role_id) DO NOTHING
+    `,
+    [userId, defaultRoles[0].id],
+  );
+}
+
 
 export async function handleRegister(req, res) {
+    let client = null;
+
     try{
         const {email, password, full_name, description, eaes_member} = registerSchema.parse(req.body);
         
         const emailNorm = email.trim().toLowerCase();
-     
-        //Proveravamo da li postoji
-        const exists = await writePool.query("SELECT id FROM users WHERE lower(email) = $1",[emailNorm])
-        if(exists.rowCount) {
-          logEvent("auth.register_failed", { email: email,message: "Email already in use"});
-          return res.status(409).json({message: "Email already in use"});
-        }
 
         const saltRounds = Number(process.env.BCRYPT_ROUNDS || 12);
         const hash = await bcrypt.hash(password,saltRounds);
 
-        const insert = 
-        `INSERT INTO users (email, password_hash, full_name, description, eaes_member)
-        VALUES ($1,$2,$3,$4,$5)
-        RETURNING id, email, full_name, created_at, role, description, image_url, eaes_member`;
+        client = await writePool.connect();
+        await client.query('BEGIN');
 
-        const {rows} = await writePool.query(insert,[email,hash,full_name,description,eaes_member]);
-
-        if (!rows.length) {
-          logEvent("auth.register_failed", { email: email,message: "Email already in use"});
-          return res.status(409).json({ message: "Email already in use" });         
-        }
-        const token = jwt.sign(
-            {
-                sub:rows[0].id,
-                role: rows[0].role
-            },
-            process.env.JWT_SECRET,
-            {expiresIn:process.env.JWT_EXPIRES || "7d"}
+        const { rows } = await client.query(
+          `
+            INSERT INTO users (
+              email,
+              password_hash,
+              full_name,
+              description,
+              eaes_member
+            )
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING
+              id,
+              email,
+              full_name,
+              created_at,
+              role,
+              description,
+              image_url,
+              eaes_member,
+              authz_version
+          `,
+          [emailNorm, hash, full_name, description, eaes_member],
         );
+
+        const user = rows[0];
+
+        await assignDefaultRole(client, user.id);
+        await client.query('COMMIT');
+
+        const token = createAccessToken(user);
         
         res.status(201).json({
-            user: {email: rows[0].email, full_name: rows[0].full_name, role: rows[0].role, image_url: rows[0].image_url, description: rows[0].description, eaes_member: eaes_member},
+            user: {email: user.email, full_name: user.full_name, role: user.role, image_url: user.image_url, description: user.description, eaes_member: user.eaes_member},
             token,
         });
          logEvent("auth.register_success", { email: email,message: "User registered successfully"});
     }catch (err){
+        if (client) await client.query('ROLLBACK').catch(() => {});
         if (err?.issues) return res.status(400).json({ message: "Invalid data", issues: err.issues });
-            console.error(err);
+        if (err?.code === '23505') {
+          logEvent("auth.register_failed", { email: req.body?.email, message: "Email already in use"});
+          return res.status(409).json({ message: "Email already in use" });
+        }
+        console.error(err);
         res.status(500).json({ message: "Server error" });
+    } finally {
+        if (client) client.release();
     }
 }
 
@@ -293,7 +334,7 @@ export async function handleLogin(req, res) {
         const {email,password} = loginSchema.parse(req.body);
         const emailNorm = email.trim().toLowerCase();
 
-        const { rows } = await writePool.query("SELECT id, email, password_hash, full_name, role, image_url, description, eaes_member FROM users WHERE lower(email) = $1",[emailNorm]);    
+        const { rows } = await writePool.query("SELECT id, email, password_hash, full_name, role, image_url, description, eaes_member, authz_version FROM users WHERE lower(email) = $1",[emailNorm]);
         if (!rows.length) {
           logEvent("auth.login_failed", { email: email, message: "No user" });
           return res.status(401).json({ message: "No account found with that email address." });
@@ -308,14 +349,7 @@ export async function handleLogin(req, res) {
 
         await writePool.query("UPDATE users SET last_login_at = NOW() WHERE id = $1", [user.id]);
 
-        const token = jwt.sign(
-            {
-                sub: user.id,
-                role: user.role
-            },
-            process.env.JWT_SECRET,
-            {expiresIn:process.env.JWT_EXPIRES || "7d"}
-        );
+        const token = createAccessToken(user);
         res.status(201).json({
             user: {email: user.email, full_name: user.full_name, image_url: user.image_url, description: user.description, eaes_member: user.eaes_member, role: user.role},
             token,
@@ -633,7 +667,7 @@ export async function handleOAuthLogin(req, res) {
 
     const idRes = await client.query(
       `
-      SELECT u.id, u.email, u.full_name, u.role, u.image_url, u.description, u.eaes_member
+      SELECT u.id, u.email, u.full_name, u.role, u.image_url, u.description, u.eaes_member, u.authz_version
       FROM public.auth_identities ai
       JOIN public.users u ON u.id = ai.user_id
       WHERE ai.provider = $1 AND ai.provider_user_id = $2
@@ -651,7 +685,7 @@ export async function handleOAuthLogin(req, res) {
     } else {
       const userRes = await client.query(
         `
-        SELECT id, email, full_name, role, image_url, description, eaes_member
+        SELECT id, email, full_name, role, image_url, description, eaes_member, authz_version
         FROM public.users
         WHERE lower(email) = $1
         LIMIT 1
@@ -690,7 +724,7 @@ export async function handleOAuthLogin(req, res) {
               full_name = COALESCE(full_name, $2),
               image_url = COALESCE(image_url, $3)
             WHERE id = $1
-            RETURNING id, email, full_name, role, image_url, description, eaes_member
+            RETURNING id, email, full_name, role, image_url, description, eaes_member, authz_version
             `,
             [userRow.id, full_name, picture]
           );
@@ -708,12 +742,14 @@ export async function handleOAuthLogin(req, res) {
           `
           INSERT INTO public.users (email, password_hash, full_name, image_url)
           VALUES ($1, $2, $3, $4)
-          RETURNING id, email, full_name, role, image_url, description, eaes_member
+          RETURNING id, email, full_name, role, image_url, description, eaes_member, authz_version
           `,
           [email, randomHash, full_name, picture]
         );
 
         userRow = insUser.rows[0];
+
+        await assignDefaultRole(client, userRow.id);
 
         await client.query(
           `
@@ -736,11 +772,7 @@ export async function handleOAuthLogin(req, res) {
 
     await client.query("COMMIT");
 
-    const token = jwt.sign(
-      { sub: userRow.id, role: userRow.role },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES || "7d" }
-    );
+    const token = createAccessToken(userRow);
 
     return res.json({
       user: {
@@ -757,7 +789,7 @@ export async function handleOAuthLogin(req, res) {
       linked_existing_account,
     });
   } catch (err) {
-    await client.query("ROLLBACK").catch(() => {});
+    if (client) await client.query("ROLLBACK").catch(() => {});
     console.error("OAuth login error:", err);
     return res.status(500).json({ message: "OAuth login failed" });
   } finally {

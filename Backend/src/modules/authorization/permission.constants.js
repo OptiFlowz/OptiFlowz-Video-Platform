@@ -1,0 +1,33 @@
+export const Permissions = Object.freeze({
+  ROLES_MANAGE: 'roles.manage',
+  MEMBERS_ASSIGN_ROLES: 'members.assign_roles',
+
+  VIDEOS_CREATE: 'videos.create',
+  VIDEOS_UPDATE_OWN: 'videos.update_own',
+  VIDEOS_UPDATE_ANY: 'videos.update_any',
+  VIDEOS_DELETE_OWN: 'videos.delete_own',
+  VIDEOS_DELETE_ANY: 'videos.delete_any',
+
+  PLAYLISTS_CREATE: 'playlists.create',
+  PLAYLISTS_UPDATE_OWN: 'playlists.update_own',
+  PLAYLISTS_UPDATE_ANY: 'playlists.update_any',
+
+  QUIZZES_CREATE: 'quizzes.create',
+  QUIZZES_MANAGE_OWN: 'quizzes.manage_own',
+  QUIZZES_MANAGE_ANY: 'quizzes.manage_any',
+
+  COMMENTS_CREATE: 'comments.create',
+  COMMENTS_EDIT_OWN: 'comments.edit_own',
+  COMMENTS_DELETE_OWN: 'comments.delete_own',
+  COMMENTS_MODERATE: 'comments.moderate',
+
+  PEOPLE_MANAGE: 'people.manage',
+
+  ANALYTICS_VIDEO_OWN_READ: 'analytics.video_own.read',
+  ANALYTICS_VIDEO_ANY_READ: 'analytics.video_any.read',
+  ANALYTICS_CHANNEL_OWN_READ: 'analytics.channel_own.read',
+  ANALYTICS_CHANNEL_ANY_READ: 'analytics.channel_any.read',
+  ANALYTICS_PLATFORM_READ: 'analytics.platform.read',
+
+  REPORTS_ANALYTICS_EXPORT: 'reports.analytics.export',
+});
