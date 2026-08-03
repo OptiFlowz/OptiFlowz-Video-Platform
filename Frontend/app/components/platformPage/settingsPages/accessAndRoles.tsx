@@ -312,19 +312,6 @@ function RolePopup({
             </span>
           </label>
 
-          <label className="platformDefaultRoleControl">
-            <span>
-              <strong>Default role</strong>
-              <small>Assign this role automatically to newly registered users.</small>
-            </span>
-            <input
-              className="quizPopupCheckbox appearance-none rounded-[6px]! p-2.25! border-2 cursor-pointer checked:bg-(--accentOrange)! transition-colors relative checked:after:content-['✓'] checked:after:absolute checked:after:text-(--text1) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
-              type="checkbox"
-              checked={isDefault}
-              onChange={(event) => setIsDefault(event.target.checked)}
-            />
-          </label>
-
           <div className="platformPermissionsHeader">
             <strong>Permissions</strong>
             <div>
@@ -388,6 +375,22 @@ function RolePopup({
             ) : (
               <div className="platformPermissionState">No permissions available.</div>
             )}
+          </div>
+
+          <div className="platformDefaultRoleSection">
+            <strong>Default role</strong>
+            <label className="platformDefaultRoleControl">
+              <span>
+                <strong>Assign on registration</strong>
+                <small>Assign this role automatically to newly registered users.</small>
+              </span>
+              <input
+                className="quizPopupCheckbox appearance-none rounded-[6px]! p-2.25! border-2 cursor-pointer checked:bg-(--accentOrange)! transition-colors relative checked:after:content-['✓'] checked:after:absolute checked:after:text-(--text1) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
+                type="checkbox"
+                checked={isDefault}
+                onChange={(event) => setIsDefault(event.target.checked)}
+              />
+            </label>
           </div>
         </div>
 

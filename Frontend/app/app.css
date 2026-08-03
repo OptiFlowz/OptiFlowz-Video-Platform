@@ -13536,7 +13536,7 @@ main.platformSettingsPage .platformSettingsShell{
 .platformRolePopupPanel{width:min(560px,92vw);max-height:min(720px,calc(100vh - 32px));padding:1.5rem;border:1px solid var(--border1);border-radius:24px}
 .platformRolePopupHeader h3{font-size:1.25rem;font-weight:600}
 .platformRolePopupHeader p{margin-top:.25rem;font-size:.85rem}
-.platformRolePopupBody{gap:1rem;margin-top:1rem;padding-right:10px}
+.platformRolePopupBody{gap:1rem;margin-top:1rem;overflow-x:hidden;padding-right:10px}
 .platformRoleNameField{gap:.4rem;font-size:.9rem}
 .platformRoleNameField>span:first-child,.platformPermissionsHeader>strong{color:var(--accentBlue2)}
 .platformRoleNameControl{min-height:50px;padding:.45rem .85rem;border-radius:12px}
@@ -13544,9 +13544,11 @@ main.platformSettingsPage .platformSettingsShell{
 .platformPermissionsHeader button{min-height:34px;padding:.4rem .75rem;font-size:.8rem}
 .platformPermissionsHeader button svg{width:16px;height:16px;stroke-width:1}
 .platformPermissionsHeader button:disabled{opacity:.55;cursor:not-allowed}
-.platformDefaultRoleControl{display:flex;align-items:center;justify-content:space-between;gap:1rem;min-height:64px;padding:.65rem .8rem;border-radius:12px;background:var(--background2);cursor:pointer}
+.platformDefaultRoleSection{display:flex;flex-direction:column;gap:.55rem;min-width:0}
+.platformDefaultRoleSection>strong{color:var(--text1);font-size:.9rem}
+.platformDefaultRoleControl{display:flex;align-items:center;justify-content:space-between;gap:1rem;min-width:0;min-height:64px;padding:.65rem .8rem;border-radius:12px;background:var(--background2);cursor:pointer}
 .platformDefaultRoleControl>span{display:flex;flex-direction:column;gap:.15rem}
-.platformDefaultRoleControl strong{color:var(--accentBlue);font-size:.9rem}
+.platformDefaultRoleControl strong{color:var(--text1);font-size:.9rem}
 .platformDefaultRoleControl small{color:var(--text2);font-size:.75rem}
 .platformDefaultRoleControl .quizPopupCheckbox{width:18px;height:18px;min-width:18px;margin:0;border-color:var(--border3);background:var(--background2)}
 .platformPermissionList{gap:.5rem}
