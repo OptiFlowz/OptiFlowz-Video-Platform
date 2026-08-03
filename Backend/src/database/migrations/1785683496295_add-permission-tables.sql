@@ -71,6 +71,18 @@ VALUES
      'Delete any video',
      'Videos', 'video', 'dangerous'),
 
+    ('videos.library.read',
+     'Read the user video library and recommendations',
+     'Videos', 'video', 'normal'),
+
+    ('videos.progress.update',
+     'Record video watch progress',
+     'Videos', 'video', 'normal'),
+
+    ('videos.react',
+     'Like or dislike videos',
+     'Videos', 'video', 'normal'),
+
     ('playlists.create',
      'Create playlists',
      'Playlists', 'playlist', 'normal'),
@@ -83,6 +95,22 @@ VALUES
      'Update any playlist',
      'Playlists', 'playlist', 'dangerous'),
 
+    ('playlists.delete_own',
+     'Delete playlists created by the user',
+     'Playlists', 'playlist', 'sensitive'),
+
+    ('playlists.delete_any',
+     'Delete any playlist',
+     'Playlists', 'playlist', 'dangerous'),
+
+    ('playlists.library.read',
+     'Read the user saved-playlist library',
+     'Playlists', 'playlist', 'normal'),
+
+    ('playlists.save',
+     'Save or unsave playlists',
+     'Playlists', 'playlist', 'normal'),
+
     ('quizzes.create',
      'Create quizzes',
      'Quizzes', 'quiz', 'normal'),
@@ -94,6 +122,14 @@ VALUES
     ('quizzes.manage_any',
      'Manage any quiz',
      'Quizzes', 'quiz', 'dangerous'),
+
+    ('quizzes.participate',
+     'Start, answer and submit quiz attempts',
+     'Quizzes', 'quiz', 'normal'),
+
+    ('quizzes.certificates',
+     'View and generate earned quiz certificates',
+     'Quizzes', 'quiz', 'normal'),
 
     ('comments.create',
      'Post comments',
@@ -110,6 +146,10 @@ VALUES
     ('comments.moderate',
      'Delete or moderate any comment',
      'Comments', 'comment', 'sensitive'),
+
+    ('comments.react',
+     'Like or dislike comments',
+     'Comments', 'comment', 'normal'),
 
     ('people.manage',
      'Create, update and delete people',
@@ -160,7 +200,15 @@ WHERE r.name = 'Viewer'
   AND p.key IN (
       'comments.create',
       'comments.edit_own',
-      'comments.delete_own'
+      'comments.delete_own',
+      'comments.react',
+      'videos.library.read',
+      'videos.progress.update',
+      'videos.react',
+      'playlists.library.read',
+      'playlists.save',
+      'quizzes.participate',
+      'quizzes.certificates'
   )
 ON CONFLICT (role_id, permission_id)
 DO UPDATE SET effect = EXCLUDED.effect;
@@ -205,6 +253,30 @@ CROSS JOIN permissions p
 WHERE r.name = 'Administrator'
 ON CONFLICT (role_id, permission_id)
 DO UPDATE SET effect = EXCLUDED.effect;
+
+-- Preserve baseline member access for every existing account.
+INSERT INTO user_roles (user_id, role_id)
+SELECT u.id, r.id
+FROM users u
+CROSS JOIN roles r
+WHERE r.is_default = true
+ON CONFLICT (user_id, role_id) DO NOTHING;
+
+-- Preserve legacy elevated roles while routes move to permission checks.
+INSERT INTO user_roles (user_id, role_id)
+SELECT
+  u.id,
+  r.id
+FROM users u
+JOIN roles r
+  ON r.name = CASE lower(u.role)
+    WHEN 'uploader' THEN 'Uploader'
+    WHEN 'moderator' THEN 'Moderator'
+    WHEN 'admin' THEN 'Administrator'
+    WHEN 'owner' THEN 'Owner'
+    ELSE NULL
+  END
+ON CONFLICT (user_id, role_id) DO NOTHING;
 
 ALTER TABLE users
 ADD COLUMN authz_version integer NOT NULL DEFAULT 1;

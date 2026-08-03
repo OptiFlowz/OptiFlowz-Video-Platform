@@ -1,6 +1,8 @@
 import { writePool } from '../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
+import { hasPermission } from '../../authorization/authorization.service.js';
+import { Permissions } from '../../authorization/permission.constants.js';
 
 function prerequisites(object,userId) {
   const schema = z.object({
@@ -16,10 +18,8 @@ function prerequisites(object,userId) {
   return validateOrThrow(schema.safeParse(object));
 }
 
-export async function deleteCommentInternal(params, userId, userRole) {
-    console.log(params);
+export async function deleteCommentInternal(params, userId, authorization) {
   const { id: commentId } = prerequisites(params,userId);
-  const isAdmin = userRole === 'admin';
 
   const check = await writePool.query(
     `
@@ -45,8 +45,11 @@ export async function deleteCommentInternal(params, userId, userRole) {
 
   const isOwner = comment.user_id === userId;
 
-  if (!isOwner && !isAdmin) {
-    const error = new Error('You can only delete your own comment (or be admin)');
+  const canModerate = authorization?.isOwner
+    || hasPermission(authorization, Permissions.COMMENTS_MODERATE);
+
+  if (!isOwner && !canModerate) {
+    const error = new Error('You can only delete your own comment');
     error.status = 403;
     throw error;
   }

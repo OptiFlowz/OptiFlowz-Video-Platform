@@ -7,19 +7,29 @@ export const Permissions = Object.freeze({
   VIDEOS_UPDATE_ANY: 'videos.update_any',
   VIDEOS_DELETE_OWN: 'videos.delete_own',
   VIDEOS_DELETE_ANY: 'videos.delete_any',
+  VIDEOS_LIBRARY_READ: 'videos.library.read',
+  VIDEOS_PROGRESS_UPDATE: 'videos.progress.update',
+  VIDEOS_REACT: 'videos.react',
 
   PLAYLISTS_CREATE: 'playlists.create',
   PLAYLISTS_UPDATE_OWN: 'playlists.update_own',
   PLAYLISTS_UPDATE_ANY: 'playlists.update_any',
+  PLAYLISTS_DELETE_OWN: 'playlists.delete_own',
+  PLAYLISTS_DELETE_ANY: 'playlists.delete_any',
+  PLAYLISTS_LIBRARY_READ: 'playlists.library.read',
+  PLAYLISTS_SAVE: 'playlists.save',
 
   QUIZZES_CREATE: 'quizzes.create',
   QUIZZES_MANAGE_OWN: 'quizzes.manage_own',
   QUIZZES_MANAGE_ANY: 'quizzes.manage_any',
+  QUIZZES_PARTICIPATE: 'quizzes.participate',
+  QUIZZES_CERTIFICATES: 'quizzes.certificates',
 
   COMMENTS_CREATE: 'comments.create',
   COMMENTS_EDIT_OWN: 'comments.edit_own',
   COMMENTS_DELETE_OWN: 'comments.delete_own',
   COMMENTS_MODERATE: 'comments.moderate',
+  COMMENTS_REACT: 'comments.react',
 
   PEOPLE_MANAGE: 'people.manage',
 

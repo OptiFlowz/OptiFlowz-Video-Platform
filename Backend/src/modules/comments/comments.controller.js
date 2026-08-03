@@ -82,7 +82,7 @@ export async function deleteComment(req, res) {
     const result = await deleteCommentInternal(
       req.params,
       req.user?.sub || null,
-      req.user?.role || null
+      req.authorization
     );
 
     return sendSuccess(res, result);

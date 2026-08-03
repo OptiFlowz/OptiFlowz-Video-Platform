@@ -1,10 +1,12 @@
 import express from 'express';
-import { requireAuth, requireAdmin } from '../../middleware/auth.js';
+import { requireAuth } from '../../middleware/auth.js';
+import { requirePermission } from '../authorization/authorization.middleware.js';
+import { Permissions } from '../authorization/permission.constants.js';
 import { generateVideoAnalyticsPdfReport } from './report.service.js';
 
 const router = express.Router();
 
-router.get('/video-analytics.pdf', requireAuth, requireAdmin, async (req, res) => {
+router.get('/video-analytics.pdf', requireAuth, requirePermission(Permissions.REPORTS_ANALYTICS_EXPORT), async (req, res) => {
   try {
     const { pdfBuffer, filename } = await generateVideoAnalyticsPdfReport({
       range: req.query.range,

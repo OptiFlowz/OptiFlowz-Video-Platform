@@ -17,12 +17,13 @@ export function requirePermission(permissionKey) {
       if (!hasPermission(authorization, permissionKey)) {
         return res.status(403).json({
           message: 'Insufficient permissions',
+          requiredPermission: permissionKey,
         });
       }
 
-      next();
+      return next();
     } catch (error) {
-      next(error);
+      return next(error);
     }
   };
 }

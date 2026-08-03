@@ -1,5 +1,9 @@
-// src/common/videoOwnership.js
-import { readPool } from '../database/index.js';
+import { writePool } from '../database/index.js';
+import {
+  hasPermission,
+  loadAuthorization,
+} from '../modules/authorization/authorization.service.js';
+import { Permissions } from '../modules/authorization/permission.constants.js';
 
 export async function assertQuizOwner(quizId, userId) {
   if (!userId) {
@@ -8,7 +12,15 @@ export async function assertQuizOwner(quizId, userId) {
     throw error;
   }
 
-  const { rowCount } = await readPool.query(
+  const authorization = await loadAuthorization(userId);
+  if (
+    authorization.isOwner
+    || hasPermission(authorization, Permissions.QUIZZES_MANAGE_ANY)
+  ) {
+    return;
+  }
+
+  const { rowCount } = await writePool.query(
     `
       SELECT 1
       FROM quizzes

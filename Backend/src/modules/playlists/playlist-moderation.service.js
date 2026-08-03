@@ -782,9 +782,10 @@ export async function handleDeletePlaylist(req, res) {
       `
       DELETE 
       FROM public.playlists
-      WHERE id=$1 AND created_by=$2
+      WHERE id = $1
+        AND (created_by = $2 OR $3::boolean = true)
       `,
-      [playlistId, userId]
+      [playlistId, userId, req.resourceAccess?.canAccessAny === true]
     );
 
     if (result.rowCount === 0) {

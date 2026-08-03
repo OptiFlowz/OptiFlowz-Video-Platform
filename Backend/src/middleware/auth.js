@@ -1,62 +1,61 @@
-// src/middleware/auth.js
-
 import jwt from 'jsonwebtoken';
 import { writePool } from '../database/index.js';
 
-export async function requireAuth(req, res, next) {
-  const authorizationHeader = req.headers.authorization || '';
+async function authenticateToken(token) {
+  const payload = jwt.verify(token, process.env.JWT_SECRET);
 
-  const token = authorizationHeader.startsWith('Bearer ')
-    ? authorizationHeader.slice(7)
-    : null;
+  const { rows } = await writePool.query(
+    `
+      SELECT id, status, authz_version
+      FROM users
+      WHERE id = $1
+      LIMIT 1
+    `,
+    [payload.sub],
+  );
 
-  if (!token) {
-    return res.status(401).json({ message: 'Missing token' });
+  const user = rows[0];
+
+  if (!user || user.status !== 'active') {
+    const error = new Error('Account is not active');
+    error.code = 'ACCOUNT_INACTIVE';
+    throw error;
   }
 
+  if (
+    payload.authzVersion !== undefined
+    && payload.authzVersion !== user.authz_version
+  ) {
+    const error = new Error('Authorization changed; sign in again');
+    error.code = 'AUTHORIZATION_CHANGED';
+    throw error;
+  }
+
+  return {
+    sub: user.id,
+    authzVersion: user.authz_version,
+  };
+}
+
+function bearerToken(req) {
+  const authorization = req.headers.authorization || '';
+  return authorization.startsWith('Bearer ')
+    ? authorization.slice(7)
+    : null;
+}
+
+export async function requireAuth(req, res, next) {
+  const token = bearerToken(req);
+  if (!token) return res.status(401).json({ message: 'Missing token' });
+
   try {
-    const payload = jwt.verify(
-      token,
-      process.env.JWT_SECRET,
-    );
-
-    const { rows } = await writePool.query(
-      `
-        SELECT id, status, authz_version
-        FROM users
-        WHERE id = $1
-        LIMIT 1
-      `,
-      [payload.sub],
-    );
-
-    const user = rows[0];
-
-    if (!user || user.status !== 'active') {
-      return res.status(401).json({
-        message: 'Account is not active',
-      });
-    }
-
-    if (
-      payload.authzVersion !== undefined
-      && payload.authzVersion !== user.authz_version
-    ) {
-      return res.status(401).json({
-        message: 'Authorization changed; sign in again',
-      });
-    }
-
-    req.user = {
-      sub: user.id,
-      authzVersion: user.authz_version,
-    };
-
-    next();
-  } catch {
-    return res.status(401).json({
-      message: 'Invalid token',
-    });
+    req.user = await authenticateToken(token);
+    return next();
+  } catch (error) {
+    const message = error.code === 'AUTHORIZATION_CHANGED'
+      ? error.message
+      : 'Invalid or expired token';
+    return res.status(401).json({ message });
   }
 }
 
@@ -68,56 +67,18 @@ export async function optionalAuth(req, res, next) {
     return next();
   }
 
-  if (!authorization.startsWith('Bearer ')) {
-    return res.status(401).json({
-      message: 'Invalid authorization header',
-    });
+  const token = bearerToken(req);
+  if (!token) {
+    return res.status(401).json({ message: 'Invalid authorization header' });
   }
 
-  const token = authorization.slice(7);
-
   try {
-    const payload = jwt.verify(
-      token,
-      process.env.JWT_SECRET,
-    );
-
-    const { rows } = await writePool.query(
-      `
-        SELECT id, status, authz_version
-        FROM users
-        WHERE id = $1
-        LIMIT 1
-      `,
-      [payload.sub],
-    );
-
-    const user = rows[0];
-
-    if (!user || user.status !== 'active') {
-      return res.status(401).json({
-        message: 'Account is not active',
-      });
-    }
-
-    if (payload.authzVersion !== user.authz_version) {
-      return res.status(401).json({
-        message: 'Authorization changed; sign in again',
-      });
-    }
-
-    req.user = {
-      sub: user.id,
-      authzVersion: user.authz_version,
-
-      // Temporary, until requireAdmin is removed.
-      role: payload.role,
-    };
-
+    req.user = await authenticateToken(token);
     return next();
-  } catch {
-    return res.status(401).json({
-      message: 'Invalid or expired token',
-    });
+  } catch (error) {
+    const message = error.code === 'AUTHORIZATION_CHANGED'
+      ? error.message
+      : 'Invalid or expired token';
+    return res.status(401).json({ message });
   }
 }

@@ -217,7 +217,7 @@ export async function handleGenerateChapters(req, res) {
  * POST /videos/mock-upload
  * Kreira mock video bez stvarnog upload-a (za testiranje)
  */
-// router.post('/mock-upload', requireAuth, requireAdmin, async (req, res) => {
+// router.post('/mock-upload', requireAuth, requirePermission(Permissions.VIDEOS_CREATE), async (req, res) => {
 //     try {
 //         // Dynamic import za mock service
 //         const mockVideoService = await import('./mockVideoService.js');

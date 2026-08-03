@@ -1,6 +1,8 @@
 import express from 'express';
 import * as playlistService from './playlist.service.js';
 import { requireAuth , optionalAuth } from '../../middleware/auth.js';
+import { requirePermission } from '../authorization/authorization.middleware.js';
+import { Permissions } from '../authorization/permission.constants.js';
 import { logEvent } from '../../common/logger.js';
 import * as playlistController from './playlist.controller.js';
 
@@ -46,7 +48,7 @@ router.get('/featured', optionalAuth, async (req, res) => {
   }
 });
 
-router.post('/:id/save', requireAuth, async (req, res) => {
+router.post('/:id/save', requireAuth, requirePermission(Permissions.PLAYLISTS_SAVE), async (req, res) => {
   try {
     const userId = req.user?.sub || null;
     if (!userId) return res.status(401).json({ message: 'Unauthorized' });
@@ -69,7 +71,7 @@ router.post('/:id/save', requireAuth, async (req, res) => {
   }
 });
 
-router.get('/user/saved', requireAuth, async (req, res) => {
+router.get('/user/saved', requireAuth, requirePermission(Permissions.PLAYLISTS_LIBRARY_READ), async (req, res) => {
   try {
     const userId = req.user?.sub || null;
     if (!userId) {
