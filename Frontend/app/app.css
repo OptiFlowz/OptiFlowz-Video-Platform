@@ -13445,6 +13445,107 @@ main.platformSettingsPage .platformSettingsShell{
   height: 22px;
 }
 
+.accessRolesLayout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(340px,.95fr);align-items:start;gap:1rem}
+.rolesCard,.roleOverviewCard{min-height:430px}
+.rolesCardHeader{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.rolesCardHeader>span{display:flex;flex-direction:column;gap:.25rem}
+.rolesCardHeader p,.rolesTotal{margin:0;color:var(--text2);font-size:.82rem;opacity:.72}
+.addRoleButton{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;min-height:40px;padding:.6rem .9rem;border-radius:11px;background:var(--accentBlue);color:var(--text1);font-size:.86rem;font-weight:500;cursor:pointer;transition:background-color 180ms ease,transform 180ms ease}
+.addRoleButton:hover{background:var(--accentBlue2);transform:translateY(-1px)}
+.addRoleButton svg{width:18px;height:18px;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.rolesTable{display:flex;flex-direction:column;min-width:0}
+.rolesTableHeader,.rolesTableRow{display:grid;grid-template-columns:minmax(180px,1fr) 90px 116px;align-items:center;gap:.75rem;min-height:56px;border-bottom:1px solid var(--border1)}
+.rolesTableHeader{min-height:42px;color:var(--text2);font-size:.78rem;opacity:.7}
+.rolesTableRow{color:var(--text1);font-size:.92rem}
+.roleNameCell,.roleActionsCell{display:flex;align-items:center}
+.roleNameCell{gap:.55rem;min-width:0}
+.roleNameCell>strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.roleTypeBadge{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:.28rem .48rem;border-radius:6px;font-size:.68rem;font-weight:600}
+.roleTypeBadge.system{background:var(--background2);color:var(--accentBlue2)}
+.roleTypeBadge.custom{background:var(--background2);color:var(--accentGreen2)}
+.roleUsersCell{font-weight:600}
+.roleActionsCell{gap:.55rem}
+.roleActionsCell button{display:grid;width:38px;height:38px;place-items:center;border-radius:var(--bR);background:var(--background2);cursor:pointer;transition:background-color 180ms ease,transform 180ms ease}
+.roleActionsCell button:hover{background:var(--background3);transform:translateY(-1px)}
+.roleActionsCell button.edit{background:var(--background2);color:var(--accentBlue2)}
+.roleActionsCell button.delete{position:relative;background:var(--background2);color:var(--accentRed3)}
+.roleActionsCell button.delete::before{content:"";position:absolute;inset:0;border-radius:inherit;background:var(--accentRed);opacity:.22;transition:opacity 180ms ease}
+.roleActionsCell button.delete:hover::before{opacity:.3}
+.roleActionsCell button.delete svg{position:relative;z-index:1}
+.roleActionsCell svg{width:19px;height:19px;stroke:currentColor;stroke-width:1;stroke-linecap:round;stroke-linejoin:round}
+.rolesTotal{margin-top:auto}
+.roleOverviewCard{gap:.5rem}
+.roleOverviewLayout{display:grid;grid-template-columns:minmax(190px,1fr) minmax(130px,.72fr);align-items:center;gap:.75rem;min-height:340px}
+.roleOverviewChart{position:relative;width:100%;aspect-ratio:1}
+.roleOverviewCenter{position:absolute;inset:50% auto auto 50%;display:flex;flex-direction:column;align-items:center;justify-content:center;width:46%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.roleOverviewCenter strong{color:var(--text1);font-size:clamp(1.7rem,4vw,2.5rem);line-height:1}
+.roleOverviewCenter span{margin-top:.45rem;color:var(--text2);font-size:.78rem}
+.roleOverviewLegend{display:flex;flex-direction:column;gap:.8rem}
+.roleOverviewLegendItem{display:grid;grid-template-columns:14px minmax(0,1fr);align-items:start;gap:.65rem}
+.roleOverviewLegendItem>i{width:14px;height:14px;margin-top:.12rem;border-radius:3px}
+.roleOverviewLegendItem>span{display:flex;flex-direction:column;gap:.15rem;min-width:0}
+.roleOverviewLegendItem strong{overflow:hidden;color:var(--text1);font-size:.75rem;text-overflow:ellipsis;white-space:nowrap}
+.roleOverviewLegendItem small{color:var(--text2);font-size:.7rem;opacity:.72}
+.platformRolePopup{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;transition:opacity 200ms ease}
+.platformRolePopup.visible{opacity:1}
+.platformRolePopupBackdrop{position:absolute;inset:0}
+.platformRolePopupPanel{position:relative;display:flex;flex-direction:column;width:min(820px,94vw);max-height:min(860px,calc(100vh - 48px));overflow:hidden;padding:1.75rem;border:1px solid var(--border1);border-radius:28px;background:var(--background1);box-shadow:0 24px 80px var(--seethroughtBlack);transform:translateY(24px);transition:opacity 200ms ease,transform 200ms ease}
+.platformRolePopup.visible .platformRolePopupPanel{transform:translateY(0)}
+.platformRolePopupHeader h3{margin:0;color:var(--text1);font-size:1.5rem;font-weight:500}
+.platformRolePopupHeader p{margin:.35rem 0 0;color:var(--text2);font-size:.95rem;opacity:.72}
+.platformRolePopupBody{display:flex;flex-direction:column;gap:1.25rem;min-height:0;margin-top:1.35rem;overflow-y:auto;overscroll-behavior:contain;padding-right:14px;scrollbar-width:thin;scrollbar-color:var(--accentBlue2) transparent}
+.platformRolePopupBody::-webkit-scrollbar{width:5px}
+.platformRolePopupBody::-webkit-scrollbar-track{margin-block:8px;background:transparent}
+.platformRolePopupBody::-webkit-scrollbar-thumb{min-height:32px;border-radius:var(--bR);background:var(--accentBlue2)}
+.platformRolePopupBody::-webkit-scrollbar-thumb:hover{background:var(--accentBlue3)}
+.platformRolePopupBody::-webkit-scrollbar-button{display:none}
+.platformRoleNameField{display:flex;flex-direction:column;gap:.55rem;color:var(--text1);font-size:.95rem;font-weight:600}
+.platformRoleNameControl{display:flex;align-items:center;gap:.75rem;min-height:56px;padding:.55rem 1rem;border:1px solid transparent;border-radius:14px;background:var(--background2);transition:border-color 180ms ease}
+.platformRoleNameControl:focus-within{border-color:var(--accentBlue2)}
+.platformRoleNameControl input{flex:1;min-width:0;background:transparent;color:var(--text1);font:inherit;font-weight:500}
+.platformPermissionsHeader{display:flex;flex-direction:column;gap:.7rem}
+.platformPermissionsHeader>strong{color:var(--text1);font-size:.95rem}
+.platformPermissionsHeader>div{display:flex;flex-wrap:wrap;gap:.65rem}
+.platformPermissionsHeader button{display:inline-flex;align-items:center;gap:.45rem;min-height:38px;padding:.5rem .9rem;border:1px solid var(--border1);border-radius:var(--bR);background:var(--background1);color:var(--text2);font-size:.84rem;cursor:pointer;transition:background-color 180ms ease,border-color 180ms ease}
+.platformPermissionsHeader button:hover{border-color:var(--accentBlue2);background:var(--background2)}
+.platformPermissionsHeader button svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.platformPermissionList{display:flex;flex-direction:column;gap:.7rem}
+.platformPermissionItem{display:grid;grid-template-columns:54px minmax(0,1fr) auto;align-items:center;gap:.85rem;min-height:78px;padding:.7rem 1rem;border-radius:14px;background:var(--background2);cursor:pointer;transition:background-color 180ms ease}
+.platformPermissionItem:hover{background:var(--background3)}
+.platformPermissionIcon{display:grid;width:54px;height:54px;place-items:center;border-radius:12px;background:var(--background1);color:var(--text1)}
+.platformPermissionIcon svg{width:32px;height:32px;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.platformPermissionText{display:flex;flex-direction:column;gap:.2rem;min-width:0}
+.platformPermissionText strong{color:var(--text1);font-size:.95rem}
+.platformPermissionText small{color:var(--text2);font-size:.8rem;opacity:.72}
+.platformRolePopupActions{display:flex;justify-content:flex-end;gap:.75rem;padding-top:1.15rem}
+.platformRolePopupActions .cancelBtn,.platformRolePopupActions .saveCaptionsBtn{width:auto;min-width:120px;margin:0}
+
+/* Compact Access & Roles dialog, aligned with the quiz dialog. */
+.platformRolePopupPanel{width:min(560px,92vw);max-height:min(720px,calc(100vh - 32px));padding:1.5rem;border:1px solid var(--border1);border-radius:24px}
+.platformRolePopupHeader h3{font-size:1.25rem;font-weight:600}
+.platformRolePopupHeader p{margin-top:.25rem;font-size:.85rem}
+.platformRolePopupBody{gap:1rem;margin-top:1rem;padding-right:10px}
+.platformRoleNameField{gap:.4rem;font-size:.9rem}
+.platformRoleNameField>span:first-child,.platformPermissionsHeader>strong{color:var(--accentBlue2)}
+.platformRoleNameControl{min-height:50px;padding:.45rem .85rem;border-radius:12px}
+.platformPermissionsHeader{gap:.55rem}
+.platformPermissionsHeader button{min-height:34px;padding:.4rem .75rem;font-size:.8rem}
+.platformPermissionsHeader button svg{width:16px;height:16px;stroke-width:1}
+.platformPermissionList{gap:.5rem}
+.platformPermissionItem{grid-template-columns:44px minmax(0,1fr) 24px;gap:.75rem;min-height:64px;padding:.55rem .75rem;border-radius:12px}
+.platformPermissionIcon{width:44px;height:44px;border-radius:10px}
+.platformPermissionIcon svg{width:29px;height:29px}
+.platformPermissionText strong{font-size:.9rem}
+.platformPermissionText small{font-size:.75rem}
+.platformPermissionItem .quizPopupCheckbox{width:18px;height:18px;min-width:18px;min-height:18px;justify-self:center;border-color:var(--border3);background-color:var(--background2);flex-shrink:0}
+.platformPermissionItem .quizPopupCheckbox:hover,.platformPermissionItem .quizPopupCheckbox:focus-visible{border-color:var(--accentOrange)}
+.platformRolePopupActions{gap:.65rem;padding-top:1rem}
+.platformRolePopupActions button{display:inline-flex;align-items:center;justify-content:center;width:auto;min-width:116px;height:46px;margin:0;padding:0 1.25rem;border:0;border-radius:var(--bR);font:inherit;font-size:.86rem;font-weight:500;cursor:pointer}
+.platformRoleCancelButton{background:var(--background2);color:var(--text1)}
+.platformRoleSaveButton{background:var(--accentBlue);color:var(--seeThroughtWhite)}
+.platformRoleCancelButton:hover{background:var(--background3)}
+.platformRoleSaveButton:hover{background:var(--accentBlue2)}
+
 .platformSettingsPlaceholder{
   min-height: 220px;
 }
@@ -13468,6 +13569,8 @@ main.platformSettingsPage .platformSettingsShell{
   .platformSettingsGrid{
     grid-template-columns: 1fr;
   }
+  .accessRolesLayout{grid-template-columns:1fr}
+  .roleOverviewCard{min-height:380px}
 }
 
 @media (max-width: 900px){
@@ -13493,4 +13596,19 @@ main.platformSettingsPage .platformSettingsShell{
   .platformSettingsCard{
     padding: 1rem;
   }
+  .rolesCardHeader{align-items:stretch;flex-direction:column}
+  .rolesTableHeader,.rolesTableRow{grid-template-columns:minmax(120px,1fr) 48px 88px;gap:.45rem}
+  .roleNameCell{align-items:flex-start;flex-direction:column;gap:.25rem}
+  .roleActionsCell{gap:.35rem}
+  .roleActionsCell button{width:34px;height:34px}
+  .roleOverviewLayout{grid-template-columns:1fr}
+  .roleOverviewChart{max-width:290px;margin-inline:auto}
+  .roleOverviewLegend{width:min(290px,100%);margin-inline:auto}
+  .platformRolePopup{padding:12px}
+  .platformRolePopupPanel{max-height:calc(100vh - 24px);padding:1.15rem;border-radius:22px}
+  .platformPermissionItem{grid-template-columns:44px minmax(0,1fr) auto;gap:.65rem;padding:.65rem .75rem}
+  .platformPermissionIcon{width:44px;height:44px}
+  .platformPermissionIcon svg{width:27px;height:27px}
+  .platformRolePopupActions .cancelBtn,.platformRolePopupActions .saveCaptionsBtn{min-width:0;flex:1}
+  .platformRolePopupActions button{min-width:0;flex:1}
 }
