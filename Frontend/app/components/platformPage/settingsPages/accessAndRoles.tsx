@@ -54,6 +54,7 @@ type ApiRole = {
   name: string;
   position: number;
   is_system: boolean;
+  is_default: boolean;
   is_owner: boolean;
   member_count: number;
   permissions: Array<{
@@ -76,6 +77,7 @@ type PlatformRole = {
   users: number;
   permissions: PermissionId[];
   position: number;
+  isDefault: boolean;
   canUpdate: boolean;
   canDelete: boolean;
 };
@@ -186,13 +188,14 @@ function RolePopup({
   isSaving: boolean;
   saveError: Error | null;
   onClose: () => void;
-  onSave: (name: string, selectedPermissions: PermissionId[]) => void;
+  onSave: (name: string, selectedPermissions: PermissionId[], isDefault: boolean) => void;
 }) {
   const duration = 200;
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
   const [name, setName] = useState("");
   const [selectedPermissions, setSelectedPermissions] = useState<PermissionId[]>([]);
+  const [isDefault, setIsDefault] = useState(false);
   const nameInputRef = useRef<HTMLInputElement | null>(null);
   const closeTimerRef = useRef<number | null>(null);
   const permissions = useMemo(
@@ -214,6 +217,7 @@ function RolePopup({
       setVisible(false);
       setName(role?.name ?? "");
       setSelectedPermissions(role?.permissions ?? []);
+      setIsDefault(role?.isDefault ?? false);
       requestAnimationFrame(() => requestAnimationFrame(() => {
         setVisible(true);
         if (!role) nameInputRef.current?.focus();
@@ -277,7 +281,7 @@ function RolePopup({
           event.preventDefault();
           const normalizedName = name.trim();
           if (!normalizedName) return;
-          onSave(normalizedName, selectedPermissions);
+          onSave(normalizedName, selectedPermissions, isDefault);
         }}
         onMouseDown={(event) => event.stopPropagation()}
       >
@@ -298,10 +302,27 @@ function RolePopup({
                 maxLength={50}
                 required
               />
-              <small className={`roleTypeBadge ${(role?.type ?? "Custom").toLowerCase()}`}>
+              <small
+                className={`roleTypeBadge roleBadgeTooltip ${(role?.type ?? "Custom").toLowerCase()}`}
+                data-tooltip={(role?.type ?? "Custom") === "System" ? "Built-in role managed by the platform." : "Custom role created for this platform."}
+                tabIndex={0}
+              >
                 {role?.type ?? "Custom"}
               </small>
             </span>
+          </label>
+
+          <label className="platformDefaultRoleControl">
+            <span>
+              <strong>Default role</strong>
+              <small>Assign this role automatically to newly registered users.</small>
+            </span>
+            <input
+              className="quizPopupCheckbox appearance-none rounded-[6px]! p-2.25! border-2 cursor-pointer checked:bg-(--accentOrange)! transition-colors relative checked:after:content-['✓'] checked:after:absolute checked:after:text-(--text1) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
+              type="checkbox"
+              checked={isDefault}
+              onChange={(event) => setIsDefault(event.target.checked)}
+            />
           </label>
 
           <div className="platformPermissionsHeader">
@@ -462,7 +483,7 @@ export default function AccessAndRoles() {
     permissionsResponse?.success ? permissionsResponse.groups : [];
 
   const createRoleMutation = useMutation({
-    mutationFn: ({ name, permissions, position }: { name: string; permissions: PermissionId[]; position: number }) =>
+    mutationFn: ({ name, permissions, position, isDefault }: { name: string; permissions: PermissionId[]; position: number; isDefault: boolean }) =>
       fetchFn<{ success: boolean; role: ApiRole }>({
         route: "api/roles",
         options: {
@@ -471,6 +492,7 @@ export default function AccessAndRoles() {
           body: JSON.stringify({
             name,
             position,
+            is_default: isDefault,
             permissions: permissions.map((id) => ({ id, effect: "allow" as const })),
           }),
         },
@@ -482,7 +504,7 @@ export default function AccessAndRoles() {
   });
 
   const updateRoleMutation = useMutation({
-    mutationFn: ({ roleId, name, permissions, position }: { roleId: string; name: string; permissions: PermissionId[]; position: number }) =>
+    mutationFn: ({ roleId, name, permissions, position, isDefault }: { roleId: string; name: string; permissions: PermissionId[]; position: number; isDefault: boolean }) =>
       fetchFn<{ success: boolean; role: ApiRole }>({
         route: `api/roles/${roleId}`,
         options: {
@@ -491,6 +513,7 @@ export default function AccessAndRoles() {
           body: JSON.stringify({
             name,
             position,
+            is_default: isDefault,
             permissions: permissions.map((id) => ({ id, effect: "allow" as const })),
           }),
         },
@@ -529,6 +552,7 @@ export default function AccessAndRoles() {
             .filter((permission) => permission.effect === "allow")
             .map((permission) => String(permission.id)),
       position: role.position,
+      isDefault: role.is_default,
       canUpdate: role.can_update,
       canDelete: role.can_delete,
     })).sort((firstRole, secondRole) => firstRole.position - secondRole.position));
@@ -613,7 +637,18 @@ export default function AccessAndRoles() {
               <div className="rolesTableRow" role="row" key={role.id}>
                 <span className="roleNameCell" role="cell">
                   <strong>{role.name}</strong>
-                  <small className={`roleTypeBadge ${role.type.toLowerCase()}`}>{role.type}</small>
+                  <small
+                    className={`roleTypeBadge roleBadgeTooltip ${role.type.toLowerCase()}`}
+                    data-tooltip={role.type === "System" ? "Built-in role managed by the platform." : "Custom role created for this platform."}
+                    tabIndex={0}
+                  >{role.type}</small>
+                  {role.isDefault ? (
+                    <small
+                      className="roleTypeBadge roleBadgeTooltip default"
+                      data-tooltip="Default role assigned automatically to users when they register."
+                      tabIndex={0}
+                    >Default</small>
+                  ) : null}
                 </span>
                 <strong className="roleUsersCell" role="cell">{role.users}</strong>
                 <span className="roleActionsCell" role="cell">
@@ -649,13 +684,14 @@ export default function AccessAndRoles() {
           updateRoleMutation.reset();
           setIsPopupOpen(false);
         }}
-        onSave={(name, selectedPermissions) => {
+        onSave={(name, selectedPermissions, isDefault) => {
           if (selectedRole) {
             updateRoleMutation.mutate({
               roleId: selectedRole.id,
               name,
               permissions: selectedPermissions,
               position: calculateRolePosition(selectedPermissions, selectedRole.id),
+              isDefault,
             });
             return;
           } else {
@@ -663,6 +699,7 @@ export default function AccessAndRoles() {
               name,
               permissions: selectedPermissions,
               position: calculateRolePosition(selectedPermissions),
+              isDefault,
             });
             return;
           }

@@ -585,6 +585,7 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
     views: true,
   });
   const [isCompletionBucketsActive, setIsCompletionBucketsActive] = useState(true);
+  const [showAllCountries, setShowAllCountries] = useState(false);
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapViewRef = useRef<MapView>({ zoom: MIN_MAP_ZOOM, x: 0, y: 0 });
   const mapDragRef = useRef<MapDrag | null>(null);
@@ -945,6 +946,10 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
   const geographicCountries = Object.entries(geographicBreakdown)
     .filter(([, country]) => country.totalViews > 0)
     .sort(([, a], [, b]) => b.totalViews - a.totalViews);
+  const visibleGeographicCountries = showAllCountries
+    ? geographicCountries
+    : geographicCountries.slice(0, 16);
+  const hasMoreGeographicCountries = geographicCountries.length > 16;
   const maxCountryViews = Math.max(
     1,
     ...geographicCountries
@@ -1611,7 +1616,7 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
                 </div>
 
                 <div className="videoAnalyticsCountryGrid">
-                  {geographicCountries.map(([code, country]) => (
+                  {visibleGeographicCountries.map(([code, country]) => (
                     <button
                       type="button"
                       key={code}
@@ -1624,6 +1629,16 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
                     </button>
                   ))}
                 </div>
+                {hasMoreGeographicCountries ? (
+                  <button
+                    type="button"
+                    className="videoAnalyticsCountriesToggle"
+                    aria-expanded={showAllCountries}
+                    onClick={() => setShowAllCountries((current) => !current)}
+                  >
+                    {t(showAllCountries ? "readLess" : "readMore")}
+                  </button>
+                ) : null}
               </>
             )}
           </section>

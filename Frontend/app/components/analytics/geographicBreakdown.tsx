@@ -166,10 +166,15 @@ function GeographicBreakdownSection({
   const mapPanFrameRef = useRef<number | null>(null);
   const pendingMapViewRef = useRef<MapView | null>(null);
   const countryPopupRef = useRef<CountryPopupHandle | null>(null);
+  const [showAllCountries, setShowAllCountries] = useState(false);
 
   const geographicCountries = Object.entries(breakdown)
     .filter(([, country]) => country.totalViews > 0)
     .sort(([, a], [, b]) => b.totalViews - a.totalViews);
+  const visibleGeographicCountries = showAllCountries
+    ? geographicCountries
+    : geographicCountries.slice(0, 16);
+  const hasMoreGeographicCountries = geographicCountries.length > 16;
   const maxCountryViews = Math.max(
     1,
     ...geographicCountries
@@ -397,7 +402,7 @@ function GeographicBreakdownSection({
             </div>
 
             <div className="videoAnalyticsCountryGrid">
-              {geographicCountries.map(([code, country]) => (
+              {visibleGeographicCountries.map(([code, country]) => (
                 <button
                   type="button"
                   key={code}
@@ -410,6 +415,16 @@ function GeographicBreakdownSection({
                 </button>
               ))}
             </div>
+            {hasMoreGeographicCountries ? (
+              <button
+                type="button"
+                className="videoAnalyticsCountriesToggle"
+                aria-expanded={showAllCountries}
+                onClick={() => setShowAllCountries((current) => !current)}
+              >
+                {t(showAllCountries ? "readLess" : "readMore")}
+              </button>
+            ) : null}
           </>
         )}
       </section>
