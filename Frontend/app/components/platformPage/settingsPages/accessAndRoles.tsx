@@ -377,21 +377,23 @@ function RolePopup({
             )}
           </div>
 
-          <div className="platformDefaultRoleSection">
-            <strong>Default role</strong>
-            <label className="platformDefaultRoleControl">
-              <span>
-                <strong>Assign on registration</strong>
-                <small>Assign this role automatically to newly registered users.</small>
-              </span>
-              <input
-                className="quizPopupCheckbox appearance-none rounded-[6px]! p-2.25! border-2 cursor-pointer checked:bg-(--accentOrange)! transition-colors relative checked:after:content-['✓'] checked:after:absolute checked:after:text-(--text1) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
-                type="checkbox"
-                checked={isDefault}
-                onChange={(event) => setIsDefault(event.target.checked)}
-              />
-            </label>
-          </div>
+          {role ? (
+            <div className="platformDefaultRoleSection">
+              <strong>Default role</strong>
+              <label className="platformDefaultRoleControl">
+                <span>
+                  <strong>Assign on registration</strong>
+                  <small>Assign this role automatically to newly registered users.</small>
+                </span>
+                <input
+                  className="quizPopupCheckbox appearance-none rounded-[6px]! p-2.25! border-2 cursor-pointer checked:bg-(--accentOrange)! transition-colors relative checked:after:content-['✓'] checked:after:absolute checked:after:text-(--text1) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
+                  type="checkbox"
+                  checked={isDefault}
+                  onChange={(event) => setIsDefault(event.target.checked)}
+                />
+              </label>
+            </div>
+          ) : null}
         </div>
 
         {saveError ? (
@@ -486,7 +488,7 @@ export default function AccessAndRoles() {
     permissionsResponse?.success ? permissionsResponse.groups : [];
 
   const createRoleMutation = useMutation({
-    mutationFn: ({ name, permissions, position, isDefault }: { name: string; permissions: PermissionId[]; position: number; isDefault: boolean }) =>
+    mutationFn: ({ name, permissions, position }: { name: string; permissions: PermissionId[]; position: number }) =>
       fetchFn<{ success: boolean; role: ApiRole }>({
         route: "api/roles",
         options: {
@@ -495,7 +497,6 @@ export default function AccessAndRoles() {
           body: JSON.stringify({
             name,
             position,
-            is_default: isDefault,
             permissions: permissions.map((id) => ({ id, effect: "allow" as const })),
           }),
         },
@@ -702,7 +703,6 @@ export default function AccessAndRoles() {
               name,
               permissions: selectedPermissions,
               position: calculateRolePosition(selectedPermissions),
-              isDefault,
             });
             return;
           }
