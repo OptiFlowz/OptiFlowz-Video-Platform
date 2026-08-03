@@ -13467,13 +13467,19 @@ main.platformSettingsPage .platformSettingsShell{
 .roleActionsCell{gap:.55rem}
 .roleActionsCell button{display:grid;width:38px;height:38px;place-items:center;border-radius:var(--bR);background:var(--background2);cursor:pointer;transition:background-color 180ms ease,transform 180ms ease}
 .roleActionsCell button:hover{background:var(--background3);transform:translateY(-1px)}
+.roleActionsCell button:disabled{opacity:.45;cursor:not-allowed;transform:none}
 .roleActionsCell button.edit{background:var(--background2);color:var(--accentBlue2)}
 .roleActionsCell button.delete{position:relative;background:var(--background2);color:var(--accentRed3)}
 .roleActionsCell button.delete::before{content:"";position:absolute;inset:0;border-radius:inherit;background:var(--accentRed);opacity:.22;transition:opacity 180ms ease}
 .roleActionsCell button.delete:hover::before{opacity:.3}
 .roleActionsCell button.delete svg{position:relative;z-index:1}
 .roleActionsCell svg{width:19px;height:19px;stroke:currentColor;stroke-width:1;stroke-linecap:round;stroke-linejoin:round}
+.rolesTableState{display:flex;align-items:center;justify-content:center;gap:.65rem;min-height:112px;color:var(--text2);font-size:.84rem}
+.rolesTableState.errorBanner{flex-direction:column;align-items:flex-start}
+.rolesTableState.errorBanner p{margin:0}
+.rolesTableState.errorBanner button{width:auto;min-height:34px;margin:0;padding:.4rem .8rem;border-radius:var(--bR);background:var(--accentBlue);color:var(--seeThroughtWhite);cursor:pointer}
 .rolesTotal{margin-top:auto}
+.rolesMutationError,.platformRoleMutationError{margin:0;padding:.65rem .8rem;border-radius:10px;background:var(--quizStatusBadChipBg);color:var(--quizStatusBadText);font-size:.8rem}
 .roleOverviewCard{gap:.5rem}
 .roleOverviewLayout{display:grid;grid-template-columns:minmax(190px,1fr) minmax(130px,.72fr);align-items:center;gap:.75rem;min-height:340px}
 .roleOverviewChart{position:relative;width:100%;aspect-ratio:1}
@@ -13531,16 +13537,27 @@ main.platformSettingsPage .platformSettingsShell{
 .platformPermissionsHeader{gap:.55rem}
 .platformPermissionsHeader button{min-height:34px;padding:.4rem .75rem;font-size:.8rem}
 .platformPermissionsHeader button svg{width:16px;height:16px;stroke-width:1}
+.platformPermissionsHeader button:disabled{opacity:.55;cursor:not-allowed}
 .platformPermissionList{gap:.5rem}
+.platformPermissionGroup{display:flex;flex-direction:column;gap:.45rem}
+.platformPermissionGroup+.platformPermissionGroup{margin-top:.25rem}
+.platformPermissionGroup>h4{margin:0;color:var(--accentBlue2);font-size:.78rem;font-weight:600;letter-spacing:.02em}
+.platformPermissionGroup>div{display:flex;flex-direction:column;gap:.5rem}
+.platformPermissionState{display:flex;align-items:center;justify-content:center;gap:.65rem;min-height:96px;color:var(--text2);font-size:.84rem}
+.platformPermissionState.errorBanner{flex-direction:column;align-items:flex-start}
+.platformPermissionState.errorBanner p{margin:0}
+.platformPermissionState.errorBanner button{width:auto;min-height:34px;margin:0;padding:.4rem .8rem;border-radius:var(--bR);background:var(--accentBlue);color:var(--seeThroughtWhite);cursor:pointer}
 .platformPermissionItem{grid-template-columns:44px minmax(0,1fr) 24px;gap:.75rem;min-height:64px;padding:.55rem .75rem;border-radius:12px}
 .platformPermissionIcon{width:44px;height:44px;border-radius:10px}
 .platformPermissionIcon svg{width:29px;height:29px}
+.platformPermissionIcon svg path{stroke:currentColor}
 .platformPermissionText strong{font-size:.9rem}
 .platformPermissionText small{font-size:.75rem}
 .platformPermissionItem .quizPopupCheckbox{width:18px;height:18px;min-width:18px;min-height:18px;justify-self:center;border-color:var(--border3);background-color:var(--background2);flex-shrink:0}
 .platformPermissionItem .quizPopupCheckbox:hover,.platformPermissionItem .quizPopupCheckbox:focus-visible{border-color:var(--accentOrange)}
 .platformRolePopupActions{gap:.65rem;padding-top:1rem}
 .platformRolePopupActions button{display:inline-flex;align-items:center;justify-content:center;width:auto;min-width:116px;height:46px;margin:0;padding:0 1.25rem;border:0;border-radius:var(--bR);font:inherit;font-size:.86rem;font-weight:500;cursor:pointer}
+.platformRolePopupActions button:disabled{opacity:.6;cursor:not-allowed}
 .platformRoleCancelButton{background:var(--background2);color:var(--text1)}
 .platformRoleSaveButton{background:var(--accentBlue);color:var(--seeThroughtWhite)}
 .platformRoleCancelButton:hover{background:var(--background3)}
