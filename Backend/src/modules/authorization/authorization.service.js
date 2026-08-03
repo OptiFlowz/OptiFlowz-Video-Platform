@@ -23,6 +23,7 @@ export async function loadAuthorization(userId,database = writePool) {
   const { rows: permissionRows } = await database.query(
     `
       SELECT
+        p.id,
         p.key,
         bool_or(rp.effect = 'allow') AS has_allow,
         bool_or(rp.effect = 'deny') AS has_deny
@@ -36,18 +37,21 @@ export async function loadAuthorization(userId,database = writePool) {
           ur.expires_at IS NULL
           OR ur.expires_at > now()
         )
-      GROUP BY p.key
+      GROUP BY p.id, p.key
     `,
     [userId],
   );
 
   const permissions = new Map();
+  const allowedPermissionIds = new Set();
 
   for (const row of permissionRows) {
-    permissions.set(
-      row.key,
-      row.has_deny ? 'deny' : row.has_allow ? 'allow' : null,
-    );
+    const effect = row.has_deny ? 'deny' : row.has_allow ? 'allow' : null;
+    permissions.set(row.key, effect);
+
+    if (effect === 'allow') {
+      allowedPermissionIds.add(String(row.id));
+    }
   }
 
   return {
@@ -60,6 +64,7 @@ export async function loadAuthorization(userId,database = writePool) {
         ? Math.min(...roleRows.map((role) => role.position))
         : Number.MAX_SAFE_INTEGER,
     permissions,
+    allowedPermissionIds,
   };
 }
 
