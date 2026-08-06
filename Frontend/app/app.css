@@ -790,109 +790,206 @@ header nav a:hover{
   text-decoration: none;
 }
 
-.adminAvatarLanguageSelect {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.9rem;
-  position: relative;
-  padding: 0.8rem 0.95rem;
-  border-radius: 10px;
-  color: var(--text1);
-  font-weight: 600;
-  cursor: pointer;
+.customLanguageSelect {
+	position: relative;
+	min-width: 0;
+	color: var(--text1);
 }
 
-.adminAvatarLanguageText {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: 0.15rem;
+.customLanguageTrigger {
+	display: flex;
+	width: 100%;
+	min-width: 0;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.9rem;
+	border: 1px solid transparent;
+	background: transparent;
+	color: inherit;
+	text-align: left;
+	cursor: pointer;
+	transition: background-color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
 }
 
-.adminAvatarLanguageText strong {
-  font-size: 1rem;
-  line-height: 1.2;
+.customLanguageText {
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+	gap: 0.15rem;
 }
 
-.adminAvatarLanguageText small {
-  overflow: hidden;
-  color: color-mix(in srgb, var(--text1) 72%, transparent);
-  font-size: 0.88rem;
-  font-weight: 600;
-  line-height: 1.2;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.customLanguageText strong {
+	font-size: 1rem;
+	font-weight: 600;
+	line-height: 1.2;
 }
 
-.adminAvatarLanguageChevron {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text1);
-  pointer-events: none;
-  transform: rotate(90deg);
+.customLanguageText small {
+	overflow: hidden;
+	color: color-mix(in srgb, var(--text1) 72%, transparent);
+	font-size: 0.88rem;
+	font-weight: 600;
+	line-height: 1.2;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
-.adminAvatarLanguageChevron svg {
-  display: block;
-  width: 0.55rem;
-  height: 0.9rem;
+.customLanguageValue {
+	overflow: hidden;
+	font-weight: 600;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
-.adminAvatarLanguageChevron svg path {
-  stroke: currentColor;
+.customLanguageChevron {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	color: var(--text1);
+	pointer-events: none;
+	transform: rotate(90deg);
+	transition: transform 0.18s ease;
 }
 
-.adminAvatarLanguageSelect select {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  appearance: none;
-  -webkit-appearance: none;
-  background: transparent;
-  color: var(--text1);
-  color-scheme: dark;
-  opacity: 0;
-  cursor: pointer;
+.customLanguageSelect.isOpen .customLanguageChevron {
+	transform: rotate(-90deg);
 }
 
-.adminAvatarLanguageSelect select option,
-.mobileLanguageSelect select option {
-  background-color: var(--background1);
-  color: var(--text1);
+.customLanguageChevron svg {
+	display: block;
+	width: 0.55rem;
+	height: 0.9rem;
 }
 
-.mobileLanguageSelect {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.9rem;
-  position: relative;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
-  color: var(--text1);
-  cursor: pointer;
-  transition: background-color 0.15s ease-in-out;
+.customLanguageChevron svg path {
+	stroke: currentColor;
 }
 
-.mobileLanguageSelect:hover {
-  background: var(--background2);
+.customLanguageMenu {
+	position: absolute;
+	top: calc(100% + 8px);
+	right: 0;
+	z-index: 120;
+	width: max(100%, 220px);
+	padding: 0.4rem;
+	overflow: hidden;
+	border: 1px solid var(--border1);
+	border-radius: 14px;
+	background: var(--background1);
+	box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+	animation: languageMenuIn 0.16s ease-out;
 }
 
-.mobileLanguageSelect select {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  appearance: none;
-  -webkit-appearance: none;
-  background: transparent;
-  color: var(--text1);
-  color-scheme: dark;
-  opacity: 0;
-  cursor: pointer;
+.customLanguageMenuScroll {
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	scrollbar-width: thin;
+	scrollbar-color: var(--accentBlue2) transparent;
+	-webkit-overflow-scrolling: touch;
+}
+
+.customLanguageMenuScroll::-webkit-scrollbar {
+	width: 5px;
+}
+
+.customLanguageMenuScroll::-webkit-scrollbar-track {
+	margin-block: 8px;
+	background: transparent;
+}
+
+.customLanguageMenuScroll::-webkit-scrollbar-thumb {
+	min-height: 32px;
+	border-radius: var(--bR);
+	background: var(--accentBlue2);
+}
+
+.customLanguageMenuScroll::-webkit-scrollbar-thumb:hover {
+	background: var(--accentBlue3);
+}
+
+.customLanguageMenuScroll::-webkit-scrollbar-button {
+	display: none;
+}
+
+.customLanguageMenu.opensUpward {
+	top: auto;
+	bottom: calc(100% + 8px);
+}
+
+.customLanguageMenu .customLanguageOption {
+	display: flex;
+	width: 100%;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	padding: 0.65rem 0.75rem;
+	border: 0;
+	border-radius: 9px;
+	background: transparent;
+	color: var(--text1);
+	font-size: 0.92rem;
+	font-weight: 500;
+	line-height: 1.25;
+	text-align: left;
+	cursor: pointer;
+	transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.customLanguageMenu .customLanguageOption:hover,
+.customLanguageMenu .customLanguageOption:focus-visible {
+	outline: none;
+	background: var(--background2);
+}
+
+.customLanguageMenu .customLanguageOption.isSelected {
+	background: color-mix(in srgb, var(--accentBlue2) 11%, var(--background1));
+	color: var(--accentBlue2);
+	font-weight: 700;
+}
+
+.customLanguageOption svg {
+	width: 1rem;
+	height: 1rem;
+	flex: 0 0 auto;
+	fill: none;
+	stroke: currentColor;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	stroke-width: 2.2;
+}
+
+.customLanguageSelect--menu .customLanguageTrigger {
+	padding: 0.8rem 0.95rem;
+	border-radius: 12px;
+}
+
+.customLanguageSelect--mobile .customLanguageTrigger {
+	padding: 0.75rem;
+	border-radius: 0.5rem;
+}
+
+.customLanguageSelect--menu .customLanguageTrigger:hover,
+.customLanguageSelect--mobile .customLanguageTrigger:hover {
+	background: var(--background2);
+}
+
+.customLanguageSelect--settings .customLanguageTrigger {
+	padding: 0.85rem;
+	border-radius: 12px;
+	background: var(--background1);
+	font-size: 0.95rem;
+}
+
+.customLanguageSelect--settings .customLanguageTrigger:hover {
+	border-color: color-mix(in srgb, var(--accentBlue2) 38%, transparent);
+}
+
+.customLanguageTrigger:focus-visible,
+.customLanguageSelect.isOpen .customLanguageTrigger {
+	outline: none;
+	border-color: var(--accentBlue2);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--accentBlue2) 16%, transparent);
 }
 
 .adminAvatarDropdown button {
@@ -907,7 +1004,6 @@ header nav a:hover{
 }
 
 .adminAvatarDropdown a:hover,
-.adminAvatarLanguageSelect:hover,
 .adminAvatarDropdown button:hover {
   background: rgba(255, 255, 255, 0.08);
 }
@@ -4918,13 +5014,9 @@ mux-player::part(menu-item) {
   font-size: 0.92rem;
   line-height: 1.3;
 }
-.settingsPopup .settingsLanguageSelect {
+.settingsPopup .customLanguageSelect--settings {
   width: 100%;
   min-width: 0;
-  padding: 0.85rem;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 0.95rem;
 }
 @media screen and (max-width: 570px) {
   .settingsPopup .settingsRow {

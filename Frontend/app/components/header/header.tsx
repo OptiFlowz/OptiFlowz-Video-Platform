@@ -1,13 +1,14 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { Link, NavLink, useNavigate, useParams } from "react-router";
-import { ArrowSVG, SearchSVG, SearchSVGWhite, CloseSVG, MenuSVG, EditModeSVG } from "~/constants";
+import { SearchSVG, SearchSVGWhite, CloseSVG, MenuSVG, EditModeSVG } from "~/constants";
 import DefaultProfile from "../../../assets/DefaultProfile.webp";
 import { getToken } from "~/functions";
 import type { AuthFetchT } from "~/types";
-import { LANGUAGE_OPTIONS, useI18n, type Locale } from "~/i18n";
+import { useI18n } from "~/i18n";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchFn } from "~/API";
 import { LOGO, BRAND_NAME, MARKETING_WEBSITE_URL } from "~/changeables";
+import LanguageSelect from "~/components/languageSelect/languageSelect";
 
 function Header(){
     const { locale, setLocale, t } = useI18n();
@@ -246,30 +247,18 @@ function Header(){
                                     >
                                         {t("footerAccount")}
                                     </Link>
-                                    <label
-                                        className="adminAvatarLanguageSelect"
+                                    <div
                                         onMouseDown={(event) => event.stopPropagation()}
                                         onClick={(event) => event.stopPropagation()}
                                     >
-                                        <span className="adminAvatarLanguageText">
-                                            <strong>{t("accountLanguage")}</strong>
-                                            <small>
-                                                {LANGUAGE_OPTIONS.find((option) => option.value === locale)?.label}
-                                            </small>
-                                        </span>
-                                        <select
+                                        <LanguageSelect
                                             value={locale}
-                                            aria-label={t("accountLanguage")}
-                                            onChange={(event) => setLocale(event.target.value as Locale)}
-                                        >
-                                            {LANGUAGE_OPTIONS.map((option) => (
-                                                <option key={option.value} value={option.value}>
-                                                    {option.label}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <span className="adminAvatarLanguageChevron" aria-hidden="true">{ArrowSVG}</span>
-                                    </label>
+                                            onChange={setLocale}
+                                            ariaLabel={t("accountLanguage")}
+                                            label={t("accountLanguage")}
+                                            variant="menu"
+                                        />
+                                    </div>
                                     {isAdmin ? (
                                         <Link
                                             to="/my-videos"
@@ -467,26 +456,13 @@ function Header(){
                     >
                         {BRAND_NAME}
                     </Link>
-                    <label className="mobileLanguageSelect">
-                        <span className="adminAvatarLanguageText">
-                            <strong>{t("accountLanguage")}</strong>
-                            <small>
-                                {LANGUAGE_OPTIONS.find((option) => option.value === locale)?.label}
-                            </small>
-                        </span>
-                        <select
-                            value={locale}
-                            aria-label={t("accountLanguage")}
-                            onChange={(event) => setLocale(event.target.value as Locale)}
-                        >
-                            {LANGUAGE_OPTIONS.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
-                        <span className="adminAvatarLanguageChevron" aria-hidden="true">{ArrowSVG}</span>
-                    </label>
+                    <LanguageSelect
+                        value={locale}
+                        onChange={setLocale}
+                        ariaLabel={t("accountLanguage")}
+                        label={t("accountLanguage")}
+                        variant="mobile"
+                    />
                     <NavLink
                         to="/account"
                         end

@@ -1,7 +1,8 @@
 import { Link } from "react-router";
 import { CloseSVG } from "~/constants";
 import { getStoredUser } from "~/functions";
-import { LANGUAGE_OPTIONS, useI18n } from "~/i18n";
+import { useI18n } from "~/i18n";
+import LanguageSelect from "~/components/languageSelect/languageSelect";
 
 function SettingsPopup({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { locale, setLocale, t } = useI18n();
@@ -23,18 +24,12 @@ function SettingsPopup({ open, onClose }: { open: boolean; onClose: () => void }
               <strong>{t("accountLanguage")}</strong>
               <p>{t("accountLanguageHelp")}</p>
             </div>
-            <select
-              id="platformLanguage"
-              className="languageSelect settingsLanguageSelect"
+            <LanguageSelect
               value={locale}
-              onChange={(e) => setLocale(e.target.value as typeof locale)}
-            >
-              {LANGUAGE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              onChange={setLocale}
+              ariaLabel={t("accountLanguage")}
+              variant="settings"
+            />
           </div>
           <div className="settingsRow">
             <div className="settingsRowText">
