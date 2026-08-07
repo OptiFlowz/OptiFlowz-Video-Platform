@@ -10,6 +10,7 @@ import { ConfirmDialog } from "../confirmPopup/confirmDialog";
 import { useConfirm } from "../confirmPopup/useConfirm";
 import { AddSVG } from "~/constants";
 import { useI18n } from "~/i18n";
+import CustomSelect from "~/components/customSelect/customSelect";
 
 type SortColumn = "visibility" | "date" | "views" | "likes";
 type SortDirection = "asc" | "desc";
@@ -384,17 +385,14 @@ function MyVideos() {
           <div className="pagination">
             <span>
               <p>{t("adminRowsPerPage")}</p>
-              <select
+              <CustomSelect
                 name="rowsPerPage"
                 value={limit}
-                onChange={(e) => handleLimitChange(Number(e.target.value))}
-              >
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={30}>30</option>
-                <option value={40}>40</option>
-                <option value={50}>50</option>
-              </select>
+                onChange={(value) => handleLimitChange(Number(value))}
+                options={[10, 20, 30, 40, 50].map((item) => ({ value: item, label: String(item) }))}
+                ariaLabel={t("adminRowsPerPage")}
+                triggerClassName="paginationSelect"
+              />
             </span>
 
             <p>

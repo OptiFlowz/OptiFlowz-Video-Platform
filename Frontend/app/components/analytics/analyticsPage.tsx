@@ -27,6 +27,7 @@ import {
 } from "~/functions";
 import { useI18n } from "~/i18n";
 import DefaultThumbnail from "../../../assets/DefaultThumbnail.webp";
+import CustomSelect from "~/components/customSelect/customSelect";
 import GeographicBreakdownSection, {
   type GeographicBreakdown,
 } from "./geographicBreakdown";
@@ -874,21 +875,22 @@ function Analytics() {
           </div>
 
           <div className="videoAnalyticsFilters" aria-label={t("videoAnalyticsFilters")}>
-            <label className="videoAnalyticsSelect">
-              {FilterSVG}
-              <select
+            <div className="videoAnalyticsSelect">
+              <CustomSelect
+                leadingContent={FilterSVG}
                 value={range}
-                onChange={(event) => setRange(event.target.value as AnalyticsRange)}
-                aria-label={t("analyticsRange")}
-              >
-                <option value="last7">{t("analyticsLast7Days")}</option>
-                <option value="last30">{t("analyticsLast30Days")}</option>
-                <option value="last90">{t("analyticsLast90Days")}</option>
-                <option value="last365">{t("analyticsLast365Days")}</option>
-                <option value="all">{t("analyticsAllTime")}</option>
-                <option value="custom">{t("analyticsCustom")}</option>
-              </select>
-            </label>
+                onChange={(value) => setRange(value as AnalyticsRange)}
+                ariaLabel={t("analyticsRange")}
+                options={[
+                  { value: "last7", label: t("analyticsLast7Days") },
+                  { value: "last30", label: t("analyticsLast30Days") },
+                  { value: "last90", label: t("analyticsLast90Days") },
+                  { value: "last365", label: t("analyticsLast365Days") },
+                  { value: "all", label: t("analyticsAllTime") },
+                  { value: "custom", label: t("analyticsCustom") },
+                ]}
+              />
+            </div>
             {range === "custom" && (
               <>
                 <label className="videoAnalyticsDateField">
@@ -921,18 +923,19 @@ function Analytics() {
                 </label>
               </>
             )}
-            <label className="videoAnalyticsSelect">
-              {FilterSVG}
-              <select
+            <div className="videoAnalyticsSelect">
+              <CustomSelect
+                leadingContent={FilterSVG}
                 value={groupBy}
-                onChange={(event) => setGroupBy(event.target.value as AnalyticsGroupBy)}
-                aria-label={t("analyticsGroupBy")}
-              >
-                <option value="day">{t("analyticsDay")}</option>
-                <option value="week">{t("analyticsWeek")}</option>
-                <option value="month">{t("analyticsMonth")}</option>
-              </select>
-            </label>
+                onChange={(value) => setGroupBy(value as AnalyticsGroupBy)}
+                ariaLabel={t("analyticsGroupBy")}
+                options={[
+                  { value: "day", label: t("analyticsDay") },
+                  { value: "week", label: t("analyticsWeek") },
+                  { value: "month", label: t("analyticsMonth") },
+                ]}
+              />
+            </div>
           </div>
 
           <section className="videoAnalyticsOverview">

@@ -10,6 +10,7 @@ import CreatePersonPopup, { type CreatePersonPayload } from "./createPersonPopup
 import { useI18n } from "~/i18n";
 import { ConfirmDialog } from "../confirmPopup/confirmDialog";
 import { useConfirm } from "../confirmPopup/useConfirm";
+import CustomSelect from "~/components/customSelect/customSelect";
 
 type PersonRecord = {
   id: string;
@@ -481,9 +482,15 @@ function SpeakersChairsPage() {
           <div className="pagination">
             <span>
               <p>{t("adminRowsPerPage")}</p>
-              <select name="rowsPerPage" value={PEOPLE_PER_PAGE} disabled>
-                <option value={PEOPLE_PER_PAGE}>{PEOPLE_PER_PAGE}</option>
-              </select>
+              <CustomSelect
+                name="rowsPerPage"
+                value={PEOPLE_PER_PAGE}
+                options={[{ value: PEOPLE_PER_PAGE, label: String(PEOPLE_PER_PAGE) }]}
+                onChange={() => undefined}
+                ariaLabel={t("adminRowsPerPage")}
+                triggerClassName="paginationSelect"
+                disabled
+              />
             </span>
 
             <p>

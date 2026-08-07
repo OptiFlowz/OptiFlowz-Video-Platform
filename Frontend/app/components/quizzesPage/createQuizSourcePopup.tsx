@@ -9,6 +9,7 @@ import type {
   QuizQuestionSourceType,
   SourceDraftValues,
 } from "./quizTypes";
+import CustomSelect from "~/components/customSelect/customSelect";
 
 type Props = {
   open: boolean;
@@ -414,21 +415,15 @@ function CreateQuizSourcePopup({
             <div className="quizPopupGrid">
               <div className="formGroup">
                 <label htmlFor="quizSourceType">{t("quizSourceType")}</label>
-                <select
+                <CustomSelect
                   id="quizSourceType"
                   value={sourceType}
-                  onChange={(event) =>
-                    handleSourceTypeChange(event.target.value as QuizQuestionSourceType)
-                  }
+                  onChange={(value) => handleSourceTypeChange(value as QuizQuestionSourceType)}
                   disabled={isSubmitting}
-                  className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
-                >
-                  {sourceTypeOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  options={sourceTypeOptions}
+                  ariaLabel={t("quizSourceType")}
+                  triggerClassName="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
+                />
               </div>
 
               <div className="formGroup">

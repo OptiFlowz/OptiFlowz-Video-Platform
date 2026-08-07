@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useI18n } from "~/i18n";
 import type { AnswerReviewMode, CreateQuizPayload, ScoringMode } from "./quizTypes";
+import CustomSelect from "~/components/customSelect/customSelect";
 
 type Props = {
   open: boolean;
@@ -316,33 +317,35 @@ function CreateQuizPopup({
 
               <div className="formGroup">
                 <label htmlFor="quizAnswerReviewMode">{t("quizAnswerReviewMode")}</label>
-                <select
+                <CustomSelect
                   id="quizAnswerReviewMode"
                   value={answerReviewMode}
-                  onChange={(event) =>
-                    setAnswerReviewMode(normalizeAnswerReviewMode(event.target.value))
-                  }
+                  onChange={(value) => setAnswerReviewMode(normalizeAnswerReviewMode(value))}
                   disabled={isSubmitting}
-                  className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
-                >
-                  <option value="immediate">{t("quizReviewImmediate")}</option>
-                  <option value="at_end">{t("quizReviewAtEnd")}</option>
-                  <option value="assignment">{t("quizReviewAssignment")}</option>
-                </select>
+                  options={[
+                    { value: "immediate", label: t("quizReviewImmediate") },
+                    { value: "at_end", label: t("quizReviewAtEnd") },
+                    { value: "assignment", label: t("quizReviewAssignment") },
+                  ]}
+                  ariaLabel={t("quizAnswerReviewMode")}
+                  triggerClassName="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
+                />
               </div>
 
               <div className="formGroup">
                 <label htmlFor="quizScoring">{t("quizScoring")}</label>
-                <select
+                <CustomSelect
                   id="quizScoring"
                   value={scoring}
-                  onChange={(event) => setScoring(normalizeScoringMode(event.target.value))}
+                  onChange={(value) => setScoring(normalizeScoringMode(value))}
                   disabled={isSubmitting}
-                  className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
-                >
-                  <option value="strict">{t("quizScoringStrict")}</option>
-                  <option value="partial">{t("quizScoringPartial")}</option>
-                </select>
+                  options={[
+                    { value: "strict", label: t("quizScoringStrict") },
+                    { value: "partial", label: t("quizScoringPartial") },
+                  ]}
+                  ariaLabel={t("quizScoring")}
+                  triggerClassName="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
+                />
               </div>
             </div>
 

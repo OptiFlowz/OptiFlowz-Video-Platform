@@ -23,6 +23,7 @@ import {
 import Sidebar from "../myVideosPage/sidebar/sidebar";
 import { useConstrainedSticky } from "../shared/useConstrainedSticky";
 import { useI18n } from "~/i18n";
+import CustomSelect from "~/components/customSelect/customSelect";
 
 interface Contributor {
   id: string;
@@ -1760,19 +1761,18 @@ function UploadPage() {
               <div className="formGroup mt-2">
                 <label htmlFor="captionLanguage">{t("spokenLanguage")}</label>
                 <div className="captionsInputRow">
-                  <select
+                  <CustomSelect
                     id="captionLanguage"
                     value={captionLanguage}
-                    onChange={(e) => setCaptionLanguage(e.target.value)}
-                    className={`languageSelect ${isUploaded ? "disabled" : ""}`}
+                    onChange={setCaptionLanguage}
+                    options={EUROPEAN_LANGUAGES.map((lang) => ({
+                      value: lang.code,
+                      label: `${lang.name} - ${lang.code}`,
+                    }))}
+                    ariaLabel={t("spokenLanguage")}
+                    triggerClassName={`languageSelect ${isUploaded ? "disabled" : ""}`}
                     disabled={isUploaded}
-                  >
-                    {EUROPEAN_LANGUAGES.map((lang) => (
-                      <option key={lang.code} value={lang.code}>
-                        {lang.name} - {lang.code}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
               </div>
             </div>
@@ -1798,26 +1798,23 @@ function UploadPage() {
                       Captions
                       <div className="flex items-center gap-2">
                         <div className="captionsInputRow">
-                          <select
+                          <CustomSelect
                             id="captionLanguageStep2"
                             value={captionLanguage}
-                            onChange={(e) =>
-                              handleCaptionLanguageChange(e.target.value)
-                            }
-                            className="languageSelect"
+                            onChange={handleCaptionLanguageChange}
+                            options={EUROPEAN_LANGUAGES.map((lang) => ({
+                              value: lang.code,
+                              label: `${lang.name} - ${lang.code}`,
+                            }))}
+                            ariaLabel={t("spokenLanguage")}
+                            triggerClassName="languageSelect"
                             disabled={
                               captionStatus === "loading" ||
                               captionStatus === "generating" ||
                               isSavingCaptions ||
                               isDeletingCaptions
                             }
-                          >
-                            {EUROPEAN_LANGUAGES.map((lang) => (
-                              <option key={lang.code} value={lang.code}>
-                                {lang.name} - {lang.code}
-                              </option>
-                            ))}
-                          </select>
+                          />
                         </div>
                         {captionStatus === "not_available" && (
                           <button
@@ -2363,17 +2360,17 @@ function UploadPage() {
 
                   <div className="formGroup editSection">
                     <label htmlFor="videoVisibility">{t("visibility")}</label>
-                    <select
+                    <CustomSelect
                       id="videoVisibility"
                       value={visibility}
-                      onChange={(e) =>
-                        setVisibility(e.target.value as "public" | "private")
-                      }
-                      className="visibilitySelect"
-                    >
-                      <option value="public">{t("adminPublic")}</option>
-                      <option value="private">{t("adminPrivate")}</option>
-                    </select>
+                      onChange={(value) => setVisibility(value as "public" | "private")}
+                      options={[
+                        { value: "public", label: t("adminPublic") },
+                        { value: "private", label: t("adminPrivate") },
+                      ]}
+                      ariaLabel={t("visibility")}
+                      triggerClassName="visibilitySelect"
+                    />
                     <p className="formHint">
                       {visibility === "public"
                         ? "Anyone can view this video."

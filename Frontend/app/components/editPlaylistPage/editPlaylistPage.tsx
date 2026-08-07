@@ -22,6 +22,7 @@ import Sidebar from "../myVideosPage/sidebar/sidebar";
 import DefaultThumbnail from "../../../assets/DefaultThumbnail.webp";
 import { useConstrainedSticky } from "~/components/shared/useConstrainedSticky";
 import { useI18n } from "~/i18n";
+import CustomSelect from "~/components/customSelect/customSelect";
 
 function reorderPlaylistVideos(
   videos: PlaylistVideoT[],
@@ -935,17 +936,17 @@ function EditPlaylistPage() {
 
                   <div className="formGroup mt-7.5 mb-5">
                     <label htmlFor="playlistStatus">{t("visibility")}</label>
-                    <select
+                    <CustomSelect
                       id="playlistStatus"
                       value={status}
-                      onChange={(e) =>
-                        setStatus(e.target.value as "public" | "private")
-                      }
-                      className="visibilitySelect"
-                    >
-                      <option value="public">{t("adminPublic")}</option>
-                      <option value="private">{t("adminPrivate")}</option>
-                    </select>
+                      onChange={(value) => setStatus(value as "public" | "private")}
+                      options={[
+                        { value: "public", label: t("adminPublic") },
+                        { value: "private", label: t("adminPrivate") },
+                      ]}
+                      ariaLabel={t("visibility")}
+                      triggerClassName="visibilitySelect"
+                    />
                     <p className="formHint">
                       {status === "public"
                         ? t("publicVisibilityHelp")
@@ -955,15 +956,17 @@ function EditPlaylistPage() {
 
                   <div className="formGroup mt-7.5 mb-5">
                     <label htmlFor="playlistFeatured">{t("featured")}</label>
-                    <select
+                    <CustomSelect
                       id="playlistFeatured"
                       value={featured ? "true" : "false"}
-                      onChange={(e) => setFeatured(e.target.value === "true")}
-                      className="visibilitySelect"
-                    >
-                      <option value="false">No</option>
-                      <option value="true">{t("adminYes")}</option>
-                    </select>
+                      onChange={(value) => setFeatured(value === "true")}
+                      options={[
+                        { value: "false", label: "No" },
+                        { value: "true", label: t("adminYes") },
+                      ]}
+                      ariaLabel={t("featured")}
+                      triggerClassName="visibilitySelect"
+                    />
                     <p className="formHint">
                       Featured playlists can be highlighted in the app.
                     </p>

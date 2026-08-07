@@ -790,25 +790,32 @@ header nav a:hover{
   text-decoration: none;
 }
 
-.customLanguageSelect {
+.customSelect {
 	position: relative;
 	min-width: 0;
 	color: var(--text1);
 }
 
-.customLanguageTrigger {
+.customSelectTrigger {
 	display: flex;
 	width: 100%;
 	min-width: 0;
 	align-items: center;
 	justify-content: space-between;
-	gap: 0.9rem;
+	gap: 0.65rem;
 	border: 1px solid transparent;
-	background: transparent;
+	padding: 0.65rem 0.7rem 0.65rem 0.8rem;
+	border-radius: 12px;
+	background: var(--background1);
 	color: inherit;
 	text-align: left;
 	cursor: pointer;
 	transition: background-color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.customSelectTrigger:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
 }
 
 .customLanguageText {
@@ -834,39 +841,51 @@ header nav a:hover{
 	white-space: nowrap;
 }
 
-.customLanguageValue {
+.customSelectValue {
 	overflow: hidden;
 	font-weight: 600;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 
-.customLanguageChevron {
+.customSelectLeading {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+}
+
+.customSelectChevron {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	flex: 0 0 auto;
 	color: var(--text1);
 	pointer-events: none;
-	transform: rotate(90deg);
+	transform: rotate(0deg);
 	transition: transform 0.18s ease;
 }
 
-.customLanguageSelect.isOpen .customLanguageChevron {
-	transform: rotate(-90deg);
+.customSelect.isOpen .customSelectChevron {
+	transform: rotate(180deg);
 }
 
-.customLanguageChevron svg {
+.customSelectChevron svg {
 	display: block;
-	width: 0.55rem;
-	height: 0.9rem;
+	width: 1rem;
+	height: 1rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	stroke-width: 1.65;
 }
 
-.customLanguageChevron svg path {
+.customSelectChevron svg path {
 	stroke: currentColor;
 }
 
-.customLanguageMenu {
+.customSelectMenu {
 	position: absolute;
 	top: calc(100% + 8px);
 	right: 0;
@@ -881,7 +900,7 @@ header nav a:hover{
 	animation: languageMenuIn 0.16s ease-out;
 }
 
-.customLanguageMenuScroll {
+.customSelectMenuScroll {
 	overflow-y: auto;
 	overscroll-behavior: contain;
 	scrollbar-width: thin;
@@ -889,35 +908,35 @@ header nav a:hover{
 	-webkit-overflow-scrolling: touch;
 }
 
-.customLanguageMenuScroll::-webkit-scrollbar {
+.customSelectMenuScroll::-webkit-scrollbar {
 	width: 5px;
 }
 
-.customLanguageMenuScroll::-webkit-scrollbar-track {
+.customSelectMenuScroll::-webkit-scrollbar-track {
 	margin-block: 8px;
 	background: transparent;
 }
 
-.customLanguageMenuScroll::-webkit-scrollbar-thumb {
+.customSelectMenuScroll::-webkit-scrollbar-thumb {
 	min-height: 32px;
 	border-radius: var(--bR);
 	background: var(--accentBlue2);
 }
 
-.customLanguageMenuScroll::-webkit-scrollbar-thumb:hover {
+.customSelectMenuScroll::-webkit-scrollbar-thumb:hover {
 	background: var(--accentBlue3);
 }
 
-.customLanguageMenuScroll::-webkit-scrollbar-button {
+.customSelectMenuScroll::-webkit-scrollbar-button {
 	display: none;
 }
 
-.customLanguageMenu.opensUpward {
+.customSelectMenu.opensUpward {
 	top: auto;
 	bottom: calc(100% + 8px);
 }
 
-.customLanguageMenu .customLanguageOption {
+.customSelectMenu .customSelectOption {
 	display: flex;
 	width: 100%;
 	align-items: center;
@@ -936,19 +955,24 @@ header nav a:hover{
 	transition: background-color 0.12s ease, color 0.12s ease;
 }
 
-.customLanguageMenu .customLanguageOption:hover,
-.customLanguageMenu .customLanguageOption:focus-visible {
+.customSelectMenu .customSelectOption:hover,
+.customSelectMenu .customSelectOption:focus-visible {
 	outline: none;
 	background: var(--background2);
 }
 
-.customLanguageMenu .customLanguageOption.isSelected {
+.customSelectMenu .customSelectOption.isSelected {
 	background: color-mix(in srgb, var(--accentBlue2) 11%, var(--background1));
-	color: var(--accentBlue2);
+	color: var(--text1);
 	font-weight: 700;
 }
 
-.customLanguageOption svg {
+.customSelectMenu .customSelectOption.isSelected:hover,
+.customSelectMenu .customSelectOption.isSelected:focus-visible {
+	background: color-mix(in srgb, var(--accentBlue2) 16%, var(--background1));
+}
+
+.customSelectOption svg {
 	width: 1rem;
 	height: 1rem;
 	flex: 0 0 auto;
@@ -985,8 +1009,8 @@ header nav a:hover{
 	border-color: color-mix(in srgb, var(--accentBlue2) 38%, transparent);
 }
 
-.customLanguageTrigger:focus-visible,
-.customLanguageSelect.isOpen .customLanguageTrigger {
+.customSelectTrigger:focus-visible,
+.customSelect.isOpen .customSelectTrigger {
 	outline: none;
 	border-color: var(--accentBlue2);
 	box-shadow: 0 0 0 3px color-mix(in srgb, var(--accentBlue2) 16%, transparent);
@@ -3709,7 +3733,7 @@ mux-player::part(menu-item) {
 }
 
 .videoQuizPage .videoQuizOption:disabled,
-.videoQuizPage .videoQuizSelect select:disabled {
+.videoQuizPage .videoQuizSelect .customSelectTrigger:disabled {
   cursor: not-allowed;
   opacity: 0.76;
 }
@@ -3782,7 +3806,7 @@ mux-player::part(menu-item) {
   flex-shrink: 0;
 }
 
-.videoQuizPage .videoQuizSelect select {
+.videoQuizPage .videoQuizSelect .customSelectTrigger {
   width: 100%;
   min-height: 48px;
   padding: 0 46px 0 16px;
@@ -7039,7 +7063,7 @@ main.uploadMain .links a:hover {
 }
 
 input.disabled,
-select.disabled {
+.languageSelect.disabled {
   opacity: 0.6;
   cursor: not-allowed;
   background-color: var(--gray-100, #f3f4f6);
@@ -7261,16 +7285,17 @@ select.disabled {
   font-size: 0.82rem;
 }
 
-.quizPopupForm select {
+.quizPopupForm .customSelectTrigger {
   min-height: 52px;
   line-height: 1.35;
-  -webkit-appearance: none;
-  appearance: none;
-  padding-right: 3rem !important;
-  background-image: url("data:image/svg+xml,%3Csvg width='18' height='18' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5' stroke='%23d5dce8' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 1rem center;
-  background-size: 18px 18px;
+  border-color: transparent;
+  background: var(--background2);
+}
+
+.quizPopupForm .customSelectTrigger:focus-visible,
+.quizPopupForm .customSelect.isOpen .customSelectTrigger {
+  border-color: transparent;
+  box-shadow: none;
 }
 
 .quizPopupGrid {
@@ -8440,7 +8465,7 @@ main.myVideos .pagination span{
   justify-content: center;
   gap: 5px;
 }
-main.myVideos .pagination span select{
+main.myVideos .pagination span .paginationSelect{
   background-color: var(--background2);
   border: 1px solid var(--border1);
   padding: 4px;
@@ -8741,7 +8766,7 @@ main.myVideos .pagination > p{
   border-radius: 12px;
   background: transparent;
 }
-main.myVideos .pagination span select{
+main.myVideos .pagination span .paginationSelect{
   padding: 0.4rem 0.5rem;
   border-radius: 8px;
 }
@@ -8954,7 +8979,7 @@ main.videoAnalyticsPage .videoAnalyticsSelect{
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.42rem 0.55rem 0.42rem 0.72rem;
+  padding: 0;
   font-weight: 500;
   cursor: pointer;
 }
@@ -8969,10 +8994,10 @@ main.videoAnalyticsPage .videoAnalyticsSelect svg path{
   stroke: var(--text1);
 }
 
-main.videoAnalyticsPage .videoAnalyticsSelect select{
-  width: auto;
+main.videoAnalyticsPage .videoAnalyticsSelect .customSelectTrigger{
+  width: 100%;
   min-width: 0;
-  padding: 0.18rem 1.7rem 0.18rem 0.3rem;
+  padding: 0.6rem 0.7rem;
   border: 0;
   outline: 0;
   background-color: transparent;
@@ -8982,9 +9007,10 @@ main.videoAnalyticsPage .videoAnalyticsSelect select{
   color-scheme: dark;
 }
 
-main.videoAnalyticsPage .videoAnalyticsSelect select option{
-  background-color: var(--background1);
-  color: var(--text1);
+main.videoAnalyticsPage .videoAnalyticsSelect .customSelectTrigger:focus-visible,
+main.videoAnalyticsPage .videoAnalyticsSelect .customSelect.isOpen .customSelectTrigger{
+  border-color: transparent;
+  box-shadow: none;
 }
 
 main.videoAnalyticsPage .videoAnalyticsDateField{

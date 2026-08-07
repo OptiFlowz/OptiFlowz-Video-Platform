@@ -9,6 +9,7 @@ import type {
   QuizRuleType,
   RuleDraftValues,
 } from "./quizTypes";
+import CustomSelect from "~/components/customSelect/customSelect";
 
 type Props = {
   open: boolean;
@@ -295,19 +296,15 @@ function CreateQuizRulePopup({
             <div className="quizPopupGrid">
               <div className="formGroup">
                 <label htmlFor="quizRuleType">{t("quizRuleType")}</label>
-                <select
+                <CustomSelect
                   id="quizRuleType"
                   value={ruleType}
-                  onChange={(event) => setRuleType(event.target.value as QuizRuleType)}
+                  onChange={(value) => setRuleType(value as QuizRuleType)}
                   disabled={isSubmitting}
-                  className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
-                >
-                  {ruleTypeOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  options={ruleTypeOptions}
+                  ariaLabel={t("quizRuleType")}
+                  triggerClassName="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
+                />
               </div>
 
               {ruleType === "video_watch_percentage" ? (

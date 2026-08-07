@@ -5,6 +5,7 @@ import { fetchFn } from "~/API";
 import { ArrowSVG, CloseSVG, IconChevron, QuizSVG } from "~/constants";
 import { appendFromQuizParam, formatDescription, getToken, QUIZ_RETURN_PATH_STORAGE_KEY } from "~/functions";
 import { useI18n } from "~/i18n";
+import CustomSelect from "~/components/customSelect/customSelect";
 
 type TranslateFn = ReturnType<typeof useI18n>["t"];
 
@@ -1656,23 +1657,21 @@ function VideoQuizPage() {
                 <strong>{pair.label}</strong>
               </span>
 
-              <label className="videoQuizSelect">
-                <select
+              <div className="videoQuizSelect">
+                <CustomSelect
                   value={selectedMap[pair.id] ?? ""}
                   disabled={shouldLockCurrentAnswer || savingQuestionId === currentQuestion.id}
-                  onChange={(event) =>
-                    handleMatchSelect(currentQuestion.id, pair.id, event.target.value)
-                  }
-                >
-                  <option value="">{t("quizChooseAnswer")}</option>
-                  {currentQuestion.choices.map((choice) => (
-                    <option key={choice.id} value={choice.id}>
-                      {choice.label}
-                    </option>
-                  ))}
-                </select>
-                <IconChevron className="videoQuizSelectChevron" />
-              </label>
+                  onChange={(value) => handleMatchSelect(currentQuestion.id, pair.id, value)}
+                  options={[
+                    { value: "", label: t("quizChooseAnswer") },
+                    ...currentQuestion.choices.map((choice) => ({
+                      value: choice.id,
+                      label: choice.label,
+                    })),
+                  ]}
+                  ariaLabel={`${pair.label}: ${t("quizChooseAnswer")}`}
+                />
+              </div>
             </div>
           ))}
         </div>

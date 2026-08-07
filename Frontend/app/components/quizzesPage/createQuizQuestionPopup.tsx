@@ -11,6 +11,7 @@ import type {
   QuestionDraftValues,
   QuestionType,
 } from "./quizTypes";
+import CustomSelect from "~/components/customSelect/customSelect";
 
 type Props = {
   open: boolean;
@@ -488,19 +489,15 @@ function CreateQuizQuestionPopup({
             <div className="quizPopupGrid">
               <div className="formGroup">
                 <label htmlFor="quizQuestionType">{t("quizQuestionType")}</label>
-                <select
+                <CustomSelect
                   id="quizQuestionType"
                   value={questionType}
-                  onChange={(event) => setQuestionType(event.target.value as QuestionType)}
+                  onChange={(value) => setQuestionType(value as QuestionType)}
                   disabled={isSubmitting}
-                  className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
-                >
-                  {questionTypeOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  options={questionTypeOptions}
+                  ariaLabel={t("quizQuestionType")}
+                  triggerClassName="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
+                />
               </div>
 
               <div className="formGroup">
