@@ -897,7 +897,26 @@ header nav a:hover{
 	border-radius: 14px;
 	background: var(--background1);
 	box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
-	animation: languageMenuIn 0.16s ease-out;
+	opacity: 0;
+	pointer-events: none;
+	transform: translateY(-7px) scale(0.975);
+	transform-origin: top right;
+	visibility: hidden;
+	transition:
+		opacity 160ms ease,
+		transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+		visibility 0s linear 220ms;
+}
+
+.customSelect.isOpen .customSelectMenu {
+	opacity: 1;
+	pointer-events: auto;
+	transform: translateY(0) scale(1);
+	visibility: visible;
+	transition:
+		opacity 190ms ease,
+		transform 260ms cubic-bezier(0.16, 1, 0.3, 1),
+		visibility 0s linear 0s;
 }
 
 .customSelectMenuScroll {
@@ -934,6 +953,18 @@ header nav a:hover{
 .customSelectMenu.opensUpward {
 	top: auto;
 	bottom: calc(100% + 8px);
+	transform: translateY(7px) scale(0.975);
+	transform-origin: bottom right;
+}
+
+.customSelect.isOpen .customSelectMenu.opensUpward {
+	transform: translateY(0) scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.customSelectMenu {
+		transition: none;
+	}
 }
 
 .customSelectMenu .customSelectOption {

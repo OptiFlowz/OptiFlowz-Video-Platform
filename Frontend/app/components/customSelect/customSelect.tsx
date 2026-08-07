@@ -154,8 +154,10 @@ function CustomSelect({
         </span>
       </button>
 
-      {open ? (
-        <div className={`customSelectMenu ${openUpward ? "opensUpward" : ""}`}>
+      <div
+        className={`customSelectMenu ${openUpward ? "opensUpward" : ""}`}
+        aria-hidden={!open}
+      >
           <div
             id={listboxId}
             className="customSelectMenuScroll"
@@ -174,6 +176,7 @@ function CustomSelect({
                   type="button"
                   role="option"
                   aria-selected={selected}
+                  tabIndex={open && !option.disabled ? 0 : -1}
                   disabled={option.disabled}
                   className={`customSelectOption ${selected ? "isSelected" : ""}`}
                   onClick={() => selectOption(option)}
@@ -216,7 +219,6 @@ function CustomSelect({
             })}
           </div>
         </div>
-      ) : null}
     </div>
   );
 }
