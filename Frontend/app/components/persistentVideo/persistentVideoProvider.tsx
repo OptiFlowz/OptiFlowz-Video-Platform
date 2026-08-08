@@ -1,0 +1,284 @@
+"use client";
+
+import { usePathname, useRouter } from "next/navigation";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import type { VideoT } from "~/types";
+import VideoPlayer from "~/components/playPage/playerCollection/muxPlayer";
+
+type PlayerSession = {
+  video: VideoT;
+  startTimeOverride?: number | null;
+  forceAutoplay?: boolean;
+  returnHref: string;
+};
+
+type PlayerRect = {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+};
+
+type PersistentVideoContextValue = {
+  activate: (session: PlayerSession) => void;
+  setAnchor: (element: HTMLDivElement | null) => void;
+};
+
+const PersistentVideoContext = createContext<PersistentVideoContextValue | null>(null);
+
+function getVideoPath(videoId: string) {
+  return `/video/${videoId}`;
+}
+
+export function usePersistentVideo() {
+  const context = useContext(PersistentVideoContext);
+
+  if (!context) {
+    throw new Error("usePersistentVideo must be used inside PersistentVideoProvider");
+  }
+
+  return context;
+}
+
+export default function PersistentVideoProvider({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [session, setSession] = useState<PlayerSession | null>(null);
+  const [anchor, setAnchorState] = useState<HTMLDivElement | null>(null);
+  const [anchorRect, setAnchorRect] = useState<PlayerRect | null>(null);
+  const [isMiniOpen, setIsMiniOpen] = useState(false);
+  const sessionRef = useRef<PlayerSession | null>(null);
+  const isPlayingRef = useRef(false);
+  const previousPathnameRef = useRef(pathname);
+
+  const setAnchor = useCallback((element: HTMLDivElement | null) => {
+    setAnchorState(element);
+    if (!element) setAnchorRect(null);
+  }, []);
+
+  const activate = useCallback((nextSession: PlayerSession) => {
+    const current = sessionRef.current;
+    const isNewVideo =
+      current?.video.id !== nextSession.video.id ||
+      current?.video.mux_playback_id !== nextSession.video.mux_playback_id;
+
+    if (isNewVideo) {
+      isPlayingRef.current = false;
+      setIsMiniOpen(false);
+    }
+
+    sessionRef.current = nextSession;
+    setSession(nextSession);
+  }, []);
+
+  const updateAnchorRect = useCallback(() => {
+    if (!anchor) {
+      setAnchorRect(null);
+      return;
+    }
+
+    const rect = anchor.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) {
+      setAnchorRect(null);
+      return;
+    }
+
+    setAnchorRect((current) => {
+      const next = {
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        height: rect.height,
+      };
+
+      if (
+        current &&
+        Math.abs(current.top - next.top) < 0.5 &&
+        Math.abs(current.left - next.left) < 0.5 &&
+        Math.abs(current.width - next.width) < 0.5 &&
+        Math.abs(current.height - next.height) < 0.5
+      ) {
+        return current;
+      }
+
+      return next;
+    });
+  }, [anchor]);
+
+  useLayoutEffect(() => {
+    if (!anchor) return;
+
+    let frame = 0;
+    const scheduleUpdate = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(updateAnchorRect);
+    };
+
+    scheduleUpdate();
+    const observer = new ResizeObserver(scheduleUpdate);
+    observer.observe(anchor);
+    window.addEventListener("resize", scheduleUpdate);
+    window.addEventListener("scroll", scheduleUpdate, true);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener("resize", scheduleUpdate);
+      window.removeEventListener("scroll", scheduleUpdate, true);
+    };
+  }, [anchor, updateAnchorRect]);
+
+  useEffect(() => {
+    if (!session) {
+      previousPathnameRef.current = pathname;
+      return;
+    }
+
+    const activeVideoPath = getVideoPath(session.video.id);
+    const previousPathname = previousPathnameRef.current;
+    const isOnActiveVideo = pathname === activeVideoPath;
+    const wasOnActiveVideo = previousPathname === activeVideoPath;
+    const openedAnotherVideo = pathname.startsWith("/video/") && !isOnActiveVideo;
+
+    if (openedAnotherVideo) {
+      sessionRef.current = null;
+      isPlayingRef.current = false;
+      setSession(null);
+      setIsMiniOpen(false);
+    } else if (isOnActiveVideo) {
+      setIsMiniOpen(false);
+    } else if (wasOnActiveVideo) {
+      if (isPlayingRef.current) {
+        setIsMiniOpen(true);
+      } else {
+        sessionRef.current = null;
+        setSession(null);
+      }
+    }
+
+    previousPathnameRef.current = pathname;
+  }, [pathname, session]);
+
+  const handlePlayingChange = useCallback((playing: boolean) => {
+    isPlayingRef.current = playing;
+  }, []);
+
+  const closeMiniPlayer = useCallback(() => {
+    sessionRef.current = null;
+    isPlayingRef.current = false;
+    setSession(null);
+    setIsMiniOpen(false);
+  }, []);
+
+  const expandMiniPlayer = useCallback(() => {
+    if (!sessionRef.current) return;
+    setIsMiniOpen(false);
+    router.push(sessionRef.current.returnHref);
+  }, [router]);
+
+  const activeVideoPath = session ? getVideoPath(session.video.id) : null;
+  const showFullPlayer = Boolean(
+    session && activeVideoPath === pathname && anchor && anchorRect,
+  );
+  const showMiniPlayer = Boolean(session && activeVideoPath !== pathname && isMiniOpen);
+  const isVisible = showFullPlayer || showMiniPlayer;
+
+  const contextValue = useMemo(
+    () => ({ activate, setAnchor }),
+    [activate, setAnchor],
+  );
+
+  return (
+    <PersistentVideoContext.Provider value={contextValue}>
+      {children}
+
+      {session ? (
+        <aside
+          className={`persistent-video-player ${showMiniPlayer ? "persistent-video-player--mini" : "persistent-video-player--full"} ${isVisible ? "is-visible" : ""}`}
+          style={
+            showFullPlayer && anchorRect
+              ? {
+                  top: anchorRect.top,
+                  left: anchorRect.left,
+                  width: anchorRect.width,
+                  height: anchorRect.height,
+                }
+              : undefined
+          }
+          aria-label={showMiniPlayer ? `Now playing: ${session.video.title}` : undefined}
+          aria-hidden={!isVisible}
+        >
+          {showMiniPlayer ? (
+            <div className="persistent-video-player__actions">
+              <button
+                type="button"
+                className="persistent-video-player__action"
+                onClick={expandMiniPlayer}
+                aria-label="Open full video"
+                title="Open full video"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M21 16v5h-5" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className="persistent-video-player__action"
+                onClick={closeMiniPlayer}
+                aria-label="Close mini player"
+                title="Close mini player"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m6 6 12 12M18 6 6 18" />
+                </svg>
+              </button>
+            </div>
+          ) : null}
+
+          <div className="persistent-video-player__media">
+            <VideoPlayer
+              key={session.video.view?.view_id ?? session.video.id ?? session.video.mux_playback_id}
+              playbackId={session.video.mux_playback_id}
+              currentTimee={
+                session.startTimeOverride != null
+                  ? session.startTimeOverride
+                  : session.video.percentage_watched < 95
+                    ? session.video.progress_seconds
+                    : 0
+              }
+              videoId={session.video.id}
+              videoTitle={session.video.title}
+              view_id={session.video.view?.view_id}
+              last_seq={session.video.view?.last_seq}
+              chapters={session.video.chapters}
+              forceAutoplay={session.forceAutoplay}
+              onPlayingChange={handlePlayingChange}
+            />
+          </div>
+
+          {showMiniPlayer ? (
+            <button
+              type="button"
+              className="persistent-video-player__details"
+              onClick={expandMiniPlayer}
+              aria-label={`Open ${session.video.title}`}
+            >
+              <strong>{session.video.title}</strong>
+              <span>{session.video.uploader_name}</span>
+            </button>
+          ) : null}
+        </aside>
+      ) : null}
+    </PersistentVideoContext.Provider>
+  );
+}

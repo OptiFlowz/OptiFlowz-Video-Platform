@@ -26,6 +26,7 @@ interface VideoPlayerProps {
   last_seq?: number;
   chapters: ChapterT[];
   onProgressSaved?: (seconds: number) => void;
+  onPlayingChange?: (isPlaying: boolean) => void;
   forceAutoplay?: boolean;
 }
 
@@ -44,6 +45,7 @@ export default function VideoPlayer({
   last_seq,
   chapters,
   onProgressSaved,
+  onPlayingChange,
   forceAutoplay = false,
 }: VideoPlayerProps) {
   const playerRef = useRef<MuxPlayerElement | null>(null);
@@ -392,15 +394,22 @@ export default function VideoPlayer({
 
   const handlePlay = useCallback(() => {
     hbIsPlayingRef.current = true;
+    onPlayingChange?.(true);
     void sendHeartbeat(true, true); // force odmah
     startHeartbeat();               // interval radi samo u play-u
-  }, [sendHeartbeat, startHeartbeat]);
+  }, [onPlayingChange, sendHeartbeat, startHeartbeat]);
 
   const handlePause = useCallback(() => {
     hbIsPlayingRef.current = false;
+    onPlayingChange?.(false);
     stopHeartbeat();                // PREKINI interval da ne šalje false non-stop
     void sendHeartbeat(false, true); // pošalji false samo jednom
-  }, [sendHeartbeat, stopHeartbeat]);
+  }, [onPlayingChange, sendHeartbeat, stopHeartbeat]);
+
+  const handleEnded = useCallback(() => {
+    onPlayingChange?.(false);
+    playNextVideoIfAutoPlayOn();
+  }, [onPlayingChange]);
 
   // Pošalji progress pri unmount (ako ima novog)
   useEffect(() => {
@@ -444,7 +453,7 @@ export default function VideoPlayer({
           onTimeUpdate={handleTimeUpdate}
           ref={playerRef as any}
           onPlay={handlePlay}
-          onEnded={playNextVideoIfAutoPlayOn}
+          onEnded={handleEnded}
           onPause={handlePause}
           style={{
             border: "none",

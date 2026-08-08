@@ -1,6 +1,6 @@
 import type { VideoT } from "~/types";
-import { useEffect, useMemo } from "react";
-import VideoPlayer from "./muxPlayer";
+import { useCallback, useEffect, useMemo } from "react";
+import { usePersistentVideo } from "~/components/persistentVideo/persistentVideoProvider";
 
 function PlayerCollection({
   props,
@@ -12,6 +12,14 @@ function PlayerCollection({
   forceAutoplay?: boolean;
 }) {
   const streamUrl = props?.mux_playback_id;
+  const { activate, setAnchor } = usePersistentVideo();
+
+  const anchorRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      setAnchor(element);
+    },
+    [setAnchor],
+  );
 
   const speakers = useMemo(() => {
     // Pokušaj iz people (najčešće speaker-i)
@@ -54,10 +62,21 @@ function PlayerCollection({
     }
   }, [props?.title, speakers, artworkUrl]);
 
+  useEffect(() => {
+    if (!props || !streamUrl) return;
+
+    activate({
+      video: props,
+      startTimeOverride,
+      forceAutoplay,
+      returnHref: `${window.location.pathname}${window.location.search}`,
+    });
+  }, [activate, forceAutoplay, props, startTimeOverride, streamUrl]);
+
   return (
-    <div className={`player ${props?.class ?? ""}`}>
+    <div ref={anchorRef} className={`player ${props?.class ?? ""}`}>
       {!streamUrl ? (
-        <div id="playerCanvas" style={{ height: "100%" }}>
+        <div className="persistent-video-slot" style={{ height: "100%" }}>
           <div className="player-skeleton" aria-hidden="true">
             <div className="player-skeleton__controls">
               <span className="player-skeleton__chip player-skeleton__chip--wide"></span>
@@ -66,25 +85,7 @@ function PlayerCollection({
             </div>
           </div>
         </div>
-      ) : (
-      <VideoPlayer
-        key={props?.view?.view_id ?? props?.id ?? streamUrl}
-        playbackId={streamUrl}
-        currentTimee={
-          startTimeOverride != null
-            ? startTimeOverride
-            : props?.percentage_watched < 95
-              ? props?.progress_seconds
-              : 0
-        }
-        videoId={props?.id}
-        videoTitle={props?.title}
-        view_id={props?.view?.view_id}
-        last_seq={props?.view?.last_seq}
-        chapters={props?.chapters}
-        forceAutoplay={forceAutoplay}
-      />
-      )}
+      ) : <div className="persistent-video-slot" aria-hidden="true" />}
     </div>
   );
 }
