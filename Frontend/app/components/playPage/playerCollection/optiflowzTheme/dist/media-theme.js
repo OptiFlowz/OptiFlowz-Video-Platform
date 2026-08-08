@@ -24,6 +24,10 @@ if (template) {
         --media-object-fit: contain;
       }
 
+      :host([compact]) media-theater-mode-button {
+        display: none !important;
+      }
+
       @media (max-width: 500px) {
         :host([compact]) media-controller {
           pointer-events: none;
