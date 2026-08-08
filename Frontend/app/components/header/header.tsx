@@ -152,7 +152,7 @@ function Header(){
     }
 
     return <>
-        <header className={`fixed w-full px-4 max-[800px]:pr-1.5 z-10 duration-300 ${searchOpen ? "search-open-mobile" : ""}`}>
+        <header data-app-header className={`fixed w-full px-4 max-[800px]:pr-1.5 z-10 duration-300 ${searchOpen ? "search-open-mobile" : ""}`}>
             <div className="max-w-(--contentWidth) py-3 flex justify-between items-center mx-auto relative">
                 {/* Logo - Klikabilan */}
                 <Link to="/" className="logo flex gap-3 items-center cursor-pointer hover:opacity-80 transition-opacity">

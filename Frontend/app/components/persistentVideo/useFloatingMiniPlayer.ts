@@ -10,8 +10,8 @@ import {
 
 type Position = { x: number; y: number };
 type Velocity = { x: number; y: number };
-type HorizontalSnap = "left" | "center" | "right";
-type VerticalSnap = "top" | "center" | "bottom";
+type HorizontalSnap = "left" | "right";
+type VerticalSnap = "top" | "bottom";
 type SnapPoint = { horizontal: HorizontalSnap; vertical: VerticalSnap };
 
 type FloatingLayout = {
@@ -37,8 +37,8 @@ type DragState = {
 };
 
 const DEFAULT_SNAP: SnapPoint = { horizontal: "right", vertical: "bottom" };
-const HORIZONTAL_SNAPS: HorizontalSnap[] = ["left", "center", "right"];
-const VERTICAL_SNAPS: VerticalSnap[] = ["top", "center", "bottom"];
+const HORIZONTAL_SNAPS: HorizontalSnap[] = ["left", "right"];
+const VERTICAL_SNAPS: VerticalSnap[] = ["top", "bottom"];
 
 function numberFromStyle(value: string) {
   const parsed = Number.parseFloat(value);
@@ -66,6 +66,26 @@ function getVisibleChatRect() {
   }
 
   return rect;
+}
+
+function getVisibleHeaderBottom() {
+  const header = document.querySelector<HTMLElement>("[data-app-header]");
+  if (!header) return 0;
+
+  const style = window.getComputedStyle(header);
+  const rect = header.getBoundingClientRect();
+  if (
+    style.display === "none" ||
+    style.visibility === "hidden" ||
+    Number(style.opacity) === 0 ||
+    rect.width <= 0 ||
+    rect.height <= 0 ||
+    rect.bottom <= 0
+  ) {
+    return 0;
+  }
+
+  return rect.bottom;
 }
 
 export function useFloatingMiniPlayer(active: boolean) {
@@ -111,7 +131,8 @@ export function useFloatingMiniPlayer(active: boolean) {
     const gap = isMobile ? 10 : 24;
     const chatRect = getVisibleChatRect();
     const minX = safeLeft + gap;
-    const minY = safeTop + gap;
+    const headerBottom = getVisibleHeaderBottom();
+    const minY = Math.max(safeTop + gap, headerBottom + gap);
     const maxX = window.innerWidth - safeRight - gap - playerRect.width;
     let maxY = window.innerHeight - safeBottom - gap - playerRect.height;
 
@@ -137,19 +158,10 @@ export function useFloatingMiniPlayer(active: boolean) {
     (snapPoint: SnapPoint, layout = getLayout()): Position | null => {
       if (!layout) return null;
 
-      const horizontalPositions: Record<HorizontalSnap, number> = {
-        left: layout.minX,
-        center: (layout.minX + layout.maxX) / 2,
-        right: layout.maxX,
-      };
-      const verticalPositions: Record<VerticalSnap, number> = {
-        top: layout.minY,
-        center: (layout.minY + layout.maxY) / 2,
-        bottom: layout.maxY,
-      };
-
-      const x = horizontalPositions[snapPoint.horizontal];
-      let y = verticalPositions[snapPoint.vertical];
+      // Explicit comparisons also make Fast Refresh recover safely if it kept
+      // an older in-memory "center" snap from the previous implementation.
+      const x = snapPoint.horizontal === "left" ? layout.minX : layout.maxX;
+      let y = snapPoint.vertical === "top" ? layout.minY : layout.maxY;
 
       // Keep a desktop bottom snap from covering the chat button when their
       // horizontal areas overlap. Mobile already uses a raised maxY above.
@@ -225,8 +237,8 @@ export function useFloatingMiniPlayer(active: boolean) {
       const current = positionRef.current;
       if (!layout || !current) return;
 
-      // Project the release trajectory before selecting a snap point. A fast
-      // flick can therefore cross the centre and land on the opposite edge.
+      // Project the release trajectory before selecting one of the four
+      // corners. A fast flick can therefore land on the opposite corner.
       const projected = {
         x: current.x + velocity.x * 0.22,
         y: current.y + velocity.y * 0.22,
@@ -363,6 +375,8 @@ export function useFloatingMiniPlayer(active: boolean) {
     const resizeObserver = new ResizeObserver(scheduleReposition);
     if (miniPlayerRef.current) resizeObserver.observe(miniPlayerRef.current);
     if (safeAreaRef.current) resizeObserver.observe(safeAreaRef.current);
+    const appHeader = document.querySelector<HTMLElement>("[data-app-header]");
+    if (appHeader) resizeObserver.observe(appHeader);
     window.addEventListener("resize", scheduleReposition);
 
     // The chat widget is injected asynchronously, so periodically re-check its
