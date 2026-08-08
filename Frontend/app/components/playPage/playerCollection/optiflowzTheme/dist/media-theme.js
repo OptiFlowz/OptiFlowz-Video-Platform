@@ -24,6 +24,16 @@ if (template) {
         --media-object-fit: contain;
       }
 
+      @media (max-width: 500px) {
+        :host([compact]) media-controller {
+          pointer-events: none;
+        }
+
+        :host([compact]) media-controller > :not([slot='media']):not([slot='poster']) {
+          display: none !important;
+        }
+      }
+
       .displayNone{
         display: none !important;
       }

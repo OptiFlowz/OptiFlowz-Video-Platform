@@ -27,6 +27,8 @@ interface VideoPlayerProps {
   chapters: ChapterT[];
   onProgressSaved?: (seconds: number) => void;
   onPlayingChange?: (isPlaying: boolean) => void;
+  onPlayerElement?: (player: MuxPlayerElement | null) => void;
+  compactControls?: boolean;
   forceAutoplay?: boolean;
 }
 
@@ -46,9 +48,16 @@ export default function VideoPlayer({
   chapters,
   onProgressSaved,
   onPlayingChange,
+  onPlayerElement,
+  compactControls = false,
   forceAutoplay = false,
 }: VideoPlayerProps) {
   const playerRef = useRef<MuxPlayerElement | null>(null);
+
+  const setPlayerRef = useCallback((player: MuxPlayerElement | null) => {
+    playerRef.current = player;
+    onPlayerElement?.(player);
+  }, [onPlayerElement]);
 
   // ---------------------------
   // METADATA / INITIAL SEEK
@@ -438,6 +447,7 @@ export default function VideoPlayer({
           themeProps={{
             videotitlee: videoTitle,
             chapterLenght: chapters?.length || 0,
+            compact: compactControls,
           }}
           onLoadedMetadata={() => {
             styleMuxPlayerCaptions(playerRef.current);
@@ -451,7 +461,7 @@ export default function VideoPlayer({
           accentColor={accentColor}
           volume={0.1}
           onTimeUpdate={handleTimeUpdate}
-          ref={playerRef as any}
+          ref={setPlayerRef as any}
           onPlay={handlePlay}
           onEnded={handleEnded}
           onPause={handlePause}

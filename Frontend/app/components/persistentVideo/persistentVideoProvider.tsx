@@ -14,6 +14,8 @@ import {
 } from "react";
 import type { VideoT } from "~/types";
 import VideoPlayer from "~/components/playPage/playerCollection/muxPlayer";
+import type MuxPlayerElement from "@mux/mux-player";
+import { useFloatingMiniPlayer } from "./useFloatingMiniPlayer";
 
 type PlayerSession = {
   video: VideoT;
@@ -56,9 +58,11 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
   const [session, setSession] = useState<PlayerSession | null>(null);
   const [anchor, setAnchorState] = useState<HTMLDivElement | null>(null);
   const [anchorRect, setAnchorRect] = useState<PlayerRect | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [isMiniOpen, setIsMiniOpen] = useState(false);
   const sessionRef = useRef<PlayerSession | null>(null);
   const isPlayingRef = useRef(false);
+  const playerElementRef = useRef<MuxPlayerElement | null>(null);
   const previousPathnameRef = useRef(pathname);
 
   const setAnchor = useCallback((element: HTMLDivElement | null) => {
@@ -74,6 +78,7 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
 
     if (isNewVideo) {
       isPlayingRef.current = false;
+      setIsPlaying(false);
       setIsMiniOpen(false);
     }
 
@@ -154,6 +159,7 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
       sessionRef.current = null;
       isPlayingRef.current = false;
       setSession(null);
+      setIsPlaying(false);
       setIsMiniOpen(false);
     } else if (isOnActiveVideo) {
       setIsMiniOpen(false);
@@ -171,12 +177,19 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
 
   const handlePlayingChange = useCallback((playing: boolean) => {
     isPlayingRef.current = playing;
+    setIsPlaying(playing);
+  }, []);
+
+  const handlePlayerElement = useCallback((player: MuxPlayerElement | null) => {
+    playerElementRef.current = player;
   }, []);
 
   const closeMiniPlayer = useCallback(() => {
+    playerElementRef.current?.pause();
     sessionRef.current = null;
     isPlayingRef.current = false;
     setSession(null);
+    setIsPlaying(false);
     setIsMiniOpen(false);
   }, []);
 
@@ -186,12 +199,24 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
     router.push(sessionRef.current.returnHref);
   }, [router]);
 
+  const toggleMiniPlayback = useCallback(() => {
+    const player = playerElementRef.current;
+    if (!player) return;
+
+    if (player.paused) {
+      void player.play().catch(() => {});
+    } else {
+      player.pause();
+    }
+  }, []);
+
   const activeVideoPath = session ? getVideoPath(session.video.id) : null;
   const showFullPlayer = Boolean(
     session && activeVideoPath === pathname && anchor && anchorRect,
   );
   const showMiniPlayer = Boolean(session && activeVideoPath !== pathname && isMiniOpen);
   const isVisible = showFullPlayer || showMiniPlayer;
+  const floatingPlayer = useFloatingMiniPlayer(showMiniPlayer);
 
   const contextValue = useMemo(
     () => ({ activate, setAnchor }),
@@ -202,9 +227,12 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
     <PersistentVideoContext.Provider value={contextValue}>
       {children}
 
+      <div ref={floatingPlayer.safeAreaRef} className="persistent-video-safe-area" aria-hidden="true" />
+
       {session ? (
         <aside
-          className={`persistent-video-player ${showMiniPlayer ? "persistent-video-player--mini" : "persistent-video-player--full"} ${isVisible ? "is-visible" : ""}`}
+          ref={floatingPlayer.miniPlayerRef}
+          className={`persistent-video-player ${showMiniPlayer ? "persistent-video-player--mini" : "persistent-video-player--full"} ${isVisible ? "is-visible" : ""} ${floatingPlayer.isDragging ? "is-dragging" : ""}`}
           style={
             showFullPlayer && anchorRect
               ? {
@@ -213,6 +241,13 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
                   width: anchorRect.width,
                   height: anchorRect.height,
                 }
+              : showMiniPlayer && floatingPlayer.position
+                ? {
+                    top: floatingPlayer.position.y,
+                    left: floatingPlayer.position.x,
+                    right: "auto",
+                    bottom: "auto",
+                  }
               : undefined
           }
           aria-label={showMiniPlayer ? `Now playing: ${session.video.title}` : undefined}
@@ -245,6 +280,34 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
             </div>
           ) : null}
 
+          {showMiniPlayer ? (
+            <div
+              className="persistent-video-player__drag-surface"
+              {...floatingPlayer.dragSurfaceProps}
+              aria-hidden="true"
+            />
+          ) : null}
+
+          {showMiniPlayer ? (
+            <button
+              type="button"
+              className="persistent-video-player__mobile-toggle"
+              onClick={toggleMiniPlayback}
+              aria-label={isPlaying ? "Pause video" : "Play video"}
+              title={isPlaying ? "Pause video" : "Play video"}
+            >
+              {isPlaying ? (
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M8 5v14M16 5v14" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path className="fill" d="m9 6 9 6-9 6Z" />
+                </svg>
+              )}
+            </button>
+          ) : null}
+
           <div className="persistent-video-player__media">
             <VideoPlayer
               key={session.video.view?.view_id ?? session.video.id ?? session.video.mux_playback_id}
@@ -263,6 +326,8 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
               chapters={session.video.chapters}
               forceAutoplay={session.forceAutoplay}
               onPlayingChange={handlePlayingChange}
+              onPlayerElement={handlePlayerElement}
+              compactControls={showMiniPlayer}
             />
           </div>
 
