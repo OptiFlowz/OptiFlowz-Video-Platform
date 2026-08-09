@@ -64,10 +64,12 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
   const [anchorRect, setAnchorRect] = useState<PlayerRect | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMiniOpen, setIsMiniOpen] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const sessionRef = useRef<PlayerSession | null>(null);
   const isPlayingRef = useRef(false);
   const playerElementRef = useRef<MuxPlayerElement | null>(null);
   const previousPathnameRef = useRef(pathname);
+  const closeTimerRef = useRef<number | null>(null);
 
   const setAnchor = useCallback((element: HTMLDivElement | null) => {
     setAnchorState(element);
@@ -75,6 +77,12 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
   }, []);
 
   const activate = useCallback((nextSession: PlayerSession) => {
+    if (closeTimerRef.current !== null) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    setIsClosing(false);
+
     const current = sessionRef.current;
     const isNewVideo =
       current?.video.id !== nextSession.video.id ||
@@ -188,12 +196,28 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
   }, []);
 
   const closeMiniPlayer = useCallback(() => {
+    if (isClosing) return;
+
     playerElementRef.current?.pause();
-    sessionRef.current = null;
     isPlayingRef.current = false;
-    setSession(null);
     setIsPlaying(false);
-    setIsMiniOpen(false);
+    setIsClosing(true);
+
+    closeTimerRef.current = window.setTimeout(() => {
+      sessionRef.current = null;
+      setSession(null);
+      setIsMiniOpen(false);
+      setIsClosing(false);
+      closeTimerRef.current = null;
+    }, 190);
+  }, [isClosing]);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current !== null) {
+        window.clearTimeout(closeTimerRef.current);
+      }
+    };
   }, []);
 
   const expandMiniPlayer = useCallback(() => {
@@ -244,6 +268,11 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
     () => ({ activate, setAnchor }),
     [activate, setAnchor],
   );
+  const miniPlayerByline =
+    session?.video.people
+      ?.map((person) => person.name?.trim())
+      .filter(Boolean)
+      .join(", ") || session?.video.uploader_name;
 
   return (
     <PersistentVideoContext.Provider value={contextValue}>
@@ -254,7 +283,7 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
       {session ? (
         <aside
           ref={floatingPlayer.miniPlayerRef}
-          className={`persistent-video-player ${showMiniPlayer ? "persistent-video-player--mini" : "persistent-video-player--full"} ${isVisible ? "is-visible" : ""} ${floatingPlayer.isDragging ? "is-dragging" : ""} ${isMorphing ? "is-morphing" : ""}`}
+          className={`persistent-video-player ${showMiniPlayer ? "persistent-video-player--mini" : "persistent-video-player--full"} ${isVisible ? "is-visible" : ""} ${floatingPlayer.isDragging ? "is-dragging" : ""} ${isMorphing ? "is-morphing" : ""} ${isClosing ? "is-closing" : ""}`}
           style={
             showFullPlayer && anchorRect
               ? {
@@ -361,7 +390,7 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
               aria-label={`Open ${session.video.title}`}
             >
               <strong>{session.video.title}</strong>
-              <span>{session.video.uploader_name}</span>
+              <span>{miniPlayerByline}</span>
             </button>
           ) : null}
         </aside>

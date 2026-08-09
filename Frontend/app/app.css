@@ -1981,7 +1981,7 @@ main.play .player.theater .persistent-video-slot {
   flex-direction: column;
   overflow: hidden;
   border-radius: 1rem;
-  background: #000;
+  background: var(--background1);
   opacity: 0;
   pointer-events: none;
   visibility: hidden;
@@ -2006,17 +2006,27 @@ main.play .player.theater .persistent-video-slot {
   /* Above page content, but below the header and its menus/drawers. */
   z-index: 9;
   width: min(400px, calc(100vw - 32px));
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid var(--border1);
   border-radius: 14px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 20px 60px var(--seethroughtBlack);
   user-select: none;
   -webkit-user-select: none;
   touch-action: none;
-  transition: opacity 160ms ease, box-shadow 160ms ease;
+  transition:
+    opacity 180ms ease,
+    transform 180ms cubic-bezier(0.4, 0, 1, 1),
+    box-shadow 160ms ease;
+}
+
+.persistent-video-player--mini.is-closing {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px) scale(0.94);
+  transform-origin: center;
 }
 
 .persistent-video-player--mini.is-dragging {
-  box-shadow: 0 28px 76px rgba(0, 0, 0, 0.68);
+  box-shadow: 0 28px 76px var(--seethroughtBlack);
 }
 
 .persistent-video-player.is-morphing {
@@ -2093,10 +2103,10 @@ main.play .player.theater .persistent-video-slot {
   width: 36px;
   height: 36px;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border1);
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.64);
-  color: #fff;
+  background: var(--playButtonBg1);
+  color: var(--seeThroughtWhite);
   cursor: pointer;
   pointer-events: auto;
   -webkit-backdrop-filter: blur(8px);
@@ -2105,7 +2115,7 @@ main.play .player.theater .persistent-video-slot {
 }
 
 .persistent-video-player__action:hover {
-  background: rgba(0, 0, 0, 0.86);
+  background: var(--background4);
   transform: scale(1.05);
 }
 
@@ -2125,9 +2135,9 @@ main.play .player.theater .persistent-video-slot {
   flex-direction: column;
   gap: 2px;
   padding: 12px 14px 13px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: #17191f;
-  color: #fff;
+  border-top: 1px solid var(--border1);
+  background: var(--background1);
+  color: var(--text1);
   text-align: left;
   cursor: pointer;
 }
@@ -2145,7 +2155,7 @@ main.play .player.theater .persistent-video-slot {
 }
 
 .persistent-video-player__details span {
-  color: rgba(255, 255, 255, 0.62);
+  color: var(--text2);
   font-size: 0.8rem;
 }
 
@@ -2198,7 +2208,7 @@ main.play .player.theater .persistent-video-slot {
     width: 32px;
     height: 32px;
     border: 0;
-    background: rgba(0, 0, 0, 0.42);
+    background: var(--playButtonBg1);
   }
 
   .persistent-video-player__mobile-toggle {
@@ -2212,8 +2222,8 @@ main.play .player.theater .persistent-video-slot {
     place-items: center;
     border: 0;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.5);
-    color: #fff;
+    background: var(--playButtonBg1);
+    color: var(--seeThroughtWhite);
     cursor: pointer;
     transform: translate(-50%, -50%);
     -webkit-backdrop-filter: blur(6px);
