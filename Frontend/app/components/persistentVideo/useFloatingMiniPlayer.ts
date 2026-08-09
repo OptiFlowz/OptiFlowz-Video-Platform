@@ -97,6 +97,7 @@ export function useFloatingMiniPlayer(active: boolean) {
   const animationFrameRef = useRef(0);
   const [position, setPosition] = useState<Position | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isPositionReady, setIsPositionReady] = useState(false);
 
   const updatePosition = useCallback((next: Position) => {
     positionRef.current = next;
@@ -117,8 +118,12 @@ export function useFloatingMiniPlayer(active: boolean) {
     const player = miniPlayerRef.current;
     if (!player) return null;
 
-    const playerRect = player.getBoundingClientRect();
-    if (playerRect.width <= 0 || playerRect.height <= 0) return null;
+    // Transforms from the full ↔ mini FLIP animation affect the bounding rect.
+    // Layout dimensions stay stable and must drive corner calculations, or the
+    // scaled player briefly appears too large and snaps via the screen center.
+    const playerWidth = player.offsetWidth;
+    const playerHeight = player.offsetHeight;
+    if (playerWidth <= 0 || playerHeight <= 0) return null;
 
     const safeStyle = safeAreaRef.current
       ? window.getComputedStyle(safeAreaRef.current)
@@ -133,17 +138,17 @@ export function useFloatingMiniPlayer(active: boolean) {
     const minX = safeLeft + gap;
     const headerBottom = getVisibleHeaderBottom();
     const minY = Math.max(safeTop + gap, headerBottom + gap);
-    const maxX = window.innerWidth - safeRight - gap - playerRect.width;
-    let maxY = window.innerHeight - safeBottom - gap - playerRect.height;
+    const maxX = window.innerWidth - safeRight - gap - playerWidth;
+    let maxY = window.innerHeight - safeBottom - gap - playerHeight;
 
     // On phones the player always stays above the floating chat affordance.
     if (isMobile && chatRect) {
-      maxY = Math.min(maxY, chatRect.top - playerRect.height - 12);
+      maxY = Math.min(maxY, chatRect.top - playerHeight - 12);
     }
 
     return {
-      width: playerRect.width,
-      height: playerRect.height,
+      width: playerWidth,
+      height: playerHeight,
       minX,
       maxX: Math.max(minX, maxX),
       minY,
@@ -356,6 +361,7 @@ export function useFloatingMiniPlayer(active: boolean) {
     if (!active) {
       dragRef.current = null;
       setIsDragging(false);
+      setIsPositionReady(false);
       stopAnimation();
       return;
     }
@@ -363,15 +369,28 @@ export function useFloatingMiniPlayer(active: boolean) {
     let scheduledFrame = 0;
     const reposition = () => {
       if (dragRef.current?.moved || animationFrameRef.current) return;
+      const player = miniPlayerRef.current;
+      if (player?.getAnimations().some((animation) => animation.playState === "running")) {
+        return;
+      }
       const target = resolveSnapPoint(snapPointRef.current);
-      if (target) updatePosition(target);
+      if (target) {
+        updatePosition(target);
+        setIsPositionReady(true);
+      }
     };
     const scheduleReposition = () => {
       cancelAnimationFrame(scheduledFrame);
       scheduledFrame = requestAnimationFrame(reposition);
     };
 
-    scheduleReposition();
+    const initialTarget = resolveSnapPoint(snapPointRef.current);
+    if (initialTarget) {
+      updatePosition(initialTarget);
+      setIsPositionReady(true);
+    } else {
+      scheduleReposition();
+    }
     const resizeObserver = new ResizeObserver(scheduleReposition);
     if (miniPlayerRef.current) resizeObserver.observe(miniPlayerRef.current);
     if (safeAreaRef.current) resizeObserver.observe(safeAreaRef.current);
@@ -396,6 +415,7 @@ export function useFloatingMiniPlayer(active: boolean) {
     miniPlayerRef,
     safeAreaRef,
     position,
+    isPositionReady,
     isDragging,
     dragSurfaceProps: {
       onPointerDown: handlePointerDown,

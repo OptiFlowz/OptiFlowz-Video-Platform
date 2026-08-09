@@ -16,6 +16,10 @@ import type { VideoT } from "~/types";
 import VideoPlayer from "~/components/playPage/playerCollection/muxPlayer";
 import type MuxPlayerElement from "@mux/mux-player";
 import { useFloatingMiniPlayer } from "./useFloatingMiniPlayer";
+import {
+  usePlayerMorphTransition,
+  type PersistentPlayerMode,
+} from "./usePlayerMorphTransition";
 
 type PlayerSession = {
   video: VideoT;
@@ -100,8 +104,8 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
 
     setAnchorRect((current) => {
       const next = {
-        top: rect.top,
-        left: rect.left,
+        top: rect.top + window.scrollY,
+        left: rect.left + window.scrollX,
         width: rect.width,
         height: rect.height,
       };
@@ -133,13 +137,11 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
     const observer = new ResizeObserver(scheduleUpdate);
     observer.observe(anchor);
     window.addEventListener("resize", scheduleUpdate);
-    window.addEventListener("scroll", scheduleUpdate, true);
 
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
       window.removeEventListener("resize", scheduleUpdate);
-      window.removeEventListener("scroll", scheduleUpdate, true);
     };
   }, [anchor, updateAnchorRect]);
 
@@ -161,7 +163,7 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
       setSession(null);
       setIsPlaying(false);
       setIsMiniOpen(false);
-    } else if (isOnActiveVideo) {
+    } else if (isOnActiveVideo && anchor && anchorRect) {
       setIsMiniOpen(false);
     } else if (wasOnActiveVideo) {
       if (isPlayingRef.current) {
@@ -173,7 +175,7 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
     }
 
     previousPathnameRef.current = pathname;
-  }, [pathname, session]);
+  }, [anchor, anchorRect, pathname, session]);
 
   const handlePlayingChange = useCallback((playing: boolean) => {
     isPlayingRef.current = playing;
@@ -195,7 +197,6 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
 
   const expandMiniPlayer = useCallback(() => {
     if (!sessionRef.current) return;
-    setIsMiniOpen(false);
     router.push(sessionRef.current.returnHref);
   }, [router]);
 
@@ -214,9 +215,29 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
   const showFullPlayer = Boolean(
     session && activeVideoPath === pathname && anchor && anchorRect,
   );
-  const showMiniPlayer = Boolean(session && activeVideoPath !== pathname && isMiniOpen);
+  const showMiniPlayer = Boolean(
+    session &&
+      !showFullPlayer &&
+      (isMiniOpen || (activeVideoPath !== pathname && isPlaying)),
+  );
   const isVisible = showFullPlayer || showMiniPlayer;
   const floatingPlayer = useFloatingMiniPlayer(showMiniPlayer);
+  const playerMode: PersistentPlayerMode = showFullPlayer
+    ? "full"
+    : showMiniPlayer
+      ? "mini"
+      : "hidden";
+  const morphLayoutKey = showFullPlayer && anchorRect
+    ? `full:${anchorRect.top}:${anchorRect.left}:${anchorRect.width}:${anchorRect.height}`
+    : showMiniPlayer
+      ? `mini:${floatingPlayer.position?.x ?? "default"}:${floatingPlayer.position?.y ?? "default"}`
+      : "hidden";
+  const isMorphing = usePlayerMorphTransition(
+    floatingPlayer.miniPlayerRef,
+    playerMode,
+    morphLayoutKey,
+    playerMode !== "mini" || floatingPlayer.isPositionReady,
+  );
 
   const contextValue = useMemo(
     () => ({ activate, setAnchor }),
@@ -232,7 +253,7 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
       {session ? (
         <aside
           ref={floatingPlayer.miniPlayerRef}
-          className={`persistent-video-player ${showMiniPlayer ? "persistent-video-player--mini" : "persistent-video-player--full"} ${isVisible ? "is-visible" : ""} ${floatingPlayer.isDragging ? "is-dragging" : ""}`}
+          className={`persistent-video-player ${showMiniPlayer ? "persistent-video-player--mini" : "persistent-video-player--full"} ${isVisible ? "is-visible" : ""} ${floatingPlayer.isDragging ? "is-dragging" : ""} ${isMorphing ? "is-morphing" : ""}`}
           style={
             showFullPlayer && anchorRect
               ? {

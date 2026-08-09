@@ -1985,7 +1985,8 @@ main.play .player.theater .persistent-video-slot {
   opacity: 0;
   pointer-events: none;
   visibility: hidden;
-  will-change: top, left, box-shadow;
+  transform-origin: top left;
+  will-change: top, left, width, height, transform, border-radius, box-shadow;
 }
 
 .persistent-video-player.is-visible {
@@ -1995,6 +1996,7 @@ main.play .player.theater .persistent-video-slot {
 }
 
 .persistent-video-player--full {
+  position: absolute;
   z-index: 4;
 }
 
@@ -2014,6 +2016,25 @@ main.play .player.theater .persistent-video-slot {
 
 .persistent-video-player--mini.is-dragging {
   box-shadow: 0 28px 76px rgba(0, 0, 0, 0.68);
+}
+
+.persistent-video-player.is-morphing {
+  pointer-events: none;
+}
+
+.persistent-video-player--mini .persistent-video-player__actions,
+.persistent-video-player--mini .persistent-video-player__details,
+.persistent-video-player--mini .persistent-video-player__mobile-toggle,
+.persistent-video-player mux-player::part(controls) {
+  transition: opacity 150ms ease;
+}
+
+.persistent-video-player.is-morphing .persistent-video-player__actions,
+.persistent-video-player.is-morphing .persistent-video-player__details,
+.persistent-video-player.is-morphing .persistent-video-player__mobile-toggle,
+.persistent-video-player.is-morphing mux-player::part(controls) {
+  opacity: 0;
+  transition: none;
 }
 
 .persistent-video-player__media {
