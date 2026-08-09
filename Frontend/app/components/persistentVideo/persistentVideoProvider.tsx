@@ -103,9 +103,10 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
     }
 
     setAnchorRect((current) => {
+      const usesFixedMobilePlayer = window.matchMedia("(max-width: 500px)").matches;
       const next = {
-        top: rect.top + window.scrollY,
-        left: rect.left + window.scrollX,
+        top: usesFixedMobilePlayer ? rect.top : rect.top + window.scrollY,
+        left: usesFixedMobilePlayer ? rect.left : rect.left + window.scrollX,
         width: rect.width,
         height: rect.height,
       };

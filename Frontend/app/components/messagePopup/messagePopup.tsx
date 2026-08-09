@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Link } from "react-router";
+import PopupPortal from "~/components/popupPortal/popupPortal";
 
 type Props = {
   open: boolean;
@@ -41,7 +42,7 @@ function MessagePopup({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [onClose, open]);
 
-  return (
+  return <PopupPortal>
     <div
       className={`popup ${open ? "active" : ""} ${actionHref ? "done" : ""}`}
       onClick={onClose}
@@ -61,7 +62,7 @@ function MessagePopup({
         </h2>
       </div>
     </div>
-  );
+  </PopupPortal>;
 }
 
 export default MessagePopup;

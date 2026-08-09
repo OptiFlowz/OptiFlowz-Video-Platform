@@ -8,6 +8,7 @@ import { changeElementClass, getToken } from "~/functions";
 import { useI18n } from "~/i18n";
 import Loader from "../loaders/loader";
 import MessagePopup from "../messagePopup/messagePopup";
+import PopupPortal from "~/components/popupPortal/popupPortal";
 
 function EditAccountPopup({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useI18n();
@@ -239,7 +240,8 @@ function EditAccountPopup({ open, onClose }: { open: boolean; onClose: () => voi
   const hasCurrentPicture = !!previewUrl || !!userData?.user?.image_url;
 
   return <>
-    <div className={`popup editAccountPopup ${open ? "active" : ""}`}>
+    <PopupPortal>
+      <div className={`popup editAccountPopup ${open ? "active" : ""}`}>
       <div className="popup-content">
         <h2>
           {t("accountSettings")} <button onClick={onClose}>{CloseSVG}</button>
@@ -325,7 +327,8 @@ function EditAccountPopup({ open, onClose }: { open: boolean; onClose: () => voi
       <button className="closePopup" onClick={onClose}></button>
 
       <Loader ref={loaderRef} classes="pageLoader displayNone" />
-    </div>
+      </div>
+    </PopupPortal>
 
     <MessagePopup
       open={popupState.open}

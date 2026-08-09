@@ -2,6 +2,7 @@ import type { VideoT } from "~/types";
 import { Link } from "react-router";
 import { CloseSVG } from "~/constants";
 import { useI18n } from "~/i18n";
+import PopupPortal from "~/components/popupPortal/popupPortal";
 
 function ChairPopup({props, open, type, onClose}: {props: VideoT, open: boolean, type: number, onClose: () => void}){
     const { t } = useI18n();
@@ -16,7 +17,7 @@ function ChairPopup({props, open, type, onClose}: {props: VideoT, open: boolean,
         </Link>
     ))
 
-    return (
+    return <PopupPortal>
         <div className={`popup ${open ? "active" : ""}`}>
             <div className="popup-content">
                 <h2>{type == 0 ? t("chairsTitle") : t("speakersTitle")} <button onClick={onClose}>{CloseSVG}</button></h2>
@@ -24,7 +25,7 @@ function ChairPopup({props, open, type, onClose}: {props: VideoT, open: boolean,
             </div>
             <button className="closePopup" onClick={onClose}></button>
         </div>
-    );
+    </PopupPortal>;
 }
 
 export default ChairPopup;

@@ -2003,7 +2003,8 @@ main.play .player.theater .persistent-video-slot {
 .persistent-video-player--mini {
   right: calc(24px + env(safe-area-inset-right, 0px));
   bottom: calc(24px + env(safe-area-inset-bottom, 0px));
-  z-index: 70;
+  /* Above page content, but below the header and its menus/drawers. */
+  z-index: 9;
   width: min(400px, calc(100vw - 32px));
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 14px;
@@ -2163,6 +2164,7 @@ main.play .player.theater .persistent-video-slot {
 
 @media screen and (max-width: 500px) {
   .persistent-video-player--full {
+    position: fixed;
     z-index: 6;
     border-radius: 0;
   }

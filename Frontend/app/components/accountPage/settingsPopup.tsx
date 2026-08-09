@@ -3,6 +3,7 @@ import { CloseSVG } from "~/constants";
 import { getStoredUser } from "~/functions";
 import { useI18n } from "~/i18n";
 import LanguageSelect from "~/components/languageSelect/languageSelect";
+import PopupPortal from "~/components/popupPortal/popupPortal";
 
 function SettingsPopup({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { locale, setLocale, t } = useI18n();
@@ -11,7 +12,7 @@ function SettingsPopup({ open, onClose }: { open: boolean; onClose: () => void }
     ? `/forgot-password?user=${encodeURIComponent(userEmail)}`
     : "/forgot-password";
 
-  return (
+  return <PopupPortal>
     <div className={`popup settingsPopup ${open ? "active" : ""}`}>
       <div className="popup-content">
         <h2>
@@ -43,7 +44,7 @@ function SettingsPopup({ open, onClose }: { open: boolean; onClose: () => void }
 
       <button className="closePopup" onClick={onClose}></button>
     </div>
-  );
+  </PopupPortal>;
 }
 
 export default SettingsPopup;
