@@ -2011,6 +2011,7 @@ main.play .player.theater .persistent-video-slot {
   box-shadow: 0 20px 60px var(--seethroughtBlack);
   user-select: none;
   -webkit-user-select: none;
+  cursor: grab;
   touch-action: none;
   transition:
     opacity 180ms ease,
@@ -2027,6 +2028,7 @@ main.play .player.theater .persistent-video-slot {
 
 .persistent-video-player--mini.is-dragging {
   box-shadow: 0 28px 76px var(--seethroughtBlack);
+  cursor: grabbing;
 }
 
 .persistent-video-player.is-morphing {
@@ -2079,19 +2081,8 @@ main.play .player.theater .persistent-video-slot {
   pointer-events: none;
 }
 
-.persistent-video-player__drag-surface {
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
-  height: 58px;
-  z-index: 3;
-  cursor: grab;
-  touch-action: none;
-}
-
-.persistent-video-player.is-dragging .persistent-video-player__drag-surface {
-  cursor: grabbing;
+.persistent-video-player__expand-surface {
+  display: none;
 }
 
 .persistent-video-player__mobile-toggle {
@@ -2194,14 +2185,11 @@ main.play .player.theater .persistent-video-slot {
     display: none;
   }
 
-  .persistent-video-player--mini .persistent-video-player__drag-surface {
-    inset: 0;
-  }
-
   .persistent-video-player--mini .persistent-video-player__actions {
     top: 6px;
     left: 6px;
     right: 6px;
+    justify-content: flex-end;
   }
 
   .persistent-video-player--mini .persistent-video-player__action {
@@ -2211,21 +2199,39 @@ main.play .player.theater .persistent-video-slot {
     background: var(--playButtonBg1);
   }
 
+  .persistent-video-player--mini .persistent-video-player__desktop-expand {
+    display: none;
+  }
+
+  .persistent-video-player--mini .persistent-video-player__expand-surface {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: block;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: grab;
+  }
+
+  .persistent-video-player--mini.is-dragging .persistent-video-player__expand-surface {
+    cursor: grabbing;
+  }
+
   .persistent-video-player__mobile-toggle {
     position: absolute;
-    top: 50%;
-    left: 50%;
+    top: 6px;
+    left: 6px;
     z-index: 5;
     display: grid;
-    width: 46px;
-    height: 46px;
+    width: 32px;
+    height: 32px;
     place-items: center;
     border: 0;
     border-radius: 50%;
     background: var(--playButtonBg1);
     color: var(--seeThroughtWhite);
     cursor: pointer;
-    transform: translate(-50%, -50%);
     -webkit-backdrop-filter: blur(6px);
     backdrop-filter: blur(6px);
   }

@@ -5,6 +5,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 
@@ -94,6 +95,7 @@ export function useFloatingMiniPlayer(active: boolean) {
   const positionRef = useRef<Position | null>(null);
   const snapPointRef = useRef<SnapPoint>(DEFAULT_SNAP);
   const dragRef = useRef<DragState | null>(null);
+  const lastDragEndRef = useRef(Number.NEGATIVE_INFINITY);
   const animationFrameRef = useRef(0);
   const [position, setPosition] = useState<Position | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -274,7 +276,7 @@ export function useFloatingMiniPlayer(active: boolean) {
   );
 
   const handlePointerDown = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
+    (event: ReactPointerEvent<HTMLElement>) => {
       if (!active || event.button !== 0) return;
 
       const layout = getLayout();
@@ -282,7 +284,6 @@ export function useFloatingMiniPlayer(active: boolean) {
       if (!layout || !current) return;
 
       stopAnimation();
-      event.currentTarget.setPointerCapture(event.pointerId);
       dragRef.current = {
         pointerId: event.pointerId,
         originPointer: { x: event.clientX, y: event.clientY },
@@ -297,7 +298,7 @@ export function useFloatingMiniPlayer(active: boolean) {
   );
 
   const handlePointerMove = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
+    (event: ReactPointerEvent<HTMLElement>) => {
       const drag = dragRef.current;
       if (!drag || drag.pointerId !== event.pointerId) return;
 
@@ -307,6 +308,7 @@ export function useFloatingMiniPlayer(active: boolean) {
 
       if (!drag.moved) {
         drag.moved = true;
+        event.currentTarget.setPointerCapture(event.pointerId);
         setIsDragging(true);
       }
 
@@ -335,7 +337,7 @@ export function useFloatingMiniPlayer(active: boolean) {
   );
 
   const finishPointerInteraction = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
+    (event: ReactPointerEvent<HTMLElement>) => {
       const drag = dragRef.current;
       if (!drag || drag.pointerId !== event.pointerId) return;
 
@@ -346,6 +348,7 @@ export function useFloatingMiniPlayer(active: boolean) {
       setIsDragging(false);
 
       if (drag.moved) {
+        lastDragEndRef.current = performance.now();
         const idleTime = Math.max(performance.now() - drag.lastTimestamp, 0);
         const releaseDecay = Math.exp(-idleTime / 120);
         snapFromVelocity({
@@ -356,6 +359,14 @@ export function useFloatingMiniPlayer(active: boolean) {
     },
     [snapFromVelocity],
   );
+
+  const handleClickCapture = useCallback((event: ReactMouseEvent<HTMLElement>) => {
+    if (performance.now() - lastDragEndRef.current >= 300) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    lastDragEndRef.current = Number.NEGATIVE_INFINITY;
+  }, []);
 
   useLayoutEffect(() => {
     if (!active) {
@@ -422,6 +433,7 @@ export function useFloatingMiniPlayer(active: boolean) {
       onPointerMove: handlePointerMove,
       onPointerUp: finishPointerInteraction,
       onPointerCancel: finishPointerInteraction,
+      onClickCapture: handleClickCapture,
     },
   };
 }

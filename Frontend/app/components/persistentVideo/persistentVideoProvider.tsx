@@ -303,12 +303,13 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
           }
           aria-label={showMiniPlayer ? `Now playing: ${session.video.title}` : undefined}
           aria-hidden={!isVisible}
+          {...(showMiniPlayer ? floatingPlayer.dragSurfaceProps : {})}
         >
           {showMiniPlayer ? (
             <div className="persistent-video-player__actions">
               <button
                 type="button"
-                className="persistent-video-player__action"
+                className="persistent-video-player__action persistent-video-player__desktop-expand"
                 onClick={expandMiniPlayer}
                 aria-label="Open full video"
                 title="Open full video"
@@ -332,10 +333,11 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
           ) : null}
 
           {showMiniPlayer ? (
-            <div
-              className="persistent-video-player__drag-surface"
-              {...floatingPlayer.dragSurfaceProps}
-              aria-hidden="true"
+            <button
+              type="button"
+              className="persistent-video-player__expand-surface"
+              onClick={expandMiniPlayer}
+              aria-label={`Open ${session.video.title}`}
             />
           ) : null}
 
