@@ -1,193 +1,232 @@
-import { BRAND_NAME, MARKETING_WEBSITE_URL, OFFICE_EMAIL, PLATFORM_NAME } from "~/changeables";
+import {
+  BRAND_NAME,
+  LEGAL_ENTITY_NAME,
+  MARKETING_WEBSITE_URL,
+  OFFICE_EMAIL,
+  PLATFORM_NAME,
+} from "~/changeables";
+import { usePrivacyPreferences } from "~/privacy/privacyPreferences";
 
-function PrivacyPolicyPage(){
-    return (
-        <main className="textFilledMain">
-            <h1>Privacy Policy</h1>
-            <p className="mt-3"><strong>Effective date:</strong> January 3, 2026</p>
+function PrivacyPolicyPage() {
+  const { openPreferences } = usePrivacyPreferences();
 
-            <p className="mb-5">
-                This Privacy Policy explains how <strong>{BRAND_NAME}</strong> (“<strong>{BRAND_NAME}</strong>”, “<strong>we</strong>”, “<strong>us</strong>”, “<strong>our</strong>”)
-                collects, uses, shares, and protects personal data when you use <strong>{PLATFORM_NAME}</strong> (the “<strong>Platform</strong>”).
-                The Platform is an educational video environment for surgeons and surgical teams, including accounts, watch-time tracking, playlists,
-                likes/saves, sharing, and personalized recommendations.
-            </p>
+  return (
+    <main className="textFilledMain">
+      <h1>Privacy Policy</h1>
+      <p className="mt-3"><strong>Effective date:</strong> August 25, 2026</p>
 
-            <section aria-labelledby="controller">
-                <h2 id="controller">1) Who is responsible for your data</h2>
-                <p>
-                <strong>Data Controller:</strong> {BRAND_NAME} (the operator of the Platform).
-                </p>
-                <p>
-                <strong>Contact:</strong> {BRAND_NAME}<br />
-                Website: <a href={MARKETING_WEBSITE_URL}>{MARKETING_WEBSITE_URL?.split("https://")[1] ?? "optiflowz.com"}</a><br />
-                Email: <a href={`mailto:${OFFICE_EMAIL}`}>{OFFICE_EMAIL}</a>
-                </p>
-            </section>
+      <p className="mb-5">
+        This notice explains how <strong>{LEGAL_ENTITY_NAME}</strong>, trading as <strong>{BRAND_NAME}</strong>,
+        processes personal data when you use <strong>{PLATFORM_NAME}</strong> (the “Platform”). It also explains
+        your choices and data-protection rights. This notice applies to the Platform website, account, video,
+        playlist, quiz, comment, support, and related learning features.
+      </p>
 
-            <section aria-labelledby="scope">
-                <h2 id="scope">2) What this policy covers</h2>
-                <ul>
-                <li>Personal data collected through the Platform website/app and related services.</li>
-                <li>Usage data used to provide learning features (watch history, progress) and recommendations.</li>
-                <li>It does not cover third-party websites you may access via links on the Platform.</li>
-                </ul>
-            </section>
+      <section aria-labelledby="controller">
+        <h2 id="controller">1) Controller and privacy contact</h2>
+        <p>
+          <strong>Controller:</strong> {LEGAL_ENTITY_NAME}<br />
+          30 N Gould St Ste R, Sheridan, WY 82801, USA<br />
+          Website: <a href={MARKETING_WEBSITE_URL}>{MARKETING_WEBSITE_URL}</a><br />
+          Privacy email: <a href={`mailto:${OFFICE_EMAIL}`}>{OFFICE_EMAIL}</a>
+        </p>
+        <p>
+          Use the privacy email for access, correction, erasure, restriction, portability, objection, consent
+          withdrawal, or questions about this notice. We may need to verify your identity before acting on a request.
+        </p>
+      </section>
 
-            <section aria-labelledby="data">
-                <h2 id="data">3) Personal data we collect</h2>
-                <ul>
-                <li>
-                    <strong>Account data:</strong> name, email, username, password (stored as a secure hash), role/specialty and affiliation (if provided),
-                    country/region, profile preferences.
-                </li>
-                <li>
-                    <strong>Learning & interaction data:</strong> videos/playlists watched, watch time, playback progress, timestamps, searches and browsing,
-                    likes/dislikes, saves/favorites, shares (e.g., that a share action happened), and signals used to generate recommendations.
-                </li>
-                <li>
-                    <strong>Technical & log data:</strong> IP address, device/browser information, app/OS version, cookies or similar identifiers,
-                    performance/error logs, and security/audit logs.
-                </li>
-                <li>
-                    <strong>Communications:</strong> messages you send to support, reports/feedback, and our service emails to you (verification, password reset, notices).
-                </li>
-                </ul>
-            </section>
+      <section aria-labelledby="data-purpose-basis">
+        <h2 id="data-purpose-basis">2) Data, purposes, and legal bases</h2>
+        <div className="privacyTableWrapper">
+          <table className="privacyTable">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Purpose</th>
+                <th>Legal basis</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Name, email, authentication data, role, membership status, and optional profile details/photo</td>
+                <td>Create and administer your account, authenticate you, provide access, and keep profile details accurate</td>
+                <td>Performance of the Platform contract; legitimate interests in account administration and security</td>
+              </tr>
+              <tr>
+                <td>Videos and playlists watched, progress, watch time, quiz attempts, certificates, likes, saves, comments, and searches</td>
+                <td>Provide learning continuity and user-requested interactive features</td>
+                <td>Performance of the Platform contract</td>
+              </tr>
+              <tr>
+                <td>Viewing and interaction history</td>
+                <td>Generate and display personalized recommendations</td>
+                <td>Your consent; this feature is off until you enable it and can be disabled at any time</td>
+              </tr>
+              <tr>
+                <td>IP address, device/browser and operating-system details, timestamps, request and security logs</td>
+                <td>Deliver the service, prevent abuse, investigate incidents, and maintain reliability</td>
+                <td>Legitimate interests in operating and securing the Platform; legal obligations where applicable</td>
+              </tr>
+              <tr>
+                <td>Messages, reports, and support correspondence</td>
+                <td>Respond to you, resolve issues, and keep a record of the request</td>
+                <td>Performance of the Platform contract; legitimate interests in support and dispute handling</td>
+              </tr>
+              <tr>
+                <td>Technical connection data and prompts sent through the AI assistant</td>
+                <td>Display and operate the assistant, then answer messages after you confirm inside the chat</td>
+                <td>Legitimate interests in providing the assistant interface; your confirmation and the user-requested service for chat messages</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Profile biography, profile photo, and membership status are optional. Please do not include patient,
+          medical, or other special-category personal data in profiles, comments, uploads, or AI prompts.
+        </p>
+      </section>
 
-            <section aria-labelledby="purpose">
-                <h2 id="purpose">4) Why we process your data</h2>
-                <ul>
-                <li><strong>Provide the Platform:</strong> create and manage accounts, authenticate users, deliver videos and playlists.</li>
-                <li><strong>Learning continuity:</strong> remember progress, show watch history, enable saved/liked content.</li>
-                <li>
-                    <strong>Personalized recommendations:</strong> suggest videos/playlists based on viewing and interactions (similar to common video platforms).
-                </li>
-                <li><strong>Analytics & improvement:</strong> understand usage patterns to improve content discovery, performance, and user experience.</li>
-                <li><strong>Security & integrity:</strong> prevent fraud/abuse, protect accounts, maintain logs and detect technical issues.</li>
-                <li><strong>Support:</strong> respond to questions and resolve problems.</li>
-                <li><strong>Legal compliance:</strong> comply with applicable laws and enforce our Terms.</li>
-                </ul>
-            </section>
+      <section aria-labelledby="sources">
+        <h2 id="sources">3) Where data comes from</h2>
+        <ul>
+          <li>directly from you when you register, edit your profile, interact with content, or contact us;</li>
+          <li>automatically from your browser/device and your use of the Platform;</li>
+          <li>from Google if you choose “Continue with Google” (basic identity data needed to sign you in); and</li>
+          <li>from an organization that sponsors or administers your access, where applicable.</li>
+        </ul>
+      </section>
 
-            <section aria-labelledby="legal-basis">
-                <h2 id="legal-basis">5) Legal bases (where GDPR applies)</h2>
-                <p>
-                Where the GDPR (or similar laws) applies, we rely on one or more of the following:
-                <strong>contract</strong> (to provide the Platform), <strong>legitimate interests</strong> (security, platform improvement, basic personalization),
-                <strong>consent</strong> (for non-essential cookies or optional features where required), and <strong>legal obligations</strong>.
-                </p>
-            </section>
+      <section aria-labelledby="required-data">
+        <h2 id="required-data">4) What is required</h2>
+        <p>
+          Name, email, password or third-party sign-in credentials, and acceptance of the Terms are required to
+          create a standard account. If you do not provide them, we cannot create or authenticate the account.
+          Optional profile fields and personalization are not required to use the core Platform. The AI assistant is
+          available as an optional user-invoked feature.
+        </p>
+      </section>
 
-            <section aria-labelledby="sharing">
-                <h2 id="sharing">6) How we share data</h2>
-                <p>We may share personal data with:</p>
-                <ul>
-                <li>
-                <strong>your organization or content partner</strong> as the educational partner/content stakeholder of the Platform,
-                    for Platform administration and reporting. This may include <strong>aggregated statistics</strong> and, where necessary for account support
-                    and access management, <strong>limited user/account details</strong>.
-                </li>
-                <li>
-                    <strong>Service providers</strong> (processors) that help us run the Platform (hosting, video streaming, email delivery, analytics, security),
-                    under contracts requiring confidentiality and appropriate safeguards.
-                </li>
-                <li>
-                    <strong>Legal/public authorities</strong> if required by law or to protect rights, safety, and security.
-                </li>
-                </ul>
-                <p><strong>We do not sell your personal data.</strong></p>
-            </section>
+      <section aria-labelledby="sharing">
+        <h2 id="sharing">5) Recipients and processors</h2>
+        <p>We disclose personal data only where needed to operate the Platform or meet legal obligations:</p>
+        <ul>
+          <li><strong>Mux</strong>, for video hosting, delivery, playback, and related technical video services;</li>
+          <li><strong>Google</strong>, only when you choose Google sign-in;</li>
+          <li>
+            the <strong>AI assistant provider</strong> at ai-chatbot-platform.fly.dev, which delivers the assistant
+            interface and processes chat messages after you confirm inside the chat;
+          </li>
+          <li>hosting, infrastructure, email, security, and support providers acting under contractual instructions;</li>
+          <li>
+            your sponsoring organization or content partner, where applicable, for access administration and
+            reporting; user-level details are limited to what is necessary, and reporting should be aggregated where possible; and
+          </li>
+          <li>courts, regulators, law enforcement, or other parties where law requires it or legal claims make it necessary.</li>
+        </ul>
+        <p><strong>We do not sell personal data or use it for third-party behavioral advertising.</strong></p>
+      </section>
 
-            <section aria-labelledby="recommendations">
-                <h2 id="recommendations">7) Recommendations & automated decisions</h2>
-                <p>
-                We may use automated methods to personalize recommendations based on your watch history and interactions (e.g., likes, saves, searches).
-                These recommendations are meant to improve learning discovery and do not produce legal or similarly significant effects about you.
-                </p>
-            </section>
+      <section aria-labelledby="cookies">
+        <h2 id="cookies">6) Cookies, local storage, and optional services</h2>
+        <p>
+          The Platform uses browser storage for authentication/session state, language, autoplay, navigation continuity,
+          and your privacy choices. These items are necessary to provide settings or functions you request. The privacy
+          choice record contains the preference version, selected categories, and the time the choice was saved.
+        </p>
+        <p>
+          Personalized recommendations remain disabled until you choose them. The AI assistant launcher is available by
+          default and its provider can receive technical connection data, such as your IP address and browser/device
+          information, to deliver the widget. Before using the chat, the widget asks you to confirm its privacy notice.
+          Anything you submit is sent to the assistant provider. Do not submit patient or other sensitive personal data.
+        </p>
+        <button type="button" className="privacySettingsButton" onClick={openPreferences}>
+          Manage privacy choices
+        </button>
+      </section>
 
-            <section aria-labelledby="cookies">
-                <h2 id="cookies">8) Cookies and similar technologies</h2>
-                <p>We use cookies (and similar technologies) for:</p>
-                <ul>
-                <li><strong>Strictly necessary</strong> cookies (login, session, security).</li>
-                <li><strong>Preferences</strong> (remember settings such as language or player options).</li>
-                <li><strong>Analytics</strong> (measure usage and improve the Platform, where enabled).</li>
-                </ul>
-                <p>
-                You can manage cookies through your browser settings and (if available) our cookie preferences tool. Disabling necessary cookies may
-                prevent the Platform from working correctly.
-                </p>
-            </section>
+      <section aria-labelledby="automated">
+        <h2 id="automated">7) Personalization and automated processing</h2>
+        <p>
+          If you enable personalization, automated methods use viewing and interaction history to rank or suggest content.
+          This does not produce legal or similarly significant effects. You can turn personalization off at any time in
+          Privacy choices; the Platform will then stop requesting and displaying personalized recommendations.
+        </p>
+      </section>
 
-            <section aria-labelledby="retention">
-                <h2 id="retention">9) How long we keep data</h2>
-                <p>
-                We keep personal data only as long as needed for the purposes described above. Typically:
-                </p>
-                <ul>
-                <li><strong>Account data</strong> is kept while your account is active.</li>
-                <li><strong>Watch history/learning data</strong> is kept to support progress, statistics, and recommendations, until you delete it (if available) or close your account.</li>
-                <li><strong>Security logs</strong> may be retained for a limited period to protect the Platform and investigate issues.</li>
-                </ul>
-                <p>
-                You can request account deletion at <a href={`mailto:${OFFICE_EMAIL}`}>{OFFICE_EMAIL}</a>.
-                </p>
-            </section>
+      <section aria-labelledby="retention">
+        <h2 id="retention">8) Retention</h2>
+        <p>We apply the following retention criteria:</p>
+        <ul>
+          <li><strong>Account and profile data:</strong> while the account is active, then only as needed for legal obligations, security, fraud prevention, or legal claims.</li>
+          <li><strong>Learning and interaction data:</strong> while needed to provide progress, history, certificates, playlists, comments, and other account features, subject to a valid rights request.</li>
+          <li><strong>Authentication, security, and audit logs:</strong> for the shortest period needed to detect and investigate security or abuse and meet documented legal requirements.</li>
+          <li><strong>Support and rights-request records:</strong> until the matter is closed, then for the period needed to demonstrate that the request was handled and manage legal claims.</li>
+          <li><strong>Privacy choices:</strong> until you replace the choice, clear browser storage, or the preference version changes.</li>
+        </ul>
+        <p>
+          Data may remain in restricted backups until the normal backup cycle replaces it. The operator maintains the
+          detailed retention schedule used to turn these criteria into operational deletion periods.
+        </p>
+      </section>
 
-            <section aria-labelledby="security">
-                <h2 id="security">10) Security</h2>
-                <p>
-                We implement reasonable technical and organizational measures to protect personal data (e.g., access controls, encryption in transit,
-                monitoring, and backups). No system is completely secure, so we cannot guarantee absolute security.
-                </p>
-            </section>
+      <section aria-labelledby="transfers">
+        <h2 id="transfers">9) International transfers</h2>
+        <p>
+          The controller is in the United States, and some providers may process data outside the European Economic Area.
+          Where GDPR transfer restrictions apply, transfers must rely on an adequacy decision or appropriate safeguards,
+          such as the European Commission’s Standard Contractual Clauses, together with supplementary measures where
+          required. Contact <a href={`mailto:${OFFICE_EMAIL}`}>{OFFICE_EMAIL}</a> to ask about the safeguard relevant to your data or request a copy.
+        </p>
+      </section>
 
-            <section aria-labelledby="confidentiality">
-                <h2 id="confidentiality">11) Patient confidentiality & sensitive data</h2>
-                <p>
-                The Platform is not intended to store patient-identifying information. Do not upload or share patient-identifying data on the Platform.
-                If the Platform allows submissions (e.g., comments), you are responsible for ensuring compliance with confidentiality obligations and applicable laws.
-                </p>
-            </section>
+      <section aria-labelledby="rights">
+        <h2 id="rights">10) Your rights</h2>
+        <p>Where GDPR applies, and subject to its conditions and exceptions, you can:</p>
+        <ul>
+          <li>ask whether we process your data and receive access and a copy;</li>
+          <li>correct inaccurate or incomplete data;</li>
+          <li>request erasure or restriction of processing;</li>
+          <li>receive data you provided in a structured, commonly used, machine-readable format and request transfer where technically feasible;</li>
+          <li>object to processing based on legitimate interests;</li>
+          <li>withdraw consent at any time, without affecting earlier lawful processing; and</li>
+          <li>lodge a complaint with the data protection authority where you live or work, or where the alleged infringement occurred.</li>
+        </ul>
+        <p>
+          Edit profile data from your account page, manage optional processing through Privacy choices, or send any rights
+          request to <a href={`mailto:${OFFICE_EMAIL}`}>{OFFICE_EMAIL}</a>. We normally respond without undue delay and within
+          one month. You can find EU supervisory authorities through the
+          {" "}<a href="https://www.edpb.europa.eu/about-edpb/about-edpb/members_en" target="_blank" rel="noreferrer">European Data Protection Board member list</a>.
+        </p>
+      </section>
 
-            <section aria-labelledby="transfers">
-                <h2 id="transfers">12) International data transfers</h2>
-                <p>
-                Your data may be processed in countries where we or our service providers operate. Where required by law, we use appropriate safeguards
-                (such as contractual protections) for transfers.
-                </p>
-            </section>
+      <section aria-labelledby="security">
+        <h2 id="security">11) Security</h2>
+        <p>
+          We use technical and organizational safeguards appropriate to risk, including access controls, encryption in
+          transit, authentication, service monitoring, backups, and incident handling. No internet service can guarantee
+          absolute security. Please use a unique password and notify us if you believe your account is compromised.
+        </p>
+      </section>
 
-            <section aria-labelledby="rights">
-                <h2 id="rights">13) Your rights</h2>
-                <p>
-                Depending on your location (including GDPR jurisdictions), you may have rights to access, correct, delete, restrict processing,
-                object to processing, and receive a copy of certain data (portability). Where processing is based on consent, you can withdraw consent.
-                </p>
-                <p>
-                To exercise your rights, contact <a href={`mailto:${OFFICE_EMAIL}`}>{OFFICE_EMAIL}</a>.
-                You may also have the right to lodge a complaint with your local data protection authority.
-                </p>
-            </section>
+      <section aria-labelledby="children">
+        <h2 id="children">12) Children</h2>
+        <p>
+          The Platform is intended for professional education and is not directed to children. Account holders must be at
+          least 18 years old or the age of majority in their country, whichever is higher. Contact us if you believe a child
+          provided personal data contrary to this requirement.
+        </p>
+      </section>
 
-            <section aria-labelledby="children">
-                <h2 id="children">14) Children</h2>
-                <p>
-                The Platform is intended for professional education and is not directed to children. We do not knowingly collect personal data from children.
-                </p>
-            </section>
-
-            <section aria-labelledby="changes">
-                <h2 id="changes">15) Changes to this Privacy Policy</h2>
-                <p>
-                We may update this Privacy Policy from time to time. We will post the updated version on this page and adjust the effective date.
-                If changes are significant, we may provide additional notice within the Platform or via email.
-                </p>
-            </section>
-            </main>
-    );
+      <section aria-labelledby="changes">
+        <h2 id="changes">13) Changes to this notice</h2>
+        <p>
+          We may update this notice to reflect service, legal, or processing changes. We will post the new effective date
+          here and provide a prominent in-product or email notice when a change materially affects how personal data is used.
+        </p>
+      </section>
+    </main>
+  );
 }
 
 export default PrivacyPolicyPage;

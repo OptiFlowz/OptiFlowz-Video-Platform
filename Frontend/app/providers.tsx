@@ -8,6 +8,7 @@ import { CurrentNavProvider } from "~/context";
 import { I18nProvider } from "~/i18n";
 import { checkServerReachability } from "~/serverReachability";
 import PersistentVideoProvider from "~/components/persistentVideo/persistentVideoProvider";
+import { PrivacyPreferencesProvider } from "~/privacy/privacyPreferences";
 
 const queryClient = new QueryClient();
 
@@ -111,9 +112,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <PageLoader />
       <I18nProvider>
-        <CurrentNavProvider>
-          <PersistentVideoProvider>{children}</PersistentVideoProvider>
-        </CurrentNavProvider>
+        <PrivacyPreferencesProvider>
+          <CurrentNavProvider>
+            <PersistentVideoProvider>{children}</PersistentVideoProvider>
+          </CurrentNavProvider>
+        </PrivacyPreferencesProvider>
       </I18nProvider>
     </QueryClientProvider>
   );

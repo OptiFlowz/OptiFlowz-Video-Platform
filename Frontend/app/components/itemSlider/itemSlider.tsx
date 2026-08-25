@@ -9,6 +9,7 @@ import { CurrentNavContext } from "~/context";
 import PlaylistItem from "./playlistItem";
 import { getToken } from "~/functions";
 import { useI18n } from "~/i18n";
+import { usePrivacyPreferences } from "~/privacy/privacyPreferences";
 
 const SkeletonItem = () => (
     <div className="skeleton-item">
@@ -23,6 +24,7 @@ const SkeletonItem = () => (
 
 function ItemSlider({props}: {props: ItemSliderT}){
     const { t } = useI18n();
+    const { preferences } = usePrivacyPreferences();
     // const { onDataStateChange } = props;
     const myHeaders = useRef(new Headers());
     const [token, setToken] = useState("");
@@ -92,7 +94,7 @@ function ItemSlider({props}: {props: ItemSliderT}){
             ? fetchFn<fetchFeaturedPlaylist>({ route, options: { method: "GET", headers: myHeaders.current } })
             : fetchFn<fetchVideo>({ route, options: { method: "GET", headers: myHeaders.current } });
         },
-        enabled: !!route && (!requiresAuth || !!token),
+        enabled: !!route && (!requiresAuth || !!token) && (props.type !== 1 || preferences.personalization),
         gcTime: 30 * 60 * 1000,
         refetchOnMount: false,
         refetchOnWindowFocus: false,
@@ -124,7 +126,7 @@ function ItemSlider({props}: {props: ItemSliderT}){
         };
     }, [data]);
 
-    if (!route || (requiresAuth && !token)) return null;
+    if (!route || (requiresAuth && !token) || (props.type === 1 && !preferences.personalization)) return null;
 
     const empty = !data || (("videos" in data) && data.videos.length === 0) || (("playlists" in data) && data.playlists.length === 0);
     if (empty && data && props.type != 1) return null;

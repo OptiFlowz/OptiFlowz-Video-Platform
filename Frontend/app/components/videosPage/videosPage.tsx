@@ -7,6 +7,7 @@ import Item from "../itemSlider/item";
 import { getToken } from "~/functions";
 import { useI18n } from "~/i18n";
 import { useRouter } from "next/navigation";
+import { usePrivacyPreferences } from "~/privacy/privacyPreferences";
 
 const SkeletonItem = () => (
     <div className="skeleton-item">
@@ -21,6 +22,7 @@ const SkeletonItem = () => (
 
 function VideosPage(){
     const { t } = useI18n();
+    const { preferences, openPreferences } = usePrivacyPreferences();
     const {type} = useParams();
     const token = getToken();
     const router = useRouter();
@@ -85,7 +87,7 @@ function VideosPage(){
         getNextPageParam: () => undefined,
         initialPageParam: 1,
         staleTime: 5 * 60 * 1000,
-        enabled: !!route && (!requiresAuth || !!token)
+        enabled: !!route && (!requiresAuth || !!token) && (type !== "1" || preferences.personalization)
     });
 
     useEffect(() => {
@@ -96,8 +98,8 @@ function VideosPage(){
     }, [requiresAuth, route, router, token]);
 
     useEffect(() => {
-        if(type === '1' && token) refetch();
-    }, [type, token, refetch]);
+        if(type === '1' && token && preferences.personalization) refetch();
+    }, [type, token, refetch, preferences.personalization]);
 
     useEffect(() => {
         if (isFetchingNextPage) return;
@@ -113,6 +115,22 @@ function VideosPage(){
     }, [isFetchingNextPage, fetchNextPage]);
 
     if (!route || (requiresAuth && !token)) return null;
+
+    if (type === "1" && !preferences.personalization) {
+        return (
+            <main className="videos">
+                <div className="heading">
+                    <h2 className="font-bold -mt-5 text-3xl max-[520px]:text-2xl mb-6">{title}</h2>
+                </div>
+                <div className="watchToRecommend">
+                    <p>{t("privacyPersonalizationDisabled")}</p>
+                    <button type="button" className="privacySettingsButton mt-4" onClick={openPreferences}>
+                        {t("privacyEnablePersonalization")}
+                    </button>
+                </div>
+            </main>
+        );
+    }
 
     const skeletonArray = Array.from({ length: 12 }).map((_, index) => (
         <SkeletonItem key={`skeleton-${index}`} />

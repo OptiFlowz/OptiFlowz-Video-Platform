@@ -30,6 +30,7 @@ function SetupWizardPage() {
     const { t } = useI18n();
     const [step, setStep] = useState(1); // 1: Account, 2: Bio, 2: Should be Categories
     const [showPassword, setShowPassword] = useState(false);
+    const [legalAccepted, setLegalAccepted] = useState(false);
     const [popupState, setPopupState] = useState<{
         open: boolean;
         message: string;
@@ -87,6 +88,10 @@ function SetupWizardPage() {
     const handleFinish = () => {
         const fullName = `${firstName.current?.value || ""} ${lastName.current?.value || ""}`.trim();
         if(!email.current?.value || !password.current?.value || !fullName) return;
+        if (!legalAccepted) {
+            openMessagePopup(t("registrationLegalRequired"), false);
+            return;
+        }
 
         const raw = JSON.stringify({
             "full_name": fullName,
@@ -289,9 +294,13 @@ function SetupWizardPage() {
                                 <h2 className="text-[1.8rem] font-bold tracking-[.1rem] text-(--text1)">{t("aboutYou")}</h2>
                                 <p className="weakText text-[.95rem] mt-0">{t("aboutYouText")}</p>
 
+                                <label htmlFor="registrationBio" className="block weakText text-[.85rem] mt-6">
+                                    {t("biography")} ({t("optionalField")})
+                                </label>
                                 <textarea
                                     ref={bio}
-                                    className="mt-6 w-full bg-gray-700 rounded-[15px] p-4 text-[.95rem] min-h-37.5 resize-none focus:outline-none focus:ring-2 focus:ring-(--accentBlue)"
+                                    id="registrationBio"
+                                    className="mt-2 w-full bg-gray-700 rounded-[15px] p-4 text-[.95rem] min-h-37.5 resize-none focus:outline-none focus:ring-2 focus:ring-(--accentBlue)"
                                     placeholder={t("bioPlaceholder")}
                                     maxLength={300}
                                 />
@@ -306,6 +315,22 @@ function SetupWizardPage() {
                                     />
                                     <label htmlFor="rememberMe" className="opacity-60 font-medium text-[.95rem] cursor-pointer">
                                         {t("eaesMember")}
+                                    </label>
+                                </span>
+
+                                <span className="flex items-start gap-2 mt-5">
+                                    <input
+                                        checked={legalAccepted}
+                                        onChange={(event) => setLegalAccepted(event.target.checked)}
+                                        className="appearance-none rounded-md! p-2.25! border-2 cursor-pointer checked:bg-(--accentOrange)! transition-colors relative checked:after:content-['✓'] checked:after:absolute checked:after:text-(--text1) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
+                                        type="checkbox"
+                                        id="legalAcceptance"
+                                    />
+                                    <label htmlFor="legalAcceptance" className="opacity-80 font-medium text-[.88rem] leading-5 cursor-pointer">
+                                        {t("registrationLegalAcceptance")} {" "}
+                                        <Link className="text-(--accentOrange)" to="/termsOfUse" target="_blank">{t("footerTerms")}</Link>
+                                        {" · "}
+                                        <Link className="text-(--accentOrange)" to="/privacyPolicy" target="_blank">{t("footerPrivacy")}</Link>
                                     </label>
                                 </span>
 

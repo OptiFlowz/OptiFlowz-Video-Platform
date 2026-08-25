@@ -3,9 +3,11 @@ import { ArrowSVG, FacebookSVG, InstagramSVG, LinkedInSVG, XSVG, YoutubeSVG } fr
 import { Link } from "react-router";
 import { LOGO, BRAND_NAME, MARKETING_WEBSITE_URL, SOCIAL_LINKS, SUPPORT_EMAIL, POWERED_BY_NAME, POWERED_BY_LOGO } from "~/changeables";
 import { useI18n } from "~/i18n";
+import { usePrivacyPreferences } from "~/privacy/privacyPreferences";
 
 function Footer() {
     const { t } = useI18n();
+    const { openPreferences } = usePrivacyPreferences();
 
     return (
         <footer>
@@ -49,6 +51,10 @@ function Footer() {
                             {ArrowSVG}
                             <p>{t("footerPrivacy")}</p>
                         </Link>
+                        <button type="button" onClick={openPreferences}>
+                            {ArrowSVG}
+                            <p>{t("footerPrivacyChoices")}</p>
+                        </button>
                         <Link to={`mailto:${SUPPORT_EMAIL}`}>
                             {ArrowSVG}
                             <p>{t("footerSupport")}</p>

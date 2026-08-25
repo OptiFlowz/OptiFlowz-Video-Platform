@@ -20,8 +20,9 @@ export async function fetchFn<T>(props: Props): Promise<T> {
 
   if (res.status === 401) {
     if(window.location.pathname !== "/login"){
-      localStorage.clear();
-      sessionStorage.clear();
+      localStorage.removeItem("user");
+      localStorage.removeItem("rememberMe");
+      sessionStorage.removeItem("user");
       window.location.href = "/login";
     }
     const data = await res.json();
