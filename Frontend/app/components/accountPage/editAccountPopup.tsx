@@ -317,11 +317,12 @@ function EditAccountPopup({ open, onClose }: { open: boolean; onClose: () => voi
             </label>
           </span>
 
-          <span className="editButtons">
-            <button onClick={onClose}>{t("cancel")}</button>
-            <button onClick={handleUserUpdate}>{t("saveChanges")}</button>
-          </span>
         </section>
+
+        <div className="editButtons">
+          <button onClick={onClose}>{t("cancel")}</button>
+          <button onClick={handleUserUpdate}>{t("saveChanges")}</button>
+        </div>
       </div>
 
       <button className="closePopup" onClick={onClose}></button>

@@ -6,9 +6,11 @@ import {
   PLATFORM_NAME,
 } from "~/changeables";
 import { usePrivacyPreferences } from "~/privacy/privacyPreferences";
+import { useI18n } from "~/i18n";
 
 function PrivacyPolicyPage() {
   const { openPreferences } = usePrivacyPreferences();
+  const { t } = useI18n();
 
   return (
     <main className="textFilledMain">
@@ -141,7 +143,7 @@ function PrivacyPolicyPage() {
           Anything you submit is sent to the assistant provider. Do not submit patient or other sensitive personal data.
         </p>
         <button type="button" className="privacySettingsButton" onClick={openPreferences}>
-          Manage privacy choices
+          {t("privacyManageChoices")}
         </button>
       </section>
 

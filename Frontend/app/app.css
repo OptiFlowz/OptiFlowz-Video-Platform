@@ -5343,19 +5343,58 @@ mux-player::part(menu-item) {
   line-height: 1.4;
 }
 .editAccountPopup .popup-content {
-  padding: 30px;
-  overflow-y: scroll;
-  overflow-x: hidden;
+  padding: 24px;
+  max-width: 560px;
+  max-height: min(680px, calc(100vh - 80px));
+  max-height: min(680px, calc(100dvh - 80px));
+  overflow: hidden;
   position: relative;
 }
+.editAccountPopup .popup-content > h2 {
+  flex: 0 0 auto;
+  margin-bottom: 0;
+}
 .settingsPopup .popup-content {
-  padding: 30px;
+  padding: 24px;
   max-width: 560px;
+  max-height: min(680px, calc(100vh - 80px));
+  max-height: min(680px, calc(100dvh - 80px));
+  overflow: hidden;
+}
+.settingsPopup .popup-content > h2 {
+  flex: 0 0 auto;
+  margin-bottom: 0;
 }
 .settingsPopup section {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  min-height: 0;
+  gap: 1rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  width: calc(100% + 5px);
+  margin-inline-end: -5px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accentBlue2) transparent;
+}
+.settingsPopup section::-webkit-scrollbar {
+  width: 5px;
+}
+.settingsPopup section::-webkit-scrollbar-track {
+  margin-block: 8px;
+  background: transparent;
+}
+.settingsPopup section::-webkit-scrollbar-thumb {
+  min-height: 32px;
+  border-radius: var(--bR);
+  background: var(--accentBlue2);
+}
+.settingsPopup section::-webkit-scrollbar-thumb:hover {
+  background: var(--accentBlue3);
+}
+.settingsPopup section::-webkit-scrollbar-button {
+  display: none;
 }
 .settingsPopup .settingsRow {
   display: grid;
@@ -5364,7 +5403,7 @@ mux-player::part(menu-item) {
   align-items: center;
   background-color: var(--background2);
   border-radius: 18px;
-  padding: 18px;
+  padding: 16px;
 }
 .settingsPopup .settingsRowText {
   display: flex;
@@ -5389,11 +5428,6 @@ mux-player::part(menu-item) {
 @media screen and (max-width: 570px) {
   .settingsPopup .settingsRow {
     grid-template-columns: 1fr;
-  }
-}
-  @media (min-height: 900px) {
-  .editAccountPopup .popup-content::-webkit-scrollbar {
-    display: none;
   }
 }
 .done .popup-content {
@@ -5648,6 +5682,236 @@ main.account .info .userInfo p svg {
   flex-shrink: 0;
 }
 
+/* ACCOUNT HERO */
+main.account.accountPage {
+  padding-top: 73px;
+}
+
+.accountHero {
+  position: relative;
+  isolation: isolate;
+  width: 100vw;
+  min-height: 320px;
+  margin-inline: calc(50% - 50vw);
+  overflow: hidden;
+  background: var(--background2);
+}
+
+.accountHeroBackground {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.accountHeroBackground img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.accountHeroContent {
+  width: min(var(--contentWidth), calc(100vw - 40px));
+  min-height: inherit;
+  margin-inline: auto;
+  padding-block: 36px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 180px;
+  align-items: center;
+  gap: clamp(24px, 3vw, 40px);
+}
+
+.accountIdentity {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: clamp(20px, 2.5vw, 32px);
+}
+
+.accountHero .profilePhoto {
+  width: clamp(160px, 14vw, 190px);
+  height: clamp(160px, 14vw, 190px);
+  flex: 0 0 auto;
+  border: 5px solid var(--seeThroughtWhite);
+  border-radius: 50%;
+  background: var(--background1);
+  box-shadow: 0 18px 42px var(--seethroughtBlack);
+  object-fit: cover;
+}
+
+.accountHero .userInfo {
+  min-width: 0;
+  width: 100%;
+  padding: 18px 28px;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 26px;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.accountHero .userInfo p {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-block: 12px;
+  border-bottom: 1px solid var(--border1);
+  color: var(--text1);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.accountHero .userInfo p.second {
+  color: var(--text2);
+  font-weight: 400;
+}
+
+.accountHero .userInfo p:last-child {
+  border-bottom: 0;
+}
+
+.accountHero .userInfo p svg {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+
+.accountHero .userInfo p svg path,
+.accountHero .userInfo p.second svg path {
+  stroke: currentColor;
+}
+
+.accountHero .userInfo .desc {
+  max-height: 110px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accentBlue2) transparent;
+}
+
+.accountHero .userInfo .desc a {
+  color: var(--accentBlue2);
+  text-decoration: underline;
+}
+
+.accountHero .accountActions,
+.accountHero .accountActions > span {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.accountHero .accountActions button {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--bR);
+  font-weight: 500;
+}
+
+.accountHero .accountActions button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.accountHero .accountActions .edit {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: var(--accentBlue2);
+}
+
+.accountHero .accountActions .edit svg path {
+  stroke: var(--accentBlue2);
+}
+
+.accountHero .accountActions .settings {
+  background: var(--accentBlue);
+  color: var(--seeThroughtWhite);
+}
+
+.accountHero .accountActions .settings svg path,
+.accountHero .accountActions .logOut svg path {
+  stroke: var(--seeThroughtWhite);
+}
+
+.accountHero .accountActions .logOut {
+  background: var(--accentRed);
+  color: var(--seeThroughtWhite);
+}
+
+.accountHero .accountActions .logOut p {
+  color: inherit;
+}
+
+@media screen and (max-width: 760px) {
+  .accountHero {
+    min-height: 390px;
+  }
+
+  .accountHeroContent {
+    width: calc(100vw - 40px);
+    padding: 62px 0 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .accountIdentity {
+    width: min(100%, 520px);
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .accountHero .profilePhoto {
+    z-index: 1;
+    width: 112px;
+    height: 112px;
+    margin-bottom: -52px;
+    border-width: 4px;
+  }
+
+  .accountHero .userInfo {
+    padding: 64px 18px 14px;
+    border-radius: 18px;
+  }
+
+  .accountHero .userInfo p {
+    min-height: 0;
+    padding-block: 10px;
+    font-size: 0.85rem;
+  }
+
+  .accountHero .userInfo p svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .accountHero .accountActions {
+    width: min(100%, 520px);
+  }
+
+  .accountHero .accountActions > span {
+    flex-direction: row;
+  }
+
+  .accountHero .accountActions button {
+    min-height: 38px;
+    padding-block: 8px;
+    font-size: 0.82rem;
+  }
+}
+
 .accountCertificates {
   width: 100%;
 }
@@ -5822,9 +6086,41 @@ main.account .info .userInfo p svg {
 
 .editAccountPopup section {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   align-items: center;
+  min-height: 0;
   gap: 1.5rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  width: calc(100% + 5px);
+  margin-inline-end: -5px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accentBlue2) transparent;
+}
+
+.editAccountPopup section::-webkit-scrollbar {
+  width: 5px;
+}
+
+.editAccountPopup section::-webkit-scrollbar-track {
+  margin-block: 8px;
+  background: transparent;
+}
+
+.editAccountPopup section::-webkit-scrollbar-thumb {
+  min-height: 32px;
+  border-radius: var(--bR);
+  background: var(--accentBlue2);
+}
+
+.editAccountPopup section::-webkit-scrollbar-thumb:hover {
+  background: var(--accentBlue3);
+}
+
+.editAccountPopup section::-webkit-scrollbar-button {
+  display: none;
 }
 
 .editAccountPopup section .userPictureInput {
@@ -6020,16 +6316,17 @@ main.account .info .userInfo p svg {
   max-width: 500px;
 }
 
-.editAccountPopup section .editButtons {
+.editAccountPopup .editButtons {
+  flex: 0 0 auto;
   width: 100%;
   max-width: 500px;
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 2rem;
+  margin: 0 auto;
 }
 
-.editAccountPopup section .editButtons button {
+.editAccountPopup .editButtons button {
   width: 100%;
   color: var(--text1);
   background-color: var(--background2);
@@ -6040,16 +6337,16 @@ main.account .info .userInfo p svg {
   transition: background-color 0.15s ease;
 }
 
-.editAccountPopup section .editButtons button:nth-child(2) {
+.editAccountPopup .editButtons button:nth-child(2) {
   background-color: var(--accentBlue);
   color: white;
 }
 
-.editAccountPopup section .editButtons button:hover {
+.editAccountPopup .editButtons button:hover {
   background-color: var(--background3);
 }
 
-.editAccountPopup section .editButtons button:nth-child(2):hover {
+.editAccountPopup .editButtons button:nth-child(2):hover {
   background-color: var(--accentBlue2);
 }
 
@@ -12984,7 +13281,7 @@ footer > span.footerCopyright {
   .editAccountPopup .popup-content {
     padding: 20px;
   }
-  .editAccountPopup section .editButtons button {
+  .editAccountPopup .editButtons button {
     padding-block: 12px;
     font-size: 0.9rem;
   }
@@ -13546,7 +13843,7 @@ footer > div {
   main.playlist .videoHolder {
     gap: 15px;
   }
-  .editAccountPopup section .editButtons {
+  .editAccountPopup .editButtons {
     flex-direction: column-reverse;
   }
   main.account > .info .buttons {

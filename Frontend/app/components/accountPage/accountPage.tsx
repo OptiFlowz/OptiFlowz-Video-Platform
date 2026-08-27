@@ -42,15 +42,16 @@ function AccountPage(){
 
     return (
         <>
-            <main className="account py-10">
-                <div className="info flex gap-4 max-[350px]:gap-3 items-center">
-                    <div className="background">
-                        <img className="w-full h-full" src={backgroundImage} alt="Background" />
+            <main className="account accountPage">
+                <section className="accountHero">
+                    <div className="accountHeroBackground" aria-hidden="true">
+                        <img src={backgroundImage} alt="" />
                     </div>
 
-                    <AccountInfo />
+                    <div className="accountHeroContent">
+                        <AccountInfo />
 
-                    <div className="accountActions z-2">
+                        <div className="accountActions">
                         <span>
                             <button className="edit button" onClick={() => setIsEditPopupOpen(true)}>
                                 {EditSVG}
@@ -63,10 +64,11 @@ function AccountPage(){
                         </span>
                         <button className="logOut button" onClick={logoutHandle}>
                             {LogOutSVG}
-                            <p className="text-(--text1)">{t("accountLogout")}</p>
+                            <p>{t("accountLogout")}</p>
                         </button>
+                        </div>
                     </div>
-                </div>
+                </section>
 
                 <AccountCertificates onDataStateChange={setCertificateState} />
                 <ItemSlider props={{type: 3, onDataStateChange: (state) => setSliderState(3, state)}} />

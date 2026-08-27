@@ -8,7 +8,7 @@ import { formatDescription, getToken } from "~/functions";
 import { useI18n } from "~/i18n";
 
 const SkeletonAccountInfo = () => (
-    <span className="w-full flex items-center gap-4 z-2">
+    <div className="accountIdentity">
         <div className="skeleton-profile-photo profilePhoto"></div>
 
         <span className="userInfo flex flex-col gap-3">
@@ -25,7 +25,7 @@ const SkeletonAccountInfo = () => (
                 <span className="skeleton-info-text long"></span>
             </p>
         </span>
-    </span>
+    </div>
 );
 
 function AccountInfo(){
@@ -59,7 +59,7 @@ function AccountInfo(){
     }
 
     return (
-        <span className="w-full flex items-center gap-4 max-[350px]:gap-3 z-2">
+        <div className="accountIdentity">
             <img
                 className="profilePhoto"
                 src={userData?.user && (userData.user?.image_url || DefaultProfile)}
@@ -75,7 +75,7 @@ function AccountInfo(){
                 <p className="second">{MailSVG}<span>{userData?.user && userData.user?.email}</span></p>
                 <p className="second">{DescriptionSVG}<span className="w-full desc">{(userData?.user && formatDescription(userData.user?.description)) || t("noBiography")}</span></p>
             </span>
-        </span>
+        </div>
     );
 }
 

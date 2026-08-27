@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { PLATFORM_NAME, POWERED_BY_NAME, BRAND_NAME } from "~/changeables";
 import { platformAnalyticsLocaleOverrides } from "~/platformAnalyticsTranslations";
+import { privacyLocaleOverrides } from "~/privacy/privacyTranslations";
 
 export const SUPPORTED_LOCALES = ["ar", "de", "en", "es", "fr", "el", "hi", "hr", "it", "nl", "pl", "pt", "ro", "sl", "sr", "tr"] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
@@ -551,6 +552,7 @@ const enBase: TranslationMap = {
   privacyEnablePersonalization: "Review privacy preferences",
   privacyPreferencesFootnote: "You can change or withdraw these choices at any time. Previous processing remains lawful.",
   privacySavePreferences: "Save preferences",
+  privacyManageChoices: "Manage privacy choices",
   privacyAiDescription: "Your friendly AI assistant",
   footerPoweredBy: `Powered by ${POWERED_BY_NAME}`,
   footerCopyright: BRAND_NAME,
@@ -11696,7 +11698,7 @@ const channelAnalyticsLocaleOverrides: Partial<Record<Locale, Partial<Translatio
 const buildTranslations = () => {
   const result = {} as Record<Locale, TranslationMap>;
   for (const locale of SUPPORTED_LOCALES) {
-    result[locale] = { ...enBase, ...localeOverrides[locale], ...adminCrudOverrides[locale], ...completeLocaleOverrides[locale], ...analyticsLocaleOverrides[locale], ...geographicAnalyticsLocaleOverrides[locale], ...(timeSeriesAnalyticsLocaleOverrides[locale] ?? {}), ...(channelAnalyticsLocaleOverrides[locale] ?? {}), ...(platformAnalyticsLocaleOverrides[locale] ?? {}), ...videoAnalyticsSectionDescriptionOverrides[locale], ...engagementDescriptionLocaleOverrides[locale], ...quizPopupLocaleOverrides[locale] } as TranslationMap;
+    result[locale] = { ...enBase, ...localeOverrides[locale], ...adminCrudOverrides[locale], ...completeLocaleOverrides[locale], ...analyticsLocaleOverrides[locale], ...geographicAnalyticsLocaleOverrides[locale], ...(timeSeriesAnalyticsLocaleOverrides[locale] ?? {}), ...(channelAnalyticsLocaleOverrides[locale] ?? {}), ...(platformAnalyticsLocaleOverrides[locale] ?? {}), ...videoAnalyticsSectionDescriptionOverrides[locale], ...engagementDescriptionLocaleOverrides[locale], ...quizPopupLocaleOverrides[locale], ...privacyLocaleOverrides[locale] } as TranslationMap;
   }
   return result;
 };
@@ -11811,6 +11813,7 @@ export function setCurrentLocaleValue(locale: Locale) {
   if (typeof window === "undefined") return;
   localStorage.setItem(STORAGE_KEY, locale);
   document.documentElement.lang = locale;
+  document.documentElement.dir = locale === "ar" ? "rtl" : "ltr";
 }
 
 export function translate(key: TranslationKey, params?: Params) {

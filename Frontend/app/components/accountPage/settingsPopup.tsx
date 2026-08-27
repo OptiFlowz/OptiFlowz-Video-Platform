@@ -7,6 +7,8 @@ import PopupPortal from "~/components/popupPortal/popupPortal";
 import { OFFICE_EMAIL } from "~/changeables";
 import { usePrivacyPreferences } from "~/privacy/privacyPreferences";
 
+const SETTINGS_ACTION_CLASS = "bg-(--background1) p-3 font-semibold rounded-xl transition-colors button text-center";
+
 function SettingsPopup({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { locale, setLocale, t } = useI18n();
   const { openPreferences } = usePrivacyPreferences();
@@ -42,28 +44,28 @@ function SettingsPopup({ open, onClose }: { open: boolean; onClose: () => void }
               <strong>{t("accountResetPassword")}</strong>
               <p>{t("accountResetPasswordHelp")}</p>
             </div>
-            <Link className="bg-(--background1) p-3 font-semibold rounded-xl transition-colors button text-center" to={resetPasswordUrl}>{t("resetPassword")}</Link>
+            <Link className={SETTINGS_ACTION_CLASS} to={resetPasswordUrl}>{t("resetPassword")}</Link>
           </div>
           <div className="settingsRow">
             <div className="settingsRowText">
               <strong>{t("accountPrivacyChoices")}</strong>
               <p>{t("accountPrivacyChoicesHelp")}</p>
             </div>
-            <button type="button" className="privacySettingsButton" onClick={openPreferences}>{t("accountManagePrivacy")}</button>
+            <button type="button" className={SETTINGS_ACTION_CLASS} onClick={openPreferences}>{t("accountManagePrivacy")}</button>
           </div>
           <div className="settingsRow">
             <div className="settingsRowText">
               <strong>{t("accountDataRights")}</strong>
               <p>{t("accountDataRightsHelp")}</p>
             </div>
-            <a className="privacySettingsButton text-center" href={dataRequestUrl}>{t("accountRequestData")}</a>
+            <a className={SETTINGS_ACTION_CLASS} href={dataRequestUrl}>{t("accountRequestData")}</a>
           </div>
           <div className="settingsRow">
             <div className="settingsRowText">
               <strong>{t("accountPrivacyContact")}</strong>
               <p>{t("accountPrivacyContactHelp")}</p>
             </div>
-            <a className="privacySettingsButton text-center" href={privacyContactUrl}>{t("accountContactPrivacy")}</a>
+            <a className={SETTINGS_ACTION_CLASS} href={privacyContactUrl}>{t("accountContactPrivacy")}</a>
           </div>
         </section>
       </div>
