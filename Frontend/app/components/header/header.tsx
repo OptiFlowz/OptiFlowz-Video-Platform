@@ -341,13 +341,30 @@ function Header(){
         </header>
 
         {/* Mobile Sidebar Menu */}
-        <div 
-            className={`fixed top-0 right-0 h-full w-64 bg-(--background1) shadow-2xl z-20 transition-transform duration-300 ease-in-out ${
-                mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
-            } max-[800px]:block hidden`}
+        <aside
+            className={`mobileSideMenu max-[800px]:flex hidden ${mobileMenuOpen ? "open" : ""}`}
+            aria-hidden={!mobileMenuOpen}
         >
-            <div className="p-4">
-                <nav className="flex flex-col gap-2 font-regular">
+            <div className="mobileSideMenuHeader">
+                <Link to="/" className="mobileSideMenuBrand" onClick={closeMobileMenu}>
+                    <img src={LOGO} alt={`${BRAND_NAME} Logo`} />
+                    <span>
+                        <h3>{BRAND_NAME}</h3>
+                        <p>{t("appName")}</p>
+                    </span>
+                </Link>
+
+                <button
+                    type="button"
+                    className="mobileSideMenuClose"
+                    onClick={closeMobileMenu}
+                    aria-label={t("close")}
+                >
+                    {CloseSVG}
+                </button>
+            </div>
+
+            <nav className="flex flex-col gap-2 font-regular">
                     <NavLink 
                         to="/" 
                         end 
@@ -453,6 +470,7 @@ function Header(){
                     <Link 
                         to={MARKETING_WEBSITE_URL}
                         className={`p-3 rounded-lg transition-colors hover:bg-(--background2)`}
+                        onClick={closeMobileMenu}
                     >
                         {BRAND_NAME}
                     </Link>
@@ -474,9 +492,8 @@ function Header(){
                         <img className="accountImg rounded-full w-8 h-8 aspect-square object-cover shrink-0 border-2!" src={headerUserData?.user?.image_url || DefaultProfile} alt={t("profilePhotoAlt")} />
                         <span>{t("footerAccount")}</span>
                     </NavLink>
-                </nav>
-            </div>
-        </div>
+            </nav>
+        </aside>
 
         <div 
             className={`mobileMenuBg max-[800px]:block hidden ${mobileMenuOpen ? "open" : ""}`}
