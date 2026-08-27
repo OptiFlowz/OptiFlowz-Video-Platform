@@ -788,35 +788,18 @@ header nav a:hover{
   box-shadow: 0 20px 60px var(--seethroughtBlack);
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
-  transform-origin: right center;
   transform: translateX(100%);
   will-change: transform;
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .mobileSideMenu.open {
   transform: translateX(0);
-  animation: mobileSideMenuEnter 0.42s both;
-}
-
-@keyframes mobileSideMenuEnter {
-  0% {
-    transform: translateX(100%);
-    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  82% {
-    transform: translateX(0) scaleX(1.015);
-    animation-timing-function: cubic-bezier(0.22, 0.8, 0.36, 1);
-  }
-  100% {
-    transform: translateX(0) scaleX(1);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .mobileSideMenu,
   .mobileSideMenu.open {
-    animation: none;
     transition: none;
   }
 }
