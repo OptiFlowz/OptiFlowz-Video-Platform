@@ -38,6 +38,16 @@ interface VideoPlayerProps {
 
 const EMPTY_STYLE: React.CSSProperties = {};
 
+function getNativeVideo(player: MuxPlayerElement | null) {
+  return (
+    player?.media?.nativeEl ??
+    player?.shadowRoot
+      ?.querySelector("mux-video")
+      ?.shadowRoot?.querySelector("video") ??
+    null
+  );
+}
+
 export default function VideoPlayer({
   playbackId,
   videoId,
@@ -71,6 +81,19 @@ export default function VideoPlayer({
   const [isThemeReady, setIsThemeReady] = useState(false);
   const [isAutoplayMuted, setIsAutoplayMuted] = useState(false);
   const didInitialSeek = useRef(false);
+  const isPlayerReadyRef = useRef(false);
+  const recoveryAttemptsRef = useRef(0);
+  const recoveryTimersRef = useRef<number[]>([]);
+  const wasPageHiddenRef = useRef(false);
+  const resumeAfterRecoveryRef = useRef(false);
+  const lastKnownTimeRef = useRef(Number.isFinite(currentTimee) ? (currentTimee ?? 0) : 0);
+  const pendingRecoveryTimeRef = useRef<number | null>(null);
+  const previousCompactControlsRef = useRef(compactControls);
+
+  const updatePlayerReady = useCallback((ready: boolean) => {
+    isPlayerReadyRef.current = ready;
+    setIsPlayerReady(ready);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -100,10 +123,150 @@ export default function VideoPlayer({
 
   useEffect(() => {
     setMetadataLoaded(false);
-    setIsPlayerReady(false);
+    updatePlayerReady(false);
     setIsAutoplayMuted(false);
     didInitialSeek.current = false;
-  }, [playbackId]);
+    recoveryAttemptsRef.current = 0;
+    pendingRecoveryTimeRef.current = null;
+    lastKnownTimeRef.current = Number.isFinite(currentTimee) ? (currentTimee ?? 0) : 0;
+  }, [playbackId, updatePlayerReady]);
+
+  const clearRecoveryTimers = useCallback(() => {
+    recoveryTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+    recoveryTimersRef.current = [];
+  }, []);
+
+  const recoverPlayer = useCallback((allowReload: boolean) => {
+    const player = playerRef.current;
+    if (!player) return;
+
+    const video = getNativeVideo(player);
+    const currentTime = Number.isFinite(video?.currentTime)
+      ? (video?.currentTime ?? 0)
+      : Number.isFinite(player.currentTime)
+        ? player.currentTime
+      : lastKnownTimeRef.current;
+    const readyState = video?.readyState ?? player.readyState ?? 0;
+    const videoWidth = video?.videoWidth ?? player.videoWidth ?? 0;
+    const hasRenderableFrame = readyState >= 2 && videoWidth > 0;
+
+    if (Number.isFinite(currentTime)) {
+      lastKnownTimeRef.current = currentTime;
+    }
+
+    if (hasRenderableFrame) {
+      recoveryAttemptsRef.current = 0;
+      setMetadataLoaded(true);
+      updatePlayerReady(true);
+      styleMuxPlayerCaptions(player);
+
+      if (resumeAfterRecoveryRef.current) {
+        resumeAfterRecoveryRef.current = false;
+        void player.play().catch(() => {});
+      } else if (video?.paused && Number.isFinite(video.currentTime)) {
+        // Re-present a paused frame after the browser recreates its video
+        // compositor layer during a tab or full/mini transition.
+        const maxTime = Number.isFinite(video.duration)
+          ? Math.max(video.duration - 0.01, 0)
+          : video.currentTime + 0.01;
+        const repaintTime = Math.min(video.currentTime + 0.01, maxTime);
+        if (repaintTime !== video.currentTime) video.currentTime = repaintTime;
+      }
+      return;
+    }
+
+    updatePlayerReady(false);
+    if (!allowReload || recoveryAttemptsRef.current >= 2) return;
+
+    recoveryAttemptsRef.current += 1;
+    pendingRecoveryTimeRef.current = lastKnownTimeRef.current;
+    setMetadataLoaded(false);
+    player.load();
+  }, [updatePlayerReady]);
+
+  const schedulePlayerRecovery = useCallback(() => {
+    clearRecoveryTimers();
+    recoveryTimersRef.current = [
+      window.setTimeout(() => recoverPlayer(false), 0),
+      window.setTimeout(() => recoverPlayer(true), 900),
+    ];
+  }, [clearRecoveryTimers, recoverPlayer]);
+
+  useEffect(() => {
+    const capturePlaybackState = () => {
+      const player = playerRef.current;
+      if (!player) return;
+      const video = getNativeVideo(player);
+      resumeAfterRecoveryRef.current = !(video?.paused ?? player.paused);
+      const currentTime = video?.currentTime ?? player.currentTime;
+      if (Number.isFinite(currentTime)) {
+        lastKnownTimeRef.current = currentTime;
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        wasPageHiddenRef.current = true;
+        capturePlaybackState();
+        return;
+      }
+
+      if (!wasPageHiddenRef.current) return;
+      wasPageHiddenRef.current = false;
+      schedulePlayerRecovery();
+    };
+
+    const handlePageHide = () => {
+      wasPageHiddenRef.current = true;
+      capturePlaybackState();
+    };
+
+    const handlePageShow = () => {
+      if (!wasPageHiddenRef.current) return;
+      wasPageHiddenRef.current = false;
+      schedulePlayerRecovery();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", handlePageHide);
+    window.addEventListener("pageshow", handlePageShow);
+
+    return () => {
+      clearRecoveryTimers();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", handlePageHide);
+      window.removeEventListener("pageshow", handlePageShow);
+    };
+  }, [clearRecoveryTimers, schedulePlayerRecovery]);
+
+  useEffect(() => {
+    if (previousCompactControlsRef.current === compactControls) return;
+    previousCompactControlsRef.current = compactControls;
+
+    const player = playerRef.current;
+    if (player) {
+      const video = getNativeVideo(player);
+      resumeAfterRecoveryRef.current = !(video?.paused ?? player.paused);
+      const currentTime = video?.currentTime ?? player.currentTime;
+      if (Number.isFinite(currentTime)) {
+        lastKnownTimeRef.current = currentTime;
+      }
+    }
+
+    schedulePlayerRecovery();
+  }, [compactControls, schedulePlayerRecovery]);
+
+  useEffect(() => {
+    if (!isThemeReady) return;
+
+    const watchdog = window.setTimeout(() => {
+      if (!isPlayerReadyRef.current && document.visibilityState === "visible") {
+        recoverPlayer(true);
+      }
+    }, 15000);
+
+    return () => window.clearTimeout(watchdog);
+  }, [isThemeReady, playbackId, recoverPlayer]);
 
   useEffect(() => {
     const player = playerRef.current;
@@ -345,6 +508,7 @@ export default function VideoPlayer({
     if (!player) return;
 
     const current = player.currentTime;
+    if (Number.isFinite(current)) lastKnownTimeRef.current = current;
     const diff = current - lastSentProgressRef.current;
 
     const { chapterIndex, chapterName } = getActiveChapter(current);
@@ -469,6 +633,7 @@ export default function VideoPlayer({
   }
 
   const handlePlay = useCallback(() => {
+    resumeAfterRecoveryRef.current = false;
     hbIsPlayingRef.current = true;
     onPlayingChange?.(true);
     void sendHeartbeat(true, true); // force odmah
@@ -476,6 +641,7 @@ export default function VideoPlayer({
   }, [onPlayingChange, sendHeartbeat, startHeartbeat]);
 
   const handlePause = useCallback(() => {
+    resumeAfterRecoveryRef.current = false;
     hbIsPlayingRef.current = false;
     onPlayingChange?.(false);
     stopHeartbeat();                // PREKINI interval da ne šalje false non-stop
@@ -518,11 +684,40 @@ export default function VideoPlayer({
           }}
           onLoadedMetadata={() => {
             styleMuxPlayerCaptions(playerRef.current);
+            const recoveryTime = pendingRecoveryTimeRef.current;
+            if (recoveryTime != null && playerRef.current) {
+              const video = getNativeVideo(playerRef.current);
+              if (video) video.currentTime = recoveryTime;
+              else playerRef.current.currentTime = recoveryTime;
+              pendingRecoveryTimeRef.current = null;
+            }
             setMetadataLoaded(true);
-            setIsPlayerReady(true);
+          }}
+          onLoadedData={() => {
+            recoveryAttemptsRef.current = 0;
+            updatePlayerReady(true);
+          }}
+          onCanPlay={() => {
+            recoveryAttemptsRef.current = 0;
+            updatePlayerReady(true);
+            if (resumeAfterRecoveryRef.current) {
+              resumeAfterRecoveryRef.current = false;
+              void playerRef.current?.play().catch(() => {});
+            }
+          }}
+          onPlaying={() => updatePlayerReady(true)}
+          onLoadStart={() => {
+            const player = playerRef.current;
+            const readyState = getNativeVideo(player)?.readyState ?? player?.readyState ?? 0;
+            if (readyState < 2) updatePlayerReady(false);
+          }}
+          onEmptied={() => {
+            setMetadataLoaded(false);
+            updatePlayerReady(false);
           }}
           playbackId={playbackId}
           autoPlay={autoplay || forceAutoplay}
+          preload="auto"
           muted={isAutoplayMuted}
           playsInline
           accentColor={accentColor}

@@ -75,17 +75,15 @@ function PlayerCollection({
 
   return (
     <div ref={anchorRef} className={`player ${props?.class ?? ""}`}>
-      {!streamUrl ? (
-        <div className="persistent-video-slot" style={{ height: "100%" }}>
-          <div className="player-skeleton" aria-hidden="true">
-            <div className="player-skeleton__controls">
-              <span className="player-skeleton__chip player-skeleton__chip--wide"></span>
-              <span className="player-skeleton__chip"></span>
-              <span className="player-skeleton__chip player-skeleton__chip--short"></span>
-            </div>
+      <div className="persistent-video-slot" style={{ height: "100%" }} aria-hidden="true">
+        <div className="player-skeleton">
+          <div className="player-skeleton__controls">
+            <span className="player-skeleton__chip player-skeleton__chip--wide"></span>
+            <span className="player-skeleton__chip"></span>
+            <span className="player-skeleton__chip player-skeleton__chip--short"></span>
           </div>
         </div>
-      ) : <div className="persistent-video-slot" aria-hidden="true" />}
+      </div>
     </div>
   );
 }

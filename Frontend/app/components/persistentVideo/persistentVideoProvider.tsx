@@ -142,15 +142,36 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
       frame = requestAnimationFrame(updateAnchorRect);
     };
 
+    const recoverAnchorMeasurement = () => {
+      if (document.visibilityState === "hidden") return;
+      updateAnchorRect();
+      scheduleUpdate();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        recoverAnchorMeasurement();
+      }
+    };
+
+    // Measure before the first paint. Relying only on rAF can leave the real
+    // player hidden indefinitely when the page is backgrounded during mount.
+    updateAnchorRect();
     scheduleUpdate();
     const observer = new ResizeObserver(scheduleUpdate);
     observer.observe(anchor);
     window.addEventListener("resize", scheduleUpdate);
+    window.addEventListener("focus", recoverAnchorMeasurement);
+    window.addEventListener("pageshow", recoverAnchorMeasurement);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
       window.removeEventListener("resize", scheduleUpdate);
+      window.removeEventListener("focus", recoverAnchorMeasurement);
+      window.removeEventListener("pageshow", recoverAnchorMeasurement);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [anchor, updateAnchorRect]);
 
