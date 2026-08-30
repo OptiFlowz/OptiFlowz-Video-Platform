@@ -892,6 +892,40 @@ header nav a:hover{
   background: var(--accentBlue2);
 }
 
+.mobileSideMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text1);
+}
+
+.mobileSideMenuIcon,
+.customLanguageSelect--mobile .customSelectLeading {
+  width: 20px;
+  height: 21px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 20px;
+  color: var(--text1);
+}
+
+.mobileSideMenuIcon svg,
+.customLanguageSelect--mobile .customSelectLeading svg {
+  display: block;
+  width: 20px;
+  height: 21px;
+}
+
+.mobileSideMenuIcon svg path,
+.customLanguageSelect--mobile .customSelectLeading svg path {
+  stroke: currentColor;
+}
+
+.customLanguageSelect--mobile .customLanguageText {
+  flex: 1;
+}
+
 .darkSVG svg path {
   stroke: var(--accentBlue2);
 }
@@ -909,20 +943,18 @@ header nav a:hover{
 }
 
 .adminAvatarDropdown {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
+  position: fixed;
   min-width: 180px;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
   padding: 0.55rem;
   border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(180deg, rgba(24, 28, 38, 0.88), rgba(18, 21, 30, 0.92));
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.26);
+  border: 1px solid var(--headerBorderColor);
+  background: var(--headerSurface);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 18px 44px var(--headerShadowColor);
   z-index: 30;
 }
 
@@ -933,6 +965,34 @@ header nav a:hover{
   color: var(--text1);
   font-weight: 600;
   text-decoration: none;
+}
+
+.adminAvatarDropdown .adminAvatarDropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.adminAvatarDropdownIcon,
+.customLanguageSelect--menu .customSelectLeading {
+  width: 20px;
+  height: 21px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 20px;
+  color: var(--text1);
+}
+
+.adminAvatarDropdownIcon svg,
+.customLanguageSelect--menu .customSelectLeading svg {
+  display: block;
+  width: 20px;
+  height: 21px;
+}
+
+.customLanguageSelect--menu .customLanguageText {
+  flex: 1;
 }
 
 .customSelect {

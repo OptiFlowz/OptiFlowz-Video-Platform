@@ -1,6 +1,12 @@
 import { memo, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, NavLink, useNavigate, useParams } from "react-router";
-import { SearchSVG, SearchSVGWhite, CloseSVG, MenuSVG, EditModeSVG } from "~/constants";
+import {
+    AnalyticsSVG, ChannelMenuSVG, CloseSVG, EditModeSVG, ExternalSiteMenuSVG,
+    HomeMenuSVG, LanguageMenuSVG, LogOutSVG, MenuSVG, PeopleSVG,
+    PlatformMenuSVG, PlaylistSVG, QuizSVG, RecommendedMenuSVG, SearchSVG,
+    SearchSVGWhite, TrendingMenuSVG, UserSVG,
+} from "~/constants";
 import DefaultProfile from "../../../assets/DefaultProfile.webp";
 import { getToken } from "~/functions";
 import type { AuthFetchT } from "~/types";
@@ -16,6 +22,7 @@ function Header(){
     const [searchOpen, setSearchOpen] = useState(false);
     const [searchFocusArmed, setSearchFocusArmed] = useState(false);
     const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+    const [accountMenuPosition, setAccountMenuPosition] = useState({ top: 0, right: 0 });
     const navigate = useNavigate();
     const {searchValue} = useParams();
     const { videoId } = useParams();
@@ -26,6 +33,7 @@ function Header(){
     const searchRef1 = useRef<HTMLInputElement>(null);
     const searchRef2 = useRef<HTMLInputElement>(null);
     const accountMenuRef = useRef<HTMLDivElement>(null);
+    const accountDropdownRef = useRef<HTMLDivElement>(null);
 
     const token = getToken();
     const myHeaders = useRef(new Headers());
@@ -96,7 +104,11 @@ function Header(){
         if (!accountMenuOpen) return;
 
         const handleClickOutside = (event: MouseEvent) => {
-            if (!accountMenuRef.current?.contains(event.target as Node)) {
+            const target = event.target as Node;
+            if (
+                !accountMenuRef.current?.contains(target) &&
+                !accountDropdownRef.current?.contains(target)
+            ) {
                 setAccountMenuOpen(false);
             }
         };
@@ -113,6 +125,29 @@ function Header(){
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
             document.removeEventListener("keydown", handleEscape);
+        };
+    }, [accountMenuOpen]);
+
+    useEffect(() => {
+        if (!accountMenuOpen) return;
+
+        const updateAccountMenuPosition = () => {
+            const triggerBounds = accountMenuRef.current?.getBoundingClientRect();
+            if (!triggerBounds) return;
+
+            setAccountMenuPosition({
+                top: triggerBounds.bottom + 10,
+                right: Math.max(16, window.innerWidth - triggerBounds.right),
+            });
+        };
+
+        updateAccountMenuPosition();
+        window.addEventListener("resize", updateAccountMenuPosition);
+        window.addEventListener("scroll", updateAccountMenuPosition, true);
+
+        return () => {
+            window.removeEventListener("resize", updateAccountMenuPosition);
+            window.removeEventListener("scroll", updateAccountMenuPosition, true);
         };
     }, [accountMenuOpen]);
 
@@ -218,7 +253,16 @@ function Header(){
                             <button
                                 type="button"
                                 className={`adminAvatarTrigger flex items-center ${isAdmin ? "bg-(--accentOrange) p-1" : "p-1 pl-3 max-[1075px]:pl-1"} rounded-full transition-all duration-200 cursor-pointer`}
-                                onClick={() => setAccountMenuOpen((prev) => !prev)}
+                                onClick={(event) => {
+                                    if (!accountMenuOpen) {
+                                        const triggerBounds = event.currentTarget.getBoundingClientRect();
+                                        setAccountMenuPosition({
+                                            top: triggerBounds.bottom + 10,
+                                            right: Math.max(16, window.innerWidth - triggerBounds.right),
+                                        });
+                                    }
+                                    setAccountMenuOpen((prev) => !prev);
+                                }}
                                 aria-haspopup="menu"
                                 aria-expanded={accountMenuOpen}
                                 aria-label={t("accountMenuAria")}
@@ -238,14 +282,21 @@ function Header(){
                                 />
                             </button>
 
-                            {accountMenuOpen ? (
-                                <div className="adminAvatarDropdown animate-slideIn" role="menu">
+                            {accountMenuOpen && typeof document !== "undefined" ? createPortal(
+                                <div
+                                    ref={accountDropdownRef}
+                                    className="adminAvatarDropdown darkSVG animate-slideIn"
+                                    role="menu"
+                                    style={accountMenuPosition}
+                                >
                                     <Link
                                         to="/account"
+                                        className="adminAvatarDropdownItem"
                                         role="menuitem"
                                         onClick={() => setAccountMenuOpen(false)}
                                     >
-                                        {t("footerAccount")}
+                                        <span className="adminAvatarDropdownIcon" aria-hidden="true">{UserSVG}</span>
+                                        <span>{t("footerAccount")}</span>
                                     </Link>
                                     <div
                                         onMouseDown={(event) => event.stopPropagation()}
@@ -257,34 +308,42 @@ function Header(){
                                             ariaLabel={t("accountLanguage")}
                                             label={t("accountLanguage")}
                                             variant="menu"
+                                            leadingContent={LanguageMenuSVG}
                                         />
                                     </div>
                                     {isAdmin ? (
                                         <Link
                                             to="/my-videos"
+                                            className="adminAvatarDropdownItem"
                                             role="menuitem"
                                             onClick={() => setAccountMenuOpen(false)}
                                         >
-                                            {t("channelLabel")}
+                                            <span className="adminAvatarDropdownIcon" aria-hidden="true">{ChannelMenuSVG}</span>
+                                            <span>{t("channelLabel")}</span>
                                         </Link>
                                     ) : null}
                                     {isAdmin ? (
                                         <Link
                                             to="/platform-analytics"
+                                            className="adminAvatarDropdownItem"
                                             role="menuitem"
                                             onClick={() => setAccountMenuOpen(false)}
                                         >
-                                            {t("navPlatform")}
+                                            <span className="adminAvatarDropdownIcon" aria-hidden="true">{PlatformMenuSVG}</span>
+                                            <span>{t("navPlatform")}</span>
                                         </Link>
                                     ) : null}
                                     <button
                                         type="button"
+                                        className="adminAvatarDropdownItem"
                                         role="menuitem"
                                         onClick={handleLogout}
                                     >
-                                        {t("accountLogout")}
+                                        <span className="adminAvatarDropdownIcon" aria-hidden="true">{LogOutSVG}</span>
+                                        <span>{t("accountLogout")}</span>
                                     </button>
-                                </div>
+                                </div>,
+                                document.body
                             ) : null}
                         </div>
                     ) : (
@@ -368,111 +427,121 @@ function Header(){
                     <NavLink 
                         to="/" 
                         end 
-                        className={({ isActive }) => `p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
+                        className={({ isActive }) => `mobileSideMenuItem p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
                         onClick={() => {
                             closeMobileMenu();
                         }}
                     >
-                        {t("navHome")}
+                        <span className="mobileSideMenuIcon" aria-hidden="true">{HomeMenuSVG}</span>
+                        <span>{t("navHome")}</span>
                     </NavLink>
                     {isAdmin ? 
                     <NavLink 
                         to="/my-videos" 
                         end 
-                        className={({ isActive }) => `p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
+                        className={({ isActive }) => `mobileSideMenuItem p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
                         onClick={() => {
                             closeMobileMenu();
                         }}
                     >
-                        {t("navMyVideos")}
+                        <span className="mobileSideMenuIcon" aria-hidden="true">{ChannelMenuSVG}</span>
+                        <span>{t("navMyVideos")}</span>
                     </NavLink>
                     : ""}
                     {isAdmin ? 
                     <NavLink 
                         to="/my-playlists" 
                         end 
-                        className={({ isActive }) => `p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
+                        className={({ isActive }) => `mobileSideMenuItem p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
                         onClick={() => {
                             closeMobileMenu();
                         }}
                     >
-                        {t("navMyPlaylists")}
+                        <span className="mobileSideMenuIcon" aria-hidden="true">{PlaylistSVG}</span>
+                        <span>{t("navMyPlaylists")}</span>
                     </NavLink>
                     : ""}
                     {isAdmin ? 
                     <NavLink 
                         to="/quizzes" 
                         end 
-                        className={({ isActive }) => `p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
+                        className={({ isActive }) => `mobileSideMenuItem p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
                         onClick={() => {
                             closeMobileMenu();
                         }}
                     >
-                        {t("navQuizzes")}
+                        <span className="mobileSideMenuIcon" aria-hidden="true">{QuizSVG}</span>
+                        <span>{t("navQuizzes")}</span>
                     </NavLink>
                     : ""}
                     {isAdmin ? 
                     <NavLink 
                         to="/speakers-chairs" 
                         end 
-                        className={({ isActive }) => `p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
+                        className={({ isActive }) => `mobileSideMenuItem p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
                         onClick={() => {
                             closeMobileMenu();
                         }}
                     >
-                        {t("navSpeakersChairs")}
+                        <span className="mobileSideMenuIcon" aria-hidden="true">{PeopleSVG}</span>
+                        <span>{t("navSpeakersChairs")}</span>
                     </NavLink>
                     : ""}
                     {isAdmin ?
                     <NavLink
                         to="/channel-analytics"
                         end
-                        className={({ isActive }) => `p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
+                        className={({ isActive }) => `mobileSideMenuItem p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
                         onClick={() => {
                             closeMobileMenu();
                         }}
                     >
-                        {t("navChannelAnalytics")}
+                        <span className="mobileSideMenuIcon" aria-hidden="true">{AnalyticsSVG}</span>
+                        <span>{t("navChannelAnalytics")}</span>
                     </NavLink>
                     : ""}
                     {isAdmin ?
                     <NavLink
                         to="/platform-analytics"
                         end
-                        className={({ isActive }) => `p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
+                        className={({ isActive }) => `mobileSideMenuItem p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
                         onClick={() => {
                             closeMobileMenu();
                         }}
                     >
-                        {t("navPlatform")}
+                        <span className="mobileSideMenuIcon" aria-hidden="true">{PlatformMenuSVG}</span>
+                        <span>{t("navPlatform")}</span>
                     </NavLink>
                     : ""}
                     <NavLink 
                         to="/videos/1" 
                         end 
-                        className={({ isActive }) => `p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
+                        className={({ isActive }) => `mobileSideMenuItem p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
                         onClick={() => {
                             closeMobileMenu();
                         }}
                     >
-                        {t("navRecommended")}
+                        <span className="mobileSideMenuIcon" aria-hidden="true">{RecommendedMenuSVG}</span>
+                        <span>{t("navRecommended")}</span>
                     </NavLink>
                     <NavLink 
                         to="/videos/2" 
                         end 
-                        className={({ isActive }) => `p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
+                        className={({ isActive }) => `mobileSideMenuItem p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
                         onClick={() => {
                             closeMobileMenu();
                         }}
                     >
-                        {t("navTrending")}
+                        <span className="mobileSideMenuIcon" aria-hidden="true">{TrendingMenuSVG}</span>
+                        <span>{t("navTrending")}</span>
                     </NavLink>
                     <Link 
                         to={MARKETING_WEBSITE_URL}
-                        className={`p-3 rounded-lg transition-colors hover:bg-(--background2)`}
+                        className="mobileSideMenuItem p-3 rounded-lg transition-colors hover:bg-(--background2)"
                         onClick={closeMobileMenu}
                     >
-                        {BRAND_NAME}
+                        <span className="mobileSideMenuIcon" aria-hidden="true">{ExternalSiteMenuSVG}</span>
+                        <span>{BRAND_NAME}</span>
                     </Link>
                     <LanguageSelect
                         value={locale}
@@ -480,11 +549,12 @@ function Header(){
                         ariaLabel={t("accountLanguage")}
                         label={t("accountLanguage")}
                         variant="mobile"
+                        leadingContent={LanguageMenuSVG}
                     />
                     <NavLink
                         to="/account"
                         end
-                        className={({ isActive }) => `p-3 rounded-lg transition-colors flex items-center gap-3 ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
+                        className={({ isActive }) => `mobileSideMenuItem p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
                         onClick={() => {
                             closeMobileMenu();
                         }}

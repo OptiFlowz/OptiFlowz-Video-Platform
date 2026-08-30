@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import CustomSelect from "~/components/customSelect/customSelect";
 import { LANGUAGE_OPTIONS, type Locale } from "~/i18n";
 
@@ -7,6 +8,7 @@ type LanguageSelectProps = {
   ariaLabel: string;
   label?: string;
   variant?: "menu" | "mobile" | "settings";
+  leadingContent?: ReactNode;
 };
 
 function LanguageSelect({
@@ -15,6 +17,7 @@ function LanguageSelect({
   ariaLabel,
   label,
   variant = "settings",
+  leadingContent,
 }: LanguageSelectProps) {
   const selectedLabel = LANGUAGE_OPTIONS.find((option) => option.value === value)?.label ?? value;
 
@@ -26,6 +29,7 @@ function LanguageSelect({
       ariaLabel={ariaLabel}
       rootClassName={`customLanguageSelect customLanguageSelect--${variant}`}
       triggerClassName="customLanguageTrigger"
+      leadingContent={leadingContent}
       valueContent={label ? (
         <span className="customLanguageText">
           <strong>{label}</strong>
@@ -37,4 +41,3 @@ function LanguageSelect({
 }
 
 export default LanguageSelect;
-

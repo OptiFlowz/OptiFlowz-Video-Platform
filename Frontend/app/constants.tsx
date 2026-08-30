@@ -106,7 +106,7 @@ export const NoResultsSVG = <svg width="60" height="63" viewBox="0 0 17 18" fill
 </svg>;
 
 export const UserSVG = <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M15.8334 17.1668C15.8334 13.8335 14.1667 12.1668 10.0001 12.1668C5.83341 12.1668 4.16675 13.8335 4.16675 17.1668M10.0001 9.66683C11.6667 9.66683 12.5001 8.8335 12.5001 6.75016C12.5001 4.66683 11.6667 3.8335 10.0001 3.8335C8.33341 3.8335 7.50008 4.66683 7.50008 6.75016C7.50008 8.8335 8.33341 9.66683 10.0001 9.66683Z" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M15.8334 17.1668C15.8334 13.8335 14.1667 12.1668 10.0001 12.1668C5.83341 12.1668 4.16675 13.8335 4.16675 17.1668M10.0001 9.66683C11.6667 9.66683 12.5001 8.8335 12.5001 6.75016C12.5001 4.66683 11.6667 3.8335 10.0001 3.8335C8.33341 3.8335 7.50008 4.66683 7.50008 6.75016C7.50008 8.8335 8.33341 9.66683 10.0001 9.66683Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
 </svg>;
 
 export const ArrowSVG = <svg width="7" height="13" viewBox="0 0 7 13" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -186,7 +186,40 @@ export const EditSVG = <svg width="20" height="21" viewBox="0 0 20 21" fill="non
 </svg>
 
 export const LogOutSVG = <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M11.6667 17.1665H5.33337C4.2288 17.1665 3.33337 16.2711 3.33337 15.1665L3.33337 5.83317C3.33337 4.7286 4.2288 3.83317 5.33337 3.83317H11.6667M8.33337 10.4998H17.5M17.5 10.4998L15 12.9998M17.5 10.4998L15 7.99984" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M11.6667 17.1665H5.33337C4.2288 17.1665 3.33337 16.2711 3.33337 15.1665L3.33337 5.83317C3.33337 4.7286 4.2288 3.83317 5.33337 3.83317H11.6667M8.33337 10.4998H17.5M17.5 10.4998L15 12.9998M17.5 10.4998L15 7.99984" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+</svg>
+
+export const LanguageMenuSVG = <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M18.3333 10.5C18.3333 15.1024 14.6024 18.8333 10 18.8333M18.3333 10.5C18.3333 5.89763 14.6024 2.16667 10 2.16667M18.3333 10.5H1.66667M10 18.8333C5.39763 18.8333 1.66667 15.1024 1.66667 10.5M10 18.8333C12.0833 16.5833 13.125 13.8056 13.125 10.5C13.125 7.19445 12.0833 4.41667 10 2.16667M10 18.8333C7.91667 16.5833 6.875 13.8056 6.875 10.5C6.875 7.19445 7.91667 4.41667 10 2.16667M1.66667 10.5C1.66667 5.89763 5.39763 2.16667 10 2.16667" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+</svg>
+
+export const ChannelMenuSVG = <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M16.6667 4.66667H3.33333C2.41286 4.66667 1.66667 5.41286 1.66667 6.33333V14.6667C1.66667 15.5871 2.41286 16.3333 3.33333 16.3333H16.6667C17.5871 16.3333 18.3333 15.5871 18.3333 14.6667V6.33333C18.3333 5.41286 17.5871 4.66667 16.6667 4.66667Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M8.33333 8L12.5 10.5L8.33333 13V8Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+</svg>
+
+export const PlatformMenuSVG = <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M2.5 3H8.33333V8.83333H2.5V3ZM11.6667 3H17.5V8.83333H11.6667V3ZM2.5 12.1667H8.33333V18H2.5V12.1667ZM11.6667 12.1667H17.5V18H11.6667V12.1667Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+</svg>
+
+export const HomeMenuSVG = <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M2.5 9.66667L10 3L17.5 9.66667V17.1667C17.5 17.6269 17.1269 18 16.6667 18H12.5V12.1667H7.5V18H3.33333C2.8731 18 2.5 17.6269 2.5 17.1667V9.66667Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+</svg>
+
+export const RecommendedMenuSVG = <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M10 2.58333L12.4467 7.54083L17.9167 8.335L13.9583 12.1933L14.8925 17.6408L10 15.0683L5.1075 17.6408L6.04167 12.1933L2.08333 8.335L7.55333 7.54083L10 2.58333Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+</svg>
+
+export const TrendingMenuSVG = <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M10.8333 18.8333C14.9755 18.8333 17.5 16.375 17.5 12.1667C17.5 8.83333 15.8333 5.5 12.5 2.16667C12.5 6.33333 10 8 8.33333 8.83333C8.33333 6.33333 6.66667 4.66667 5.83333 4.25C5.83333 7.58333 2.5 9.25 2.5 13C2.5 16.2217 4.93333 18.8333 8.33333 18.8333M8.33333 18.8333C6.95262 18.8333 5.83333 17.714 5.83333 16.3333C5.83333 14.6667 7.5 13.8333 8.33333 12.1667C9.16667 13.8333 10.8333 14.6667 10.8333 16.3333C10.8333 17.714 9.71404 18.8333 8.33333 18.8333Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+</svg>
+
+export const ExternalSiteMenuSVG = <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M10.8333 3H17.5V9.66667M17.0833 3.41667L9.58333 10.9167M8.33333 4.66667H4.16667C3.24619 4.66667 2.5 5.41286 2.5 6.33333V16.3333C2.5 17.2538 3.24619 18 4.16667 18H14.1667C15.0871 18 15.8333 17.2538 15.8333 16.3333V12.1667" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+</svg>
+
+export const ReadingListMenuSVG = <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M10 5.08333C8.26417 3.69467 6.34333 3 4.16667 3C3.24619 3 2.5 3.74619 2.5 4.66667V15.5C2.5 16.4205 3.24619 17.1667 4.16667 17.1667C6.34333 17.1667 8.26417 17.8613 10 19.25M10 5.08333C11.7358 3.69467 13.6567 3 15.8333 3C16.7538 3 17.5 3.74619 17.5 4.66667V15.5C17.5 16.4205 16.7538 17.1667 15.8333 17.1667C13.6567 17.1667 11.7358 17.8613 10 19.25M10 5.08333V19.25" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
 </svg>
 
 export const CupSVG = <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
