@@ -32,6 +32,7 @@ function PlayPage(){
     const { t } = useI18n();
     const queryClient = useQueryClient();
     const [showChapters, setShowChapters] = useState(false);
+    const [chapterPanelView, setChapterPanelView] = useState<"chapters" | "transcript">("chapters");
     const [showComments, setShowComments] = useState(false);
     const [isTheater, setIsTheater] = useState(false);
     const [isMobileCommentsDrawer, setIsMobileCommentsDrawer] = useState(false);
@@ -107,6 +108,14 @@ function PlayPage(){
     };
 
     function openChapters() {
+        setChapterPanelView("chapters");
+        setShowChapters(true);
+        setShowComments(false);
+        handleClose();
+    }
+
+    function openTranscript() {
+        setChapterPanelView("transcript");
         setShowChapters(true);
         setShowComments(false);
         handleClose();
@@ -193,7 +202,10 @@ function PlayPage(){
     }, []);
 
     useEffect(() => {
-        const handler = () => setShowChapters(true);
+        const handler = () => {
+            setChapterPanelView("chapters");
+            setShowChapters(true);
+        };
         window.addEventListener("open-chapter-menu", handler);
         return () => window.removeEventListener("open-chapter-menu", handler);
     }, []);
@@ -202,7 +214,7 @@ function PlayPage(){
         if (showChapters) {
             scrollToPanel(chaptersRef);
         }
-    }, [showChapters]);
+    }, [showChapters, chapterPanelView]);
 
     useEffect(() => {
         if (playlistId) {
@@ -253,6 +265,7 @@ function PlayPage(){
                             props={videoData}
                             isLoading={isVideoLoading}
                             onOpenChapter={openChapters}
+                            onOpenTranscript={openTranscript}
                             onOpenComments={ isMobileCommentsDrawer ? openComments : undefined }
                             topAction={backToQuizButton}
                         />
@@ -263,7 +276,7 @@ function PlayPage(){
                     </div>
 
                     <div className={`relevant flex flex-col gap-7 ${isCompactRelevant ? "relevant--compact" : ""}`}>
-                        {showChapters && videoData ? <div ref={chaptersRef}><VideoChapters props={videoData} onClose={() => handleCloseChapters()} /></div> : ""}
+                        {showChapters && videoData ? <div ref={chaptersRef}><VideoChapters key={chapterPanelView} props={videoData} initialView={chapterPanelView} onClose={() => handleCloseChapters()} /></div> : ""}
                         {showComments && videoId ? <CommentsSection videoId={videoId} variant="drawer" onClose={() => handleCloseComments()} /> : ""}
                         {playlistId ? <div ref={playlistRef}><PlayingPlaylist playlistId={playlistId} videoId={videoId || ""} onClose={() => handleClose()} /></div> : ""}
                         <Similar props={resolvedSimilarData} isLoading={isLoadingSimilar} />
@@ -279,7 +292,7 @@ function PlayPage(){
                         
                         <div className="flex gap-5 overflow-x-hidden">
                             <div className="flex flex-col gap-5 overflow-x-hidden">
-                                <VideoInfo props={videoData} isLoading={isVideoLoading} onOpenChapter={openChapters} topAction={backToQuizButton} />
+                                <VideoInfo props={videoData} isLoading={isVideoLoading} onOpenChapter={openChapters} onOpenTranscript={openTranscript} topAction={backToQuizButton} />
 
                                 {videoData?.playlists && <InPlaylist props={videoData?.playlists} />}
 
@@ -287,7 +300,7 @@ function PlayPage(){
                             </div>
 
                             <div className={`relevant flex flex-col gap-7 ${isCompactRelevant ? "relevant--compact" : "min-w-110"}`}>
-                                {showChapters && videoData ? <div ref={chaptersRef}><VideoChapters props={videoData} onClose={() => handleCloseChapters()} /></div> : ""}
+                                {showChapters && videoData ? <div ref={chaptersRef}><VideoChapters key={chapterPanelView} props={videoData} initialView={chapterPanelView} onClose={() => handleCloseChapters()} /></div> : ""}
                                 {playlistId ? <div ref={playlistRef}><PlayingPlaylist playlistId={playlistId} videoId={videoId || ""} onClose={() => handleClose()} /></div> : ""}
                                 <Similar props={resolvedSimilarData} isLoading={isLoadingSimilar} />
                             </div> 

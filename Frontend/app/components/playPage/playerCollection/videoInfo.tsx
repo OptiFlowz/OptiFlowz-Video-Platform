@@ -1,5 +1,5 @@
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { ShareSVG, ArrowSVG, LikeSVG, DislikeSVG, InfoSVG, CommentSVG, AIButtonSVG } from "~/constants";
+import { ShareSVG, ArrowSVG, LikeSVG, DislikeSVG, InfoSVG, CommentSVG, AIButtonSVG, TranscriptSVG } from "~/constants";
 import { fetchFn } from "~/API";
 import { env } from "~/env";
 import { formatDate, formatViews, formatDescription, getToken } from "~/functions";
@@ -190,12 +190,14 @@ function VideoInfo({
     props,
     isLoading,
     onOpenChapter,
+    onOpenTranscript,
     onOpenComments,
     topAction,
 }: {
     props?: VideoT,
     isLoading?: boolean,
     onOpenChapter: () => void,
+    onOpenTranscript: () => void,
     onOpenComments?: () => void,
     topAction?: ReactNode,
 }) {
@@ -570,20 +572,33 @@ function VideoInfo({
                 </div>
 
                 {props?.chapters?.length > 0 && (
-                    <button className="viewVideoChapters noHover"
-                        onMouseEnter={() => setIsHoveringTags(true)}
-                        onMouseLeave={() => setIsHoveringTags(false)}
-                        onPointerEnter={() => setIsHoveringTags(true)}
-                        onPointerLeave={() => setIsHoveringTags(false)}
-                        onClick={onOpenChapter}
-                    >
-                        <span>
-                            <img src={`${stockThumbnailUrl}?time=${props?.duration_seconds/9}&width=50&height=30`} alt="ChapterImages" />
-                            <img src={`${stockThumbnailUrl}?time=${props?.duration_seconds/6}&width=50&height=30`} alt="ChapterImages" />
-                            <img src={`${stockThumbnailUrl}?time=${props?.duration_seconds/3}&width=50&height=30`} alt="ChapterImages" />
-                        </span>
-                        <p>{t("videoChapterCount", { count: props?.chapters?.length || 0 })} {ArrowSVG}</p>
-                    </button>
+                    <div className="videoPanelActions">
+                        <button className="viewVideoChapters noHover"
+                            onMouseEnter={() => setIsHoveringTags(true)}
+                            onMouseLeave={() => setIsHoveringTags(false)}
+                            onPointerEnter={() => setIsHoveringTags(true)}
+                            onPointerLeave={() => setIsHoveringTags(false)}
+                            onClick={onOpenChapter}
+                        >
+                            <span>
+                                <img src={`${stockThumbnailUrl}?time=${props?.duration_seconds/9}&width=50&height=30`} alt="ChapterImages" />
+                                <img src={`${stockThumbnailUrl}?time=${props?.duration_seconds/6}&width=50&height=30`} alt="ChapterImages" />
+                                <img src={`${stockThumbnailUrl}?time=${props?.duration_seconds/3}&width=50&height=30`} alt="ChapterImages" />
+                            </span>
+                            <p>{t("videoChapterCount", { count: props?.chapters?.length || 0 })} {ArrowSVG}</p>
+                        </button>
+
+                        <button className="viewVideoChapters viewVideoTranscript noHover"
+                            onMouseEnter={() => setIsHoveringTags(true)}
+                            onMouseLeave={() => setIsHoveringTags(false)}
+                            onPointerEnter={() => setIsHoveringTags(true)}
+                            onPointerLeave={() => setIsHoveringTags(false)}
+                            onClick={onOpenTranscript}
+                        >
+                            <span className="descriptionActionIcon">{TranscriptSVG}</span>
+                            <p>{t("transcript")} {ArrowSVG}</p>
+                        </button>
+                    </div>
                 )}
 
                 {onOpenComments && (

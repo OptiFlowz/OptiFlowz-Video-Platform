@@ -12,6 +12,10 @@ import { env } from "~/env";
 import type { ChapterT } from "~/types";
 import { getToken } from "~/functions";
 import { loadMediaTheme, styleMuxPlayerCaptions } from "./loadMediaTheme";
+import {
+  publishPlayerTranscript,
+  TRANSCRIPT_REQUEST_EVENT,
+} from "./transcript";
 
 interface VideoPlayerProps {
   playbackId: string;
@@ -100,6 +104,69 @@ export default function VideoPlayer({
     setIsAutoplayMuted(false);
     didInitialSeek.current = false;
   }, [playbackId]);
+
+  useEffect(() => {
+    const player = playerRef.current;
+    const video = player?.media?.nativeEl;
+    if (!player || !video || !metadataLoaded) return;
+
+    const trackedTracks = new Set<TextTrack>();
+    let lastTranscriptSignature = "";
+    let pollingAttempts = 0;
+
+    const publishTranscript = () => publishPlayerTranscript(player);
+
+    const publishIfChanged = () => {
+      const tracks = Array.from(video.textTracks).filter(
+        (track) => track.kind === "captions" || track.kind === "subtitles",
+      );
+      const signature = tracks
+        .map((track) => `${track.language}:${track.mode}:${track.cues?.length ?? -1}`)
+        .join("|");
+
+      if (signature === lastTranscriptSignature) return;
+      lastTranscriptSignature = signature;
+      publishTranscript();
+    };
+
+    const syncTracks = () => {
+      Array.from(video.textTracks).forEach((track) => {
+        if (trackedTracks.has(track)) return;
+        trackedTracks.add(track);
+        track.addEventListener("cuechange", publishIfChanged);
+      });
+      publishIfChanged();
+    };
+
+    const handleTranscriptRequest = () => publishTranscript();
+    const handleTrackChange = () => {
+      lastTranscriptSignature = "";
+      syncTracks();
+    };
+
+    window.addEventListener(TRANSCRIPT_REQUEST_EVENT, handleTranscriptRequest);
+    video.textTracks.addEventListener("addtrack", handleTrackChange);
+    video.textTracks.addEventListener("removetrack", handleTrackChange);
+    video.textTracks.addEventListener("change", handleTrackChange);
+    syncTracks();
+
+    const pollingTimer = window.setInterval(() => {
+      pollingAttempts += 1;
+      syncTracks();
+      if (pollingAttempts >= 20) window.clearInterval(pollingTimer);
+    }, 500);
+
+    return () => {
+      window.clearInterval(pollingTimer);
+      window.removeEventListener(TRANSCRIPT_REQUEST_EVENT, handleTranscriptRequest);
+      video.textTracks.removeEventListener("addtrack", handleTrackChange);
+      video.textTracks.removeEventListener("removetrack", handleTrackChange);
+      video.textTracks.removeEventListener("change", handleTrackChange);
+      trackedTracks.forEach((track) => {
+        track.removeEventListener("cuechange", publishIfChanged);
+      });
+    };
+  }, [metadataLoaded, playbackId]);
 
   useEffect(() => {
     const el = playerRef.current;

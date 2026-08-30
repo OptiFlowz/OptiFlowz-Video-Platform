@@ -395,6 +395,14 @@ export const PlaylistSVG = <svg width="24" height="24" viewBox="0 0 24 24" fill=
 <path d="M8 3H16M6 7H18M11 14.5V17.5L14 16L11 14.5ZM6 21H18C19.1046 21 20 20.1046 20 19V13C20 11.8954 19.1046 11 18 11H6C4.89543 11 4 11.8954 4 13V19C4 20.1046 4.89543 21 6 21Z" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
 </svg>;
 
+export const ChaptersSVG = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M4 6H4.01M8 6H20M4 12H4.01M8 12H20M4 18H4.01M8 18H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+</svg>;
+
+export const TranscriptSVG = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M7 4H15L19 8V20H7C5.89543 20 5 19.1046 5 18V6C5 4.89543 5.89543 4 7 4ZM14 4V9H19M9 13H15M9 17H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+</svg>;
+
 export const ThreeDotMenuSVG = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M12 7C12.55 7 13 6.55 13 6C13 5.45 12.55 5 12 5C11.45 5 11 5.45 11 6C11 6.55 11.45 7 12 7Z" stroke="black" strokeWidth="2"/>
 <path d="M12 13C12.55 13 13 12.55 13 12C13 11.45 12.55 11 12 11C11.45 11 11 11.45 11 12C11 12.55 11.45 13 12 13Z" stroke="black" strokeWidth="2"/>

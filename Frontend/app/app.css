@@ -2576,6 +2576,44 @@ mux-player::part(menu-item) {
   max-height: 400px;
 }
 
+.sideChapters .transcriptList {
+  display: flex;
+  flex-direction: column;
+  gap: calc(4 * 0.25rem);
+}
+
+.sideChapters .transcriptCue {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text1);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sideChapters .transcriptText {
+  color: var(--text3);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.sidePlaylists .similar .playCard.active .transcriptText {
+  color: var(--text1);
+}
+
+.sideChapters .transcriptMessage {
+  padding: 1.25rem 0.75rem;
+  color: var(--text2);
+  text-align: center;
+}
+
+
 .sidePlaylists .playlistHeader {
   background-image: linear-gradient(135deg, var(--accentBlue), var(--accentBlue2));
   color: white;
@@ -2689,6 +2727,10 @@ mux-player::part(menu-item) {
 
 .sidePlaylists .tags .whiteTag svg path {
   stroke: var(--accentBlue);
+}
+
+.sidePlaylists.sideChapters .tags button {
+  transition: background-color 0.15s ease, color 0.15s ease, filter 0.15s ease;
 }
 
 .sidePlaylists .similar {
@@ -3041,8 +3083,37 @@ mux-player::part(menu-item) {
   transition: all 0.2s ease;
 }
 
+.videoInfo .videoPanelActions{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 10px;
+}
+
+.videoInfo .videoPanelActions .viewVideoChapters{
+  width: 100%;
+  min-width: 0;
+  margin-top: 0;
+}
+
 .videoInfo .viewVideoChapters span{
   display: flex;
+}
+
+.videoInfo .viewVideoTranscript .descriptionActionIcon{
+  width: 55px;
+  height: 35px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: var(--accentBlue2);
+  background-color: var(--background3);
+}
+
+.videoInfo .viewVideoTranscript .descriptionActionIcon svg{
+  width: 24px;
+  height: 24px;
 }
 
 .videoInfo .viewVideoChapters span img{
@@ -12693,6 +12764,10 @@ main.playlist .videoHolder .playlistOrderNumber {
 }
 
 @media (max-width: 670px){
+  .videoInfo .videoPanelActions{
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   /* UPLOAD PAGE */
   .stepItem{
     gap: 0.3rem;
@@ -13589,6 +13664,10 @@ footer > span.footerCopyright {
 
   .videoInfo .viewVideoChapters{
     padding: 15px;
+  }
+  .videoInfo .viewVideoTranscript .descriptionActionIcon{
+    width: 42px;
+    height: 30px;
   }
   .videoInfo .viewVideoChapters span img{
     width: 42px;
