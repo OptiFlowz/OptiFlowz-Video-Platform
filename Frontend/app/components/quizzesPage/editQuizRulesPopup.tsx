@@ -311,7 +311,7 @@ function EditQuizRulesPopup({
                         </button>
                         <button
                           type="button"
-                          className="cursor-pointer rounded-full border border-(--accentRed) bg-(--background15) px-3 py-1.5 text-sm text-red-400 transition-colors"
+                          className="cursor-pointer rounded-full border border-(--accentRed) bg-(--background15) px-3 py-1.5 text-sm text-(--dangerText) transition-colors"
                           onClick={() => void handleDeleteRule(rule)}
                         >
                           {t("adminDelete")}

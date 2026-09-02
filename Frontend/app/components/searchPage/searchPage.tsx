@@ -344,7 +344,7 @@ function SearchPage() {
                     <p className="text-md opacity-70 pr-2">
                       {person.description || t("noBioPerson")}
                     </p>
-                    <p className="mt-1 text-md text-white font-medium bg-(--accentOrange) w-fit py-1.5 px-5 rounded-full">
+                    <p className="mt-1 text-md text-(--colorWhite) font-medium bg-(--accentOrange) w-fit py-1.5 px-5 rounded-full">
                       {t("videosLabel", { count: person.total_video_count })}
                     </p>
                   </div>

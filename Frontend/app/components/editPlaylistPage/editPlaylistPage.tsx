@@ -492,8 +492,8 @@ function EditPlaylistPage() {
       preview.style.pointerEvents = "none";
       preview.style.opacity = "0.98";
       preview.style.transform = "rotate(1deg)";
-      preview.style.boxShadow = "0 18px 40px rgba(9, 28, 66, 0.18)";
-      preview.style.background = "white";
+      preview.style.boxShadow = "0 18px 40px color-mix(in srgb, var(--palette-091c42) 18%, transparent)";
+      preview.style.background = "var(--colorWhite)";
       preview.style.zIndex = "9999";
       document.body.appendChild(preview);
       dragPreviewRef.current = preview;

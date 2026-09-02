@@ -62,7 +62,7 @@ export function ConfirmDialog({
       onMouseDown={onNo}
     >
       <div
-        className={`absolute inset-0 bg-black/50 transition-opacity duration-200 ${
+        className={`absolute inset-0 bg-[color-mix(in_srgb,var(--colorBlack)_50%,transparent)] transition-opacity duration-200 ${
           visible ? "opacity-100" : "opacity-0"
         }`}
       />

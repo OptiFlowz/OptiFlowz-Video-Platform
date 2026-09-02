@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { BRAND_NAME, LOGO } from "~/changeables";
 import { UploadSVG } from "~/constants";
+import { DEFAULT_THEME_CSS_VARIABLES } from "~/theme";
 import PlatformSettingsHeader from "./platformSettingsHeader";
 
 const initialDescription =
@@ -49,9 +50,21 @@ export default function BrandingAndAppearance() {
 
         <section className="platformSettingsCard appearanceCard">
           <h2>Appearance</h2>
-          <ColorSetting label="Accent Colors" colors={["#EC8B55", "#003E8E"]} />
-          <ColorSetting label="Background Color" colors={["#FFFFFF"]} />
-          <ColorSetting label="Text Color" colors={["#000000"]} />
+          <ColorSetting
+            label="Accent Colors"
+            colors={[
+              DEFAULT_THEME_CSS_VARIABLES["--palette-ec8b55"],
+              DEFAULT_THEME_CSS_VARIABLES["--palette-003e8e"],
+            ]}
+          />
+          <ColorSetting
+            label="Background Color"
+            colors={[DEFAULT_THEME_CSS_VARIABLES["--palette-ffffff"]]}
+          />
+          <ColorSetting
+            label="Text Color"
+            colors={[DEFAULT_THEME_CSS_VARIABLES["--palette-000000"]]}
+          />
         </section>
       </div>
     </>

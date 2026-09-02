@@ -1,10 +1,12 @@
 import "flag-icons/css/flag-icons.min.css";
 import "./app.css";
 import type { Metadata, Viewport } from "next";
+import type { CSSProperties } from "react";
 import Providers from "./providers";
 import { defaultMetadata } from "./metadata";
 import { Gabarito, Solitreo } from "next/font/google";
 import { SITE_URL } from "./metadata";
+import { DEFAULT_THEME, getThemeCssVariables } from "./theme";
 
 const gabarito = Gabarito({
   subsets: ["latin"],
@@ -26,8 +28,10 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#05080d",
+  themeColor: DEFAULT_THEME.metadata.browserThemeColor,
 };
+
+const defaultThemeStyle = getThemeCssVariables(DEFAULT_THEME) as CSSProperties;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const organizationJsonLd = {
@@ -47,7 +51,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   };
 
   return (
-    <html lang="en" className={`${gabarito.variable} ${solitreo.variable}`}>
+    <html
+      lang="en"
+      className={`${gabarito.variable} ${solitreo.variable}`}
+      style={defaultThemeStyle}
+    >
       <body>
         <script
           type="application/ld+json"

@@ -19,7 +19,7 @@ const StepIndicator = ({ step }: { step: number }) => (
                         ? "w-8 bg-(--accentOrange)"
                         : s < step
                         ? "w-2 bg-(--accentBlue)"
-                        : "w-2 bg-gray-600"
+                        : "w-2 bg-(--neutralTextStrong)"
                 }`}
             />
         ))}
@@ -238,7 +238,7 @@ function SetupWizardPage() {
 
                             <div className="flex gap-3 mt-8 max-[800px]:mt-12">
                                 <button 
-                                    className="button flex-1 bg-(--accentOrange) text-white rounded-xl py-3 font-semibold" 
+                                    className="button flex-1 bg-(--accentOrange) text-(--colorWhite) rounded-xl py-3 font-semibold"
                                     onClick={handleNextStep}
                                 >
                                     {t("next")}
@@ -259,7 +259,7 @@ function SetupWizardPage() {
                                             className={`catItem button flex items-center gap-2 p-3 rounded-[15px] transition-all ${
                                                 selectedCategories.includes(category.id)
                                                     ? "bg-[var(--accentBlue)] border-2 border-[var(--accentOrange)]"
-                                                    : "bg-gray-700 border-2 border-gray-600 hover:border-gray-500"
+                                                    : "bg-(--neutralSurfaceStrong) border-2 border-(--neutralTextStrong) hover:border-(--neutralBorder)"
                                             }`}
                                             onClick={() => handleCategoryToggle(category.id)}
                                         >
@@ -270,7 +270,7 @@ function SetupWizardPage() {
                                 </div>
 
                                 <div className="flex gap-3 mt-12 max-[800px]:mt-16">
-                                    <button className="button flex-1 bg-gray-700 rounded-[30px] py-[10px] font-[200]" onClick={() => setStep(1)}>
+                                    <button className="button flex-1 bg-(--neutralSurfaceStrong) rounded-[30px] py-[10px] font-[200]" onClick={() => setStep(1)}>
                                         Previous
                                     </button>
                                     <button 
@@ -300,7 +300,7 @@ function SetupWizardPage() {
                                 <textarea
                                     ref={bio}
                                     id="registrationBio"
-                                    className="mt-2 w-full bg-gray-700 rounded-[15px] p-4 text-[.95rem] min-h-37.5 resize-none focus:outline-none focus:ring-2 focus:ring-(--accentBlue)"
+                                    className="mt-2 w-full bg-(--neutralSurfaceStrong) rounded-[15px] p-4 text-[.95rem] min-h-37.5 resize-none focus:outline-none focus:ring-2 focus:ring-(--accentBlue)"
                                     placeholder={t("bioPlaceholder")}
                                     maxLength={300}
                                 />
@@ -338,7 +338,7 @@ function SetupWizardPage() {
                                     <button className="button flex-1 bg-(--background2) hover:bg-(--background3) text-(--text1) rounded-xl py-3 font-semibold" onClick={() => setStep(1)}>
                                         {t("previous")}
                                     </button>
-                                    <button className="button flex-1 bg-(--accentOrange) text-white rounded-xl py-3 font-semibold" onClick={handleFinish}>
+                                    <button className="button flex-1 bg-(--accentOrange) text-(--colorWhite) rounded-xl py-3 font-semibold" onClick={handleFinish}>
                                         {t("finish")}
                                     </button>
                                 </div>
