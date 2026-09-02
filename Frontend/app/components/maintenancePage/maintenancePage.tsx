@@ -42,73 +42,73 @@ const maintenanceAnimation = `
     @keyframes screenGlow { 0%, 100% { opacity: 0.92; } 50% { opacity: 1; } }
     @keyframes blink { 0%, 44%, 48%, 100% { transform: scaleY(1); } 46% { transform: scaleY(0.12); } }
   </style>
-  <rect width="760" height="420" rx="28" fill="var(--palette-f8fafd)"/>
-  <ellipse cx="380" cy="350" rx="235" ry="18" fill="var(--palette-091c42)" opacity="0.07"/>
+  <rect width="760" height="420" rx="28" fill="#F8FAFD"/>
+  <ellipse cx="380" cy="350" rx="235" ry="18" fill="#091c42" opacity="0.07"/>
   <g class="monitor-group">
-    <rect x="300" y="126" width="160" height="110" rx="18" fill="var(--palette-ffffff)" stroke="var(--palette-164194)" stroke-width="4"/>
-    <rect class="screen-glow" x="314" y="140" width="132" height="80" rx="10" fill="var(--palette-091c42)"/>
-    <circle cx="350" cy="180" r="10" fill="none" stroke="var(--palette-ec8b55)" stroke-width="4"/>
-    <path d="M350 170 L350 180 L358 186" stroke="var(--palette-ec8b55)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-    <rect x="372" y="172" width="40" height="8" rx="4" fill="var(--palette-164194)" opacity="0.35"/>
-    <rect x="372" y="186" width="28" height="8" rx="4" fill="var(--palette-ec8b55)"/>
-    <circle cx="419" cy="190" r="4" fill="var(--palette-ec8b55)"/>
-    <rect x="370" y="236" width="20" height="16" rx="5" fill="var(--palette-164194)"/>
-    <rect x="340" y="250" width="80" height="8" rx="4" fill="var(--palette-164194)" opacity="0.18"/>
+    <rect x="300" y="126" width="160" height="110" rx="18" fill="#FFFFFF" stroke="#164194" stroke-width="4"/>
+    <rect class="screen-glow" x="314" y="140" width="132" height="80" rx="10" fill="#091c42"/>
+    <circle cx="350" cy="180" r="10" fill="none" stroke="#ec8b55" stroke-width="4"/>
+    <path d="M350 170 L350 180 L358 186" stroke="#ec8b55" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="372" y="172" width="40" height="8" rx="4" fill="#164194" opacity="0.35"/>
+    <rect x="372" y="186" width="28" height="8" rx="4" fill="#ec8b55"/>
+    <circle cx="419" cy="190" r="4" fill="#ec8b55"/>
+    <rect x="370" y="236" width="20" height="16" rx="5" fill="#164194"/>
+    <rect x="340" y="250" width="80" height="8" rx="4" fill="#164194" opacity="0.18"/>
   </g>
   <g class="tower-group">
-    <rect x="500" y="162" width="64" height="112" rx="14" fill="var(--palette-ffffff)" stroke="var(--palette-164194)" stroke-width="4"/>
-    <rect x="516" y="180" width="32" height="6" rx="3" fill="var(--palette-164194)" opacity="0.22"/>
-    <circle cx="532" cy="212" r="6" fill="var(--palette-ec8b55)"/>
-    <circle cx="532" cy="236" r="4" fill="var(--palette-164194)" opacity="0.22"/>
-    <circle cx="532" cy="253" r="4" fill="var(--palette-164194)" opacity="0.22"/>
+    <rect x="500" y="162" width="64" height="112" rx="14" fill="#FFFFFF" stroke="#164194" stroke-width="4"/>
+    <rect x="516" y="180" width="32" height="6" rx="3" fill="#164194" opacity="0.22"/>
+    <circle cx="532" cy="212" r="6" fill="#ec8b55"/>
+    <circle cx="532" cy="236" r="4" fill="#164194" opacity="0.22"/>
+    <circle cx="532" cy="253" r="4" fill="#164194" opacity="0.22"/>
   </g>
-  <path d="M460 220 C478 220, 486 220, 500 220" stroke="var(--palette-164194)" stroke-width="4" stroke-linecap="round" opacity="0.35"/>
+  <path d="M460 220 C478 220, 486 220, 500 220" stroke="#164194" stroke-width="4" stroke-linecap="round" opacity="0.35"/>
   <g transform="translate(302 216)">
-    <path class="spark monitor-spark-a" d="M0 -8 L3 -3 L8 0 L3 3 L0 8 L-3 3 L-8 0 L-3 -3 Z" fill="var(--palette-ec8b55)"/>
-    <path class="spark monitor-spark-b" d="M0 -6 L2.5 -2.5 L6 0 L2.5 2.5 L0 6 L-2.5 2.5 L-6 0 L-2.5 -2.5 Z" fill="var(--palette-164194)"/>
-    <path class="spark monitor-spark-c" d="M0 -5 L2 -2 L5 0 L2 2 L0 5 L-2 2 L-5 0 L-2 -2 Z" fill="var(--palette-ec8b55)"/>
+    <path class="spark monitor-spark-a" d="M0 -8 L3 -3 L8 0 L3 3 L0 8 L-3 3 L-8 0 L-3 -3 Z" fill="#ec8b55"/>
+    <path class="spark monitor-spark-b" d="M0 -6 L2.5 -2.5 L6 0 L2.5 2.5 L0 6 L-2.5 2.5 L-6 0 L-2.5 -2.5 Z" fill="#164194"/>
+    <path class="spark monitor-spark-c" d="M0 -5 L2 -2 L5 0 L2 2 L0 5 L-2 2 L-5 0 L-2 -2 Z" fill="#ec8b55"/>
   </g>
   <g transform="translate(508 220)">
-    <path class="spark tower-spark-a" d="M0 -8 L3 -3 L8 0 L3 3 L0 8 L-3 3 L-8 0 L-3 -3 Z" fill="var(--palette-ec8b55)"/>
-    <path class="spark tower-spark-b" d="M0 -6 L2.5 -2.5 L6 0 L2.5 2.5 L0 6 L-2.5 2.5 L-6 0 L-2.5 -2.5 Z" fill="var(--palette-164194)"/>
-    <path class="spark tower-spark-c" d="M0 -5 L2 -2 L5 0 L2 2 L0 5 L-2 2 L-5 0 L-2 -2 Z" fill="var(--palette-ec8b55)"/>
+    <path class="spark tower-spark-a" d="M0 -8 L3 -3 L8 0 L3 3 L0 8 L-3 3 L-8 0 L-3 -3 Z" fill="#ec8b55"/>
+    <path class="spark tower-spark-b" d="M0 -6 L2.5 -2.5 L6 0 L2.5 2.5 L0 6 L-2.5 2.5 L-6 0 L-2.5 -2.5 Z" fill="#164194"/>
+    <path class="spark tower-spark-c" d="M0 -5 L2 -2 L5 0 L2 2 L0 5 L-2 2 L-5 0 L-2 -2 Z" fill="#ec8b55"/>
   </g>
   <g class="droid-track">
     <g class="droid-bob">
-      <ellipse cx="165" cy="318" rx="48" ry="10" fill="var(--palette-091c42)" opacity="0.08"/>
-      <circle cx="165" cy="258" r="44" fill="var(--palette-ffffff)" stroke="var(--palette-164194)" stroke-width="4"/>
+      <ellipse cx="165" cy="318" rx="48" ry="10" fill="#091c42" opacity="0.08"/>
+      <circle cx="165" cy="258" r="44" fill="#FFFFFF" stroke="#164194" stroke-width="4"/>
       <g class="body-roll" clip-path="url(#bb8BodyClip)">
-        <circle cx="165" cy="258" r="44" fill="var(--palette-ffffff)"/>
-        <circle cx="165" cy="258" r="18" fill="none" stroke="var(--palette-ec8b55)" stroke-width="6"/>
-        <circle cx="165" cy="258" r="7" fill="var(--palette-164194)"/>
-        <circle cx="138" cy="243" r="10" fill="none" stroke="var(--palette-ec8b55)" stroke-width="5"/>
-        <circle cx="138" cy="243" r="3.5" fill="var(--palette-164194)"/>
-        <circle cx="192" cy="276" r="10" fill="none" stroke="var(--palette-ec8b55)" stroke-width="5"/>
-        <circle cx="192" cy="276" r="3.5" fill="var(--palette-164194)"/>
-        <path d="M132 274 C144 280, 152 284, 164 286" stroke="var(--palette-ec8b55)" stroke-width="5" stroke-linecap="round"/>
-        <path d="M179 232 C188 234, 195 238, 200 244" stroke="var(--palette-ec8b55)" stroke-width="5" stroke-linecap="round"/>
+        <circle cx="165" cy="258" r="44" fill="#FFFFFF"/>
+        <circle cx="165" cy="258" r="18" fill="none" stroke="#ec8b55" stroke-width="6"/>
+        <circle cx="165" cy="258" r="7" fill="#164194"/>
+        <circle cx="138" cy="243" r="10" fill="none" stroke="#ec8b55" stroke-width="5"/>
+        <circle cx="138" cy="243" r="3.5" fill="#164194"/>
+        <circle cx="192" cy="276" r="10" fill="none" stroke="#ec8b55" stroke-width="5"/>
+        <circle cx="192" cy="276" r="3.5" fill="#164194"/>
+        <path d="M132 274 C144 280, 152 284, 164 286" stroke="#ec8b55" stroke-width="5" stroke-linecap="round"/>
+        <path d="M179 232 C188 234, 195 238, 200 244" stroke="#ec8b55" stroke-width="5" stroke-linecap="round"/>
       </g>
-      <circle cx="165" cy="258" r="44" fill="none" stroke="var(--palette-164194)" stroke-width="4"/>
+      <circle cx="165" cy="258" r="44" fill="none" stroke="#164194" stroke-width="4"/>
       <g class="head-look">
-        <path d="M130 205 C130 185, 146 172, 165 172 C184 172, 200 185, 200 205 L200 214 L130 214 Z" fill="var(--palette-ffffff)" stroke="var(--palette-164194)" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M130 205 C130 185, 146 172, 165 172 C184 172, 200 185, 200 205 L200 214 L130 214 Z" fill="#FFFFFF" stroke="#164194" stroke-width="4" stroke-linejoin="round"/>
         <g class="antenna-wobble">
-          <rect x="144" y="159" width="2.5" height="18" rx="1.25" fill="var(--palette-164194)"/>
-          <circle cx="145.25" cy="156.5" r="3.5" fill="var(--palette-ec8b55)"/>
-          <circle cx="145.25" cy="177" r="2.2" fill="var(--palette-164194)"/>
+          <rect x="144" y="159" width="2.5" height="18" rx="1.25" fill="#164194"/>
+          <circle cx="145.25" cy="156.5" r="3.5" fill="#ec8b55"/>
+          <circle cx="145.25" cy="177" r="2.2" fill="#164194"/>
         </g>
-        <path d="M138 191 H192" stroke="var(--palette-ec8b55)" stroke-width="5" stroke-linecap="round"/>
-        <path d="M144 200 H186" stroke="var(--palette-164194)" stroke-width="3.5" stroke-linecap="round" opacity="0.35"/>
-        <circle cx="166" cy="196" r="11" fill="var(--palette-091c42)"/>
-        <circle cx="166" cy="196" r="4" fill="var(--palette-ffffff)" opacity="0.95"/>
+        <path d="M138 191 H192" stroke="#ec8b55" stroke-width="5" stroke-linecap="round"/>
+        <path d="M144 200 H186" stroke="#164194" stroke-width="3.5" stroke-linecap="round" opacity="0.35"/>
+        <circle cx="166" cy="196" r="11" fill="#091c42"/>
+        <circle cx="166" cy="196" r="4" fill="#FFFFFF" opacity="0.95"/>
         <g class="blink">
-          <circle cx="186" cy="204" r="4.5" fill="var(--palette-091c42)"/>
+          <circle cx="186" cy="204" r="4.5" fill="#091c42"/>
         </g>
       </g>
       <g class="hammer-carrier">
         <g class="hammer-tilt">
-          <circle cx="0" cy="0" r="7" fill="var(--palette-164194)"/>
-          <rect x="-4" y="-28" width="8" height="46" rx="4" fill="var(--palette-ec8b55)"/>
-          <rect x="-18" y="-38" width="36" height="12" rx="6" fill="var(--palette-164194)"/>
+          <circle cx="0" cy="0" r="7" fill="#164194"/>
+          <rect x="-4" y="-28" width="8" height="46" rx="4" fill="#ec8b55"/>
+          <rect x="-18" y="-38" width="36" height="12" rx="6" fill="#164194"/>
         </g>
       </g>
     </g>

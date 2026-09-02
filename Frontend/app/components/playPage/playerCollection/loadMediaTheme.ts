@@ -26,17 +26,17 @@ const captionSizes = {
 } as const;
 
 const captionColors = {
-  red: "var(--palette-ff6b6b)",
-  blue: "var(--palette-72a7ff)",
-  white: "var(--palette-ffffff)",
-  green: "var(--palette-69dc8e)",
-  purple: "var(--palette-c995ff)",
+  red: "#ff6b6b",
+  blue: "#72a7ff",
+  white: "#ffffff",
+  green: "#69dc8e",
+  purple: "#c995ff",
 } as const;
 
 const captionBackgrounds = {
   transparent: "transparent",
-  black: "color-mix(in srgb, var(--palette-000000) 72%, transparent)",
-  white: "color-mix(in srgb, var(--palette-ffffff) 72%, transparent)",
+  black: "rgba(0, 0, 0, 0.72)",
+  white: "rgba(255, 255, 255, 0.72)",
 } as const;
 
 type CaptionPreferenceMenu = HTMLElement & {
@@ -300,12 +300,12 @@ const captionStyles = `
     flex-direction: column;
     align-items: center;
     gap: 0.1em;
-    color: var(--optiflowz-caption-color, var(--palette-ffffff));
+    color: var(--optiflowz-caption-color, #fff);
     font-family: Arial, Helvetica, sans-serif;
     font-weight: 500;
     line-height: 1.25;
     text-align: center;
-    text-shadow: 0 1px 2px color-mix(in srgb, var(--palette-000000) 45%, transparent);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
     pointer-events: none;
     transition: bottom 180ms ease;
   }
@@ -336,7 +336,7 @@ const captionStyles = `
   }
 
   #${CAPTION_OVERLAY_ID} .optiflowz-caption-background path {
-    fill: var(--optiflowz-caption-background, color-mix(in srgb, var(--palette-000000) 72%, transparent));
+    fill: var(--optiflowz-caption-background, rgba(0, 0, 0, 0.72));
   }
 `;
 

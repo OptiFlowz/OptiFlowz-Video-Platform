@@ -512,7 +512,7 @@ function EditQuizQuestionsPopup({
                         </button>
                         <button
                           type="button"
-                          className="cursor-pointer rounded-full border border-(--accentRed) bg-(--background15) px-3 py-1.5 text-sm text-(--dangerText) transition-colors disabled:cursor-not-allowed"
+                          className="cursor-pointer rounded-full border border-(--accentRed) bg-(--background15) px-3 py-1.5 text-sm text-red-400 transition-colors disabled:cursor-not-allowed"
                           onClick={() => void handleDeleteQuestion(question)}
                           disabled={isReordering}
                         >

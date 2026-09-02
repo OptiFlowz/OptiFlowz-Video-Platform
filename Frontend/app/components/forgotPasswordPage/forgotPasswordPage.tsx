@@ -14,7 +14,7 @@ const StepIndicator = ({ step }: { step: number }) => (
             <div
                 key={s}
                 className={`h-2 rounded-full transition-all ${
-                    s === step ? "w-8 bg-(--accentOrange)" : s < step ? "w-2 bg-(--accentBlue)" : "w-2 bg-(--neutralTextStrong)"
+                    s === step ? "w-8 bg-(--accentOrange)" : s < step ? "w-2 bg-(--accentBlue)" : "w-2 bg-gray-600"
                 }`}
             />
         ))}

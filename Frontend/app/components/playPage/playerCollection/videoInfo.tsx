@@ -566,7 +566,7 @@ function VideoInfo({
                         className="showLess font-semibold mt-2 mb-5 hover:opacity-80 transition-opacity cursor-pointer bg-(--accentBlue) px-4 py-1.5 rounded-full flex gap-3 items-center"
                         >
                         {ArrowSVG}
-                        <p className="text-(--colorWhite)">{t("showLess")}</p>
+                        <p className="text-white">{t("showLess")}</p>
                         </button>
                     ) : null}
                 </div>

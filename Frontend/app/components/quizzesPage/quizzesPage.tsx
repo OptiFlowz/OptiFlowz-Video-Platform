@@ -698,8 +698,8 @@ function QuizzesPage() {
                         <span
                           className={`inline-flex w-fit whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${
                             quiz.is_active
-                              ? "bg-(--successSurfaceSoft) text-(--successTextStrong)"
-                              : "bg-(--neutralSurfaceSoft) text-(--neutralTextMuted)"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-slate-200 text-slate-600"
                           }`}
                         >
                           {quiz.is_active ? t("adminActive") : t("adminInactive")}

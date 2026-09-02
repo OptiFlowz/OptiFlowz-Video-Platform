@@ -1,9 +1,9 @@
 <!-- Optiflowz Theme -->
 <style>
   :host {
-    --_primary-color: var(--media-primary-color, var(--colorWhite));
+    --_primary-color: var(--media-primary-color, white);
     --_secondary-color: var(--media-secondary-color, transparent);
-    --_accent-color: var(--media-accent-color, var(--colorWhite));
+    --_accent-color: var(--media-accent-color, white);
   }
 
   media-controller {
@@ -14,9 +14,9 @@
     --media-font-family: Roboto, helvetica neue, segoe ui, arial, sans-serif;
     -webkit-font-smoothing: antialiased;
 
-    --media-primary-color: var(--palette-ffffff);
+    --media-primary-color: #fff;
     --media-secondary-color: transparent;
-    --media-menu-background: color-mix(in srgb, var(--palette-1c1c1c) 60%, transparent);
+    --media-menu-background: rgba(28, 28, 28, 0.6);
     --media-text-color: var(--_primary-color);
     --media-control-hover-background: var(--media-secondary-color);
 
@@ -40,7 +40,7 @@
 
   .media-button {
     --media-control-hover-background: var(--_secondary-color);
-    --media-tooltip-background: color-mix(in srgb, var(--palette-1c1c1c) 24%, transparent);
+    --media-tooltip-background: rgb(28 28 28 / .24);
     --media-text-content-height: 1.2;
     --media-tooltip-padding: .7em 1em;
     --media-tooltip-distance: 8px;
@@ -60,7 +60,7 @@
   }
 
   svg .svg-shadow {
-    stroke: var(--palette-000000);
+    stroke: #000;
     stroke-opacity: 0.15;
     stroke-width: 2px;
     fill: none;
@@ -93,11 +93,11 @@
 
     .media-gradient-bottom::before {
       content: '';
-      --gradient-steps: transparent 0%, color-mix(in srgb, var(--palette-000000) 1.3%, transparent) 8.1%, color-mix(in srgb, var(--palette-000000) 4.9%, transparent) 15.5%,
-        color-mix(in srgb, var(--palette-000000) 10.4%, transparent) 22.5%, color-mix(in srgb, var(--palette-000000) 17.5%, transparent) 29%, color-mix(in srgb, var(--palette-000000) 25.9%, transparent) 35.3%, color-mix(in srgb, var(--palette-000000) 35.2%, transparent) 41.2%,
-        color-mix(in srgb, var(--palette-000000) 45%, transparent) 47.1%, color-mix(in srgb, var(--palette-000000) 55%, transparent) 52.9%, color-mix(in srgb, var(--palette-000000) 64.8%, transparent) 58.8%, color-mix(in srgb, var(--palette-000000) 74.1%, transparent) 64.7%,
-        color-mix(in srgb, var(--palette-000000) 82.5%, transparent) 71%, color-mix(in srgb, var(--palette-000000) 89.6%, transparent) 77.5%, color-mix(in srgb, var(--palette-000000) 95.1%, transparent) 84.5%, color-mix(in srgb, var(--palette-000000) 98.7%, transparent) 91.9%,
-        var(--palette-000000) 100%;
+      --gradient-steps: hsl(0 0% 0% / 0) 0%, hsl(0 0% 0% / 0.013) 8.1%, hsl(0 0% 0% / 0.049) 15.5%,
+        hsl(0 0% 0% / 0.104) 22.5%, hsl(0 0% 0% / 0.175) 29%, hsl(0 0% 0% / 0.259) 35.3%, hsl(0 0% 0% / 0.352) 41.2%,
+        hsl(0 0% 0% / 0.45) 47.1%, hsl(0 0% 0% / 0.55) 52.9%, hsl(0 0% 0% / 0.648) 58.8%, hsl(0 0% 0% / 0.741) 64.7%,
+        hsl(0 0% 0% / 0.825) 71%, hsl(0 0% 0% / 0.896) 77.5%, hsl(0 0% 0% / 0.951) 84.5%, hsl(0 0% 0% / 0.987) 91.9%,
+        hsl(0 0% 0%) 100%;
 
       position: absolute;
       inset: 0;
@@ -116,9 +116,9 @@
       --media-menu-transform-in: translateY(0) scale(1);
       --media-menu-transform-out: translateY(15px) scale(1);
       padding-block: calc(0.15 * var(--base));
-      background-color: color-mix(in srgb, var(--palette-0c0c0c) 94%, transparent);
+      background-color: rgba(12, 12, 12, 0.94);
       will-change: transform, opacity, height;
-      border: 1px solid color-mix(in srgb, var(--palette-ffffff) 12%, transparent);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       margin-right: 18px;
       margin-bottom: 8px;
       border-radius: 24px;
@@ -159,22 +159,22 @@
     }
 
     [slot='submenu']::part(back button):hover {
-      background: color-mix(in srgb, var(--palette-ffffff) 10%, transparent);
+      background: rgba(255, 255, 255, 0.1);
     }
 
     media-settings-menu-item:hover {
       --media-icon-color: var(--_primary-color);
       color: var(--_primary-color);
-      background: color-mix(in srgb, var(--palette-ffffff) 10%, transparent);
-      border-color: color-mix(in srgb, var(--palette-ffffff) 18%, transparent);
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.18);
     }
 
     media-chrome-menu-item:hover,
     media-chrome-menu-item[aria-checked='true'] {
       --media-icon-color: var(--_primary-color);
       color: var(--_primary-color);
-      background: color-mix(in srgb, var(--palette-ffffff) 10%, transparent);
-      border-color: color-mix(in srgb, var(--palette-ffffff) 18%, transparent);
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.18);
     }
 
     /*
@@ -194,8 +194,8 @@
     media-settings-menu-item:hover [slot='submenu']::part(menu-item):hover {
       --media-icon-color: var(--_primary-color);
       color: var(--_primary-color);
-      background: color-mix(in srgb, var(--palette-ffffff) 10%, transparent);
-      border-color: color-mix(in srgb, var(--palette-ffffff) 18%, transparent);
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.18);
     }
 
     media-settings-menu-item[submenusize='0'] {
@@ -308,8 +308,8 @@
       }
 
       .media-button:hover {
-        /* background-color: color-mix(in srgb, var(--palette-000000) 5%, transparent); */
-        box-shadow: color-mix(in srgb, var(--palette-000000) 30%, transparent) 0px 0px 5px;
+        /* background-color: rgba(0, 0, 0, 0.05); */
+        box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 5px;
         /* hue-rotate(120deg) */
         backdrop-filter: blur(10px) invert(15%) brightness(80%) opacity(1);
         -webkit-backdrop-filter: blur(10px) invert(15%) brightness(80%) opacity(1);
@@ -451,7 +451,7 @@
       }
 
       media-volume-range {
-        --media-range-track-background: color-mix(in srgb, var(--palette-ffffff) 20%, transparent);
+        --media-range-track-background: rgba(255, 255, 255, 0.2);
         --media-range-thumb-opacity: 0;
       }
 
@@ -517,7 +517,7 @@
         padding: 0;
         border-radius: calc(0.25 * var(--base));
         overflow: hidden;
-        background: color-mix(in srgb, var(--palette-000000) 20%, transparent);
+        background: rgba(0, 0, 0, 0.2);
 
         --media-range-bar-color: var(--media-accent-color);
 
@@ -535,7 +535,7 @@
         --media-range-thumb-border-radius: calc(0.25 * var(--base));
 
         /* The Optiflowz Theme design has a gradient like this, but not sure I like it */
-        /* --media-range-thumb-box-shadow: 10px 0px 20px color-mix(in srgb, var(--palette-ffffff) 50%, transparent); */
+        /* --media-range-thumb-box-shadow: 10px 0px 20px rgba(255, 255, 255, 0.5); */
       }
 
       media-volume-range[mediavolume] {
@@ -544,7 +544,7 @@
 
       [keyboardcontrol] media-volume-range:focus {
         /* TODO: This appears to be creating a think outline */
-        outline: 1px solid color-mix(in srgb, var(--palette-1b7fcc) 90%, transparent);
+        outline: 1px solid rgba(27, 127, 204, 0.9);
       }
 
       media-mute-button:hover + .media-volume-range-wrapper,
@@ -624,18 +624,18 @@
         border-radius: calc(0.25 * var(--base));
 
         --media-range-track-backdrop-filter: invert(10%) blur(5px) brightness(110%);
-        --media-range-track-background: color-mix(in srgb, var(--palette-ffffff) 20%, transparent);
-        --media-range-track-pointer-background: color-mix(in srgb, var(--palette-ffffff) 50%, transparent);
+        --media-range-track-background: rgba(255, 255, 255, 0.2);
+        --media-range-track-pointer-background: rgba(255, 255, 255, 0.5);
         --media-range-track-border-radius: calc(0.25 * var(--base));
 
-        --media-time-range-buffered-color: color-mix(in srgb, var(--palette-ffffff) 40%, transparent);
+        --media-time-range-buffered-color: rgba(255, 255, 255, 0.4);
         --media-range-bar-color: var(--media-accent-color);
 
         --media-range-thumb-background: var(--media-accent-color);
         --media-range-thumb-transition: opacity 0.1s linear;
         --media-range-thumb-opacity: 0;
 
-        --media-preview-thumbnail-border: calc(0.125 * var(--base)) solid var(--palette-ffffff);
+        --media-preview-thumbnail-border: calc(0.125 * var(--base)) solid #fff;
         --media-preview-thumbnail-border-radius: calc(0.5 * var(--base));
         --media-preview-thumbnail-min-width: calc(8 * var(--base));
         --media-preview-thumbnail-max-width: calc(10 * var(--base));

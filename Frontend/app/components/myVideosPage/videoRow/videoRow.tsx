@@ -291,7 +291,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
               className="fixed inset-0 z-100 flex items-end justify-center"
               onClick={() => setMobileMenuOpen(false)}
             >
-              <div className="absolute inset-0 bg-[color-mix(in_srgb,var(--colorBlack)_50%,transparent)]" />
+              <div className="absolute inset-0 bg-black/50" />
 
               <div
                 className="rowActionSheet relative w-full max-w-lg animate-slide-up rounded-t-3xl bg-(--background1) pb-safe"
@@ -391,7 +391,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                   className="fixed inset-0 z-100 flex items-end justify-center"
                   onClick={() => setVisOpen(false)}
                 >
-                  <div className="absolute inset-0 bg-[color-mix(in_srgb,var(--colorBlack)_50%,transparent)]" />
+                  <div className="absolute inset-0 bg-black/50" />
                   <div
                     className="rowVisibilitySheet relative w-full max-w-lg animate-slide-up rounded-t-3xl bg-(--background1) pb-safe"
                     onClick={(e) => e.stopPropagation()}
@@ -442,7 +442,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                       <button
                         type="button"
                         onClick={saveVisibility}
-                        className="flex-1 rounded-full text-(--colorWhite) bg-(--accentBlue) hover:bg-(--accentBlue2) py-3 font-medium transition-colors cursor-pointer"
+                        className="flex-1 rounded-full text-white bg-(--accentBlue) hover:bg-(--accentBlue2) py-3 font-medium transition-colors cursor-pointer"
                       >
                         Save
                       </button>

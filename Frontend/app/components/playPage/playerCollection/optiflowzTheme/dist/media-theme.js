@@ -18,9 +18,9 @@ if (template) {
     <!-- Optiflowz Theme -->
     <style>
       :host {
-        --_primary-color: var(--media-primary-color, var(--colorWhite));
+        --_primary-color: var(--media-primary-color, white);
         --_secondary-color: var(--media-secondary-color, transparent);
-        --_accent-color: var(--media-accent-color, var(--colorWhite));
+        --_accent-color: var(--media-accent-color, white);
         --media-object-fit: contain;
       }
 
@@ -47,8 +47,8 @@ if (template) {
         --base: 18px;
         overflow: hidden;
 
-        --media-control-hover-background: color-mix(in srgb, var(--palette-ffffff) 10%, transparent);
-        --media-tooltip-background: color-mix(in srgb, var(--palette-000000) 50%, transparent);
+        --media-control-hover-background: rgba(255, 255, 255, 0.1);
+        --media-tooltip-background: rgb(0 0 0 / .5);
         --media-text-content-height: 1.2;
         --media-tooltip-padding: .7em 1em;
         --media-tooltip-distance: 8px;
@@ -59,9 +59,9 @@ if (template) {
     --media-font-family: 'Gabarito', Roboto, helvetica neue, segoe ui, arial, sans-serif;
         -webkit-font-smoothing: antialiased;
 
-        --media-primary-color: var(--palette-ffffff);
+        --media-primary-color: #fff;
         --media-secondary-color: transparent;
-        --media-menu-background: color-mix(in srgb, var(--palette-1c1c1c) 60%, transparent);
+        --media-menu-background: rgba(28, 28, 28, 0.6);
         --media-text-color: var(--_primary-color);
         --media-control-hover-background: var(--media-secondary-color);
 
@@ -110,7 +110,7 @@ if (template) {
       }
 
       .media-button {
-        --media-control-hover-background: color-mix(in srgb, var(--palette-ffffff) 10%, transparent);
+        --media-control-hover-background: rgba(255, 255, 255, 0.1);
         --media-text-content-height: 1.2;
         --media-tooltip-padding: .7em 1em;
         --media-tooltip-distance: 8px;
@@ -130,7 +130,7 @@ if (template) {
       }
 
       svg .svg-shadow {
-        stroke: var(--palette-000000);
+        stroke: #000;
         stroke-opacity: 0.15;
         stroke-width: 2px;
         fill: none;
@@ -150,9 +150,9 @@ if (template) {
         align-items: center;
         justify-content: center;
         gap: calc(0.1 * var(--base));
-        background-color: color-mix(in srgb, var(--palette-000000) 50%, transparent);
+        background-color: rgba(0, 0, 0, 0.5);
         border-radius: 9999px;
-        border: 1px solid color-mix(in srgb, var(--palette-ffffff) 12%, transparent);
+        border: 1px solid rgba(255, 255, 255, 0.12);
         margin-bottom: calc(1.5 * var(--base));
       }
 
@@ -190,7 +190,7 @@ if (template) {
 
       .center media-play-button svg path{
         fill: none;
-        stroke: var(--colorWhite);
+        stroke: white;
         stroke-width: 2;
       }
 
@@ -199,13 +199,13 @@ if (template) {
       .center media-seek-backward-button svg text,
       .center media-seek-forward-button svg text{
         fill: none;
-        stroke: var(--colorWhite);
+        stroke: white;
         stroke-width: 1.8;
       }
 
       .center media-seek-backward-button svg text,
       .center media-seek-forward-button svg text{
-        fill: var(--colorWhite);
+        fill: white;
         stroke: none;
         font-size: 6px;
         font-weight: 700;
@@ -237,8 +237,8 @@ if (template) {
               <path id="icon-play" d="M7.54553 13.4287V10.5713C7.54553 8.74427 7.54553 7.83075 7.92908 7.30433C8.2636 6.84521 8.77757 6.54999 9.34271 6.49239C9.99067 6.42633 10.7798 6.88663 12.3579 7.80722L14.8071 9.23591C16.3642 10.1442 17.1428 10.5984 17.4048 11.1898C17.6334 11.7057 17.6334 12.2943 17.4048 12.8102C17.1428 13.4016 16.3642 13.8558 14.8071 14.7641L12.3579 16.1928L12.3579 16.1928C10.7798 17.1134 9.99067 17.5737 9.34271 17.5076C8.77757 17.45 8.2636 17.1548 7.92908 16.6957C7.54553 16.1693 7.54553 15.2557 7.54553 13.4287Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
             </g>
             <g id="icon-pause">
-              <path id="pause-left" d="M7 16V8C7 7.44772 7.44772 7 8 7H9C9.55228 7 10 7.44772 10 8V16C10 16.5523 9.55228 17 9 17H8C7.44772 17 7 16.5523 7 16Z" stroke="var(--colorWhite)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path id="pause-right" d="M14 16V8C14 7.44772 14.4477 7 15 7H16C16.5523 7 17 7.44772 17 8V16C17 16.5523 16.5523 17 16 17H15C14.4477 17 14 16.5523 14 16Z" stroke="var(--colorWhite)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path id="pause-left" d="M7 16V8C7 7.44772 7.44772 7 8 7H9C9.55228 7 10 7.44772 10 8V16C10 16.5523 9.55228 17 9 17H8C7.44772 17 7 16.5523 7 16Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path id="pause-right" d="M14 16V8C14 7.44772 14.4477 7 15 7H16C16.5523 7 17 7.44772 17 8V16C17 16.5523 16.5523 17 16 17H15C14.4477 17 14 16.5523 14 16Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </g>
           </svg>
         </media-play-button>
@@ -250,7 +250,7 @@ if (template) {
         <p>{{videotitlee ?? ''}}</p>
         <span>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 8V8.5M12 12V16M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z" stroke="var(--colorWhite)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 8V8.5M12 12V16M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           <div class="popup">
             Content available on this platform may be subject to third-party rights. Please do not copy, download, or redistribute any material unless you have permission from the relevant rights holder.
@@ -295,9 +295,9 @@ if (template) {
     font-family: 'Gabarito';
           padding: calc(0.75 * var(--base));
           border-radius:  calc(0.75 * var(--base));
-          background-color: color-mix(in srgb, var(--palette-000000) 72%, transparent);
+          background-color: rgba(0, 0, 0, 0.72);
           will-change: transform, opacity, height;
-          border: 1px solid color-mix(in srgb, var(--palette-ffffff) 12%, transparent);
+          border: 1px solid rgba(255, 255, 255, 0.12);
           font-size: calc(0.8 * var(--base));
           text-align: left;
           opacity: 0;
@@ -313,7 +313,7 @@ if (template) {
         }
 
         .popup span {
-          color: var(--palette-ec8b55);
+          color: #ec8b55;
         }
 
         media-controller[breakpointlg] .topTitle {
@@ -335,11 +335,11 @@ if (template) {
 
         .media-gradient-top::before {
           content: '';
-          --gradient-steps: transparent 0%, color-mix(in srgb, var(--palette-000000) 1.3%, transparent) 8.1%, color-mix(in srgb, var(--palette-000000) 4.9%, transparent) 15.5%,
-            color-mix(in srgb, var(--palette-000000) 10.4%, transparent) 22.5%, color-mix(in srgb, var(--palette-000000) 17.5%, transparent) 29%, color-mix(in srgb, var(--palette-000000) 25.9%, transparent) 35.3%, color-mix(in srgb, var(--palette-000000) 35.2%, transparent) 41.2%,
-            color-mix(in srgb, var(--palette-000000) 45%, transparent) 47.1%, color-mix(in srgb, var(--palette-000000) 55%, transparent) 52.9%, color-mix(in srgb, var(--palette-000000) 64.8%, transparent) 58.8%, color-mix(in srgb, var(--palette-000000) 74.1%, transparent) 64.7%,
-            color-mix(in srgb, var(--palette-000000) 82.5%, transparent) 71%, color-mix(in srgb, var(--palette-000000) 89.6%, transparent) 77.5%, color-mix(in srgb, var(--palette-000000) 95.1%, transparent) 84.5%, color-mix(in srgb, var(--palette-000000) 98.7%, transparent) 91.9%,
-            var(--palette-000000) 100%;
+          --gradient-steps: hsl(0 0% 0% / 0) 0%, hsl(0 0% 0% / 0.013) 8.1%, hsl(0 0% 0% / 0.049) 15.5%,
+            hsl(0 0% 0% / 0.104) 22.5%, hsl(0 0% 0% / 0.175) 29%, hsl(0 0% 0% / 0.259) 35.3%, hsl(0 0% 0% / 0.352) 41.2%,
+            hsl(0 0% 0% / 0.45) 47.1%, hsl(0 0% 0% / 0.55) 52.9%, hsl(0 0% 0% / 0.648) 58.8%, hsl(0 0% 0% / 0.741) 64.7%,
+            hsl(0 0% 0% / 0.825) 71%, hsl(0 0% 0% / 0.896) 77.5%, hsl(0 0% 0% / 0.951) 84.5%, hsl(0 0% 0% / 0.987) 91.9%,
+            hsl(0 0% 0%) 100%;
 
           position: absolute;
           inset: 0;
@@ -357,11 +357,11 @@ if (template) {
 
         .media-gradient-bottom::before {
           content: '';
-          --gradient-steps: transparent 0%, color-mix(in srgb, var(--palette-000000) 1.3%, transparent) 8.1%, color-mix(in srgb, var(--palette-000000) 4.9%, transparent) 15.5%,
-            color-mix(in srgb, var(--palette-000000) 10.4%, transparent) 22.5%, color-mix(in srgb, var(--palette-000000) 17.5%, transparent) 29%, color-mix(in srgb, var(--palette-000000) 25.9%, transparent) 35.3%, color-mix(in srgb, var(--palette-000000) 35.2%, transparent) 41.2%,
-            color-mix(in srgb, var(--palette-000000) 45%, transparent) 47.1%, color-mix(in srgb, var(--palette-000000) 55%, transparent) 52.9%, color-mix(in srgb, var(--palette-000000) 64.8%, transparent) 58.8%, color-mix(in srgb, var(--palette-000000) 74.1%, transparent) 64.7%,
-            color-mix(in srgb, var(--palette-000000) 82.5%, transparent) 71%, color-mix(in srgb, var(--palette-000000) 89.6%, transparent) 77.5%, color-mix(in srgb, var(--palette-000000) 95.1%, transparent) 84.5%, color-mix(in srgb, var(--palette-000000) 98.7%, transparent) 91.9%,
-            var(--palette-000000) 100%;
+          --gradient-steps: hsl(0 0% 0% / 0) 0%, hsl(0 0% 0% / 0.013) 8.1%, hsl(0 0% 0% / 0.049) 15.5%,
+            hsl(0 0% 0% / 0.104) 22.5%, hsl(0 0% 0% / 0.175) 29%, hsl(0 0% 0% / 0.259) 35.3%, hsl(0 0% 0% / 0.352) 41.2%,
+            hsl(0 0% 0% / 0.45) 47.1%, hsl(0 0% 0% / 0.55) 52.9%, hsl(0 0% 0% / 0.648) 58.8%, hsl(0 0% 0% / 0.741) 64.7%,
+            hsl(0 0% 0% / 0.825) 71%, hsl(0 0% 0% / 0.896) 77.5%, hsl(0 0% 0% / 0.951) 84.5%, hsl(0 0% 0% / 0.987) 91.9%,
+            hsl(0 0% 0%) 100%;
 
           position: absolute;
           inset: 0;
@@ -381,18 +381,18 @@ if (template) {
               width: calc(100% - 0.5 * var(--base));
               border-radius: calc(0.25 * var(--base));
 
-            --media-range-track-background: color-mix(in srgb, var(--palette-000000) 60%, transparent);
+            --media-range-track-background: rgba(0, 0, 0, 0.6);
             --media-range-track-border-radius: calc(0.25 * var(--base));
 
-            --media-time-range-buffered-color: color-mix(in srgb, var(--palette-ffffff) 50%, transparent);
+            --media-time-range-buffered-color: rgba(255, 255, 255, 0.5);
             --media-range-bar-color: var(--media-accent-color);
 
             --media-range-thumb-background: var(--media-accent-color);
             --media-range-thumb-transition: opacity 0.1s linear;
             --media-range-thumb-opacity: 0;
 
-            --preview-card-background: color-mix(in srgb, var(--palette-000000) 50%, transparent);
-            --preview-card-border: color-mix(in srgb, var(--palette-ffffff) 12%, transparent);
+            --preview-card-background: rgba(0, 0, 0, 0.5);
+            --preview-card-border: rgba(255, 255, 255, 0.12);
             --media-preview-box-margin: 0 0 calc(0.35 * var(--base));
             --media-box-arrow-background: var(--preview-card-background);
             --media-box-arrow-width: calc(0.65 * var(--base));
@@ -409,7 +409,7 @@ if (template) {
             padding: calc(0.35 * var(--base));
             padding-bottom: calc(0.55 * var(--base));
             overflow: hidden;
-            color: var(--colorWhite);
+            color: white;
             background: var(--preview-card-background);
             border: 1px solid var(--preview-card-border);
             border-radius: calc(0.8 * var(--base));
@@ -423,7 +423,7 @@ if (template) {
             min-height: calc(5.23 * var(--base));
             max-height: calc(5.23 * var(--base));
             overflow: hidden;
-            background: color-mix(in srgb, var(--palette-000000) 35%, transparent);
+            background: rgba(0, 0, 0, 0.35);
             border-radius: calc(0.55 * var(--base));
           }
 
@@ -456,9 +456,9 @@ if (template) {
           --media-menu-transform-in: translateY(0) scale(1);
           --media-menu-transform-out: translateY(15px) scale(1);
           padding-block: calc(0.15 * var(--base));
-          background-color: color-mix(in srgb, var(--palette-0c0c0c) 94%, transparent);
+          background-color: rgba(12, 12, 12, 0.94);
           will-change: transform, opacity, height;
-          border: 1px solid color-mix(in srgb, var(--palette-ffffff) 12%, transparent);
+          border: 1px solid rgba(255, 255, 255, 0.12);
           margin-right: 18px;
           margin-bottom: 8px;
           border-radius: 24px;
@@ -499,22 +499,22 @@ if (template) {
         }
 
         [slot='submenu']::part(back button):hover{
-          background: color-mix(in srgb, var(--palette-ffffff) 10%, transparent);
+          background: rgba(255, 255, 255, 0.1);
         }
 
         media-settings-menu-item:hover {
           --media-icon-color: var(--_primary-color);
           color: var(--_primary-color);
-          background: color-mix(in srgb, var(--palette-ffffff) 10%, transparent);
-          border-color: color-mix(in srgb, var(--palette-ffffff) 18%, transparent);
+          background: rgba(255, 255, 255, 0.1);
+          border-color: rgba(255, 255, 255, 0.18);
         }
 
         media-chrome-menu-item:hover,
         media-chrome-menu-item[aria-checked='true'] {
           --media-icon-color: var(--_primary-color);
           color: var(--_primary-color);
-          background: color-mix(in srgb, var(--palette-ffffff) 10%, transparent);
-          border-color: color-mix(in srgb, var(--palette-ffffff) 18%, transparent);
+          background: rgba(255, 255, 255, 0.1);
+          border-color: rgba(255, 255, 255, 0.18);
         }
 
         /*
@@ -534,8 +534,8 @@ if (template) {
         media-settings-menu-item:hover [slot='submenu']::part(menu-item):hover {
           --media-icon-color: var(--_primary-color);
           color: var(--_primary-color);
-          background: color-mix(in srgb, var(--palette-ffffff) 10%, transparent);
-          border-color: color-mix(in srgb, var(--palette-ffffff) 18%, transparent);
+          background: rgba(255, 255, 255, 0.1);
+          border-color: rgba(255, 255, 255, 0.18);
         }
 
         media-settings-menu-item[submenusize='0'] {
@@ -639,11 +639,11 @@ if (template) {
               }
 
               .media-button:hover {
-                /* background-color: color-mix(in srgb, var(--palette-ffffff) 10%, transparent); */
-                /*box-shadow: color-mix(in srgb, var(--palette-000000) 30%, transparent) 0px 0px 5px; */
+                /* background-color: rgba(255, 255, 255, 0.1); */
+                /*box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 5px; */
                 /* hue-rotate(120deg) */
-                background-color: color-mix(in srgb, var(--palette-ffffff) 10%, transparent);
-                border-color: color-mix(in srgb, var(--palette-ffffff) 18%, transparent);
+                background-color: rgba(255, 255, 255, 0.1);
+                border-color: rgba(255, 255, 255, 0.18);
               }
 
               media-play-button #icon-play {
@@ -682,8 +682,8 @@ if (template) {
                   <path id="icon-play" d="M7.54553 13.4287V10.5713C7.54553 8.74427 7.54553 7.83075 7.92908 7.30433C8.2636 6.84521 8.77757 6.54999 9.34271 6.49239C9.99067 6.42633 10.7798 6.88663 12.3579 7.80722L14.8071 9.23591C16.3642 10.1442 17.1428 10.5984 17.4048 11.1898C17.6334 11.7057 17.6334 12.2943 17.4048 12.8102C17.1428 13.4016 16.3642 13.8558 14.8071 14.7641L12.3579 16.1928L12.3579 16.1928C10.7798 17.1134 9.99067 17.5737 9.34271 17.5076C8.77757 17.45 8.2636 17.1548 7.92908 16.6957C7.54553 16.1693 7.54553 15.2557 7.54553 13.4287Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                 </g>
                 <g id="icon-pause">
-                  <path id="pause-left" d="M7 16V8C7 7.44772 7.44772 7 8 7H9C9.55228 7 10 7.44772 10 8V16C10 16.5523 9.55228 17 9 17H8C7.44772 17 7 16.5523 7 16Z" stroke="var(--colorWhite)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path id="pause-right" d="M14 16V8C14 7.44772 14.4477 7 15 7H16C16.5523 7 17 7.44772 17 8V16C17 16.5523 16.5523 17 16 17H15C14.4477 17 14 16.5523 14 16Z" stroke="var(--colorWhite)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path id="pause-left" d="M7 16V8C7 7.44772 7.44772 7 8 7H9C9.55228 7 10 7.44772 10 8V16C10 16.5523 9.55228 17 9 17H8C7.44772 17 7 16.5523 7 16Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path id="pause-right" d="M14 16V8C14 7.44772 14.4477 7 15 7H16C16.5523 7 17 7.44772 17 8V16C17 16.5523 16.5523 17 16 17H15C14.4477 17 14 16.5523 14 16Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </g>
               </svg>
             </media-play-button>
@@ -778,7 +778,7 @@ if (template) {
 
               [keyboardcontrol] media-volume-range:focus {
                 /* TODO: This appears to be creating a think outline */
-                outline: 1px solid color-mix(in srgb, var(--palette-1b7fcc) 90%, transparent);
+                outline: 1px solid rgba(27, 127, 204, 0.9);
               }
 
               /* When keyboard navigating the volume range and wrapper need to always be visible
@@ -794,15 +794,15 @@ if (template) {
             <media-mute-button class="media-button custom-btn">
               <use class="svg-shadow" xlink:href="#vol-paths"></use>
               <svg slot="icon" viewBox="0 0 24 24">
-                <path d="M11.0438 5.91L7.04376 9.1125C6.81499 9.29837 6.54503 9.39765 6.26876 9.3975H5.18751C4.81844 9.39551 4.46392 9.57004 4.20236 9.88251C3.9408 10.195 3.79376 10.6196 3.79376 11.0625V12.9375C3.79376 13.3804 3.9408 13.805 4.20236 14.1175C4.46392 14.43 4.81844 14.6045 5.18751 14.6025H6.26876C6.54503 14.6024 6.81499 14.7016 7.04376 14.8875L11.0438 18.09C11.4708 18.4289 12.0182 18.4595 12.4697 18.1698C12.9212 17.8802 13.2039 17.3168 13.2063 16.7025V7.2975C13.2039 6.68318 12.9212 6.11983 12.4697 5.83016C12.0182 5.5405 11.4708 5.57115 11.0438 5.91Z" stroke="var(--colorWhite)" stroke-width="2"/>
+                <path d="M11.0438 5.91L7.04376 9.1125C6.81499 9.29837 6.54503 9.39765 6.26876 9.3975H5.18751C4.81844 9.39551 4.46392 9.57004 4.20236 9.88251C3.9408 10.195 3.79376 10.6196 3.79376 11.0625V12.9375C3.79376 13.3804 3.9408 13.805 4.20236 14.1175C4.46392 14.43 4.81844 14.6045 5.18751 14.6025H6.26876C6.54503 14.6024 6.81499 14.7016 7.04376 14.8875L11.0438 18.09C11.4708 18.4289 12.0182 18.4595 12.4697 18.1698C12.9212 17.8802 13.2039 17.3168 13.2063 16.7025V7.2975C13.2039 6.68318 12.9212 6.11983 12.4697 5.83016C12.0182 5.5405 11.4708 5.57115 11.0438 5.91Z" stroke="white" stroke-width="2"/>
                 <g id="high-vol-path" clip-path="url(#clip1_2964_39)">
-                  <path d="M16.5174 9.10336C18.1171 10.7031 18.1171 13.2968 16.5174 14.8966M18.6898 6.93091C21.4894 9.73047 21.4894 14.2695 18.6898 17.069" stroke="var(--colorWhite)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M16.5174 9.10336C18.1171 10.7031 18.1171 13.2968 16.5174 14.8966M18.6898 6.93091C21.4894 9.73047 21.4894 14.2695 18.6898 17.069" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </g>
                 <g id="muted-path">
-                  <path d="M17 10L21 14M21 10L17 14" stroke="var(--colorWhite)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M17 10L21 14M21 10L17 14" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </g>
                 <clipPath id="clip1_2964_39">
-                  <rect width="12.2892" height="12.2892" fill="var(--colorWhite)" transform="translate(18.6898 3.31018) rotate(45)"/>
+                  <rect width="12.2892" height="12.2892" fill="white" transform="translate(18.6898 3.31018) rotate(45)"/>
                 </clipPath>
               </svg>
             </media-mute-button>
@@ -866,8 +866,8 @@ if (template) {
                   border: 1px solid transparent;
                 }
                 media-current-chapter:hover{
-                  background: color-mix(in srgb, var(--palette-ffffff) 10%, transparent);
-                  border-color: color-mix(in srgb, var(--palette-ffffff) 18%, transparent);
+                  background: rgba(255, 255, 255, 0.1);
+                  border-color: rgba(255, 255, 255, 0.18);
                 }
 
               media-current-chapter p{
@@ -892,7 +892,7 @@ if (template) {
               <p>Chapters loading...</p>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <g clip-path="url(#clip0_2964_39)">
-                <path d="M9 6L14.2929 11.2929C14.6834 11.6834 14.6834 12.3166 14.2929 12.7071L9 18" stroke="var(--colorWhite)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M9 6L14.2929 11.2929C14.6834 11.6834 14.6834 12.3166 14.2929 12.7071L9 18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </g>
                 <defs>
               </svg>
@@ -907,9 +907,9 @@ if (template) {
                 display: flex;
                 align-items: center;
                 gap: calc(0.1 * var(--base));
-                background-color: color-mix(in srgb, var(--palette-000000) 50%, transparent);
+                background-color: rgba(0, 0, 0, 0.5);
                 border-radius: 9999px;
-                border: 1px solid color-mix(in srgb, var(--palette-ffffff) 12%, transparent);
+                border: 1px solid rgba(255, 255, 255, 0.12);
                 padding: calc(0.2 * var(--base));
               }
 
@@ -973,7 +973,7 @@ if (template) {
               <svg slot="icon" viewBox="0 0 24 24">
                 <use class="svg-shadow" xlink:href="#cc-icon"></use>
                 <g id="cc-icon">
-                  <path d="M11.2804 9.12926H9.72923C9.66957 8.79782 9.55853 8.50615 9.39613 8.25426C9.23372 8.00237 9.03486 7.78859 8.79954 7.61293C8.56422 7.43726 8.30072 7.30469 8.00906 7.2152C7.7207 7.12571 7.41412 7.08097 7.08931 7.08097C6.50266 7.08097 5.97733 7.22846 5.51332 7.52344C5.05262 7.81842 4.68803 8.25095 4.41957 8.82102C4.15442 9.3911 4.02184 10.0871 4.02184 10.9091C4.02184 11.7377 4.15442 12.437 4.41957 13.0071C4.68803 13.5772 5.05427 14.008 5.51829 14.2997C5.9823 14.5914 6.50432 14.7372 7.08434 14.7372C7.40584 14.7372 7.71076 14.6941 7.99911 14.608C8.29078 14.5185 8.55427 14.3875 8.7896 14.2152C9.02492 14.0429 9.22378 13.8324 9.38619 13.5838C9.55191 13.3319 9.66625 13.0436 9.72923 12.7188L11.2804 12.7237C11.1975 13.2242 11.0368 13.6849 10.7981 14.1058C10.5628 14.5234 10.2595 14.8847 9.88832 15.1896C9.52042 15.4912 9.09949 15.7249 8.62553 15.8906C8.15157 16.0563 7.63453 16.1392 7.0744 16.1392C6.19277 16.1392 5.40726 15.9304 4.71786 15.5128C4.02847 15.0919 3.48491 14.4903 3.08718 13.7081C2.69277 12.9259 2.49556 11.9929 2.49556 10.9091C2.49556 9.82197 2.69442 8.88897 3.09215 8.11008C3.48988 7.32789 4.03344 6.72798 4.72283 6.31037C5.41223 5.88944 6.19608 5.67898 7.0744 5.67898C7.61464 5.67898 8.11843 5.75687 8.58576 5.91264C9.0564 6.0651 9.47899 6.29048 9.85352 6.58878C10.228 6.88376 10.5379 7.24503 10.7832 7.67258C11.0285 8.09683 11.1942 8.58239 11.2804 9.12926ZM21.5753 9.12926H20.0241C19.9645 8.79782 19.8535 8.50615 19.6911 8.25426C19.5286 8.00237 19.3298 7.78859 19.0945 7.61293C18.8591 7.43726 18.5956 7.30469 18.304 7.2152C18.0156 7.12571 17.709 7.08097 17.3842 7.08097C16.7976 7.08097 16.2723 7.22846 15.8082 7.52344C15.3475 7.81842 14.983 8.25095 14.7145 8.82102C14.4493 9.3911 14.3168 10.0871 14.3168 10.9091C14.3168 11.7377 14.4493 12.437 14.7145 13.0071C14.983 13.5772 15.3492 14.008 15.8132 14.2997C16.2772 14.5914 16.7992 14.7372 17.3793 14.7372C17.7008 14.7372 18.0057 14.6941 18.294 14.608C18.5857 14.5185 18.8492 14.3875 19.0845 14.2152C19.3198 14.0429 19.5187 13.8324 19.6811 13.5838C19.8468 13.3319 19.9612 13.0436 20.0241 12.7188L21.5753 12.7237C21.4924 13.2242 21.3317 13.6849 21.093 14.1058C20.8577 14.5234 20.5545 14.8847 20.1832 15.1896C19.8153 15.4912 19.3944 15.7249 18.9205 15.8906C18.4465 16.0563 17.9295 16.1392 17.3693 16.1392C16.4877 16.1392 15.7022 15.9304 15.0128 15.5128C14.3234 15.0919 13.7798 14.4903 13.3821 13.7081C12.9877 12.9259 12.7905 11.9929 12.7905 10.9091C12.7905 9.82197 12.9893 8.88897 13.3871 8.11008C13.7848 7.32789 14.3284 6.72798 15.0178 6.31037C15.7071 5.88944 16.491 5.67898 17.3693 5.67898C17.9096 5.67898 18.4134 5.75687 18.8807 5.91264C19.3513 6.0651 19.7739 6.29048 20.1484 6.58878C20.523 6.88376 20.8329 7.24503 21.0781 7.67258C21.3234 8.09683 21.4891 8.58239 21.5753 9.12926Z" fill="var(--colorWhite)"/>
+                  <path d="M11.2804 9.12926H9.72923C9.66957 8.79782 9.55853 8.50615 9.39613 8.25426C9.23372 8.00237 9.03486 7.78859 8.79954 7.61293C8.56422 7.43726 8.30072 7.30469 8.00906 7.2152C7.7207 7.12571 7.41412 7.08097 7.08931 7.08097C6.50266 7.08097 5.97733 7.22846 5.51332 7.52344C5.05262 7.81842 4.68803 8.25095 4.41957 8.82102C4.15442 9.3911 4.02184 10.0871 4.02184 10.9091C4.02184 11.7377 4.15442 12.437 4.41957 13.0071C4.68803 13.5772 5.05427 14.008 5.51829 14.2997C5.9823 14.5914 6.50432 14.7372 7.08434 14.7372C7.40584 14.7372 7.71076 14.6941 7.99911 14.608C8.29078 14.5185 8.55427 14.3875 8.7896 14.2152C9.02492 14.0429 9.22378 13.8324 9.38619 13.5838C9.55191 13.3319 9.66625 13.0436 9.72923 12.7188L11.2804 12.7237C11.1975 13.2242 11.0368 13.6849 10.7981 14.1058C10.5628 14.5234 10.2595 14.8847 9.88832 15.1896C9.52042 15.4912 9.09949 15.7249 8.62553 15.8906C8.15157 16.0563 7.63453 16.1392 7.0744 16.1392C6.19277 16.1392 5.40726 15.9304 4.71786 15.5128C4.02847 15.0919 3.48491 14.4903 3.08718 13.7081C2.69277 12.9259 2.49556 11.9929 2.49556 10.9091C2.49556 9.82197 2.69442 8.88897 3.09215 8.11008C3.48988 7.32789 4.03344 6.72798 4.72283 6.31037C5.41223 5.88944 6.19608 5.67898 7.0744 5.67898C7.61464 5.67898 8.11843 5.75687 8.58576 5.91264C9.0564 6.0651 9.47899 6.29048 9.85352 6.58878C10.228 6.88376 10.5379 7.24503 10.7832 7.67258C11.0285 8.09683 11.1942 8.58239 11.2804 9.12926ZM21.5753 9.12926H20.0241C19.9645 8.79782 19.8535 8.50615 19.6911 8.25426C19.5286 8.00237 19.3298 7.78859 19.0945 7.61293C18.8591 7.43726 18.5956 7.30469 18.304 7.2152C18.0156 7.12571 17.709 7.08097 17.3842 7.08097C16.7976 7.08097 16.2723 7.22846 15.8082 7.52344C15.3475 7.81842 14.983 8.25095 14.7145 8.82102C14.4493 9.3911 14.3168 10.0871 14.3168 10.9091C14.3168 11.7377 14.4493 12.437 14.7145 13.0071C14.983 13.5772 15.3492 14.008 15.8132 14.2997C16.2772 14.5914 16.7992 14.7372 17.3793 14.7372C17.7008 14.7372 18.0057 14.6941 18.294 14.608C18.5857 14.5185 18.8492 14.3875 19.0845 14.2152C19.3198 14.0429 19.5187 13.8324 19.6811 13.5838C19.8468 13.3319 19.9612 13.0436 20.0241 12.7188L21.5753 12.7237C21.4924 13.2242 21.3317 13.6849 21.093 14.1058C20.8577 14.5234 20.5545 14.8847 20.1832 15.1896C19.8153 15.4912 19.3944 15.7249 18.9205 15.8906C18.4465 16.0563 17.9295 16.1392 17.3693 16.1392C16.4877 16.1392 15.7022 15.9304 15.0128 15.5128C14.3234 15.0919 13.7798 14.4903 13.3821 13.7081C12.9877 12.9259 12.7905 11.9929 12.7905 10.9091C12.7905 9.82197 12.9893 8.88897 13.3871 8.11008C13.7848 7.32789 14.3284 6.72798 15.0178 6.31037C15.7071 5.88944 16.491 5.67898 17.3693 5.67898C17.9096 5.67898 18.4134 5.75687 18.8807 5.91264C19.3513 6.0651 19.7739 6.29048 20.1484 6.58878C20.523 6.88376 20.8329 7.24503 21.0781 7.67258C21.3234 8.09683 21.4891 8.58239 21.5753 9.12926Z" fill="white"/>
                   <rect id="cc-underline" x="3" y="21" width="18" height="2" rx="1" />
                 </g>
               </svg>
@@ -992,8 +992,8 @@ if (template) {
             <media-settings-menu-button class="media-button custom-btn">
               <svg slot="icon" viewBox="0 0 24 24">
                 <use class="svg-shadow" xlink:href="#settings-icon"></use>
-                <path d="M9.98532 6.06614C10.1887 5.15106 11.0003 4.5 11.9377 4.5H12.0623C12.9997 4.5 13.8114 5.15106 14.0147 6.06614L14.1258 6.56613C14.6768 6.78182 15.1869 7.07889 15.6414 7.44254L16.1315 7.28829C17.0257 7.00685 17.9953 7.38421 18.464 8.19602L18.5264 8.30397C18.9951 9.11578 18.837 10.1442 18.1462 10.7778L17.7681 11.1247C17.8111 11.4102 17.8333 11.7025 17.8333 12C17.8333 12.2975 17.8111 12.5898 17.7681 12.8753L18.1462 13.2222C18.837 13.8558 18.9951 14.8842 18.5264 15.696L18.464 15.804C17.9953 16.6158 17.0257 16.9931 16.1315 16.7117L15.6414 16.5575C15.1869 16.9211 14.6768 17.2182 14.1258 17.4339L14.0147 17.9339C13.8114 18.8489 12.9997 19.5 12.0623 19.5H11.9377C11.0003 19.5 10.1887 18.8489 9.98532 17.9339L9.87421 17.4339C9.32327 17.2182 8.81313 16.9211 8.35859 16.5574L7.86848 16.7117C6.97432 16.9931 6.00467 16.6158 5.53597 15.804L5.47365 15.696C5.00495 14.8842 5.16298 13.8558 5.85378 13.2221L6.23191 12.8753C6.18895 12.5898 6.16668 12.2975 6.16668 12C6.16668 11.7025 6.18895 11.4102 6.23192 11.1247L5.85379 10.7778C5.16299 10.1442 5.00496 9.11578 5.47366 8.30397L5.53598 8.19603C6.00468 7.38422 6.97433 7.00686 7.86849 7.28829L8.35859 7.44255C8.81314 7.07889 9.32327 6.78183 9.87421 6.56613L9.98532 6.06614Z" stroke="var(--colorWhite)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M12.8333 12C12.8333 12.4602 12.4602 12.8333 12 12.8333C11.5398 12.8333 11.1667 12.4602 11.1667 12C11.1667 11.5398 11.5398 11.1667 12 11.1667C12.4602 11.1667 12.8333 11.5398 12.8333 12Z" stroke="var(--colorWhite)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M9.98532 6.06614C10.1887 5.15106 11.0003 4.5 11.9377 4.5H12.0623C12.9997 4.5 13.8114 5.15106 14.0147 6.06614L14.1258 6.56613C14.6768 6.78182 15.1869 7.07889 15.6414 7.44254L16.1315 7.28829C17.0257 7.00685 17.9953 7.38421 18.464 8.19602L18.5264 8.30397C18.9951 9.11578 18.837 10.1442 18.1462 10.7778L17.7681 11.1247C17.8111 11.4102 17.8333 11.7025 17.8333 12C17.8333 12.2975 17.8111 12.5898 17.7681 12.8753L18.1462 13.2222C18.837 13.8558 18.9951 14.8842 18.5264 15.696L18.464 15.804C17.9953 16.6158 17.0257 16.9931 16.1315 16.7117L15.6414 16.5575C15.1869 16.9211 14.6768 17.2182 14.1258 17.4339L14.0147 17.9339C13.8114 18.8489 12.9997 19.5 12.0623 19.5H11.9377C11.0003 19.5 10.1887 18.8489 9.98532 17.9339L9.87421 17.4339C9.32327 17.2182 8.81313 16.9211 8.35859 16.5574L7.86848 16.7117C6.97432 16.9931 6.00467 16.6158 5.53597 15.804L5.47365 15.696C5.00495 14.8842 5.16298 13.8558 5.85378 13.2221L6.23191 12.8753C6.18895 12.5898 6.16668 12.2975 6.16668 12C6.16668 11.7025 6.18895 11.4102 6.23192 11.1247L5.85379 10.7778C5.16299 10.1442 5.00496 9.11578 5.47366 8.30397L5.53598 8.19603C6.00468 7.38422 6.97433 7.00686 7.86849 7.28829L8.35859 7.44255C8.81314 7.07889 9.32327 6.78183 9.87421 6.56613L9.98532 6.06614Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12.8333 12C12.8333 12.4602 12.4602 12.8333 12 12.8333C11.5398 12.8333 11.1667 12.4602 11.1667 12C11.1667 11.5398 11.5398 11.1667 12 11.1667C12.4602 11.1667 12.8333 11.5398 12.8333 12Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </media-settings-menu-button>
 
@@ -1001,7 +1001,7 @@ if (template) {
             <media-airplay-button class="media-button custom-btn">
               <svg viewBox="0 0 24 24" aria-hidden="true" slot="icon">
                 <g clip-path="url(#clip0_2964_39)">
-                <path d="M6 17H5C3.89543 17 3 16.1046 3 15V7C3 5.89543 3.89543 5 5 5H19C20.1046 5 21 5.89543 21 7V15C21 16.1046 20.1046 17 19 17H18M8 20L12 15L16 20H8Z" stroke="var(--colorWhite)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M6 17H5C3.89543 17 3 16.1046 3 15V7C3 5.89543 3.89543 5 5 5H19C20.1046 5 21 5.89543 21 7V15C21 16.1046 20.1046 17 19 17H18M8 20L12 15L16 20H8Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </g>
                 <defs>
               </svg>
@@ -1012,7 +1012,7 @@ if (template) {
               <svg slot="icon" viewBox="0 0 24 24">
                 <use class="svg-shadow" xlink:href="#cast-icon"></use>
                 <g id="cast-icon">
-                  <path d="M3.75 5.58337H18.25C19.3546 5.58337 20.25 6.4788 20.25 7.58337V16.4167C20.25 17.5213 19.3546 18.4167 18.25 18.4167H15.6667M8.33333 18.4167C8.33333 15.8854 6.28131 13.8334 3.75 13.8334M12 18.4167C12 13.8604 8.30635 10.1667 3.75 10.1667M3.75 17.9584C3.75 18.2115 3.9552 18.4167 4.20833 18.4167C4.46146 18.4167 4.67617 18.1992 4.55462 17.9772C4.47041 17.8233 4.34336 17.6963 4.18953 17.6121C3.96749 17.4905 3.75 17.7052 3.75 17.9584Z" stroke="var(--colorWhite)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M3.75 5.58337H18.25C19.3546 5.58337 20.25 6.4788 20.25 7.58337V16.4167C20.25 17.5213 19.3546 18.4167 18.25 18.4167H15.6667M8.33333 18.4167C8.33333 15.8854 6.28131 13.8334 3.75 13.8334M12 18.4167C12 13.8604 8.30635 10.1667 3.75 10.1667M3.75 17.9584C3.75 18.2115 3.9552 18.4167 4.20833 18.4167C4.46146 18.4167 4.67617 18.1992 4.55462 17.9772C4.47041 17.8233 4.34336 17.6963 4.18953 17.6121C3.96749 17.4905 3.75 17.7052 3.75 17.9584Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </g>
               </svg>
             </media-cast-button>
@@ -1030,7 +1030,7 @@ if (template) {
               }
 
               .custom-btn:hover {
-                background: color-mix(in srgb, var(--palette-ffffff) 10%, transparent);
+                background: rgba(255, 255, 255, 0.1);
               }
 
               .custom-btn svg {
@@ -1055,8 +1055,8 @@ if (template) {
               <media-tooltip placement="top">Theater mode</media-tooltip>
               <button style="background-color: transparent; border: none; cursor: pointer; outline: none;">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path fill-rule="evenodd" clip-rule="evenodd" d="M2 7C2 5.89543 2.89543 5 4 5H20C21.1046 5 22 5.89543 22 7V17C22 18.1046 21.1046 19 20 19H4C2.89543 19 2 18.1046 2 17V7Z" stroke="var(--colorWhite)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M9.33333 9.33325L6 11.9999L9.33333 14.6666M14.6667 14.6666L18 11.9999L14.6667 9.33325" stroke="var(--colorWhite)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path fill-rule="evenodd" clip-rule="evenodd" d="M2 7C2 5.89543 2.89543 5 4 5H20C21.1046 5 22 5.89543 22 7V17C22 18.1046 21.1046 19 20 19H4C2.89543 19 2 18.1046 2 17V7Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M9.33333 9.33325L6 11.9999L9.33333 14.6666M14.6667 14.6666L18 11.9999L14.6667 9.33325" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </button>
             </media-theater-mode-button>
@@ -1102,11 +1102,11 @@ if (template) {
             <media-fullscreen-button class="media-button custom-btn">
               <svg slot="enter" viewBox="0 0 24 24">
                 <use class="svg-shadow" xlink:href="#fs-enter-paths"></use>
-                <path d="M5 15.5V17C5 18.1046 5.89543 19 7 19H8.5M19 15.5V17C19 18.1046 18.1046 19 17 19H15.5M5 8.5V7C5 5.89543 5.89543 5 7 5H8.5M19 8.5V7C19 5.89543 18.1046 5 17 5H15.5" stroke="var(--colorWhite)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M5 15.5V17C5 18.1046 5.89543 19 7 19H8.5M19 15.5V17C19 18.1046 18.1046 19 17 19H15.5M5 8.5V7C5 5.89543 5.89543 5 7 5H8.5M19 8.5V7C19 5.89543 18.1046 5 17 5H15.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
               <svg slot="exit" viewBox="0 0 24 24">
                 <use class="svg-shadow" xlink:href="#fs-exit-paths"></use>
-                <path d="M8.50001 19.0001L8.50001 17.5001C8.50001 16.3956 7.60458 15.5001 6.50001 15.5001H5.00001M15.5 19.0001V17.5001C15.5 16.3956 16.3954 15.5001 17.5 15.5001L19 15.5001M8.5 5.00012L8.5 6.50012C8.5 7.60469 7.60457 8.50012 6.5 8.50012L5 8.50012M15.5 5.00015L15.5 6.50015C15.5 7.60472 16.3954 8.50015 17.5 8.50015L19 8.50015" stroke="var(--colorWhite)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M8.50001 19.0001L8.50001 17.5001C8.50001 16.3956 7.60458 15.5001 6.50001 15.5001H5.00001M15.5 19.0001V17.5001C15.5 16.3956 16.3954 15.5001 17.5 15.5001L19 15.5001M8.5 5.00012L8.5 6.50012C8.5 7.60469 7.60457 8.50012 6.5 8.50012L5 8.50012M15.5 5.00015L15.5 6.50015C15.5 7.60472 16.3954 8.50015 17.5 8.50015L19 8.50015" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </media-fullscreen-button>
           </div>
