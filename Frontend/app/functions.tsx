@@ -215,6 +215,8 @@ export function formatDescription(desc?: string | null): ReactNode[] | null {
 }
 
 export const getStoredUser = () => {
+  if (typeof window === "undefined") return null;
+
   const raw = sessionStorage.getItem("user") || localStorage.getItem("user");
   if (!raw) return null;
   try {
@@ -243,6 +245,8 @@ export const getToken = (): string | null => {
 
 let userImageUrl = "";
 export const getUserImageUrl = () => {
+  if (typeof window === "undefined") return "";
+
   if(userImageUrl == "" && localStorage.user)
     userImageUrl = JSON.parse(sessionStorage.user || localStorage.user).user.image_url;
   return userImageUrl;

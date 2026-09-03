@@ -119,7 +119,7 @@ export type PersonT = {
     name: string,
     image_url: string,
     total_video_count: number,
-    type: number
+    type: 0 | 1 | "0" | "1"
 }
 
 export type PersonSearchT = {

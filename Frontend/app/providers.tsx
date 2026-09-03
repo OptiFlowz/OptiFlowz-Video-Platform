@@ -9,11 +9,15 @@ import { I18nProvider } from "~/i18n";
 import { checkServerReachability } from "~/serverReachability";
 import PersistentVideoProvider from "~/components/persistentVideo/persistentVideoProvider";
 import { PrivacyPreferencesProvider } from "~/privacy/privacyPreferences";
+import { usePathname } from "next/navigation";
 
 const queryClient = new QueryClient();
 
 export default function Providers({ children }: { children: React.ReactNode }) {
-  const [serverState, setServerState] = useState<"initial" | "reachable" | "unreachable" | "retrying">("initial");
+  const pathname = usePathname();
+  const [serverState, setServerState] = useState<"initial" | "reachable" | "unreachable" | "retrying">(
+    () => (pathname.startsWith("/video/") ? "reachable" : "initial"),
+  );
   const [retryNonce, setRetryNonce] = useState(0);
 
   useEffect(() => {
