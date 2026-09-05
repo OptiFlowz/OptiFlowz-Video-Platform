@@ -285,7 +285,7 @@ function PlaylistRow({
             </div>
             <span className="flex flex-col gap-0.5 rounded-none!">
               <h3>{props?.title}</h3>
-              <h5 className="line-clamp-2 font-light!">
+              <h5 className="line-clamp-1 font-light!">
                 {formatDescription(props?.description || t("adminNoDescription"))}
               </h5>
               <div className="videoActions">

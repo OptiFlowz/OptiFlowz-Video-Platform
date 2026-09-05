@@ -15045,7 +15045,7 @@ main.platformUsersPage .platformUsersFilterControls:focus-within { border-color:
 .platformUsersRow + .platformUsersRow { border-top: 1px solid var(--border1); }
 .platformUsersRow:not(.platformUsersTableHeader):hover { background: var(--background3); }
 .platformUsersTableHeader { background: var(--background3); font-size: .76rem; font-weight: 500; }
-.platformUsersSortButton { display: inline-flex; align-items: center; gap: .4rem; padding: .25rem 0; color: inherit; font: inherit; text-align: start; cursor: pointer; }
+.platformUsersSortButton { display: inline-flex; align-items: center; flex-wrap: nowrap; white-space: nowrap; gap: .4rem; padding: .25rem 0; color: inherit; font: inherit; text-align: start; cursor: pointer; }
 .platformUsersSortButton:hover, .platformUsersTableHeader [aria-sort="ascending"], .platformUsersTableHeader [aria-sort="descending"] { color: var(--accentBlue2); }
 .platformUsersSortArrow { display: block; flex-shrink: 0; width: 1rem; height: 1rem; }
 .platformUsersRow > * { min-width: 0; }
@@ -15108,3 +15108,88 @@ main.platformUsersPage .platformUsersFilterControls:focus-within { border-color:
 .platformUserAssignRole .customSelect { flex: 1; min-width: 0; }
 .platformUserRoleEditor button:disabled { cursor: not-allowed; opacity: .5; }
 @media (max-width: 480px) { .platformUserAssignRole { align-items: stretch; flex-direction: column; } }
+
+/* Channel management lists follow the Platform Users table and toolbar. */
+main.managementPage .libraryShell { gap: 1.25rem; }
+main.managementPage .libraryHeader { display: flex; }
+main.managementPage .managementToolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+main.managementPage .filter { display: flex; flex: 1 1 280px; width: auto; min-width: 0; max-width: 460px; border-color: var(--border1); background: var(--background2); box-shadow: none; }
+main.managementPage .filter input { width: 100%; min-width: 0; }
+main.managementPage .filter:focus-within { border-color: var(--accentBlue2); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accentBlue2) 16%, transparent); }
+main.managementPage .filter input:focus-visible { outline: none; }
+main.managementPage .playlistAddBtn { width: 46px; min-width: 46px; height: 46px; border-radius: 50%; border-color: var(--border1); background: var(--background2); box-shadow: none; }
+main.managementPage .playlistAddBtn:hover { background: var(--background3); }
+main.managementPage .playlistAddBtn svg path { stroke: var(--accentBlue2); }
+main.managementPage .libraryTableWrap, .managementPeopleTable { overflow: hidden; border: 1px solid var(--border1); border-radius: 20px; background: var(--background2); }
+main.managementPage table th { background: var(--background3); text-transform: none; letter-spacing: normal; font-size: .76rem; }
+main.managementPage table th.notHoverable:hover { background: var(--background3); }
+main.managementPage table th, main.managementPage table td { padding: 1rem 1.25rem; }
+main.managementPage table td { font-size: .88rem; }
+main.managementPage table th:first-child, main.managementPage table td:first-child { border-right: none; }
+main.managementPage table tbody tr + tr > td { border-top: 1px solid var(--border1); }
+main.managementPage tbody tr:hover { background: var(--background3); }
+main.managementPage table th.sortable.active { color: var(--accentBlue2); }
+main.managementPage table th .platformUsersSortArrow path, main.managementPage table th.sortable.active .platformUsersSortArrow path { stroke: currentColor; fill: none; }
+main.managementPage table th.sortable { position: relative; white-space: nowrap; }
+/* Extend the native sort button's hit area to the entire header cell. */
+main.managementPage table th.sortable .platformUsersSortButton::after { content: ""; position: absolute; inset: 0; }
+main.managementPage table th.sortable:has(.platformUsersSortButton:focus-visible) { outline: 2px solid var(--accentBlue2); outline-offset: -2px; }
+main.managementPage table th.sortable .platformUsersSortButton:focus-visible { outline: none; }
+main.managementPage table th > span { font-size: inherit; }
+main.managementPage table th p { padding-block: .25rem; }
+main.managementPage table td > span, main.managementPage table td .videoInfo { gap: .75rem; }
+main.managementPage table td .videoInfo > span { min-width: 0; }
+main.managementPage table td .videoInfo img { width: 150px; border-radius: 8px; }
+main.managementPage td .videoInfo h3, main.managementPage .quizRowTitle { font-size: .88rem; font-weight: 500; line-height: 1.35; overflow-wrap: anywhere; }
+main.managementPage td .videoInfo h3 { -webkit-line-clamp: 1; line-clamp: 1; }
+main.managementPage td .videoInfo h5, main.managementPage .quizRowDescription { font-size: .8rem; line-height: 1.35; }
+main.managementPage table td .videoInfo .videoActions { margin-top: .35rem; gap: .4rem; opacity: 1; pointer-events: auto; }
+main.managementPage table td .videoInfo .videoActions button, main.managementPage table td .videoInfo .videoActions a { display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border: none; background: var(--background2); }
+main.managementPage table td .videoInfo .videoActions button:hover, main.managementPage table td .videoInfo .videoActions a:hover { background: var(--background3); }
+main.managementPage td .visibility { padding: .35rem .6rem; font-size: .76rem; border: 0; border-radius: 6px; background: var(--background3); color: var(--accentBlue2); }
+main.managementPage td .visibility.private { background: color-mix(in srgb, var(--accentRed) 14%, var(--background2)); color: var(--accentRed3); }
+main.managementPage td .visibility svg path { stroke: currentColor; }
+.managementStatus { display: inline-flex; width: fit-content; white-space: nowrap; padding: .28rem .48rem; border-radius: 6px; background: var(--background3); color: var(--text2); font-size: .76rem; font-weight: 600; }
+.managementStatus.active { color: var(--accentBlue2); }
+.managementQuizIcon { flex-shrink: 0; border-radius: 50%; background: var(--background3); }
+.managementQuizIcon svg path { stroke: var(--accentBlue2); }
+.managementRowActions { display: flex; align-items: center; gap: .55rem; }
+.managementRowActions button, .managementRowActions a { display: grid; place-items: center; flex-shrink: 0; width: 38px; height: 38px; border-radius: 50%; background: var(--background2); color: var(--accentBlue2); cursor: pointer; transition: background-color .2s; }
+.managementRowActions button:hover, .managementRowActions a:hover { background: var(--background3); }
+.managementRowActions .danger { color: var(--accentRed3); }
+.managementRowActions .danger:hover { background: color-mix(in srgb, var(--accentRed) 14%, var(--background3)); }
+.managementRowActions button:disabled { opacity: .45; cursor: not-allowed; }
+.managementRowActions svg { width: 19px; height: 19px; }
+.managementRowActions svg path { stroke: currentColor; }
+.managementPeopleRow { display: grid; grid-template-columns: minmax(160px, 1.1fr) minmax(180px, 1.5fr) minmax(70px, .4fr) 90px; gap: 1rem; align-items: center; padding: 1rem 1.25rem; color: var(--text2); font-size: .88rem; }
+.managementPeopleRow > * { min-width: 0; }
+.managementPeopleRow + .managementPeopleRow { border-top: 1px solid var(--border1); }
+.managementPeopleRow:not(.managementPeopleHeader):hover { background: var(--background3); }
+.managementPeopleHeader { background: var(--background3); font-size: .76rem; font-weight: 500; }
+.managementPersonIdentity { display: flex; align-items: center; gap: .75rem; }
+.managementPersonBio { overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.managementPage button:focus-visible, .managementPage a:focus-visible, .managementPage input:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: 3px; }
+@media (max-width: 1160px) {
+  main.managementPage table td .videoInfo img { width: 140px; }
+}
+@media (max-width: 800px) {
+  .managementPeopleRow { grid-template-columns: minmax(0, 1fr) 84px; gap: .7rem; padding: 1rem; }
+  .managementPeopleHeader { display: none; }
+  .managementPersonIdentity, .managementPersonBio, .managementPersonCount { grid-column: 1; }
+  .managementPeopleRow .managementRowActions { grid-column: 2; grid-row: 1 / 4; align-self: start; }
+  .managementPersonCount .platformUserMobileLabel { display: inline; }
+  main.managementPage .filter { max-width: none; }
+}
+@media (max-width: 570px) {
+  main.managementPage .libraryHeading h1 { font-size: 1.4rem; }
+  main.managementPage .libraryHeading p { font-size: .85rem; }
+  main.managementPage table td { padding: 1rem !important; border-radius: 0 !important; }
+  main.managementPage table tbody tr + tr > td { border-top: 1px solid var(--border1) !important; }
+  main.managementPage table td > span { padding-right: 28px; }
+  main.managementPage table td .videoInfo img { width: 100px; }
+  main.managementPage table td .videoInfo .videoActions { display: none; }
+  main.managementPage table td .videoInfo .mobileOptionsButton { right: 8px; }
+  main.managementPage .quizRowInfo { padding-right: 32px; }
+  .managementRowActions { gap: .35rem; }
+  .managementRowActions button, .managementRowActions a { width: 34px; height: 34px; }
+}

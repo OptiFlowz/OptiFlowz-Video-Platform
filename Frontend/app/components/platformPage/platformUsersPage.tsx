@@ -1,3 +1,4 @@
+import LibrarySortButton from "~/components/library/librarySortButton";
 import { useLocalizedPageTitle } from "~/hooks/useLocalizedPageTitle";
 import { useRoleLabel } from "~/authorization/roleLabels";
 import { useAuthorization } from "~/authorization/authorization";
@@ -58,17 +59,7 @@ export default function PlatformUsersPage() {
   }));
   const sortHeader = (column: UserSortBy, label: string) => (
     <span role="columnheader" aria-sort={search.sortBy === column ? (search.sortOrder === "asc" ? "ascending" : "descending") : "none"}>
-      <button type="button" className="platformUsersSortButton" onClick={() => toggleSort(column)}>
-        {label}
-        <svg className="platformUsersSortArrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-          {(search.sortBy !== column || search.sortOrder === "asc") && (
-            <path d="M7 20V4M3 8l4-4 4 4" transform={search.sortBy === column ? "translate(5 0)" : undefined} />
-          )}
-          {(search.sortBy !== column || search.sortOrder === "desc") && (
-            <path d="M17 4v16m-4-4 4 4 4-4" transform={search.sortBy === column ? "translate(-5 0)" : undefined} />
-          )}
-        </svg>
-      </button>
+      <LibrarySortButton label={label} direction={search.sortBy === column ? search.sortOrder : null} onClick={() => toggleSort(column)} />
     </span>
   );
   const errorMessage = !token ? t("usersSignInRequired") : getErrorStatus(query.error) === 403 ? t("usersForbidden") : t("usersLoadFailed");

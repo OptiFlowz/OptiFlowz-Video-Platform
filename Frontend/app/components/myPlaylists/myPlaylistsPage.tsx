@@ -1,6 +1,7 @@
+import LibrarySortButton from "~/components/library/librarySortButton";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
-import { AddSVG, FilterSVG } from "~/constants";
+import { AddSVG, SearchSVG } from "~/constants";
 import Sidebar from "../myVideosPage/sidebar/sidebar";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { getToken } from "~/functions";
@@ -18,14 +19,6 @@ type SortColumn = "created_at" | "view_count" | "save_count";
 type SortDirection = "asc" | "desc";
 const EMPTY_PLAYLISTS: MyPlaylistT[] = [];
 
-const SortIndicator = ({ column, sortColumn, sortDirection }: { column: SortColumn; sortColumn: SortColumn | null; sortDirection: SortDirection }) => {
-    if (sortColumn !== column) return <span className="sortIcon">⇅</span>;
-    return (
-      <span className="sortIcon active">
-        {sortDirection === "asc" ? "↑" : "↓"}
-      </span>
-    );
-};
 
 function MyPlaylistsPage() {
   const { t } = useI18n();
@@ -339,7 +332,7 @@ function MyPlaylistsPage() {
   };
 
   return (
-    <main className="myVideos">
+    <main className="myVideos managementPage">
       <Sidebar />
       <ConfirmDialog {...dialogProps} />
       <CreatePlaylistPopup
@@ -355,27 +348,15 @@ function MyPlaylistsPage() {
               <h1>{t("navMyPlaylists")}</h1>
               <p>{t("adminMyPlaylistsDescription")}</p>
             </div>
-            <div className="libraryActions">
-              <div className="filter">
-                {FilterSVG}
-                <input type="text" placeholder={t("filterPlaylists")} />
-              </div>
-              {can(P.playlistsCreate) && <button
-                type="button"
-                className="playlistAddBtn"
-                title={t("createPlaylist")}
-                aria-label={t("createPlaylist")}
-                onClick={() => setIsCreatePopupOpen(true)}
-              >
-                {AddSVG}
-              </button>}
-            </div>
           </div>
-          <div className="mobileTitleRow">
-            <h2 className="mobileTitle">{t("navMyPlaylists")}</h2>
+          <div className="managementToolbar">
+            <div className="filter">
+              {SearchSVG}
+              <input type="search" aria-label={t("filterPlaylists")} placeholder={t("filterPlaylists")} />
+            </div>
             {can(P.playlistsCreate) && <button
               type="button"
-              className="playlistAddBtn mobile"
+              className="playlistAddBtn"
               title={t("createPlaylist")}
               aria-label={t("createPlaylist")}
               onClick={() => setIsCreatePopupOpen(true)}
@@ -432,22 +413,22 @@ function MyPlaylistsPage() {
                   <th className="notHoverable">{t("adminTableStatus")}</th>
                   <th
                     className={`sortable ${sortColumn === "created_at" ? "active" : ""}`}
-                    onClick={() => handleSort("created_at")}
+                    aria-sort={sortColumn === "created_at" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}
                   >
-                    {t("adminTableDate")} <SortIndicator sortColumn={sortColumn} sortDirection={sortDirection} column="created_at" />
+                    <LibrarySortButton label={t("adminTableDate")} direction={sortColumn === "created_at" ? sortDirection : null} onClick={() => handleSort("created_at")} />
                   </th>
                   <th
                     className={`sortable ${sortColumn === "view_count" ? "active" : ""}`}
-                    onClick={() => handleSort("view_count")}
+                    aria-sort={sortColumn === "view_count" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}
                   >
-                    {t("adminTableViews")} <SortIndicator sortColumn={sortColumn} sortDirection={sortDirection} column="view_count" />
+                    <LibrarySortButton label={t("adminTableViews")} direction={sortColumn === "view_count" ? sortDirection : null} onClick={() => handleSort("view_count")} />
                   </th>
                   <th className="notHoverable">{t("adminTableVideos")}</th>
                   <th
                     className={`sortable ${sortColumn === "save_count" ? "active" : ""}`}
-                    onClick={() => handleSort("save_count")}
+                    aria-sort={sortColumn === "save_count" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}
                   >
-                    {t("adminTableSaves")} <SortIndicator sortColumn={sortColumn} sortDirection={sortDirection} column="save_count" />
+                    <LibrarySortButton label={t("adminTableSaves")} direction={sortColumn === "save_count" ? sortDirection : null} onClick={() => handleSort("save_count")} />
                   </th>
                 </tr>
               </thead>

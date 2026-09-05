@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import DefaultProfile from "../../../assets/DefaultProfile.webp";
 import { fetchFn } from "~/API";
-import { AddSVG, DeleteSVG, EditSVG, FilterSVG } from "~/constants";
+import { AddSVG, DeleteSVG, EditSVG, SearchSVG } from "~/constants";
 import Sidebar from "../myVideosPage/sidebar/sidebar";
 import CreatePersonPopup, { type CreatePersonPayload } from "./createPersonPopup";
 import { useI18n } from "~/i18n";
@@ -352,7 +352,7 @@ function SpeakersChairsPage() {
       : people.find((person) => person.id === editingPersonId) ?? null;
 
   return (
-    <main className="myVideos speakersChairsPage">
+    <main className="myVideos managementPage speakersChairsPage">
       <Sidebar />
       <ConfirmDialog {...dialogProps} />
       <CreatePersonPopup
@@ -386,36 +386,24 @@ function SpeakersChairsPage() {
               <h1>{t("navSpeakersChairs")}</h1>
               <p>{t("adminSpeakersChairsDescription")}</p>
             </div>
-            <div className="libraryActions">
-              <div className="filter">
-                {FilterSVG}
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(event) => {
-                    setSearch(event.target.value);
-                    setPage(1);
-                  }}
-                  placeholder={t("searchPlaceholder")}
-                />
-              </div>
-              <button
-                type="button"
-                className="playlistAddBtn"
-                title={t("navSpeakersChairs")}
-                aria-label={t("navSpeakersChairs")}
-                onClick={() => setIsCreatePopupOpen(true)}
-              >
-                {AddSVG}
-              </button>
-            </div>
           </div>
-
-          <div className="mobileTitleRow">
-            <h2 className="mobileTitle">{t("navSpeakersChairs")}</h2>
+          <div className="managementToolbar">
+            <div className="filter">
+              {SearchSVG}
+              <input
+                type="search"
+                aria-label={t("searchPlaceholder")}
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  setPage(1);
+                }}
+                placeholder={t("searchPlaceholder")}
+              />
+            </div>
             <button
               type="button"
-              className="playlistAddBtn mobile"
+              className="playlistAddBtn"
               title={t("navSpeakersChairs")}
               aria-label={t("navSpeakersChairs")}
               onClick={() => setIsCreatePopupOpen(true)}
@@ -424,59 +412,47 @@ function SpeakersChairsPage() {
             </button>
           </div>
 
-          <section className="speakersChairsPeopleGrid">
-            {isLoading ? (
-              <div className="speakersChairsEmptyState">
-                {t("adminLoadingPeople")}
+          <section className="managementPeopleTable" aria-label={t("navSpeakersChairs")} aria-busy={isLoading}>
+            <div role="table" aria-label={t("navSpeakersChairs")}>
+              <div className="managementPeopleRow managementPeopleHeader" role="row">
+                <span role="columnheader">{t("usersName")}</span>
+                <span role="columnheader">{t("biography")}</span>
+                <span role="columnheader">{t("adminTableVideos")}</span>
+                <span role="columnheader">{t("adminTableActions")}</span>
               </div>
-            ) : null}
-
-            {isError ? (
-              <div className="speakersChairsEmptyState">
-                {t("adminFailedLoadPeople")}
-              </div>
-            ) : null}
-
-            {filteredPeople.map((person) => {
-              const fullName = `${person.first_name} ${person.last_name}`.trim();
-
-              return (
-                <article key={person.id} className="speakersChairsPersonCard">
-                  <img src={person.image_url || DefaultProfile} alt={fullName} />
-                  <div className="speakersChairsPersonBody">
-                    <h3>{fullName}</h3>
-                    <p className="speakersChairsMeta">
-                      {t("videosLabel", { count: person.total_video_count })}
-                    </p>
-                    <p className="speakersChairsBio">{person.biography}</p>
+              {isLoading || isError || !filteredPeople.length ? (
+                <div role="row">
+                  <div role="cell" aria-colspan={4}>
+                    <div className="platformUsersState" role={isError ? "alert" : "status"}>
+                      {isLoading && <div className="uploadSpinner tiny" />}
+                      {t(isLoading ? "adminLoadingPeople" : isError ? "adminFailedLoadPeople" : "adminNoPeopleAdded")}
+                    </div>
                   </div>
-                  <div className="speakersChairsPersonActions">
-                    <button
-                      type="button"
-                      onClick={() => setEditingPersonId(person.id)}
-                      title={t("adminEditPerson")}
-                      aria-label={t("adminEditPerson")}
-                    >
-                      {EditSVG}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void handleDeletePerson(person)}
-                      title={t("adminDeletePerson")}
-                      aria-label={t("adminDeletePerson")}
-                    >
-                      {DeleteSVG}
-                    </button>
+                </div>
+              ) : filteredPeople.map((person) => {
+                const fullName = `${person.first_name} ${person.last_name}`.trim();
+                return (
+                  <div key={person.id} className="managementPeopleRow" role="row">
+                    <div className="managementPersonIdentity" role="cell">
+                      <img className="platformUserAvatar" src={person.image_url || DefaultProfile} alt="" />
+                      <button type="button" className="platformUserName" onClick={() => setEditingPersonId(person.id)}>{fullName}</button>
+                    </div>
+                    <div className="managementPersonBio" role="cell">{person.biography || t("adminNoDescription")}</div>
+                    <div className="managementPersonCount" role="cell">
+                      <span className="platformUserMobileLabel">{t("adminTableVideos")}: </span>{person.total_video_count}
+                    </div>
+                    <div className="managementRowActions" role="cell">
+                      <button type="button" onClick={() => setEditingPersonId(person.id)} title={t("adminEditPerson")} aria-label={`${t("adminEditPerson")}: ${fullName}`}>
+                        {EditSVG}
+                      </button>
+                      <button type="button" className="danger" onClick={() => void handleDeletePerson(person)} title={t("adminDeletePerson")} aria-label={`${t("adminDeletePerson")}: ${fullName}`}>
+                        {DeleteSVG}
+                      </button>
+                    </div>
                   </div>
-                </article>
-              );
-            })}
-
-            {!isLoading && !isError && filteredPeople.length === 0 ? (
-              <div className="speakersChairsEmptyState">
-                {t("adminNoPeopleAdded")}
-              </div>
-            ) : null}
+                );
+              })}
+            </div>
           </section>
 
           <div className="pagination">

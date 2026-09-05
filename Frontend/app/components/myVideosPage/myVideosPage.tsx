@@ -1,6 +1,7 @@
+import LibrarySortButton from "~/components/library/librarySortButton";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
-import { FilterSVG } from "~/constants";
+import { SearchSVG } from "~/constants";
 import VideoRow from "./videoRow/videoRow";
 import Sidebar from "./sidebar/sidebar";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -17,14 +18,6 @@ import CustomSelect from "~/components/customSelect/customSelect";
 type SortColumn = "visibility" | "date" | "views" | "likes";
 type SortDirection = "asc" | "desc";
 
-const SortIndicator = ({ column, sortColumn, sortDirection }: { column: SortColumn; sortColumn: SortColumn | null; sortDirection: SortDirection }) => {
-    if (sortColumn !== column) return <span className="sortIcon">⇅</span>;
-    return (
-      <span className="sortIcon active">
-        {sortDirection === "asc" ? "↑" : "↓"}
-      </span>
-    );
-};
 
 function MyVideos() {
   const { t } = useI18n();
@@ -38,7 +31,7 @@ function MyVideos() {
   const [limit, setLimit] = useState(20);
   const [selectedVideos, setSelectedVideos] = useState<VideoT[]>([]);
   const { confirm, dialogProps } = useConfirm();
-  
+
   const selectAllRef = useRef<HTMLInputElement>(null);
 
   const queryClient = useQueryClient();
@@ -124,7 +117,7 @@ function MyVideos() {
     });
     if(!ok) return;
 
-    Promise.all(selectedVideos.map(video => 
+    Promise.all(selectedVideos.map(video =>
       fetchFn({
         route: `api/video-moderation/video-details/${video.id}`,
         options: {
@@ -226,7 +219,7 @@ function MyVideos() {
     });
     if(!ok) return;
 
-    Promise.all(selectedVideos.map(video => 
+    Promise.all(selectedVideos.map(video =>
       fetchFn({
         route: `api/video-moderation/video/${video.id}`,
         options: {
@@ -277,7 +270,7 @@ function MyVideos() {
   }, [data]);
 
   return (
-    <main className="myVideos">
+    <main className="myVideos managementPage">
       <Sidebar />
       <ConfirmDialog {...dialogProps} />
 
@@ -288,29 +281,15 @@ function MyVideos() {
               <h1>{t("navMyVideos")}</h1>
               <p>{t("adminMyVideosDescription")}</p>
             </div>
-            <div className="libraryActions">
-              <div className="filter">
-                {FilterSVG}
-                <input type="text" placeholder={t("filterVideos")} />
-              </div>
-              {can(P.videosCreate) && <button
-                type="button"
-                className="playlistAddBtn"
-                title={t("uploadVideoAction")}
-                aria-label={t("uploadVideoAction")}
-                onClick={() => {
-                  window.location.href = "/upload";
-                }}
-              >
-                {AddSVG}
-              </button>}
-            </div>
           </div>
-          <div className="mobileTitleRow">
-            <h2 className="mobileTitle">{t("navMyVideos")}</h2>
+          <div className="managementToolbar">
+            <div className="filter">
+              {SearchSVG}
+              <input type="search" aria-label={t("filterVideos")} placeholder={t("filterVideos")} />
+            </div>
             {can(P.videosCreate) && <button
               type="button"
-              className="playlistAddBtn mobile"
+              className="playlistAddBtn"
               title={t("uploadVideoAction")}
               aria-label={t("uploadVideoAction")}
               onClick={() => {
@@ -333,52 +312,52 @@ function MyVideos() {
                       type="checkbox"
                     />
                     <p className="py-3">{t("adminTableVideo")}</p>
-                    {selectedVideos.length > 0 && 
+                    {selectedVideos.length > 0 &&
                       <span id="selectedButtons">
                         {canDelete && <button
                           className="button bg-(--accentRed) text-(--text1)"
                           onClick={deleteAll}
                         >{t("adminDeleteAll")}</button>}
-                        {selectedVideos.some(video => video.visibility !== "private") && 
-                          <button 
+                        {selectedVideos.some(video => video.visibility !== "private") &&
+                          <button
                             onClick={() => saveVisibility("private")}
                             className="button bg-(--background2) text-(--text1)!"
                           >{t("adminMakePrivate")}</button>
                         }
-                        {selectedVideos.some(video => video.visibility !== "public") && 
+                        {selectedVideos.some(video => video.visibility !== "public") &&
                           <button
                             onClick={() => saveVisibility("public")}
                             className="button bg-(--background2) text-(--text1)!"
                           >{t("adminMakePublic")}</button>
-                        } 
+                        }
                       </span>
                     }
                   </span>
                 </th>
                 <th
                   className={`sortable ${sortColumn === "visibility" ? "active" : ""}`}
-                  onClick={() => handleSort("visibility")}
+                  aria-sort={sortColumn === "visibility" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}
                 >
-                  {t("adminTableVisibility")} <SortIndicator sortColumn={sortColumn} sortDirection={sortDirection} column="visibility" />
+                  <LibrarySortButton label={t("adminTableVisibility")} direction={sortColumn === "visibility" ? sortDirection : null} onClick={() => handleSort("visibility")} />
                 </th>
                 <th
                   className={`sortable ${sortColumn === "date" ? "active" : ""}`}
-                  onClick={() => handleSort("date")}
+                  aria-sort={sortColumn === "date" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}
                 >
-                  {t("adminTableDate")} <SortIndicator sortColumn={sortColumn} sortDirection={sortDirection} column="date" />
+                  <LibrarySortButton label={t("adminTableDate")} direction={sortColumn === "date" ? sortDirection : null} onClick={() => handleSort("date")} />
                 </th>
                 <th
                   className={`sortable ${sortColumn === "views" ? "active" : ""}`}
-                  onClick={() => handleSort("views")}
+                  aria-sort={sortColumn === "views" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}
                 >
-                  {t("adminTableViews")} <SortIndicator sortColumn={sortColumn} sortDirection={sortDirection} column="views" />
+                  <LibrarySortButton label={t("adminTableViews")} direction={sortColumn === "views" ? sortDirection : null} onClick={() => handleSort("views")} />
                 </th>
                 <th className="notHoverable">{t("adminTableComments")}</th>
                 <th
                   className={`sortable ${sortColumn === "likes" ? "active" : ""}`}
-                  onClick={() => handleSort("likes")}
+                  aria-sort={sortColumn === "likes" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}
                 >
-                  {t("adminTableLikes")} <SortIndicator sortColumn={sortColumn} sortDirection={sortDirection} column="likes" />
+                  <LibrarySortButton label={t("adminTableLikes")} direction={sortColumn === "likes" ? sortDirection : null} onClick={() => handleSort("likes")} />
                 </th>
               </tr>
             </thead>

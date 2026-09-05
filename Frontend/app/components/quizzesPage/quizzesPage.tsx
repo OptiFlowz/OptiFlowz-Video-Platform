@@ -8,8 +8,9 @@ import {
   AddSVG,
   DeleteSVG,
   EditSVG,
-  FilterSVG,
+  SearchSVG,
   PlaySVG,
+  PermissionEyeSVG,
   QuizSVG,
   ThreeDotMenuSVG,
 } from "~/constants";
@@ -568,7 +569,7 @@ function QuizzesPage() {
     : null;
 
   return (
-    <main className="myVideos quizzesPage">
+    <main className="myVideos managementPage quizzesPage">
       <Sidebar />
       <ConfirmDialog {...dialogProps} />
 
@@ -579,33 +580,21 @@ function QuizzesPage() {
               <h1>{t("navQuizzes")}</h1>
               <p>{t("adminQuizzesDescription")}</p>
             </div>
-            <div className="libraryActions">
-              <div className="filter">
-                {FilterSVG}
-                <input
-                  type="text"
-                  placeholder={t("filterQuizzes")}
-                  value={filterValue}
-                  onChange={(event) => setFilterValue(event.target.value)}
-                />
-              </div>
-              {can(P.quizzesCreate) && <button
-                type="button"
-                className="playlistAddBtn"
-                title={t("createQuiz")}
-                aria-label={t("createQuiz")}
-                onClick={openCreateModal}
-              >
-                {AddSVG}
-              </button>}
-            </div>
           </div>
-
-          <div className="mobileTitleRow">
-            <h2 className="mobileTitle">{t("navQuizzes")}</h2>
+          <div className="managementToolbar">
+            <div className="filter">
+              {SearchSVG}
+              <input
+                type="search"
+                aria-label={t("filterQuizzes")}
+                placeholder={t("filterQuizzes")}
+                value={filterValue}
+                onChange={(event) => setFilterValue(event.target.value)}
+              />
+            </div>
             {can(P.quizzesCreate) && <button
               type="button"
-              className="playlistAddBtn mobile"
+              className="playlistAddBtn"
               title={t("createQuiz")}
               aria-label={t("createQuiz")}
               onClick={openCreateModal}
@@ -680,7 +669,7 @@ function QuizzesPage() {
                               toggleQuizSelection(quiz, event.target.checked)
                             }
                           />
-                          <div className="rounded-xl bg-(--background2) p-2 text-(--accentBlue)">
+                          <div className="managementQuizIcon rounded-xl bg-(--background2) p-2 text-(--accentBlue)">
                             {QuizSVG}
                           </div>
                           <div className="quizRowText flex flex-col gap-1">
@@ -701,38 +690,38 @@ function QuizzesPage() {
                       </td>
                       <td>
                         <span
-                          className={`inline-flex w-fit whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${
-                            quiz.is_active
-                              ? "bg-emerald-100 text-emerald-700"
-                              : "bg-slate-200 text-slate-600"
-                          }`}
+                          className={`managementStatus ${quiz.is_active ? "active" : "inactive"}`}
                         >
                           {quiz.is_active ? t("adminActive") : t("adminInactive")}
                         </span>
                       </td>
                       <td>{quiz.question_count}</td>
                       <td>
-                        <div className="flex flex-wrap gap-2 py-2">
+                        <div className="managementRowActions">
                           <Link
                             to={`/quiz/${quiz.id}`}
-                            className="saveCaptionsBtn"
+                            title={t("adminOpen")}
+                            aria-label={`${t("adminOpen")}: ${quiz.title}`}
                           >
-                            {t("adminOpen")}
+                            {PermissionEyeSVG}
                           </Link>
                           <button
                             type="button"
-                            className="saveCaptionsBtn"
+                            title={t("adminEdit")}
+                            aria-label={`${t("adminEdit")}: ${quiz.title}`}
                             onClick={() => void openEditModal(quiz)}
                           >
-                            {t("adminEdit")}
+                            {EditSVG}
                           </button>
                           <button
                             type="button"
-                            className="deleteCaptionsBtn"
+                            className="danger"
+                            title={t("adminDelete")}
+                            aria-label={`${t("adminDelete")}: ${quiz.title}`}
                             onClick={() => void handleDeleteQuiz(quiz)}
                             disabled={isDeletingQuizId === quiz.id || isBulkDeleting}
                           >
-                            {isDeletingQuizId === quiz.id ? t("adminDeleting") : t("adminDelete")}
+                            {isDeletingQuizId === quiz.id ? <span className="uploadSpinner tiny" /> : DeleteSVG}
                           </button>
                         </div>
                       </td>
