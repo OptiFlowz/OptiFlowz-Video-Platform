@@ -47,9 +47,13 @@ VALUES
      'Create, update and delete manageable roles',
      'Roles', NULL, 'dangerous'),
 
-    ('members.assign_roles',
+    ('users.assign_roles',
      'Assign manageable roles to users',
-     'Members', NULL, 'dangerous'),
+     'Users', NULL, 'dangerous'),
+
+    ('users.search',
+     'Search users and view their role assignments',
+     'Users', NULL, 'sensitive'),
 
     ('videos.create',
      'Upload videos',

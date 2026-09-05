@@ -10,6 +10,7 @@ import channelRoutes from '../modules/channels/channel.routes.js';
 import quizzesRoutes from '../modules/quizzes/quiz.routes.js';
 import analyticsRoutes from '../modules/analytics/analytics.routes.js';
 import roleRoutes from '../modules/roles/role.routes.js';
+import usersRoutes from '../modules/users/users.routes.js';
 
 export function registerRoutes(app) {
   app.get('/health', (_req, res) => res.json({ ok: true }));
@@ -26,4 +27,5 @@ export function registerRoutes(app) {
   app.use('/api/quizzes',quizzesRoutes);
   app.use('/api/analytics',analyticsRoutes);
   app.use('/api/roles', roleRoutes);
+  app.use('/api/users', usersRoutes);
 }
