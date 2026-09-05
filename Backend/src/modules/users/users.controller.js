@@ -2,6 +2,17 @@ import { sendSuccess, sendError } from '../../common/response.js';
 import { searchUsersInternal } from './handlers/searchUsers.js';
 import { assignRoleInternal } from './handlers/assignRole.js';
 import { removeRoleInternal } from './handlers/removeRole.js';
+import { getMyPermissionsInternal } from './handlers/getMyPermissions.js';
+
+export async function getMyPermissions(req, res) {
+  try {
+    const permissions = await getMyPermissionsInternal(req.user?.sub || null);
+    return sendSuccess(res, { permissions });
+  } catch (error) {
+    console.error('getMyPermissions error:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
 
 export async function searchUsers(req, res) {
   try {
