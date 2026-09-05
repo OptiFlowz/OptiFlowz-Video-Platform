@@ -43,12 +43,14 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
 
 export function NavLink({ to, className, children, end, ...props }: NavLinkProps) {
   const pathname = usePathname();
-  const isActive = end ? pathname === to : pathname === to || pathname.startsWith(`${to}/`);
+  // Query parameters choose a tab without changing the active navigation page.
+  const targetPathname = to.split(/[?#]/, 1)[0] || pathname;
+  const isActive = end ? pathname === targetPathname : pathname === targetPathname || pathname.startsWith(`${targetPathname}/`);
   const resolvedClassName = typeof className === "function" ? className({ isActive }) : className;
   const resolvedChildren = typeof children === "function" ? children({ isActive }) : children;
 
   return (
-    <Link to={to} className={resolvedClassName} {...props}>
+    <Link to={to} className={resolvedClassName} aria-current={isActive ? "page" : undefined} {...props}>
       {resolvedChildren}
     </Link>
   );

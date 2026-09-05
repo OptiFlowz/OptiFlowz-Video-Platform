@@ -421,12 +421,11 @@ main.account > .info,
 main.analyticsPage .analyticsSimple,
 main.myVideos table,
 main.myPlaylists table,
-.login .holder,
-.maintenance-card {
+.login .holder {
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   background: linear-gradient(180deg, rgba(24, 28, 38, 0.74), rgba(18, 21, 30, 0.76)) !important;
-  backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
 }
 
@@ -652,7 +651,6 @@ main.analyticsPage .analyticsSimple,
 main.myVideos table,
 main.myPlaylists table,
 .login .holder,
-.maintenance-card,
 main.play .player,
 .videoInfo .viewVideoChapters,
 .videoInfo .author,
@@ -960,8 +958,9 @@ header nav a:hover{
   border-radius: 18px;
   border: 1px solid var(--headerBorderColor);
   background: var(--headerSurface);
-  backdrop-filter: blur(18px);
+  /* Keep the standard declaration last so production optimization preserves it. */
   -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
   box-shadow: 0 18px 44px var(--headerShadowColor);
   z-index: 30;
 }
@@ -2011,16 +2010,16 @@ main .collection.notscrollable .item {
 .maintenance-card {
   width: 100%;
   display: grid;
-  grid-template-columns: minmax(300px, 440px) minmax(320px, 1fr);
+  grid-template-columns: minmax(300px, 520px) minmax(320px, 1fr);
   gap: 2rem;
   align-items: center;
   padding: clamp(1.5rem, 3vw, 3rem);
   border-radius: 32px;
-  background:
-    radial-gradient(circle at top left, rgba(76, 154, 255, 0.18), transparent 30%),
-    linear-gradient(135deg, rgba(17, 20, 26, 0.96), rgba(10, 12, 16, 0.98));
+  background: var(--background2);
   border: 1px solid var(--border1);
-  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 28px 80px var(--headerShadowColor);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
 }
 
 .maintenance-copy {
@@ -2033,8 +2032,9 @@ main .collection.notscrollable .item {
   width: fit-content;
   padding: 0.55rem 0.9rem;
   border-radius: 999px;
-  background-color: rgba(236, 139, 85, 0.12);
-  color: var(--accentOrange2);
+  background-color: var(--background3);
+  border: 1px solid var(--border1);
+  color: var(--accentBlue2);
   font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -2042,25 +2042,26 @@ main .collection.notscrollable .item {
 }
 
 .maintenance-copy h1 {
-  font-size: clamp(2rem, 4vw, 3.5rem);
-  line-height: 0.95;
-  color: var(--accentBlue2);
-  max-width: 10ch;
+  font-size: clamp(2rem, 3.5vw, 3.25rem);
+  line-height: 1.1;
+  color: var(--text1);
+  max-width: none;
+  text-wrap: wrap;
 }
 
 .maintenance-copy p {
   max-width: 50ch;
   font-size: 1rem;
-  line-height: 1.4;
-  color: rgba(9, 28, 66, 0.72);
+  line-height: 1.65;
+  color: var(--text2);
 }
 
 .maintenance-retry {
   width: fit-content;
   padding: 0.95rem 1.4rem;
   border-radius: 999px;
-  background: linear-gradient(135deg, var(--accentOrange), var(--accentOrange2));
-  color: white;
+  background: var(--blueButtonGradient);
+  color: var(--text1);
   font-weight: 700;
 }
 
@@ -2073,6 +2074,9 @@ main .collection.notscrollable .item {
   position: relative;
   display: flex;
   justify-content: center;
+  align-items: center;
+  min-width: 0;
+  padding: clamp(1rem, 2vw, 2rem) 0;
 }
 
 .maintenance-visual::before {
@@ -2080,7 +2084,7 @@ main .collection.notscrollable .item {
   position: absolute;
   inset: 10% 8% auto;
   height: 65%;
-  background: radial-gradient(circle, rgba(22, 65, 148, 0.08), transparent 70%);
+  background: radial-gradient(circle, var(--background3), transparent 70%);
   filter: blur(24px);
 }
 
@@ -2091,7 +2095,7 @@ main .collection.notscrollable .item {
   position: relative;
 }
 
-@media screen and (max-width: 640px) {
+@media screen and (max-width: 800px) {
   .maintenance-shell {
     width: min(100dvw, calc(100dvw - 20px));
     padding: 0.75rem 0;
@@ -9124,8 +9128,8 @@ main.myVideos{
   border-radius: 26px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: linear-gradient(180deg, rgba(24, 28, 38, 0.62), rgba(18, 21, 30, 0.68));
-  backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
 }
 .videoAsideSticky::-webkit-scrollbar {
@@ -9285,8 +9289,8 @@ main.myVideos .mobileTitle{
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: linear-gradient(180deg, rgba(24, 28, 38, 0.74), rgba(18, 21, 30, 0.76));
-  backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
 }
 
@@ -9768,8 +9772,8 @@ main.myVideos .filter{
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   background: linear-gradient(180deg, rgba(24, 28, 38, 0.74), rgba(18, 21, 30, 0.76));
-  backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
 }
 main.myVideos .filter svg{
@@ -9795,8 +9799,8 @@ main.myVideos .playlistAddBtn{
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   background: linear-gradient(180deg, rgba(24, 28, 38, 0.74), rgba(18, 21, 30, 0.76));
-  backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
   color: var(--text1);
   cursor: pointer;
@@ -13174,8 +13178,8 @@ footer > span.footerCopyright {
 @media screen and (max-width: 500px) {
   body:has(.play) header {
     background-color: var(--background1);
-    backdrop-filter: none;
     -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
   main.play {
     padding-top: calc(110px + 56.25dvw);
