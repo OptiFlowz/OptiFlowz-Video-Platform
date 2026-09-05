@@ -2,7 +2,7 @@ import Footer from "~/components/footer/footer";
 import Header from "~/components/header/header";
 import AnalyticsPage from "~/components/analytics/analyticsPage";
 import type { Route } from "./+types/play";
-import { isUserAdmin } from "~/functions";
+import ClientGuard from "~/client-guard";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -11,18 +11,6 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export default function PlatformAnalyticsRoute() {
-  const hasUser = !!localStorage.getItem("user") || !!sessionStorage.getItem("user");
-
-  if (!hasUser) {
-    window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search + window.location.hash)}`;
-    return null;
-  }
-
-  if (!isUserAdmin()) {
-    window.location.href = "/";
-    return null;
-  }
-
-  return <><Header /><AnalyticsPage /><Footer /></>;
+export default function Page() {
+  return <ClientGuard mode="auth" access="platformAnalytics"><Header /><AnalyticsPage /><Footer /></ClientGuard>;
 }

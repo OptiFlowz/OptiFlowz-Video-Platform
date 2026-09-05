@@ -1,3 +1,6 @@
+import { permissionLabel, permissionGroupLabel } from "~/authorization/permissionLabels";
+import { useI18n } from "~/i18n";
+import { getRoleLabel } from "~/authorization/roleLabels";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -76,6 +79,7 @@ type PlatformRole = {
   type: "System" | "Custom";
   users: number;
   permissions: PermissionId[];
+  deniedPermissions: PermissionId[];
   position: number;
   isDefault: boolean;
   canUpdate: boolean;
@@ -112,13 +116,15 @@ const chartColors = [
 ];
 
 function RoleOverview({ roles }: { roles: PlatformRole[] }) {
+  const { t, locale } = useI18n();
+  const label = (role: PlatformRole) => getRoleLabel(role.name, role.type === "System", t);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const totalUsers = roles.reduce((total, role) => total + role.users, 0);
   const activeRole = activeIndex === null ? null : roles[activeIndex];
 
   return (
     <section className="platformSettingsCard roleOverviewCard">
-      <h2>Role overview</h2>
+      <h2>{t("rolesOverview")}</h2>
       <div className="roleOverviewLayout">
         <div className="roleOverviewChart">
           <ResponsiveContainer width="100%" height="100%">
@@ -147,17 +153,17 @@ function RoleOverview({ roles }: { roles: PlatformRole[] }) {
           </ResponsiveContainer>
           <div className="roleOverviewCenter">
             <strong>{activeRole?.users ?? totalUsers}</strong>
-            <span>{activeRole?.name ?? "Total users"}</span>
+            <span>{activeRole ? label(activeRole) : t("rolesAssignments")}</span>
           </div>
         </div>
 
         <div className="roleOverviewLegend">
           {roles.map((role, index) => {
-            const percentage = totalUsers > 0 ? ((role.users / totalUsers) * 100).toFixed(1) : "0.0";
+            const percentage = new Intl.NumberFormat(locale, { style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(totalUsers > 0 ? role.users / totalUsers : 0);
             return (
               <div className="roleOverviewLegendItem" key={role.id}>
                 <i style={{ backgroundColor: chartColors[index % chartColors.length] }} />
-                <span><strong>{role.name}</strong><small>{role.users} ({percentage}%)</small></span>
+                <span><strong>{label(role)}</strong><small>{role.users} ({percentage})</small></span>
               </div>
             );
           })}
@@ -190,6 +196,7 @@ function RolePopup({
   onClose: () => void;
   onSave: (name: string, selectedPermissions: PermissionId[], isDefault: boolean) => void;
 }) {
+  const { t } = useI18n();
   const duration = 200;
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -271,7 +278,7 @@ function RolePopup({
       className={`platformRolePopup ${visible ? "visible" : ""}`}
       role="dialog"
       aria-modal="true"
-      aria-label={role ? `Edit ${role.name} role` : "Add role"}
+      aria-label={role ? `${t("rolesEdit")}: ${getRoleLabel(role.name, role.type === "System", t)}` : t("rolesAdd")}
       onMouseDown={onClose}
     >
       <div className="platformRolePopupBackdrop bg-(--backgroundC1)" />
@@ -286,17 +293,17 @@ function RolePopup({
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="platformRolePopupHeader">
-          <h3>{role ? "Edit role" : "Add role"}</h3>
-          <p>{role ? "Edit user permissions for the selected role" : "Create a role and choose its permissions"}</p>
+          <h3>{t(role ? "rolesEdit" : "rolesAdd")}</h3>
+          <p>{t(role ? "rolesEditHelp" : "rolesAddHelp")}</p>
         </div>
 
         <div className="platformRolePopupBody">
           <label className="platformRoleNameField">
-            <span>Name</span>
+            <span>{t("usersName")}</span>
             <span className="platformRoleNameControl">
               <input
                 ref={nameInputRef}
-                value={name}
+                value={role?.type === "System" ? getRoleLabel(name, true, t) : name}
                 onChange={(event) => setName(event.target.value)}
                 readOnly={role?.type === "System"}
                 maxLength={50}
@@ -304,16 +311,16 @@ function RolePopup({
               />
               <small
                 className={`roleTypeBadge roleBadgeTooltip ${(role?.type ?? "Custom").toLowerCase()}`}
-                data-tooltip={(role?.type ?? "Custom") === "System" ? "Built-in role managed by the platform." : "Custom role created for this platform."}
+                data-tooltip={(role?.type ?? "Custom") === "System" ? t("rolesSystemHelp") : t("rolesCustomHelp")}
                 tabIndex={0}
               >
-                {role?.type ?? "Custom"}
+                {t(role?.type === "System" ? "rolesSystem" : "rolesCustom")}
               </small>
             </span>
           </label>
 
           <div className="platformPermissionsHeader">
-            <strong>Permissions</strong>
+            <strong>{t("rolesPermissions")}</strong>
             <div>
               <button
                 type="button"
@@ -321,7 +328,7 @@ function RolePopup({
                 onClick={() => setSelectedPermissions(allPermissionIds)}
               >
                 {PermissionHandSVG}
-                Give all permissions
+                {t("rolesGiveAll")}
               </button>
               <button
                 type="button"
@@ -329,7 +336,7 @@ function RolePopup({
                 onClick={() => setSelectedPermissions([])}
               >
                 {PermissionClearSVG}
-                Clear permissions
+                {t("rolesClear")}
               </button>
             </div>
           </div>
@@ -338,17 +345,17 @@ function RolePopup({
             {isPermissionsLoading ? (
               <div className="platformPermissionState">
                 <div className="uploadSpinner tiny" />
-                <span>Loading permissions...</span>
+                <span>{t("rolesPermissionsLoading")}</span>
               </div>
             ) : permissionsError ? (
               <div className="errorBanner platformPermissionState">
-                <p>{permissionsError.message || "Failed to load permissions."}</p>
-                <button type="button" onClick={onRetryPermissions}>Retry</button>
+                <p>{t("rolesPermissionsFailed")}</p>
+                <button type="button" onClick={onRetryPermissions}>{t("usersRetry")}</button>
               </div>
             ) : permissionGroups.length ? (
               permissionGroups.map((group) => (
                 <section className="platformPermissionGroup" key={group.name}>
-                  <h4>{group.name}</h4>
+                  <h4>{permissionGroupLabel(group.name, t)}</h4>
                   <div>
                     {group.permissions.map((permission) => {
                       const checked = selectedPermissions.includes(permission.id);
@@ -356,7 +363,7 @@ function RolePopup({
                         <label className="platformPermissionItem" key={permission.id}>
                           <span className="platformPermissionIcon">{getPermissionIcon(permission)}</span>
                           <span className="platformPermissionText">
-                            <strong>{permission.description}</strong>
+                            <strong>{permissionLabel(permission.key, permission.description, t)}</strong>
                             <small>{permission.key}</small>
                           </span>
                           <input
@@ -364,7 +371,7 @@ function RolePopup({
                             type="checkbox"
                             checked={checked}
                             onChange={() => togglePermission(permission.id)}
-                            aria-label={permission.description}
+                            aria-label={permissionLabel(permission.key, permission.description, t)}
                           />
                         </label>
                       );
@@ -373,17 +380,17 @@ function RolePopup({
                 </section>
               ))
             ) : (
-              <div className="platformPermissionState">No permissions available.</div>
+              <div className="platformPermissionState">{t("rolesPermissionsEmpty")}</div>
             )}
           </div>
 
           {role ? (
             <div className="platformDefaultRoleSection">
-              <strong>Default role</strong>
+              <strong>{t("rolesDefault")}</strong>
               <label className="platformDefaultRoleControl">
                 <span>
-                  <strong>Assign on registration</strong>
-                  <small>Assign this role automatically to newly registered users.</small>
+                  <strong>{t("rolesAssignOnRegistration")}</strong>
+                  <small>{t("rolesDefaultHelp")}</small>
                 </span>
                 <input
                   className="quizPopupCheckbox appearance-none rounded-[6px]! p-2.25! border-2 cursor-pointer checked:bg-(--accentOrange)! transition-colors relative checked:after:content-['✓'] checked:after:absolute checked:after:text-(--text1) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
@@ -398,14 +405,14 @@ function RolePopup({
 
         {saveError ? (
           <p className="platformRoleMutationError" role="alert">
-            {saveError.message || (role ? "Failed to update role." : "Failed to create role.")}
+            {t(role ? "rolesUpdateFailed" : "rolesCreateFailed")}
           </p>
         ) : null}
 
         <div className="platformRolePopupActions">
-          <button type="button" className="cancelBtn platformRoleCancelButton" onClick={onClose}>Cancel</button>
+          <button type="button" className="cancelBtn platformRoleCancelButton" onClick={onClose}>{t("cancel")}</button>
           <button type="submit" className="saveCaptionsBtn platformRoleSaveButton" disabled={isSaving}>
-            {isSaving ? (role ? "Saving..." : "Adding...") : role ? "Save role" : "Add role"}
+            {t(isSaving ? (role ? "saving" : "rolesAdding") : role ? "rolesSave" : "rolesAdd")}
           </button>
         </div>
       </form>
@@ -415,6 +422,8 @@ function RolePopup({
 }
 
 export default function AccessAndRoles() {
+  const { t } = useI18n();
+  const label = (role: PlatformRole) => getRoleLabel(role.name, role.type === "System", t);
   const [roles, setRoles] = useState<PlatformRole[]>([]);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
@@ -452,7 +461,7 @@ export default function AccessAndRoles() {
     error: rolesError,
     refetch: refetchRoles,
   } = useQuery({
-    queryKey: ["roles"],
+    queryKey: ["roles", token],
     queryFn: () =>
       fetchFn<RolesResponse>({
         route: "api/roles",
@@ -471,7 +480,7 @@ export default function AccessAndRoles() {
     error: permissionsError,
     refetch: refetchPermissions,
   } = useQuery({
-    queryKey: ["role-permissions"],
+    queryKey: ["role-permissions", token],
     queryFn: () =>
       fetchFn<RolePermissionsResponse>({
         route: "api/roles/permissions",
@@ -503,12 +512,15 @@ export default function AccessAndRoles() {
       }),
     onSuccess: async () => {
       setIsPopupOpen(false);
-      await queryClient.invalidateQueries({ queryKey: ["roles"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["roles"] }),
+        queryClient.invalidateQueries({ queryKey: ["user-permissions"] }),
+      ]);
     },
   });
 
   const updateRoleMutation = useMutation({
-    mutationFn: ({ roleId, name, permissions, position, isDefault }: { roleId: string; name: string; permissions: PermissionId[]; position: number; isDefault: boolean }) =>
+    mutationFn: ({ roleId, name, permissions, deniedPermissions, position, isDefault }: { roleId: string; name: string; permissions: PermissionId[]; deniedPermissions: PermissionId[]; position: number; isDefault: boolean }) =>
       fetchFn<{ success: boolean; role: ApiRole }>({
         route: `api/roles/${roleId}`,
         options: {
@@ -518,13 +530,16 @@ export default function AccessAndRoles() {
             name,
             position,
             is_default: isDefault,
-            permissions: permissions.map((id) => ({ id, effect: "allow" as const })),
+            permissions: [...permissions.map((id) => ({ id, effect: "allow" as const })), ...deniedPermissions.filter(id => !permissions.includes(id)).map(id => ({ id, effect: "deny" as const }))],
           }),
         },
       }),
     onSuccess: async () => {
       setIsPopupOpen(false);
-      await queryClient.invalidateQueries({ queryKey: ["roles"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["roles"] }),
+        queryClient.invalidateQueries({ queryKey: ["user-permissions"] }),
+      ]);
     },
   });
 
@@ -538,7 +553,10 @@ export default function AccessAndRoles() {
         },
       }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["roles"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["roles"] }),
+        queryClient.invalidateQueries({ queryKey: ["user-permissions"] }),
+      ]);
     },
   });
 
@@ -550,6 +568,7 @@ export default function AccessAndRoles() {
       name: role.name,
       type: role.is_system ? "System" : "Custom",
       users: role.member_count,
+      deniedPermissions: role.permissions.filter(permission => permission.effect === "deny").map(permission => String(permission.id)),
       permissions: role.is_owner
         ? ["*"]
         : role.permissions
@@ -592,10 +611,10 @@ export default function AccessAndRoles() {
 
   const deleteRole = async (role: PlatformRole) => {
     const shouldDelete = await confirm({
-      title: "Delete role?",
-      message: `Are you sure you want to delete the ${role.name} role?`,
-      yesText: "Delete",
-      noText: "Cancel",
+      title: t("rolesDeleteTitle"),
+      message: t("rolesDeleteMessage", { name: label(role) }),
+      yesText: t("delete"),
+      noText: t("cancel"),
     });
     if (shouldDelete) deleteRoleMutation.mutate(role.id);
   };
@@ -608,67 +627,67 @@ export default function AccessAndRoles() {
       <div className="accessRolesLayout">
         <section className="platformSettingsCard rolesCard">
           <div className="rolesCardHeader">
-            <span><h2>Roles</h2><p>Manage user roles and their permissions</p></span>
+            <span><h2>{t("usersRoles")}</h2><p>{t("rolesManageHelp")}</p></span>
             <button type="button" className="addRoleButton" onClick={openAddRole}>
               {RoleAddSVG}
-              Add role
+              {t("rolesAdd")}
             </button>
           </div>
 
           {deleteRoleMutation.error ? (
             <p className="rolesMutationError" role="alert">
-              {deleteRoleMutation.error.message || "Failed to delete role."}
+              {t("rolesDeleteFailed")}
             </p>
           ) : null}
 
-          <div className="rolesTable" role="table" aria-label="Platform roles">
+          <div className="rolesTable" role="table" aria-label={t("rolesTableLabel")}>
             <div className="rolesTableHeader" role="row">
-              <span role="columnheader">Role name</span>
-              <span role="columnheader">Users</span>
-              <span role="columnheader">Actions</span>
+              <span role="columnheader">{t("rolesName")}</span>
+              <span role="columnheader">{t("rolesUsers")}</span>
+              <span role="columnheader">{t("usersActions")}</span>
             </div>
             {isRolesLoading ? (
               <div className="rolesTableState">
                 <div className="uploadSpinner tiny" />
-                <span>Loading roles...</span>
+                <span>{t("rolesLoading")}</span>
               </div>
             ) : rolesError ? (
               <div className="errorBanner rolesTableState">
-                <p>{rolesError.message || "Failed to load roles."}</p>
-                <button type="button" onClick={() => void refetchRoles()}>Retry</button>
+                <p>{t("rolesLoadFailed")}</p>
+                <button type="button" onClick={() => void refetchRoles()}>{t("usersRetry")}</button>
               </div>
             ) : roles.length ? roles.map((role) => (
               <div className="rolesTableRow" role="row" key={role.id}>
                 <span className="roleNameCell" role="cell">
-                  <strong>{role.name}</strong>
+                  <strong>{label(role)}</strong>
                   <small
                     className={`roleTypeBadge roleBadgeTooltip ${role.type.toLowerCase()}`}
-                    data-tooltip={role.type === "System" ? "Built-in role managed by the platform." : "Custom role created for this platform."}
+                    data-tooltip={role.type === "System" ? t("rolesSystemHelp") : t("rolesCustomHelp")}
                     tabIndex={0}
-                  >{role.type}</small>
+                  >{t(role.type === "System" ? "rolesSystem" : "rolesCustom")}</small>
                   {role.isDefault ? (
                     <small
                       className="roleTypeBadge roleBadgeTooltip default"
-                      data-tooltip="Default role assigned automatically to users when they register."
+                      data-tooltip={t("rolesDefaultHelp")}
                       tabIndex={0}
-                    >Default</small>
+                    >{t("rolesDefaultBadge")}</small>
                   ) : null}
                 </span>
                 <strong className="roleUsersCell" role="cell">{role.users}</strong>
                 <span className="roleActionsCell" role="cell">
-                  <button type="button" className="edit" disabled={!role.canUpdate || updateRoleMutation.isPending} onClick={() => openEditRole(role)} aria-label={`Edit ${role.name}`}>
+                  <button type="button" className="edit" disabled={!role.canUpdate || updateRoleMutation.isPending} onClick={() => openEditRole(role)} aria-label={`${t("rolesEdit")}: ${label(role)}`}>
                     {RoleWrenchSVG}
                   </button>
-                  <button type="button" className="delete" disabled={!role.canDelete || deleteRoleMutation.isPending} onClick={() => void deleteRole(role)} aria-label={`Delete ${role.name}`}>
+                  <button type="button" className="delete" disabled={!role.canDelete || deleteRoleMutation.isPending} onClick={() => void deleteRole(role)} aria-label={`${t("delete")}: ${label(role)}`}>
                     {RoleDeleteSVG}
                   </button>
                 </span>
               </div>
             )) : (
-              <div className="rolesTableState">No roles available.</div>
+              <div className="rolesTableState">{t("rolesEmpty")}</div>
             )}
           </div>
-          <p className="rolesTotal">Total roles: {roles.length}</p>
+          <p className="rolesTotal">{t("rolesTotal", { count: roles.length })}</p>
         </section>
 
         <RoleOverview roles={roles} />
@@ -692,6 +711,7 @@ export default function AccessAndRoles() {
           if (selectedRole) {
             updateRoleMutation.mutate({
               roleId: selectedRole.id,
+              deniedPermissions: selectedRole.deniedPermissions,
               name,
               permissions: selectedPermissions,
               position: calculateRolePosition(selectedPermissions, selectedRole.id),

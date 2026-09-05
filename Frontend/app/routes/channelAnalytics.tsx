@@ -1,7 +1,8 @@
+import ClientGuard from "~/client-guard";
 import Footer from "~/components/footer/footer";
 import Header from "~/components/header/header";
 import type { Route } from "./+types/play";
-import { isUserAdmin } from "~/functions";
+
 import ChannelAnalyticsPage from "~/components/channelAnalyticsPage/channelAnalyticsPage";
 
 export function meta({}: Route.MetaArgs) {
@@ -11,26 +12,6 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export default function ChannelAnalyticsRoute() {
-  const hasUser = !!localStorage.getItem("user") || !!sessionStorage.getItem("user");
-
-  if (!hasUser) {
-    window.location.href = `/login?redirect=${encodeURIComponent(
-      window.location.pathname + window.location.search + window.location.hash,
-    )}`;
-    return null;
-  }
-
-  if (!isUserAdmin()) {
-    window.location.href = "/";
-    return null;
-  }
-
-  return (
-    <>
-      <Header />
-      <ChannelAnalyticsPage />
-      <Footer />
-    </>
-  );
+export default function Page() {
+  return <ClientGuard mode="auth" access="channelAnalytics"><Header /><ChannelAnalyticsPage /><Footer /></ClientGuard>;
 }

@@ -1,3 +1,5 @@
+import { useAuthorization } from "~/authorization/authorization";
+import { P } from "~/authorization/permissions";
 // VideoPlayer.tsx
 import React, {
   useRef,
@@ -66,6 +68,8 @@ export default function VideoPlayer({
   compactControls = false,
   forceAutoplay = false,
 }: VideoPlayerProps) {
+  const { can } = useAuthorization();
+  const canSaveProgress = can(P.videosProgress);
   const playerRef = useRef<MuxPlayerElement | null>(null);
 
   const setPlayerRef = useCallback((player: MuxPlayerElement | null) => {
@@ -475,7 +479,7 @@ export default function VideoPlayer({
 
   const sendProgress = useCallback(
     async (progressSeconds: number) => {
-      if (!videoId) return;
+      if (!videoId || !canSaveProgress) return;
 
       const token = getToken();
       if (!token) return;
@@ -495,7 +499,7 @@ export default function VideoPlayer({
         // best effort
       }
     },
-    [apiBaseUrl, videoId, onProgressSaved]
+    [apiBaseUrl, videoId, onProgressSaved, canSaveProgress]
   );
 
   // Ako nema currentTimee, upiši 0 jednom

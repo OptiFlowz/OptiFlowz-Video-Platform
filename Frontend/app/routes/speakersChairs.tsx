@@ -1,7 +1,8 @@
-﻿import Footer from "~/components/footer/footer";
+import ClientGuard from "~/client-guard";
+import Footer from "~/components/footer/footer";
 import Header from "~/components/header/header";
 import type { Route } from "./+types/play";
-import { isUserAdmin } from "~/functions";
+
 import SpeakersChairsPage from "~/components/speakersChairsPage/speakersChairsPage";
 
 export function meta({}: Route.MetaArgs) {
@@ -15,30 +16,6 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-function Play() {
-  const hasUser =
-    !!localStorage.getItem("user") || !!sessionStorage.getItem("user");
-
-  if (!hasUser) {
-    window.location.href = `/login?redirect=${encodeURIComponent(
-      window.location.pathname + window.location.search + window.location.hash
-    )}`;
-
-    if (!isUserAdmin()) {
-      window.location.href = `/`;
-    }
-    return null;
-  }
-
-  return (
-    <>
-      <Header />
-
-      <SpeakersChairsPage />
-
-      <Footer />
-    </>
-  );
+export default function Page() {
+  return <ClientGuard mode="auth" access="people"><Header /><SpeakersChairsPage /><Footer /></ClientGuard>;
 }
-
-export default Play;

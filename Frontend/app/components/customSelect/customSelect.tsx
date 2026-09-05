@@ -18,6 +18,7 @@ type CustomSelectProps = {
   triggerClassName?: string;
   leadingContent?: ReactNode;
   valueContent?: ReactNode;
+  typeAhead?: boolean;
 };
 
 const MAX_MENU_HEIGHT = 280;
@@ -34,6 +35,7 @@ function CustomSelect({
   triggerClassName = "",
   leadingContent,
   valueContent,
+  typeAhead = false,
 }: CustomSelectProps) {
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -42,6 +44,7 @@ function CustomSelect({
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const typeAheadRef = useRef({ text: "", lastTypedAt: 0 });
   const generatedId = useId();
   const listboxId = `${generatedId}-listbox`;
   const stringValue = String(value);
@@ -67,12 +70,14 @@ function CustomSelect({
 
   const openMenu = (index = selectedIndex) => {
     if (disabled || options.length === 0) return;
+    typeAheadRef.current = { text: "", lastTypedAt: 0 };
     prepareMenu();
     setActiveIndex(options[index]?.disabled ? firstEnabledIndex : index);
     setOpen(true);
   };
 
   const closeMenu = (restoreFocus = false) => {
+    typeAheadRef.current = { text: "", lastTypedAt: 0 };
     setOpen(false);
     if (restoreFocus) window.requestAnimationFrame(() => buttonRef.current?.focus());
   };
@@ -113,6 +118,26 @@ function CustomSelect({
   const focusOption = (index: number) => {
     setActiveIndex(index);
     optionRefs.current[index]?.focus();
+  };
+
+  const focusMatchingOption = (key: string, currentIndex: number) => {
+    const now = Date.now();
+    const previous = typeAheadRef.current;
+    const text = (now - previous.lastTypedAt < 800 ? previous.text : "") + key.toLowerCase();
+    typeAheadRef.current = { text, lastTypedAt: now };
+
+    // Repeated letters cycle through matches; a prefix such as "spa" finds Spanish.
+    const repeated = [...text].every((character) => character === text[0]);
+    const prefix = repeated ? text[0] : text;
+    const start = repeated ? currentIndex + 1 : currentIndex;
+    for (let offset = 0; offset < options.length; offset += 1) {
+      const index = (start + offset) % options.length;
+      const option = options[index];
+      if (!option.disabled && option.label.toLowerCase().startsWith(prefix)) {
+        focusOption(index);
+        break;
+      }
+    }
   };
 
   const selectOption = (option: CustomSelectOption) => {
@@ -184,6 +209,13 @@ function CustomSelect({
                     if (!option.disabled) setActiveIndex(index);
                   }}
                   onKeyDown={(event) => {
+                    if (typeAhead && event.key.length === 1 && event.key !== " " && !event.ctrlKey && !event.metaKey && !event.altKey && !event.nativeEvent.isComposing) {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      focusMatchingOption(event.key, index);
+                      return;
+                    }
+                    if (event.key !== "Shift") typeAheadRef.current = { text: "", lastTypedAt: 0 };
                     if (event.key === "ArrowDown") {
                       event.preventDefault();
                       focusOption(findEnabledIndex(index, 1));

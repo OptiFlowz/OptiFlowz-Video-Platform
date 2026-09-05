@@ -1,3 +1,5 @@
+import { useAuthorization } from "~/authorization/authorization";
+import { P } from "~/authorization/permissions";
 import { useQuery } from "@tanstack/react-query";
 import { memo, useLayoutEffect, useRef, useState, useEffect, useCallback, useMemo } from "react";
 import { AutoPlaySVG, BookmarkSVG, CloseSVG, ShareSVG } from "~/constants";
@@ -11,6 +13,7 @@ import { useI18n } from "~/i18n";
 
 function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, videoId: string, onClose: () => void}){
     const { t } = useI18n();
+    const { can } = useAuthorization();
     const location = useLocation();
 
     const token = getToken() ?? "";
@@ -121,6 +124,7 @@ function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, vi
     }, []);
 
     const toggleSave = async () => {
+        if (!can(P.playlistsSave)) return;
         if (!data?.id || !token) return;
 
         const prevSaved = isSaved;
@@ -176,7 +180,7 @@ function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, vi
                 <span className="tagsHolder">
                     <span className="tags">
                         <button className="whiteTag" onClick={changeAutoPlay} title={t("toggleAutoplay")}>{AutoPlaySVG}&nbsp;{isAutoPlayOn ? t("on") : t("off")}</button>
-                        <button className={`${isSaved ? "saved" : ""} clickable`} onClick={toggleSave}>{BookmarkSVG}&nbsp;{isSaved ? t("saved") : t("save")}</button>
+                        <button className={`${isSaved ? "saved" : ""} clickable`} onClick={toggleSave} disabled={!can(P.playlistsSave)}>{BookmarkSVG}&nbsp;{isSaved ? t("saved") : t("save")}</button>
                         <button onClick={e => sharePlaylistLink(e)} title={t("sharePlaylist")}>{ShareSVG}&nbsp;{t("share")}</button>
                     </span>
                 </span>

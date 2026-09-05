@@ -1,3 +1,5 @@
+import { useAuthorization } from "~/authorization/authorization";
+import { P } from "~/authorization/permissions";
 import { useQuery } from "@tanstack/react-query";
 import { useLayoutEffect, useRef, useState, useCallback, useEffect, useMemo } from "react";
 import { env } from "~/env";
@@ -41,6 +43,7 @@ const SkeletonHeader = () => (
 
 function PlaylistPage(){
     const { t } = useI18n();
+    const { can } = useAuthorization();
     const {id: playlistId} = useParams();
     const token = getToken() ?? "";
     const [descOpen, setDescOpen] = useState(false);
@@ -105,6 +108,7 @@ function PlaylistPage(){
     });
 
     const toggleSave = async () => {
+        if (!can(P.playlistsSave)) return;
         if (!data?.id || !token) return;
 
         const prevSaved = isSaved;
@@ -202,7 +206,7 @@ function PlaylistPage(){
                     <span className="buttonHolder">
                         <button className="play rounded-full! flex! bg-(--accentBlue)! text-(--text1)! font-semibold!" onClick={playPlaylist}>{PlaySVG}&nbsp;{t("playAll")}</button>
 
-                        <button className={`${isSaved ? "saved" : ""} clickable bg-(--background2) hover:bg-(--background3) rounded-full flex`} onClick={toggleSave}>{BookmarkSVG}&nbsp;{isSaved ? t("saved") : t("save")}</button>
+                        <button className={`${isSaved ? "saved" : ""} clickable bg-(--background2) hover:bg-(--background3) rounded-full flex`} onClick={toggleSave} disabled={!can(P.playlistsSave)}>{BookmarkSVG}&nbsp;{isSaved ? t("saved") : t("save")}</button>
                         <button onClick={e => sharePlaylistLink(e)} className="clickable bg-(--background2) hover:bg-(--background3) rounded-full flex">{ShareSVG}&nbsp;{t("share")}</button>
                     </span>
 

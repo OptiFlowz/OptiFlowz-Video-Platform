@@ -1,3 +1,4 @@
+import { useAuthorization } from "~/authorization/authorization";
 import { NavLink } from "react-router";
 import { getStoredUser } from "~/functions";
 import DefaultProfile from "../../../../assets/DefaultProfile.webp";
@@ -9,6 +10,7 @@ import { useI18n } from "~/i18n";
 
 function Sidebar() {
     const { t } = useI18n();
+    const { canAccess } = useAuthorization();
     const user = getStoredUser()?.user;
     const channelName = user?.full_name?.trim() || t("yourChannel");
     const asideRef = useRef<HTMLElement | null>(null);
@@ -37,21 +39,21 @@ function Sidebar() {
                     </div>
                 </section>
                 <nav>
-                    <NavLink to="/my-videos" end className={({ isActive }) => (isActive ? "active" : "")}>
+                    {canAccess('videos') && <NavLink to="/my-videos" end className={({ isActive }) => (isActive ? "active" : "")}>
                         {PlaySVG}&nbsp;{t("navMyVideos")}
-                    </NavLink>
-                    <NavLink to="/my-playlists" end className={({ isActive }) => (isActive ? "active" : "")}>
+                    </NavLink>}
+                    {canAccess('playlists') && <NavLink to="/my-playlists" end className={({ isActive }) => (isActive ? "active" : "")}>
                         {PlaylistSVG}&nbsp;{t("navMyPlaylists")}
-                    </NavLink>
-                    <NavLink to="/speakers-chairs" end className={({ isActive }) => (isActive ? "active" : "")}>
+                    </NavLink>}
+                    {canAccess('people') && <NavLink to="/speakers-chairs" end className={({ isActive }) => (isActive ? "active" : "")}>
                         {PeopleSVG}&nbsp;{t("navSpeakersChairs")}
-                    </NavLink>
-                    <NavLink to="/quizzes" end className={({ isActive }) => (isActive ? "active" : "")}>
+                    </NavLink>}
+                    {canAccess('quizzes') && <NavLink to="/quizzes" end className={({ isActive }) => (isActive ? "active" : "")}>
                         {QuizSVG}&nbsp;{t("navQuizzes")}
-                    </NavLink>
-                    <NavLink to="/channel-analytics" end className={({ isActive }) => (isActive ? "active" : "")}>
+                    </NavLink>}
+                    {canAccess('channelAnalytics') && <NavLink to="/channel-analytics" end className={({ isActive }) => (isActive ? "active" : "")}>
                         {AnalyticsSVG}&nbsp;{t("navChannelAnalytics")}
-                    </NavLink>
+                    </NavLink>}
                 </nav>
             </div>
         </aside>

@@ -1,4 +1,4 @@
-﻿import { useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { memo, useMemo } from "react";
 import { fetchFn } from "~/API";
 import type { AuthFetchT } from "~/types";
@@ -40,7 +40,7 @@ function AccountInfo(){
     }, [token]);
 
     const {data: userData, isLoading} = useQuery({
-        queryKey: [`accountInfo`],
+        queryKey: ["accountInfo", token],
         queryFn: () => fetchFn<AuthFetchT>({
             route: `api/auth/me`,
             options: {

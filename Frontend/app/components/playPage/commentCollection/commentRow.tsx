@@ -1,3 +1,5 @@
+import { useAuthorization } from "~/authorization/authorization";
+import { P } from "~/authorization/permissions";
 import { useEffect, useRef, useState } from "react";
 import { DeleteSVG, EditSVG, ReplySVG, ThumbIcon } from "~/constants";
 import type { VideoCommentT } from "~/types";
@@ -49,6 +51,7 @@ function CommentRow({
   isHighlighted = false,
 }: CommentRowProps) {
   const { t } = useI18n();
+  const { can } = useAuthorization();
   const userReaction = comment.my_reaction;
   const isLiked = userReaction === 1;
   const isDisliked = userReaction === -1;
@@ -146,7 +149,7 @@ function CommentRow({
             type="button"
             onClick={() => handleReact("like")}
             className={`flex items-center transition ${isLiked ? "bookmarked" : ""}`}
-            disabled={isReactionPending}
+            disabled={isReactionPending || !can(P.commentsReact)}
           >
             <span className={`comment-reaction-icon ${likeAnimation ? "like-animate" : ""}`}>
               <ThumbIcon filled={isLiked} />
@@ -158,7 +161,7 @@ function CommentRow({
             type="button"
             onClick={() => handleReact("dislike")}
             className={`flex items-center transition ${isDisliked ? "bookmarked" : ""}`}
-            disabled={isReactionPending}
+            disabled={isReactionPending || !can(P.commentsReact)}
           >
             <span className={`comment-reaction-icon rotated ${dislikeAnimation ? "dislike-animate" : ""}`}>
               <ThumbIcon filled={isDisliked} />
@@ -169,13 +172,13 @@ function CommentRow({
             type="button"
             onClick={e => onReply(comment, e.currentTarget as HTMLButtonElement)}
             className="flex items-center transition"
-            disabled={isEditing}
+            disabled={isEditing || !can(P.commentsCreate)}
           >
             {ReplySVG}
             <span>{t("reply")}</span>
           </button>
 
-          {isCurrentUser && !isEditing && (
+          {isCurrentUser && can(P.commentsEditOwn) && !isEditing && (
             <button
               type="button"
               onClick={() => onEditStart(comment)}

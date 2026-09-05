@@ -1,8 +1,10 @@
+import { useAuthorization } from "~/authorization/authorization";
+import { P } from "~/authorization/permissions";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchFn } from "~/API";
 import { CloseSVG, CommentSVG } from "~/constants";
-import { getStoredUser, getToken, getUserImageUrl, isUserAdmin } from "~/functions";
+import { getStoredUser, getToken, getUserImageUrl } from "~/functions";
 import type {
   CommentReactionResponseT,
   FetchCommentRepliesT,
@@ -21,7 +23,6 @@ import type { CommentsSectionProps } from "./types";
 import {
   appendReplyToCache,
   buildRepliesTree,
-  canDeleteComment,
   countUniqueComments,
   findCommentNode,
   findRootParentId,
@@ -46,9 +47,9 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
   const userProfileImage = getUserImageUrl() || DefaultProfile;
   const token = getToken() ?? "";
   const storedUser = getStoredUser();
+  const { can, user } = useAuthorization();
   const currentUserName = storedUser?.user?.full_name ?? "";
-  const currentUserId = storedUser?.user?.id ?? "";
-  const isAdmin = isUserAdmin();
+  const currentUserId = user?.id ?? storedUser?.user?.id ?? "";
 
   const [value, setValue] = useState("");
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -404,11 +405,12 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
   }, []);
 
   const onReact = (comment: VideoCommentT, reaction: "like" | "dislike") => {
-    if (reactionMutation.isPending) return;
+    if (!can(P.commentsReact) || reactionMutation.isPending) return;
     reactionMutation.mutate({ commentId: comment.id, reaction });
   };
 
   const onEditStart = (comment: VideoCommentT) => {
+    if (!can(P.commentsEditOwn) || !isCurrentUser(comment)) return;
     setReplyingTo(null);
     setEditingCommentId(comment.id);
     setEditingValue(comment.content);
@@ -420,6 +422,7 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
   };
 
   const onEditConfirm = (comment: VideoCommentT) => {
+    if (!can(P.commentsEditOwn) || !isCurrentUser(comment)) return;
     const content = editingValue.trim();
     if (!content || content === comment.content.trim() || editMutation.isPending) return;
 
@@ -427,7 +430,7 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
   };
 
   const onDelete = async (comment: VideoCommentT) => {
-    if (deleteMutation.isPending) return;
+    if (!canDelete(comment) || deleteMutation.isPending) return;
 
     const confirmed = await confirm({
       title: t("deleteCommentTitle"),
@@ -441,6 +444,7 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
   };
 
   const submitComment = () => {
+    if (!can(P.commentsCreate)) return;
     const content = value.trim();
     if (!content || submitMutation.isPending) return;
 
@@ -504,7 +508,7 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
   };
 
   const isCurrentUser = (comment: VideoCommentT) => isCommentOwnedByUser(comment, currentUserId, currentUserName);
-  const canDelete = (comment: VideoCommentT) => canDeleteComment(comment, currentUserId, currentUserName, isAdmin);
+  const canDelete = (comment: VideoCommentT) => can(P.commentsModerate) || (can(P.commentsDeleteOwn) && isCurrentUser(comment));
   const isEditPending = (commentId: string) => editMutation.isPending && editingCommentId === commentId;
   const isDeletePending = (commentId: string) => deleteMutation.isPending && deleteMutation.variables?.id === commentId;
 
@@ -514,7 +518,7 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
         <h2 className="mb-2 text-lg font-semibold max-[500px]:text-md max-[500px]:ml-6">{t("commentCount", { count: totalCount })}</h2>
       </div>
 
-      <CommentComposer
+      {can(P.commentsCreate) && <CommentComposer
         userProfileImage={userProfileImage}
         replyingTo={replyingTo}
         value={value}
@@ -526,7 +530,7 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
         isSubmitting={submitMutation.isPending}
         isSubmitError={submitMutation.isError}
         scrollBackTo={scrollBackTo}
-      />
+      />}
 
       <div className={`comments-main comments-main-shell pt-4 ${mobileThreadId ? "mobile-thread-open" : ""}`}>
         <div className="comments-list-view">

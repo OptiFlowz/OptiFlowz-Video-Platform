@@ -1,3 +1,5 @@
+import { useAuthorization } from "~/authorization/authorization";
+import { P } from "~/authorization/permissions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams, Link } from "react-router";
@@ -751,6 +753,7 @@ function AnimatedTimer({ secondsLeft }: { secondsLeft: number }) {
 }
 
 function VideoQuizPage() {
+  const { can } = useAuthorization();
   const { t } = useI18n();
   const routeParams = useParams();
   const location = useLocation();
@@ -1773,7 +1776,7 @@ function VideoQuizPage() {
                   {quizMaxAttempts > 0 ? <p>{t("quizAttemptsLeft", { count: attemptsLeft })}</p> : null}
                 </span>
 
-                {quizSummary?.has_certificate && attempts.some((attempt) => attempt.passed) &&
+                {can(P.quizzesCertificates) && quizSummary?.has_certificate && attempts.some((attempt) => attempt.passed) &&
                   <Link to="/account" className="viewQuizCertificate">{t("quizViewCertificates")}</Link>
                 }
               </div>

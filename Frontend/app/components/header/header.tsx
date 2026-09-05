@@ -1,3 +1,5 @@
+import { useAuthorization } from "~/authorization/authorization";
+import { P } from "~/authorization/permissions";
 import { memo, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, NavLink, useNavigate, useParams } from "react-router";
@@ -11,8 +13,7 @@ import DefaultProfile from "../../../assets/DefaultProfile.webp";
 import { getToken } from "~/functions";
 import type { AuthFetchT } from "~/types";
 import { useI18n } from "~/i18n";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchFn } from "~/API";
+import { useQueryClient } from "@tanstack/react-query";
 import { LOGO, BRAND_NAME, MARKETING_WEBSITE_URL } from "~/changeables";
 import LanguageSelect from "~/components/languageSelect/languageSelect";
 
@@ -28,7 +29,10 @@ function Header(){
     const { videoId } = useParams();
     const idToEdit = videoId || "";
 
-    const [isAdmin, setIsAdmin] = useState(false);
+    const { can, canAccess, user: authUser } = useAuthorization();
+    const channelHome = canAccess('videos') ? '/my-videos' : canAccess('playlists') ? '/my-playlists' : canAccess('quizzes') ? '/quizzes' : canAccess('people') ? '/speakers-chairs' : canAccess('channelAnalytics') ? '/channel-analytics' : canAccess('upload') ? '/upload' : null;
+    const platformHome = canAccess('platformAnalytics') ? '/platform-analytics' : canAccess('platformUsers') ? '/platform-users' : canAccess('platformSettings') ? '/platform-settings?page=access' : null;
+    const hasManagementAccess = !!channelHome || !!platformHome;
 
     const searchRef1 = useRef<HTMLInputElement>(null);
     const searchRef2 = useRef<HTMLInputElement>(null);
@@ -36,35 +40,19 @@ function Header(){
     const accountDropdownRef = useRef<HTMLDivElement>(null);
 
     const token = getToken();
-    const myHeaders = useRef(new Headers());
-
-    useEffect(() => {
-        if (token) myHeaders.current.set("Authorization", `Bearer ${token}`);
-    }, [token]);
-
-    const { data: headerUserData } = useQuery({
-        queryKey: ["accountInfo"],
-        queryFn: () => fetchFn<AuthFetchT>({
-            route: `api/auth/me`,
-            options: { method: "GET", headers: myHeaders.current }
-        }),
-        enabled: !!token,
-        staleTime: 5 * 60 * 1000,
-    });
+    const headerUserData = authUser ? { user: authUser } : undefined;
 
     //LISTEN FOR PROFILE UPDATE
     const queryClient = useQueryClient();
     
     useEffect(() => {
-        if(headerUserData && headerUserData.user)
-            setIsAdmin(headerUserData.user.role === "admin");
 
         const handleUpdate = () => {
             const newUser = localStorage.getItem("user");
 
             if(newUser && headerUserData){
                 queryClient.setQueriesData<AuthFetchT>(
-                      { queryKey: ["accountInfo"] },
+                      { queryKey: ["accountInfo", token] },
                       (old) => {
                         if (!old) return old;
                 
@@ -210,9 +198,9 @@ function Header(){
                     <NavLink to="/videos/2" end className={({ isActive }) => (isActive ? "active" : "")}>{t("navTrending")}</NavLink>
                 </nav>
 
-                <div className={`flex ${isAdmin ? "gap-3" : "gap-1"} max-[650px]:gap-2 max-[500px]:gap-0.5 items-center`}>
+                <div className={`flex ${hasManagementAccess ? "gap-3" : "gap-1"} max-[650px]:gap-2 max-[500px]:gap-0.5 items-center`}>
                     {/* Admin Edit Mode Switch */}
-                    {isAdmin && idToEdit != "" && (
+                    {can(P.videosUpdateAny) && idToEdit != "" && (
                         <Link to={`/edit?video=${idToEdit}`} className="darkSVG max-[800px]:hidden flex items-center p-2.5 hover:bg-(--background2) rounded-full transition-all duration-200 cursor-pointer">
                             <span className="w-6 h-6 flex items-center justify-center">{EditModeSVG}</span>
                         </Link>
@@ -252,7 +240,7 @@ function Header(){
                         <div ref={accountMenuRef} className="adminAvatarMenuWrap darkSVG max-[500px]:hidden">
                             <button
                                 type="button"
-                                className={`adminAvatarTrigger flex items-center ${isAdmin ? "bg-(--accentOrange) p-1" : "p-1 pl-3 max-[1075px]:pl-1"} rounded-full transition-all duration-200 cursor-pointer`}
+                                className={`adminAvatarTrigger flex items-center ${hasManagementAccess ? "bg-(--accentOrange) p-1" : "p-1 pl-3 max-[1075px]:pl-1"} rounded-full transition-all duration-200 cursor-pointer`}
                                 onClick={(event) => {
                                     if (!accountMenuOpen) {
                                         const triggerBounds = event.currentTarget.getBoundingClientRect();
@@ -267,7 +255,7 @@ function Header(){
                                 aria-expanded={accountMenuOpen}
                                 aria-label={t("accountMenuAria")}
                             >
-                                {!isAdmin ? (
+                                {!hasManagementAccess ? (
                                     <p className="mr-2.5 font-medium max-[1075px]:hidden">
                                         <span>👋&nbsp;{t("helloUser", {firstName: headerUserData.user.full_name.split(" ")[0]})}</span>
                                     </p>
@@ -311,9 +299,9 @@ function Header(){
                                             leadingContent={LanguageMenuSVG}
                                         />
                                     </div>
-                                    {isAdmin ? (
+                                    {channelHome ? (
                                         <Link
-                                            to="/my-videos"
+                                            to={channelHome}
                                             className="adminAvatarDropdownItem"
                                             role="menuitem"
                                             onClick={() => setAccountMenuOpen(false)}
@@ -322,9 +310,9 @@ function Header(){
                                             <span>{t("channelLabel")}</span>
                                         </Link>
                                     ) : null}
-                                    {isAdmin ? (
+                                    {platformHome ? (
                                         <Link
-                                            to="/platform-analytics"
+                                            to={platformHome}
                                             className="adminAvatarDropdownItem"
                                             role="menuitem"
                                             onClick={() => setAccountMenuOpen(false)}
@@ -435,7 +423,7 @@ function Header(){
                         <span className="mobileSideMenuIcon" aria-hidden="true">{HomeMenuSVG}</span>
                         <span>{t("navHome")}</span>
                     </NavLink>
-                    {isAdmin ? 
+                    {canAccess('videos') ?
                     <NavLink 
                         to="/my-videos" 
                         end 
@@ -448,7 +436,7 @@ function Header(){
                         <span>{t("navMyVideos")}</span>
                     </NavLink>
                     : ""}
-                    {isAdmin ? 
+                    {canAccess('playlists') ?
                     <NavLink 
                         to="/my-playlists" 
                         end 
@@ -461,7 +449,7 @@ function Header(){
                         <span>{t("navMyPlaylists")}</span>
                     </NavLink>
                     : ""}
-                    {isAdmin ? 
+                    {canAccess('quizzes') ?
                     <NavLink 
                         to="/quizzes" 
                         end 
@@ -474,7 +462,7 @@ function Header(){
                         <span>{t("navQuizzes")}</span>
                     </NavLink>
                     : ""}
-                    {isAdmin ? 
+                    {canAccess('people') ?
                     <NavLink 
                         to="/speakers-chairs" 
                         end 
@@ -487,7 +475,7 @@ function Header(){
                         <span>{t("navSpeakersChairs")}</span>
                     </NavLink>
                     : ""}
-                    {isAdmin ?
+                    {canAccess('channelAnalytics') ?
                     <NavLink
                         to="/channel-analytics"
                         end
@@ -500,9 +488,9 @@ function Header(){
                         <span>{t("navChannelAnalytics")}</span>
                     </NavLink>
                     : ""}
-                    {isAdmin ?
+                    {platformHome ?
                     <NavLink
-                        to="/platform-analytics"
+                        to={platformHome}
                         end
                         className={({ isActive }) => `mobileSideMenuItem p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
                         onClick={() => {

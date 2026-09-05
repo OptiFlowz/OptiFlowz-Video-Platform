@@ -1,3 +1,5 @@
+import { useAuthorization } from "~/authorization/authorization";
+import { P } from "~/authorization/permissions";
 import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router";
@@ -26,6 +28,9 @@ import { useI18n } from "~/i18n";
 
 function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatch<React.SetStateAction<VideoT[]>>}}) {
   const { t } = useI18n();
+  const { canAny } = useAuthorization();
+  const canDelete = canAny([P.videosDeleteOwn, P.videosDeleteAny]);
+  const canReadAnalytics = canAny([P.videoAnalyticsOwn, P.videoAnalyticsAny]);
   const [isHidden, setIsHidden] = useState(false);
   const { confirm, dialogProps } = useConfirm();
   const queryClient = useQueryClient();
@@ -189,6 +194,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
   };
 
   const handleDelete = async () => {
+    if (!canDelete) return;
     setMobileMenuOpen(false);
 
     const ok = await confirm({
@@ -222,6 +228,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
   };
 
   const handleAnalytics = () => {
+    if (!canReadAnalytics) return;
     setMobileMenuOpen(false);
     window.location.href = `/video-analytics?video=${props?.id}`;
   };
@@ -265,12 +272,12 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                   {PlaySVG}
                 </Link>
                 <Link to={`/edit?video=${props?.id}`}  title={t("adminEditVideo")}>{EditSVG}</Link>
-                <Link to={`/video-analytics?video=${props?.id}`} title={t("adminVideoAnalytics")}>
+                {canReadAnalytics && <Link to={`/video-analytics?video=${props?.id}`} title={t("adminVideoAnalytics")}>
                   {AnalyticsSVG}
-                </Link>
-                <button onClick={handleDelete} title={t("adminDeleteVideo")}>
+                </Link>}
+                {canDelete && <button onClick={handleDelete} title={t("adminDeleteVideo")}>
                   {DeleteSVG}
-                </button>
+                </button>}
               </div>
             </span>
             <button
@@ -333,7 +340,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                   <span>{t("adminEditVideo")}</span>
                   </button>
 
-                  <button
+                  {canReadAnalytics && <button
                     onClick={handleAnalytics}
                     className="flex items-center gap-4 px-4 py-3 text-left hover:bg-(--background2) active:bg-(--background3) transition-colors cursor-pointer"
                   >
@@ -341,9 +348,9 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                       {AnalyticsSVG}
                     </span>
                     <span>{t("adminVideoAnalytics")}</span>
-                  </button>
+                  </button>}
 
-                  <button
+                  {canDelete && <button
                     onClick={handleDelete}
                     className="flex items-center gap-4 px-4 py-3 text-left hover:bg-(--background2) active:bg-(--background3) transition-colors cursor-pointer"
                   >
@@ -351,7 +358,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                       {DeleteSVG}
                     </span>
                   <span>{t("adminDeleteVideo")}</span>
-                  </button>
+                  </button>}
                 </div>
 
                 <div className="px-4 pb-4 pt-2">

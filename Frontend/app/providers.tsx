@@ -1,5 +1,7 @@
 "use client";
 
+import { AuthorizationProvider } from "~/authorization/authorization";
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import PageLoader from "~/components/loaders/pageLoader";
@@ -116,11 +118,13 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <PageLoader />
       <I18nProvider>
+        <AuthorizationProvider>
         <PrivacyPreferencesProvider>
           <CurrentNavProvider>
             <PersistentVideoProvider>{children}</PersistentVideoProvider>
           </CurrentNavProvider>
         </PrivacyPreferencesProvider>
+        </AuthorizationProvider>
       </I18nProvider>
     </QueryClientProvider>
   );

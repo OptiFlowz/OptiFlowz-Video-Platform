@@ -1,3 +1,6 @@
+import { useLocalizedPageTitle } from "~/hooks/useLocalizedPageTitle";
+import { useAuthorization } from "~/authorization/authorization";
+import { P } from "~/authorization/permissions";
 import { EditSVG, LogOutSVG, SettingsSVG } from "~/constants";
 import AccountInfo from "./accountInfo";
 import { useNavigate } from "react-router";
@@ -13,7 +16,9 @@ const accountSliderTypes = [3, 4, 6] as const;
 type SliderStatus = "loading" | "empty" | "has-data";
 
 function AccountPage(){
+  useLocalizedPageTitle("footerAccount");
     const { t } = useI18n();
+    const { can } = useAuthorization();
     const navigate = useNavigate();
     const [isEditPopupOpen, setIsEditPopupOpen] = useState(false);
     const [isSettingsPopupOpen, setIsSettingsPopupOpen] = useState(false);
@@ -32,7 +37,7 @@ function AccountPage(){
     };
 
     const allAccountSlidersEmpty = accountSliderTypes.every((type) => sliderStates[type] === "empty");
-    const isAccountContentEmpty = allAccountSlidersEmpty && certificateState === "empty";
+    const isAccountContentEmpty = allAccountSlidersEmpty && (!can(P.quizzesCertificates) || certificateState === "empty");
 
     const logoutHandle = () => {
         localStorage.removeItem("user");
@@ -70,7 +75,7 @@ function AccountPage(){
                     </div>
                 </section>
 
-                <AccountCertificates onDataStateChange={setCertificateState} />
+                {can(P.quizzesCertificates) && <AccountCertificates onDataStateChange={setCertificateState} />}
                 <ItemSlider props={{type: 3, onDataStateChange: (state) => setSliderState(3, state)}} />
                 <ItemSlider props={{type: 4, onDataStateChange: (state) => setSliderState(4, state)}} />
                 <ItemSlider props={{type: 6, onDataStateChange: (state) => setSliderState(6, state)}} />

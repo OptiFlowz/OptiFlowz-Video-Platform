@@ -5,7 +5,7 @@ import { FramedPage } from "../page-shell";
 
 export default function Page() {
   return (
-    <FramedPage guard="admin">
+    <FramedPage guard="auth" access="playlists">
       <MyPlaylistsPage />
     </FramedPage>
   );

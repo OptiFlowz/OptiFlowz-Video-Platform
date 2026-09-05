@@ -1,8 +1,8 @@
-﻿import Header from "~/components/header/header";
+import Header from "~/components/header/header";
 import type { Route } from "./+types/home";
 import Footer from "~/components/footer/footer";
 import UemsReadingList from "~/components/uemsPage/uemsPage";
-import { isUserUEMS } from "~/functions";
+import ClientGuard from "~/client-guard";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -11,24 +11,6 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export default function Home() {
-  const hasUser =
-    !!localStorage.getItem("user") || !!sessionStorage.getItem("user");
-
-  const isUems = isUserUEMS();
-
-  if (!hasUser || !isUems) {
-    window.location.href = `/login?redirect=${encodeURIComponent(
-      window.location.pathname + window.location.search + window.location.hash
-    )}`;
-    return null;
-  }
-
-  return <>
-    <Header />
-
-    <UemsReadingList />
-
-    <Footer />
-  </>
+export default function Page() {
+  return <ClientGuard mode="uems"><Header /><UemsReadingList /><Footer /></ClientGuard>;
 }

@@ -25,6 +25,7 @@ function LanguageSelect({
     <CustomSelect
       value={value}
       options={LANGUAGE_OPTIONS}
+      typeAhead
       onChange={(nextValue) => onChange(nextValue as Locale)}
       ariaLabel={ariaLabel}
       rootClassName={`customLanguageSelect customLanguageSelect--${variant}`}

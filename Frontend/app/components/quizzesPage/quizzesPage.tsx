@@ -1,3 +1,5 @@
+import { useAuthorization } from "~/authorization/authorization";
+import { P } from "~/authorization/permissions";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
@@ -98,6 +100,7 @@ function formatDate(value?: string) {
 
 function QuizzesPage() {
   const { t } = useI18n();
+  const { can } = useAuthorization();
   const headersRef = useRef(new Headers());
   const selectAllRef = useRef<HTMLInputElement>(null);
   const [token, setToken] = useState("");
@@ -259,6 +262,7 @@ function QuizzesPage() {
   };
 
   const openCreateModal = () => {
+    if (!can(P.quizzesCreate)) return;
     setSelectedQuiz(null);
     setQuizModalError(null);
     setIsQuizModalOpen(true);
@@ -290,6 +294,7 @@ function QuizzesPage() {
   };
 
   const handleCreateQuiz = async (payload: CreateQuizPayload) => {
+    if (!can(P.quizzesCreate)) return;
     await fetchFn<{ success: boolean; quiz?: QuizData }>({
       route: "api/quizzes/create",
       options: {
@@ -584,7 +589,7 @@ function QuizzesPage() {
                   onChange={(event) => setFilterValue(event.target.value)}
                 />
               </div>
-              <button
+              {can(P.quizzesCreate) && <button
                 type="button"
                 className="playlistAddBtn"
                 title={t("createQuiz")}
@@ -592,13 +597,13 @@ function QuizzesPage() {
                 onClick={openCreateModal}
               >
                 {AddSVG}
-              </button>
+              </button>}
             </div>
           </div>
 
           <div className="mobileTitleRow">
             <h2 className="mobileTitle">{t("navQuizzes")}</h2>
-            <button
+            {can(P.quizzesCreate) && <button
               type="button"
               className="playlistAddBtn mobile"
               title={t("createQuiz")}
@@ -606,7 +611,7 @@ function QuizzesPage() {
               onClick={openCreateModal}
             >
               {AddSVG}
-            </button>
+            </button>}
           </div>
 
           <div className="libraryTableWrap">

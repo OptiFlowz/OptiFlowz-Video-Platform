@@ -6,6 +6,14 @@
     "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
+/* Determine text direction per paragraph without reversing the page layout. */
+html:is([lang="ar"], [lang="he"], [lang="fa"]) :where(
+  h1, h2, h3, h4, h5, h6, p, span, a, label, button, input, textarea,
+  th, td, dt, dd, li, strong, small, legend, figcaption
+) {
+  unicode-bidi: plaintext;
+}
+
 :root {
   --background: #090a0b;
   --foreground: #ededed;
@@ -5603,80 +5611,50 @@ mux-player::part(menu-item) {
   margin-bottom: 0;
 }
 .settingsPopup .popup-content {
-  padding: 24px;
+  width: min(560px, 92vw);
   max-width: 560px;
-  max-height: min(680px, calc(100vh - 80px));
-  max-height: min(680px, calc(100dvh - 80px));
+  max-height: min(760px, calc(100vh - 32px));
+  max-height: min(760px, calc(100dvh - 32px));
+  padding: 1.5rem;
   overflow: hidden;
+  gap: 0;
+  border-color: var(--border1);
 }
-.settingsPopup .popup-content > h2 {
-  flex: 0 0 auto;
-  margin-bottom: 0;
-}
-.settingsPopup section {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  gap: 1rem;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  width: calc(100% + 5px);
-  margin-inline-end: -5px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--accentBlue2) transparent;
-}
-.settingsPopup section::-webkit-scrollbar {
-  width: 5px;
-}
-.settingsPopup section::-webkit-scrollbar-track {
-  margin-block: 8px;
-  background: transparent;
-}
-.settingsPopup section::-webkit-scrollbar-thumb {
-  min-height: 32px;
-  border-radius: var(--bR);
-  background: var(--accentBlue2);
-}
-.settingsPopup section::-webkit-scrollbar-thumb:hover {
-  background: var(--accentBlue3);
-}
-.settingsPopup section::-webkit-scrollbar-button {
-  display: none;
-}
-.settingsPopup .settingsRow {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 220px;
-  gap: 1rem;
-  align-items: center;
-  background-color: var(--background2);
-  border-radius: 18px;
-  padding: 16px;
-}
-.settingsPopup .settingsRowText {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-.settingsPopup .settingsRowText strong {
-  color: var(--accentBlue2);
-  font-size: 1rem;
-  font-weight: 700;
-  line-height: 1.2;
-}
-.settingsPopup .settingsRowText p {
-  color: var(--text2);
-  font-size: 0.92rem;
-  line-height: 1.3;
-}
-.settingsPopup .customLanguageSelect--settings {
-  width: 100%;
-  min-width: 0;
-}
+.settingsPopup .popup-content:focus { outline: none; }
+.settingsPopup .accountSettingsHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-shrink: 0; }
+.settingsPopup .accountSettingsHeader > div { min-width: 0; }
+.settingsPopup .accountSettingsHeader h2 { margin: 0; color: var(--text1); font-size: 1.25rem; font-weight: 600; }
+.settingsPopup .accountSettingsHeader p { margin-top: .25rem; color: var(--text2); font-size: .85rem; line-height: 1.5; }
+.settingsPopup .accountSettingsClose { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; background: var(--background2); color: var(--text1); cursor: pointer; }
+.settingsPopup .accountSettingsClose:hover { background: var(--background3); }
+.settingsPopup .accountSettingsClose svg { width: 16px; height: 16px; }
+.settingsPopup .accountSettingsClose svg path { stroke: currentColor; }
+.settingsPopup .accountSettingsBody { min-height: 0; margin-top: 1rem; padding-inline-end: 10px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--border1) transparent; }
+.settingsPopup .settingsRow { display: grid; grid-template-columns: minmax(0, 1fr) 180px; gap: 1rem; align-items: center; padding-block: 1.05rem; }
+.settingsPopup .settingsRow + .settingsRow { border-top: 1px solid var(--border1); }
+.settingsPopup .settingsRowText { display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
+.settingsPopup .settingsRowText h3 { color: var(--text1); font-size: .9rem; font-weight: 500; line-height: 1.4; }
+.settingsPopup .settingsRowText p { color: var(--text2); font-size: .8rem; line-height: 1.5; }
+.settingsPopup .accountSettingsAction { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: .65rem 1rem; border: 0; border-radius: var(--bR); background: var(--background2); color: var(--text1); font: inherit; font-size: .8rem; font-weight: 500; line-height: 1.4; text-align: center; cursor: pointer; transition: background-color .16s ease; }
+.settingsPopup .accountSettingsAction:hover { background: var(--background3); }
+.settingsPopup .customLanguageSelect--settings { width: 100%; min-width: 0; }
+.settingsPopup .customLanguageSelect--settings .customLanguageTrigger { min-height: 46px; padding: .7rem .85rem; background: var(--background2); font-size: .85rem; }
+.settingsPopup .accountSettingsDanger h3, .settingsPopup .accountDeleteAction { color: var(--accentRed3); }
+.settingsPopup .accountSettingsFooter { display: flex; justify-content: flex-end; gap: .65rem; flex-shrink: 0; padding-top: 1rem; }
+.settingsPopup .accountSettingsFooter .accountSettingsAction { min-width: 116px; min-height: 46px; font-size: .86rem; }
+.settingsPopup .accountDeleteConfirm { background: var(--accentRed); color: var(--text1); }
+.settingsPopup .accountDeleteConfirm:hover { background: var(--accentRed3); }
+.settingsPopup .accountDeleteConfirmation { display: flex; flex-direction: column; gap: 1rem; padding-block: .5rem; color: var(--text2); font-size: .9rem; line-height: 1.6; }
+.settingsPopup .accountDeleteEmail { color: var(--text1); overflow-wrap: anywhere; }
+.settingsPopup .accountDeleteError { padding: 1rem; border: 1px solid var(--border1); border-radius: 12px; background: var(--background2); color: var(--accentRed3); }
+.settingsPopup .accountDeleteError a { display: inline-block; margin-top: .6rem; color: var(--accentBlue2); text-decoration: underline; text-underline-offset: 3px; }
+.settingsPopup button:disabled { opacity: .55; cursor: not-allowed; }
+.settingsPopup button:focus-visible, .settingsPopup a:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: 3px; }
 @media screen and (max-width: 570px) {
-  .settingsPopup .settingsRow {
-    grid-template-columns: 1fr;
-  }
+  .settingsPopup .popup-content { width: calc(100% - 24px); padding: 1.15rem; max-height: calc(100dvh - 24px); border-radius: 22px; }
+  .settingsPopup .settingsRow { grid-template-columns: 1fr; gap: .7rem; }
+  .settingsPopup .settingsRow > .accountSettingsAction { justify-self: start; }
+  .settingsPopup .accountSettingsFooter .accountSettingsAction { flex: 1; min-width: 0; }
 }
 .done .popup-content {
   padding-block: 30px;
@@ -8513,7 +8491,8 @@ input.disabled,
   font-size: 0.82rem;
 }
 
-.quizPopupForm .customSelectTrigger {
+.quizPopupForm .customSelectTrigger,
+.platformUserAssignRole .customSelectTrigger {
   min-height: 52px;
   line-height: 1.35;
   border-color: transparent;
@@ -8521,7 +8500,9 @@ input.disabled,
 }
 
 .quizPopupForm .customSelectTrigger:focus-visible,
-.quizPopupForm .customSelect.isOpen .customSelectTrigger {
+.quizPopupForm .customSelect.isOpen .customSelectTrigger,
+.platformUserAssignRole .customSelectTrigger:focus-visible,
+.platformUserAssignRole .customSelect.isOpen .customSelectTrigger {
   border-color: transparent;
   box-shadow: none;
 }
@@ -15044,3 +15025,82 @@ main.platformSettingsPage .platformSettingsShell{
   .platformRolePopupActions .cancelBtn,.platformRolePopupActions .saveCaptionsBtn{min-width:0;flex:1}
   .platformRolePopupActions button{min-width:0;flex:1}
 }
+
+/* Platform users: shared library controls and platform role popup styling. */
+main.platformUsersPage .libraryHeader { display: flex; }
+.platformUsersToolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; }
+main.platformUsersPage .filter { display: flex; flex: 1 1 280px; width: auto; min-width: 0; max-width: 460px; border-color: var(--border1); background: var(--background2); box-shadow: none; }
+main.platformUsersPage .filter input { width: 100%; min-width: 0; }
+main.platformUsersPage .filter:focus-within { border-color: var(--accentBlue2); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accentBlue2) 16%, transparent); }
+main.platformUsersPage .filter input:focus-visible { outline: none; }
+main.platformUsersPage .platformUsersFilterControls:focus-within { border-color: var(--accentBlue2); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accentBlue2) 16%, transparent); }
+.platformUsersFilterControls { display: flex; flex-wrap: wrap; gap: .65rem; }
+.platformUsersFilterControls .customSelect { min-width: 145px; }
+.platformUsersTable { overflow: hidden; border: 1px solid var(--border1); border-radius: 20px; background: var(--background2); }
+.platformUsersRow { display: grid; grid-template-columns: minmax(150px, 1.1fr) minmax(160px, 1.3fr) minmax(125px, 1fr) minmax(100px, .65fr) 65px; gap: 1rem; align-items: center; padding: 1rem 1.25rem; color: var(--text2); font-size: .88rem; }
+.platformUsersRow + .platformUsersRow { border-top: 1px solid var(--border1); }
+.platformUsersRow:not(.platformUsersTableHeader):hover { background: var(--background3); }
+.platformUsersTableHeader { background: var(--background3); font-size: .76rem; font-weight: 500; }
+.platformUsersSortButton { display: inline-flex; align-items: center; gap: .4rem; padding: .25rem 0; color: inherit; font: inherit; text-align: start; cursor: pointer; }
+.platformUsersSortButton:hover, .platformUsersTableHeader [aria-sort="ascending"], .platformUsersTableHeader [aria-sort="descending"] { color: var(--accentBlue2); }
+.platformUsersSortArrow { display: block; flex-shrink: 0; width: 1rem; height: 1rem; }
+.platformUsersRow > * { min-width: 0; }
+.platformUsersIdentity, .platformUserSummary { display: flex; align-items: center; gap: .75rem; }
+.platformUserAvatar { display: block; flex-shrink: 0; width: 38px; height: 38px; object-fit: cover; border: 1px solid var(--border1); border-radius: 50%; background: var(--background2); }
+.platformUserName { text-align: start; overflow-wrap: anywhere; color: var(--text1); font-weight: 500; cursor: pointer; }
+.platformUserName:hover { color: var(--accentBlue2); }
+.platformUserEmail { overflow-wrap: anywhere; }
+.platformUserRoles { display: flex; flex-wrap: wrap; gap: .4rem; }
+.platformUserRoles .roleTypeBadge { white-space: normal; overflow-wrap: anywhere; max-width: 100%; }
+.platformUserNoRoles { color: var(--text2); font-size: .8rem; }
+.platformUserMobileLabel { display: none; }
+.platformUserActions { justify-content: flex-end; }
+.platformUsersState { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; min-height: 220px; padding: 2rem; color: var(--text2); text-align: center; }
+.platformUsersState[role="alert"] { color: var(--accentRed3); }
+.platformUsersPagination { display: flex; align-items: center; justify-content: center; gap: .75rem; }
+.platformUsersPagination .pageBtn:disabled { opacity: .45; cursor: not-allowed; }
+.platformUsersPagination .pageBtn:disabled:hover { background: var(--background2); }
+.platformUsersPage button:focus-visible, .platformUsersPage input:focus-visible, .platformUserPopup button:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: 3px; }
+.platformUserPopupHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.platformUserClose { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; background: var(--background2); color: var(--text1); cursor: pointer; }
+.platformUserClose:hover { background: var(--background3); }
+.platformUserClose svg { width: 16px; height: 16px; }
+.platformUserClose svg path { stroke: currentColor; }
+.platformUserSummary { color: var(--text1); overflow-wrap: anywhere; }
+.platformUserSummary .platformUserAvatar { width: 48px; height: 48px; }
+.platformUserDetails { display: flex; flex-direction: column; gap: 1rem; margin: 0; }
+.platformUserDetails > div { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: .75rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border1); }
+.platformUserDetails dt { color: var(--text2); font-size: .82rem; }
+.platformUserDetails dd { margin: 0; color: var(--text1); font-size: .88rem; overflow-wrap: anywhere; }
+.platformUserPopup .platformRolePopupPanel:focus { outline: none; }
+@media (max-width: 1100px) {
+  .platformUsersRow { grid-template-columns: minmax(120px, 1fr) minmax(140px, 1.2fr) minmax(100px, 1fr) 90px 40px; gap: .65rem; padding: 1rem; }
+}
+@media (max-width: 800px) {
+  .platformUsersToolbar, .platformUsersFilterControls { width: 100%; }
+  main.platformUsersPage .filter { max-width: none; flex-basis: 100%; }
+  .platformUsersFilterControls > .customSelect { flex: 1; min-width: 0; }
+  .platformUsersRow { grid-template-columns: minmax(0, 1fr) 40px; gap: .7rem; }
+  .platformUsersRow.platformUsersTableHeader { display: flex; flex-wrap: wrap; justify-content: space-between; }
+  .platformUsersTableHeader > [role="columnheader"]:not([aria-sort]) { display: none; }
+  .platformUsersIdentity, .platformUserEmail, .platformUsersRow > [role="cell"]:nth-child(3), .platformUserJoined { grid-column: 1; }
+  .platformUserActions { grid-column: 2; grid-row: 1 / 5; align-self: start; }
+  .platformUserMobileLabel { display: inline; }
+  .platformUserJoined { font-size: .8rem; }
+  .platformUsersPagination { width: 100%; flex-wrap: wrap; }
+}
+@media (max-width: 480px) {
+  .platformUserDetails > div { grid-template-columns: 1fr; gap: .35rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .platformUserPopup, .platformUserPopup .platformRolePopupPanel { transition: none; }
+}
+.platformUserRoleEditor { display: flex; flex-direction: column; gap: .7rem; }
+.platformUserRoleEditor h4 { color: var(--text1); font-size: .95rem; }
+.platformUserRoleEditor p { color: var(--text2); font-size: .82rem; }
+.platformUserRoleEditor .platformDefaultRoleControl { cursor: default; }
+.platformUserRemoveRole { padding: .4rem .6rem; border-radius: var(--bR); color: var(--accentRed3); background: var(--background2); cursor: pointer; font-size: .8rem; }
+.platformUserAssignRole { display: flex; gap: .65rem; align-items: center; }
+.platformUserAssignRole .customSelect { flex: 1; min-width: 0; }
+.platformUserRoleEditor button:disabled { cursor: not-allowed; opacity: .5; }
+@media (max-width: 480px) { .platformUserAssignRole { align-items: stretch; flex-direction: column; } }

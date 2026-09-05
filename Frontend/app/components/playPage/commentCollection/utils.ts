@@ -399,14 +399,6 @@ export function countUniqueComments(sortedParents: VideoCommentT[], repliesByPar
 }
 
 export function isCommentOwnedByUser(comment: VideoCommentT, currentUserId: string, currentUserName: string) {
-  return comment.user_id === currentUserId || comment.author_full_name === currentUserName;
+  return !!currentUserId && comment.user_id === currentUserId;
 }
 
-export function canDeleteComment(
-  comment: VideoCommentT,
-  currentUserId: string,
-  currentUserName: string,
-  isAdmin: boolean
-) {
-  return isAdmin || isCommentOwnedByUser(comment, currentUserId, currentUserName);
-}

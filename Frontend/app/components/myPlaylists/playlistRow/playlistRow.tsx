@@ -1,3 +1,5 @@
+import { useAuthorization } from "~/authorization/authorization";
+import { P } from "~/authorization/permissions";
 import {
   memo,
   useEffect,
@@ -41,6 +43,8 @@ function PlaylistRow({
   setSelectedPlaylists: Dispatch<SetStateAction<MyPlaylistT[]>>;
 }) {
   const { t } = useI18n();
+  const { canAny } = useAuthorization();
+  const canDelete = canAny([P.playlistsDeleteOwn, P.playlistsDeleteAny]);
   const [isHidden, setIsHidden] = useState(false);
   const [visOpen, setVisOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -200,6 +204,7 @@ function PlaylistRow({
   };
 
   const handleDelete = async () => {
+    if (!canDelete) return;
     setMobileMenuOpen(false);
 
     const ok = await confirm({
@@ -293,9 +298,9 @@ function PlaylistRow({
                 >
                   {EditSVG}
                 </Link>
-                <button onClick={handleDelete} title={t("adminDeletePlaylist")}>
+                {canDelete && <button onClick={handleDelete} title={t("adminDeletePlaylist")}>
                   {DeleteSVG}
-                </button>
+                </button>}
               </div>
             </span>
             <button
@@ -357,7 +362,7 @@ function PlaylistRow({
                     <span>{t("adminEditPlaylist")}</span>
                   </button>
 
-                  <button
+                  {canDelete && <button
                     onClick={handleDelete}
                     className="flex items-center gap-4 px-4 py-3 text-left hover:bg-(--background2) active:bg-(--background3) transition-colors cursor-pointer"
                   >
@@ -365,7 +370,7 @@ function PlaylistRow({
                       {DeleteSVG}
                     </span>
                     <span>{t("adminDeletePlaylist")}</span>
-                  </button>
+                  </button>}
                 </div>
 
                 <div className="px-4 pb-4 pt-2">

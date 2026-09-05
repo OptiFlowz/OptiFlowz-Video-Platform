@@ -1,7 +1,8 @@
+import ClientGuard from "~/client-guard";
 import Footer from "~/components/footer/footer";
 import Header from "~/components/header/header";
 import type { Route } from "./+types/play";
-import { isUserAdmin } from "~/functions";
+
 import QuizzesPage from "~/components/quizzesPage/quizzesPage";
 
 export function meta({}: Route.MetaArgs) {
@@ -14,28 +15,6 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-function Quizzes() {
-  const hasUser =
-    !!localStorage.getItem("user") || !!sessionStorage.getItem("user");
-
-  if (!hasUser) {
-    window.location.href = `/login?redirect=${encodeURIComponent(
-      window.location.pathname + window.location.search + window.location.hash
-    )}`;
-
-    if (!isUserAdmin()) {
-      window.location.href = `/`;
-    }
-    return null;
-  }
-
-  return (
-    <>
-      <Header />
-      <QuizzesPage />
-      <Footer />
-    </>
-  );
+export default function Page() {
+  return <ClientGuard mode="auth" access="quizzes"><Header /><QuizzesPage /><Footer /></ClientGuard>;
 }
-
-export default Quizzes;

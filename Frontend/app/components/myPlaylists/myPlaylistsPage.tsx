@@ -1,3 +1,5 @@
+import { useAuthorization } from "~/authorization/authorization";
+import { P } from "~/authorization/permissions";
 import { AddSVG, FilterSVG } from "~/constants";
 import Sidebar from "../myVideosPage/sidebar/sidebar";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -27,6 +29,8 @@ const SortIndicator = ({ column, sortColumn, sortDirection }: { column: SortColu
 
 function MyPlaylistsPage() {
   const { t } = useI18n();
+  const { can, canAny } = useAuthorization();
+  const canDelete = canAny([P.playlistsDeleteOwn, P.playlistsDeleteAny]);
   const myHeaders = useRef(new Headers());
   const [token, setToken] = useState("");
   const [sortColumn, setSortColumn] = useState<SortColumn | null>("created_at");
@@ -179,6 +183,7 @@ function MyPlaylistsPage() {
   };
 
   const deleteAll = useCallback(async () => {
+    if (!canDelete) return;
     const len = selectedPlaylists.length;
     if (len === 0) return;
 
@@ -221,7 +226,7 @@ function MyPlaylistsPage() {
         setSelectedPlaylists([]);
       })
       .catch(console.error);
-  }, [confirm, limit, page, queryClient, selectedPlaylists, sortColumn, sortDirection]);
+  }, [confirm, limit, page, queryClient, selectedPlaylists, sortColumn, sortDirection, canDelete]);
 
   useEffect(() => {
     setSelectedPlaylists((prev) => {
@@ -272,6 +277,7 @@ function MyPlaylistsPage() {
   };
 
   const handleCreatePlaylist = async (title: string) => {
+    if (!can(P.playlistsCreate)) return;
     const response = await fetchFn<{
       success: boolean;
       playlist: {
@@ -354,7 +360,7 @@ function MyPlaylistsPage() {
                 {FilterSVG}
                 <input type="text" placeholder={t("filterPlaylists")} />
               </div>
-              <button
+              {can(P.playlistsCreate) && <button
                 type="button"
                 className="playlistAddBtn"
                 title={t("createPlaylist")}
@@ -362,12 +368,12 @@ function MyPlaylistsPage() {
                 onClick={() => setIsCreatePopupOpen(true)}
               >
                 {AddSVG}
-              </button>
+              </button>}
             </div>
           </div>
           <div className="mobileTitleRow">
             <h2 className="mobileTitle">{t("navMyPlaylists")}</h2>
-            <button
+            {can(P.playlistsCreate) && <button
               type="button"
               className="playlistAddBtn mobile"
               title={t("createPlaylist")}
@@ -375,7 +381,7 @@ function MyPlaylistsPage() {
               onClick={() => setIsCreatePopupOpen(true)}
             >
               {AddSVG}
-            </button>
+            </button>}
           </div>
           <div className="libraryTableWrap">
             <table>
@@ -393,12 +399,12 @@ function MyPlaylistsPage() {
                       <p className="py-3">{t("adminTablePlaylist")}</p>
                       {selectedPlaylists.length > 0 && (
                         <span id="selectedButtons">
-                          <button
+                          {canDelete && <button
                             className="button bg-(--accentRed) text-(--text1)"
                             onClick={deleteAll}
                           >
                             {t("adminDeleteAll")}
-                          </button>
+                          </button>}
                           {selectedPlaylists.some(
                             (playlist) => playlist.status !== "private"
                           ) && (

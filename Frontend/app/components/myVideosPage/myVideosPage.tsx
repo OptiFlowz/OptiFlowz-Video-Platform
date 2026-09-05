@@ -1,3 +1,5 @@
+import { useAuthorization } from "~/authorization/authorization";
+import { P } from "~/authorization/permissions";
 import { FilterSVG } from "~/constants";
 import VideoRow from "./videoRow/videoRow";
 import Sidebar from "./sidebar/sidebar";
@@ -26,6 +28,8 @@ const SortIndicator = ({ column, sortColumn, sortDirection }: { column: SortColu
 
 function MyVideos() {
   const { t } = useI18n();
+  const { can, canAny } = useAuthorization();
+  const canDelete = canAny([P.videosDeleteOwn, P.videosDeleteAny]);
   const myHeaders = useRef(new Headers());
   const [token, setToken] = useState("");
   const [sortColumn, setSortColumn] = useState<SortColumn | null>("date");
@@ -210,6 +214,7 @@ function MyVideos() {
   };
 
   const deleteAll = useCallback(async () => {
+    if (!canDelete) return;
     const len = selectedVideos.length;
     if(len === 0) return;
 
@@ -247,7 +252,7 @@ function MyVideos() {
 
       setSelectedVideos([]);
     }).catch(console.error);
-  }, [selectedVideos]);
+  }, [selectedVideos, canDelete]);
 
   useEffect(() => {
     const el = selectAllRef.current;
@@ -288,7 +293,7 @@ function MyVideos() {
                 {FilterSVG}
                 <input type="text" placeholder={t("filterVideos")} />
               </div>
-              <button
+              {can(P.videosCreate) && <button
                 type="button"
                 className="playlistAddBtn"
                 title={t("uploadVideoAction")}
@@ -298,12 +303,12 @@ function MyVideos() {
                 }}
               >
                 {AddSVG}
-              </button>
+              </button>}
             </div>
           </div>
           <div className="mobileTitleRow">
             <h2 className="mobileTitle">{t("navMyVideos")}</h2>
-            <button
+            {can(P.videosCreate) && <button
               type="button"
               className="playlistAddBtn mobile"
               title={t("uploadVideoAction")}
@@ -313,7 +318,7 @@ function MyVideos() {
               }}
             >
               {AddSVG}
-            </button>
+            </button>}
           </div>
           <div className="libraryTableWrap">
           <table>
@@ -330,10 +335,10 @@ function MyVideos() {
                     <p className="py-3">{t("adminTableVideo")}</p>
                     {selectedVideos.length > 0 && 
                       <span id="selectedButtons">
-                        <button
+                        {canDelete && <button
                           className="button bg-(--accentRed) text-(--text1)"
                           onClick={deleteAll}
-                        >{t("adminDeleteAll")}</button>
+                        >{t("adminDeleteAll")}</button>}
                         {selectedVideos.some(video => video.visibility !== "private") && 
                           <button 
                             onClick={() => saveVisibility("private")}

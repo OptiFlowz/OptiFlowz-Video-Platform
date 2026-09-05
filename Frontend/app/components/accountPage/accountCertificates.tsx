@@ -172,8 +172,8 @@ function AccountCertificates({ onDataStateChange }: Props) {
             >
               <div className="certificatePreview">
                 <div className="certificatePreviewText">
-                  <strong>CERTIFICATE</strong>
-                  <span>OF COMPLETION</span>
+                  <strong>{t("accountCertificateLabel")}</strong>
+                  <span>{t("accountCertificateCompletion")}</span>
                   <p>{title}</p>
                 </div>
                 <button

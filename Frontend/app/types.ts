@@ -91,7 +91,8 @@ export type AuthFetchT = {
         full_name: string,
         email: string,
         image_url: string,
-        role: string,
+        id?: string,
+        roles: Array<{ id: string | number; name: string }>,
         eaes_member: boolean,
         description: string
     },

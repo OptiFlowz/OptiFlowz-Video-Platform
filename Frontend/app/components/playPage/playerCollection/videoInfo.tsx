@@ -1,3 +1,5 @@
+import { useAuthorization } from "~/authorization/authorization";
+import { P } from "~/authorization/permissions";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { ShareSVG, ArrowSVG, LikeSVG, DislikeSVG, InfoSVG, CommentSVG, AIButtonSVG, TranscriptSVG } from "~/constants";
 import { fetchFn } from "~/API";
@@ -202,6 +204,7 @@ function VideoInfo({
     topAction?: ReactNode,
 }) {
     const { t } = useI18n();
+    const { can } = useAuthorization();
     const location = useLocation();
 
     const tagsArray = props?.tags?.map((item, index) => (
@@ -326,7 +329,7 @@ function VideoInfo({
     };
 
     const toggleLike = async () => {
-        if (isReacting || !props) return;
+        if (!can(P.videosReact) || isReacting || !props) return;
         setIsReacting(true);
         setLikeAnimation(true);
         setTimeout(() => setLikeAnimation(false), 300);
@@ -359,7 +362,7 @@ function VideoInfo({
     };
 
     const toggleDislike = async () => {
-        if (isReacting || !props) return;
+        if (!can(P.videosReact) || isReacting || !props) return;
         setIsReacting(true);
         setDislikeAnimation(true);
         setTimeout(() => setDislikeAnimation(false), 300);
@@ -465,7 +468,7 @@ function VideoInfo({
                     <div className="flex bg-(--background2) rounded-full">
                         <button 
                             className={`${userReaction == 1 ? "bookmarked" : ""} ${likeAnimation ? "like-animate" : ""} bg-transparent! rounded-r-none! border-r! border-r-(--border1)! hover:bg-(--background2)! pl-3.5!`} 
-                            onClick={toggleLike}
+                            onClick={toggleLike} disabled={!can(P.videosReact) || isReacting}
                             title={t("likeVideo")}
                         >
                             {LikeSVG}
@@ -473,7 +476,7 @@ function VideoInfo({
                         </button>
                         <button 
                             className={`${userReaction == -1 ? "bookmarked" : ""} ${dislikeAnimation ? "dislike-animate" : ""} bg-transparent! rounded-l-none! hover:bg-(--background2)! pr-3.5!`} 
-                            onClick={toggleDislike}
+                            onClick={toggleDislike} disabled={!can(P.videosReact) || isReacting}
                             title={t("dislikeVideo")}
                         >
                             {DislikeSVG}

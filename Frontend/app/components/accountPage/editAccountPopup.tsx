@@ -98,7 +98,7 @@ function EditAccountPopup({ open, onClose }: { open: boolean; onClose: () => voi
   }, []);
 
   const { data: userData } = useQuery({
-    queryKey: ["accountInfo"],
+    queryKey: ["accountInfo", token],
     queryFn: () =>
       fetchFn<AuthFetchT>({
         route: `api/auth/me`,
@@ -216,7 +216,7 @@ function EditAccountPopup({ open, onClose }: { open: boolean; onClose: () => voi
 
         window.dispatchEvent(new CustomEvent("update-header"));
 
-        queryClient.setQueryData<AuthFetchT>(["accountInfo"], (old) => {
+        queryClient.setQueryData<AuthFetchT>(["accountInfo", token], (old) => {
           if (!old) return old;
           return { ...old, user: latestUser };
         });

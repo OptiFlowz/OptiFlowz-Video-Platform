@@ -228,16 +228,6 @@ export const getStoredUser = () => {
   }
 };
 
-export const isUserAdmin = (): boolean => {
-  const u = getStoredUser();
-  return u?.user?.role === 'admin';
-};
-
-export const isUserUEMS = (): boolean => {
-  const u = getStoredUser();
-  return (u?.user?.role === 'uems' || u?.user?.role === 'admin');
-};
-
 export const getToken = (): string | null => {
   const u = getStoredUser();
   return u?.token ?? null;

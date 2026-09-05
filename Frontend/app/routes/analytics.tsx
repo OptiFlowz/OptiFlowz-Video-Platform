@@ -1,7 +1,7 @@
-﻿import Footer from "~/components/footer/footer";
+import Footer from "~/components/footer/footer";
 import Header from "~/components/header/header";
 import type { Route } from "./+types/play";
-import { isUserAdmin } from "~/functions";
+import ClientGuard from "~/client-guard";
 import Analytics from "~/components/analytics/analyticsPage";
 
 export function meta({}: Route.MetaArgs) {
@@ -11,28 +11,6 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-function Play(){
-    const hasUser =
-        !!localStorage.getItem("user") || !!sessionStorage.getItem("user");
-
-    if (!hasUser) {
-        window.location.href = `/login?redirect=${encodeURIComponent(
-        window.location.pathname + window.location.search + window.location.hash
-    )}`;
-
-    if(!isUserAdmin()){
-        window.location.href = `/`;
-    }
-    return null;
-  }
-
-  return <>
-      <Header />
-
-      <Analytics />
-
-      <Footer />
-  </>;
+export default function Page() {
+  return <ClientGuard mode="auth" access="platformAnalytics"><Header /><Analytics /><Footer /></ClientGuard>;
 }
-
-export default Play;

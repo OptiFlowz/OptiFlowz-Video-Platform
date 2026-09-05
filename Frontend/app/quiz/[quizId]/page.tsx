@@ -5,7 +5,7 @@ import { FramedPage } from "../../page-shell";
 
 export default function Page() {
   return (
-    <FramedPage>
+    <FramedPage guard="auth" access="participate">
       <VideoQuizPage />
     </FramedPage>
   );

@@ -1,3 +1,4 @@
+import { useAuthorization } from "~/authorization/authorization";
 import { memo, useRef } from "react";
 import { NavLink, useLocation } from "react-router";
 import { AnalyticsSVG, PeopleSVG, SettingsSVG } from "~/constants";
@@ -8,6 +9,7 @@ import backgroundImage from "../../../../assets/LoginBackground.webp";
 
 function PlatformSidebar() {
   const { t } = useI18n();
+    const { canAccess } = useAuthorization();
   const { pathname } = useLocation();
   const asideRef = useRef<HTMLElement | null>(null);
   const stickyRef = useRef<HTMLDivElement | null>(null);
@@ -35,19 +37,19 @@ function PlatformSidebar() {
           </div>
         </section>
         <nav>
-          <NavLink to="/platform-settings" end className={({ isActive }) => (isActive ? "active" : "")}>
+          {canAccess('platformSettings') && <NavLink to="/platform-settings?page=access" end className={({ isActive }) => (isActive ? "active" : "")}>
             {SettingsSVG}&nbsp;{t("platformSettings")}
-          </NavLink>
-          <NavLink to="/platform-users" end className={({ isActive }) => (isActive ? "active" : "")}>
+          </NavLink>}
+          {canAccess('platformUsers') && <NavLink to="/platform-users" end className={({ isActive }) => (isActive ? "active" : "")}>
             {PeopleSVG}&nbsp;{t("platformUsers")}
-          </NavLink>
-          <NavLink
+          </NavLink>}
+          {canAccess('platformAnalytics') && <NavLink
             to="/platform-analytics"
             end
             className={({ isActive }) => (isActive || pathname === "/analytics" ? "active" : "")}
           >
             {AnalyticsSVG}&nbsp;{t("platformAnalytics")}
-          </NavLink>
+          </NavLink>}
         </nav>
       </div>
     </aside>

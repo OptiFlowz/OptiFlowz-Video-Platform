@@ -1,3 +1,5 @@
+import { useAuthorization } from "~/authorization/authorization";
+import { P } from "~/authorization/permissions";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
@@ -450,6 +452,7 @@ function DownloadIcon() {
 
 function Analytics() {
   const { locale, t } = useI18n();
+  const { can } = useAuthorization();
   const headers = useRef(new Headers());
   const [token, setToken] = useState("");
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
@@ -804,6 +807,7 @@ function Analytics() {
   };
 
   const openAnalyticsReport = async () => {
+    if (!can(P.analyticsExport)) return;
     setIsGeneratingReport(true);
     const reportWindow = window.open("", "_blank");
 
@@ -863,7 +867,7 @@ function Analytics() {
               <h1>{t("platformAnalytics")}</h1>
               <p>{t("platformAnalyticsDescription")}</p>
             </div>
-            <button
+            {can(P.analyticsExport) && <button
               type="button"
               className="platformAnalyticsPdfButton"
               onClick={openAnalyticsReport}
@@ -871,7 +875,7 @@ function Analytics() {
             >
               <DownloadIcon />
               {isGeneratingReport ? t("analyticsGeneratingPdf") : t("analyticsDownloadPdf")}
-            </button>
+            </button>}
           </div>
 
           <div className="videoAnalyticsFilters" aria-label={t("videoAnalyticsFilters")}>

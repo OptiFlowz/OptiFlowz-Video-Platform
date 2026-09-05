@@ -1,3 +1,5 @@
+import { useAuthorization } from "~/authorization/authorization";
+import { P } from "~/authorization/permissions";
 import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { fetchVideo, ItemSliderT, fetchFeaturedPlaylist } from "~/types";
 import { Link } from "react-router";
@@ -38,6 +40,8 @@ function ItemSlider({props}: {props: ItemSliderT}){
 
     let route = null;
     const isPlaylist = props.type === 5 || props.type === 6;
+    const { can } = useAuthorization();
+    const hasLibraryAccess = !requiresAuth || can(props.type === 6 ? P.playlistsLibrary : P.videosLibrary);
     switch(props.type){
         case 0: {
             route = `api/videos/user/continue?limit=${props.limit || 20}`;
@@ -94,7 +98,7 @@ function ItemSlider({props}: {props: ItemSliderT}){
             ? fetchFn<fetchFeaturedPlaylist>({ route, options: { method: "GET", headers: myHeaders.current } })
             : fetchFn<fetchVideo>({ route, options: { method: "GET", headers: myHeaders.current } });
         },
-        enabled: !!route && (!requiresAuth || !!token) && (props.type !== 1 || preferences.personalization),
+        enabled: hasLibraryAccess && !!route && (!requiresAuth || !!token) && (props.type !== 1 || preferences.personalization),
         gcTime: 30 * 60 * 1000,
         refetchOnMount: false,
         refetchOnWindowFocus: false,
@@ -126,7 +130,7 @@ function ItemSlider({props}: {props: ItemSliderT}){
         };
     }, [data]);
 
-    if (!route || (requiresAuth && !token) || (props.type === 1 && !preferences.personalization)) return null;
+    if (!hasLibraryAccess || !route || (requiresAuth && !token) || (props.type === 1 && !preferences.personalization)) return null;
 
     const empty = !data || (("videos" in data) && data.videos.length === 0) || (("playlists" in data) && data.playlists.length === 0);
     if (empty && data && props.type != 1) return null;

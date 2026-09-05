@@ -47,7 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   };
 
   return (
-    <html lang="en" className={`${gabarito.variable} ${solitreo.variable}`}>
+    <html lang="en" dir="ltr" className={`${gabarito.variable} ${solitreo.variable}`}>
       <body>
         <script
           type="application/ld+json"
