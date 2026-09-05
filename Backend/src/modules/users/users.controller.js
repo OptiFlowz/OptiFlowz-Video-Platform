@@ -3,6 +3,17 @@ import { searchUsersInternal } from './handlers/searchUsers.js';
 import { assignRoleInternal } from './handlers/assignRole.js';
 import { removeRoleInternal } from './handlers/removeRole.js';
 import { getMyPermissionsInternal } from './handlers/getMyPermissions.js';
+import { deleteMyAccountInternal } from './handlers/deleteMyAccount.js';
+
+export async function deleteMyAccount(req, res) {
+  try {
+    const result = await deleteMyAccountInternal(req.user?.sub || null);
+    return sendSuccess(res, result);
+  } catch (error) {
+    console.error('deleteMyAccount error:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
 
 export async function getMyPermissions(req, res) {
   try {
