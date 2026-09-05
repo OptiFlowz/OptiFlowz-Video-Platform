@@ -64,6 +64,7 @@ export async function searchUsersInternal(object = {}) {
         u.email,
         u.full_name,
         u.created_at,
+        u.image_url,
         COALESCE(
           (
             SELECT jsonb_agg(
