@@ -18,7 +18,6 @@ export async function getChannelDetailsByIdInternal(object) {
     SELECT
       id,
       full_name,
-      role,
       image_url,
       description
     FROM users

@@ -294,7 +294,6 @@ export async function handleRegister(req, res) {
               email,
               full_name,
               created_at,
-              role,
               description,
               image_url,
               eaes_member,
@@ -311,7 +310,7 @@ export async function handleRegister(req, res) {
         const token = createAccessToken(user);
         
         res.status(201).json({
-            user: {email: user.email, full_name: user.full_name, role: user.role, image_url: user.image_url, description: user.description, eaes_member: user.eaes_member},
+            user: {email: user.email, full_name: user.full_name, image_url: user.image_url, description: user.description, eaes_member: user.eaes_member},
             token,
         });
          logEvent("auth.register_success", { email: email,message: "User registered successfully"});
@@ -334,7 +333,7 @@ export async function handleLogin(req, res) {
         const {email,password} = loginSchema.parse(req.body);
         const emailNorm = email.trim().toLowerCase();
 
-        const { rows } = await writePool.query("SELECT id, email, password_hash, full_name, role, image_url, description, eaes_member, authz_version FROM users WHERE lower(email) = $1",[emailNorm]);
+        const { rows } = await writePool.query("SELECT id, email, password_hash, full_name, image_url, description, eaes_member, authz_version FROM users WHERE lower(email) = $1",[emailNorm]);
         if (!rows.length) {
           logEvent("auth.login_failed", { email: email, message: "No user" });
           return res.status(401).json({ message: "No account found with that email address." });
@@ -351,7 +350,7 @@ export async function handleLogin(req, res) {
 
         const token = createAccessToken(user);
         res.status(201).json({
-            user: {email: user.email, full_name: user.full_name, image_url: user.image_url, description: user.description, eaes_member: user.eaes_member, role: user.role},
+            user: {email: user.email, full_name: user.full_name, image_url: user.image_url, description: user.description, eaes_member: user.eaes_member},
             token,
         });
         logEvent("auth.login_success", { email: email, message: "User logged in" });
@@ -519,7 +518,32 @@ export async function handlePasswordReset(req, res) {
 
 export async function handleGetMe(req, res) {
   try{
-    const { rows } = await readPool.query("SELECT email, full_name, role, image_url, description, eaes_member, role FROM users WHERE id = $1",[req.user.sub]);   
+    const { rows } = await readPool.query(
+      `
+        SELECT
+          u.email,
+          u.full_name,
+          u.image_url,
+          u.description,
+          u.eaes_member,
+          COALESCE(
+            (
+              SELECT jsonb_agg(
+                jsonb_build_object('id', r.id, 'name', r.name)
+                ORDER BY r.position ASC, r.id ASC
+              )
+              FROM public.user_roles ur
+              JOIN public.roles r ON r.id = ur.role_id
+              WHERE ur.user_id = u.id
+                AND (ur.expires_at IS NULL OR ur.expires_at > now())
+            ),
+            '[]'::jsonb
+          ) AS roles
+        FROM public.users u
+        WHERE u.id = $1
+      `,
+      [req.user.sub],
+    );
     if (!rows.length) {
       // Ako token postoji, ali user je obrisan/ne postoji -> front može da odradi logout
       logEvent("auth.me_failed", { user_id: req.user.sub, message: "No user"});
@@ -569,7 +593,7 @@ export async function handleUserUpdate(req, res) {
         eaes_member  = COALESCE($3, eaes_member),
         updated_at   = NOW()
       WHERE id = $4
-      RETURNING email, full_name, role, image_url, description, eaes_member;
+      RETURNING email, full_name, image_url, description, eaes_member;
     `;
 
     // Bitno: prosleđujemo null za "nije poslato", da COALESCE radi
@@ -667,7 +691,7 @@ export async function handleOAuthLogin(req, res) {
 
     const idRes = await client.query(
       `
-      SELECT u.id, u.email, u.full_name, u.role, u.image_url, u.description, u.eaes_member, u.authz_version
+      SELECT u.id, u.email, u.full_name, u.image_url, u.description, u.eaes_member, u.authz_version
       FROM public.auth_identities ai
       JOIN public.users u ON u.id = ai.user_id
       WHERE ai.provider = $1 AND ai.provider_user_id = $2
@@ -685,7 +709,7 @@ export async function handleOAuthLogin(req, res) {
     } else {
       const userRes = await client.query(
         `
-        SELECT id, email, full_name, role, image_url, description, eaes_member, authz_version
+        SELECT id, email, full_name, image_url, description, eaes_member, authz_version
         FROM public.users
         WHERE lower(email) = $1
         LIMIT 1
@@ -724,7 +748,7 @@ export async function handleOAuthLogin(req, res) {
               full_name = COALESCE(full_name, $2),
               image_url = COALESCE(image_url, $3)
             WHERE id = $1
-            RETURNING id, email, full_name, role, image_url, description, eaes_member, authz_version
+            RETURNING id, email, full_name, image_url, description, eaes_member, authz_version
             `,
             [userRow.id, full_name, picture]
           );
@@ -742,7 +766,7 @@ export async function handleOAuthLogin(req, res) {
           `
           INSERT INTO public.users (email, password_hash, full_name, image_url)
           VALUES ($1, $2, $3, $4)
-          RETURNING id, email, full_name, role, image_url, description, eaes_member, authz_version
+          RETURNING id, email, full_name, image_url, description, eaes_member, authz_version
           `,
           [email, randomHash, full_name, picture]
         );
@@ -778,7 +802,6 @@ export async function handleOAuthLogin(req, res) {
       user: {
         email: userRow.email,
         full_name: userRow.full_name,
-        role: userRow.role,
         image_url: userRow.image_url,
         description: userRow.description,
         eaes_member: userRow.eaes_member,
