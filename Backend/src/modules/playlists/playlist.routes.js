@@ -1,100 +1,30 @@
 import express from 'express';
-import * as playlistService from './playlist.service.js';
-import { requireAuth , optionalAuth } from '../../middleware/auth.js';
+import { requireAuth, optionalAuth } from '../../middleware/auth.js';
 import { requirePermission } from '../authorization/authorization.middleware.js';
 import { Permissions } from '../authorization/permission.constants.js';
-import { logEvent } from '../../common/logger.js';
 import * as playlistController from './playlist.controller.js';
 
 const router = express.Router();
 
-router.get('/search', optionalAuth, async (req, res) => {
-  try {
-    const { q, tags, sort = 'relevance', limit = 20, page = 1 } = req.query;
+router.get('/search', optionalAuth, playlistController.searchPlaylists);
 
-    const searchParams = {
-      query: q,
-      tags: tags ? tags.split(',').map((t) => t.trim()).filter(Boolean) : null,
-      sortBy: sort,
-      limit: Math.min(parseInt(limit, 10), 100),
-      offset: (parseInt(page, 10) - 1) * parseInt(limit, 10),
-    };
+router.get('/featured', optionalAuth, playlistController.getFeaturedPlaylists);
 
-    const results = await playlistService.searchPlaylists(searchParams);
+router.post(
+  '/:id/save',
+  requireAuth,
+  requirePermission(Permissions.PLAYLISTS_SAVE),
+  playlistController.savePlaylist,
+);
 
-    res.json({
-      playlists: results.playlists,
-      pagination: {
-        total: results.total,
-        page: parseInt(page, 10),
-        limit: results.limit,
-        totalPages: Math.ceil(results.total / results.limit),
-      },
-    });
-  } catch (error) {
-    console.error('Playlist search error:', error);
-    res.status(500).json({ message: 'Search failed' });
-  }
-});
-
-router.get('/featured', optionalAuth, async (req, res) => {
-  try {
-    logEvent('playlist.featured', { user_id: req.user?.sub, message: 'Visited home page' });
-    const result = await playlistService.getFeaturedPlaylists();
-    return res.json(result);
-  } catch (err) {
-    console.error('GET /playlists/featured error:', err);
-    return res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-router.post('/:id/save', requireAuth, requirePermission(Permissions.PLAYLISTS_SAVE), async (req, res) => {
-  try {
-    const userId = req.user?.sub || null;
-    if (!userId) return res.status(401).json({ message: 'Unauthorized' });
-
-    const { id } = req.params;
-    if (!id) return res.status(400).json({ message: 'id is required' });
-
-    const result = await playlistService.togglePlaylistSave(id, userId);
-
-    return res.json({
-      saved: result.saved,
-      save_count: result.save_count,
-    });
-  } catch (err) {
-    if (err?.message === 'PLAYLIST_NOT_FOUND') {
-      return res.status(404).json({ message: 'Playlist not found' });
-    }
-    console.error('toggle-save error:', err);
-    return res.status(500).json({ message: 'Server error' });
-  }
-});
-
-router.get('/user/saved', requireAuth, requirePermission(Permissions.PLAYLISTS_LIBRARY_READ), async (req, res) => {
-  try {
-    const userId = req.user?.sub || null;
-    if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-
-    const result = await playlistService.getSavedPlaylists(userId, req.query);
-    return res.json(result);
-  } catch (err) {
-    console.error('GET /playlists/saved error:', err);
-    return res.status(500).json({ message: 'Server error' });
-  }
-});
-
+router.get(
+  '/user/saved',
+  requireAuth,
+  requirePermission(Permissions.PLAYLISTS_LIBRARY_READ),
+  playlistController.getSavedPlaylists,
+);
 
 router.get('/:id/videos', optionalAuth, playlistController.getPlaylistVideos);
 router.get('/:id', optionalAuth, playlistController.getPlaylistById);
-
-
-function getClientIp(req) {
-  let ip = req.ip || '';
-  if (ip.startsWith('::ffff:')) ip = ip.slice(7);
-  return ip;
-}
 
 export default router;

@@ -1,10 +1,6 @@
 import express from 'express';
 import { requireAuth } from '../../middleware/auth.js';
 import {
-  profilePictureUploadMiddleware,
-  resetLimiter,
-  resetRequestLimiter,
-  resetVerifyLimiter,
   handleProfilePictureUpload,
   handleRegister,
   handleLogin,
@@ -14,11 +10,22 @@ import {
   handleGetMe,
   handleUserUpdate,
   handleOAuthLogin,
-} from './auth.service.js';
+} from './auth.controller.js';
+import {
+  profilePictureUploadMiddleware,
+  resetLimiter,
+  resetRequestLimiter,
+  resetVerifyLimiter,
+} from './auth.middleware.js';
 
 const router = express.Router();
 
-router.post('/user/profile-picture', requireAuth, profilePictureUploadMiddleware, handleProfilePictureUpload);
+router.post(
+  '/user/profile-picture',
+  requireAuth,
+  profilePictureUploadMiddleware,
+  handleProfilePictureUpload,
+);
 router.post('/register', handleRegister);
 router.post('/login', handleLogin);
 router.post('/passwordResetRequest', resetRequestLimiter, handlePasswordResetRequest);
