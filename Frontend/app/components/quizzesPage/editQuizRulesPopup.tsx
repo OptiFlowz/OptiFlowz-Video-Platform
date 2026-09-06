@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AddSVG } from "~/constants";
 import { fetchFn } from "~/API";
 import CreateQuizRulePopup from "~/components/quizzesPage/createQuizRulePopup";
@@ -67,12 +67,15 @@ function EditQuizRulesPopup({
   onSubmit,
 }: Props) {
   const { t } = useI18n();
+  const queryClient = useQueryClient();
   const DURATION = 200;
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
   const [isCreateRuleOpen, setIsCreateRuleOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<QuizRule | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [statusError, setStatusError] = useState<string | null>(null);
+  const [togglingRuleId, setTogglingRuleId] = useState<string | null>(null);
   const closeTimeoutRef = useRef<number | null>(null);
   const { confirm, dialogProps } = useConfirm();
 
@@ -147,6 +150,7 @@ function EditQuizRulesPopup({
       setIsCreateRuleOpen(false);
       setEditingRule(null);
       setSuccessMessage(null);
+      setStatusError(null);
 
       requestAnimationFrame(() => {
         requestAnimationFrame(() => setVisible(true));
@@ -192,6 +196,44 @@ function EditQuizRulesPopup({
     await refetchRules();
     setEditingRule(null);
     setSuccessMessage(t("quizRuleUpdated"));
+  };
+
+  const handleToggleRule = async (rule: QuizRule) => {
+    if (togglingRuleId) return;
+
+    setTogglingRuleId(rule.id);
+    setStatusError(null);
+    setSuccessMessage(null);
+
+    try {
+      const isActive = !rule.is_active;
+      await fetchFn<{ success: boolean }>({
+        route: `api/quizzes/rule/${rule.id}`,
+        options: {
+          method: "PATCH",
+          headers: requestHeaders,
+          body: JSON.stringify({ rule_type: rule.rule_type, is_active: isActive }),
+        },
+      });
+
+      await queryClient.cancelQueries({ queryKey: ["quiz-rules", quizId], exact: true });
+      queryClient.setQueryData<QuizRulesResponse>(["quiz-rules", quizId], (current) =>
+        current
+          ? {
+              ...current,
+              rules: current.rules?.map((item) =>
+                (item.id ?? item.rule_id) === rule.id ? { ...item, is_active: isActive } : item
+              ),
+            }
+          : current
+      );
+      await refetchRules();
+      setSuccessMessage(t("quizRuleUpdated"));
+    } catch (error) {
+      setStatusError(error instanceof Error ? error.message : t("errorUnexpected"));
+    } finally {
+      setTogglingRuleId(null);
+    }
   };
 
   const handleDeleteRule = async (rule: QuizRule) => {
@@ -267,41 +309,54 @@ function EditQuizRulesPopup({
                     <div className="flex flex-wrap items-center gap-2 text-sm opacity-75">
                       <span>{getRuleTypeLabel(rule.rule_type)}</span>
                       <span>•</span>
-                      <span
-                        className={
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={rule.is_active}
+                        aria-label={`${t("adminActive")}: ${getRuleSummary(rule)}`}
+                        aria-busy={togglingRuleId === rule.id}
+                        disabled={togglingRuleId !== null}
+                        onClick={() => void handleToggleRule(rule)}
+                        className={`cursor-pointer rounded-sm underline decoration-dotted underline-offset-4 transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-wait disabled:opacity-50 ${
                           rule.is_active ? "font-medium text-(--accentGreen2)" : "font-medium text-(--accentRed)"
-                        }
+                        }`}
                       >
                         {rule.is_active ? t("adminActive") : t("adminInactive")}
-                      </span>
+                      </button>
                     </div>
 
-                    <div className="mt-3 flex flex-wrap items-center justify-between gap-4">
-                      <div className="flex min-w-0 items-center gap-3">
+                    <div className="mt-3 flex items-center justify-between gap-2 sm:gap-4">
+                      <div className="flex min-w-0 flex-1 items-center gap-3">
                         {rule.video_thumbnail ? (
                           <img
                             src={rule.video_thumbnail}
                             alt={rule.video_title || t("quizRuleVideo")}
-                            className="h-14 w-24 rounded-xl object-cover"
+                            className="h-14 w-16 shrink-0 rounded-xl object-cover sm:w-24"
                           />
                         ) : (
-                          <div className="flex h-14 w-24 items-center justify-center rounded-xl bg-(--background1) text-xs opacity-70">
+                          <div className="flex h-14 w-16 shrink-0 items-center justify-center rounded-xl bg-(--background1) text-xs opacity-70 sm:w-24">
                             {t("quizNoThumbnail")}
                           </div>
                         )}
 
                         <div className="min-w-0">
-                          <p className="font-medium">{getRuleSummary(rule)}</p>
-                          <p className="mt-1 text-sm opacity-75">
+                          <p className="truncate font-medium" title={getRuleSummary(rule)}>
+                            {getRuleSummary(rule)}
+                          </p>
+                          <p
+                            className="mt-1 truncate text-sm opacity-75"
+                            title={rule.video_title || rule.video_id || t("quizNoVideoSelected")}
+                          >
                             {rule.video_title || rule.video_id || t("quizNoVideoSelected")}
                           </p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex shrink-0 items-center gap-2 whitespace-nowrap">
                         <button
                           type="button"
-                          className="cursor-pointer rounded-full border border-(--border1) bg-(--background1) px-3 py-1.5 text-sm transition-colors hover:bg-(--background3)"
+                          disabled={togglingRuleId === rule.id}
+                          className="cursor-pointer rounded-full border border-(--border1) bg-(--background1) px-3 py-1.5 text-sm transition-colors hover:bg-(--background3) disabled:cursor-wait disabled:opacity-50"
                           onClick={() => {
                             setSuccessMessage(null);
                             setEditingRule(rule);
@@ -311,7 +366,8 @@ function EditQuizRulesPopup({
                         </button>
                         <button
                           type="button"
-                          className="cursor-pointer rounded-full border border-(--accentRed) bg-(--background15) px-3 py-1.5 text-sm text-red-400 transition-colors"
+                          disabled={togglingRuleId === rule.id}
+                          className="cursor-pointer rounded-full border border-(--accentRed) bg-(--background15) px-3 py-1.5 text-sm text-red-400 transition-colors disabled:cursor-wait disabled:opacity-50"
                           onClick={() => void handleDeleteRule(rule)}
                         >
                           {t("adminDelete")}
@@ -341,7 +397,8 @@ function EditQuizRulesPopup({
               </button>
             </div>
 
-            {successMessage ? <p className="mt-4 text-sm text-(--accentGreen2)">{successMessage}</p> : null}
+            {statusError ? <p role="alert" className="mt-4 text-sm text-(--accentRed)">{statusError}</p> : null}
+            {successMessage ? <p role="status" className="mt-4 text-sm text-(--accentGreen2)">{successMessage}</p> : null}
           </div>
 
           <div className="quizPopupActions mt-4">
