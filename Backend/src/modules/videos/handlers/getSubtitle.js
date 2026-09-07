@@ -1,9 +1,9 @@
 import { readPool } from '../../../database/index.js';
-import { muxBasicAuthHeader } from '../helpers/videoModeration.shared.js';
+import { muxBasicAuthHeader, getMuxVttUrl } from '../helpers/videoModeration.shared.js';
 import { HttpError } from '../../../common/httpError.js';
 
 export async function getSubtitleInternal({ params: routeParams, query: queryParams }) {
-  const responseHeaders = {};
+  const responseHeaders = { 'Cache-Control': 'private, no-store' };
   try {
     const { videoId } = routeParams;
     const lang = String(queryParams.lang || '')
@@ -16,7 +16,7 @@ export async function getSubtitleInternal({ params: routeParams, query: queryPar
 
     const { rows } = await readPool.query(
       `
-      SELECT mux_status, mux_asset_id, mux_playback_id
+      SELECT mux_status, mux_asset_id, mux_playback_id, playback_policy
       FROM public.videos
       WHERE id = $1
       LIMIT 1
@@ -136,7 +136,7 @@ export async function getSubtitleInternal({ params: routeParams, query: queryPar
     }
 
     // 3) ready => fetch VTT
-    const vttUrl = `https://stream.mux.com/${playbackId}/text/${trackId}.vtt`;
+    const vttUrl = await getMuxVttUrl(playbackId, trackId, video.playback_policy);
     const vttResp = await fetch(vttUrl);
 
     // ako stream endpoint kasni: tretiraj kao processing
@@ -160,7 +160,7 @@ export async function getSubtitleInternal({ params: routeParams, query: queryPar
         message: 'Failed to fetch VTT from Mux stream endpoint',
         status: vttResp.status,
         details: txt?.slice(0, 500),
-        vtt_url: vttUrl,
+        vtt_url: vttUrl.split('?')[0],
       });
     }
 
@@ -169,7 +169,7 @@ export async function getSubtitleInternal({ params: routeParams, query: queryPar
     responseHeaders['Content-Type'] = 'text/vtt; charset=utf-8';
     responseHeaders['X-Mux-Track-Id'] = trackId;
     responseHeaders['X-Mux-Lang'] = lang;
-    responseHeaders['X-Mux-VTT-Url'] = vttUrl;
+    responseHeaders['X-Mux-VTT-Url'] = vttUrl.split('?')[0];
     return { status: 200, body: vttText, headers: responseHeaders, format: 'send' };
   } catch (err) {
     if (err instanceof HttpError) throw err;

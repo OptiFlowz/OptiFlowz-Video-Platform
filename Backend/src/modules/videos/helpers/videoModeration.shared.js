@@ -1,5 +1,9 @@
 import { S3Client } from '@aws-sdk/client-s3';
 import { Agent } from 'undici';
+import Mux from '@mux/mux-node';
+import { HttpError } from '../../../common/httpError.js';
+
+const mux = new Mux();
 
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
 
@@ -140,15 +144,34 @@ export function pickTextTrackByLang(tracks, lang) {
   );
 }
 
-export async function fetchVttFromMux(playbackId, trackId) {
+export async function getMuxVttUrl(playbackId, trackId, playbackPolicy) {
   const vttUrl = `https://stream.mux.com/${playbackId}/text/${trackId}.vtt`;
+  if (playbackPolicy === 'public') return vttUrl;
+  if (playbackPolicy !== 'signed') {
+    throw new HttpError(503, { message: 'Video playback policy is not configured' });
+  }
+  if (!mux.jwtSigningKey || !mux.jwtPrivateKey) {
+    throw new HttpError(503, { message: 'Signed subtitles are not configured' });
+  }
+  // Sidecar subtitles use the video audience. This token is only for the
+  // backend's immediate VTT download, so five minutes is sufficient.
+  const token = await mux.jwt.signPlaybackId(playbackId, {
+    type: 'video',
+    expiration: '5m',
+  });
+  return `${vttUrl}?token=${token}`;
+}
+
+export async function fetchVttFromMux(playbackId, trackId, playbackPolicy) {
+  const vttUrl = await getMuxVttUrl(playbackId, trackId, playbackPolicy);
   const resp = await fetch(vttUrl);
   if (!resp.ok) {
     const txt = await resp.text().catch(() => '');
     throw new Error(`MUX_FETCH_VTT_FAILED:${resp.status}:${txt.slice(0, 300)}`);
   }
   const vttText = await resp.text();
-  return { vttText, vttUrl };
+  // Keep the internal playback credential out of diagnostic response fields.
+  return { vttText, vttUrl: vttUrl.split('?')[0] };
 }
 
 export function ensureWebVttHeader(vttText) {

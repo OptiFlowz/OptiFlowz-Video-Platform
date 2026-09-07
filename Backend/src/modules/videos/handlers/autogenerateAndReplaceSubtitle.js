@@ -35,7 +35,7 @@ export async function autogenerateAndReplaceSubtitleInternal({
   try {
     // 1) DB: uzmi mux ids
     const { rows } = await readPool.query(
-      `SELECT mux_asset_id, mux_playback_id FROM public.videos WHERE id = $1 LIMIT 1`,
+      `SELECT mux_asset_id, mux_playback_id, playback_policy FROM public.videos WHERE id = $1 LIMIT 1`,
       [videoId],
     );
     const assetId = rows[0]?.mux_asset_id;
@@ -58,7 +58,7 @@ export async function autogenerateAndReplaceSubtitleInternal({
     }
 
     // 4) Skini EN VTT
-    const { vttText: enVtt, vttUrl: enVttUrl } = await fetchVttFromMux(playbackId, enTrack.id);
+    const { vttText: enVtt, vttUrl: enVttUrl } = await fetchVttFromMux(playbackId, enTrack.id, rows[0].playback_policy);
 
     // 5) Pošalji na n8n (prevod)
     const translatedRaw = await callN8nTranslateVtt({

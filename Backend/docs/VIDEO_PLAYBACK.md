@@ -50,8 +50,18 @@ missing/inaccessible video (`404`), video not ready or missing a playback ID
 (`409`), missing signing configuration or unsupported policy (`503`), unexpected
 database/signing failure (`500`).
 
-Frontend players and standalone subtitle URL builders still need to use tokens
-for signed playback IDs. Existing public Mux IDs are not converted or removed.
+Frontend players still need to use tokens for signed playback IDs. Existing
+public Mux IDs are not converted or removed.
+
+## Subtitle downloads
+
+The video-moderation subtitle endpoint and the shared VTT downloader used by
+subtitle translation and metadata generation read `playback_policy` from the
+database. Signed VTT requests include a five-minute JWT with audience `v` using
+the same `MUX_SIGNING_KEY` and `MUX_PRIVATE_KEY` secrets as playback. Public VTT
+requests remain unsigned. The backend returns the VTT contents; diagnostic URL
+headers and response fields omit the internal token. Existing authentication,
+video update permissions, and processing responses are preserved.
 
 ## Video-card images
 
