@@ -53,6 +53,25 @@ database/signing failure (`500`).
 Frontend players still need to use tokens for signed playback IDs. Existing
 public Mux IDs are not converted or removed.
 
+## Video details
+
+`GET /api/videos/:id` returns metadata and image URLs; it no longer returns
+`stream_url`. Use the playback endpoint for the stream URL and player tokens.
+The details response includes the same `thumbnail_url`, `mux_thumbnail_url`,
+`preview_url`, and `media_expires_at` fields as video cards. The stored
+`thumbnail_url` is returned unchanged.
+
+Each entry in `chapters` keeps its existing fields and adds `thumbnail_url`.
+Its Mux image uses that chapter's `startTime` and the saved thumbnail dimensions
+and fit mode (defaults: width 1280, height 720, fit mode `preserve`). The video's
+saved thumbnail time does not override chapter times. Image URLs follow the
+video's public/signed policy; the top-level `media_expires_at` applies to chapter
+images too. Invalid chapter times produce a null URL; times beyond the video
+are clamped. Null or empty chapter lists retain their existing shape.
+
+Access checks use the primary database. Existing visibility rules and view
+counting remain in place, and responses use `Cache-Control: private, no-store`.
+
 ## Subtitle downloads
 
 The video-moderation subtitle endpoint and the shared VTT downloader used by

@@ -1,13 +1,17 @@
-import { readPool } from '../../../database/index.js';
+import { readPool, writePool } from '../../../database/index.js';
+import { withVideoDetailsMedia } from '../helpers/videoCardMedia.js';
 
 export async function getVideoByIdInternal(videoId, userId = null) {
   const query = `
         SELECT 
             v.id,
             v.mux_playback_id,
+            v.mux_status,
+            v.playback_policy,
             v.title,
             v.description,
             v.thumbnail_url,
+            v.thumbnail_settings,
             v.duration_seconds,
             v.tags,
             v.view_count,
@@ -20,24 +24,21 @@ export async function getVideoByIdInternal(videoId, userId = null) {
             v.visibility,
             u.id as uploader_id,
             u.full_name as uploader_name,
-            u.image_url as uploader_image,
-            ${userId ? 'wp.progress_seconds, wp.percentage_watched,' : ''}
-            ${userId ? 'COALESCE(vr.reaction, 0) as user_reaction,' : ''}
-            CASE WHEN v.mux_playback_id IS NOT NULL 
-                THEN $2 || v.mux_playback_id || '.m3u8' 
-                ELSE NULL 
-            END as stream_url
+            u.image_url as uploader_image
+            ${userId ? ', wp.progress_seconds, wp.percentage_watched' : ''}
+            ${userId ? ', COALESCE(vr.reaction, 0) as user_reaction' : ''}
         FROM videos v
         LEFT JOIN users u ON v.uploaded_by = u.id
-        ${userId ? 'LEFT JOIN watch_progress wp ON v.id = wp.video_id AND wp.user_id = $3' : ''}
-        ${userId ? 'LEFT JOIN video_reactions vr ON v.id = vr.video_id AND vr.user_id = $3' : ''}
-        WHERE v.id = $1 AND v.mux_status = 'ready' AND (v.visibility = 'public'  ${userId ? "OR (v.visibility = 'private' AND v.uploaded_by = $3)" : ''})
+        ${userId ? 'LEFT JOIN watch_progress wp ON v.id = wp.video_id AND wp.user_id = $2' : ''}
+        ${userId ? 'LEFT JOIN video_reactions vr ON v.id = vr.video_id AND vr.user_id = $2' : ''}
+        WHERE v.id = $1 AND v.mux_status = 'ready' AND (v.visibility = 'public'  ${userId ? "OR (v.visibility = 'private' AND v.uploaded_by = $2)" : ''})
     `;
 
-  const params = [videoId, 'https://stream.mux.com/'];
+  const params = [videoId];
   if (userId) params.push(userId);
 
-  const { rows } = await readPool.query(query, params);
+  // Check current access and media settings on the primary before signing.
+  const { rows } = await writePool.query(query, params);
 
   if (!rows.length) {
     return null;
@@ -125,5 +126,5 @@ export async function getVideoByIdInternal(videoId, userId = null) {
   rows[0].categories = catRows;
   rows[0].people = chairRows;
   rows[0].playlists = playlistRows;
-  return rows[0];
+  return withVideoDetailsMedia(rows[0]);
 }

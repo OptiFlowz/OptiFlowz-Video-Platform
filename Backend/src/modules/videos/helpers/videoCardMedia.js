@@ -78,6 +78,29 @@ async function cardMedia(card, video) {
   return { ...card, ...media };
 }
 
+// The caller must load and authorize this video before requesting its media.
+export async function withVideoDetailsMedia(video) {
+  const result = await cardMedia(video, video);
+  if (!Array.isArray(video.chapters)) return result;
+
+  result.chapters = await Promise.all(video.chapters.map(async chapter => {
+    const start = chapter?.startTime;
+    let thumbnailUrl = null;
+    if (video.mux_status === 'ready' && video.mux_playback_id
+      && typeof start === 'number' && Number.isFinite(start) && start >= 0) {
+      const params = thumbnailParams({
+        ...video,
+        thumbnail_settings: { ...video.thumbnail_settings, time: start },
+      });
+      thumbnailUrl = await imageUrl(
+        video.mux_playback_id, video.playback_policy, 'thumbnail.webp', 'thumbnail', params,
+      );
+    }
+    return { ...chapter, thumbnail_url: thumbnailUrl };
+  }));
+  return result;
+}
+
 export async function withVideoCardMedia(cards, userId = null) {
   if (!cards.length) return [];
   // One primary read per list prevents signing stale private/deleted video data

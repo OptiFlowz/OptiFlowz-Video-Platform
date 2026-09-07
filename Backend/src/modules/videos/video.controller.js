@@ -210,6 +210,7 @@ export async function handleGetSimilarVideos(req, res) {
 }
 
 export async function handleGetVideoById(req, res) {
+  res.set('Cache-Control', 'private, no-store');
   try {
     const userId = req.user?.sub || null;
     let video = await getVideoByIdInternal(req.params.id, userId);
@@ -237,6 +238,9 @@ export async function handleGetVideoById(req, res) {
     });
     return res.json(video);
   } catch (error) {
+    if (error instanceof HttpError) {
+      return res.status(error.status).json(error.body);
+    }
     console.error('Get video error:', error);
     res.status(500).json({ message: 'Failed to fetch video' });
   }
