@@ -299,7 +299,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
               className="fixed inset-0 z-100 flex items-end justify-center"
               onClick={() => setMobileMenuOpen(false)}
             >
-              <div className="absolute inset-0 bg-black/50" />
+              <div className="absolute inset-0 bg-(--seethroughtBlack)" />
 
               <div
                 className="rowActionSheet relative w-full max-w-lg animate-slide-up rounded-t-3xl bg-(--background1) pb-safe"
@@ -399,7 +399,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                   className="fixed inset-0 z-100 flex items-end justify-center"
                   onClick={() => setVisOpen(false)}
                 >
-                  <div className="absolute inset-0 bg-black/50" />
+                  <div className="absolute inset-0 bg-(--seethroughtBlack)" />
                   <div
                     className="rowVisibilitySheet relative w-full max-w-lg animate-slide-up rounded-t-3xl bg-(--background1) pb-safe"
                     onClick={(e) => e.stopPropagation()}
@@ -450,7 +450,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                       <button
                         type="button"
                         onClick={saveVisibility}
-                        className="flex-1 rounded-full text-white bg-(--accentBlue) hover:bg-(--accentBlue2) py-3 font-medium transition-colors cursor-pointer"
+                        className="flex-1 rounded-full text-(--text1) bg-(--accentBlue) hover:bg-(--accentBlue2) py-3 font-medium transition-colors cursor-pointer"
                       >
                         Save
                       </button>
@@ -463,7 +463,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                   role="dialog"
               aria-label={t("adminChangeVisibility")}
                   style={visPopupStyle}
-                  className="rowVisibilityPopup z-50 border! border-(--border1)! rounded-2xl bg-(--background1) p-3 shadow-2xl"
+                  className="rowVisibilityPopup z-50 border! border-(--border1)! rounded-2xl bg-(--background1) p-3 shadow-2xl shadow-(color:--seethroughtBlack)"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex flex-col gap-2">

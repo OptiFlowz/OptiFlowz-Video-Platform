@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { themeColor } from "./theme/serverColors";
 
 export const alt = "OptiFlowz Video Platform";
 export const size = { width: 1200, height: 630 };
@@ -15,9 +16,9 @@ export default function OpenGraphImage() {
           flexDirection: "column",
           justifyContent: "center",
           padding: "76px 88px",
-          color: "white",
+          color: themeColor("--text1"),
           background:
-            "radial-gradient(circle at 82% 18%, #126de0 0, #0b3269 20%, transparent 47%), linear-gradient(135deg, #03070b 0%, #0b1422 62%, #071b35 100%)",
+            `radial-gradient(circle at 82% 18%, ${themeColor("--accentBlue2")} 0, ${themeColor("--accentBlue")} 20%, transparent 47%), linear-gradient(135deg, ${themeColor("--background1")} 0%, ${themeColor("--background4")} 62%, ${themeColor("--accentBlue")} 100%)`,
           fontFamily: "Arial, sans-serif",
         }}
       >
@@ -28,9 +29,9 @@ export default function OpenGraphImage() {
               width: 86,
               height: 86,
               borderRadius: 43,
-              border: "15px solid #268cff",
-              borderRightColor: "#b9dcff",
-              boxShadow: "0 0 42px rgba(38, 140, 255, .55)",
+              border: `15px solid ${themeColor("--accentBlue2")}`,
+              borderRightColor: themeColor("--analyticsChart6"),
+              boxShadow: `0 0 42px ${themeColor("--privacyAccentShadowColor")}`,
             }}
           />
           <div style={{ display: "flex", fontSize: 46, fontWeight: 700 }}>OptiFlowz</div>
@@ -38,7 +39,7 @@ export default function OpenGraphImage() {
         <div style={{ display: "flex", fontSize: 76, lineHeight: 1.05, fontWeight: 800, maxWidth: 900 }}>
           Video content, organized.
         </div>
-        <div style={{ display: "flex", marginTop: 30, fontSize: 30, color: "#c8d5e8" }}>
+        <div style={{ display: "flex", marginTop: 30, fontSize: 30, color: themeColor("--text3") }}>
           Professional videos, playlists, and learning resources.
         </div>
       </div>

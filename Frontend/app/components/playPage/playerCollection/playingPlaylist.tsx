@@ -1,12 +1,13 @@
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
 import { useQuery } from "@tanstack/react-query";
-import { memo, useLayoutEffect, useRef, useState, useEffect, useCallback, useMemo } from "react";
+import { memo, useLayoutEffect, useState, useCallback, useMemo } from "react";
 import { AutoPlaySVG, BookmarkSVG, CloseSVG, ShareSVG } from "~/constants";
 import { env } from "~/env";
 import type { FetchPlaylistT, PlaylistVideosT } from "~/types";
 import { fetchFn } from "~/API";
 import PlaylistVideos from "./playlistVideos";
+import PlayerSheet from "./playerSheet";
 import { Link, useLocation } from "react-router";
 import { getToken } from "~/functions";
 import { useI18n } from "~/i18n";
@@ -17,14 +18,12 @@ function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, vi
     const location = useLocation();
 
     const token = getToken() ?? "";
-    const [isOpen, setIsOpen] = useState(false);
     const [isAutoPlayOn, setAutoPlay] = useState(() => {
         const v = localStorage.getItem("autoplay");
         return v === null ? true : v === "true";
     });
     const [isSaved, setIsSaved] = useState(false);
     const [saveCount, setSaveCount] = useState(0);
-    const headerRef = useRef<HTMLDivElement>(null);
 
     function changeAutoPlay() {
         setAutoPlay(prev => {
@@ -33,34 +32,6 @@ function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, vi
             return next;
         });
     }
-
-    function useIsMobile(breakpoint = 500) {
-        const [isMobile, setIsMobile] = useState(() => window.innerWidth < breakpoint);
-
-        useEffect(() => {
-            const onResize = () => setIsMobile(window.innerWidth < breakpoint);
-            window.addEventListener("resize", onResize);
-            return () => window.removeEventListener("resize", onResize);
-        }, [breakpoint]);
-
-        return isMobile;
-    }
-
-    const isMobile = useIsMobile();
-
-    useLayoutEffect(() => {
-        const el = headerRef.current;
-        if (!el) return;
-
-        const update = () => {
-            const h = el.offsetHeight;
-            document.documentElement.style.setProperty("--headerHeight", `${h+10}px`);
-        };
-
-        update();
-        window.addEventListener("resize", update);
-        return () => window.removeEventListener("resize", update);
-    }, []);
 
     const myHeaders = useMemo(() => {
         const headers = new Headers();
@@ -118,11 +89,6 @@ function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, vi
         }
     }, [data?.is_saved, data?.save_count]);
 
-    useEffect(() => {
-        const frame = requestAnimationFrame(() => setIsOpen(true));
-        return () => cancelAnimationFrame(frame);
-    }, []);
-
     const toggleSave = async () => {
         if (!can(P.playlistsSave)) return;
         if (!data?.id || !token) return;
@@ -155,19 +121,8 @@ function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, vi
         }
     };
 
-    const handleClose = () => {
-        if (!isMobile) {
-            onClose();
-            return;
-        }
-
-        setIsOpen(false);
-        window.setTimeout(() => onClose(), 320);
-    };
-
     return (
-        <div className={`sidePlaylists ${isOpen ? "" : "closed"}`}>
-            <div ref={headerRef} className="playlistHeader">
+        <PlayerSheet onClose={onClose} header={handleClose => (<>
                 <span className="titleBar">
                     <Link to={`/playlist/${playlistId}`}>
                         <h2>{data?.title}</h2>
@@ -184,9 +139,9 @@ function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, vi
                         <button onClick={e => sharePlaylistLink(e)} title={t("sharePlaylist")}>{ShareSVG}&nbsp;{t("share")}</button>
                     </span>
                 </span>
-            </div>
+            </>)}>
             <PlaylistVideos playlistId={playlistId} videos={playlistVideosResponse?.videos ?? []} playedVideoId={videoId} />
-        </div>
+        </PlayerSheet>
     );
 }
 

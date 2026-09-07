@@ -278,7 +278,7 @@ function EditQuizRulesPopup({
           }`}
         />
         <div
-          className={`relative flex max-h-[min(720px,calc(100vh-32px))] w-[min(760px,94vw)] flex-col overflow-hidden rounded-3xl border border-(--border1) bg-(--background1) p-6 shadow-2xl transition-all duration-200 ease-out ${
+          className={`relative flex max-h-[min(720px,calc(100vh-32px))] w-[min(760px,94vw)] flex-col overflow-hidden rounded-3xl border border-(--border1) bg-(--background1) p-6 shadow-2xl shadow-(color:--seethroughtBlack) transition-all duration-200 ease-out ${
             visible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
           }`}
           onMouseDown={(event) => event.stopPropagation()}
@@ -370,7 +370,7 @@ function EditQuizRulesPopup({
                         <button
                           type="button"
                           disabled={togglingRuleId === rule.id}
-                          className="cursor-pointer rounded-full border border-(--accentRed) bg-(--background15) px-3 py-1.5 text-sm text-red-400 transition-colors disabled:cursor-wait disabled:opacity-50"
+                          className="cursor-pointer rounded-full border border-(--accentRed) bg-(--background15) px-3 py-1.5 text-sm text-(--accentRed3) transition-colors disabled:cursor-wait disabled:opacity-50"
                           onClick={() => void handleDeleteRule(rule)}
                         >
                           {t("adminDelete")}

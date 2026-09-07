@@ -5,6 +5,7 @@ import Providers from "./providers";
 import { defaultMetadata } from "./metadata";
 import { Gabarito, Solitreo } from "next/font/google";
 import { SITE_URL } from "./metadata";
+import { themeColor } from "./theme/serverColors";
 
 const gabarito = Gabarito({
   subsets: ["latin"],
@@ -26,7 +27,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#05080d",
+  themeColor: themeColor("--background1"),
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -62,13 +62,13 @@ export function ConfirmDialog({
       onMouseDown={onNo}
     >
       <div
-        className={`absolute inset-0 bg-black/50 transition-opacity duration-200 ${
+        className={`absolute inset-0 bg-(--seethroughtBlack) transition-opacity duration-200 ${
           visible ? "opacity-100" : "opacity-0"
         }`}
       />
 
       <div
-        className={`relative w-[min(520px,90vw)] rounded-3xl bg-(--background1) border border-(--border1) p-6 shadow-lg
+        className={`relative w-[min(520px,90vw)] rounded-3xl bg-(--background1) border border-(--border1) p-6 shadow-lg shadow-(color:--seethroughtBlack)
         transition-all duration-200 ease-out will-change-transform
         ${visible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"}`}
         onMouseDown={(e) => e.stopPropagation()}

@@ -4,6 +4,7 @@ import { env } from "~/env";
 import { formatDuration, getToken } from "~/functions";
 import type { VideoT } from "~/types";
 import ChapterCard from "./chapterCard";
+import PlayerSheet from "./playerSheet";
 import { useI18n } from "~/i18n";
 import {
   TRANSCRIPT_EVENT,
@@ -16,18 +17,6 @@ import {
 type PanelView = "chapters" | "transcript";
 type TranscriptStatus = "loading" | "ready" | "empty";
 
-function useIsMobile(breakpoint = 500) {
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < breakpoint);
-
-  useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < breakpoint);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, [breakpoint]);
-
-  return isMobile;
-}
-
 function VideoChapters({
   props,
   onClose,
@@ -38,25 +27,17 @@ function VideoChapters({
   initialView?: PanelView;
 }) {
   const { t } = useI18n();
-  const [isOpen, setIsOpen] = useState(false);
   const [playerTime, setPlayerTime] = useState(0);
   const [activeView, setActiveView] = useState<PanelView>(initialView);
   const [transcriptCues, setTranscriptCues] = useState<TranscriptCue[]>([]);
   const [transcriptStatus, setTranscriptStatus] = useState<TranscriptStatus>("loading");
   const [transcriptLanguage, setTranscriptLanguage] = useState("en");
-  const isMobile = useIsMobile();
 
   const holderRef = useRef<HTMLDivElement>(null);
-  const headerRef = useRef<HTMLDivElement>(null);
   const lastActiveChapterRef = useRef<number>(-1);
   const lastActiveCueRef = useRef<number>(-1);
   const transcriptLanguageRef = useRef("en");
   const fullTranscriptLanguageRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => setIsOpen(true));
-    return () => cancelAnimationFrame(frame);
-  }, []);
 
   useEffect(() => {
     const handlePlayerTime = (event: Event) => {
@@ -136,19 +117,6 @@ function VideoChapters({
     return () => window.clearTimeout(timeout);
   }, [activeView, transcriptCues.length]);
 
-  useLayoutEffect(() => {
-    const header = headerRef.current;
-    if (!header) return;
-
-    const update = () => {
-      document.documentElement.style.setProperty("--headerHeight", `${header.offsetHeight + 10}px`);
-    };
-
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
-
   const chapters = useMemo(() => {
     return (props?.chapters ?? []).map((chapter) => ({
       ...chapter,
@@ -226,16 +194,6 @@ function VideoChapters({
 
   if (chapters.length === 0) return null;
 
-  const handleClose = () => {
-    if (!isMobile) {
-      onClose();
-      return;
-    }
-
-    setIsOpen(false);
-    window.setTimeout(() => onClose(), 320);
-  };
-
   const selectView = (view: PanelView) => {
     setActiveView(view);
     holderRef.current?.scrollTo({ top: 0 });
@@ -247,8 +205,7 @@ function VideoChapters({
   };
 
   return (
-    <div className={`sidePlaylists sideChapters ${isOpen ? "" : "closed"}`}>
-      <div ref={headerRef} className="playlistHeader">
+    <PlayerSheet className="sideChapters" onClose={onClose} header={handleClose => (<>
         <span className="titleBar">
           <h2>{t("inThisVideo")}</h2>
           <button onClick={handleClose} aria-label={t("close")}>
@@ -268,7 +225,7 @@ function VideoChapters({
             </button>
           </span>
         </span>
-      </div>
+      </>)}>
 
       <div className="similar" ref={holderRef} role="tabpanel">
         {activeView === "chapters" ? (
@@ -295,7 +252,7 @@ function VideoChapters({
           </div>
         )}
       </div>
-    </div>
+    </PlayerSheet>
   );
 }
 

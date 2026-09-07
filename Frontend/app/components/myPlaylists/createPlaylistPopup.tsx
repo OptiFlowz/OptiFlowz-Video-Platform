@@ -104,7 +104,7 @@ function CreatePlaylistPopup({ open, onClose, onCreate }: Props) {
       />
 
       <div
-        className={`relative w-[min(480px,92vw)] rounded-3xl border border-(--border1) bg-(--background1) p-6 shadow-2xl transition-all duration-200 ease-out ${
+        className={`relative w-[min(480px,92vw)] rounded-3xl border border-(--border1) bg-(--background1) p-6 shadow-2xl shadow-(color:--seethroughtBlack) transition-all duration-200 ease-out ${
           visible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
         }`}
         onMouseDown={(event) => event.stopPropagation()}

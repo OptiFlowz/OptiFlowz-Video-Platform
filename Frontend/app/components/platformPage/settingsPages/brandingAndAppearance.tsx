@@ -1,5 +1,5 @@
 import { useI18n } from "~/i18n";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BRAND_NAME, LOGO } from "~/changeables";
 import { UploadSVG } from "~/constants";
 import PlatformSettingsHeader from "./platformSettingsHeader";
@@ -49,9 +49,9 @@ export default function BrandingAndAppearance() {
 
         <section className="platformSettingsCard appearanceCard">
           <h2>{t("settingsAppearance")}</h2>
-          <ColorSetting label={t("settingsAccentColors")} colors={["#EC8B55", "#003E8E"]} />
-          <ColorSetting label={t("settingsBackgroundColor")} colors={["#FFFFFF"]} />
-          <ColorSetting label={t("settingsTextColor")} colors={["#000000"]} />
+          <ColorSetting label={t("settingsAccentColors")} colors={["--accentBlue2", "--accentBlue"]} />
+          <ColorSetting label={t("settingsBackgroundColor")} colors={["--background1"]} />
+          <ColorSetting label={t("settingsTextColor")} colors={["--text1"]} />
         </section>
       </div>
     </>
@@ -64,12 +64,31 @@ function ColorSetting({ label, colors }: { label: string; colors: string[] }) {
       <span>{label}</span>
       <div>
         {colors.map((color) => (
-          <label key={color} className="platformColorChip">
-            <input type="color" defaultValue={color} aria-label={`${label} ${color}`} />
-            <span>{color}</span>
-          </label>
+          <ThemeColorInput key={color} label={label} variable={color} />
         ))}
       </div>
     </div>
+  );
+}
+
+function ThemeColorInput({ label, variable }: { label: string; variable: string }) {
+  const swatchRef = useRef<HTMLSpanElement>(null);
+  const [color, setColor] = useState<string>();
+
+  useEffect(() => {
+    if (!swatchRef.current) return;
+    // Native color inputs require hex, not var(...). Resolve the actual theme
+    // through the browser, including aliases, before showing the input.
+    const channels = getComputedStyle(swatchRef.current).color.match(/[\d.]+/g);
+    if (!channels || channels.length < 3) return;
+    setColor(`#${channels.slice(0, 3).map((channel) => Math.round(Number(channel)).toString(16).padStart(2, "0")).join("")}`);
+  }, [variable]);
+
+  return (
+    <label className="platformColorChip">
+      <span ref={swatchRef} hidden style={{ color: `var(${variable})` }} aria-hidden="true" />
+      {color && <input type="color" value={color} onChange={(event) => setColor(event.target.value)} aria-label={`${label} ${color}`} />}
+      <span>{color}</span>
+    </label>
   );
 }

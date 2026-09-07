@@ -18,6 +18,7 @@ import { useConfirm } from "../../confirmPopup/useConfirm";
 import { useI18n } from "~/i18n";
 import { fetchAllComments, fetchReplyThread } from "./api";
 import CommentComposer from "./commentComposer";
+import PlayerSheet from "../playerCollection/playerSheet";
 import { CommentThread, MobileCommentThreadView } from "./commentThread";
 import type { CommentsSectionProps } from "./types";
 import {
@@ -55,7 +56,6 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [replyingTo, setReplyingTo] = useState<VideoCommentT | null>(null);
   const [focusedCommentId, setFocusedCommentId] = useState<string | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(variant !== "drawer");
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState("");
   const [mobileThreadStack, setMobileThreadStack] = useState<string[]>([]);
@@ -71,12 +71,6 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
     }
     return nextHeaders;
   }, [token]);
-
-  useEffect(() => {
-    if (variant !== "drawer") return;
-    const frame = requestAnimationFrame(() => setIsDrawerOpen(true));
-    return () => cancelAnimationFrame(frame);
-  }, [variant]);
 
   const { data, isLoading, isFetching } = useQuery<FetchVideoCommentsT>({
     queryKey: ["video-comments", videoId],
@@ -595,25 +589,18 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
   );
 
   if (variant === "drawer") {
-    const handleClose = () => {
-      setMobileThreadStack([]);
-      setIsDrawerOpen(false);
-      window.setTimeout(() => onClose?.(), 320);
-    };
-
     return (
-      <div className={`sidePlaylists sideComments ${isDrawerOpen ? "" : "closed"}`}>
-        <div className="playlistHeader">
+      <PlayerSheet className="sideComments" onClose={() => { setMobileThreadStack([]); onClose?.(); }} header={handleClose => (<>
           <span className="titleBar">
             <h2 className="flex items-center gap-2 mt-1">{CommentSVG}{t("comments")}</h2>
             <button onClick={handleClose} aria-label={t("close")}>
               {CloseSVG}
             </button>
           </span>
-        </div>
+        </>)}>
 
         <div className="similar">{content}</div>
-      </div>
+      </PlayerSheet>
     );
   }
 
