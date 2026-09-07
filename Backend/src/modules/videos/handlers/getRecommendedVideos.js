@@ -1,3 +1,4 @@
+import { withVideoCardMedia } from '../helpers/videoCardMedia.js';
 import { readPool } from '../../../database/index.js';
 
 export async function getRecommendedVideosInternal(videoId, userId, limit = 10, page = 1) {
@@ -84,5 +85,5 @@ export async function getRecommendedVideosInternal(videoId, userId, limit = 10, 
   const { rows } = userId
     ? await readPool.query(sql, [videoId, limit, offset, userId])
     : await readPool.query(sql, [videoId, limit, offset]);
-  return rows;
+  return withVideoCardMedia(rows, userId);
 }

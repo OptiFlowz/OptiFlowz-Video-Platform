@@ -1,3 +1,4 @@
+import { withVideoCardMedia } from '../helpers/videoCardMedia.js';
 import { writePool } from '../../../database/index.js';
 import { HttpError } from '../../../common/httpError.js';
 
@@ -65,7 +66,7 @@ export async function getMyVideosInternal({ query: queryParams }, actorUserId = 
       total_pages: Math.ceil(total / limit),
       sort_by: sortByRaw,
       sort_dir: sortDirRaw,
-      videos: rows,
+      videos: await withVideoCardMedia(rows, actorUserId),
     };
   } catch (err) {
     if (err instanceof HttpError) throw err;

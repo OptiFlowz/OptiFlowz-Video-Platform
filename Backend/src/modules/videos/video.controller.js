@@ -1,4 +1,6 @@
 import { initiateUploadInternal } from './handlers/initiateUpload.js';
+import { getVideoPlaybackInternal } from './handlers/getVideoPlayback.js';
+import { HttpError } from '../../common/httpError.js';
 import { generateChaptersInternal } from './handlers/generateChapters.js';
 import { muxWebhookInternal } from './handlers/muxWebhook.js';
 import { getTrendingInternal } from './handlers/getTrending.js';
@@ -77,6 +79,7 @@ export async function handleHeartbeat(req, res) {
 }
 
 export async function handleSearchVideos(req, res) {
+  res.set('Cache-Control', 'private, no-store');
   try {
     const userId = req.user?.sub || null;
     const {
@@ -117,6 +120,7 @@ export async function handleSearchVideos(req, res) {
 }
 
 export async function handleGetRecommended(req, res) {
+  res.set('Cache-Control', 'private, no-store');
   try {
     const userId = req.user.sub;
     const { limit = 20, page = 1 } = req.query;
@@ -180,6 +184,7 @@ export async function handleDislikeVideo(req, res) {
 }
 
 export async function handleGetSimilarVideos(req, res) {
+  res.set('Cache-Control', 'private, no-store');
   try {
     const userId = req.user?.sub || null;
     const videoId = req.params.id;
@@ -236,6 +241,20 @@ export async function handleGetVideoById(req, res) {
     res.status(500).json({ message: 'Failed to fetch video' });
   }
 }
+export async function handleGetVideoPlayback(req, res) {
+  res.set('Cache-Control', 'private, no-store');
+  try {
+    const result = await getVideoPlaybackInternal(req.params.id, req.user?.sub || null);
+    return res.status(200).json(result);
+  } catch (error) {
+    if (error instanceof HttpError) {
+      return res.status(error.status).json(error.body);
+    }
+    console.error('Video playback request failed:', error.message);
+    return res.status(500).json({ message: 'Failed to prepare video playback' });
+  }
+}
+
 export async function handleInitiateUpload(req, res) {
   try {
     const result = await initiateUploadInternal({ body: req.body }, req.user?.sub || null);
@@ -270,6 +289,7 @@ export async function handleMuxWebhook(req, res) {
 }
 
 export async function handleGetTrending(req, res) {
+  res.set('Cache-Control', 'private, no-store');
   try {
     const result = await getTrendingInternal({ query: req.query }, req.user?.sub || null);
     return res.status(200).json(result);
@@ -292,6 +312,7 @@ export async function handleGetCategories(req, res) {
 }
 
 export async function handleGetUserHistory(req, res) {
+  res.set('Cache-Control', 'private, no-store');
   try {
     const result = await getUserHistoryInternal({ query: req.query }, req.user?.sub || null);
     return res.status(200).json(result);
@@ -303,6 +324,7 @@ export async function handleGetUserHistory(req, res) {
 }
 
 export async function handleGetContinueWatching(req, res) {
+  res.set('Cache-Control', 'private, no-store');
   try {
     const result = await getContinueWatchingInternal({ query: req.query }, req.user?.sub || null);
     return res.status(200).json(result);
@@ -314,6 +336,7 @@ export async function handleGetContinueWatching(req, res) {
 }
 
 export async function handleGetLikedVideos(req, res) {
+  res.set('Cache-Control', 'private, no-store');
   try {
     const result = await getLikedVideosInternal({ query: req.query }, req.user?.sub || null);
     return res.status(200).json(result);

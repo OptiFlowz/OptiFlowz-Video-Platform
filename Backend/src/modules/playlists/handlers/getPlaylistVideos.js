@@ -1,3 +1,4 @@
+import { withVideoCardMedia } from '../../videos/helpers/videoCardMedia.js';
 import { readPool } from '../../../database/index.js';
 import {
   buildVideoCardSelect,
@@ -82,7 +83,7 @@ export async function getPlaylistVideosInternal(object, userId = null) {
   const totalPages = Math.ceil(total / limit);
 
   return {
-    videos: videosResult.rows,
+    videos: await withVideoCardMedia(videosResult.rows, userId),
     pagination: {
       page,
       limit,

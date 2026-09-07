@@ -211,6 +211,7 @@ export async function checkQuizRequirements(req, res) {
 }
 
 export async function getQuizRequirementVideos(req, res) {
+  res.set('Cache-Control', 'private, no-store');
   try {
     const requirements = await getQuizRequirementVideosInternal(req.params, req.user?.sub || null);
     return sendSuccess(res, { requirements }, 200);

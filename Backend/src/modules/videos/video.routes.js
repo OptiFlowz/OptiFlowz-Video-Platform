@@ -20,6 +20,7 @@ import {
   handleDislikeVideo,
   handleGetSimilarVideos,
   handleGetVideoById,
+  handleGetVideoPlayback,
   handleGetComments,
 } from './video.controller.js';
 
@@ -90,6 +91,7 @@ router.post(
   handleDislikeVideo,
 );
 router.get('/:id/similar', optionalAuth, handleGetSimilarVideos);
+router.post('/:id/playback', optionalAuth, handleGetVideoPlayback);
 router.get('/:id/comments', optionalAuth, handleGetComments);
 router.get('/:id', optionalAuth, handleGetVideoById);
 

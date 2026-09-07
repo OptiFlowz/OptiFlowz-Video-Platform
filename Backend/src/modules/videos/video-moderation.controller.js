@@ -126,6 +126,7 @@ export async function handleVideoThumbnailUpload(req, res) {
 }
 
 export async function handleGetMyVideos(req, res) {
+  res.set('Cache-Control', 'private, no-store');
   try {
     const result = await getMyVideosInternal({ query: req.query }, req.user?.sub || null);
     return res.status(200).json(result);

@@ -15,7 +15,11 @@ export async function initiateUploadInternal({ body: inputBody }, actorUserId = 
   const languageCode = String(inputBody?.language_code ?? 'en')
     .trim()
     .toLowerCase();
-  const languageName = String(inputBody?.language_name ?? 'English').trim();
+  const defaultLanguageName = languageCode === 'auto' ? 'Auto-generated captions' : 'English';
+  const languageName = String(inputBody?.language_name ?? defaultLanguageName).trim();
+  const playbackPolicy = inputBody?.playback_policy === undefined
+    ? 'signed'
+    : inputBody.playback_policy;
 
   if (!title) {
     throw new HttpError(400, { message: 'title is required' });
@@ -26,23 +30,27 @@ export async function initiateUploadInternal({ body: inputBody }, actorUserId = 
     throw new HttpError(400, { message: 'language_code must be non-empty' });
   }
 
+  if (playbackPolicy !== 'public' && playbackPolicy !== 'signed') {
+    throw new HttpError(400, { message: 'playback_policy must be public or signed' });
+  }
+
   const client = await writePool.connect();
   try {
     await client.query('BEGIN');
 
     const insertSql = `
-            INSERT INTO public.videos (title, uploaded_by)
-            VALUES ($1, $2)
+            INSERT INTO public.videos (title, uploaded_by, playback_policy)
+            VALUES ($1, $2, $3)
             RETURNING id
             `;
-    const { rows: createdRows } = await client.query(insertSql, [title, userId]);
+    const { rows: createdRows } = await client.query(insertSql, [title, userId, playbackPolicy]);
     const videoId = createdRows[0]?.id;
 
     // 2) Kreiraj Mux direct upload sa auto captions
     const upload = await mux.video.uploads.create({
       cors_origin: '*',
       new_asset_settings: {
-        playback_policies: ['public'],
+        playback_policies: [playbackPolicy],
         encoding_tier: 'baseline',
         normalize_audio: false,
         inputs: [
@@ -74,6 +82,7 @@ export async function initiateUploadInternal({ body: inputBody }, actorUserId = 
 
     return {
       video_id: videoId,
+      playback_policy: playbackPolicy,
       upload: {
         upload_id: upload.id,
         upload_url: upload.url,

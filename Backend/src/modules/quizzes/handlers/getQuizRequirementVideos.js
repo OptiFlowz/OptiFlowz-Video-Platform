@@ -1,3 +1,4 @@
+import { withVideoCardMedia } from '../../videos/helpers/videoCardMedia.js';
 import { readPool } from '../../../database/index.js';
 import {
   buildVideoCardSelect,
@@ -93,5 +94,5 @@ export async function getQuizRequirementVideosInternal(object, userId = null) {
 
   const { rows } = await readPool.query(query, [quizId, validatedUserId]);
 
-  return rows;
+  return withVideoCardMedia(rows, validatedUserId);
 }

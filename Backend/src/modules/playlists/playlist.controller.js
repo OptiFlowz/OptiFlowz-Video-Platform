@@ -32,6 +32,7 @@ export async function getPlaylistById(req, res) {
 }
 
 export async function getPlaylistVideos(req, res) {
+  res.set('Cache-Control', 'private, no-store');
   try {
     const result = await getPlaylistVideosInternal(
       { ...req.params, ...req.query },

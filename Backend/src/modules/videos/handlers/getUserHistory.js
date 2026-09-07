@@ -1,3 +1,4 @@
+import { withVideoCardMedia } from '../helpers/videoCardMedia.js';
 import { readPool } from '../../../database/index.js';
 import { HttpError } from '../../../common/httpError.js';
 
@@ -51,7 +52,7 @@ export async function getUserHistoryInternal({ query: queryParams }, actorUserId
     ]);
 
     return {
-      videos: rows,
+      videos: await withVideoCardMedia(rows, actorUserId),
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),

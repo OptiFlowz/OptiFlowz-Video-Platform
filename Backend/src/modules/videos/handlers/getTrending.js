@@ -1,3 +1,4 @@
+import { withVideoCardMedia } from '../helpers/videoCardMedia.js';
 import { readPool } from '../../../database/index.js';
 import { HttpError } from '../../../common/httpError.js';
 
@@ -58,7 +59,7 @@ export async function getTrendingInternal({ query: queryParams }, actorUserId = 
       : await readPool.query(query, [Math.min(parseInt(limit), 100), offset]);
 
     return {
-      videos: rows,
+      videos: await withVideoCardMedia(rows, actorUserId),
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),

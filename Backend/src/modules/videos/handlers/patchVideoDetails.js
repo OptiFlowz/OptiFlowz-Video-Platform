@@ -43,6 +43,7 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
     title,
     description,
     thumbnail_url,
+    thumbnail_settings,
     tags,
     chapters,
     visibility, // "public" | "private"
@@ -62,6 +63,14 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
   }
 
   // --- normalizacije sa podrškom za null (null => brisanje) ---
+  if (
+    isDefined(thumbnail_settings)
+    && thumbnail_settings !== null
+    && (typeof thumbnail_settings !== 'object' || Array.isArray(thumbnail_settings))
+  ) {
+    throw new HttpError(400, { message: 'thumbnail_settings must be an object or null' });
+  }
+
   const normTags = isDefined(tags) ? (tags === null ? null : normalizeTags(tags)) : undefined;
   if (isDefined(tags) && tags !== null && normTags === null) {
     throw new HttpError(400, { message: 'tags must be an array of strings or null' });
@@ -102,6 +111,7 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
     isDefined(title) ||
     isDefined(description) ||
     isDefined(thumbnail_url) ||
+    isDefined(thumbnail_settings) ||
     isDefined(tags) ||
     isDefined(chapters) ||
     isDefined(visibility);
@@ -157,6 +167,12 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
       if (isDefined(thumbnail_url)) {
         set.push(`thumbnail_url = $${i++}`);
         params.push(thumbnail_url === null ? null : String(thumbnail_url).trim());
+      }
+
+      // Replace the settings object; explicit null clears the SQL column.
+      if (isDefined(thumbnail_settings)) {
+        set.push(`thumbnail_settings = $${i++}::jsonb`);
+        params.push(thumbnail_settings === null ? null : JSON.stringify(thumbnail_settings));
       }
 
       // tags: null => NULL, array => text[]

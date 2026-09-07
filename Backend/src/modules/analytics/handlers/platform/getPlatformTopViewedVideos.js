@@ -1,3 +1,4 @@
+import { withVideoCardMedia } from '../../../videos/helpers/videoCardMedia.js';
 import { readPool } from '../../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../../common/input.validation.js';
@@ -58,5 +59,5 @@ export async function getPlatformTopViewedVideosInternal(object, userId = null) 
     filter.values,
   );
 
-  return rows;
+  return withVideoCardMedia(rows, userId);
 }

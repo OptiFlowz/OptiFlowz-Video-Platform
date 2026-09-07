@@ -247,6 +247,7 @@ export async function getPlatformAverageEngagementPerVideo(req, res) {
 }
 
 export async function getPlatformTopViewedVideos(req, res) {
+  res.set('Cache-Control', 'private, no-store');
   try {
     const topViewedVideos = await getPlatformTopViewedVideosInternal(
       { ...req.params, ...req.body, ...req.query },

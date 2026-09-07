@@ -1,3 +1,4 @@
+import { withVideoCardMedia } from '../../videos/helpers/videoCardMedia.js';
 import { readPool } from '../../../database/index.js';
 
 export async function getPlaylistWithVideosInternal(playlistId, userId = null) {
@@ -96,5 +97,7 @@ export async function getPlaylistWithVideosInternal(playlistId, userId = null) {
   const params = userId ? [playlistId, userId] : [playlistId];
   const { rows } = await readPool.query(sql, params);
 
-  return rows[0] || null;
+  if (!rows[0]) return null;
+  rows[0].videos = await withVideoCardMedia(rows[0].videos, userId);
+  return rows[0];
 }

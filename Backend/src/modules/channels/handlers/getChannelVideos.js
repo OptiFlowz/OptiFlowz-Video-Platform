@@ -1,3 +1,4 @@
+import { withVideoCardMedia } from '../../videos/helpers/videoCardMedia.js';
 import { writePool } from '../../../database/index.js';
 import { buildVideoCardSelect,buildVideoCardJoins,buildVideoCardVisibilityWhere } from '../../../database/sql/videoCardFragments.js';
 import { z } from 'zod';
@@ -61,7 +62,7 @@ export async function getChannelVideosInternal(object, userId = null) {
   const totalPages = Math.ceil(total / limit);
 
   return {
-    videos: videosResult.rows,
+    videos: await withVideoCardMedia(videosResult.rows, userId),
     pagination: {
       page,
       limit,

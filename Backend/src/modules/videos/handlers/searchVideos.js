@@ -1,3 +1,4 @@
+import { withVideoCardMedia } from '../helpers/videoCardMedia.js';
 import { readPool } from '../../../database/index.js';
 
 export async function searchVideosInternal(searchParams, userId = null) {
@@ -215,7 +216,7 @@ export async function searchVideosInternal(searchParams, userId = null) {
   const { rows: countRows } = await readPool.query(countQuery, countParams);
 
   return {
-    videos: rows,
+    videos: await withVideoCardMedia(rows, userId),
     total: parseInt(countRows[0].total, 10),
     limit,
     offset,
