@@ -107,7 +107,7 @@ function SearchResults({ context }: { context: SearchContext }) {
     : (peopleQ.data?.people ?? []).map((person) => ({
         id: person.id, kind: "people", title: person.name,
         href: `/search?${new URLSearchParams({ person: person.id, name: person.name })}`,
-        thumbnail: person.image_url, description: person.description || t("noBioPerson"), videoCount: Number(person.total_video_count),
+        thumbnail: person.image_url, description: person.description || t("noDescription"), videoCount: Number(person.total_video_count),
       }));
 
   const contextTitle = context.category ? "categoryResultsFor" : context.tag ? "tagResultsFor" : context.person ? "personResultsFor" : "searchResultsFor";

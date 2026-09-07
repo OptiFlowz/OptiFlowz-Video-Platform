@@ -11,6 +11,7 @@ import {
   type DragEvent,
   type KeyboardEvent,
   useEffect,
+  useMemo,
 } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AISVG, UploadSVG } from "~/constants";
@@ -148,7 +149,8 @@ function getInitialThumbnailTime(video?: VideoData | null): number {
 }
 
 function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) => void; onFinish?: () => void } = {}) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const languageNames = useMemo(() => new Intl.DisplayNames([locale === "sr" ? "sr-Latn" : locale], { type: "language" }), [locale]);
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [isDragging, setIsDragging] = useState(false);
@@ -344,7 +346,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
       });
 
       if (!response?.success) {
-        setProcessingError("Failed to upload video thumbnail.");
+        setProcessingError(t("editorThumbnailFailed"));
         return false;
       }
 
@@ -370,7 +372,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
       return true;
     } catch (err) {
       console.error("Error uploading video thumbnail:", err);
-      setProcessingError("Failed to upload video thumbnail.");
+      setProcessingError(t("editorThumbnailFailed"));
     } finally {
       setIsUploadingThumbnail(false);
       if (thumbnailInputRef.current) {
@@ -487,7 +489,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
       });
 
       if (!response?.success) {
-        setProcessingError("Failed to save video thumbnail.");
+        setProcessingError(t("editorThumbnailFailed"));
         return false;
       }
 
@@ -501,7 +503,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
       return true;
     } catch (err) {
       console.error("Error saving generated thumbnail:", err);
-      setProcessingError("Failed to save video thumbnail.");
+      setProcessingError(t("editorThumbnailFailed"));
     } finally {
       setIsUploadingThumbnail(false);
     }
@@ -533,7 +535,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
         });
 
         if (!response?.success) {
-          setProcessingError("Failed to remove video thumbnail.");
+          setProcessingError(t("editorThumbnailFailed"));
           return false;
         }
 
@@ -543,7 +545,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
         return true;
       } catch (err) {
         console.error("Error removing video thumbnail:", err);
-        setProcessingError("Failed to remove video thumbnail.");
+        setProcessingError(t("editorThumbnailFailed"));
       } finally {
         setIsRemovingThumbnail(false);
       }
@@ -665,12 +667,12 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
         setCaptionStatus("available");
         setCaptionsModified(true);
       } else {
-        setProcessingError("Failed to generate captions. Please try again.");
+        setProcessingError(t("videoGenerateCaptionsFailed"));
         setCaptionStatus("not_available");
       }
     } catch (error) {
       console.error("Error generating captions:", error);
-      setProcessingError("Failed to generate captions. Please try again.");
+      setProcessingError(t("videoGenerateCaptionsFailed"));
       setCaptionStatus("not_available");
     }
   };
@@ -707,16 +709,16 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
         return true;
       } else if (response.status === 502) {
         setProcessingError(
-          "Mux track is not ready yet. Please try again later."
+          t("editorTrackNotReady")
         );
       } else if (response.status === 404) {
-        setProcessingError("Video not found.");
+        setProcessingError(t("videoNotFound"));
       } else {
-        setProcessingError("Failed to save captions.");
+        setProcessingError(t("captionsSaveFailed"));
       }
     } catch (error) {
       console.error("Error saving captions:", error);
-      setProcessingError("Failed to save captions.");
+      setProcessingError(t("captionsSaveFailed"));
     } finally {
       setIsSavingCaptions(false);
     }
@@ -749,11 +751,11 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
         setCaptionStatus("not_available");
         setCaptionsModified(false);
       } else {
-        setProcessingError("Failed to delete captions.");
+        setProcessingError(t("captionsDeleteFailed"));
       }
     } catch (error) {
       console.error("Error deleting captions:", error);
-      setProcessingError("Failed to delete captions.");
+      setProcessingError(t("captionsDeleteFailed"));
     } finally {
       setIsDeletingCaptions(false);
     }
@@ -836,11 +838,11 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
         setOldChairs([...chairs]);
         setSpeakersOrChairsModified(false);
       } else {
-        setProcessingError("Failed to save speakers and chairs.");
+        setProcessingError(t("contributorsSaveFailed"));
       }
     } catch (error) {
       console.error("Error saving contributors:", error);
-      setProcessingError("Failed to save speakers and chairs.");
+      setProcessingError(t("contributorsSaveFailed"));
     } finally {
       setIsSavingContributors(false);
     }
@@ -871,11 +873,11 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
         setOldChapters([...chapters]);
         setChaptersModified(false);
       } else {
-        setProcessingError("Failed to save chapters.");
+        setProcessingError(t("chaptersSaveFailed"));
       }
     } catch (error) {
       console.error("Error saving chapters:", error);
-      setProcessingError("Failed to save chapters.");
+      setProcessingError(t("chaptersSaveFailed"));
     } finally {
       setIsSavingChapters(false);
     }
@@ -1113,7 +1115,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
 
       if (!response.ok) {
         setProcessingError(
-          `Failed to generate ${type}. Make sure the video has English subtitles added.`
+          t("editorGenerateRequiresEnglish")
         );
         return;
       }
@@ -1129,7 +1131,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
       }
     } catch (error) {
       console.error(`Error generating ${type}:`, error);
-      setProcessingError(`Failed to generate ${type}. Please try again.`);
+      setProcessingError(t("editorGenerateFailed"));
     } finally {
       setLoading(false);
     }
@@ -1181,7 +1183,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
       setCurrentStep(1);
       setVideoId(null);
       setProcessingPhase("idle");
-      setProcessingError("Failed to upload video. Please try again.");
+      setProcessingError(t("editorUploadFailed"));
     }
   };
 
@@ -1324,11 +1326,11 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
         navigate("/my-videos");
         onFinish?.();
       } else {
-        setProcessingError("Failed to save video.");
+        setProcessingError(t("videoDetailsSaveFailed"));
       }
     } catch (error) {
       console.error("Error saving video:", error);
-      setProcessingError("Failed to save video.");
+      setProcessingError(t("videoDetailsSaveFailed"));
     } finally {
       setIsSavingDetails(false);
     }
@@ -1363,14 +1365,16 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
     <>
       <main className={`uploadMain ${statusStyles.page}`}>
         <Sidebar />
-        <div
-          className={`uploadSide ${currentStep > 1 ? "max-w-325 w-full" : ""}`}
-        >
+        <div className="uploadSide">
           <h1>{t("videoUploadTitle")}</h1>
           <p className="mt-3 links">
-            By submitting videos to this platform, you agree to our{" "}
-            <Link to="/termsOfUse">{t("termsOfUse")}</Link> and{" "}
-            <Link to="/privacyPolicy">{t("privacyPolicy")}</Link>.
+            {t("uploadLegalNotice", { terms: "__TERMS__", privacy: "__PRIVACY__" })
+              .split(/(__TERMS__|__PRIVACY__)/)
+              .map((part, index) => part === "__TERMS__" ? (
+                <Link key={index} to="/termsOfUse">{t("termsOfUse")}</Link>
+              ) : part === "__PRIVACY__" ? (
+                <Link key={index} to="/privacyPolicy">{t("privacyPolicy")}</Link>
+              ) : part)}
           </p>
 
           {/* Step Indicator */}
@@ -1460,8 +1464,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                     <polyline points="22 4 12 14.01 9 11.01" />
                   </svg>
                   <span>
-                    Video uploaded successfully. These settings cannot be
-                    changed.
+                    {t("uploadSettingsLocked")}
                   </span>
                 </div>
               )}
@@ -1510,7 +1513,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                           removeVideo();
                         }}
                       >
-                        Remove
+                        {t("quizRemove")}
                       </button>
                     )}
                   </div>
@@ -1518,76 +1521,55 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                   <div className="uploadPrompt">
                     {UploadSVG}
                     <p>{t("dragDropVideoFile")}</p>
-                    <span>or</span>
+                    <span>{t("uploadOr")}</span>
                     <button type="button" className="selectFileBtn">
-                      Select file
+                      {t("uploadSelectFile")}
                     </button>
                   </div>
                 )}
               </div>
               <div className="formGroup mt-7.5">
-                <label htmlFor="muxTitle">{t("title")}</label>
+                <label htmlFor="uploadVideoTitle">{t("title")}</label>
                 <input
                   type="text"
-                  id="muxTitle"
+                  id="uploadVideoTitle"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder={t("muxTitlePlaceholder")}
+                  placeholder={t("videoTitlePlaceholder")}
                   maxLength={100}
                   disabled={isUploaded || isProcessing}
                   className={isUploaded ? "disabled" : ""}
                 />
                 <span className="charCount">{title.length}/100</span>
               </div>
-              <div className="formGroup my-7.5">
-                <ContributorSearch
-                  label="Speakers"
-                  selectedContributors={speakers}
-                  onAdd={(contributor) =>
-                    handleContributorAdd({ new: contributor })
-                  }
-                  onRemove={(id) => handleContributorRemove({ id: id })}
-                  placeholder={t("searchSpeakersPlaceholder")}
-                />
-
-                <ContributorSearch
-                  label="Chairs"
-                  selectedContributors={chairs}
-                  onAdd={(contributor) =>
-                    handleContributorAdd({ type: true, new: contributor })
-                  }
-                  onRemove={(id) =>
-                    handleContributorRemove({ type: true, id: id })
-                  }
-                  placeholder={t("searchChairsPlaceholder")}
-                />
-              </div>
               <div className="formGroup mt-2">
                 <label htmlFor="captionLanguage">{t("spokenLanguage")}</label>
+                <p className="formHint">{t("spokenLanguageAutoHelp")}</p>
                 <div className="captionsInputRow">
                   <CustomSelect
                     id="captionLanguage"
+                    rootClassName="spokenLanguageSelect"
                     value={spokenLanguage}
                     onChange={(value) => { setSpokenLanguage(value); setCaptionLanguage(value); }}
                     options={[{ value: "auto", label: t("spokenLanguageAuto") }, ...MUX_SPOKEN_LANGUAGES.map((lang) => ({
                       value: lang.code,
-                      label: `${lang.name} - ${lang.code}`,
+                      label: `${languageNames.of(lang.code) || lang.name} - ${lang.code}`,
                     }))]}
                     ariaLabel={t("spokenLanguage")}
                     triggerClassName={`languageSelect ${isUploaded || isProcessing ? "disabled" : ""}`}
                     disabled={isUploaded || isProcessing}
                   />
                 </div>
-                <p className="formHint">{t("spokenLanguageAutoHelp")}</p>
               </div>
               <div className="formGroup mt-7.5">
                 <label htmlFor="uploadPlaybackPolicy">{t("playbackProtection")}</label>
+                <p className="formHint">{t(playbackPolicy === "signed" ? "playbackSignedHelp" : "playbackPublicHelp")}</p>
                 <CustomSelect id="uploadPlaybackPolicy" value={playbackPolicy}
+                  rootClassName="playbackProtectionSelect"
                   onChange={(value) => setPlaybackPolicy(value as "public" | "signed")}
                   options={[{ value: "signed", label: t("playbackSigned") }, { value: "public", label: t("playbackPublic") }]}
                   ariaLabel={t("playbackProtection")} triggerClassName="visibilitySelect"
                   disabled={isUploaded || isProcessing} />
-                <p className="formHint">{t(playbackPolicy === "signed" ? "playbackSignedHelp" : "playbackPublicHelp")}</p>
               </div>
             </div>
           )}
@@ -1619,7 +1601,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                             onChange={handleCaptionLanguageChange}
                             options={[...(captionLanguage === "auto" ? [{ value: "auto", label: t("autoGeneratedCaptions") }] : []), ...EUROPEAN_LANGUAGES.map((lang) => ({
                               value: lang.code,
-                              label: `${lang.name} - ${lang.code}`,
+                              label: `${languageNames.of(lang.code) || lang.name} - ${lang.code}`,
                             }))]}
                             ariaLabel={t("spokenLanguage")}
                             triggerClassName="languageSelect"
@@ -1639,7 +1621,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                             title={!isUploaded ? t("uploadAIReadyHint") : undefined}
                             className="generateAIBtn"
                           >
-                            {AISVG}&nbsp;Generate with AI
+                            {AISVG}{t("editorGenerateAI")}
                           </button>
                         )}
                       </div>
@@ -1647,7 +1629,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
 
                     <CaptionStatusMessage
                       status={captionStatus}
-                      language={EUROPEAN_LANGUAGES.find((language) => language.code === captionLanguage)?.name || t("autoGeneratedCaptions")}
+                      language={captionLanguage === "auto" ? t("autoGeneratedCaptions") : languageNames.of(captionLanguage) || captionLanguage}
                     />
 
                     <>
@@ -1661,11 +1643,11 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                         />
                         <div className="captionsActions">
                           <p className="formHint">
-                            Supports VTT format
+                            {t("editorVttSupport")}
                             {captionsModified && (
                               <span className="unsavedIndicator">
                                 {" "}
-                                • Unsaved changes
+                                {t("editorUnsavedChanges")}
                               </span>
                             )}
                           </p>
@@ -1679,10 +1661,10 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                               {isSavingCaptions ? (
                                 <>
                                   <div className="uploadSpinner tiny" />
-                                  Saving...
+                                  {t("saving")}
                                 </>
                               ) : (
-                                "Save Captions"
+                                t("save")
                               )}
                             </button>
                             <button
@@ -1694,10 +1676,10 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                               {isDeletingCaptions ? (
                                 <>
                                   <div className="uploadSpinner tiny" />
-                                  Deleting...
+                                  {t("editorDeleting")}
                                 </>
                               ) : (
-                                "Delete Captions"
+                                t("delete")
                               )}
                             </button>
                           </div>
@@ -1707,7 +1689,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
 
                   <div className="formGroup editSection mt-10">
                     <ContributorSearch
-                      label="Speakers"
+                      label={t("speakersTitle")}
                       selectedContributors={speakers}
                       onAdd={(contributor) =>
                         handleContributorAdd({ new: contributor })
@@ -1717,7 +1699,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                     />
 
                     <ContributorSearch
-                      label="Chairs"
+                      label={t("chairsTitle")}
                       selectedContributors={chairs}
                       onAdd={(contributor) =>
                         handleContributorAdd({ type: true, new: contributor })
@@ -1732,7 +1714,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                       <p className="formHint">
                         {speakersOrChairsModified && (
                           <span className="unsavedIndicator">
-                            • Unsaved changes
+                            {t("editorUnsavedChanges")}
                           </span>
                         )}
                       </p>
@@ -1749,10 +1731,10 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                           {isSavingContributors ? (
                             <>
                               <div className="uploadSpinner tiny" />
-                              Saving...
+                              {t("saving")}
                             </>
                           ) : (
-                            "Save Speakers & Chairs"
+                            t("save")
                           )}
                         </button>
                       </div>
@@ -1761,7 +1743,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
 
                   <div className="formGroup editSection mt-10">
                     <label>
-                      Chapters
+                      {t("chapters")}
                       <button
                         type="button"
                         onClick={handleRegenerateChapters}
@@ -1770,15 +1752,15 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                           captionStatus !== "available"
                         }
                       >
-                        {AISVG}&nbsp;Generate with AI
+                        {AISVG}{t("editorGenerateAI")}
                       </button>
                     </label>
                     <div className="chaptersContainer">
                       {chapters.length === 0 ? (
                         <p className="noChapters">
                           {captionStatus !== "available"
-                            ? "Captions are required to generate chapters."
-                            : "No chapters generated. Click 'Generate with AI' to create chapters."}
+                            ? t("editorChaptersRequireCaptions")
+                            : t("editorNoChapters")}
                         </p>
                       ) : (
                         chapters.map((chapter, index) => (
@@ -1816,14 +1798,14 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                         className="addChapterBtn"
                         onClick={addChapter}
                       >
-                        + Add Chapter
+                        {t("editorAddChapter")}
                       </button>
                     </div>
                     <div className="captionsActions">
                       <p className="formHint">
                         {chaptersModified && (
                           <span className="unsavedIndicator">
-                            • Unsaved changes
+                            {t("editorUnsavedChanges")}
                           </span>
                         )}
                       </p>
@@ -1837,10 +1819,10 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                           {isSavingChapters ? (
                             <>
                               <div className="uploadSpinner tiny" />
-                              Saving...
+                              {t("saving")}
                             </>
                           ) : (
-                            "Save Chapters"
+                            t("save")
                           )}
                         </button>
                       </div>
@@ -1867,7 +1849,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
               </aside>
               <div className="stepContentMain">
                 <div className="videoDetailsForm">
-                  <div className="formGroup editSection">
+                  <div className="formGroup editSection thumbnailEditorSection">
                     <h2 className="editSectionTitle">{t("thumbnail")}</h2>
 
                     <input
@@ -1893,27 +1875,28 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                       <div className="thumbnailSourceHeading">
                         <button
                           type="button"
-                          className="thumbnailPickerToggle"
+                          className="saveCaptionsBtn thumbnailSourceButton"
                           onClick={() => thumbnailInputRef.current?.click()}
                           disabled={isUploadingThumbnail || isRemovingThumbnail}
                         >
                           {UploadSVG}
-                          Select file
+                          {t("uploadSelectFile")}
                         </button>
                         <button
                           type="button"
-                          className={`thumbnailPickerToggle ${isThumbnailPickerOpen ? "active" : ""}`}
+                          className="saveCaptionsBtn thumbnailSourceButton"
+                          aria-pressed={isThumbnailPickerOpen}
                           onClick={handleToggleThumbnailPicker}
                           disabled={!canChooseVideoFrame || isUploadingThumbnail || isRemovingThumbnail}
                         >
-                          {isThumbnailPickerOpen ? "Back to image" : "Choose from video"}
+                          {isThumbnailPickerOpen ? t("editorBackToImage") : t("editorChooseFrame")}
                         </button>
                       </div>
                       <p className="formHint thumbnailPickerHint">
                         {pendingThumbnailFile
                           ? `${pendingThumbnailFile.name} · ${(pendingThumbnailFile.size / (1024 * 1024)).toFixed(2)} MB`
                           : isThumbnailPickerOpen
-                          ? "Choose a frame from the timeline, then save your thumbnail."
+                          ? t("editorChooseFrameHelp")
                           : t("imageFormatsHint")}
                       </p>
                     </div>
@@ -1950,7 +1933,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                                   commitThumbnailTimeInput();
                                 }
                               }}
-                              placeholder="00:00 or 00:00:00"
+                              placeholder={`00:00 ${t("uploadOr")} 00:00:00`}
                               className="thumbnailPickerTimeInput"
                             />
                           </div>
@@ -1989,15 +1972,15 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                             <>
                               <div className="uploadSpinner tiny" />
                               {thumbnailMarkedForRemoval
-                                ? "Saving..."
+                                ? t("saving")
                                 : hasPendingVideoFrame
-                                ? "Setting..."
-                                : "Uploading..."}
+                                ? t("saving")
+                                : t("saving")}
                             </>
                           ) : (
                             hasPendingVideoFrame
-                              ? "Set Frame as Thumbnail"
-                              : "Save Thumbnail"
+                              ? t("saveThumbnail")
+                              : t("saveThumbnail")
                           )}
                         </button>
                         <button
@@ -2010,7 +1993,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                           }
                           className="deleteCaptionsBtn"
                         >
-                          {pendingThumbnailFile ? "Clear Selection" : "Remove Thumbnail"}
+                          {pendingThumbnailFile ? t("clearSelection") : t("removeThumbnail")}
                         </button>
                         {thumbnailModified && (
                           <button
@@ -2018,19 +2001,19 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                             onClick={resetThumbnailSelection}
                             className="cancelBtn thumbnailCancelBtn"
                           >
-                            Cancel
+                            {t("cancel")}
                           </button>
                         )}
                       </div>
                       <p className="formHint thumbnailHint">
                         {thumbnailModified ? (
                           <span className="unsavedIndicator">
-                            • Unsaved thumbnail changes
+                            {t("editorUnsavedChanges")}
                           </span>
                         ) : displayedThumbnailUrl ? (
-                          "Upload an image or choose a video frame to change your thumbnail."
+                          t("editorThumbnailHelp")
                         ) : (
-                          "No thumbnail selected yet."
+                          t("quizNoThumbnail")
                         )}
                       </p>
                     </div>
@@ -2038,7 +2021,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
 
                   <div className="formGroup editSection">
                     <label htmlFor="videoTitle">
-                      Title
+                      {t("title")}
                       <button
                         type="button"
                         onClick={() => handleGenerateWithAI("title")}
@@ -2046,9 +2029,9 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                         title={!isUploaded ? t("uploadAIReadyHint") : undefined}
                       >
                         {isGeneratingTitle ? (
-                          <><div className="uploadSpinner tiny" />&nbsp;Generating...</>
+                          <><div className="uploadSpinner tiny" />{t("editorGenerating")}</>
                         ) : (
-                          <>{AISVG}&nbsp;Generate with AI</>
+                          <>{AISVG}{t("editorGenerateAI")}</>
                         )}
                       </button>
                     </label>
@@ -2065,7 +2048,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
 
                   <div className="formGroup editSection">
                     <label htmlFor="videoDescription">
-                      Description
+                      {t("description")}
                       <button
                         type="button"
                         onClick={() => handleGenerateWithAI("description")}
@@ -2073,9 +2056,9 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                         title={!isUploaded ? t("uploadAIReadyHint") : undefined}
                       >
                         {isGeneratingDescription ? (
-                          <><div className="uploadSpinner tiny" />&nbsp;Generating...</>
+                          <><div className="uploadSpinner tiny" />{t("editorGenerating")}</>
                         ) : (
-                          <>{AISVG}&nbsp;Generate with AI</>
+                          <>{AISVG}{t("editorGenerateAI")}</>
                         )}
                       </button>
                     </label>
@@ -2092,7 +2075,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
 
                   <div className="formGroup editSection">
                     <label htmlFor="videoTags">
-                      Tags
+                      {t("tags")}
                       <button
                         type="button"
                         onClick={() => handleGenerateWithAI("tags")}
@@ -2100,9 +2083,9 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                         title={!isUploaded ? t("uploadAIReadyHint") : undefined}
                       >
                         {isGeneratingTags ? (
-                          <><div className="uploadSpinner tiny" />&nbsp;Generating...</>
+                          <><div className="uploadSpinner tiny" />{t("editorGenerating")}</>
                         ) : (
-                          <>{AISVG}&nbsp;Generate with AI</>
+                          <>{AISVG}{t("editorGenerateAI")}</>
                         )}
                       </button>
                     </label>
@@ -2126,7 +2109,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                         onChange={(e) => setTagInput(e.target.value)}
                         onKeyDown={handleTagKeyDown}
                         placeholder={
-                          tags.length === 0 ? "Press Enter to add tags" : ""
+                          tags.length === 0 ? t("pressEnterToAddTags") : ""
                         }
                       />
                     </div>
@@ -2136,6 +2119,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                     <label htmlFor="videoVisibility">{t("visibility")}</label>
                     <CustomSelect
                       id="videoVisibility"
+                      rootClassName={statusStyles.compactSelect}
                       value={visibility}
                       onChange={(value) => setVisibility(value as "public" | "private")}
                       options={[
@@ -2147,8 +2131,8 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                     />
                     <p className="formHint">
                       {visibility === "public"
-                        ? "Anyone can view this video."
-                        : "Only you and people you share the link with can view this video."}
+                        ? t("editorPublicHelp")
+                        : t("editorPrivateHelp")}
                     </p>
                   </div>
 
@@ -2165,7 +2149,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                 className="cancelBtn"
                 onClick={() => navigate("/my-videos")}
               >
-                Cancel
+                {t("cancel")}
               </button>
             ) : (
               <button
@@ -2173,7 +2157,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                 className="cancelBtn"
                 onClick={handleBack}
               >
-                Back
+                {t("back")}
               </button>
             )}
             {currentStep < 3 ? (
@@ -2183,7 +2167,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                 disabled={!canProceed() || (currentStep === 1 && processingPhase === "initializing")}
                 onClick={handleNext}
               >
-                {currentStep === 1 && processingPhase === "initializing" ? t("uploadPhase_initializing") : "Next"}
+                {currentStep === 1 && processingPhase === "initializing" ? t("uploadPhase_initializing") : t("next")}
               </button>
             ) : (
               <button
@@ -2192,7 +2176,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                 disabled={!isUploaded || !canProceed() || isSavingDetails || isSavingCaptions || isSavingChapters || isSavingContributors || isUploadingThumbnail || isRemovingThumbnail || isGeneratingTitle || isGeneratingDescription || isGeneratingTags || captionStatus === "generating"}
                 onClick={handleSubmit}
               >
-                {isSavingDetails ? "Saving..." : "Save"}
+                {isSavingDetails ? t("saving") : t("save")}
               </button>
             )}
           </section>

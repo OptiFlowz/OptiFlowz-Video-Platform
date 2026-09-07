@@ -15,8 +15,8 @@ export function CaptionStatusMessage({ status, language }: {
         {busy ? <span className="uploadSpinner small" /> : TranscriptSVG}
       </span>
       <div className="captionStatusCopy">
-        <p>{busy ? t(status === "generating" ? "generatingCaptions" : "checkingCaptions") : `No captions for ${language} yet`}</p>
-        <span>{busy ? "Your captions will appear here when ready." : "Generate with AI or paste your own captions in VTT format below."}</span>
+        <p>{busy ? t(status === "generating" ? "generatingCaptions" : "checkingCaptions") : t("editorNoCaptions", { language })}</p>
+        <span>{busy ? t("editorCaptionsReadyHelp") : t("editorCaptionsCreateHelp")}</span>
       </div>
     </div>
   );

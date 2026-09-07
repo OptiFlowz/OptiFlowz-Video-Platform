@@ -7545,8 +7545,10 @@ main.uploadMain {
   position: relative;
 }
 main.uploadMain .uploadSide{
-  margin-inline: auto;
-  padding-inline: 10px;
+  flex: 1 1 0%;
+  min-width: 0;
+  width: 100%;
+  padding-inline: clamp(10px, 4vw, 66px);
   padding-block: 30px 80px;
 }
 
@@ -8126,6 +8128,29 @@ main.uploadMain .links a:hover {
 .visibilitySelect:focus {
   outline: none;
   border-color: var(--accentBlue);
+}
+
+.playbackProtectionSelect {
+  width: fit-content;
+  max-width: 100%;
+}
+
+.spokenLanguageSelect {
+  width: 16rem;
+  max-width: 100%;
+}
+
+.spokenLanguageSelect .languageSelect {
+  min-width: 0;
+}
+
+.playbackProtectionSelect .visibilitySelect {
+  background-color: var(--background2);
+}
+
+.playbackProtectionSelect .customSelectMenu,
+.spokenLanguageSelect .customSelectMenu {
+  width: 100%;
 }
 
 .uploadOverlay {

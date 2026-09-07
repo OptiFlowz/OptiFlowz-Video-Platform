@@ -7,6 +7,42 @@
   cursor: not-allowed;
 }
 .page :global(.editSection) button:disabled svg { opacity: 0.6; }
+.page :global(.stepContentSidebar) { min-width: 0; }
+@media (min-width: 1421px) {
+  .page :global(.stepContentWithPreview) {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+}
+.page :global(.captionToolbar .captionsInputRow) {
+  flex: 0 1 13rem;
+  width: 13rem;
+  max-width: 100%;
+}
+.page :global(.captionToolbar .generateAIBtn) { margin-inline-start: auto; }
+.compactSelect { width: fit-content; max-width: 100%; }
+.compactSelect :global(.customSelectMenu),
+.page :global(.captionToolbar .customSelectMenu) { width: 100%; }
+.page :global(.editSectionTitle),
+.page :global(.captionToolbarTitle) { color: var(--accentBlue2); }
+.page :global(.thumbnailSourceHeading) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 0.5rem;
+}
+.page :global(.thumbnailSourceButton) {
+  min-width: 0;
+  justify-content: center;
+  padding: 0.65rem 0.75rem;
+  font-weight: 500;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.page :global(.thumbnailSourceButton) svg { width: 18px; height: 18px; flex-shrink: 0; }
+.page :global(.thumbnailSourceButton) svg path { stroke: currentColor; }
+.page :global(.thumbnailSourceButton:focus-visible) { outline: 2px solid var(--accentBlue2); outline-offset: 3px; }
+.page :global(.thumbnailEditorSection) { background: var(--background2); }
 .status { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; margin-block: 1.5rem; border: 1px solid var(--border1); border-radius: 1rem; background: var(--background2); color: var(--text1); }
 .body { flex: 1; min-width: 0; }
 .body strong { display: block; font-size: 0.95rem; font-weight: 500; }

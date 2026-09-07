@@ -1,3 +1,4 @@
+import { useI18n } from "~/i18n";
 import { useEffect, useRef, useState } from "react";
 
 interface ThumbnailImageProps {
@@ -7,6 +8,7 @@ interface ThumbnailImageProps {
 }
 
 export const ThumbnailImage = ({ src, alt, className }: ThumbnailImageProps) => {
+  const { t } = useI18n();
   const [displaySrc, setDisplaySrc] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [attempt, setAttempt] = useState(0);
@@ -74,12 +76,12 @@ export const ThumbnailImage = ({ src, alt, className }: ThumbnailImageProps) => 
       {isLoading && (
         <div className="thumbnailImageLoader">
           <div className="uploadSpinner tiny" />
-          <span>{attempt === 0 ? "Loading frame..." : "Retrying frame..."}</span>
+          <span>{t(attempt === 0 ? "loadingVideoPreview" : "editorRetryingFrame")}</span>
         </div>
       )}
       {hasFailed && !isLoading ? (
         <div className="thumbnailImageFallback">
-          <span>Preview unavailable right now</span>
+          <span>{t("editorPreviewUnavailable")}</span>
           <button
             type="button"
             className="thumbnailImageRetryBtn"
@@ -89,7 +91,7 @@ export const ThumbnailImage = ({ src, alt, className }: ThumbnailImageProps) => 
               setAttempt(0);
             }}
           >
-            Retry
+            {t("usersRetry")}
           </button>
         </div>
       ) : null}

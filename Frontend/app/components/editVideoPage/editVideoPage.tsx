@@ -10,6 +10,7 @@ import {
   useLayoutEffect,
   type KeyboardEvent,
   useEffect,
+  useMemo,
 } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AISVG, UploadSVG } from "~/constants";
@@ -21,6 +22,7 @@ import { EUROPEAN_LANGUAGES } from "~/constants";
 import Sidebar from "../myVideosPage/sidebar/sidebar";
 import { useConstrainedSticky } from "~/components/shared/useConstrainedSticky";
 import { useI18n } from "~/i18n";
+import statusStyles from "../uploadPage/uploadStatus.module.css";
 import CustomSelect from "~/components/customSelect/customSelect";
 
 
@@ -128,7 +130,8 @@ function getInitialThumbnailTime(video?: VideoData | null): number {
 }
 
 function EditVideoPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const languageNames = useMemo(() => new Intl.DisplayNames([locale === "sr" ? "sr-Latn" : locale], { type: "language" }), [locale]);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const videoId = searchParams.get("video");
@@ -367,7 +370,7 @@ function EditVideoPage() {
       });
 
       if (!response?.success) {
-        setError("Failed to upload video thumbnail.");
+        setError(t("editorThumbnailFailed"));
         return;
       }
 
@@ -392,7 +395,7 @@ function EditVideoPage() {
       setIsThumbnailPickerOpen(false);
     } catch (err) {
       console.error("Error uploading video thumbnail:", err);
-      setError("Failed to upload video thumbnail.");
+      setError(t("editorThumbnailFailed"));
     } finally {
       setIsUploadingThumbnail(false);
       if (thumbnailInputRef.current) {
@@ -508,7 +511,7 @@ function EditVideoPage() {
       });
 
       if (!response?.success) {
-        setError("Failed to save video thumbnail.");
+        setError(t("editorThumbnailFailed"));
         return;
       }
 
@@ -521,7 +524,7 @@ function EditVideoPage() {
       setIsThumbnailPickerOpen(false);
     } catch (err) {
       console.error("Error saving generated thumbnail:", err);
-      setError("Failed to save video thumbnail.");
+      setError(t("editorThumbnailFailed"));
     } finally {
       setIsUploadingThumbnail(false);
     }
@@ -552,7 +555,7 @@ function EditVideoPage() {
         });
 
         if (!response?.success) {
-          setError("Failed to remove video thumbnail.");
+          setError(t("editorThumbnailFailed"));
           return;
         }
 
@@ -561,7 +564,7 @@ function EditVideoPage() {
         resetThumbnailSelection();
       } catch (err) {
         console.error("Error removing video thumbnail:", err);
-        setError("Failed to remove video thumbnail.");
+        setError(t("editorThumbnailFailed"));
       } finally {
         setIsRemovingThumbnail(false);
       }
@@ -708,7 +711,7 @@ function EditVideoPage() {
       );
 
       if (!response.ok) {
-        setError(`Failed to generate ${type}. Make sure the video has English subtitles added.`);
+        setError(t("editorGenerateRequiresEnglish"));
         return;
       }
 
@@ -725,7 +728,7 @@ function EditVideoPage() {
       }
     } catch (err) {
       console.error(`Error generating ${type}:`, err);
-      setError(`Failed to generate ${type}. Please try again.`);
+      setError(t("editorGenerateFailed"));
     } finally {
       setLoading(false);
     }
@@ -758,7 +761,7 @@ function EditVideoPage() {
         setOldCaptions(captions);
         setCaptionsModified(false);
       } else if (response.status === 502) {
-        setError(t("muxTrackNotReady"));
+        setError(t("editorTrackNotReady"));
       } else if (response.status === 404) {
         setError(t("videoNotFound"));
       } else {
@@ -1056,7 +1059,7 @@ function EditVideoPage() {
   // Handle missing videoId
   if (!videoId) {
     return (
-      <main className="uploadMain">
+      <main className={`uploadMain ${statusStyles.page}`}>
         <Sidebar />
         <div className="uploadSide max-w-full! w-full">
           <h1>{t("videoEditTitle")}</h1>
@@ -1068,7 +1071,7 @@ function EditVideoPage() {
             className="cancelBtn mt-4"
             onClick={() => navigate("/my-videos")}
           >
-            Go to My Videos
+            {t("navMyVideos")}
           </button>
         </div>
       </main>
@@ -1078,7 +1081,7 @@ function EditVideoPage() {
   // Handle video not found
   if (isVideoError) {
     return (
-      <main className="uploadMain">
+      <main className={`uploadMain ${statusStyles.page}`}>
         <Sidebar />
         <div className="uploadSide max-w-full! w-full">
           <h1>{t("videoEditTitle")}</h1>
@@ -1090,7 +1093,7 @@ function EditVideoPage() {
             className="cancelBtn mt-4"
             onClick={() => navigate("/my-videos")}
           >
-            Go to My Videos
+            {t("navMyVideos")}
           </button>
         </div>
       </main>
@@ -1098,12 +1101,12 @@ function EditVideoPage() {
   }
 
   return (
-    <main className="uploadMain">
+    <main className={`uploadMain ${statusStyles.page}`}>
       <Sidebar />
       <div className="uploadSide max-w-full! w-full">
         <h1>{t("videoEditTitle")}</h1>
         <p className="mt-1 mb-3 links">
-          Make changes to your video's details, captions, and chapters.
+          {t("videoDetails")} · {t("uploadCaptionsChapters")}
         </p>
 
         {/* Error Message */}
@@ -1167,27 +1170,28 @@ function EditVideoPage() {
                     <div className="thumbnailSourceHeading">
                       <button
                         type="button"
-                        className="thumbnailPickerToggle"
+                        className="saveCaptionsBtn thumbnailSourceButton"
                         onClick={() => thumbnailInputRef.current?.click()}
                         disabled={isUploadingThumbnail || isRemovingThumbnail}
                       >
                         {UploadSVG}
-                        Select file
+                        {t("uploadSelectFile")}
                       </button>
                       <button
                         type="button"
-                        className={`thumbnailPickerToggle ${isThumbnailPickerOpen ? "active" : ""}`}
+                        className="saveCaptionsBtn thumbnailSourceButton"
+                        aria-pressed={isThumbnailPickerOpen}
                         onClick={handleToggleThumbnailPicker}
                         disabled={!canChooseVideoFrame || isUploadingThumbnail || isRemovingThumbnail}
                       >
-                        {isThumbnailPickerOpen ? "Back to image" : "Choose from video"}
+                        {isThumbnailPickerOpen ? t("editorBackToImage") : t("editorChooseFrame")}
                       </button>
                     </div>
                     <p className="formHint thumbnailPickerHint">
                       {pendingThumbnailFile
                         ? `${pendingThumbnailFile.name} · ${(pendingThumbnailFile.size / (1024 * 1024)).toFixed(2)} MB`
                         : isThumbnailPickerOpen
-                        ? "Choose a frame from the timeline, then save your thumbnail."
+                        ? t("editorChooseFrameHelp")
                         : t("imageFormatsHint")}
                     </p>
                   </div>
@@ -1224,7 +1228,7 @@ function EditVideoPage() {
                                 commitThumbnailTimeInput();
                               }
                             }}
-                            placeholder="00:00 or 00:00:00"
+                            placeholder={`00:00 ${t("uploadOr")} 00:00:00`}
                             className="thumbnailPickerTimeInput"
                           />
                         </div>
@@ -1263,15 +1267,15 @@ function EditVideoPage() {
                           <>
                             <div className="uploadSpinner tiny" />
                             {thumbnailMarkedForRemoval
-                              ? "Saving..."
+                              ? t("saving")
                               : hasPendingVideoFrame
-                              ? "Setting..."
-                              : "Uploading..."}
+                              ? t("saving")
+                              : t("saving")}
                           </>
                         ) : (
                           hasPendingVideoFrame
-                            ? "Set Frame as Thumbnail"
-                            : "Save Thumbnail"
+                            ? t("saveThumbnail")
+                            : t("saveThumbnail")
                         )}
                       </button>
                       <button
@@ -1284,7 +1288,7 @@ function EditVideoPage() {
                         }
                         className="deleteCaptionsBtn"
                       >
-                        {pendingThumbnailFile ? "Clear Selection" : "Remove Thumbnail"}
+                        {pendingThumbnailFile ? t("clearSelection") : t("removeThumbnail")}
                       </button>
                       {thumbnailModified && (
                         <button
@@ -1292,19 +1296,19 @@ function EditVideoPage() {
                           onClick={resetThumbnailSelection}
                           className="cancelBtn thumbnailCancelBtn"
                         >
-                          Cancel
+                          {t("cancel")}
                         </button>
                       )}
                     </div>
                     <p className="formHint thumbnailHint">
                       {thumbnailModified ? (
                         <span className="unsavedIndicator">
-                          • Unsaved thumbnail changes
+                          {t("editorUnsavedChanges")}
                         </span>
                       ) : displayedThumbnailUrl ? (
-                        "Upload an image or choose a video frame to change your thumbnail."
+                        t("editorThumbnailHelp")
                       ) : (
-                        "No thumbnail selected yet."
+                        t("quizNoThumbnail")
                       )}
                     </p>
                   </div>
@@ -1315,16 +1319,16 @@ function EditVideoPage() {
 
                   <div className="formGroup">
                     <label htmlFor="videoTitle">
-                      Title
+                      {t("title")}
                       <button
                         type="button"
                         onClick={() => handleGenerateWithAI("title")}
                         disabled={isGeneratingTitle}
                       >
                         {isGeneratingTitle ? (
-                          <><div className="uploadSpinner tiny" />&nbsp;Generating...</>
+                          <><div className="uploadSpinner tiny" />{t("editorGenerating")}</>
                         ) : (
-                          <>{AISVG}&nbsp;Generate with AI</>
+                          <>{AISVG}{t("editorGenerateAI")}</>
                         )}
                       </button>
                     </label>
@@ -1341,16 +1345,16 @@ function EditVideoPage() {
 
                   <div className="formGroup">
                     <label htmlFor="videoDescription">
-                      Description
+                      {t("description")}
                       <button
                         type="button"
                         onClick={() => handleGenerateWithAI("description")}
                         disabled={isGeneratingDescription}
                       >
                         {isGeneratingDescription ? (
-                          <><div className="uploadSpinner tiny" />&nbsp;Generating...</>
+                          <><div className="uploadSpinner tiny" />{t("editorGenerating")}</>
                         ) : (
-                          <>{AISVG}&nbsp;Generate with AI</>
+                          <>{AISVG}{t("editorGenerateAI")}</>
                         )}
                       </button>
                     </label>
@@ -1367,16 +1371,16 @@ function EditVideoPage() {
 
                   <div className="formGroup">
                     <label htmlFor="videoTags">
-                      Tags
+                      {t("tags")}
                       <button
                         type="button"
                         onClick={() => handleGenerateWithAI("tags")}
                         disabled={isGeneratingTags}
                       >
                         {isGeneratingTags ? (
-                          <><div className="uploadSpinner tiny" />&nbsp;Generating...</>
+                          <><div className="uploadSpinner tiny" />{t("editorGenerating")}</>
                         ) : (
-                          <>{AISVG}&nbsp;Generate with AI</>
+                          <>{AISVG}{t("editorGenerateAI")}</>
                         )}
                       </button>
                     </label>
@@ -1400,7 +1404,7 @@ function EditVideoPage() {
                         onChange={(e) => setTagInput(e.target.value)}
                         onKeyDown={handleTagKeyDown}
                         placeholder={
-                          tags.length === 0 ? "Press Enter to add tags" : ""
+                          tags.length === 0 ? t("pressEnterToAddTags") : ""
                         }
                       />
                     </div>
@@ -1410,6 +1414,7 @@ function EditVideoPage() {
                     <label htmlFor="videoVisibility">{t("visibility")}</label>
                     <CustomSelect
                       id="videoVisibility"
+                      rootClassName={statusStyles.compactSelect}
                       value={visibility}
                       onChange={(value) => setVisibility(value as "public" | "private")}
                       options={[
@@ -1421,8 +1426,8 @@ function EditVideoPage() {
                     />
                     <p className="formHint">
                       {visibility === "public"
-                        ? "Anyone can view this video."
-                        : "Only you and people you share the link with can view this video."}
+                        ? t("editorPublicHelp")
+                        : t("editorPrivateHelp")}
                     </p>
                   </div>
 
@@ -1430,7 +1435,7 @@ function EditVideoPage() {
                     <p className="formHint">
                       {detailsModified && (
                         <span className="unsavedIndicator">
-                          • Unsaved changes
+                          {t("editorUnsavedChanges")}
                         </span>
                       )}
                     </p>
@@ -1444,10 +1449,10 @@ function EditVideoPage() {
                         {isSavingDetails ? (
                           <>
                             <div className="uploadSpinner tiny" />
-                            Saving...
+                            {t("saving")}
                           </>
                         ) : (
-                          "Save Details"
+                          t("save")
                         )}
                       </button>
                     </div>
@@ -1468,7 +1473,7 @@ function EditVideoPage() {
                             onChange={handleCaptionLanguageChange}
                             options={EUROPEAN_LANGUAGES.map((lang) => ({
                               value: lang.code,
-                              label: `${lang.name} - ${lang.code}`,
+                              label: `${languageNames.of(lang.code) || lang.name} - ${lang.code}`,
                             }))}
                             ariaLabel={t("spokenLanguage")}
                             triggerClassName="languageSelect"
@@ -1486,7 +1491,7 @@ function EditVideoPage() {
                             onClick={handleGenerateCaptions}
                             className="generateAIBtn"
                           >
-                            {AISVG}&nbsp;Generate with AI
+                            {AISVG}{t("editorGenerateAI")}
                           </button>
                         )}
                       </div>
@@ -1494,7 +1499,7 @@ function EditVideoPage() {
 
                     <CaptionStatusMessage
                       status={captionStatus}
-                      language={EUROPEAN_LANGUAGES.find((language) => language.code === captionLanguage)?.name || t("autoGeneratedCaptions")}
+                      language={captionLanguage === "auto" ? t("autoGeneratedCaptions") : languageNames.of(captionLanguage) || captionLanguage}
                     />
 
                     {(captionStatus === "available" || captionStatus === "not_available") && (
@@ -1509,11 +1514,11 @@ function EditVideoPage() {
                         />
                         <div className="captionsActions">
                           <p className="formHint">
-                            Supports VTT format
+                            {t("editorVttSupport")}
                             {captionsModified && (
                               <span className="unsavedIndicator">
                                 {" "}
-                                • Unsaved changes
+                                {t("editorUnsavedChanges")}
                               </span>
                             )}
                           </p>
@@ -1527,10 +1532,10 @@ function EditVideoPage() {
                               {isSavingCaptions ? (
                                 <>
                                   <div className="uploadSpinner tiny" />
-                                  Saving...
+                                  {t("saving")}
                                 </>
                               ) : (
-                                "Save Captions"
+                                t("save")
                               )}
                             </button>
                             <button
@@ -1542,10 +1547,10 @@ function EditVideoPage() {
                               {isDeletingCaptions ? (
                                 <>
                                   <div className="uploadSpinner tiny" />
-                                  Deleting...
+                                  {t("editorDeleting")}
                                 </>
                               ) : (
-                                "Delete Captions"
+                                t("delete")
                               )}
                             </button>
                           </div>
@@ -1561,7 +1566,7 @@ function EditVideoPage() {
 
                   <div className="formGroup">
                     <ContributorSearch
-                      label="Speakers"
+                      label={t("speakersTitle")}
                       selectedContributors={speakers}
                       onAdd={(contributor) =>
                         handleContributorAdd({ new: contributor })
@@ -1571,7 +1576,7 @@ function EditVideoPage() {
                     />
 
                     <ContributorSearch
-                      label="Chairs"
+                      label={t("chairsTitle")}
                       selectedContributors={chairs}
                       onAdd={(contributor) =>
                         handleContributorAdd({ type: true, new: contributor })
@@ -1586,7 +1591,7 @@ function EditVideoPage() {
                       <p className="formHint">
                         {speakersOrChairsModified && (
                           <span className="unsavedIndicator">
-                            • Unsaved changes
+                            {t("editorUnsavedChanges")}
                           </span>
                         )}
                       </p>
@@ -1603,10 +1608,10 @@ function EditVideoPage() {
                           {isSavingContributors ? (
                             <>
                               <div className="uploadSpinner tiny" />
-                              Saving...
+                              {t("saving")}
                             </>
                           ) : (
-                            "Save Speakers & Chairs"
+                            t("save")
                           )}
                         </button>
                       </div>
@@ -1627,20 +1632,20 @@ function EditVideoPage() {
                           isGeneratingChapters || captionStatus !== "available"
                         }
                       >
-                        {AISVG}&nbsp;Generate with AI
+                        {AISVG}{t("editorGenerateAI")}
                       </button>
                     </label>
                     <div className="chaptersContainer">
                       {isGeneratingChapters ? (
                         <div className="captionsLoadingState">
                           <div className="uploadSpinner small" />
-                          <p>Generating chapters...</p>
+                          <p>{t("uploadPhase_generating_chapters")}</p>
                         </div>
                       ) : chapters.length === 0 ? (
                         <p className="noChapters">
                           {captionStatus !== "available"
-                            ? "Captions are required to generate chapters."
-                            : "No chapters. Click 'Generate with AI' to create chapters or add them manually."}
+                            ? t("editorChaptersRequireCaptions")
+                            : t("editorNoChapters")}
                         </p>
                       ) : (
                         chapters.map((chapter, index) => (
@@ -1678,14 +1683,14 @@ function EditVideoPage() {
                         className="addChapterBtn"
                         onClick={addChapter}
                       >
-                        + Add Chapter
+                        {t("editorAddChapter")}
                       </button>
                     </div>
                     <div className="captionsActions">
                       <p className="formHint">
                         {chaptersModified && (
                           <span className="unsavedIndicator">
-                            • Unsaved changes
+                            {t("editorUnsavedChanges")}
                           </span>
                         )}
                       </p>
@@ -1699,10 +1704,10 @@ function EditVideoPage() {
                           {isSavingChapters ? (
                             <>
                               <div className="uploadSpinner tiny" />
-                              Saving...
+                              {t("saving")}
                             </>
                           ) : (
-                            "Save Chapters"
+                            t("save")
                           )}
                         </button>
                       </div>
@@ -1722,10 +1727,10 @@ function EditVideoPage() {
             className="cancelBtn"
             onClick={() => navigate("/my-videos")}
           >
-            Back to My Videos
+            {t("navMyVideos")}
           </button>
           <Link to={`/video/${videoId}`} className="uploadBtn">
-            View Video
+            {t("editorWatchVideo")}
           </Link>
         </section>
       </div>

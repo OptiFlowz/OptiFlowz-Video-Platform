@@ -1,3 +1,4 @@
+import { useI18n } from "~/i18n";
 import { useState, useRef, useEffect, useLayoutEffect, memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchFn } from "~/API";
@@ -21,8 +22,9 @@ function ContributorSearch({
   selectedContributors,
   onAdd,
   onRemove,
-  placeholder = "Search contributors...",
+  placeholder,
 }: ContributorSearchProps) {
+  const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -116,7 +118,7 @@ function ContributorSearch({
               setIsOpen(true);
             }}
             onFocus={() => setIsOpen(true)}
-            placeholder={selectedContributors.length === 0 ? placeholder : ""}
+            placeholder={selectedContributors.length === 0 ? (placeholder ?? t("searchPlaceholder")) : ""}
             className="contributorInput"
           />
         </div>
@@ -124,7 +126,7 @@ function ContributorSearch({
         {isOpen && debouncedQuery.length >= 2 && (
           <div className="contributorDropdown">
             {isLoading ? (
-              <div className="dropdownItem loading">Searching...</div>
+              <div className="dropdownItem loading">{t("editorSearching")}</div>
             ) : filteredResults.length > 0 ? (
               filteredResults.map((person) => (
                 <button
@@ -144,7 +146,7 @@ function ContributorSearch({
                 </button>
               ))
             ) : (
-              <div className="dropdownItem noResults">No results found</div>
+              <div className="dropdownItem noResults">{t("noResultsTitle")}</div>
             )}
           </div>
         )}

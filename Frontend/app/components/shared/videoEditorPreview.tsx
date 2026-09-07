@@ -150,10 +150,10 @@ export const VideoEditorPreview = ({
         )}
       </div>
       <div className="videoPreviewInfo">
-        <h3 className="videoPreviewTitle">{title || "Untitled Video"}</h3>
+        <h3 className="videoPreviewTitle">{title || t("editorUntitledVideo")}</h3>
         {videoData?.duration_seconds && (
           <p className="videoPreviewDuration">
-            Duration: {formatSecondsToTimestamp(videoData?.duration_seconds)}
+            {t("editorDuration", { time: formatSecondsToTimestamp(videoData.duration_seconds) })}
           </p>
         )}
       </div>
