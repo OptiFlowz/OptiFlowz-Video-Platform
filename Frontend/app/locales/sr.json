@@ -1008,6 +1008,7 @@
   "searchViewVideos": "Pogledaj videe",
   "searchResultCount": {
     "select": "count",
+    "rule": "cardinal",
     "one": "{{param.count}} rezultat",
     "few": "{{param.count}} rezultata",
     "other": "{{param.count}} rezultata"
