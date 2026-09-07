@@ -574,8 +574,9 @@ function VideoInfo({
                     ) : null}
                 </div>
 
-                {props?.chapters?.length > 0 && (
+                {props && (
                     <div className="videoPanelActions">
+                        {props.chapters?.length > 0 && (
                         <button className="viewVideoChapters noHover"
                             onMouseEnter={() => setIsHoveringTags(true)}
                             onMouseLeave={() => setIsHoveringTags(false)}
@@ -591,6 +592,7 @@ function VideoInfo({
                             <p>{t("videoChapterCount", { count: props?.chapters?.length || 0 })} {ArrowSVG}</p>
                         </button>
 
+                        )}
                         <button className="viewVideoChapters viewVideoTranscript noHover"
                             onMouseEnter={() => setIsHoveringTags(true)}
                             onMouseLeave={() => setIsHoveringTags(false)}

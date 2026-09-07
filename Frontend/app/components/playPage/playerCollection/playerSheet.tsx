@@ -1,3 +1,5 @@
+import { isolatePlayerSheet, isActivePlayerSheet } from "./sheetAccessibility";
+import { scrollWithinPlayerSheet } from "./sheetScroll";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 const mobileQuery = "(max-width: 500px)";
@@ -52,12 +54,14 @@ type Gesture = {
   scrollContainers: HTMLElement[];
 };
 
-export default function PlayerSheet({ className = "", onClose, header, children }: {
+export default function PlayerSheet({ className = "", label, onClose, header, children }: {
   className?: string;
+  label: string;
   onClose: () => void;
   header: (close: () => void) => ReactNode;
   children: ReactNode;
 }) {
+  const previousFocusRef = useRef<Element | null>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
@@ -88,7 +92,12 @@ export default function PlayerSheet({ className = "", onClose, header, children 
         ? playerRect : anchor?.getBoundingClientRect();
       const viewport = window.visualViewport;
       const viewportBottom = viewport ? viewport.offsetTop + viewport.height : window.innerHeight;
-      const top = Math.max(0, Math.min(rect?.bottom ?? pageHeader?.getBoundingClientRect().bottom ?? 0, viewportBottom));
+      let top = Math.max(0, Math.min(rect?.bottom ?? pageHeader?.getBoundingClientRect().bottom ?? 0, viewportBottom));
+      const focused = document.activeElement;
+      if (focused instanceof HTMLElement && sheetRef.current?.contains(focused) && focused.matches("input, textarea, [contenteditable='true']")) {
+        top = Math.min(top, Math.max(viewport?.offsetTop ?? 0, viewportBottom - 240));
+        requestAnimationFrame(() => scrollWithinPlayerSheet(focused));
+      }
       const height = Math.max(0, viewportBottom - top);
       setBounds(previous => previous?.top === top && previous.height === height ? previous : { top, height });
     };
@@ -97,6 +106,8 @@ export default function PlayerSheet({ className = "", onClose, header, children 
     for (const element of [anchor, player, pageHeader]) if (element) resizeObserver.observe(element);
     const positionObserver = new MutationObserver(update);
     if (player) positionObserver.observe(player, { attributes: true, attributeFilter: ["style", "class"] });
+    document.addEventListener("focusin", update);
+    document.addEventListener("focusout", update);
     window.addEventListener("resize", update);
     window.addEventListener("scroll", update, true);
     window.visualViewport?.addEventListener("resize", update);
@@ -105,6 +116,8 @@ export default function PlayerSheet({ className = "", onClose, header, children 
     return () => {
       resizeObserver.disconnect();
       positionObserver.disconnect();
+      document.removeEventListener("focusin", update);
+      document.removeEventListener("focusout", update);
       window.removeEventListener("resize", update);
       window.removeEventListener("scroll", update, true);
       window.visualViewport?.removeEventListener("resize", update);
@@ -137,6 +150,7 @@ export default function PlayerSheet({ className = "", onClose, header, children 
   const mobile = bounds !== null;
   useLayoutEffect(() => {
     if (!mobile) return;
+    previousFocusRef.current = document.activeElement;
     return lockPageScroll();
   }, [mobile]);
 
@@ -145,19 +159,33 @@ export default function PlayerSheet({ className = "", onClose, header, children 
     const sheet = sheetRef.current;
     const content = sheet?.querySelector<HTMLElement>(":scope > .similar");
     if (!sheet || !content) return;
-    const previousFocus = document.activeElement;
     const previousTabIndex = content.getAttribute("tabindex");
     content.tabIndex = -1;
     content.focus({ preventScroll: true });
     return () => {
       if (previousTabIndex === null) content.removeAttribute("tabindex");
       else content.setAttribute("tabindex", previousTabIndex);
-      if (previousFocus instanceof HTMLElement && previousFocus.isConnected &&
-          (sheet.contains(document.activeElement) || document.activeElement === document.body)) {
-        previousFocus.focus({ preventScroll: true });
-      }
     };
   }, [mobile, open]);
+
+  useEffect(() => {
+    const sheet = sheetRef.current;
+    if (!mobile || !sheet) return;
+    const release = isolatePlayerSheet(sheet);
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!isActivePlayerSheet(sheet) || event.defaultPrevented || event.key !== "Escape" || document.querySelector("[role='dialog']")) return;
+      event.preventDefault();
+      close();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      const shouldRestore = sheet.contains(document.activeElement) || document.activeElement === document.body;
+      release();
+      const previousFocus = previousFocusRef.current;
+      if (shouldRestore && previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus({ preventScroll: true });
+    };
+  }, [mobile, close]);
 
   useEffect(() => {
     const sheet = sheetRef.current;
@@ -295,7 +323,7 @@ export default function PlayerSheet({ className = "", onClose, header, children 
   } : undefined;
 
   return (
-    <div ref={sheetRef} className={`sidePlaylists playerSheet ${className} ${open ? "" : "closed"} ${dragging ? "is-dragging" : ""}`} style={style}>
+    <div ref={sheetRef} role="region" aria-label={label} className={`sidePlaylists playerSheet ${className} ${open ? "" : "closed"} ${dragging ? "is-dragging" : ""}`} style={style}>
       <div className="playlistHeader">
         <div className="playerSheetHandle" aria-hidden="true"><span /></div>
         {header(close)}

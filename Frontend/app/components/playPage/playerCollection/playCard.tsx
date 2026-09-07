@@ -23,11 +23,11 @@ function PlayCard({props, playedVideoId, playlistId, nextVideo} : {props: PlayCa
     const videoLink = `${props?.id}${params.toString() ? `?${params.toString()}` : ""}`;
 
     return (
-        <Link to={`/video/${videoLink}`} className={`${props?.id == playedVideoId ? "active" : props?.id == nextVideo?.id ? "nextVideo" : ""} playCard flex gap-4 items-center rounded-xl transition-all hover:cursor-pointer`} onMouseEnter={() => setIsHovered(true)}
+        <Link to={`/video/${videoLink}`} className={`${props?.id == playedVideoId ? "active" : props?.id == nextVideo?.id ? "nextVideo" : ""} playCard flex gap-4 items-center rounded-xl transition-all hover:cursor-pointer`} onMouseEnter={() => { if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) setIsHovered(true); }}
             onMouseLeave={() => setIsHovered(false)}>
             <span className="banner relative w-[50%]">
-                {animGifUrl && <img className={isHovered ? "z-[-1] absolute top-0 left-0" : "z-0 absolute top-0 left-0"} src={animGifUrl} alt="Thumbnail preview" onLoad={() => setLoadedPreview(animGifUrl)} onError={() => setLoadedPreview(undefined)} />}
-                <img className={showPreview ? "z-0 relative opacity-0" : "z-1 relative opacity-100"} src={newThumbnailUrl} alt="Thumbnail" />
+                {isHovered && animGifUrl && <img className={isHovered ? "z-[-1] absolute top-0 left-0" : "z-0 absolute top-0 left-0"} src={animGifUrl} alt="Thumbnail preview" onLoad={() => setLoadedPreview(animGifUrl)} onError={() => setLoadedPreview(undefined)} />}
+                <img loading="lazy" decoding="async" className={showPreview ? "z-0 relative opacity-0" : "z-1 relative opacity-100"} src={newThumbnailUrl} alt="Thumbnail" />
 
                 <p className={"absolute bottom-1.75 right-1.75 z-2" + (isWatched ? " watched" : "")}>{formatDuration(props?.duration_seconds)}</p>
 

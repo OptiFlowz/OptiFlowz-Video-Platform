@@ -1,4 +1,5 @@
 {
+  "resumePlaybackFollow": "Follow playback",
   "accessLoadFailed": "Unable to load your access permissions. Please try again.",
   "usersAllRoles": "All roles",
   "usersRoleFilter": "Filter by role",

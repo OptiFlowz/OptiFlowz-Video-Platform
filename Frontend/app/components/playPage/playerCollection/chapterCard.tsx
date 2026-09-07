@@ -33,11 +33,12 @@ function ChapterCard({
         isActive ? "active" : ""
       }`}
       onClick={setPlayerTime}
+      onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setPlayerTime(); } }}
       role="button"
       tabIndex={0}
     >
       <span className="banner relative w-[50%]">
-        <img className="z-1 relative opacity-100" src={props.thumbnail_url || DefaultThumbnail} alt="" />
+        <img loading="lazy" decoding="async" className="z-1 relative opacity-100" src={props.thumbnail_url || DefaultThumbnail} alt="" />
       </span>
 
       <span className="info flex flex-col gap-1">

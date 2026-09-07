@@ -1,4 +1,4 @@
-import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, useId } from "react";
 import { ChaptersSVG, CloseSVG, TranscriptSVG } from "~/constants";
 import { env } from "~/env";
 import { formatDuration, getToken } from "~/functions";
@@ -28,16 +28,40 @@ function VideoChapters({
 }) {
   const { t } = useI18n();
   const [playerTime, setPlayerTime] = useState(0);
-  const [activeView, setActiveView] = useState<PanelView>(initialView);
+  const [activeView, setActiveView] = useState<PanelView>(props.chapters?.length ? initialView : "transcript");
   const [transcriptCues, setTranscriptCues] = useState<TranscriptCue[]>([]);
   const [transcriptStatus, setTranscriptStatus] = useState<TranscriptStatus>("loading");
   const [transcriptLanguage, setTranscriptLanguage] = useState("en");
 
+  const tabId = useId();
+  const [following, setFollowing] = useState(true);
+  const followingRef = useRef(true);
+  const resumeFollowing = () => {
+    followingRef.current = true;
+    lastActiveChapterRef.current = -1;
+    lastActiveCueRef.current = -1;
+    setFollowing(true);
+    holderRef.current?.focus({ preventScroll: true });
+  };
   const holderRef = useRef<HTMLDivElement>(null);
   const lastActiveChapterRef = useRef<number>(-1);
   const lastActiveCueRef = useRef<number>(-1);
   const transcriptLanguageRef = useRef("en");
   const fullTranscriptLanguageRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const sheet = holderRef.current?.closest(".playerSheet");
+    const pause = (event: Event) => {
+      if (event.target instanceof Element && event.target.closest(".sheetFollowButton")) return;
+      if (event instanceof KeyboardEvent && !["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)) return;
+      followingRef.current = false;
+      setFollowing(false);
+      const holder = holderRef.current;
+      if (holder) holder.scrollTo({ top: holder.scrollTop, behavior: "instant" });
+    };
+    for (const type of ["pointerdown", "touchstart", "wheel", "keydown"]) sheet?.addEventListener(type, pause, { capture: true, passive: true });
+    return () => { for (const type of ["pointerdown", "touchstart", "wheel", "keydown"]) sheet?.removeEventListener(type, pause, true); };
+  }, []);
 
   useEffect(() => {
     const handlePlayerTime = (event: Event) => {
@@ -160,7 +184,7 @@ function VideoChapters({
 
   useLayoutEffect(() => {
     const holder = holderRef.current;
-    if (!holder || activeView !== "chapters" || activeChapterIndex < 0) return;
+    if (!followingRef.current || !holder || activeView !== "chapters" || activeChapterIndex < 0) return;
     if (lastActiveChapterRef.current === activeChapterIndex) return;
 
     lastActiveChapterRef.current = activeChapterIndex;
@@ -171,13 +195,13 @@ function VideoChapters({
     const elementBounds = activeElement.getBoundingClientRect();
     holder.scrollTo({
       top: elementBounds.top - holderBounds.top + holder.scrollTop - 15,
-      behavior: "smooth",
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
     });
-  }, [activeChapterIndex, activeView]);
+  }, [activeChapterIndex, activeView, following]);
 
   useLayoutEffect(() => {
     const holder = holderRef.current;
-    if (!holder || activeView !== "transcript" || activeCueIndex < 0) return;
+    if (!followingRef.current || !holder || activeView !== "transcript" || activeCueIndex < 0) return;
     if (lastActiveCueRef.current === activeCueIndex) return;
 
     lastActiveCueRef.current = activeCueIndex;
@@ -188,14 +212,14 @@ function VideoChapters({
     const elementBounds = activeElement.getBoundingClientRect();
     holder.scrollTo({
       top: elementBounds.top - holderBounds.top + holder.scrollTop - 15,
-      behavior: "smooth",
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
     });
-  }, [activeCueIndex, activeView]);
+  }, [activeCueIndex, activeView, following]);
 
-  if (chapters.length === 0) return null;
 
   const selectView = (view: PanelView) => {
     setActiveView(view);
+    resumeFollowing();
     holderRef.current?.scrollTo({ top: 0 });
     if (view === "transcript") window.dispatchEvent(new Event(TRANSCRIPT_REQUEST_EVENT));
   };
@@ -205,7 +229,7 @@ function VideoChapters({
   };
 
   return (
-    <PlayerSheet className="sideChapters" onClose={onClose} header={handleClose => (<>
+    <PlayerSheet label={t("inThisVideo")} className="sideChapters" onClose={onClose} header={handleClose => (<>
         <span className="titleBar">
           <h2>{t("inThisVideo")}</h2>
           <button onClick={handleClose} aria-label={t("close")}>
@@ -214,20 +238,27 @@ function VideoChapters({
         </span>
 
         <span className="tagsHolder inVideoTabs">
-          <span className="tags" role="tablist" aria-label={t("inThisVideo")}>
-            <button type="button" className={activeView === "chapters" ? "whiteTag" : ""} role="tab" aria-selected={activeView === "chapters"} onClick={() => selectView("chapters")}>
+          <span className="tags" role="tablist" aria-label={t("inThisVideo")} onKeyDown={event => {
+            if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+            event.preventDefault();
+            const view = !chapters.length || event.key === "End" ? "transcript" : event.key === "Home" ? "chapters" : activeView === "chapters" ? "transcript" : "chapters";
+            selectView(view);
+            document.getElementById(`${tabId}-${view}`)?.focus();
+          }}>
+            {chapters.length > 0 && <button id={`${tabId}-chapters`} aria-controls={`${tabId}-panel`} tabIndex={activeView === "chapters" ? 0 : -1} type="button" className={activeView === "chapters" ? "whiteTag" : ""} role="tab" aria-selected={activeView === "chapters"} onClick={() => selectView("chapters")}>
               {ChaptersSVG}
               {t("chapters")}
-            </button>
-            <button type="button" className={activeView === "transcript" ? "whiteTag" : ""} role="tab" aria-selected={activeView === "transcript"} onClick={() => selectView("transcript")}>
+            </button>}
+            <button id={`${tabId}-transcript`} aria-controls={`${tabId}-panel`} tabIndex={activeView === "transcript" ? 0 : -1} type="button" className={activeView === "transcript" ? "whiteTag" : ""} role="tab" aria-selected={activeView === "transcript"} onClick={() => selectView("transcript")}>
               {TranscriptSVG}
               {t("transcript")}
             </button>
           </span>
         </span>
+        {!following && <button type="button" className="sheetFollowButton" onClick={resumeFollowing}>{t("resumePlaybackFollow")}</button>}
       </>)}>
 
-      <div className="similar" ref={holderRef} role="tabpanel">
+      <div className="similar" ref={holderRef} id={`${tabId}-panel`} role="tabpanel" tabIndex={0} aria-labelledby={`${tabId}-${activeView}`}>
         {activeView === "chapters" ? (
           <div className="holder">{chaptersArray}</div>
         ) : (

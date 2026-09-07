@@ -4,7 +4,7 @@ import Similar from "./playerCollection/similar";
 import VideoInfo from "./playerCollection/videoInfo";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchFn } from "~/API";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { SimilarT, VideoT } from "~/types";
 import InPlaylist from "./inPlaylist";
 import PlayingPlaylist from "./playerCollection/playingPlaylist";
@@ -202,13 +202,17 @@ function PlayPage(){
     }, []);
 
     useEffect(() => {
-        const handler = () => {
-            setChapterPanelView("chapters");
-            setShowChapters(true);
-        };
+        const handler = () => openChapters();
         window.addEventListener("open-chapter-menu", handler);
         return () => window.removeEventListener("open-chapter-menu", handler);
-    }, []);
+    }, [playlistId, location.pathname, location.search, navigate]);
+
+    useLayoutEffect(() => {
+        if (playlistId) {
+            setShowChapters(false);
+            setShowComments(false);
+        }
+    }, [playlistId]);
 
     useEffect(() => {
         if (showChapters) {
@@ -276,9 +280,9 @@ function PlayPage(){
                     </div>
 
                     <div className={`relevant flex flex-col gap-7 ${isCompactRelevant ? "relevant--compact" : ""}`}>
-                        {showChapters && videoData ? <div ref={chaptersRef}><VideoChapters key={chapterPanelView} props={videoData} initialView={chapterPanelView} onClose={() => handleCloseChapters()} /></div> : ""}
+                        {showChapters && videoData ? <div ref={chaptersRef}><VideoChapters key={`${videoId}-${chapterPanelView}`} props={videoData} initialView={chapterPanelView} onClose={() => handleCloseChapters()} /></div> : ""}
                         {showComments && videoId ? <CommentsSection videoId={videoId} variant="drawer" onClose={() => handleCloseComments()} /> : ""}
-                        {playlistId ? <div ref={playlistRef}><PlayingPlaylist playlistId={playlistId} videoId={videoId || ""} onClose={() => handleClose()} /></div> : ""}
+                        {playlistId ? <div ref={playlistRef}><PlayingPlaylist key={playlistId} playlistId={playlistId} videoId={videoId || ""} onClose={() => handleClose()} /></div> : ""}
                         <Similar props={resolvedSimilarData} isLoading={isLoadingSimilar} />
                     </div>
                 </>
@@ -300,8 +304,8 @@ function PlayPage(){
                             </div>
 
                             <div className={`relevant flex flex-col gap-7 ${isCompactRelevant ? "relevant--compact" : "min-w-110"}`}>
-                                {showChapters && videoData ? <div ref={chaptersRef}><VideoChapters key={chapterPanelView} props={videoData} initialView={chapterPanelView} onClose={() => handleCloseChapters()} /></div> : ""}
-                                {playlistId ? <div ref={playlistRef}><PlayingPlaylist playlistId={playlistId} videoId={videoId || ""} onClose={() => handleClose()} /></div> : ""}
+                                {showChapters && videoData ? <div ref={chaptersRef}><VideoChapters key={`${videoId}-${chapterPanelView}`} props={videoData} initialView={chapterPanelView} onClose={() => handleCloseChapters()} /></div> : ""}
+                                {playlistId ? <div ref={playlistRef}><PlayingPlaylist key={playlistId} playlistId={playlistId} videoId={videoId || ""} onClose={() => handleClose()} /></div> : ""}
                                 <Similar props={resolvedSimilarData} isLoading={isLoadingSimilar} />
                             </div> 
                         </div>

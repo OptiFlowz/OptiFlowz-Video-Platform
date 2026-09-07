@@ -1,4 +1,5 @@
 {
+  "resumePlaybackFollow": "再生に追従",
   "accessLoadFailed": "アクセス許可を読み込めません。もう一度試してください。",
   "usersAllRoles": "すべての役割",
   "usersRoleFilter": "役割でフィルタリングする",

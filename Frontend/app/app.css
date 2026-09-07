@@ -215,7 +215,7 @@ header > div {
 }
 
 header nav {
-  gap: 1.35rem !important;
+  gap: 0.4rem !important;
 }
 
 header nav a {
@@ -239,10 +239,16 @@ header .logo {
 }
 
 header .logo h3,
-header .logo p,
 header .darkSVG,
 header .darkSVG p {
   color: var(--text1);
+}
+
+header .logo p {
+  color: var(--text2);
+  /* Gabarito starts at 400; use the system face for a lighter subtitle. */
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-weight: 300;
 }
 
 header .darkSVG svg path {
@@ -748,18 +754,18 @@ header nav a {
 header > div > a svg path {
   fill: var(--accentBlue2);
 }
-header nav a:hover{
-  filter: brightness(0.8);
+header nav a { padding: 9px 14px; border-radius: var(--bR); }
+header nav a:hover, header nav a:focus-visible {
+  background: var(--background2);
+  color: var(--accentBlue2);
+  filter: none;
 }
 header nav a.active {
   font-weight: 700;
-  text-decoration: underline;
-  text-underline-offset: 10px;
-  text-decoration-thickness: 2px;
-  text-decoration-color: var(--accentOrange);
-}
-header nav a:hover{
-  color: var(--accentOrange);
+  background: var(--background2);
+  box-shadow: inset 0 0 0 1px var(--border1);
+  color: var(--accentBlue2);
+  text-decoration: none;
 }
 
 .mobileMenuBg{
@@ -15218,3 +15224,7 @@ main.managementPage td .visibility svg path { stroke: currentColor; }
   .managementRowActions { gap: .35rem; }
   .managementRowActions button, .managementRowActions a { width: 34px; height: 34px; }
 }
+
+.sheetState { padding: 1rem; display: flex; flex-direction: column; align-items: flex-start; gap: 1rem; }
+.sheetFollowButton { position: absolute; bottom: max(1rem, env(safe-area-inset-bottom)); right: 1rem; max-width: calc(100% - 2rem); z-index: 1; border: 1px solid var(--border1); padding: 6px 12px; border-radius: var(--bR); background: var(--accentBlue); color: var(--text1); }
+.playerSheet :focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: -2px; }

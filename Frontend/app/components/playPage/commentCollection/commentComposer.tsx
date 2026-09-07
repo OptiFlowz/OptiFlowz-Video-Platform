@@ -1,3 +1,4 @@
+import { scrollWithinPlayerSheet } from "../playerCollection/sheetScroll";
 import { useRef, type RefObject } from "react";
 import { CommentSendSVG } from "~/constants";
 import type { VideoCommentT } from "~/types";
@@ -36,7 +37,7 @@ function CommentComposer({
 
   const handleReplyClick = () => {
       if(scrollBackTo){
-        scrollBackTo.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (!scrollWithinPlayerSheet(scrollBackTo)) scrollBackTo.scrollIntoView({ behavior: "smooth", block: "center" });
         const commentParent = (scrollBackTo.parentElement?.parentElement?.parentElement as HTMLDivElement);
 
         const observer = new IntersectionObserver((entries) => {

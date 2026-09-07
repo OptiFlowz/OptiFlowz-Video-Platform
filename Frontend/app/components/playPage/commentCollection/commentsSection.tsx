@@ -1,3 +1,4 @@
+import { scrollWithinPlayerSheet } from "../playerCollection/sheetScroll";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -43,6 +44,7 @@ import {
 function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSectionProps) {
   const { t } = useI18n();
   const queryClient = useQueryClient();
+  const sectionRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement | null>(null);
   const focusResetTimeoutRef = useRef<number | null>(null);
   const userProfileImage = getUserImageUrl() || DefaultProfile;
@@ -297,9 +299,10 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
   };
 
   const scrollToComment = (commentId: string) => {
-    const target = document.querySelector(`[data-comment-id="${commentId}"]`) as HTMLElement | null;
+    const target = sectionRef.current?.querySelector(`[data-comment-id="${CSS.escape(commentId)}"]`) as HTMLElement | null;
     if (!target) return false;
 
+    if (scrollWithinPlayerSheet(target, "start")) { highlightComment(commentId); return true; }
     const header = document.querySelector("header");
     const headerHeight = header instanceof HTMLElement ? header.getBoundingClientRect().height : 0;
     const absoluteTop = window.scrollY + target.getBoundingClientRect().top;
@@ -367,7 +370,13 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
       const textarea = taRef.current;
       const header = document.querySelector("header");
 
-      if (!textarea || !header) return;
+      if (!textarea) return;
+      if (scrollWithinPlayerSheet(textarea)) {
+        textarea.focus({ preventScroll: true });
+        autoResize();
+        return;
+      }
+      if (!header) return;
 
       const textareaRect = textarea.getBoundingClientRect();
       const headerRect = header.getBoundingClientRect();
@@ -507,7 +516,7 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
   const isDeletePending = (commentId: string) => deleteMutation.isPending && deleteMutation.variables?.id === commentId;
 
   const content = (
-    <div className={`flex flex-col ${variant === "drawer" ? "" : "p-3.75 bg-(--background2)! rounded-2xl!"}`}>
+    <div ref={sectionRef} className={`flex flex-col ${variant === "drawer" ? "" : "p-3.75 bg-(--background2)! rounded-2xl!"}`}>
       <div className="collection-header comments-header px-0! h-auto!">
         <h2 className="mb-2 text-lg font-semibold max-[500px]:text-md max-[500px]:ml-6">{t("commentCount", { count: totalCount })}</h2>
       </div>
@@ -590,7 +599,7 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
 
   if (variant === "drawer") {
     return (
-      <PlayerSheet className="sideComments" onClose={() => { setMobileThreadStack([]); onClose?.(); }} header={handleClose => (<>
+      <PlayerSheet label={t("comments")} className="sideComments" onClose={() => { setMobileThreadStack([]); onClose?.(); }} header={handleClose => (<>
           <span className="titleBar">
             <h2 className="flex items-center gap-2 mt-1">{CommentSVG}{t("comments")}</h2>
             <button onClick={handleClose} aria-label={t("close")}>
