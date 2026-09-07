@@ -1,3 +1,4 @@
+import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import type { VideoT } from "~/types";
 import { useCallback, useEffect, useMemo } from "react";
 import { usePersistentVideo } from "~/components/persistentVideo/persistentVideoProvider";
@@ -11,7 +12,6 @@ function PlayerCollection({
   startTimeOverride?: number | null;
   forceAutoplay?: boolean;
 }) {
-  const streamUrl = props?.mux_playback_id;
   const { activate, setAnchor } = usePersistentVideo();
 
   const anchorRef = useCallback(
@@ -34,7 +34,7 @@ function PlayerCollection({
     return ""; // može i "EAES" ako želiš
   }, [props?.people, props?.uploader_name]);
 
-  const artworkUrl = props?.thumbnail_url || "";
+  const artworkUrl = getVideoThumbnail(props) || "";
 
   useEffect(() => {
     if (!("mediaSession" in navigator)) return;
@@ -63,7 +63,7 @@ function PlayerCollection({
   }, [props?.title, speakers, artworkUrl]);
 
   useEffect(() => {
-    if (!props || !streamUrl) return;
+    if (!props?.id) return;
 
     activate({
       video: props,
@@ -71,7 +71,7 @@ function PlayerCollection({
       forceAutoplay,
       returnHref: `${window.location.pathname}${window.location.search}`,
     });
-  }, [activate, forceAutoplay, props, startTimeOverride, streamUrl]);
+  }, [activate, forceAutoplay, props, startTimeOverride]);
 
   return (
     <div ref={anchorRef} className={`player ${props?.class ?? ""}`}>

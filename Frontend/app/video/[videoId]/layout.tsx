@@ -1,3 +1,4 @@
+import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import type { Metadata } from "next";
 import { cache } from "react";
 import type { VideoT } from "~/types";
@@ -15,12 +16,6 @@ const getVideo = cache((id: string) =>
 
 const getPeopleByRole = (video: VideoT, role: 0 | 1) =>
   (video.people || []).filter((person) => Number(person.type) === role);
-
-const getVideoThumbnail = (video: VideoT) =>
-  video.thumbnail_url ||
-  (video.mux_playback_id
-    ? `https://image.mux.com/${video.mux_playback_id}/thumbnail.jpg?width=1280&height=720&fit_mode=preserve`
-    : null);
 
 const unique = (values: Array<string | null | undefined>) =>
   Array.from(
@@ -111,9 +106,6 @@ export async function generateMetadata({ params }: Omit<Props, "children">): Pro
       images: thumbnail
         ? [{ url: thumbnail, width: 1280, height: 720, alt: `${video.title} — video thumbnail` }]
         : metadata.openGraph?.images,
-      videos: video.stream_url
-        ? [{ url: video.stream_url, secureUrl: video.stream_url, type: "application/x-mpegURL" }]
-        : undefined,
     },
     other: {
       "video:duration": Math.max(0, Math.round(Number(video.duration_seconds) || 0)),
@@ -146,7 +138,6 @@ export default async function VideoLayout({ children, params }: Props) {
         datePublished: video.published_at || video.created_at,
         dateModified: video.updated_at || undefined,
         duration: toIsoDuration(video.duration_seconds),
-        contentUrl: video.stream_url || undefined,
         embedUrl: canonicalUrl,
         url: canonicalUrl,
         keywords: (video.tags || []).join(", ") || undefined,

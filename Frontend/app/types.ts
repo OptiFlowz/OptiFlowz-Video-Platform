@@ -1,6 +1,9 @@
+import type { VideoMedia } from "./components/shared/videoMedia";
+
 export type VPreviewProps = {
     id?: string,
     thumbnail: string,
+    preview_url?: string | null,
     progress_seconds: number,
     percentage_watched: number,
     title: string,
@@ -41,7 +44,8 @@ export type CategoryT = {
 
 export type ChapterT = {
     title: string,
-    startTime: number
+    startTime: number,
+    thumbnail_url?: string | null
 }
 
 export type VideoPlaylistT = {
@@ -54,7 +58,7 @@ export type VideoPlaylistT = {
     status?: "private" | "public"
 }
 
-export type VideoT = {
+export type VideoT = VideoMedia & {
     categories: CategoryT[],
     comment_count?: number,
     created_at: string,
@@ -66,11 +70,9 @@ export type VideoT = {
     percentage_watched: number,
     progress_seconds: number,
     published_at: string,
-    stream_url: string,
-    mux_playback_id: string,
+    mux_playback_id?: string,
     chapters: ChapterT[],
     tags: string[],
-    thumbnail_url: string,
     title: string,
     updated_at: string,
     uploader_name: string,
@@ -101,14 +103,13 @@ export type AuthFetchT = {
     pagination: Pagination
 }
 
-export type VideosT = {
+export type VideosT = VideoMedia & {
     created_at: string,
     duration_seconds: number 
     id: string,
     last_watched_at: string,
     percentage_watched: number,
     progress_seconds: number,
-    thumbnail_url: string,
     title: string,
     uploader_name: string,
     view_count: number,
@@ -141,27 +142,25 @@ export type PlaylistViewT = {
     counted: boolean
 }
 
-export type PlaylistVideoT = {
+export type PlaylistVideoT = VideoMedia & {
     created_at: string,
     duration_seconds: number,
     id: string,
     percentage_watched: number,
     progress_seconds: number,
-    thumbnail_url: string,
     title: string,
     uploader_name: string,
     view_count: number,
     people: PersonT[]
 }
 
-export type SimilarVideoT = {
+export type SimilarVideoT = VideoMedia & {
     created_at: string,
     duration_seconds: number 
     id: string,
     similarity_score: number,
     percentage_watched: number,
     progress_seconds: number,
-    thumbnail_url: string,
     title: string,
     uploader_name: string,
     view_count: number,
@@ -272,10 +271,9 @@ export type FetchChannelT = {
     channel: ChannelT
 }
 
-export type ChannelVideoT = {
+export type ChannelVideoT = VideoMedia & {
     id: string,
     title: string,
-    thumbnail_url: string,
     duration_seconds: number,
     view_count: number,
     created_at: string,

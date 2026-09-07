@@ -19,8 +19,10 @@ import {
   TRANSCRIPT_REQUEST_EVENT,
 } from "./transcript";
 
+import { useVideoPlayback } from "~/components/playback/useVideoPlayback";
+import { PlaybackFeedback } from "~/components/playback/playbackFeedback";
+
 interface VideoPlayerProps {
-  playbackId: string;
   videoId: string;
   videoTitle: string;
   apiBaseUrl?: string;
@@ -51,7 +53,6 @@ function getNativeVideo(player: MuxPlayerElement | null) {
 }
 
 export default function VideoPlayer({
-  playbackId,
   videoId,
   videoTitle,
   apiBaseUrl = env.apiBaseUrl,
@@ -68,6 +69,8 @@ export default function VideoPlayer({
   compactControls = false,
   forceAutoplay = false,
 }: VideoPlayerProps) {
+  const playback = useVideoPlayback(videoId);
+  const playbackId = playback.data?.mux_playback_id;
   const { can } = useAuthorization();
   const canSaveProgress = can(P.videosProgress);
   const playerRef = useRef<MuxPlayerElement | null>(null);
@@ -139,6 +142,16 @@ export default function VideoPlayer({
     recoveryTimersRef.current.forEach((timer) => window.clearTimeout(timer));
     recoveryTimersRef.current = [];
   }, []);
+
+  const previousStreamUrl = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const streamUrl = playback.data?.stream_url;
+    if (previousStreamUrl.current && streamUrl && previousStreamUrl.current !== streamUrl) {
+      pendingRecoveryTimeRef.current = lastKnownTimeRef.current;
+      resumeAfterRecoveryRef.current = !(playerRef.current?.paused ?? true);
+    }
+    previousStreamUrl.current = streamUrl;
+  }, [playback.data?.stream_url]);
 
   const recoverPlayer = useCallback((allowReload: boolean) => {
     const player = playerRef.current;
@@ -667,9 +680,15 @@ export default function VideoPlayer({
     };
   }, [sendProgress]);
 
+  if (!playback.data && playback.isError) {
+    return <PlaybackFeedback error retry={() => void playback.refetch()} />;
+  }
+
+  const isLoadingPlayer = !playback.data || !isThemeReady || !isPlayerReady;
+
   return (
-    <div id="playerCanvas" style={{ height: "100%" }}>
-      {!isPlayerReady && (
+    <div id="playerCanvas" style={{ height: "100%" }} aria-busy={isLoadingPlayer}>
+      {isLoadingPlayer && (
         <div className="player-skeleton" aria-hidden="true">
           <div className="player-skeleton__controls">
             <span className="player-skeleton__chip player-skeleton__chip--wide"></span>
@@ -678,7 +697,7 @@ export default function VideoPlayer({
           </div>
         </div>
       )}
-      {isThemeReady && (
+      {isThemeReady && playback.data && (
         <MuxPlayer
           theme="optiflowz-theme"
           themeProps={{
@@ -719,7 +738,7 @@ export default function VideoPlayer({
             setMetadataLoaded(false);
             updatePlayerReady(false);
           }}
-          playbackId={playbackId}
+          src={playback.data.stream_url}
           autoPlay={autoplay || forceAutoplay}
           preload="auto"
           muted={isAutoplayMuted}

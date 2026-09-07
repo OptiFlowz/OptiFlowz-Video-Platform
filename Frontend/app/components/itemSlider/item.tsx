@@ -1,3 +1,4 @@
+import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import { Link } from "react-router";
 import { useContext, useState } from "react";
 import ContentInfo from "~/components/contentInfo";
@@ -6,18 +7,13 @@ import type { VideoT } from "~/types";
 import { CurrentNavContext } from "~/context";
 
 function  Item({props, playlistIndex, playlistId}: {props: VideoT, playlistIndex?: number, playlistId?: string}){
-    const isBigWindow = typeof window !== 'undefined' && (window.innerWidth > 1500 || (window.innerWidth > 670 && window.innerWidth < 800));
-    const newThumbnailUrl = props?.thumbnail_url
-        ?.replace(/\.png(?=([?#]|$))/i, ".webp")
-        ?.replace(/\.jpg(?=([?#]|$))/i, ".webp")
-        ?.replace(/width=\d+/i, `width=${isBigWindow ? 700 : 500}`)
-        ?.replace(/height=\d+/i, `height=${isBigWindow ? 525 : 375}`);
-    const animGifUrl = `https://image.mux.com/` + props?.thumbnail_url?.split('mux.com/')[1]?.split('/')[0] + `/animated.webp?width=640&fps=10&start=` + (props.progress_seconds ? props.progress_seconds : props.duration_seconds/2);
+    const newThumbnailUrl = getVideoThumbnail(props);
+    const animGifUrl = props.preview_url || undefined;
     const isWatched = (props?.percentage_watched ?? 0) >= 5 && !!props?.progress_seconds;
 
     const [isHovered, setIsHovered] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [isPreviewLoading, setIsPreviewLoading] = useState(true);
+    const [loadedPreview, setLoadedPreview] = useState<string>();
 
     const {setCurrentNav} = useContext(CurrentNavContext);
     const params = new URLSearchParams();
@@ -27,25 +23,26 @@ function  Item({props, playlistIndex, playlistId}: {props: VideoT, playlistIndex
     const videoHref = `/video/${props?.id || 0}${params.toString() ? `?${params.toString()}` : ""}`;
 
     return (
-        <Link 
-            className={`item ${playlistIndex == 1 ? "playlistStartVideo" : ""}`} 
+        <Link
+            className={`item ${playlistIndex == 1 ? "playlistStartVideo" : ""}`}
             to={videoHref}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
             onClick={() => setCurrentNav(-1)}
         >
             <span className={`${isLoading ? "opacity-0 absolute!" : "relative"}`}>
-                {!isLoading && 
+                {!isLoading && animGifUrl &&
                     <img
                         className={isHovered ? "z-[-1] absolute top-0 left-0" : "z-[-1] absolute top-0 left-0 opacity-0"}
                         src={animGifUrl}
                         alt="Thumbnail preview"
                         decoding="async"
-                        onLoad={() => setIsPreviewLoading(false)}
+                        onLoad={() => setLoadedPreview(animGifUrl)}
+                        onError={() => setLoadedPreview(undefined)}
                     />
                 }
-                <img 
-                    className={`thumbnail ${isLoading ? "z-0 absolute opacity-0" : `relative ${!isPreviewLoading && isHovered ? "z-0 opacity-0 transition-opacity! duration-200! ease" : isHovered ? "z-1 opacity-100 darken" : "z-1 -100"}`}`}
+                <img
+                    className={`thumbnail ${isLoading ? "z-0 absolute opacity-0" : `relative ${animGifUrl && loadedPreview === animGifUrl && isHovered ? "z-0 opacity-0 transition-opacity! duration-200! ease" : isHovered ? "z-1 opacity-100 darken" : "z-1 -100"}`}`}
                     src={newThumbnailUrl}
                     alt="Thumbnail"
                     decoding="async"
@@ -63,7 +60,7 @@ function  Item({props, playlistIndex, playlistId}: {props: VideoT, playlistIndex
                 </span> : ""}
             </span>
 
-            {isLoading && 
+            {isLoading &&
                 <div className="skeleton-item">
                     <div className="skeleton-thumbnail"></div>
                     <div className="skeleton-content">

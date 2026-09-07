@@ -5,6 +5,7 @@ import { useAuthorization } from "~/authorization/authorization";
 import { useCallback, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import CustomSelect from "~/components/customSelect/customSelect";
+import Pagination from "~/components/library/pagination";
 import PlatformSidebar from "~/components/platformPage/sidebar/platformSidebar";
 import { SearchSVG, PermissionEyeSVG, FilterSVG } from "~/constants";
 import { getToken } from "~/functions";
@@ -132,15 +133,18 @@ export default function PlatformUsersPage() {
             </div>
           </section>
 
-          <div className="pagination">
-            <span><p>{t("adminRowsPerPage")}</p><CustomSelect value={search.limit} options={[10, 20, 50, 100].map((value) => ({ value, label: String(value) }))} onChange={(value) => changeSearch({ limit: Number(value) })} ariaLabel={t("adminRowsPerPage")} triggerClassName="paginationSelect" /></span>
-            {!loading && !query.isError && pagination && <p role="status">{pagination.total > 0 ? t("adminPaginationRange", { start: (pagination.page - 1) * pagination.limit + 1, end: Math.min(pagination.page * pagination.limit, pagination.total), total: pagination.total }) : t("adminZeroResults")}</p>}
-            <nav className="platformUsersPagination" aria-label={t("usersPagination")}>
-              <button type="button" className="pageBtn" disabled={loading || query.isFetching || query.isError || !pagination?.hasPreviousPage} onClick={() => setSearch((current) => ({ ...current, page: current.page - 1 }))}>{t("previous")}</button>
-              {pagination && !loading && !query.isError && <span>{t("usersPage", { page: pagination.page, total: Math.max(1, pagination.totalPages) })}</span>}
-              <button type="button" className="pageBtn" disabled={loading || query.isFetching || query.isError || !pagination?.hasNextPage} onClick={() => setSearch((current) => ({ ...current, page: current.page + 1 }))}>{t("next")}</button>
-            </nav>
-          </div>
+          <Pagination
+            page={search.page}
+            limit={search.limit}
+            total={query.isError ? undefined : pagination?.total}
+            totalPages={pagination?.totalPages}
+            loading={loading || query.isFetching}
+            disabled={!token || query.isError}
+            pageSizes={[10, 20, 50, 100]}
+            label={t("usersPagination")}
+            onPageChange={(page) => setSearch((current) => ({ ...current, page }))}
+            onLimitChange={(limit) => changeSearch({ limit })}
+          />
         </div>
       </div>
       <PlatformUserPopup user={selectedUser} onClose={closePopup} />

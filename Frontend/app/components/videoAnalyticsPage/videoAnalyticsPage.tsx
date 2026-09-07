@@ -1,3 +1,4 @@
+import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import {
   forwardRef,
   useCallback,
@@ -1088,7 +1089,7 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
             ) : (
               <section className="videoAnalyticsCard">
                 <div className="videoAnalyticsThumbnail">
-                  <img src={video.thumbnail_url} alt={video.title} />
+                  <img src={getVideoThumbnail(video)} alt={video.title} />
                   <span>{formatDuration(video.duration_seconds)}</span>
                 </div>
 
@@ -1235,7 +1236,7 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
                         </span>
                         <div className="channelAnalyticsBestVideoThumbnail">
                           <img
-                            src={bestVideo.thumbnail_url || DefaultThumbnail}
+                            src={getVideoThumbnail(bestVideo) || DefaultThumbnail}
                             alt={bestVideo.title}
                             loading="lazy"
                             decoding="async"

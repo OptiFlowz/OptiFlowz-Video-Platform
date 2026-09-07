@@ -1,3 +1,4 @@
+import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -35,7 +36,8 @@ type VideoDetailsResponse =
   | {
       id: string;
       title: string;
-      thumbnail_url: string;
+      thumbnail_url: string | null;
+      mux_thumbnail_url?: string | null;
       uploader_name?: string;
     };
 
@@ -52,7 +54,7 @@ function normalizeVideoDetails(response: VideoDetailsResponse | undefined): Sear
   return {
     id: response.id,
     title: response.title,
-    thumbnail_url: response.thumbnail_url,
+    thumbnail_url: getVideoThumbnail(response),
     uploader_name: response.uploader_name ?? "",
     created_at: "created_at" in response ? response.created_at : "",
     duration_seconds: "duration_seconds" in response ? response.duration_seconds : 0,
@@ -495,7 +497,7 @@ function CreateQuizSourcePopup({
                 ) : selectedVideo ? (
                   <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-(--border1) bg-(--background1) p-3">
                     <div className="flex min-w-0 items-center gap-3">
-                      {renderThumbnail(selectedVideo.thumbnail_url, selectedVideo.title)}
+                      {renderThumbnail(getVideoThumbnail(selectedVideo), selectedVideo.title)}
                       <span className="flex min-w-0 flex-col gap-1">
                         <strong className="line-clamp-2">{selectedVideo.title}</strong>
                         <span className="text-sm opacity-80">
@@ -565,7 +567,7 @@ function CreateQuizSourcePopup({
                           className="flex items-center justify-between gap-3 rounded-2xl border border-(--border1) bg-(--background1) p-3"
                         >
                           <div className="flex min-w-0 items-center gap-3">
-                            {renderThumbnail(video.thumbnail_url, video.title)}
+                            {renderThumbnail(getVideoThumbnail(video), video.title)}
                             <span className="flex min-w-0 flex-col gap-1">
                               <strong className="line-clamp-2">{video.title}</strong>
                               <span className="text-sm opacity-80">{video.uploader_name}</span>

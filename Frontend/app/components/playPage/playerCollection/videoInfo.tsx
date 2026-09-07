@@ -1,3 +1,4 @@
+import DefaultThumbnail from "../../../../assets/DefaultThumbnail.webp";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
 import { useQueries, useQuery } from "@tanstack/react-query";
@@ -211,7 +212,6 @@ function VideoInfo({
         <Link to={`/search?tag=${item}`} key={`tag${index}`} className="tag noHover">#{item}</Link>
     ))
 
-    const stockThumbnailUrl = props?.thumbnail_url.split("?")[0];
 
     const [isExpanded, setIsExpanded] = useState(false);
     const [hasDescriptionOverflow, setHasDescriptionOverflow] = useState(false);
@@ -584,9 +584,9 @@ function VideoInfo({
                             onClick={onOpenChapter}
                         >
                             <span>
-                                <img src={`${stockThumbnailUrl}?time=${props?.duration_seconds/9}&width=50&height=30`} alt="ChapterImages" />
-                                <img src={`${stockThumbnailUrl}?time=${props?.duration_seconds/6}&width=50&height=30`} alt="ChapterImages" />
-                                <img src={`${stockThumbnailUrl}?time=${props?.duration_seconds/3}&width=50&height=30`} alt="ChapterImages" />
+                                {props.chapters.slice(0, 3).map((chapter, index) => (
+                                    <img key={`${chapter.startTime}-${index}`} src={chapter.thumbnail_url || DefaultThumbnail} alt="" />
+                                ))}
                             </span>
                             <p>{t("videoChapterCount", { count: props?.chapters?.length || 0 })} {ArrowSVG}</p>
                         </button>

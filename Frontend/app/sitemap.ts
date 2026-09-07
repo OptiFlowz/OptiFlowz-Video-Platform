@@ -1,3 +1,4 @@
+import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "./metadata";
 import { fetchPublicApi } from "./seo";
@@ -8,7 +9,8 @@ type PublicVideoIndex = {
     created_at?: string;
     updated_at?: string;
     published_at?: string;
-    thumbnail_url?: string;
+    thumbnail_url?: string | null;
+    mux_thumbnail_url?: string | null;
     visibility?: "public" | "private";
   }>;
   pagination?: {
@@ -68,7 +70,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: video.updated_at || video.published_at || video.created_at || lastModified,
     changeFrequency: "weekly",
     priority: 0.7,
-    images: video.thumbnail_url ? [video.thumbnail_url] : undefined,
+    images: getVideoThumbnail(video) ? [getVideoThumbnail(video)] : undefined,
   }));
 
   return [

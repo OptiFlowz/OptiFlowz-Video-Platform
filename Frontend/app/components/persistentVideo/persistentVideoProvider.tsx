@@ -85,8 +85,7 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
 
     const current = sessionRef.current;
     const isNewVideo =
-      current?.video.id !== nextSession.video.id ||
-      current?.video.mux_playback_id !== nextSession.video.mux_playback_id;
+      current?.video.id !== nextSession.video.id;
 
     if (isNewVideo) {
       isPlayingRef.current = false;
@@ -384,8 +383,7 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
 
           <div className="persistent-video-player__media">
             <VideoPlayer
-              key={session.video.view?.view_id ?? session.video.id ?? session.video.mux_playback_id}
-              playbackId={session.video.mux_playback_id}
+              key={session.video.view?.view_id ?? session.video.id}
               currentTimee={
                 session.startTimeOverride != null
                   ? session.startTimeOverride

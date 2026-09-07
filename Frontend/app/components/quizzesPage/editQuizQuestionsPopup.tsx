@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import {
+  DndContext, DragOverlay, MouseSensor, TouchSensor, KeyboardSensor,
+  closestCenter, useSensor, useSensors,
+} from "@dnd-kit/core";
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import SortableQuizQuestion, { QuizQuestionCard } from "./sortableQuizQuestion";
 import { AddSVG } from "~/constants";
 import { fetchFn } from "~/API";
 import CreateQuizQuestionPopup from "~/components/quizzesPage/createQuizQuestionPopup";
@@ -10,7 +16,6 @@ import { useI18n } from "~/i18n";
 import type {
   CreateQuizQuestionPayload,
   QuestionDraftValues,
-  QuestionType,
   QuizQuestion,
 } from "./quizTypes";
 
@@ -59,10 +64,16 @@ function EditQuizQuestionsPopup({
   const [orderedQuestions, setOrderedQuestions] = useState<QuizQuestion[]>([]);
   const [draggedQuestionId, setDraggedQuestionId] = useState<string | null>(null);
   const [isReordering, setIsReordering] = useState(false);
+  const [reorderError, setReorderError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const closeTimeoutRef = useRef<number | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const { confirm, dialogProps } = useConfirm();
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   const modalLabel = useMemo(
     () => t("quizQuestionsDescription", { title: quizTitle || t("quizThisQuiz") }),
@@ -124,11 +135,14 @@ function EditQuizQuestionsPopup({
     orderedQuestions.length > 0
       ? Math.max(...orderedQuestions.map((question) => Number(question.position) || 0))
       : 0;
-  const totalQuestionCount = Number(latestPagination?.total) || 0;
+  const totalQuestionCount = Number(latestPagination?.total ?? questions.length);
+  const draggedQuestion = orderedQuestions.find((question) => question.id === draggedQuestionId);
   const nextQuestionPosition =
     Math.max(loadedMaxQuestionPosition, totalQuestionCount) + 1;
 
   useEffect(() => {
+    if (draggedQuestionId || isReordering) return;
+
     setOrderedQuestions((currentQuestions) => {
       const nextQuestionsSnapshot = JSON.stringify(sortedQuestions);
       const currentQuestionsSnapshot = JSON.stringify(currentQuestions);
@@ -139,7 +153,7 @@ function EditQuizQuestionsPopup({
 
       return sortedQuestions;
     });
-  }, [sortedQuestions]);
+  }, [sortedQuestions, draggedQuestionId, isReordering]);
 
   useEffect(() => {
     return () => {
@@ -162,6 +176,7 @@ function EditQuizQuestionsPopup({
       setEditingQuestion(null);
       setDraggedQuestionId(null);
       setSuccessMessage(null);
+      setReorderError(null);
 
       requestAnimationFrame(() => {
         requestAnimationFrame(() => setVisible(true));
@@ -202,17 +217,18 @@ function EditQuizQuestionsPopup({
     if (!open) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !isCreateQuestionOpen && !editingQuestion) {
+      if (event.key === "Escape" && !draggedQuestionId && !isCreateQuestionOpen && !editingQuestion) {
         onClose();
       }
     };
 
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [editingQuestion, isCreateQuestionOpen, onClose, open]);
+    // Read the drag state before the sensor handles Escape and clears it.
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
+  }, [draggedQuestionId, editingQuestion, isCreateQuestionOpen, onClose, open]);
 
   useEffect(() => {
-    if (!open || !hasNextPage || isFetchingNextPage) return;
+    if (!open || !hasNextPage || isFetchingNextPage || draggedQuestionId || isReordering) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -229,7 +245,7 @@ function EditQuizQuestionsPopup({
     return () => {
       if (el) observer.unobserve(el);
     };
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage, open]);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, open, draggedQuestionId, isReordering]);
 
   const handleCreateQuestion = async (payload: CreateQuizQuestionPayload) => {
     await onSubmit(payload);
@@ -273,19 +289,6 @@ function EditQuizQuestionsPopup({
 
     await refetchQuestions();
     setSuccessMessage(t("quizQuestionDeleted"));
-  };
-
-  const getQuestionTypeLabel = (type: QuestionType) => {
-    switch (type) {
-      case "single_choice":
-        return t("quizSingleChoice");
-      case "multiple_choice":
-        return t("quizMultipleChoice");
-      case "matching":
-        return t("quizMatching");
-      default:
-        return type;
-    }
   };
 
   const getQuestionDraftValues = (question: QuizQuestion): QuestionDraftValues => ({
@@ -371,9 +374,10 @@ function EditQuizQuestionsPopup({
     setDraggedQuestionId(null);
     setIsReordering(true);
     setSuccessMessage(null);
+    setReorderError(null);
 
     try {
-      await Promise.all(
+      const results = await Promise.allSettled(
         changedQuestions.map((question) =>
           fetchFn<{ success: boolean }>({
             route: `api/quizzes/question/${question.id}`,
@@ -386,12 +390,15 @@ function EditQuizQuestionsPopup({
         )
       );
 
+      const failure = results.find((result) => result.status === "rejected");
+      if (failure?.status === "rejected") throw failure.reason;
+
       await refetchQuestions();
       setSuccessMessage(t("quizQuestionOrderUpdated"));
     } catch (err) {
       await refetchQuestions();
       setSuccessMessage(null);
-      console.error("Error reordering questions:", err);
+      setReorderError(err instanceof Error ? err.message : t("errorUnexpected"));
     } finally {
       setIsReordering(false);
     }
@@ -448,7 +455,10 @@ function EditQuizQuestionsPopup({
 
           <div className="quizPopupScroll flex min-h-0 flex-1 flex-col overflow-y-auto">
             <div className="flex items-center gap-4">
-              <h4 className="text-base font-semibold">{t("adminTableQuestions")}</h4>
+              <h4 className="flex items-center gap-2 text-base font-semibold">
+                {t("adminTableQuestions")}
+                {questionsResponse ? <span className="rounded-full bg-(--background2) px-2.5 py-0.5 text-sm tabular-nums opacity-75">{totalQuestionCount}</span> : null}
+              </h4>
             </div>
 
             <div className="mt-5 flex flex-col gap-3">
@@ -457,72 +467,52 @@ function EditQuizQuestionsPopup({
                   {t("quizLoadingQuestions")}
                 </div>
               ) : orderedQuestions.length ? (
-                orderedQuestions.map((question) => (
-                  <div
-                    key={question.id}
-                    className={`rounded-3xl border border-(--border1) bg-(--background2) px-5 py-4 transition-opacity ${
-                      isReordering ? "opacity-70" : "opacity-100"
-                    } ${draggedQuestionId === question.id ? "opacity-50" : ""}`}
-                    draggable={!isReordering}
-                    onDragStart={() => setDraggedQuestionId(question.id)}
-                    onDragEnd={() => setDraggedQuestionId(null)}
-                    onDragOver={(event) => event.preventDefault()}
-                    onDrop={(event) => {
-                      event.preventDefault();
-                      if (!draggedQuestionId) return;
-                      void handleReorderQuestions(draggedQuestionId, question.id);
-                    }}
-                  >
-                    <div className="flex flex-wrap items-center gap-2 text-sm opacity-75">
-                      <span>#{question.position}</span>
-                      <span>•</span>
-                      <span>{getQuestionTypeLabel(question.question_type)}</span>
-                      <span>•</span>
-                      <span>{t("quizPointsShort", { count: question.points })}</span>
-                      <span>•</span>
-                      <span>{question.video_id ? t("quizVideoAttached") : t("quizNoVideo")}</span>
-                      <span>•</span>
-                      <span>{question.playlist_id ? t("quizPlaylistAttached") : t("quizNoPlaylist")}</span>
-                      <span>•</span>
-                      <span>{t("quizDragToReorder")}</span>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between gap-4">
-                      <p className="font-medium">{question.question_text}</p>
-                      <div className="flex items-center gap-3">
-                        <span
-                          className="inline-flex cursor-grab flex-col gap-1 active:cursor-grabbing"
-                          aria-label={t("quizDragQuestion", { position: question.position })}
-                          title={t("quizDragToReorder")}
-                        >
-                          <span className="block h-[2px] w-4 rounded-full bg-(--text2)" />
-                          <span className="block h-[2px] w-4 rounded-full bg-(--text2)" />
-                          <span className="block h-[2px] w-4 rounded-full bg-(--text2)" />
-                        </span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          className="cursor-pointer rounded-full border border-(--border1) bg-(--background1) px-3 py-1.5 text-sm transition-colors hover:bg-(--background3) disabled:cursor-not-allowed"
-                          onClick={() => {
-                            setSuccessMessage(null);
-                            setEditingQuestion(question);
-                          }}
-                          disabled={isReordering}
-                        >
-                          {t("adminEdit")}
-                        </button>
-                        <button
-                          type="button"
-                          className="cursor-pointer rounded-full border border-(--accentRed) bg-(--background15) px-3 py-1.5 text-sm text-red-400 transition-colors disabled:cursor-not-allowed"
-                          onClick={() => void handleDeleteQuestion(question)}
-                          disabled={isReordering}
-                        >
-                          {t("adminDelete")}
-                        </button>
-                      </div>
-                      </div>
-                    </div>
-                  </div>
-                ))
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragStart={({ active }) => {
+                    setDraggedQuestionId(String(active.id));
+                    setSuccessMessage(null);
+                    setReorderError(null);
+                  }}
+                  onDragCancel={() => setDraggedQuestionId(null)}
+                  onDragEnd={({ active, over }) => {
+                    setDraggedQuestionId(null);
+                    if (over) void handleReorderQuestions(String(active.id), String(over.id));
+                  }}
+                >
+                  <SortableContext items={orderedQuestions.map((question) => question.id)} strategy={verticalListSortingStrategy}>
+                    {orderedQuestions.map((question, index) => (
+                      <SortableQuizQuestion
+                        key={question.id}
+                        question={question}
+                        position={index + 1}
+                        disabled={isReordering}
+                        onEdit={() => {
+                          setSuccessMessage(null);
+                          setEditingQuestion(question);
+                        }}
+                        onDelete={() => void handleDeleteQuestion(question)}
+                      />
+                    ))}
+                  </SortableContext>
+                  {createPortal(
+                    <DragOverlay zIndex={90}>
+                      {draggedQuestion ? (
+                        <div aria-hidden="true" className="cursor-grabbing rounded-3xl shadow-2xl ring-2 ring-(--accentBlue)">
+                          <QuizQuestionCard
+                            question={draggedQuestion}
+                            position={orderedQuestions.findIndex((question) => question.id === draggedQuestion.id) + 1}
+                            disabled
+                            onEdit={() => {}}
+                            onDelete={() => {}}
+                          />
+                        </div>
+                      ) : null}
+                    </DragOverlay>,
+                    document.body
+                  )}
+                </DndContext>
               ) : (
                 <div className="rounded-3xl border border-dashed border-(--border1) bg-(--background2) px-5 py-6 text-sm opacity-75">
                   {t("quizNoQuestionsYet")}
@@ -539,7 +529,8 @@ function EditQuizQuestionsPopup({
 
             </div>
 
-            {successMessage ? <p className="mt-4 text-sm text-(--accentGreen2)">{successMessage}</p> : null}
+            {reorderError ? <p role="alert" className="mt-4 text-sm text-(--accentRed)">{reorderError}</p> : null}
+            {successMessage ? <p role="status" className="mt-4 text-sm text-(--accentGreen2)">{successMessage}</p> : null}
           </div>
 
           <div className="quizPopupActions mt-4">

@@ -13,7 +13,7 @@ import { ConfirmDialog } from "../confirmPopup/confirmDialog";
 import { useConfirm } from "../confirmPopup/useConfirm";
 import CreatePlaylistPopup from "./createPlaylistPopup";
 import { useI18n } from "~/i18n";
-import CustomSelect from "~/components/customSelect/customSelect";
+import Pagination from "~/components/library/pagination";
 
 type SortColumn = "created_at" | "view_count" | "save_count";
 type SortDirection = "asc" | "desc";
@@ -44,7 +44,7 @@ function MyPlaylistsPage() {
     myHeaders.current.set("Authorization", `Bearer ${userToken}`);
   }, []);
 
-  const { data } = useQuery<FetchMyPlaylistsT>({
+  const { data, isFetching, isError } = useQuery<FetchMyPlaylistsT>({
     queryKey: ["my-playlists", page, limit, sortColumn, sortDirection],
     queryFn: () => {
       return fetchFn<FetchMyPlaylistsT>({
@@ -87,40 +87,12 @@ function MyPlaylistsPage() {
 
   const total = data?.total ?? 0;
   const totalPages = data?.total_pages ?? 1;
-  const startIndex = total > 0 ? (page - 1) * limit + 1 : 0;
-  const endIndex = Math.min(page * limit, total);
-
-  const getPageNumbers = () => {
-    const pages: (number | "...")[] = [];
-    const maxVisible = 5;
-
-    if (totalPages <= maxVisible + 2) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      pages.push(1);
-
-      if (page > 3) {
-        pages.push("...");
-      }
-
-      const start = Math.max(2, page - 1);
-      const end = Math.min(totalPages - 1, page + 1);
-
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
-
-      if (page < totalPages - 2) {
-        pages.push("...");
-      }
-
-      pages.push(totalPages);
+  useEffect(() => {
+    if (data && !isFetching && !isError && page > Math.max(1, totalPages)) {
+      setPage(Math.max(1, totalPages));
     }
+  }, [data, isFetching, isError, page, totalPages]);
 
-    return pages;
-  };
 
   const saveVisibility = async (type: MyPlaylistT["status"]) => {
     const len = selectedPlaylists.length;
@@ -437,41 +409,18 @@ function MyPlaylistsPage() {
             </table>
           </div>
 
-          <div className="pagination">
-            <span>
-              <p>{t("adminRowsPerPage")}</p>
-              <CustomSelect
-                name="rowsPerPage"
-                value={limit}
-                onChange={(value) => handleLimitChange(Number(value))}
-                options={[10, 20, 30, 40, 50].map((item) => ({ value: item, label: String(item) }))}
-                ariaLabel={t("adminRowsPerPage")}
-                triggerClassName="paginationSelect"
-              />
-            </span>
-
-            <p>
-              {total > 0 ? t("adminPaginationRange", { start: startIndex, end: endIndex, total }) : t("adminZeroResults")}
-            </p>
-
-            <span className="pageNumbers">
-              {getPageNumbers().map((pageNum, index) =>
-                pageNum === "..." ? (
-                  <span key={`ellipsis-${index}`} className="ellipsis">
-                    ...
-                  </span>
-                ) : (
-                  <button
-                    key={pageNum}
-                    className={`pageBtn ${page === pageNum ? "active" : ""}`}
-                    onClick={() => setPage(pageNum)}
-                  >
-                    {pageNum}
-                  </button>
-                )
-              )}
-            </span>
-          </div>
+          <Pagination
+            page={page}
+            limit={limit}
+            total={data ? total : undefined}
+            totalPages={totalPages}
+            loading={isFetching}
+            disabled={isError || !token}
+            pageSizes={[10, 20, 30, 40, 50]}
+            label={t("navMyPlaylists")}
+            onPageChange={setPage}
+            onLimitChange={handleLimitChange}
+          />
 
         </div>
       </div>

@@ -2,17 +2,14 @@
 import { memo, useMemo } from "react";
 import { formatDuration } from "~/functions";
 import type { ChapterT } from "~/types";
+import DefaultThumbnail from "../../../../assets/DefaultThumbnail.webp";
 
 function ChapterCard({
   props,
-  thumbnail_url,
-  index,
   nextStartTime,
   playerTime,
 }: {
   props: ChapterT;
-  thumbnail_url: string;
-  index: number;
   nextStartTime: number;
   playerTime: number;
 }) {
@@ -25,11 +22,6 @@ function ChapterCard({
     return playerTime >= start && playerTime < end;
   }, [playerTime, start, nextStartTime]);
 
-  const rightThumbnailUrl = useMemo(() => {
-    const base = (thumbnail_url ?? "").split("?")[0];
-    if (index === 0) return thumbnail_url;
-    return `${base}?time=${start}&width=320&height=180`;
-  }, [thumbnail_url, index, start]);
 
   function setPlayerTime() {
     window.dispatchEvent(new CustomEvent("player:seek", { detail: { seconds: start } }));
@@ -45,7 +37,7 @@ function ChapterCard({
       tabIndex={0}
     >
       <span className="banner relative w-[50%]">
-        <img className="z-1 relative opacity-100" src={rightThumbnailUrl} alt="Thumbnail" />
+        <img className="z-1 relative opacity-100" src={props.thumbnail_url || DefaultThumbnail} alt="" />
       </span>
 
       <span className="info flex flex-col gap-1">

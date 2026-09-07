@@ -183,14 +183,12 @@ function VideoChapters({
         <ChapterCard
           key={`chapter-${index}`}
           props={chapter}
-          thumbnail_url={props?.thumbnail_url}
-          index={index}
           nextStartTime={nextStartTime}
           playerTime={playerTime}
         />
       );
     });
-  }, [chapters, props?.thumbnail_url, props?.duration_seconds, playerTime]);
+  }, [chapters, props?.duration_seconds, playerTime]);
 
   useLayoutEffect(() => {
     const holder = holderRef.current;

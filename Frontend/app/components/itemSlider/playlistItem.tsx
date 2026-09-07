@@ -8,7 +8,7 @@ import { useI18n } from "~/i18n";
 
 function PlaylistItem({props, featured}: {props: VideoPlaylistT, featured?:boolean}){
     const { t } = useI18n();
-    const newThumbnailUrl = props?.thumbnail_url.replace(/width=\d+/i, `width=${800}`).replace(/height=\d+/i, `height=${600}`);
+    const newThumbnailUrl = props?.thumbnail_url;
     const [isLoading, setIsLoading] = useState(true);
 
     const {setCurrentNav} = useContext(CurrentNavContext);

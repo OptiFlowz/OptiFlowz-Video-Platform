@@ -13,6 +13,8 @@ import PersistentVideoProvider from "~/components/persistentVideo/persistentVide
 import { PrivacyPreferencesProvider } from "~/privacy/privacyPreferences";
 import { usePathname } from "next/navigation";
 
+import { UploadSessionProvider } from "~/components/uploadPage/uploadSession";
+
 const queryClient = new QueryClient();
 
 export default function Providers({ children }: { children: React.ReactNode }) {
@@ -121,7 +123,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         <AuthorizationProvider>
         <PrivacyPreferencesProvider>
           <CurrentNavProvider>
-            <PersistentVideoProvider>{children}</PersistentVideoProvider>
+            <PersistentVideoProvider><UploadSessionProvider>{children}</UploadSessionProvider></PersistentVideoProvider>
           </CurrentNavProvider>
         </PrivacyPreferencesProvider>
         </AuthorizationProvider>

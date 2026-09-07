@@ -2531,7 +2531,7 @@ main.play .player.theater mux-player::part(video) {
 }
 
 .player-skeleton__chip {
-  background: rgba(255, 255, 255, 0.45);
+  background: var(--accentGray);
   opacity: 0.9;
   height: 0.9rem;
   width: 5rem;
@@ -7701,7 +7701,7 @@ main.uploadMain .links a:hover {
   display: flex;
   align-items: center;
   background: linear-gradient(45deg, var(--accentBlue3), var(--accentBlue));
-  color: white;
+  color: var(--text1);
   padding: 0.5rem 0.75rem;
   border: none;
   border-radius: 999px;
@@ -7716,7 +7716,7 @@ main.uploadMain .links a:hover {
 }
 
 .formGroup label svg path {
-  stroke: white;
+  stroke: currentColor;
 }
 
 .formGroup input[type="text"],
@@ -8232,28 +8232,32 @@ main.uploadMain .links a:hover {
   margin: 0;
 }
 
-.videoPreviewThumbBlock {
-  margin-top: 0.85rem;
-  padding-top: 0.85rem;
-  border-top: 1px solid var(--border1);
+/* Thumbnail selection and its preview share the same editor section. */
+.thumbnailSettingsPreview {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--border1);
+  border-radius: 12px;
+  background: var(--background3);
+  margin-bottom: 1rem;
 }
 
-.videoPreviewThumbLabel {
-  margin: 0 0 0.45rem 0;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+.thumbnailSettingsPreview img { object-fit: contain; }
+
+.thumbnailSettingsEmpty {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
   color: var(--text2);
 }
 
-.videoPreviewThumbImage {
-  width: 100%;
-  max-width: 200px;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-  border-radius: 10px;
-}
+.thumbnailSettingsEmpty svg { width: 32px; height: 32px; color: var(--accentBlue2); }
+.thumbnailSettingsEmpty svg path,
+.thumbnailPickerToggle svg path { stroke: currentColor; }
 
 .videoPreviewLoading,
 .videoPreviewPlaceholder {
@@ -8262,7 +8266,7 @@ main.uploadMain .links a:hover {
   align-items: center;
   justify-content: center;
   min-height: 200px;
-  color: var(--text-secondary, #888);
+  color: var(--text2);
   gap: 1rem;
 }
 
@@ -8297,37 +8301,67 @@ input.disabled,
   flex-shrink: 0;
 }
 
-.captionsLoadingState {
+.captionToolbar,
+.captionToolbarControls {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 32px;
-  background-color: var(--gray-50, #f9fafb);
-  border: 1px dashed var(--gray-300, #d1d5db);
-  border-radius: 8px;
-  gap: 12px;
-  color: var(--gray-600, #4b5563);
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
+.captionToolbar { flex-direction: column; align-items: stretch; margin-bottom: 0.5rem; }
+.captionToolbarTitle { font-size: 1.25rem; font-weight: 600; color: var(--text1); }
+.captionToolbarControls { width: 100%; justify-content: flex-start; min-width: 0; }
+.captionToolbar .captionsInputRow { flex: 1 1 175px; min-width: 0; }
+.captionToolbar .languageSelect { width: 100%; min-width: 0; }
+.captionToolbar .generateAIBtn {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.65rem 0.9rem;
+  border-radius: var(--bR);
+  background: var(--blueButtonGradient);
+  color: var(--text1);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+.captionToolbar .generateAIBtn svg path { stroke: currentColor; }
+.captionToolbar .generateAIBtn:hover:not(:disabled) { filter: brightness(1.1); }
+.captionToolbar button:focus-visible,
+.thumbnailPickerToggle:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: 3px; }
+
+.captionsLoadingState,
 .captionsNotAvailable {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 32px;
-  background-color: rgba(51, 140, 255, 0.08);
-  border: 2px solid rgba(51, 140, 255, 0.3);
-  border-radius: 8px;
-  gap: 12px;
-  font-weight: 500;
+  gap: 0.85rem;
+  padding: 1rem;
+  background: var(--background3);
+  border: 1px solid var(--border1);
+  border-radius: 12px;
   color: var(--text1);
-  text-align: center;
 }
 
-.captionsNotAvailable svg {
-  color: #92400e;
+.captionStatusIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 2.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 10px;
+  background: var(--background2);
+  color: var(--accentBlue2);
 }
+
+.captionStatusIcon svg { width: 24px; height: 24px; }
+.captionStatusIcon svg path { stroke: currentColor; }
+.captionsLoadingState .uploadSpinner { margin: 0; border-top-color: var(--accentBlue2); }
+.captionStatusCopy { min-width: 0; }
+.captionStatusCopy p { margin: 0; font-size: 0.95rem; font-weight: 500; }
+.captionStatusCopy > span { display: block; margin-top: 0.25rem; color: var(--text2); font-size: 0.8rem; line-height: 1.5; }
 
 .uploadSpinner.small {
   width: 24px;
@@ -8351,12 +8385,13 @@ input.disabled,
 
 .captionsButtonGroup {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
 }
 
 /* Unsaved indicator */
 .unsavedIndicator {
-  color: #f59e0b;
+  color: var(--accentOrange);
   font-weight: 500;
 }
 
@@ -8367,7 +8402,7 @@ input.disabled,
   gap: 0.5rem;
   padding: 0.5rem 1rem;
   background-color: var(--accentBlue);
-  color: white;
+  color: var(--text1);
   border: none;
   border-radius: 999px;
   cursor: pointer;
@@ -8380,7 +8415,9 @@ input.disabled,
 }
 
 .saveCaptionsBtn:disabled {
-  background-color: #9ca3af;
+  background-color: var(--background2);
+  color: var(--text2);
+  opacity: 0.55;
   cursor: not-allowed;
 }
 
@@ -8391,7 +8428,7 @@ input.disabled,
   gap: 0.5rem;
   padding: 0.5rem 1rem;
   background-color: var(--accentRed);
-  color: white;
+  color: var(--text1);
   border: none;
   border-radius: 999px;
   cursor: pointer;
@@ -8400,11 +8437,13 @@ input.disabled,
 }
 
 .deleteCaptionsBtn:hover:not(:disabled) {
-  background-color: #9c1313;
+  background-color: var(--accentRed3);
 }
 
 .deleteCaptionsBtn:disabled {
-  background-color: #9ca3af;
+  background-color: var(--background2);
+  color: var(--text2);
+  opacity: 0.55;
   cursor: not-allowed;
 }
 
@@ -8648,8 +8687,9 @@ input.disabled,
 .thumbnailSourceHeading {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .thumbnailPickerToggle {
@@ -8657,11 +8697,12 @@ input.disabled,
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  gap: 0.5rem;
   min-height: 2.75rem;
   padding: 0.6rem 1rem;
   border-radius: 999px;
-  border: 1px solid rgba(18, 86, 180, 0.18);
-  background: rgba(18, 86, 180, 0.08);
+  border: 1px solid var(--border1);
+  background: var(--background2);
   color: var(--accentBlue2);
   font-size: 0.9rem;
   font-weight: 600;
@@ -8673,13 +8714,14 @@ input.disabled,
 }
 
 .thumbnailPickerToggle:hover:not(:disabled) {
-  background: rgba(18, 86, 180, 0.14);
+  background: var(--background3);
+  border-color: var(--accentBlue2);
   transform: translateY(-1px);
 }
 
 .thumbnailPickerToggle.active {
   background: var(--accentBlue2);
-  color: white;
+  color: var(--text1);
   border-color: var(--accentBlue2);
 }
 
@@ -8691,7 +8733,8 @@ input.disabled,
 .thumbnailPickerHint {
   margin: 0;
   text-align: left;
-  max-width: 460px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .thumbnailPickerCard {
@@ -8701,10 +8744,8 @@ input.disabled,
   margin-top: 1rem;
   padding: 1rem;
   border-radius: 1.25rem;
-  background:
-    linear-gradient(135deg, rgba(18, 86, 180, 0.08), rgba(7, 18, 56, 0.02)),
-    var(--background2);
-  border: 1px solid rgba(18, 86, 180, 0.12);
+  background: var(--background3);
+  border: 1px solid var(--border1);
 }
 
 .thumbnailPickerPreview {
@@ -8713,8 +8754,8 @@ input.disabled,
   max-height: 360px;
   border-radius: 1rem;
   overflow: hidden;
-  background: rgba(7, 18, 56, 0.08);
-  box-shadow: inset 0 0 0 1px rgba(18, 86, 180, 0.08);
+  background: var(--background3);
+  box-shadow: inset 0 0 0 1px var(--border1);
 }
 
 .thumbnailImageShell {
@@ -8742,7 +8783,7 @@ input.disabled,
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
-  background: rgba(7, 18, 56, 0.08);
+  background: var(--background3);
   color: var(--text2);
   z-index: 1;
 }
@@ -8761,7 +8802,7 @@ input.disabled,
   justify-content: center;
   gap: 0.7rem;
   padding: 1rem;
-  background: rgba(7, 18, 56, 0.12);
+  background: var(--background3);
   color: var(--text2);
   text-align: center;
   z-index: 1;
@@ -8771,7 +8812,7 @@ input.disabled,
   min-height: 2.2rem;
   padding: 0.5rem 0.9rem;
   border-radius: 999px;
-  background: rgba(18, 86, 180, 0.12);
+  background: var(--border1);
   color: var(--accentBlue2);
   font-size: 0.85rem;
   font-weight: 600;
@@ -8803,7 +8844,7 @@ input.disabled,
 }
 
 .thumbnailPickerTimeRow strong {
-  color: var(--text);
+  color: var(--text1);
   font-size: 1.05rem;
 }
 
@@ -8834,7 +8875,7 @@ input.disabled,
 .thumbnailPickerTimeInput:focus {
   outline: none;
   border-color: var(--accentBlue);
-  box-shadow: 0 0 0 3px rgba(18, 86, 180, 0.12);
+  box-shadow: 0 0 0 3px var(--border1);
 }
 
 .thumbnailPickerSliderWrap {
@@ -8858,8 +8899,9 @@ input.disabled,
 }
 
 .thumbnailHint {
-  margin-left: auto;
-  text-align: right;
+  width: 100%;
+  margin-top: 0.35rem;
+  text-align: left;
 }
 
 .playlistVideoEditorList {
@@ -9660,64 +9702,6 @@ main.myVideos table input{
   width: 16px;
   height: 16px;
 }
-main.myVideos .pagination{
-  padding-inline: 20px;
-  width: 100%;
-  border-top: 1px solid var(--border1);
-  border-bottom: 1px solid var(--border1);
-  display: flex;
-  gap: 2rem;
-  align-items: center;
-  justify-content: flex-end;
-  font-size: .75rem;
-  font-weight: 500;
-}
-main.myVideos .pagination span{
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-}
-main.myVideos .pagination span .paginationSelect{
-  background-color: var(--background2);
-  border: 1px solid var(--border1);
-  padding: 4px;
-  border-radius: 8px;
-}
-.pagination .pageNumbers {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-.pagination .pageBtn {
-  min-width: 2rem;
-  height: 2rem;
-  padding: 0 0.5rem;
-  border: 1px solid var(--border1);
-  border-radius: 8px;
-  background: var(--background2);
-  color: inherit;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.pagination .pageBtn:hover {
-  background: var(--background3);
-}
-.pagination .pageBtn.active {
-  background: var(--accentOrange);
-  border-color: var(--accentOrange);
-  color: white;
-  font-weight: 600;
-}
-.pagination .pageBtn.active:hover{
-  background-color: var(--accentOrange2);
-}
-.pagination .ellipsis {
-  padding: 0 0.25rem;
-  color: var(--textSecondary);
-}
-
 main.myVideos .libraryContent{
   padding: 2rem 1.25rem 1rem 1rem;
 }
@@ -9965,30 +9949,6 @@ main.myVideos td > p{
   color: var(--text2);
   font-weight: 500;
 }
-main.myVideos .pagination{
-  padding: 0.45rem 0 0;
-  border: none;
-  gap: 1rem;
-  justify-content: space-between;
-  flex-wrap: wrap;
-}
-main.myVideos .pagination > span,
-main.myVideos .pagination > p{
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border1);
-  border-radius: 12px;
-  background: transparent;
-}
-main.myVideos .pagination span .paginationSelect{
-  padding: 0.4rem 0.5rem;
-  border-radius: 8px;
-}
-.pagination .pageBtn{
-  min-width: 2.2rem;
-  height: 2.2rem;
-  border-radius: 999px;
-}
-
 main.analyticsPage .analyticsSimple{
   display: flex;
   flex-direction: column;
@@ -13099,14 +13059,6 @@ footer > span.footerCopyright {
     border-radius: 18px;
     padding: 1rem;
   }
-  main.myVideos .pagination{
-    padding: 0;
-  }
-  main.myVideos .pagination > span,
-  main.myVideos .pagination > p{
-    width: 100%;
-    justify-content: center;
-  }
   main.myVideos table td .videoInfo{
     align-items: flex-start;
   }
@@ -15061,9 +15013,6 @@ main.platformUsersPage .platformUsersFilterControls:focus-within { border-color:
 .platformUserActions { justify-content: flex-end; }
 .platformUsersState { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; min-height: 220px; padding: 2rem; color: var(--text2); text-align: center; }
 .platformUsersState[role="alert"] { color: var(--accentRed3); }
-.platformUsersPagination { display: flex; align-items: center; justify-content: center; gap: .75rem; }
-.platformUsersPagination .pageBtn:disabled { opacity: .45; cursor: not-allowed; }
-.platformUsersPagination .pageBtn:disabled:hover { background: var(--background2); }
 .platformUsersPage button:focus-visible, .platformUsersPage input:focus-visible, .platformUserPopup button:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: 3px; }
 .platformUserPopupHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
 .platformUserClose { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; background: var(--background2); color: var(--text1); cursor: pointer; }
@@ -15091,7 +15040,6 @@ main.platformUsersPage .platformUsersFilterControls:focus-within { border-color:
   .platformUserActions { grid-column: 2; grid-row: 1 / 5; align-self: start; }
   .platformUserMobileLabel { display: inline; }
   .platformUserJoined { font-size: .8rem; }
-  .platformUsersPagination { width: 100%; flex-wrap: wrap; }
 }
 @media (max-width: 480px) {
   .platformUserDetails > div { grid-template-columns: 1fr; gap: .35rem; }

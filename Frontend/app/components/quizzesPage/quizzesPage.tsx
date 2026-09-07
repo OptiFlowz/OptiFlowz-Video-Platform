@@ -1,3 +1,4 @@
+import Pagination from "~/components/library/pagination";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -33,22 +34,25 @@ import type {
   QuizQuestionResponse,
 } from "~/components/quizzesPage/quizTypes";
 
+type QuizPagination = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+};
+
 type QuizCollectionResponse =
   | QuizData[]
   | {
       success?: boolean;
+      pagination?: QuizPagination;
       quizzes?:
         | QuizData[]
         | {
             quizzes?: QuizData[];
-            pagination?: {
-              page: number;
-              limit: number;
-              total: number;
-              totalPages: number;
-              hasNextPage: boolean;
-              hasPreviousPage: boolean;
-            };
+            pagination?: QuizPagination;
             sorting?: {
               sortBy?: string;
               sortOrder?: string;
@@ -106,6 +110,17 @@ function QuizzesPage() {
   const selectAllRef = useRef<HTMLInputElement>(null);
   const [token, setToken] = useState("");
   const [filterValue, setFilterValue] = useState("");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setSearch(filterValue.trim());
+      setPage(1);
+    }, 300);
+    return () => window.clearTimeout(timeout);
+  }, [filterValue]);
   const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState<QuizData | null>(null);
   const [closingSelectedQuiz, setClosingSelectedQuiz] = useState<QuizData | null>(null);
@@ -140,56 +155,48 @@ function QuizzesPage() {
   const {
     data: quizzesResponse,
     isLoading,
+    isFetching,
     isError,
     error,
     refetch,
   } = useQuery({
-    queryKey: ["admin-quizzes"],
-    queryFn: () =>
+    queryKey: ["admin-quizzes", token, page, limit, search],
+    queryFn: ({ signal }) =>
       fetchFn<QuizCollectionResponse>({
-        route: "api/quizzes/user?sortBy=created_at&sortOrder=desc&page=1&limit=100",
+        route: `api/quizzes/user?sortBy=created_at&sortOrder=desc&page=${page}&limit=${limit}&q=${encodeURIComponent(search)}`,
         options: {
           method: "GET",
           headers: headersRef.current,
+          signal,
         },
       }),
     enabled: !!token,
     refetchOnWindowFocus: false,
   });
 
-  const quizzes = useMemo(() => {
-    const items = normalizeQuizCollection(quizzesResponse ?? []);
+  const quizzes = useMemo(
+    () => normalizeQuizCollection(quizzesResponse ?? []),
+    [quizzesResponse]
+  );
+  const pagination = quizzesResponse && !Array.isArray(quizzesResponse)
+    ? quizzesResponse.pagination ?? (
+        quizzesResponse.quizzes && !Array.isArray(quizzesResponse.quizzes)
+          ? quizzesResponse.quizzes.pagination
+          : undefined
+      )
+    : undefined;
+  const total = pagination?.total ?? quizzes.length;
+  const totalPages = Math.max(1, pagination?.totalPages ?? Math.ceil(total / limit));
+  const awaitingSearch = search !== filterValue.trim();
 
-    return items.slice().sort((a, b) => {
-      const left = new Date(b.updated_at ?? b.created_at ?? 0).getTime();
-      const right = new Date(a.updated_at ?? a.created_at ?? 0).getTime();
-      return left - right;
-    });
-  }, [quizzesResponse]);
-
-  const filteredQuizzes = useMemo(() => {
-    const normalizedFilter = filterValue.trim().toLowerCase();
-    if (!normalizedFilter) return quizzes;
-
-    return quizzes.filter((quiz) => {
-      const haystack = [
-        quiz.title,
-        quiz.description,
-        quiz.created_by,
-        String(quiz.question_count ?? ""),
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      return haystack.includes(normalizedFilter);
-    });
-  }, [filterValue, quizzes]);
+  useEffect(() => {
+    if (quizzesResponse && !isFetching && page > totalPages) setPage(totalPages);
+  }, [quizzesResponse, isFetching, page, totalPages]);
 
   useEffect(() => {
     setSelectedQuizzes((prev) => {
       const next = prev.filter((selected) =>
-        filteredQuizzes.some((quiz) => quiz.id === selected.id)
+        quizzes.some((quiz) => quiz.id === selected.id)
       );
 
       if (
@@ -201,26 +208,26 @@ function QuizzesPage() {
 
       return next;
     });
-  }, [filteredQuizzes]);
+  }, [quizzes]);
 
   useEffect(() => {
     const el = selectAllRef.current;
     if (!el) return;
 
-    if (filteredQuizzes.length === 0) {
+    if (quizzes.length === 0) {
       el.checked = false;
       el.indeterminate = false;
       return;
     }
 
-    const selectedVisibleCount = filteredQuizzes.filter((quiz) =>
+    const selectedVisibleCount = quizzes.filter((quiz) =>
       selectedQuizzes.some((selected) => selected.id === quiz.id)
     ).length;
 
-    el.checked = selectedVisibleCount === filteredQuizzes.length;
+    el.checked = selectedVisibleCount === quizzes.length;
     el.indeterminate =
-      selectedVisibleCount > 0 && selectedVisibleCount < filteredQuizzes.length;
-  }, [filteredQuizzes, selectedQuizzes]);
+      selectedVisibleCount > 0 && selectedVisibleCount < quizzes.length;
+  }, [quizzes, selectedQuizzes]);
 
   useEffect(() => {
     if (selectedQuiz) {
@@ -241,7 +248,7 @@ function QuizzesPage() {
     if (!el) return;
 
     if (el.checked) {
-      setSelectedQuizzes(filteredQuizzes);
+      setSelectedQuizzes(quizzes);
       return;
     }
 
@@ -586,6 +593,7 @@ function QuizzesPage() {
               {SearchSVG}
               <input
                 type="search"
+                maxLength={200}
                 aria-label={t("filterQuizzes")}
                 placeholder={t("filterQuizzes")}
                 value={filterValue}
@@ -635,7 +643,7 @@ function QuizzesPage() {
                 </tr>
               </thead>
               <tbody>
-                {isLoading ? (
+                {isLoading || awaitingSearch ? (
                   <tr>
                     <td colSpan={4}>
                       <div className="flex items-center gap-3 py-6">
@@ -656,8 +664,8 @@ function QuizzesPage() {
                       </div>
                     </td>
                   </tr>
-                ) : filteredQuizzes.length ? (
-                  filteredQuizzes.map((quiz) => (
+                ) : quizzes.length ? (
+                  quizzes.map((quiz) => (
                     <tr key={quiz.id}>
                       <td>
                         <div className="quizRowInfo flex min-w-[240px] items-center gap-3 py-2">
@@ -747,6 +755,18 @@ function QuizzesPage() {
               </tbody>
             </table>
           </div>
+          <Pagination
+            page={page}
+            limit={limit}
+            total={quizzesResponse && !isError ? total : undefined}
+            totalPages={totalPages}
+            loading={isFetching || awaitingSearch}
+            disabled={isError || !token}
+            pageSizes={[10, 20, 50, 100]}
+            label={t("navQuizzes")}
+            onPageChange={(value) => { setSelectedQuizzes([]); setPage(value); }}
+            onLimitChange={(value) => { setSelectedQuizzes([]); setLimit(value); setPage(1); }}
+          />
           {mobileMenuQuiz &&
             typeof document !== "undefined" &&
             createPortal(

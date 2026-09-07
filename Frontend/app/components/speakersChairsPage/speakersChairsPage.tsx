@@ -10,7 +10,7 @@ import CreatePersonPopup, { type CreatePersonPayload } from "./createPersonPopup
 import { useI18n } from "~/i18n";
 import { ConfirmDialog } from "../confirmPopup/confirmDialog";
 import { useConfirm } from "../confirmPopup/useConfirm";
-import CustomSelect from "~/components/customSelect/customSelect";
+import Pagination from "~/components/library/pagination";
 
 type PersonRecord = {
   id: string;
@@ -52,12 +52,8 @@ type PersonDeleteResponse = {
   deleted: boolean;
 };
 
-const PEOPLE_PER_PAGE = 20;
-
 const fallbackBiography =
   "Biography is not available yet for this person.";
-
-type PaginationItem = number | "...";
 
 function splitFullName(name: string) {
   const trimmedName = name.trim();
@@ -165,12 +161,12 @@ async function deletePerson(token: string, personId: string) {
   });
 }
 
-async function fetchPeoplePage(token: string, page: number) {
+async function fetchPeoplePage(token: string, page: number, limit: number) {
   const headers = new Headers();
   headers.set("Authorization", `Bearer ${token}`);
 
   const response = await fetchFn<PeopleApiResponse>({
-    route: `api/people?page=${page}&limit=${PEOPLE_PER_PAGE}&sortBy=name&sortOrder=asc`,
+    route: `api/people?page=${page}&limit=${limit}&sortBy=name&sortOrder=asc`,
     options: { method: "GET", headers },
   });
 
@@ -187,6 +183,7 @@ function SpeakersChairsPage() {
   const [token, setToken] = useState<string | null>(null);
   const [people, setPeople] = useState<PersonRecord[]>([]);
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
   const [search, setSearch] = useState("");
   const [isCreatePopupOpen, setIsCreatePopupOpen] = useState(false);
   const [editingPersonId, setEditingPersonId] = useState<string | null>(null);
@@ -210,10 +207,11 @@ function SpeakersChairsPage() {
   const {
     data,
     isLoading,
+    isFetching,
     isError,
   } = useQuery({
-    queryKey: ["people", token, page],
-    queryFn: () => fetchPeoplePage(token as string, page),
+    queryKey: ["people", token, page, limit],
+    queryFn: () => fetchPeoplePage(token as string, page, limit),
     enabled: !!token,
   });
 
@@ -229,24 +227,12 @@ function SpeakersChairsPage() {
     1
   );
   const currentPage = data?.pagination?.page ?? page;
-  const startIndex = total === 0 ? 0 : (currentPage - 1) * PEOPLE_PER_PAGE + 1;
-  const endIndex = total === 0 ? 0 : Math.min(currentPage * PEOPLE_PER_PAGE, total);
-
-  const getPageNumbers = (): PaginationItem[] => {
-    if (totalPages <= 5) {
-      return Array.from({ length: totalPages }, (_, index) => index + 1);
+  useEffect(() => {
+    if (data && !isFetching && !isError && page > Math.max(1, totalPages)) {
+      setPage(Math.max(1, totalPages));
     }
+  }, [data, isFetching, isError, page, totalPages]);
 
-    if (currentPage <= 3) {
-      return [1, 2, 3, "...", totalPages];
-    }
-
-    if (currentPage >= totalPages - 2) {
-      return [1, "...", totalPages - 2, totalPages - 1, totalPages];
-    }
-
-    return [1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages];
-  };
 
   const filteredPeople = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -455,44 +441,17 @@ function SpeakersChairsPage() {
             </div>
           </section>
 
-          <div className="pagination">
-            <span>
-              <p>{t("adminRowsPerPage")}</p>
-              <CustomSelect
-                name="rowsPerPage"
-                value={PEOPLE_PER_PAGE}
-                options={[{ value: PEOPLE_PER_PAGE, label: String(PEOPLE_PER_PAGE) }]}
-                onChange={() => undefined}
-                ariaLabel={t("adminRowsPerPage")}
-                triggerClassName="paginationSelect"
-                disabled
-              />
-            </span>
-
-            <p>
-              {total > 0 ? t("adminPaginationRange", { start: startIndex, end: endIndex, total }) : t("adminZeroResults")}
-            </p>
-
-            <span className="pageNumbers">
-              {getPageNumbers().map((pageNum, index) =>
-                pageNum === "..." ? (
-                  <span key={`ellipsis-${index}`} className="ellipsis">
-                    ...
-                  </span>
-                ) : (
-                  <button
-                    key={pageNum}
-                    type="button"
-                    className={`pageBtn ${currentPage === pageNum ? "active" : ""}`}
-                    onClick={() => setPage(pageNum)}
-                    disabled={isLoading}
-                  >
-                    {pageNum}
-                  </button>
-                )
-              )}
-            </span>
-          </div>
+          <Pagination
+            page={currentPage}
+            limit={limit}
+            total={data ? total : undefined}
+            totalPages={totalPages}
+            loading={isLoading || isFetching}
+            disabled={isError || !token}
+            label={t("navSpeakersChairs")}
+            onPageChange={setPage}
+            onLimitChange={(value) => { setLimit(value); setPage(1); }}
+          />
         </div>
       </div>
     </main>

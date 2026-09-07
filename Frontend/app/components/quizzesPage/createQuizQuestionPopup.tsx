@@ -1,3 +1,4 @@
+import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -222,7 +223,8 @@ function CreateQuizQuestionPopup({
       fetchFn<{
         id: string;
         title: string;
-        thumbnail_url: string;
+        thumbnail_url: string | null;
+      mux_thumbnail_url?: string | null;
         uploader_name?: string;
       }>({
         route: `api/videos/${selectedVideoId}`,
@@ -281,7 +283,7 @@ function CreateQuizQuestionPopup({
     return {
       id: selectedVideoDetails.id,
       title: selectedVideoDetails.title,
-      thumbnail_url: selectedVideoDetails.thumbnail_url,
+      thumbnail_url: getVideoThumbnail(selectedVideoDetails),
       uploader_name: selectedVideoDetails.uploader_name ?? "",
       created_at: "",
       duration_seconds: 0,
@@ -546,7 +548,7 @@ function CreateQuizQuestionPopup({
                   <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-(--border1) bg-(--background1) p-3">
                     <div className="flex min-w-0 items-center gap-3">
                       <img
-                        src={selectedVideo.thumbnail_url}
+                        src={getVideoThumbnail(selectedVideo)}
                         alt={selectedVideo.title}
                         className="h-14 w-24 rounded-xl object-cover"
                       />
@@ -588,7 +590,7 @@ function CreateQuizQuestionPopup({
                         >
                           <div className="flex min-w-0 items-center gap-3">
                             <img
-                              src={video.thumbnail_url}
+                              src={getVideoThumbnail(video)}
                               alt={video.title}
                               className="h-14 w-24 rounded-xl object-cover"
                             />

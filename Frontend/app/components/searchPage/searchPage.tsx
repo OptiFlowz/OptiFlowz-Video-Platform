@@ -1,361 +1,204 @@
-﻿import { useParams, useSearchParams, Link } from "react-router";
-import VerticalSlider from "./verticalSlider/verticalSlider";
-import { useState, useRef, useLayoutEffect, useMemo, useEffect } from "react";
+import { getVideoThumbnail } from "~/components/shared/videoMedia";
+import { useParams, useSearchParams, useNavigate, Link } from "react-router";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQueries } from "@tanstack/react-query";
 import { fetchFn } from "~/API";
 import type { SearchT, PlaylistSearchRes, PeopleSearchRes } from "~/types";
-import { LibrarySVG, NoResultsSVG } from "~/constants";
-import { formatDate, formatDescription, formatViews, getToken } from "~/functions";
-import DefaultProfile from "../../../assets/DefaultProfile.webp";
+import { getToken } from "~/functions";
 import { useI18n } from "~/i18n";
+import CustomSelect from "~/components/customSelect/customSelect";
+import Pagination from "~/components/library/pagination";
+import SearchResultCard, { type SearchResult } from "./searchResultCard";
+import { SearchIcon } from "./searchIcons";
+import styles from "./searchPage.module.css";
+import backgroundImage from "../../../assets/LoginBackground.webp";
 
-const decodeSearchValue = (value?: string | null) => {
-  if (!value) return "";
+type SearchContext = { query: string; category: string | null; tag: string | null; person: string | null; label: string };
 
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
-};
-
-const SkeletonSearchItem = () => (
-  <div className="skeleton-search-item">
-    <div className="skeleton-search-thumbnail"></div>
-    <div className="skeleton-search-content">
-      <div className="skeleton-search-title"></div>
-      <div className="skeleton-search-text"></div>
-      <div className="skeleton-search-text short"></div>
-    </div>
-  </div>
-);
-
-const SkeletonPlaylistItem = () => (
-  <div className="item flex gap-4 items-start">
-    <div className="thumbnail relative">
-      <div className="skeleton-playlist-thumbnail"></div>
-    </div>
-    <div className="w-full flex flex-col mt-1 gap-2">
-      <div className="skeleton-playlist-title"></div>
-      <div className="skeleton-playlist-desc"></div>
-      <div className="skeleton-playlist-desc short"></div>
-      <div className="skeleton-playlist-meta"></div>
-    </div>
-  </div>
-);
-
-const SkeletonPersonItem = () => (
-  <div className="item personItem flex gap-4 items-center rounded-[20px]">
-    <div className="thumbnail">
-      <div className="skeleton-person-image"></div>
-    </div>
-    <div className="flex flex-col gap-2 flex-1">
-      <div className="skeleton-person-name"></div>
-      <div className="skeleton-person-bio"></div>
-      <div className="skeleton-person-bio short"></div>
-      <div className="skeleton-person-badge"></div>
-    </div>
-  </div>
-);
-
-function SearchPage() {
+function SearchResults({ context }: { context: SearchContext }) {
   const { t } = useI18n();
-  const { searchValue } = useParams();
-  const [searchParams] = useSearchParams();
-
-  const categoryId = searchParams.get("category");
-  const tagId = searchParams.get("tag");
-  const personId = searchParams.get("person");
-  const categoryTitle = searchParams.get("title");
-  const personName = searchParams.get("name");
-
+  const navigate = useNavigate();
+  const [token, setToken] = useState<string>();
+  const [input, setInput] = useState(context.label);
   const [selected, setSelected] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [sort, setSort] = useState("relevance");
+  const choseCategory = useRef(false);
+  useEffect(() => { setToken(getToken() || undefined); }, []);
+  const headers = useMemo(() => new Headers(token ? { Authorization: `Bearer ${token}` } : {}), [token]);
+  const hasSearch = !!(context.query || context.category || context.tag || context.person);
+  const videoParams = new URLSearchParams();
+  if (context.category) videoParams.set("category", context.category);
+  else if (context.tag) videoParams.set("tags", context.tag);
+  else if (context.person) videoParams.set("person", context.person);
+  else videoParams.set("q", context.query);
+  videoParams.set("page", String(selected === 0 ? page : 1));
+  videoParams.set("limit", String(limit));
+  videoParams.set("sort", sort);
+  const videoRoute = `api/videos/search?${videoParams}`;
+  const playlistRoute = `api/playlists/search?${new URLSearchParams({ q: context.label, page: String(selected === 1 ? page : 1), limit: String(limit), sort })}`;
+  const peopleRoute = `api/people/search?${new URLSearchParams({ q: context.label, page: String(selected === 2 ? page : 1), limit: String(limit) })}`;
 
-  const myHeaders = useRef(new Headers());
-  const [token, setToken] = useState<string | undefined>(undefined);
+  const [videoQ, playlistQ, peopleQ] = useQueries({ queries: [
+    {
+      queryKey: ["search-videos", token, videoRoute],
+      queryFn: ({ signal }) => fetchFn<SearchT>({ route: videoRoute, options: { headers, signal } }),
+      enabled: !!token && hasSearch,
+      refetchOnWindowFocus: false,
+    },
+    {
+      queryKey: ["search-playlists", token, playlistRoute],
+      queryFn: ({ signal }) => fetchFn<PlaylistSearchRes>({ route: playlistRoute, options: { headers, signal } }),
+      enabled: !!token && !!context.label,
+      refetchOnWindowFocus: false,
+    },
+    {
+      queryKey: ["search-people", token, peopleRoute],
+      queryFn: ({ signal }) => fetchFn<PeopleSearchRes>({ route: peopleRoute, options: { headers, signal } }),
+      enabled: !!token && !!context.label,
+      refetchOnWindowFocus: false,
+    },
+  ] });
+  const queries = [videoQ, playlistQ, peopleQ];
+  const counts = [
+    videoQ.data?.pagination?.total ?? videoQ.data?.videos?.length,
+    playlistQ.data?.pagination?.total ?? playlistQ.data?.playlists?.length,
+    peopleQ.data?.pagination?.total ?? peopleQ.data?.people?.length,
+  ];
+  const activeQuery = queries[selected];
+  const total = counts[selected] ?? 0;
+  const fetching = hasSearch && (!token || activeQuery.isLoading);
+  const initialLoading = hasSearch && (!token || queries.some((query) => query.isLoading));
+  const allCountsKnown = counts.every((count) => count !== undefined);
+  const resultCount = counts.reduce<number>((sum, count) => sum + (count ?? 0), 0);
+  const tabs = [
+    { label: t("videosTab"), description: t("searchVideosHint"), icon: "video" as const },
+    { label: t("playlistsTab"), description: t("searchPlaylistsHint"), icon: "playlist" as const },
+    { label: t("contributorsTab"), description: t("searchPeopleHint"), icon: "people" as const },
+  ];
 
-  useLayoutEffect(() => {
-    const userToken = getToken();
-    if(!userToken) return;
-    setToken(userToken);
-    myHeaders.current.set("Authorization", `Bearer ${userToken}`);
-  }, []);
-
-  const videoRoute = categoryId
-    ? `api/videos/search?category=${categoryId}`
-    : tagId
-    ? `api/videos/search?tags=${tagId}`
-    : personId
-    ? `api/videos/search?person=${personId}`
-    : `api/videos/search?q=${encodeURIComponent(searchValue || "")}`;
-
-  const q = useMemo(() => {
-    const fallback = searchValue || categoryTitle || tagId || personName || "";
-    return decodeSearchValue(fallback);
-  }, [searchValue, categoryTitle, tagId, personName]);
-
-  const videosEnabled = !!token && (!!searchValue || !!categoryId || !!tagId || !!personId);
-  const othersEnabled = !!token && q.trim().length > 0;
-
-  const [videoQ, playlistQ, peopleQ] = useQueries({
-    queries: [
-      {
-        queryKey: ["search-videos", videoRoute],
-        queryFn: () =>
-          fetchFn({
-            route: videoRoute,
-            options: { method: "GET", headers: myHeaders.current },
-          }),
-        enabled: videosEnabled,
-      },
-      {
-        queryKey: ["search-playlists", q],
-        queryFn: () =>
-          fetchFn({
-            route: `api/playlists/search?q=${encodeURIComponent(q)}`,
-            options: { method: "GET", headers: myHeaders.current },
-          }),
-        enabled: othersEnabled,
-      },
-      {
-        queryKey: ["search-people", q],
-        queryFn: () =>
-          fetchFn({
-            route: `api/people/search?q=${encodeURIComponent(q)}`,
-            options: { method: "GET", headers: myHeaders.current },
-          }),
-        enabled: othersEnabled,
-      },
-    ],
-  });
-
-  const showLoader =
-    videoQ.isLoading ||
-    playlistQ.isLoading ||
-    peopleQ.isLoading ||
-    videoQ.isFetching ||
-    playlistQ.isFetching ||
-    peopleQ.isFetching;
-
-  // brojevi za dugmiÄ‡e (prefer: pagination.total, fallback: length)
-  const videosCount =
-    (videoQ.data as any)?.pagination?.total ?? ((videoQ.data as SearchT)?.videos?.length ?? 0);
-
-  const playlistsCount =
-    (playlistQ.data as PlaylistSearchRes | undefined)?.pagination?.total ??
-    ((playlistQ.data as PlaylistSearchRes | undefined)?.playlists?.length ?? 0);
-
-  const peopleCount =
-    (peopleQ.data as PeopleSearchRes | undefined)?.pagination?.total ??
-    ((peopleQ.data as PeopleSearchRes | undefined)?.people?.length ?? 0);
-
-  // NEW: da li uopÅ¡te ima bilo kakvih rezultata
-  const hasAnyResults = videosCount > 0 || playlistsCount > 0 || peopleCount > 0;
-
-  // NEW: da li je trenutno selektovan tab prazan
-  const isSelectedEmpty =
-    (selected === 0 && videosCount === 0) ||
-    (selected === 1 && playlistsCount === 0) ||
-    (selected === 2 && peopleCount === 0);
-
-  // NEW: auto-switch na prvi tab koji ima rezultate (posle uÄitavanja)
   useEffect(() => {
-    if (showLoader) return;
-    if (!hasAnyResults) return;
-
-    if (isSelectedEmpty) {
-      if (videosCount > 0) setSelected(0);
-      else if (playlistsCount > 0) setSelected(1);
-      else if (peopleCount > 0) setSelected(2);
+    if (initialLoading || choseCategory.current || !hasSearch) return;
+    const available = counts.findIndex((count) => (count ?? 0) > 0);
+    if (available >= 0) {
+      setSelected(available);
+      choseCategory.current = true;
     }
-  }, [
-    showLoader,
-    hasAnyResults,
-    isSelectedEmpty,
-    videosCount,
-    playlistsCount,
-    peopleCount,
-    selected,
-  ]);
+  }, [initialLoading, hasSearch, counts[0], counts[1], counts[2]]);
 
-  // NEW: "No results" samo ako nigde nema rezultata
-  const noResults = useMemo(() => {
-    if (showLoader) return false;
-    return !hasAnyResults;
-  }, [showLoader, hasAnyResults]);
+  useEffect(() => {
+    if (activeQuery.data && !activeQuery.isFetching && page > Math.max(1, Math.ceil(total / limit))) {
+      setPage(Math.max(1, Math.ceil(total / limit)));
+    }
+  }, [activeQuery.data, activeQuery.isFetching, page, total, limit]);
 
-  const skeletonVideos = Array.from({ length: 8 }).map((_, i) => (
-    <SkeletonSearchItem key={`skeleton-video-${i}`} />
-  ));
+  const results: SearchResult[] = selected === 0
+    ? (videoQ.data?.videos ?? []).map((video) => ({
+        id: video.id, kind: "video", title: video.title, href: `/video/${video.id}`,
+        thumbnail: getVideoThumbnail(video), preview_url: video.preview_url, author: video.people?.map((person) => person.name).join(", ") || video.uploader_name,
+        views: video.view_count, date: video.created_at, duration: video.duration_seconds, progress: video.percentage_watched,
+      }))
+    : selected === 1 ? (playlistQ.data?.playlists ?? []).map((playlist) => ({
+        id: playlist.id, kind: "playlist", title: playlist.title, href: `/playlist/${playlist.id}`,
+        thumbnail: playlist.thumbnail_url, description: playlist.description || "",
+        views: playlist.view_count, date: playlist.created_at, videoCount: playlist.video_count,
+      }))
+    : (peopleQ.data?.people ?? []).map((person) => ({
+        id: person.id, kind: "people", title: person.name,
+        href: `/search?${new URLSearchParams({ person: person.id, name: person.name })}`,
+        thumbnail: person.image_url, description: person.description || t("noBioPerson"), videoCount: Number(person.total_video_count),
+      }));
 
-  const skeletonPlaylists = Array.from({ length: 6 }).map((_, i) => (
-    <SkeletonPlaylistItem key={`skeleton-playlist-${i}`} />
-  ));
-
-  const skeletonPeople = Array.from({ length: 6 }).map((_, i) => (
-    <SkeletonPersonItem key={`skeleton-person-${i}`} />
-  ));
+  const contextTitle = context.category ? "categoryResultsFor" : context.tag ? "tagResultsFor" : context.person ? "personResultsFor" : "searchResultsFor";
 
   return (
-    <main className="search">
-      <div className="heading hero">
-        {searchValue && !categoryId && (
-          <h2 className="font-light text-3xl">
-            {t("searchResultsFor", { value: q })}
-          </h2>
-        )}
+    <main className={styles.page}>
+      <section className={styles.intro} aria-labelledby="search-heading">
+        <div className={styles.introBackground} aria-hidden="true">
+          <img src={backgroundImage} alt="" />
+        </div>
+        <div className={styles.introContent}>
+        <div className={styles.headingRow}>
+          <div>
+            <h1 id="search-heading">{hasSearch ? t(contextTitle, { value: context.label }) : t("searchLibraryTitle")}</h1>
+            <p className={styles.subtitle}>{t("searchLibrarySubtitle")}</p>
+          </div>
+          {hasSearch && allCountsKnown ? <div className={styles.totalBadge}><SearchIcon name="search" /><span>{t("searchResultCount", { count: resultCount })}</span></div> : null}
+        </div>
+        <form className={styles.searchForm} role="search" onSubmit={(event) => {
+          event.preventDefault();
+          if (input.trim()) navigate(`/search/${encodeURIComponent(input.trim())}`);
+        }}>
+          <SearchIcon name="search" />
+          <label className={styles.srOnly} htmlFor="library-search">{t("searchAria")}</label>
+          <input id="library-search" type="search" value={input} onChange={(event) => setInput(event.target.value)} placeholder={t("searchLibraryPlaceholder")} autoComplete="off" />
+          <button type="submit" disabled={!input.trim()}>{t("search")}<SearchIcon name="search" /></button>
+        </form>
+        </div>
+      </section>
 
-        {categoryId && categoryTitle && (
-          <h2 className="font-light text-3xl">
-            {t("categoryResultsFor", { value: decodeSearchValue(categoryTitle) })}
-          </h2>
-        )}
+      <div className={styles.layout}>
+        <aside className={styles.sidebar}>
+          <p className={styles.sidebarTitle}>{t("searchContentType")}</p>
+          <nav className={styles.categories} aria-label={t("searchContentType")}>
+            {tabs.map((tab, index) => (
+              <button key={tab.icon} type="button" aria-pressed={selected === index} onClick={() => { choseCategory.current = true; setSelected(index); setPage(1); }}>
+                <span className={styles.categoryIcon}><SearchIcon name={tab.icon} /></span>
+                <span className={styles.categoryText}><strong>{tab.label}</strong><small>{tab.description}</small></span>
+                <span className={styles.count}>{counts[index] ?? (!hasSearch || queries[index].isError ? "—" : "…")}</span>
+              </button>
+            ))}
+          </nav>
+          <div className={styles.browseCard}>
+            <span className={styles.browseIcon}><SearchIcon name="playlist" /></span>
+            <h2>{t("searchExploreTitle")}</h2>
+            <p>{t("searchExploreText")}</p>
+            <Link to="/">{t("searchExploreAction")}<SearchIcon name="arrow" /></Link>
+          </div>
+        </aside>
 
-        {tagId && !categoryTitle && (
-          <h2 className="font-light text-3xl">
-            {t("tagResultsFor", { value: tagId || "" })}
-          </h2>
-        )}
-
-        {personName && (
-          <h2 className="font-light text-3xl">
-            {t("personResultsFor", { value: decodeSearchValue(personName) })}
-          </h2>
-        )}
-
-        <span className="buttons">
-          {showLoader ? (
-            <>
-              <div className="skeleton-button-tab"></div>
-              <div className="skeleton-button-tab"></div>
-              <div className="skeleton-button-tab"></div>
-            </>
+        <section className={styles.results} aria-labelledby="results-heading" aria-busy={fetching || activeQuery.isFetching}>
+          <div className={styles.resultsToolbar}>
+            <div><h2 id="results-heading">{tabs[selected].label}<span>{counts[selected] ?? "—"}</span></h2><p>{t("searchMatchingResults")}</p></div>
+            {selected !== 2 && hasSearch ? <div className={styles.sort}><span>{t("searchSortBy")}</span><CustomSelect
+              value={sort}
+              onChange={(value) => { setSort(value); setPage(1); }}
+              options={[{ value: "relevance", label: t("searchSortRelevance") }, { value: "date", label: t("searchSortNewest") }, { value: "views", label: t("searchSortViews") }]}
+              ariaLabel={t("searchSortBy")}
+              triggerClassName={styles.sortSelect}
+            /></div> : null}
+          </div>
+          {!hasSearch ? (
+            <div className={styles.empty}><SearchIcon name="search" /><h3>{t("searchLibraryTitle")}</h3><p>{t("searchLibrarySubtitle")}</p></div>
+          ) : fetching ? (
+            <div className={styles.resultList} aria-label={t("searchLoadingResults")}>
+              {[0, 1, 2].map((item) => <div key={item} className={styles.skeleton} aria-hidden="true"><div /><span><i /><i /><i /></span></div>)}
+            </div>
+          ) : activeQuery.isError ? (
+            <div className={styles.empty} role="alert"><SearchIcon name="search" /><h3>{t("searchLoadFailed")}</h3><p>{t("searchTryAgain")}</p><button type="button" onClick={() => void activeQuery.refetch()}>{t("usersRetry")}</button></div>
+          ) : results.length ? (
+            <div className={styles.resultList}>{results.map((result) => <SearchResultCard key={`${result.kind}-${result.id}`} result={result} />)}</div>
           ) : (
-            <>
-              {videosCount > 0 ? (
-                <button
-                  className={`button ${selected === 0 ? "selected" : ""}`}
-                  onClick={() => setSelected(0)}
-                >
-                  {t("videosTab")} {videosCount > 0 ? <span className="count">{videosCount}</span> : ""}
-                </button>
-              ) : (
-                ""
-              )}
-
-              {playlistsCount > 0 ? (
-                <button
-                  className={`button ${selected === 1 ? "selected" : ""}`}
-                  onClick={() => setSelected(1)}
-                >
-                  {t("playlistsTab")}{" "}
-                  {playlistsCount > 0 ? <span className="count">{playlistsCount}</span> : ""}
-                </button>
-              ) : (
-                ""
-              )}
-
-              {peopleCount > 0 ? (
-                <button
-                  className={`button ${selected === 2 ? "selected" : ""}`}
-                  onClick={() => setSelected(2)}
-                >
-                  {t("contributorsTab")}{" "}
-                  {peopleCount > 0 ? <span className="count">{peopleCount}</span> : ""}
-                </button>
-              ) : (
-                ""
-              )}
-            </>
+            <div className={styles.empty}><SearchIcon name="search" /><h3>{t("noResultsTitle")}</h3><p>{t("noResultsText")}</p><button type="button" onClick={() => { document.getElementById("library-search")?.focus(); }}>{t("searchChangeQuery")}</button></div>
           )}
-        </span>
+          {hasSearch && activeQuery.data && !activeQuery.isError ? <Pagination
+            page={page} limit={limit} total={total} loading={activeQuery.isFetching}
+            label={tabs[selected].label} onPageChange={setPage} onLimitChange={(value) => { setLimit(value); setPage(1); }}
+          /> : null}
+        </section>
       </div>
-
-      {showLoader ? (
-        <div className={`resultHolder ${personId ? "large" : ""}`}>
-          <div className="verticalSlider grid gap-4">
-            {selected === 0 && skeletonVideos}
-            {selected === 1 && skeletonPlaylists}
-            {selected === 2 && skeletonPeople}
-          </div>
-        </div>
-      ) : noResults ? (
-        <div className="resultHolder">
-          <div className="flex flex-col py-10 px-10 max-sm:px-7 max-sm:py-7">
-            <div className="mb-6">{NoResultsSVG}</div>
-            <h3 className="text-2xl font-semibold">{t("noResultsTitle")}</h3>
-            <p className="text-md mt-4">{t("noResultsText")}</p>
-          </div>
-        </div>
-      ) : (
-        <div className={`resultHolder ${personId ? "large" : ""}`}>
-          {selected === 0 && <VerticalSlider props={videoQ.data as SearchT} />}
-
-          {selected === 1 && (
-            <div className="verticalSlider grid gap-4">
-              {(playlistQ.data as PlaylistSearchRes).playlists.map((p) => (
-                <Link key={p.id} to={`/playlist/${p.id}`} className="item flex gap-4 items-start">
-                  <div className="thumbnail">
-                    <img
-                      src={p.thumbnail_url}
-                      alt={p.title}
-                      className="object-cover rounded"
-                      loading="lazy"
-                    />
-                    <span className="pins absolute bottom-2.25 right-2.25 flex items-center gap-2">
-                      <p className="flex items-center">{LibrarySVG}&nbsp;{t("playlistLabel")}</p>
-                      <p>{t("videosLabel", { count: p.video_count })}</p>
-                    </span>
-                  </div>
-                  <div className="w-full flex flex-col mt-1">
-                    <h3 className="text-2xl font-semibold">{p.title}</h3>
-                    <p className="text-ellipsis line-clamp-3 text-md opacity-70 pr-2">
-                      {formatDescription(p.description)}
-                    </p>
-                    <p className="text-md font-normal">
-                      <strong className="font-medium">{formatViews(p.view_count)}</strong> •{" "}
-                      {formatDate(p.created_at)}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-
-          {selected === 2 && (
-            <div className="verticalSlider grid gap-4">
-              {(peopleQ.data as PeopleSearchRes).people.map((person) => (
-                <Link
-                  key={person.id}
-                  to={`/search?person=${person.id}&name=${encodeURIComponent(person.name)}`}
-                  className="item personItem flex gap-4 items-start rounded-[20px]"
-                  onClick={() => setSelected(0)}
-                >
-                  <div className="thumbnail">
-                    <img
-                      src={person.image_url || DefaultProfile}
-                      alt={person.name}
-                      className="object-cover rounded-xl! aspect-square! max-w-40"
-                      loading="lazy"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <h3 className="text-2xl font-semibold">{person.name}</h3>
-                    <p className="text-md opacity-70 pr-2">
-                      {person.description || t("noBioPerson")}
-                    </p>
-                    <p className="mt-1 text-md text-white font-medium bg-(--accentOrange) w-fit py-1.5 px-5 rounded-full">
-                      {t("videosLabel", { count: person.total_video_count })}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
     </main>
   );
 }
 
-export default SearchPage;
+export default function SearchPage() {
+  const { searchValue = "" } = useParams();
+  const [params] = useSearchParams();
+  const category = params.get("category");
+  const tag = params.get("tag");
+  const person = params.get("person");
+  const label = category ? params.get("title") || category : tag ? params.get("title") || tag : person ? params.get("name") || person : searchValue;
+  const context = { query: searchValue, category, tag, person, label };
+  return <SearchResults key={JSON.stringify(context)} context={context} />;
+}

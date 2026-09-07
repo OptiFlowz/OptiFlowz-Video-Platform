@@ -8,6 +8,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@mux/mux-player-react": "^3.11.4",
     "@svg-maps/world": "^2.0.0",
     "@tanstack/react-query": "^5.90.5",

@@ -1,0 +1,24 @@
+.page :global(.editSection) button:disabled,
+.page :global(.bottomBtns) button:disabled {
+  background: var(--background2);
+  color: var(--text2);
+  border-color: var(--border1);
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.page :global(.editSection) button:disabled svg { opacity: 0.6; }
+.status { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; margin-block: 1.5rem; border: 1px solid var(--border1); border-radius: 1rem; background: var(--background2); color: var(--text1); }
+.body { flex: 1; min-width: 0; }
+.body strong { display: block; font-size: 0.95rem; font-weight: 500; }
+.body p, .hint { font-size: 0.8rem; color: var(--text2); line-height: 1.5; }
+.body p { margin-top: 0.3rem; }
+.progress { height: 5px; margin-top: 0.75rem; border-radius: var(--bR); background: var(--border1); overflow: hidden; }
+.progress > span { display: block; height: 100%; border-radius: inherit; background: var(--accentBlue2); transition: width 180ms ease; }
+.hint { margin-block: 0.8rem; }
+.floating { position: fixed; inset-inline-start: 1.25rem; bottom: 1.25rem; z-index: 90; display: flex; align-items: center; gap: 0.85rem; padding: 1rem 1.25rem; max-width: calc(100vw - 6rem); border: 1px solid var(--accentBlue2); border-radius: 1rem; background: var(--background1); color: var(--text1); box-shadow: 0 8px 24px var(--seethroughtBlack); }
+.floating > svg { width: 24px; height: 24px; flex-shrink: 0; }
+.floating strong, .floating small { display: block; }
+.floating strong { font-size: 0.85rem; font-weight: 500; }
+.floating small { font-size: 0.75rem; color: var(--text2); margin-top: 0.25rem; }
+.floating:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .progress > span { transition: none; } }

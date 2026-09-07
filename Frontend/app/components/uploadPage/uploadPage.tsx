@@ -1,3 +1,8 @@
+import { VideoEditorPreview, useVideoPreviewRefresh } from "../shared/videoEditorPreview";
+import { ThumbnailImage } from "../shared/thumbnailImage";
+import { CaptionStatusMessage } from "../shared/captionStatusMessage";
+import { getVideoThumbnail, type VideoMedia } from "../shared/videoMedia";
+import { ThumbnailFramePreview } from "../shared/thumbnailFramePreview";
 import { Link, useNavigate } from "react-router";
 import {
   useState,
@@ -8,22 +13,21 @@ import {
   useEffect,
 } from "react";
 import { useQuery } from "@tanstack/react-query";
-import MuxPlayer from "@mux/mux-player-react";
-import type MuxPlayerElement from "@mux/mux-player";
-import { AISVG, CloseSVG, UploadSVG } from "~/constants";
+import { AISVG, UploadSVG } from "~/constants";
 import { env } from "~/env";
 import ContributorSearch from "./contributorSearch";
 import { fetchFn } from "~/API";
 import { getToken } from "~/functions";
-import { EUROPEAN_LANGUAGES } from "~/constants";
-import {
-  loadMediaTheme,
-  styleMuxPlayerCaptions,
-} from "../playPage/playerCollection/loadMediaTheme";
+import { EUROPEAN_LANGUAGES, MUX_SPOKEN_LANGUAGES } from "~/constants";
 import Sidebar from "../myVideosPage/sidebar/sidebar";
 import { useConstrainedSticky } from "../shared/useConstrainedSticky";
 import { useI18n } from "~/i18n";
+import type { UploadStatus } from "./uploadSession";
+import statusStyles from "./uploadStatus.module.css";
 import CustomSelect from "~/components/customSelect/customSelect";
+
+
+import { createThumbnailSettings, type ThumbnailSettings } from "../shared/thumbnailSettings";
 
 interface Contributor {
   id: string;
@@ -51,14 +55,13 @@ interface GenerateChaptersResponse {
   }[];
 }
 
-interface VideoData {
+interface VideoData extends VideoMedia {
   id: string;
   title: string;
   description: string;
   mux_playback_id: string;
   duration_seconds: number;
-  thumbnail_url: string;
-  stream_url: string;
+  thumbnail_settings?: ThumbnailSettings | null;
   tags: string[];
   chapters: { timestamp: number; title: string }[];
   people: { id: string; name: string; image_url?: string; role: string }[];
@@ -75,17 +78,6 @@ type ProcessingPhase =
   | "complete";
 
 type CaptionStatus = "loading" | "available" | "not_available" | "generating";
-
-const PHASE_LABELS: Record<ProcessingPhase, string> = {
-  idle: "",
-  initializing: "Initializing upload...",
-  uploading: "Uploading video...",
-  processing_asset: "Processing video...",
-  generating_captions: "Generating captions...",
-  generating_chapters: "Generating chapters...",
-  saving_initial_data: "Saving video data...",
-  complete: "Complete!",
-};
 
 function formatSecondsToTimestamp(seconds: number): string {
   const hrs = Math.floor(seconds / 3600);
@@ -107,20 +99,14 @@ function parseTimestampToSeconds(timestamp: string): number {
 function formatThumbnailPickerTime(seconds: number): string {
   if (!Number.isFinite(seconds)) return "00:00";
 
-  const rounded = Math.max(0, Math.floor(seconds));
-  const mins = Math.floor(rounded / 60);
-  const secs = rounded % 60;
-
-  if (mins >= 60) {
-    return formatSecondsToTimestamp(rounded);
+  const safeTime = Math.max(0, Number(seconds.toFixed(2)));
+  const wholeSeconds = Math.floor(safeTime);
+  const fraction = safeTime.toFixed(2).slice(-2).replace(/0+$/, "");
+  const suffix = fraction ? `.${fraction}` : "";
+  if (wholeSeconds >= 3600) {
+    return `${formatSecondsToTimestamp(wholeSeconds)}${suffix}`;
   }
-
-  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-}
-
-function getMuxThumbnailUrl(playbackId: string, time: number): string {
-  const safeTime = Math.max(0, Number(time.toFixed(2)));
-  return `https://image.mux.com/${playbackId}/thumbnail.jpg?time=${safeTime}&width=1280`;
+  return `${Math.floor(wholeSeconds / 60).toString().padStart(2, "0")}:${(wholeSeconds % 60).toString().padStart(2, "0")}${suffix}`;
 }
 
 function clampThumbnailTime(seconds: number, duration: number): number {
@@ -155,285 +141,13 @@ function parseThumbnailPickerInput(value: string): number | null {
 
 function getInitialThumbnailTime(video?: VideoData | null): number {
   const duration = video?.duration_seconds ?? 0;
-  const fallbackTime =
-    duration > 1 ? Math.min(duration / 3, Math.max(duration - 0.1, 0)) : 0;
-  const thumbnailUrl = video?.thumbnail_url;
-
-  if (!thumbnailUrl) {
-    return fallbackTime;
+  if (video?.thumbnail_settings && Number.isFinite(video.thumbnail_settings.time)) {
+    return clampThumbnailTime(video.thumbnail_settings.time, duration);
   }
-
-  try {
-    const parsedUrl = new URL(thumbnailUrl);
-    const timeValue = parsedUrl.searchParams.get("time");
-    if (!timeValue) {
-      return fallbackTime;
-    }
-
-    const parsedTime = Number(timeValue);
-    if (!Number.isFinite(parsedTime)) {
-      return fallbackTime;
-    }
-
-    if (duration <= 0) {
-      return Math.max(0, parsedTime);
-    }
-
-    return Math.min(Math.max(parsedTime, 0), Math.max(duration - 0.1, 0));
-  } catch {
-    return fallbackTime;
-  }
+  return duration > 1 ? Math.min(duration / 3, Math.max(duration - 0.1, 0)) : 0;
 }
 
-interface ThumbnailImageProps {
-  src: string;
-  alt: string;
-  className?: string;
-}
-
-const ThumbnailImage = ({ src, alt, className }: ThumbnailImageProps) => {
-  const [displaySrc, setDisplaySrc] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [attempt, setAttempt] = useState(0);
-  const [hasFailed, setHasFailed] = useState(false);
-  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const revealTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    setDisplaySrc(null);
-    setIsLoading(true);
-    setAttempt(0);
-    setHasFailed(false);
-  }, [src]);
-
-  useEffect(() => {
-    if (retryTimeoutRef.current) {
-      clearTimeout(retryTimeoutRef.current);
-      retryTimeoutRef.current = null;
-    }
-    if (revealTimeoutRef.current) {
-      clearTimeout(revealTimeoutRef.current);
-      revealTimeoutRef.current = null;
-    }
-
-    const separator = src.includes("?") ? "&" : "?";
-    const nextSrc = `${src}${separator}previewAttempt=${attempt}`;
-    const revealDelay = attempt === 0 ? 180 : Math.min(350 * attempt, 900);
-
-    revealTimeoutRef.current = setTimeout(() => {
-      setDisplaySrc(nextSrc);
-    }, revealDelay);
-
-    return () => {
-      if (retryTimeoutRef.current) {
-        clearTimeout(retryTimeoutRef.current);
-      }
-      if (revealTimeoutRef.current) {
-        clearTimeout(revealTimeoutRef.current);
-      }
-    };
-  }, [src, attempt]);
-
-  const handleLoad = () => {
-    setHasFailed(false);
-    setIsLoading(false);
-  };
-
-  const handleError = () => {
-    if (attempt >= 3) {
-      setIsLoading(false);
-      setHasFailed(true);
-      return;
-    }
-
-    setIsLoading(true);
-    setHasFailed(false);
-
-    const retryDelay = 400 + attempt * 450;
-    retryTimeoutRef.current = setTimeout(() => {
-      setAttempt((currentAttempt) => currentAttempt + 1);
-    }, retryDelay);
-  };
-
-  return (
-    <div className="thumbnailImageShell">
-      {isLoading && (
-        <div className="thumbnailImageLoader">
-          <div className="uploadSpinner tiny" />
-          <span>{attempt === 0 ? "Loading frame..." : "Retrying frame..."}</span>
-        </div>
-      )}
-      {hasFailed && !isLoading ? (
-        <div className="thumbnailImageFallback">
-          <span>Preview unavailable right now</span>
-          <button
-            type="button"
-            className="thumbnailImageRetryBtn"
-            onClick={() => {
-              setHasFailed(false);
-              setIsLoading(true);
-              setAttempt(0);
-            }}
-          >
-            Retry
-          </button>
-        </div>
-      ) : null}
-      {displaySrc ? (
-        <img
-          src={displaySrc}
-          alt={alt}
-          className={`${className ?? ""} ${isLoading ? "thumbnailImagePending" : ""}`.trim()}
-          onLoad={handleLoad}
-          onError={handleError}
-        />
-      ) : null}
-    </div>
-  );
-};
-
-function VideoPreview({
-  isVideoLoading,
-  videoData,
-  title,
-  chapters,
-  thumbnailUrl,
-}: {
-  isVideoLoading: boolean;
-  videoData: VideoData | null | undefined;
-  title: string;
-  chapters: Chapter[];
-  thumbnailUrl?: string | null;
-}) {
-  const { t } = useI18n();
-  const [isThemeReady, setIsThemeReady] = useState(false);
-  const [metadataLoaded, setMetadataLoaded] = useState(false);
-  const playerRef = useRef<MuxPlayerElement | null>(null);
-
-  useEffect(() => {
-    setMetadataLoaded(false);
-  }, [videoData?.mux_playback_id]);
-
-  useEffect(() => {
-    const player = playerRef.current;
-    if (!player || !metadataLoaded) return;
-
-    const muxChapters = (chapters ?? [])
-      .map((chapter) => ({
-        startTime: parseTimestampToSeconds(chapter.timestamp),
-        value: String(chapter.title ?? ""),
-      }))
-      .filter((chapter) => Number.isFinite(chapter.startTime) && chapter.value.length > 0);
-
-    if (!muxChapters.length) return;
-
-    try {
-      player.addChapters(muxChapters);
-    } catch {
-      // ignore preview chapter registration errors
-    }
-  }, [chapters, metadataLoaded]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    void loadMediaTheme().then(() => {
-      if (!cancelled) {
-        setIsThemeReady(true);
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  if (isVideoLoading) {
-    return (
-      <div className="videoPreviewContainer">
-        <div className="videoPreviewLoading">
-          <div className="uploadSpinner" />
-          <p>{t("loadingVideoPreview")}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!videoData?.mux_playback_id) {
-    return (
-      <div className="videoPreviewContainer">
-        <div className="videoPreviewPlaceholder">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="48"
-            height="48"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <polygon points="23 7 16 12 23 17 23 7" />
-            <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-          </svg>
-          <p>{t("videoPreviewUnavailable")}</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="videoPreviewContainer">
-      <div className="videoPreviewWrapper">
-        {isThemeReady ? (
-          <MuxPlayer
-            theme="optiflowz-theme"
-            themeProps={{ videotitlee: title, chapterLenght: chapters?.length || 0 }}
-            playbackId={videoData.mux_playback_id}
-            autoPlay={false}
-            playsInline
-            volume={0.1}
-            ref={playerRef as any}
-            onLoadedMetadata={(event) => {
-              styleMuxPlayerCaptions(event.currentTarget as MuxPlayerElement);
-              setMetadataLoaded(true);
-            }}
-            style={{
-              width: "100%",
-              aspectRatio: "16 / 9",
-              borderRadius: "8px",
-              overflow: "hidden",
-            }}
-          />
-        ) : (
-          <div className="videoPreviewLoading">
-            <div className="uploadSpinner" />
-            <p>{t("loadingVideoPreview")}</p>
-          </div>
-        )}
-      </div>
-      <div className="videoPreviewInfo">
-        <h3 className="videoPreviewTitle">{title || "Untitled Video"}</h3>
-        {videoData.duration_seconds && (
-          <p className="videoPreviewDuration">
-            Duration: {formatSecondsToTimestamp(videoData.duration_seconds)}
-          </p>
-        )}
-        {thumbnailUrl ? (
-          <div className="videoPreviewThumbBlock">
-            <p className="videoPreviewThumbLabel">Thumbnail</p>
-            <ThumbnailImage
-              className="videoPreviewThumbImage"
-              src={thumbnailUrl}
-              alt="Video thumbnail"
-            />
-          </div>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-function UploadPage() {
+function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) => void; onFinish?: () => void } = {}) {
   const { t } = useI18n();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
@@ -450,7 +164,9 @@ function UploadPage() {
   const [visibility, setVisibility] = useState<"public" | "private">("private");
   const [captions, setCaptions] = useState("");
   const [oldCaptions, setOldCaptions] = useState("");
-  const [captionLanguage, setCaptionLanguage] = useState("en");
+  const [spokenLanguage, setSpokenLanguage] = useState("auto");
+  const [captionLanguage, setCaptionLanguage] = useState("auto");
+  const [playbackPolicy, setPlaybackPolicy] = useState<"public" | "signed">("signed");
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [oldChapters, setOldChapters] = useState<Chapter[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -467,11 +183,12 @@ function UploadPage() {
     useState(false);
   const [isThumbnailPickerOpen, setIsThumbnailPickerOpen] = useState(false);
   const [selectedThumbnailTime, setSelectedThumbnailTime] = useState(0);
-  const [pendingGeneratedThumbnailUrl, setPendingGeneratedThumbnailUrl] =
-    useState<string | null>(null);
+  const [hasPendingVideoFrame, setHasPendingVideoFrame] = useState(false);
   const [thumbnailTimeInput, setThumbnailTimeInput] = useState("00:00");
+  const savedThumbnailTime = useRef(0);
 
   const [videoId, setVideoId] = useState<string | null>(null);
+  const { previewRevision, refreshVideoPreview } = useVideoPreviewRefresh(videoId);
   const [processingPhase, setProcessingPhase] =
     useState<ProcessingPhase>("idle");
   const [processingError, setProcessingError] = useState<string | null>(null);
@@ -493,7 +210,7 @@ function UploadPage() {
   const previewStickyRef = useRef<HTMLDivElement | null>(null);
   const previewBoundaryRef = useRef<HTMLElement | null>(null);
 
-  // Step 3 tracking
+  // Video details tracking
   const [isSavingDetails, setIsSavingDetails] = useState(false);
   const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
@@ -511,13 +228,31 @@ function UploadPage() {
     bottomGap: 24,
   });
 
-  // Store speakers/chairs at upload time to save after chapters generate
-  const pendingSpeakersRef = useRef<Contributor[]>([]);
-  const pendingChairsRef = useRef<Contributor[]>([]);
+  const draftRef = useRef({ chapters, speakers, chairs, captions, captionLanguage });
+  draftRef.current = { chapters, speakers, chairs, captions, captionLanguage };
+  const chaptersRevision = useRef(0);
+  const captionsRevision = useRef(0);
+  const xhrRef = useRef<XMLHttpRequest | null>(null);
+  const mountedRef = useRef(true);
 
   const isProcessing =
     processingPhase !== "idle" && processingPhase !== "complete";
   const isUploaded = !!videoId && processingPhase === "complete";
+
+  const phaseLabel = processingPhase === "uploading"
+    ? `${t("uploadPhaseUploading")} ${uploadProgress}%`
+    : processingPhase === "idle" ? "" : t(`uploadPhase_${processingPhase}`);
+
+  useEffect(() => {
+    onStatus?.({ label: processingError || phaseLabel, busy: isProcessing, hasDraft: !!videoFile });
+  }, [onStatus, phaseLabel, processingError, isProcessing, videoFile]);
+
+  useEffect(() => {
+    if (!isProcessing) return;
+    const preventUnload = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", preventUnload);
+    return () => window.removeEventListener("beforeunload", preventUnload);
+  }, [isProcessing]);
 
   useLayoutEffect(() => {
     const userToken = getToken();
@@ -538,21 +273,20 @@ function UploadPage() {
         options: {
           method: "GET",
           headers: myHeaders.current,
+          cache: "no-store",
         },
       }) as Promise<VideoData | null>,
     enabled: !!token && !!videoId && processingPhase === "complete",
   });
 
   useEffect(() => {
-    if (videoData?.thumbnail_url && !pendingThumbnailFile && !thumbnailMarkedForRemoval) {
-      setThumbnailUrl(videoData.thumbnail_url);
-      const initialThumbnailTime = getInitialThumbnailTime(videoData);
-      setSelectedThumbnailTime(initialThumbnailTime);
-      setThumbnailTimeInput(formatThumbnailPickerTime(initialThumbnailTime));
-      setPendingGeneratedThumbnailUrl(null);
-      setIsThumbnailPickerOpen(false);
-    }
-  }, [pendingThumbnailFile, thumbnailMarkedForRemoval, videoData]);
+    if (!videoData || pendingThumbnailFile || hasPendingVideoFrame || thumbnailMarkedForRemoval) return;
+    const initialThumbnailTime = getInitialThumbnailTime(videoData);
+    savedThumbnailTime.current = initialThumbnailTime;
+    setThumbnailUrl(getVideoThumbnail(videoData) || null);
+    setSelectedThumbnailTime(initialThumbnailTime);
+    setThumbnailTimeInput(formatThumbnailPickerTime(initialThumbnailTime));
+  }, [videoData]);
 
   useEffect(() => {
     return () => {
@@ -564,18 +298,28 @@ function UploadPage() {
 
   const displayedThumbnailUrl = thumbnailMarkedForRemoval
     ? null
-    : pendingGeneratedThumbnailUrl || pendingThumbnailUrl || thumbnailUrl;
+    : pendingThumbnailUrl || thumbnailUrl;
   const thumbnailModified =
     thumbnailMarkedForRemoval ||
     !!pendingThumbnailFile ||
-    !!pendingGeneratedThumbnailUrl;
+    !!hasPendingVideoFrame;
   const videoDuration = videoData?.duration_seconds ?? 0;
   const maxThumbnailTime =
     videoDuration > 0 ? Math.max(videoDuration - 0.1, 0) : 0;
-  const canChooseVideoFrame = !!videoData?.mux_playback_id && videoDuration > 0;
+  const canChooseVideoFrame = !!videoData?.id && videoDuration > 0;
+
+  const fetchUpdatedThumbnail = async () => {
+    const updatedVideo = await fetchFn<VideoData>({
+      route: `api/videos/${videoId}`,
+      options: { method: "GET", headers: myHeaders.current, cache: "no-store" },
+    });
+    if (!updatedVideo) throw new Error("Failed to refresh video thumbnail.");
+    await refreshVideoPreview();
+    return getVideoThumbnail(updatedVideo) || null;
+  };
 
   const uploadThumbnail = async (file: File) => {
-    if (!videoId) return;
+    if (!videoId) return false;
 
     setIsUploadingThumbnail(true);
     setProcessingError(null);
@@ -601,16 +345,29 @@ function UploadPage() {
 
       if (!response?.success) {
         setProcessingError("Failed to upload video thumbnail.");
-        return;
+        return false;
       }
 
-      const nextThumbnailUrl = response.video?.thumbnail_url || null;
+      const clearedSettings = await fetchFn<{ success: boolean }>({
+        route: `api/video-moderation/video-details/${videoId}`,
+        options: {
+          method: "PATCH",
+          headers: myHeaders.current,
+          body: JSON.stringify({ thumbnail_settings: null }),
+        },
+      });
+      if (!clearedSettings?.success) {
+        throw new Error("Failed to clear previous thumbnail settings.");
+      }
+      savedThumbnailTime.current = 0;
+      const nextThumbnailUrl = await fetchUpdatedThumbnail();
       setThumbnailUrl(nextThumbnailUrl);
       setPendingThumbnailFile(null);
       setPendingThumbnailUrl(null);
-      setPendingGeneratedThumbnailUrl(null);
+      setHasPendingVideoFrame(false);
       setThumbnailMarkedForRemoval(false);
       setIsThumbnailPickerOpen(false);
+      return true;
     } catch (err) {
       console.error("Error uploading video thumbnail:", err);
       setProcessingError("Failed to upload video thumbnail.");
@@ -620,14 +377,15 @@ function UploadPage() {
         thumbnailInputRef.current.value = "";
       }
     }
+    return false;
   };
 
   const resetThumbnailSelection = () => {
     setPendingThumbnailFile(null);
     setPendingThumbnailUrl(null);
-    setPendingGeneratedThumbnailUrl(null);
+    setHasPendingVideoFrame(false);
     setThumbnailMarkedForRemoval(false);
-    const initialThumbnailTime = getInitialThumbnailTime(videoData);
+    const initialThumbnailTime = savedThumbnailTime.current;
     setSelectedThumbnailTime(initialThumbnailTime);
     setThumbnailTimeInput(formatThumbnailPickerTime(initialThumbnailTime));
     setIsThumbnailPickerOpen(false);
@@ -649,7 +407,7 @@ function UploadPage() {
       }
       return URL.createObjectURL(file);
     });
-    setPendingGeneratedThumbnailUrl(null);
+    setHasPendingVideoFrame(false);
     setThumbnailMarkedForRemoval(false);
     setIsThumbnailPickerOpen(false);
   };
@@ -667,16 +425,12 @@ function UploadPage() {
     setIsThumbnailPickerOpen((previousValue) => {
       const nextValue = !previousValue;
       if (nextValue) {
-        const initialTime = selectedThumbnailTime || getInitialThumbnailTime(videoData);
+        const initialTime = selectedThumbnailTime;
         setSelectedThumbnailTime(initialTime);
         setThumbnailTimeInput(formatThumbnailPickerTime(initialTime));
-        if (videoData?.mux_playback_id) {
-          setPendingGeneratedThumbnailUrl(
-            getMuxThumbnailUrl(videoData.mux_playback_id, initialTime)
-          );
-        }
+        setHasPendingVideoFrame(true);
       } else {
-        setPendingGeneratedThumbnailUrl(null);
+        setHasPendingVideoFrame(false);
       }
 
       return nextValue;
@@ -688,11 +442,7 @@ function UploadPage() {
     setSelectedThumbnailTime(clampedTime);
     setThumbnailTimeInput(formatThumbnailPickerTime(clampedTime));
 
-    if (videoData?.mux_playback_id) {
-      setPendingGeneratedThumbnailUrl(
-        getMuxThumbnailUrl(videoData.mux_playback_id, clampedTime)
-      );
-    }
+    setHasPendingVideoFrame(true);
   };
 
   const handleThumbnailTimeChange = (
@@ -718,7 +468,7 @@ function UploadPage() {
   };
 
   const handleSaveGeneratedThumbnail = async () => {
-    if (!videoId || !pendingGeneratedThumbnailUrl) return;
+    if (!videoId || !hasPendingVideoFrame) return false;
 
     setIsUploadingThumbnail(true);
     setProcessingError(null);
@@ -730,32 +480,36 @@ function UploadPage() {
           method: "PATCH",
           headers: myHeaders.current,
           body: JSON.stringify({
-            thumbnail_url: pendingGeneratedThumbnailUrl,
+            thumbnail_url: null,
+            thumbnail_settings: createThumbnailSettings(selectedThumbnailTime),
           }),
         },
       });
 
       if (!response?.success) {
         setProcessingError("Failed to save video thumbnail.");
-        return;
+        return false;
       }
 
-      setThumbnailUrl(pendingGeneratedThumbnailUrl);
-      setPendingGeneratedThumbnailUrl(null);
+      savedThumbnailTime.current = selectedThumbnailTime;
+      setThumbnailUrl(await fetchUpdatedThumbnail());
+      setHasPendingVideoFrame(false);
       setPendingThumbnailFile(null);
       setPendingThumbnailUrl(null);
       setThumbnailMarkedForRemoval(false);
       setIsThumbnailPickerOpen(false);
+      return true;
     } catch (err) {
       console.error("Error saving generated thumbnail:", err);
       setProcessingError("Failed to save video thumbnail.");
     } finally {
       setIsUploadingThumbnail(false);
     }
+    return false;
   };
 
   const handleSaveThumbnail = async () => {
-    if (!videoId) return;
+    if (!videoId) return false;
 
     if (thumbnailMarkedForRemoval) {
       setIsRemovingThumbnail(true);
@@ -767,23 +521,26 @@ function UploadPage() {
         headers.append("Content-Type", "application/json");
 
         const response = await fetchFn<{ success: boolean }>({
-          route: `api/video-moderation/${videoId}/thumbnail`,
+          route: `api/video-moderation/video-details/${videoId}`,
           options: {
-            method: "POST",
+            method: "PATCH",
             headers,
             body: JSON.stringify({
-              file: null,
+              thumbnail_url: null,
+              thumbnail_settings: null,
             }),
           },
         });
 
         if (!response?.success) {
           setProcessingError("Failed to remove video thumbnail.");
-          return;
+          return false;
         }
 
-        setThumbnailUrl(null);
+        savedThumbnailTime.current = 0;
+        setThumbnailUrl(await fetchUpdatedThumbnail());
         resetThumbnailSelection();
+        return true;
       } catch (err) {
         console.error("Error removing video thumbnail:", err);
         setProcessingError("Failed to remove video thumbnail.");
@@ -791,17 +548,16 @@ function UploadPage() {
         setIsRemovingThumbnail(false);
       }
 
-      return;
+      return false;
     }
 
-    if (pendingGeneratedThumbnailUrl) {
-      await handleSaveGeneratedThumbnail();
-      return;
+    if (hasPendingVideoFrame) {
+      return handleSaveGeneratedThumbnail();
     }
 
-    if (!pendingThumbnailFile) return;
+    if (!pendingThumbnailFile) return true;
 
-    await uploadThumbnail(pendingThumbnailFile);
+    return uploadThumbnail(pendingThumbnailFile);
   };
 
   const handleRemoveThumbnail = () => {
@@ -814,13 +570,22 @@ function UploadPage() {
 
     setPendingThumbnailFile(null);
     setPendingThumbnailUrl(null);
-    setPendingGeneratedThumbnailUrl(null);
+    setHasPendingVideoFrame(false);
     setThumbnailMarkedForRemoval(true);
     setIsThumbnailPickerOpen(false);
     if (thumbnailInputRef.current) {
       thumbnailInputRef.current.value = "";
     }
   };
+
+  useEffect(() => {
+    setCaptionsModified(captions !== oldCaptions);
+  }, [captions, oldCaptions]);
+  useEffect(() => {
+    setSpeakersOrChairsModified(
+      !checkContributorsEqual(oldSpeakers, speakers) || !checkContributorsEqual(oldChairs, chairs)
+    );
+  }, [speakers, chairs, oldSpeakers, oldChairs]);
 
   // Check if chapters have been modified
   useEffect(() => {
@@ -829,8 +594,8 @@ function UploadPage() {
     setChaptersModified(chaptersChanged);
   }, [chapters, oldChapters]);
 
-  // Fetch captions when language changes (only in step 2 and when video is uploaded)
-  const fetchCaptionsForLanguage = async (lang: string) => {
+  // Keep the original revision across polling retries so typed drafts win.
+  const fetchCaptionsForLanguage = async (lang: string, revision = captionsRevision.current) => {
     if (!videoId) return;
 
     if (captionPollingRef.current) {
@@ -839,9 +604,7 @@ function UploadPage() {
     }
 
     setCaptionStatus("loading");
-    setCaptions("");
-    setOldCaptions("");
-    setCaptionsModified(false);
+
 
     try {
       const response = await fetch(
@@ -854,13 +617,13 @@ function UploadPage() {
 
       if (response.status === 200) {
         const vttText = await response.text();
-        setCaptions(vttText);
+        if (captionsRevision.current === revision) setCaptions(vttText);
         setOldCaptions(vttText);
         setCaptionStatus("available");
       } else if (response.status === 202) {
         setCaptionStatus("generating");
         captionPollingRef.current = setTimeout(
-          () => fetchCaptionsForLanguage(lang),
+          () => fetchCaptionsForLanguage(lang, revision),
           5000
         );
       } else if (response.status === 404) {
@@ -876,13 +639,14 @@ function UploadPage() {
 
   // Auto-generate captions for a language
   const handleGenerateCaptions = async () => {
-    if (!videoId) return;
+    if (!isUploaded || !videoId) return;
 
     const selectedLang = EUROPEAN_LANGUAGES.find(
       (l) => l.code === captionLanguage
     );
     if (!selectedLang) return;
 
+    const revision = captionsRevision.current;
     setCaptionStatus("generating");
 
     try {
@@ -896,8 +660,8 @@ function UploadPage() {
 
       if (response.ok) {
         const vttText = await response.text();
-        setCaptions(vttText);
-        setOldCaptions(vttText);
+        if (captionsRevision.current === revision) setCaptions(vttText);
+        // Generation returns a draft; only a successful save updates oldCaptions.
         setCaptionStatus("available");
         setCaptionsModified(true);
       } else {
@@ -913,12 +677,16 @@ function UploadPage() {
 
   // Save captions
   const handleSaveCaptions = async () => {
-    if (!videoId || !captions) return;
+    if (!isUploaded || !videoId) return false;
+    if (!captions.trim()) {
+      setProcessingError(t("uploadEmptyCaptionsHint"));
+      return false;
+    }
 
     const selectedLang = EUROPEAN_LANGUAGES.find(
       (l) => l.code === captionLanguage
-    );
-    if (!selectedLang) return;
+    ) || (captionLanguage === "auto" ? { name: t("autoGeneratedCaptions"), code: "auto" } : undefined);
+    if (!selectedLang) return false;
 
     setIsSavingCaptions(true);
     try {
@@ -932,8 +700,11 @@ function UploadPage() {
       );
 
       if (response.ok) {
+        await refreshVideoPreview();
+        setCaptionStatus("available");
         setOldCaptions(captions);
         setCaptionsModified(false);
+        return true;
       } else if (response.status === 502) {
         setProcessingError(
           "Mux track is not ready yet. Please try again later."
@@ -949,6 +720,7 @@ function UploadPage() {
     } finally {
       setIsSavingCaptions(false);
     }
+    return false;
   };
 
   // Delete captions
@@ -971,6 +743,7 @@ function UploadPage() {
       );
 
       if (response.ok) {
+        await refreshVideoPreview();
         setCaptions("");
         setOldCaptions("");
         setCaptionStatus("not_available");
@@ -988,6 +761,7 @@ function UploadPage() {
 
   // Handle caption text change
   const handleCaptionsChange = (newValue: string) => {
+    captionsRevision.current += 1;
     setCaptions(newValue);
     setCaptionsModified(newValue !== oldCaptions);
   };
@@ -1057,6 +831,7 @@ function UploadPage() {
       });
 
       if (response?.success) {
+        await refreshVideoPreview();
         setOldSpeakers([...speakers]);
         setOldChairs([...chairs]);
         setSpeakersOrChairsModified(false);
@@ -1092,6 +867,7 @@ function UploadPage() {
       });
 
       if (response?.success) {
+        await refreshVideoPreview();
         setOldChapters([...chapters]);
         setChaptersModified(false);
       } else {
@@ -1105,10 +881,17 @@ function UploadPage() {
     }
   };
 
-  // Handle language change in step 2
+  // Preserve unsaved captions before switching language.
   const handleCaptionLanguageChange = (newLang: string) => {
+    if (captionsModified) {
+      setProcessingError(t("uploadSaveCaptionsFirst"));
+      return;
+    }
+    captionsRevision.current = 0;
+    setCaptions("");
+    setOldCaptions("");
     setCaptionLanguage(newLang);
-    if (currentStep === 2 && videoId) {
+    if (currentStep === 3 && isUploaded && videoId) {
       fetchCaptionsForLanguage(newLang);
     }
   };
@@ -1116,6 +899,7 @@ function UploadPage() {
   const uploadFileToMux = async (uploadUrl: string, file: File) => {
     return new Promise<void>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
+      xhrRef.current = xhr;
       xhr.open("PUT", uploadUrl);
 
       xhr.upload.onprogress = (event) => {
@@ -1134,6 +918,7 @@ function UploadPage() {
       };
 
       xhr.onerror = () => reject(new Error("Upload failed"));
+      xhr.onabort = () => reject(new Error("Upload cancelled"));
       xhr.send(file);
     });
   };
@@ -1142,6 +927,7 @@ function UploadPage() {
     setProcessingPhase("processing_asset");
 
     const poll = async () => {
+      if (!mountedRef.current) return;
       try {
         const response = await fetch(
         `${env.apiBaseUrl || ""}/api/video-moderation/subtitle/${vid}?lang=${lang}`,
@@ -1151,6 +937,7 @@ function UploadPage() {
           }
         );
 
+        if (!mountedRef.current) return;
         if (response.status === 202) {
           const data = await response.json();
           if (data.code === "ASSET_PROCESSING") {
@@ -1160,21 +947,26 @@ function UploadPage() {
           }
           pollingRef.current = setTimeout(poll, 5000);
         } else if (response.status === 200) {
+          setProcessingError(null);
           const vttText = await response.text();
-          setCaptions(vttText);
+          const detectedLanguage = response.headers.get("X-Mux-Lang") || lang;
+          if (lang === "auto") setCaptionLanguage(detectedLanguage);
+          if (captionsRevision.current === 0) setCaptions(vttText);
           setOldCaptions(vttText);
           setCaptionStatus("available");
-          setCaptionsModified(false);
-          await generateChapters(vid, lang);
-        } else if (response.status === 404) {
-          setProcessingError("No captions available for this language.");
-          setCaptionStatus("not_available");
-          // Still save speakers/chairs even if captions fail
-          await saveInitialData(vid, []);
+
+          await generateChapters(vid, response.headers.get("X-Mux-Lang") || lang);
         } else {
-          setProcessingError("Failed to fetch captions.");
-          setCaptionStatus("not_available");
-          await saveInitialData(vid, []);
+          const error = await response.json().catch(() => ({}));
+          if (error.code === "NO_CAPTIONS" || error.code === "CAPTIONS_ERRORED") {
+            // These responses are only returned after the asset is ready.
+            setProcessingError(t("uploadCaptionsUnavailable"));
+            setCaptionStatus("not_available");
+            await saveInitialData(vid, []);
+          } else {
+            setProcessingError(t("uploadStatusRetrying"));
+            pollingRef.current = setTimeout(poll, 5000);
+          }
         }
       } catch (error) {
         console.error("Error polling captions:", error);
@@ -1187,10 +979,14 @@ function UploadPage() {
 
   // Save initial data (speakers, chairs, chapters) after chapter generation
   const saveInitialData = async (vid: string, generatedChapters: Chapter[]) => {
+    if (!mountedRef.current) return;
     setProcessingPhase("saving_initial_data");
 
+    const snapshot = draftRef.current;
+    const savedChapters = generatedChapters;
+    const saveGeneratedChapters = chaptersRevision.current === 0;
     try {
-      const chaptersPayload = generatedChapters.map((ch) => ({
+      const chaptersPayload = savedChapters.map((ch) => ({
         title: ch.title,
         startTime: parseTimestampToSeconds(ch.timestamp),
       }));
@@ -1201,33 +997,34 @@ function UploadPage() {
           method: "PATCH",
           headers: myHeaders.current,
           body: JSON.stringify({
-            speakers: pendingSpeakersRef.current.map((s) => s.id),
-            chairs: pendingChairsRef.current.map((c) => c.id),
-            chapters: chaptersPayload,
+            speakers: snapshot.speakers.map((s) => s.id),
+            chairs: snapshot.chairs.map((c) => c.id),
+            ...(saveGeneratedChapters ? { chapters: chaptersPayload } : {}),
           }),
         },
       });
 
       if (response?.success) {
         // Update old values to reflect saved state
-        setOldSpeakers([...pendingSpeakersRef.current]);
-        setOldChairs([...pendingChairsRef.current]);
-        setOldChapters([...generatedChapters]);
-        setSpeakersOrChairsModified(false);
-        setChaptersModified(false);
+        setOldSpeakers([...snapshot.speakers]);
+        setOldChairs([...snapshot.chairs]);
+        if (saveGeneratedChapters) setOldChapters([...savedChapters]);
+
+
       } else {
-        console.error("Failed to save initial data");
+        setProcessingError(t("uploadInitialSaveFailed"));
       }
     } catch (error) {
       console.error("Error saving initial data:", error);
+      setProcessingError(t("uploadInitialSaveFailed"));
     }
 
     setProcessingPhase("complete");
-    setCurrentStep(2);
-    document.scrollingElement?.scrollTo({ top: 0, behavior: "smooth" });
+
   };
 
   const generateChapters = async (vid: string, lang: string) => {
+    if (!mountedRef.current) return;
     setProcessingPhase("generating_chapters");
 
     let generatedChapters: Chapter[] = [];
@@ -1250,7 +1047,7 @@ function UploadPage() {
           timestamp: formatSecondsToTimestamp(ch.startTime),
           title: ch.title,
         }));
-        setChapters(generatedChapters);
+        if (chaptersRevision.current === 0) setChapters(generatedChapters);
       }
     } catch (error) {
       console.error("Error generating chapters:", error);
@@ -1261,7 +1058,8 @@ function UploadPage() {
   };
 
   const handleRegenerateChapters = async () => {
-    if (!videoId) return;
+    if (!isUploaded || !videoId) return;
+    const revision = chaptersRevision.current;
 
     setProcessingPhase("generating_chapters");
     try {
@@ -1282,7 +1080,7 @@ function UploadPage() {
           timestamp: formatSecondsToTimestamp(ch.startTime),
           title: ch.title,
         }));
-        setChapters(formattedChapters);
+        if (chaptersRevision.current === revision) setChapters(formattedChapters);
       }
       setProcessingPhase("complete");
     } catch (error) {
@@ -1294,7 +1092,7 @@ function UploadPage() {
   const handleGenerateWithAI = async (
     type: "title" | "description" | "tags"
   ) => {
-    if (!videoId) return;
+    if (!isUploaded || !videoId) return;
 
     const setLoading =
       type === "title"
@@ -1338,20 +1136,16 @@ function UploadPage() {
   };
 
   const initiateUpload = async () => {
-    if (!videoFile || !title.trim()) return;
+    if (!videoFile || !title.trim() || isProcessing) return;
 
     setProcessingPhase("initializing");
     setProcessingError(null);
     setUploadProgress(0);
 
-    const selectedLang = EUROPEAN_LANGUAGES.find(
-      (l) => l.code === captionLanguage
-    );
-    if (!selectedLang) return;
+    const selectedLang = MUX_SPOKEN_LANGUAGES.find((l) => l.code === spokenLanguage);
+    if (spokenLanguage !== "auto" && !selectedLang) { setProcessingPhase("idle"); return; }
 
-    // Store current speakers/chairs to save after chapters generate
-    pendingSpeakersRef.current = [...speakers];
-    pendingChairsRef.current = [...chairs];
+
 
     try {
       const initiateResponse = (await fetchFn({
@@ -1361,8 +1155,9 @@ function UploadPage() {
           headers: myHeaders.current,
           body: JSON.stringify({
             title: title.trim(),
-            language_code: captionLanguage,
-            language_name: selectedLang.name,
+            language_code: spokenLanguage,
+            ...(selectedLang ? { language_name: selectedLang.name } : {}),
+            playback_policy: playbackPolicy,
           }),
         },
       })) as UploadInitiateResponse | null;
@@ -1373,13 +1168,18 @@ function UploadPage() {
 
       const { video_id, upload } = initiateResponse;
       setVideoId(video_id);
+      setCurrentStep(2);
+      document.scrollingElement?.scrollTo({ top: 0, behavior: "smooth" });
 
       setProcessingPhase("uploading");
       await uploadFileToMux(upload.upload_url, videoFile);
 
-      pollForCaptions(video_id, captionLanguage);
+      pollForCaptions(video_id, spokenLanguage);
     } catch (error) {
+      if (!mountedRef.current) return;
       console.error("Upload error:", error);
+      setCurrentStep(1);
+      setVideoId(null);
       setProcessingPhase("idle");
       setProcessingError("Failed to upload video. Please try again.");
     }
@@ -1387,7 +1187,7 @@ function UploadPage() {
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    if (!isUploaded) {
+    if (!isUploaded && !isProcessing) {
       setIsDragging(true);
     }
   };
@@ -1400,7 +1200,7 @@ function UploadPage() {
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
-    if (isUploaded) return;
+    if (isUploaded || isProcessing) return;
 
     const file = e.dataTransfer.files[0];
     if (file && file.type.startsWith("video/")) {
@@ -1409,7 +1209,7 @@ function UploadPage() {
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (isUploaded) return;
+    if (isUploaded || isProcessing) return;
 
     const file = e.target.files?.[0];
     if (file && file.type.startsWith("video/")) {
@@ -1432,7 +1232,7 @@ function UploadPage() {
   };
 
   const removeVideo = () => {
-    if (isUploaded) return;
+    if (isUploaded || isProcessing) return;
 
     setVideoFile(null);
     if (fileInputRef.current) {
@@ -1441,6 +1241,7 @@ function UploadPage() {
   };
 
   const addChapter = () => {
+    chaptersRevision.current += 1;
     setChapters([...chapters, { timestamp: "00:00:00", title: "" }]);
   };
 
@@ -1449,18 +1250,20 @@ function UploadPage() {
     field: keyof Chapter,
     value: string
   ) => {
-    const updated = [...chapters];
-    updated[index][field] = value;
-    setChapters(updated);
+    chaptersRevision.current += 1;
+    setChapters(chapters.map((chapter, chapterIndex) =>
+      chapterIndex === index ? { ...chapter, [field]: value } : chapter
+    ));
   };
 
   const removeChapter = (index: number) => {
+    chaptersRevision.current += 1;
     setChapters(chapters.filter((_, i) => i !== index));
   };
 
   const handleNext = () => {
     if (currentStep === 1) {
-      if (isUploaded) {
+      if (videoId) {
         setCurrentStep(2);
         document.scrollingElement?.scrollTo({ top: 0, behavior: "smooth" });
       } else {
@@ -1493,10 +1296,12 @@ function UploadPage() {
   };
 
   const handleSubmit = async () => {
-    if (!videoId) return;
+    if (!isUploaded || !videoId || isSavingDetails) return;
 
     setIsSavingDetails(true);
     try {
+      if (captionsModified && !(await handleSaveCaptions())) return;
+      if (thumbnailModified && !(await handleSaveThumbnail())) return;
       const response = await fetchFn<{ success: boolean }>({
         route: `api/video-moderation/video-details/${videoId}`,
         options: {
@@ -1507,12 +1312,17 @@ function UploadPage() {
             description,
             tags,
             visibility,
+            speakers: speakers.map((person) => person.id),
+            chairs: chairs.map((person) => person.id),
+            chapters: chapters.map((chapter) => ({ title: chapter.title, startTime: parseTimestampToSeconds(chapter.timestamp) })),
           }),
         },
       });
 
       if (response?.success) {
+        await refreshVideoPreview();
         navigate("/my-videos");
+        onFinish?.();
       } else {
         setProcessingError("Failed to save video.");
       }
@@ -1525,14 +1335,17 @@ function UploadPage() {
   };
 
   const steps = [
-    { number: 1, label: "Upload Video" },
-    { number: 2, label: "Captions & Chapters" },
-    { number: 3, label: "Video Details" },
+    { number: 1, label: t("uploadVideoAction") },
+    { number: 2, label: t("videoDetails") },
+    { number: 3, label: t("uploadCaptionsChapters") },
   ];
 
-  // Cleanup polling on unmount
+  // The session host survives route changes; cleanup only on session disposal.
   useLayoutEffect(() => {
+    mountedRef.current = true;
     return () => {
+      mountedRef.current = false;
+      xhrRef.current?.abort();
       if (pollingRef.current) clearTimeout(pollingRef.current);
       if (captionPollingRef.current) clearTimeout(captionPollingRef.current);
     };
@@ -1540,7 +1353,7 @@ function UploadPage() {
 
   // Remove theater button
   useEffect(() => {
-    if (currentStep === 2 && videoData)
+    if (currentStep > 1 && videoData)
       window.dispatchEvent(
         new CustomEvent("theater-disable", { bubbles: true, composed: true })
       );
@@ -1548,7 +1361,7 @@ function UploadPage() {
 
   return (
     <>
-      <main className={`uploadMain`}>
+      <main className={`uploadMain ${statusStyles.page}`}>
         <Sidebar />
         <div
           className={`uploadSide ${currentStep > 1 ? "max-w-325 w-full" : ""}`}
@@ -1599,30 +1412,21 @@ function UploadPage() {
             ))}
           </div>
 
-          {/* Upload Loader Overlay */}
-          {isProcessing && (
-            <div className="uploadOverlay">
-              <div className="uploadLoaderContainer">
-                <div className="uploadSpinner" />
-                <p className="uploadingText">
-                  {processingPhase === "uploading"
-                    ? `${PHASE_LABELS[processingPhase]} ${uploadProgress}%`
-                    : PHASE_LABELS[processingPhase]}
-                </p>
-                <div className="uploadProgressBar">
-                  <div
-                    className="uploadProgressFill"
-                    style={{
-                      width:
-                        processingPhase === "uploading"
-                          ? `${uploadProgress}%`
-                          : "100%",
-                    }}
-                  />
-                </div>
+          {(isProcessing || isUploaded) && (
+            <div className={statusStyles.status} role="status" aria-live="polite">
+              {isProcessing && <div className="uploadSpinner small" />}
+              <div className={statusStyles.body}>
+                <strong>{phaseLabel}</strong>
+                <p>{t(isUploaded ? "uploadReadyHint" : "uploadBackgroundHint")}</p>
+                {processingPhase === "uploading" && (
+                  <div className={statusStyles.progress} role="progressbar" aria-label={t("uploadPhaseUploading")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={uploadProgress}>
+                    <span style={{ width: `${uploadProgress}%` }} />
+                  </div>
+                )}
               </div>
             </div>
           )}
+          {currentStep > 1 && !isUploaded && <p className={statusStyles.hint}>{t("uploadAIReadyHint")}</p>}
 
           {/* Error Message */}
           {processingError && (
@@ -1663,7 +1467,7 @@ function UploadPage() {
               )}
 
               <div
-                className={`uploadZone ${isDragging ? "dragging" : ""} ${videoFile ? "hasFile" : ""} ${isUploaded ? "disabled" : ""}`}
+                className={`uploadZone ${isDragging ? "dragging" : ""} ${videoFile ? "hasFile" : ""} ${isUploaded || isProcessing ? "disabled" : ""}`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -1677,7 +1481,7 @@ function UploadPage() {
                   accept="video/*"
                   onChange={handleFileSelect}
                   hidden
-                  disabled={isUploaded}
+                  disabled={isUploaded || isProcessing}
                 />
                 {videoFile ? (
                   <div className="fileInfo">
@@ -1697,7 +1501,7 @@ function UploadPage() {
                     <p className="fileSize">
                       {(videoFile.size / (1024 * 1024)).toFixed(2)} MB
                     </p>
-                    {!isUploaded && (
+                    {!isUploaded && !isProcessing && (
                       <button
                         type="button"
                         className="removeFileBtn"
@@ -1730,7 +1534,7 @@ function UploadPage() {
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder={t("muxTitlePlaceholder")}
                   maxLength={100}
-                  disabled={isUploaded}
+                  disabled={isUploaded || isProcessing}
                   className={isUploaded ? "disabled" : ""}
                 />
                 <span className="charCount">{title.length}/100</span>
@@ -1763,27 +1567,38 @@ function UploadPage() {
                 <div className="captionsInputRow">
                   <CustomSelect
                     id="captionLanguage"
-                    value={captionLanguage}
-                    onChange={setCaptionLanguage}
-                    options={EUROPEAN_LANGUAGES.map((lang) => ({
+                    value={spokenLanguage}
+                    onChange={(value) => { setSpokenLanguage(value); setCaptionLanguage(value); }}
+                    options={[{ value: "auto", label: t("spokenLanguageAuto") }, ...MUX_SPOKEN_LANGUAGES.map((lang) => ({
                       value: lang.code,
                       label: `${lang.name} - ${lang.code}`,
-                    }))}
+                    }))]}
                     ariaLabel={t("spokenLanguage")}
-                    triggerClassName={`languageSelect ${isUploaded ? "disabled" : ""}`}
-                    disabled={isUploaded}
+                    triggerClassName={`languageSelect ${isUploaded || isProcessing ? "disabled" : ""}`}
+                    disabled={isUploaded || isProcessing}
                   />
                 </div>
+                <p className="formHint">{t("spokenLanguageAutoHelp")}</p>
+              </div>
+              <div className="formGroup mt-7.5">
+                <label htmlFor="uploadPlaybackPolicy">{t("playbackProtection")}</label>
+                <CustomSelect id="uploadPlaybackPolicy" value={playbackPolicy}
+                  onChange={(value) => setPlaybackPolicy(value as "public" | "signed")}
+                  options={[{ value: "signed", label: t("playbackSigned") }, { value: "public", label: t("playbackPublic") }]}
+                  ariaLabel={t("playbackProtection")} triggerClassName="visibilitySelect"
+                  disabled={isUploaded || isProcessing} />
+                <p className="formHint">{t(playbackPolicy === "signed" ? "playbackSignedHelp" : "playbackPublicHelp")}</p>
               </div>
             </div>
           )}
 
-          {/* Step 2: Captions & Chapters */}
-          {currentStep === 2 && (
+          {/* Step 3: Captions & Chapters */}
+          {currentStep === 3 && (
             <div className="stepContentWithPreview">
               <aside ref={previewAsideRef} className="stepContentSidebar">
                 <div ref={previewStickyRef} style={previewStickyStyle}>
-                  <VideoPreview
+                  <VideoEditorPreview
+                    revision={previewRevision}
                     isVideoLoading={isVideoLoading}
                     videoData={videoData}
                     title={title}
@@ -1794,73 +1609,51 @@ function UploadPage() {
               <div className="stepContentMain">
                 <div className="videoDetailsForm">
                   <div className="formGroup editSection">
-                    <label htmlFor="videoCaptions">
-                      Captions
-                      <div className="flex items-center gap-2">
+                    <div className="captionToolbar">
+                      <h2 className="captionToolbarTitle">{t("captions")}</h2>
+                      <div className="captionToolbarControls">
                         <div className="captionsInputRow">
                           <CustomSelect
                             id="captionLanguageStep2"
                             value={captionLanguage}
                             onChange={handleCaptionLanguageChange}
-                            options={EUROPEAN_LANGUAGES.map((lang) => ({
+                            options={[...(captionLanguage === "auto" ? [{ value: "auto", label: t("autoGeneratedCaptions") }] : []), ...EUROPEAN_LANGUAGES.map((lang) => ({
                               value: lang.code,
                               label: `${lang.name} - ${lang.code}`,
-                            }))}
+                            }))]}
                             ariaLabel={t("spokenLanguage")}
                             triggerClassName="languageSelect"
                             disabled={
-                              captionStatus === "loading" ||
+                              !isUploaded || captionStatus === "loading" ||
                               captionStatus === "generating" ||
                               isSavingCaptions ||
                               isDeletingCaptions
                             }
                           />
                         </div>
-                        {captionStatus === "not_available" && (
+                        {(captionStatus === "not_available" || !isUploaded) && (
                           <button
                             type="button"
                             onClick={handleGenerateCaptions}
+                            disabled={!isUploaded || captionLanguage === "auto" || captionStatus === "generating"}
+                            title={!isUploaded ? t("uploadAIReadyHint") : undefined}
                             className="generateAIBtn"
                           >
                             {AISVG}&nbsp;Generate with AI
                           </button>
                         )}
                       </div>
-                    </label>
+                    </div>
 
-                    {captionStatus === "loading" && (
-                      <div className="captionsLoadingState">
-                        <div className="uploadSpinner small" />
-                        <p>{t("checkingCaptions")}</p>
-                      </div>
-                    )}
+                    <CaptionStatusMessage
+                      status={captionStatus}
+                      language={EUROPEAN_LANGUAGES.find((language) => language.code === captionLanguage)?.name || t("autoGeneratedCaptions")}
+                    />
 
-                    {captionStatus === "generating" && (
-                      <div className="captionsLoadingState">
-                        <div className="uploadSpinner small" />
-                        <p>{t("generatingCaptions")}</p>
-                      </div>
-                    )}
-
-                    {captionStatus === "not_available" && (
-                      <div className="captionsNotAvailable">
-                        {CloseSVG}
-                        <p>
-                          No captions available for{" "}
-                          {
-                            EUROPEAN_LANGUAGES.find(
-                              (l) => l.code === captionLanguage
-                            )?.name
-                          }
-                          . Click "Generate with AI" to create them.
-                        </p>
-                      </div>
-                    )}
-
-                    {captionStatus === "available" && (
-                      <>
+                    <>
                         <textarea
                           id="videoCaptions"
+                          aria-label={t("captions")}
                           value={captions}
                           onChange={(e) => handleCaptionsChange(e.target.value)}
                           placeholder={t("captionsPlaceholder")}
@@ -1880,7 +1673,7 @@ function UploadPage() {
                             <button
                               type="button"
                               onClick={handleSaveCaptions}
-                              disabled={!captionsModified || isSavingCaptions}
+                              disabled={!isUploaded || !captions.trim() || !captionsModified || isSavingCaptions || isDeletingCaptions}
                               className="saveCaptionsBtn"
                             >
                               {isSavingCaptions ? (
@@ -1895,7 +1688,7 @@ function UploadPage() {
                             <button
                               type="button"
                               onClick={handleDeleteCaptions}
-                              disabled={isDeletingCaptions || isSavingCaptions}
+                              disabled={!isUploaded || captionStatus !== "available" || isDeletingCaptions || isSavingCaptions}
                               className="deleteCaptionsBtn"
                             >
                               {isDeletingCaptions ? (
@@ -1909,8 +1702,7 @@ function UploadPage() {
                             </button>
                           </div>
                         </div>
-                      </>
-                    )}
+                    </>
                   </div>
 
                   <div className="formGroup editSection mt-10">
@@ -1950,7 +1742,7 @@ function UploadPage() {
                           type="button"
                           onClick={handleSaveContributors}
                           disabled={
-                            !speakersOrChairsModified || isSavingContributors
+                            !isUploaded || !speakersOrChairsModified || isSavingContributors
                           }
                           className="saveCaptionsBtn"
                         >
@@ -1974,7 +1766,7 @@ function UploadPage() {
                         type="button"
                         onClick={handleRegenerateChapters}
                         disabled={
-                          processingPhase === "generating_chapters" ||
+                          !isUploaded ||
                           captionStatus !== "available"
                         }
                       >
@@ -2039,7 +1831,7 @@ function UploadPage() {
                         <button
                           type="button"
                           onClick={handleSaveChapters}
-                          disabled={!chaptersModified || isSavingChapters}
+                          disabled={!isUploaded || !chaptersModified || isSavingChapters}
                           className="saveCaptionsBtn"
                         >
                           {isSavingChapters ? (
@@ -2059,17 +1851,17 @@ function UploadPage() {
             </div>
           )}
 
-          {/* Step 3: Video Details */}
-          {currentStep === 3 && (
+          {/* Step 2: Video Details */}
+          {currentStep === 2 && (
             <div className="stepContentWithPreview">
               <aside ref={previewAsideRef} className="stepContentSidebar">
                 <div ref={previewStickyRef} style={previewStickyStyle}>
-                  <VideoPreview
+                  <VideoEditorPreview
+                    revision={previewRevision}
                     isVideoLoading={isVideoLoading}
                     videoData={videoData}
                     title={title}
                     chapters={chapters}
-                    thumbnailUrl={displayedThumbnailUrl}
                   />
                 </div>
               </aside>
@@ -2078,80 +1870,59 @@ function UploadPage() {
                   <div className="formGroup editSection">
                     <h2 className="editSectionTitle">{t("thumbnail")}</h2>
 
+                    <input
+                      type="file"
+                      ref={thumbnailInputRef}
+                      accept="image/*"
+                      onChange={handleThumbnailFileSelect}
+                      hidden
+                    />
+                    {!isThumbnailPickerOpen && (
+                      <div className="thumbnailSettingsPreview">
+                        {displayedThumbnailUrl ? (
+                          <ThumbnailImage src={displayedThumbnailUrl} alt={t("thumbnail")} className="thumbnailPickerImage" />
+                        ) : (
+                          <div className="thumbnailSettingsEmpty">
+                            {UploadSVG}
+                            <span>{t("selectThumbnailImage")}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     <div className="thumbnailSourceActions">
                       <div className="thumbnailSourceHeading">
+                        <button
+                          type="button"
+                          className="thumbnailPickerToggle"
+                          onClick={() => thumbnailInputRef.current?.click()}
+                          disabled={isUploadingThumbnail || isRemovingThumbnail}
+                        >
+                          {UploadSVG}
+                          Select file
+                        </button>
                         <button
                           type="button"
                           className={`thumbnailPickerToggle ${isThumbnailPickerOpen ? "active" : ""}`}
                           onClick={handleToggleThumbnailPicker}
                           disabled={!canChooseVideoFrame || isUploadingThumbnail || isRemovingThumbnail}
                         >
-                          {isThumbnailPickerOpen ? "Back to upload" : "Choose from video"}
+                          {isThumbnailPickerOpen ? "Back to image" : "Choose from video"}
                         </button>
-                        <p className="formHint thumbnailPickerHint">
-                          {canChooseVideoFrame
-                            ? isThumbnailPickerOpen
-                              ? "Choose the exact frame you want and save it as the thumbnail."
-                              : "Pick a frame directly from the video timeline instead of uploading an image."
-                            : "Frame selection becomes available once the video preview and duration are ready."}
-                        </p>
                       </div>
+                      <p className="formHint thumbnailPickerHint">
+                        {pendingThumbnailFile
+                          ? `${pendingThumbnailFile.name} · ${(pendingThumbnailFile.size / (1024 * 1024)).toFixed(2)} MB`
+                          : isThumbnailPickerOpen
+                          ? "Choose a frame from the timeline, then save your thumbnail."
+                          : t("imageFormatsHint")}
+                      </p>
                     </div>
-
-                    {!isThumbnailPickerOpen ? (
-                      <div
-                        className={`uploadZone ${pendingThumbnailFile ? "hasFile" : ""}`}
-                        onClick={() =>
-                          !pendingThumbnailFile && thumbnailInputRef.current?.click()
-                        }
-                      >
-                        <input
-                          type="file"
-                          ref={thumbnailInputRef}
-                          accept="image/*"
-                          onChange={handleThumbnailFileSelect}
-                          hidden
-                        />
-                        {pendingThumbnailFile ? (
-                          <div className="fileInfo">
-                            {UploadSVG}
-                            <p className="fileName">{pendingThumbnailFile.name}</p>
-                            <p className="fileSize">
-                              {(pendingThumbnailFile.size / (1024 * 1024)).toFixed(2)} MB
-                            </p>
-                            <button
-                              type="button"
-                              className="removeFileBtn"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRemoveThumbnail();
-                              }}
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="uploadPrompt">
-                            {UploadSVG}
-                            <p>{t("selectThumbnailImage")}</p>
-                            <span>{t("imageFormatsHint")}</span>
-                            <button type="button" className="selectFileBtn">
-                              Select file
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ) : null}
 
                     {isThumbnailPickerOpen && canChooseVideoFrame ? (
                       <div className="thumbnailPickerCard">
                         <div className="thumbnailPickerPreview">
-                          {pendingGeneratedThumbnailUrl ? (
-                            <ThumbnailImage
-                              src={pendingGeneratedThumbnailUrl}
-                              alt={`Thumbnail preview at ${formatThumbnailPickerTime(selectedThumbnailTime)}`}
-                              className="thumbnailPickerImage"
-                            />
+                          {hasPendingVideoFrame && videoId ? (
+                            <ThumbnailFramePreview videoId={videoId} time={selectedThumbnailTime} />
                           ) : (
                             <div className="thumbnailPickerPreviewPlaceholder">
                               <div className="uploadSpinner tiny" />
@@ -2219,12 +1990,12 @@ function UploadPage() {
                               <div className="uploadSpinner tiny" />
                               {thumbnailMarkedForRemoval
                                 ? "Saving..."
-                                : pendingGeneratedThumbnailUrl
+                                : hasPendingVideoFrame
                                 ? "Setting..."
                                 : "Uploading..."}
                             </>
                           ) : (
-                            pendingGeneratedThumbnailUrl
+                            hasPendingVideoFrame
                               ? "Set Frame as Thumbnail"
                               : "Save Thumbnail"
                           )}
@@ -2257,7 +2028,7 @@ function UploadPage() {
                             • Unsaved thumbnail changes
                           </span>
                         ) : displayedThumbnailUrl ? (
-                          "Current thumbnail is set. Select a new image, then save it explicitly."
+                          "Upload an image or choose a video frame to change your thumbnail."
                         ) : (
                           "No thumbnail selected yet."
                         )}
@@ -2271,7 +2042,8 @@ function UploadPage() {
                       <button
                         type="button"
                         onClick={() => handleGenerateWithAI("title")}
-                        disabled={isGeneratingTitle || !videoId}
+                        disabled={isGeneratingTitle || !isUploaded}
+                        title={!isUploaded ? t("uploadAIReadyHint") : undefined}
                       >
                         {isGeneratingTitle ? (
                           <><div className="uploadSpinner tiny" />&nbsp;Generating...</>
@@ -2297,7 +2069,8 @@ function UploadPage() {
                       <button
                         type="button"
                         onClick={() => handleGenerateWithAI("description")}
-                        disabled={isGeneratingDescription || !videoId}
+                        disabled={isGeneratingDescription || !isUploaded}
+                        title={!isUploaded ? t("uploadAIReadyHint") : undefined}
                       >
                         {isGeneratingDescription ? (
                           <><div className="uploadSpinner tiny" />&nbsp;Generating...</>
@@ -2323,7 +2096,8 @@ function UploadPage() {
                       <button
                         type="button"
                         onClick={() => handleGenerateWithAI("tags")}
-                        disabled={isGeneratingTags || !videoId}
+                        disabled={isGeneratingTags || !isUploaded}
+                        title={!isUploaded ? t("uploadAIReadyHint") : undefined}
                       >
                         {isGeneratingTags ? (
                           <><div className="uploadSpinner tiny" />&nbsp;Generating...</>
@@ -2389,7 +2163,7 @@ function UploadPage() {
               <button
                 type="button"
                 className="cancelBtn"
-                disabled={isProcessing}
+                onClick={() => navigate("/my-videos")}
               >
                 Cancel
               </button>
@@ -2398,7 +2172,6 @@ function UploadPage() {
                 type="button"
                 className="cancelBtn"
                 onClick={handleBack}
-                disabled={isProcessing}
               >
                 Back
               </button>
@@ -2407,16 +2180,16 @@ function UploadPage() {
               <button
                 type="button"
                 className="uploadBtn"
-                disabled={!canProceed() || isProcessing}
+                disabled={!canProceed() || (currentStep === 1 && processingPhase === "initializing")}
                 onClick={handleNext}
               >
-                {isProcessing ? "Processing..." : "Next"}
+                {currentStep === 1 && processingPhase === "initializing" ? t("uploadPhase_initializing") : "Next"}
               </button>
             ) : (
               <button
                 type="submit"
                 className="uploadBtn"
-                disabled={!canProceed() || isSavingDetails}
+                disabled={!isUploaded || !canProceed() || isSavingDetails || isSavingCaptions || isSavingChapters || isSavingContributors || isUploadingThumbnail || isRemovingThumbnail || isGeneratingTitle || isGeneratingDescription || isGeneratingTags || captionStatus === "generating"}
                 onClick={handleSubmit}
               >
                 {isSavingDetails ? "Saving..." : "Save"}

@@ -1,3 +1,4 @@
+import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -64,7 +65,8 @@ type PlatformEngagementResponse = {
 type TopViewedVideo = {
   id: string;
   title: string;
-  thumbnail_url: string;
+  thumbnail_url: string | null;
+      mux_thumbnail_url?: string | null;
   duration_seconds: number;
   view_count: number;
   period_views: number;
@@ -81,7 +83,8 @@ type TopViewedVideosResponse = {
 type TopViewedPlaylist = {
   id: string;
   title: string;
-  thumbnail_url: string;
+  thumbnail_url: string | null;
+      mux_thumbnail_url?: string | null;
   view_count: number;
   video_count: number;
   period_views: number;
@@ -1194,7 +1197,7 @@ function Analytics() {
                     <span className="channelAnalyticsBestVideoRank" aria-label={`${index + 1}`}>{index + 1}</span>
                     <div className="channelAnalyticsBestVideoThumbnail">
                       <img
-                        src={video.thumbnail_url || DefaultThumbnail}
+                        src={getVideoThumbnail(video) || DefaultThumbnail}
                         alt={video.title}
                         loading="lazy"
                         decoding="async"

@@ -1,3 +1,4 @@
+import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
 import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -254,7 +255,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
           />
           <span className="videoInfo">
             <div className="relative">
-              <img src={props?.thumbnail_url} alt="Thumbnail" loading="lazy" decoding="async" />
+              <img src={getVideoThumbnail(props)} alt="Thumbnail" loading="lazy" decoding="async" />
               <p className="duration">
                 {formatDuration(props?.duration_seconds)}
               </p>
@@ -310,7 +311,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
 
                 <div className="flex items-center gap-3 px-4 pb-3 border-b border-(--border1)">
                   <img
-                    src={props?.thumbnail_url}
+                    src={getVideoThumbnail(props)}
                     alt="Thumbnail"
                     className="h-12 w-20 rounded-lg object-cover"
                   />

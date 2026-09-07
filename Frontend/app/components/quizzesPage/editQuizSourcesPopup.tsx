@@ -259,7 +259,10 @@ function EditQuizSourcesPopup({
 
           <div className="quizPopupScroll flex min-h-0 flex-1 flex-col overflow-y-auto">
             <div className="flex items-center gap-4">
-              <h4 className="text-base font-semibold">{t("quizSourcesButton")}</h4>
+              <h4 className="flex items-center gap-2 text-base font-semibold">
+                {t("quizSourcesButton")}
+                {sourcesResponse ? <span className="rounded-full bg-(--background2) px-2.5 py-0.5 text-sm tabular-nums opacity-75">{sources.length}</span> : null}
+              </h4>
             </div>
 
             <div className="mt-5 flex flex-col gap-3">

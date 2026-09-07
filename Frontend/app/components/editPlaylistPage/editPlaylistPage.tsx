@@ -1,3 +1,4 @@
+import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import {
   useEffect,
@@ -56,7 +57,7 @@ function PlaylistVideoRowContent({
   return (
     <>
       <img
-        src={video.thumbnail_url}
+        src={getVideoThumbnail(video)}
         alt={video.title}
         className="h-14 w-24 rounded-lg object-cover"
       />
@@ -1027,7 +1028,7 @@ function EditPlaylistPage() {
                               >
                                 <div className="playlistVideoSearchInfo">
                                   <img
-                                    src={video.thumbnail_url}
+                                    src={getVideoThumbnail(video)}
                                     alt={video.title}
                                     className="playlistVideoSearchThumb"
                                   />

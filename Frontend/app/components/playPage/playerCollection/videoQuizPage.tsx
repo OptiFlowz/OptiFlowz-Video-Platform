@@ -1,3 +1,4 @@
+import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -122,6 +123,7 @@ type QuizRequirementVideo = {
   id: string;
   title: string;
   thumbnail_url?: string | null;
+  mux_thumbnail_url?: string | null;
   duration_seconds?: number | string | null;
   view_count?: number | string | null;
   uploader_name?: string | null;
@@ -1880,8 +1882,8 @@ function VideoQuizPage() {
                           {requirementVideos.map((video) => (
                             <div key={video.id} className={`videoQuizRequirementVideo ${video.has_met_requirement ? "met" : ""}`}>
                               <div className="videoQuizRequirementThumb">
-                                {video.thumbnail_url ? (
-                                  <img src={video.thumbnail_url} alt="" loading="lazy" decoding="async" />
+                                {getVideoThumbnail(video) ? (
+                                  <img src={getVideoThumbnail(video)} alt="" loading="lazy" decoding="async" />
                                 ) : (
                                   <div className="videoQuizRequirementThumbFallback" aria-hidden="true">
                                     {QuizSVG}

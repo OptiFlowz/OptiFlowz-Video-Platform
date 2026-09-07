@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router";
 import LibrarySortButton from "~/components/library/librarySortButton";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
@@ -13,7 +14,7 @@ import { ConfirmDialog } from "../confirmPopup/confirmDialog";
 import { useConfirm } from "../confirmPopup/useConfirm";
 import { AddSVG } from "~/constants";
 import { useI18n } from "~/i18n";
-import CustomSelect from "~/components/customSelect/customSelect";
+import Pagination from "~/components/library/pagination";
 
 type SortColumn = "visibility" | "date" | "views" | "likes";
 type SortDirection = "asc" | "desc";
@@ -21,6 +22,7 @@ type SortDirection = "asc" | "desc";
 
 function MyVideos() {
   const { t } = useI18n();
+  const navigate = useNavigate();
   const { can, canAny } = useAuthorization();
   const canDelete = canAny([P.videosDeleteOwn, P.videosDeleteAny]);
   const myHeaders = useRef(new Headers());
@@ -44,7 +46,7 @@ function MyVideos() {
     myHeaders.current.set("Authorization", `Bearer ${userToken}`);
   }, []);
 
-  const { data } = useQuery<fetchVideo>({
+  const { data, isFetching, isError } = useQuery<fetchVideo>({
     queryKey: ["my-videos", page, limit, sortColumn, sortDirection],
     queryFn: () => {
       return fetchFn<fetchVideo>({
@@ -166,45 +168,12 @@ function MyVideos() {
 
   const total = data?.total ?? 0;
   const totalPages = data?.total_pages ?? 1;
-  const startIndex = total > 0 ? (page - 1) * limit + 1 : 0;
-  const endIndex = Math.min(page * limit, total);
-
-  // Generisanje brojeva stranica
-  const getPageNumbers = () => {
-    const pages: (number | "...")[] = [];
-    const maxVisible = 5; // Koliko brojeva prikazati
-
-    if (totalPages <= maxVisible + 2) {
-      // Ako ima malo stranica, prikaži sve
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      // Uvek prikaži prvu stranicu
-      pages.push(1);
-
-      if (page > 3) {
-        pages.push("...");
-      }
-
-      // Stranice oko trenutne
-      const start = Math.max(2, page - 1);
-      const end = Math.min(totalPages - 1, page + 1);
-
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
-
-      if (page < totalPages - 2) {
-        pages.push("...");
-      }
-
-      // Uvek prikaži poslednju stranicu
-      pages.push(totalPages);
+  useEffect(() => {
+    if (data && !isFetching && !isError && page > Math.max(1, totalPages)) {
+      setPage(Math.max(1, totalPages));
     }
+  }, [data, isFetching, isError, page, totalPages]);
 
-    return pages;
-  };
 
   const deleteAll = useCallback(async () => {
     if (!canDelete) return;
@@ -293,7 +262,7 @@ function MyVideos() {
               title={t("uploadVideoAction")}
               aria-label={t("uploadVideoAction")}
               onClick={() => {
-                window.location.href = "/upload";
+                navigate("/upload");
               }}
             >
               {AddSVG}
@@ -366,41 +335,18 @@ function MyVideos() {
           </table>
           </div>
 
-          <div className="pagination">
-            <span>
-              <p>{t("adminRowsPerPage")}</p>
-              <CustomSelect
-                name="rowsPerPage"
-                value={limit}
-                onChange={(value) => handleLimitChange(Number(value))}
-                options={[10, 20, 30, 40, 50].map((item) => ({ value: item, label: String(item) }))}
-                ariaLabel={t("adminRowsPerPage")}
-                triggerClassName="paginationSelect"
-              />
-            </span>
-
-            <p>
-              {total > 0 ? t("adminPaginationRange", { start: startIndex, end: endIndex, total }) : t("adminZeroResults")}
-            </p>
-
-            <span className="pageNumbers">
-              {getPageNumbers().map((pageNum, index) =>
-                pageNum === "..." ? (
-                  <span key={`ellipsis-${index}`} className="ellipsis">
-                    ...
-                  </span>
-                ) : (
-                  <button
-                    key={pageNum}
-                    className={`pageBtn ${page === pageNum ? "active" : ""}`}
-                    onClick={() => setPage(pageNum)}
-                  >
-                    {pageNum}
-                  </button>
-                )
-              )}
-            </span>
-          </div>
+          <Pagination
+            page={page}
+            limit={limit}
+            total={data ? total : undefined}
+            totalPages={totalPages}
+            loading={isFetching}
+            disabled={isError || !token}
+            pageSizes={[10, 20, 30, 40, 50]}
+            label={t("navMyVideos")}
+            onPageChange={setPage}
+            onLimitChange={handleLimitChange}
+          />
 
         </div>
       </div>

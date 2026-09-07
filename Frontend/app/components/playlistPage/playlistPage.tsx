@@ -194,7 +194,7 @@ function PlaylistPage(){
     return (
         <main className="playlist">
             <div className="relative flex items-start gap-5">
-                <img className="plBanner w-100 rounded-[15px] z-1" src={data?.thumbnail_url?.replace(/width=\d+/i, `width=${800}`)?.replace(/height=\d+/i, `height=${600}`) || DefaultThumbnail} alt="" />
+                <img className="plBanner w-100 rounded-[15px] z-1" src={data?.thumbnail_url || DefaultThumbnail} alt="" />
 
                 <span className="flex flex-col gap-3 z-1 w-full">
                     <h2 className="subTitle pb-0!">{data?.title}</h2>
