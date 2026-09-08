@@ -29,7 +29,6 @@ import statusStyles from "./uploadStatus.module.css";
 import CustomSelect from "~/components/customSelect/customSelect";
 
 
-import { createThumbnailSettings, type ThumbnailSettings } from "../shared/thumbnailSettings";
 
 interface Contributor {
   id: string;
@@ -64,7 +63,7 @@ interface VideoData extends VideoMedia {
   mux_playback_id: string;
   playback_policy: PlaybackPolicy;
   duration_seconds: number;
-  thumbnail_settings?: ThumbnailSettings | null;
+  thumbnail_time?: number | null;
   tags: string[];
   chapters: { timestamp: number; title: string }[];
   people: { id: string; name: string; image_url?: string; role: string }[];
@@ -144,10 +143,10 @@ function parseThumbnailPickerInput(value: string): number | null {
 
 function getInitialThumbnailTime(video?: VideoData | null): number {
   const duration = video?.duration_seconds ?? 0;
-  if (video?.thumbnail_settings && Number.isFinite(video.thumbnail_settings.time)) {
-    return clampThumbnailTime(video.thumbnail_settings.time, duration);
+  if (typeof video?.thumbnail_time === "number" && Number.isFinite(video.thumbnail_time)) {
+    return clampThumbnailTime(video.thumbnail_time, duration);
   }
-  return duration > 1 ? Math.min(duration / 3, Math.max(duration - 0.1, 0)) : 0;
+  return clampThumbnailTime(duration / 3, duration);
 }
 
 function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) => void; onFinish?: () => void } = {}) {
@@ -361,7 +360,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
         options: {
           method: "PATCH",
           headers: myHeaders.current,
-          body: JSON.stringify({ thumbnail_settings: null }),
+          body: JSON.stringify({ time: null }),
         },
       });
       if (!clearedSettings?.success) {
@@ -488,7 +487,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
           method: "PATCH",
           headers: myHeaders.current,
           body: JSON.stringify({
-            thumbnail_settings: createThumbnailSettings(selectedThumbnailTime),
+            time: clampThumbnailTime(selectedThumbnailTime, videoDuration),
           }),
         },
       });
@@ -498,7 +497,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
         return false;
       }
 
-      savedThumbnailTime.current = selectedThumbnailTime;
+      savedThumbnailTime.current = clampThumbnailTime(selectedThumbnailTime, videoDuration);
       setThumbnailUrl(await fetchUpdatedThumbnail());
       setHasPendingVideoFrame(false);
       setPendingThumbnailFile(null);
@@ -533,7 +532,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
             method: "PATCH",
             headers,
             body: JSON.stringify({
-              thumbnail_settings: null,
+              time: null,
             }),
           },
         });
