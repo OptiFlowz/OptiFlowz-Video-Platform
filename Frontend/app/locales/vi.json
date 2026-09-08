@@ -1,4 +1,8 @@
 {
+  "playlistSearchEmpty": "Không có video phù hợp hoặc video đã có trong danh sách này.",
+  "playlistReorderHelp": "Kéo tay nắm để đổi thứ tự. Với bàn phím, nhấn phím cách, dùng các phím mũi tên, rồi nhấn phím cách để thả hoặc Escape để hủy. Thay đổi được lưu tự động.",
+  "playlistFeaturedHelp": "Danh sách phát nổi bật có thể được làm nổi bật trong ứng dụng.",
+  "playlistEditHelp": "Chỉnh sửa chi tiết, ảnh thu nhỏ và thứ tự video.",
   "resumePlaybackFollow": "Theo dõi phát lại",
   "accessLoadFailed": "Không thể tải quyền truy cập của bạn. Vui lòng thử lại.",
   "usersAllRoles": "Tất cả vai trò",
@@ -423,7 +427,7 @@
   "publicVisibilityHelp": "Bất kỳ ai cũng có thể xem danh sách phát này.",
   "privateVisibilityHelp": "Chỉ những người dùng có quyền truy cập mới có thể xem danh sách phát này.",
   "featured": "Nổi bật",
-  "playlistVideos": "Video danh sách phát",
+  "playlistVideos": "Video trong danh sách phát",
   "addVideo": "Thêm video",
   "searchVideosAddPlaylist": "Tìm kiếm video để thêm vào danh sách phát này",
   "searchingVideos": "Đang tìm kiếm video...",

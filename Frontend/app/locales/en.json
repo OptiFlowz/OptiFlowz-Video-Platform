@@ -1,4 +1,8 @@
 {
+  "playlistSearchEmpty": "No matching videos, or they are already in this playlist.",
+  "playlistReorderHelp": "Drag the handle to reorder. With a keyboard, press Space, use the arrow keys, then Space to drop or Escape to cancel. Changes save automatically.",
+  "playlistFeaturedHelp": "Featured playlists can be highlighted in the app.",
+  "playlistEditHelp": "Edit playlist details, thumbnail and video order.",
   "resumePlaybackFollow": "Follow playback",
   "accessLoadFailed": "Unable to load your access permissions. Please try again.",
   "usersAllRoles": "All roles",
@@ -423,7 +427,7 @@
   "publicVisibilityHelp": "Anyone can view this playlist.",
   "privateVisibilityHelp": "Only users with access can view this playlist.",
   "featured": "Featured",
-  "playlistVideos": "Playlist Videos",
+  "playlistVideos": "Playlist videos",
   "addVideo": "Add video",
   "searchVideosAddPlaylist": "Search videos to add to this playlist",
   "searchingVideos": "Searching videos...",

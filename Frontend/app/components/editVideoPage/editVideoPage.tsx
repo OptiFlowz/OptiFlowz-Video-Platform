@@ -1,3 +1,4 @@
+import type { PlaybackPolicy } from "../playback/useVideoPlayback";
 import { VideoEditorPreview, useVideoPreviewRefresh } from "../shared/videoEditorPreview";
 import { ThumbnailImage } from "../shared/thumbnailImage";
 import { CaptionStatusMessage } from "../shared/captionStatusMessage";
@@ -51,6 +52,7 @@ interface VideoData extends VideoMedia {
   title: string;
   description: string;
   mux_playback_id: string;
+  playback_policy: PlaybackPolicy;
   duration_seconds: number;
   thumbnail_settings?: ThumbnailSettings | null;
   tags: string[];
@@ -156,6 +158,11 @@ function EditVideoPage() {
   const [oldTitle, setOldTitle] = useState("");
   const [oldDescription, setOldDescription] = useState("");
   const [oldTags, setOldTags] = useState<string[]>([]);
+  const [playbackPolicy, setPlaybackPolicy] = useState<PlaybackPolicy | null>(null);
+  const [oldPlaybackPolicy, setOldPlaybackPolicy] = useState<PlaybackPolicy | null>(null);
+  const [isSavingAccess, setIsSavingAccess] = useState(false);
+  const [accessError, setAccessError] = useState<string | null>(null);
+  const accessSavePending = useRef(false);
   const [oldVisibility, setOldVisibility] = useState<"public" | "private">(
     "public"
   );
@@ -258,6 +265,10 @@ function EditVideoPage() {
       setOldTags(videoData.tags || []);
       setVisibility(videoData.visibility || "private");
       setOldVisibility(videoData.visibility || "private");
+      const policy = ["signed", "public"].includes(videoData.playback_policy) ? videoData.playback_policy : null;
+      setPlaybackPolicy(policy);
+      setOldPlaybackPolicy(policy);
+      setAccessError(null);
       setThumbnailUrl(getVideoThumbnail(videoData) || null);
       const initialThumbnailTime = getInitialThumbnailTime(videoData);
       savedThumbnailTime.current = initialThumbnailTime;
@@ -265,8 +276,6 @@ function EditVideoPage() {
       setThumbnailTimeInput(formatThumbnailPickerTime(initialThumbnailTime));
       setHasPendingVideoFrame(false);
       setIsThumbnailPickerOpen(false);
-
-      console.log(videoData);
 
       // Set chapters
       const formattedChapters =
@@ -310,8 +319,7 @@ function EditVideoPage() {
     const titleChanged = title !== oldTitle;
     const descChanged = description !== oldDescription;
     const tagsChanged = JSON.stringify(tags) !== JSON.stringify(oldTags);
-    const visChanged = visibility !== oldVisibility;
-    setDetailsModified(titleChanged || descChanged || tagsChanged || visChanged);
+    setDetailsModified(titleChanged || descChanged || tagsChanged);
   }, [
     title,
     oldTitle,
@@ -319,9 +327,9 @@ function EditVideoPage() {
     oldDescription,
     tags,
     oldTags,
-    visibility,
-    oldVisibility,
   ]);
+
+  const accessModified = visibility !== oldVisibility || playbackPolicy !== oldPlaybackPolicy;
 
   const displayedThumbnailUrl = thumbnailMarkedForRemoval
     ? null
@@ -504,7 +512,6 @@ function EditVideoPage() {
           method: "PATCH",
           headers: myHeaders.current,
           body: JSON.stringify({
-            thumbnail_url: null,
             thumbnail_settings: createThumbnailSettings(selectedThumbnailTime),
           }),
         },
@@ -548,7 +555,6 @@ function EditVideoPage() {
             method: "PATCH",
             headers,
             body: JSON.stringify({
-              thumbnail_url: null,
               thumbnail_settings: null,
             }),
           },
@@ -1017,7 +1023,6 @@ function EditVideoPage() {
             title,
             description,
             tags,
-            visibility,
           }),
         },
       });
@@ -1027,7 +1032,6 @@ function EditVideoPage() {
         setOldTitle(title);
         setOldDescription(description);
         setOldTags([...tags]);
-        setOldVisibility(visibility);
         setDetailsModified(false);
       } else {
         setError(t("videoDetailsSaveFailed"));
@@ -1037,6 +1041,60 @@ function EditVideoPage() {
       setError(t("videoDetailsSaveFailed"));
     } finally {
       setIsSavingDetails(false);
+    }
+  };
+
+  // Each setting has its own endpoint. Keep successful baselines even if the
+  // other request fails, so retrying only sends the remaining change.
+  const handleSaveAccess = async () => {
+    if (!videoId || !accessModified || accessSavePending.current) return;
+    accessSavePending.current = true;
+    setIsSavingAccess(true);
+    setAccessError(null);
+    let changed = false;
+    try {
+      if (visibility !== oldVisibility) {
+        const response = await fetchFn<{ success: boolean }>({
+          route: `api/video-moderation/video-details/${videoId}`,
+          options: {
+            method: "PATCH",
+            headers: myHeaders.current,
+            body: JSON.stringify({ visibility }),
+          },
+        });
+        if (!response?.success) throw new Error("Visibility update failed");
+        setOldVisibility(visibility);
+        changed = true;
+      }
+      if (playbackPolicy && playbackPolicy !== oldPlaybackPolicy) {
+        const response = await fetchFn<{
+          id: string;
+          playback_policy: PlaybackPolicy;
+          mux_playback_id: string;
+          changed: boolean;
+        }>({
+          route: `api/video-moderation/${videoId}/playback-policy`,
+          options: {
+            method: "PATCH",
+            headers: myHeaders.current,
+            body: JSON.stringify({ playback_policy: playbackPolicy }),
+          },
+        });
+        if (response?.id !== videoId || response.playback_policy !== playbackPolicy || !response.mux_playback_id) {
+          throw new Error("Invalid playback policy response");
+        }
+        setOldPlaybackPolicy(response.playback_policy);
+        changed = true;
+      }
+    } catch {
+      setAccessError(t("uploadInitialSaveFailed"));
+    } finally {
+      try {
+        if (changed) await refreshVideoPreview();
+      } finally {
+        accessSavePending.current = false;
+        setIsSavingAccess(false);
+      }
     }
   };
 
@@ -1410,27 +1468,6 @@ function EditVideoPage() {
                     </div>
                   </div>
 
-                  <div className="formGroup mt-7.5 mb-5">
-                    <label htmlFor="videoVisibility">{t("visibility")}</label>
-                    <CustomSelect
-                      id="videoVisibility"
-                      rootClassName={statusStyles.compactSelect}
-                      value={visibility}
-                      onChange={(value) => setVisibility(value as "public" | "private")}
-                      options={[
-                        { value: "public", label: t("adminPublic") },
-                        { value: "private", label: t("adminPrivate") },
-                      ]}
-                      ariaLabel={t("visibility")}
-                      triggerClassName="visibilitySelect"
-                    />
-                    <p className="formHint">
-                      {visibility === "public"
-                        ? t("editorPublicHelp")
-                        : t("editorPrivateHelp")}
-                    </p>
-                  </div>
-
                   <div className="captionsActions">
                     <p className="formHint">
                       {detailsModified && (
@@ -1454,6 +1491,66 @@ function EditVideoPage() {
                         ) : (
                           t("save")
                         )}
+                      </button>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="editSection" aria-labelledby="videoAccessHeading">
+                  <h2 id="videoAccessHeading" className="editSectionTitle">
+                    {t("visibility")} · {t("playbackProtection")}
+                  </h2>
+                  <div className="formGroup">
+                    <label htmlFor="videoVisibility">{t("visibility")}</label>
+                    <p className="formHint">
+                      {t(visibility === "public" ? "editorPublicHelp" : "editorPrivateHelp")}
+                    </p>
+                    <CustomSelect
+                      id="videoVisibility"
+                      rootClassName={statusStyles.compactSelect}
+                      value={visibility}
+                      onChange={(value) => setVisibility(value as "public" | "private")}
+                      options={[
+                        { value: "public", label: t("adminPublic") },
+                        { value: "private", label: t("adminPrivate") },
+                      ]}
+                      ariaLabel={t("visibility")}
+                      triggerClassName="visibilitySelect"
+                      disabled={isSavingAccess}
+                    />
+                  </div>
+                  <div className="formGroup mt-7.5">
+                    <label htmlFor="editPlaybackPolicy">{t("playbackProtection")}</label>
+                    <p className="formHint">
+                      {t(playbackPolicy === "public" ? "playbackPublicHelp" : "playbackSignedHelp")}
+                    </p>
+                    <CustomSelect
+                      id="editPlaybackPolicy"
+                      rootClassName={statusStyles.compactSelect}
+                      value={playbackPolicy ?? ""}
+                      onChange={(value) => setPlaybackPolicy(value as PlaybackPolicy)}
+                      options={[
+                        { value: "signed", label: t("playbackSigned") },
+                        { value: "public", label: t("playbackPublic") },
+                      ]}
+                      ariaLabel={t("playbackProtection")}
+                      triggerClassName="visibilitySelect"
+                      disabled={isSavingAccess || oldPlaybackPolicy === null}
+                    />
+                  </div>
+                  {accessError && <p className="formHint" role="alert">{accessError}</p>}
+                  <div className="captionsActions">
+                    <p className="formHint">
+                      {accessModified && <span className="unsavedIndicator">{t("editorUnsavedChanges")}</span>}
+                    </p>
+                    <div className="captionsButtonGroup">
+                      <button
+                        type="button"
+                        onClick={handleSaveAccess}
+                        disabled={!accessModified || isSavingAccess}
+                        className="saveCaptionsBtn"
+                      >
+                        {isSavingAccess ? <><div className="uploadSpinner tiny" />{t("saving")}</> : t("save")}
                       </button>
                     </div>
                   </div>

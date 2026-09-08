@@ -1,4 +1,8 @@
 {
+  "playlistSearchEmpty": "Nėra atitinkančių vaizdo įrašų arba jie jau yra šiame grojaraštyje.",
+  "playlistReorderHelp": "Vilkite rankenėlę, kad pakeistumėte tvarką. Klaviatūroje paspauskite tarpą, naudokite rodykles, tada tarpą, kad padėtumėte, arba Escape, kad atšauktumėte. Pakeitimai išsaugomi automatiškai.",
+  "playlistFeaturedHelp": "Paryškinti grojaraščiai gali būti išskirti programėlėje.",
+  "playlistEditHelp": "Redaguokite informaciją, miniatiūrą ir vaizdo įrašų tvarką.",
   "resumePlaybackFollow": "Sekti atkūrimą",
   "accessLoadFailed": "Nepavyko įkelti prieigos leidimų. Bandykite dar kartą.",
   "usersAllRoles": "Visi vaidmenys",
@@ -422,7 +426,7 @@
   "visibility": "Matomumas",
   "publicVisibilityHelp": "Visi gali peržiūrėti šį grojaraštį.",
   "privateVisibilityHelp": "Tik prieigą turintys naudotojai gali peržiūrėti šį grojaraštį.",
-  "featured": "Teminiai",
+  "featured": "Paryškintas",
   "playlistVideos": "Grojaraščio vaizdo įrašai",
   "addVideo": "Pridėti vaizdo įrašą",
   "searchVideosAddPlaylist": "Ieškokite vaizdo įrašų, kuriuos norite pridėti prie šio grojaraščio",

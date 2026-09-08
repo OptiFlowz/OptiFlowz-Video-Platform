@@ -1,4 +1,8 @@
 {
+  "playlistSearchEmpty": "Engin samsvarandi myndskeið fundust eða þau eru þegar á listanum.",
+  "playlistReorderHelp": "Dragðu handfangið til að breyta röðinni. Ýttu á bilstöng, notaðu örvatakkana og ýttu svo á bilstöng til að sleppa eða Escape til að hætta við. Breytingar vistast sjálfkrafa.",
+  "playlistFeaturedHelp": "Valdir spilunarlistar geta verið sýndir á áberandi stað í forritinu.",
+  "playlistEditHelp": "Breyttu upplýsingum, smámynd og röð myndskeiða.",
   "resumePlaybackFollow": "Fylgja spilun",
   "accessLoadFailed": "Ekki tókst að hlaða aðgangsheimildum þínum. Vinsamlegast reyndu aftur.",
   "usersAllRoles": "Öll hlutverk",
@@ -423,7 +427,7 @@
   "publicVisibilityHelp": "Allir geta skoðað þennan lagalista.",
   "privateVisibilityHelp": "Aðeins notendur með aðgang geta skoðað þennan lagalista.",
   "featured": "Valið",
-  "playlistVideos": "Lagalisti myndbönd",
+  "playlistVideos": "Myndskeið á spilunarlista",
   "addVideo": "Bæta við myndbandi",
   "searchVideosAddPlaylist": "Leitaðu að myndskeiðum til að bæta við þennan spilunarlista",
   "searchingVideos": "Leitar að myndskeiðum...",

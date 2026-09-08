@@ -1,4 +1,8 @@
 {
+  "playlistSearchEmpty": "Keine passenden Videos gefunden oder sie sind bereits in dieser Wiedergabeliste.",
+  "playlistReorderHelp": "Zum Sortieren am Griff ziehen. Mit der Tastatur: Leertaste, Pfeiltasten und erneut Leertaste zum Ablegen oder Escape zum Abbrechen. Änderungen werden automatisch gespeichert.",
+  "playlistFeaturedHelp": "Hervorgehobene Wiedergabelisten können in der App besonders angezeigt werden.",
+  "playlistEditHelp": "Details, Vorschaubild und Videoreihenfolge bearbeiten.",
   "resumePlaybackFollow": "Wiedergabe folgen",
   "accessLoadFailed": "Ihre Zugriffsrechte konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
   "usersAllRoles": "Alle Rollen",
@@ -413,7 +417,7 @@
   "publicVisibilityHelp": "Jeder kann diese Playlist ansehen.",
   "privateVisibilityHelp": "Nur Benutzer mit Zugriff können diese Playlist ansehen.",
   "featured": "Hervorgehoben",
-  "playlistVideos": "Playlist-Videos",
+  "playlistVideos": "Videos der Wiedergabeliste",
   "addVideo": "Video hinzufügen",
   "searchVideosAddPlaylist": "Suchen Sie nach Videos, die Sie dieser Wiedergabeliste hinzufügen möchten",
   "searchingVideos": "Videos werden gesucht...",

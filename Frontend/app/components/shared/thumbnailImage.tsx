@@ -7,48 +7,25 @@ interface ThumbnailImageProps {
   className?: string;
 }
 
-export const ThumbnailImage = ({ src, alt, className }: ThumbnailImageProps) => {
+export const ThumbnailImage = (props: ThumbnailImageProps) => (
+  <ThumbnailImageRequest key={props.src} {...props} />
+);
+
+// A new source gets its own request state, so late events and retry timers
+// from the previous image cannot change the current preview.
+const ThumbnailImageRequest = ({ src, alt, className }: ThumbnailImageProps) => {
   const { t } = useI18n();
-  const [displaySrc, setDisplaySrc] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [attempt, setAttempt] = useState(0);
   const [hasFailed, setHasFailed] = useState(false);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const revealTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
   useEffect(() => {
-    setDisplaySrc(null);
-    setIsLoading(true);
-    setAttempt(0);
-    setHasFailed(false);
-  }, [src]);
-
-  useEffect(() => {
-    if (retryTimeoutRef.current) {
-      clearTimeout(retryTimeoutRef.current);
-      retryTimeoutRef.current = null;
-    }
-    if (revealTimeoutRef.current) {
-      clearTimeout(revealTimeoutRef.current);
-      revealTimeoutRef.current = null;
-    }
-
-    const nextSrc = src;
-    const revealDelay = attempt === 0 ? 180 : Math.min(350 * attempt, 900);
-
-    revealTimeoutRef.current = setTimeout(() => {
-      setDisplaySrc(nextSrc);
-    }, revealDelay);
-
     return () => {
       if (retryTimeoutRef.current) {
         clearTimeout(retryTimeoutRef.current);
       }
-      if (revealTimeoutRef.current) {
-        clearTimeout(revealTimeoutRef.current);
-      }
     };
-  }, [src, attempt]);
+  }, []);
 
   const handleLoad = () => {
     setHasFailed(false);
@@ -56,6 +33,7 @@ export const ThumbnailImage = ({ src, alt, className }: ThumbnailImageProps) => 
   };
 
   const handleError = () => {
+    if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
     if (attempt >= 3) {
       setIsLoading(false);
       setHasFailed(true);
@@ -67,6 +45,7 @@ export const ThumbnailImage = ({ src, alt, className }: ThumbnailImageProps) => 
 
     const retryDelay = 400 + attempt * 450;
     retryTimeoutRef.current = setTimeout(() => {
+      retryTimeoutRef.current = null;
       setAttempt((currentAttempt) => currentAttempt + 1);
     }, retryDelay);
   };
@@ -95,9 +74,10 @@ export const ThumbnailImage = ({ src, alt, className }: ThumbnailImageProps) => 
           </button>
         </div>
       ) : null}
-      {displaySrc ? (
+      {!hasFailed ? (
         <img
-          src={displaySrc}
+          key={attempt}
+          src={src}
           alt={alt}
           className={`${className ?? ""} ${isLoading ? "thumbnailImagePending" : ""}`.trim()}
           onLoad={handleLoad}
@@ -107,4 +87,3 @@ export const ThumbnailImage = ({ src, alt, className }: ThumbnailImageProps) => 
     </div>
   );
 };
-

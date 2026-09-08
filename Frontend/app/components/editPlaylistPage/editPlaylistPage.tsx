@@ -6,13 +6,12 @@ import {
   useMemo,
   useRef,
   useState,
-  type DragEvent,
   type KeyboardEvent,
 } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AddSVG, CloseSVG, DeleteSVG, UploadSVG } from "~/constants";
+import { AddSVG, CloseSVG, UploadSVG } from "~/constants";
 import { fetchFn } from "~/API";
-import { formatDescription, getToken } from "~/functions";
+import { getToken } from "~/functions";
 import type {
   FetchPlaylistT,
   PlaylistVideoT,
@@ -20,8 +19,9 @@ import type {
   SearchT,
 } from "~/types";
 import Sidebar from "../myVideosPage/sidebar/sidebar";
-import DefaultThumbnail from "../../../assets/DefaultThumbnail.webp";
-import { useConstrainedSticky } from "~/components/shared/useConstrainedSticky";
+import PlaylistVideoList from "./playlistVideoList";
+import styles from "./editPlaylistPage.module.css";
+import statusStyles from "../uploadPage/uploadStatus.module.css";
 import { useI18n } from "~/i18n";
 import CustomSelect from "~/components/customSelect/customSelect";
 
@@ -45,30 +45,6 @@ function reorderPlaylistVideos(
   const [draggedVideo] = nextVideos.splice(draggedIndex, 1);
   nextVideos.splice(targetIndex, 0, draggedVideo);
   return nextVideos;
-}
-
-function PlaylistVideoRowContent({
-  video,
-  index,
-}: {
-  video: PlaylistVideoT;
-  index: number;
-}) {
-  return (
-    <>
-      <img
-        src={getVideoThumbnail(video)}
-        alt={video.title}
-        className="h-14 w-24 rounded-lg object-cover"
-      />
-      <span className="flex flex-col gap-1 min-w-0">
-        <strong className="playlistVideoTitleClamp">
-          {index + 1}. {video.title}
-        </strong>
-        <span className="text-sm opacity-80">{video.uploader_name}</span>
-      </span>
-    </>
-  );
 }
 
 function EditPlaylistPage() {
@@ -107,8 +83,6 @@ function EditPlaylistPage() {
   const [thumbnailMarkedForRemoval, setThumbnailMarkedForRemoval] =
     useState(false);
   const [playlistVideos, setPlaylistVideos] = useState<PlaylistVideoT[]>([]);
-  const [draggedVideoId, setDraggedVideoId] = useState<string | null>(null);
-  const [dragOverVideoId, setDragOverVideoId] = useState<string | null>(null);
   const [playlistVideoSearch, setPlaylistVideoSearch] = useState("");
   const [debouncedPlaylistVideoSearch, setDebouncedPlaylistVideoSearch] =
     useState("");
@@ -122,19 +96,8 @@ function EditPlaylistPage() {
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   const [isRemovingThumbnail, setIsRemovingThumbnail] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const dragPreviewRef = useRef<HTMLDivElement | null>(null);
-  const dragStartVideosRef = useRef<PlaylistVideoT[]>([]);
-  const previewAsideRef = useRef<HTMLElement | null>(null);
-  const previewStickyRef = useRef<HTMLDivElement | null>(null);
-  const previewBoundaryRef = useRef<HTMLElement | null>(null);
-  const previewStickyStyle = useConstrainedSticky({
-    containerRef: previewAsideRef,
-    stickyRef: previewStickyRef,
-    boundaryRef: previewBoundaryRef,
-    disabledBelow: 1420,
-    topOffset: 89,
-    bottomGap: 24,
-  });
+  const videoMutationRef = useRef(false);
+  const videosBusy = isReorderingPlaylistVideos || !!isAddingVideoId || !!isDeletingVideoId;
 
   useLayoutEffect(() => {
     const userToken = getToken();
@@ -166,16 +129,20 @@ function EditPlaylistPage() {
 
   const playlistDetails = playlistData?.playlist;
 
-  const { data: playlistVideosData } = useQuery({
+  const { data: playlistVideosData, isPending: videosLoading, isError: videosError, refetch: reloadVideos } = useQuery({
     queryKey: [`playlist-edit-videos-${playlistId}`],
-    queryFn: () =>
-      fetchFn<PlaylistVideosT>({
-        route: `api/playlists/${playlistId}/videos?limit=100&page=1`,
-        options: {
-          method: "GET",
-          headers: myHeaders.current,
-        },
-      }),
+    queryFn: async ({ signal }) => {
+      const videos: PlaylistVideoT[] = [];
+      let page = 1;
+      while (true) {
+        const result = await fetchFn<PlaylistVideosT>({ route: `api/playlists/${playlistId}/videos?limit=100&page=${page}`,
+          options: { method: "GET", headers: myHeaders.current, signal } });
+        videos.push(...result.videos);
+        if (!result.pagination.hasNextPage || page >= result.pagination.totalPages) break;
+        page++;
+      }
+      return { videos };
+    },
     enabled: !!token && !!playlistId,
     refetchOnWindowFocus: false,
   });
@@ -183,7 +150,6 @@ function EditPlaylistPage() {
   useEffect(() => {
     if (!playlistDetails) return;
 
-    console.log("Loaded playlist data for editing:", playlistDetails);
 
     const nextStatus =
       playlistDetails.status ??
@@ -471,127 +437,31 @@ function EditPlaylistPage() {
     setThumbnailMarkedForRemoval(true);
   };
 
-  const handlePlaylistVideoDragStart = (
-    e: DragEvent<HTMLButtonElement>,
-    videoId: string
-  ) => {
-    dragStartVideosRef.current = playlistVideos;
-    setDraggedVideoId(videoId);
-    setDragOverVideoId(videoId);
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", videoId);
-
-    const row = e.currentTarget.closest(
-      ".playlistVideoEditorRow"
-    ) as HTMLDivElement | null;
-    if (row) {
-      const preview = row.cloneNode(true) as HTMLDivElement;
-      preview.style.position = "fixed";
-      preview.style.top = "-9999px";
-      preview.style.left = "-9999px";
-      preview.style.width = `${row.offsetWidth}px`;
-      preview.style.pointerEvents = "none";
-      preview.style.opacity = "0.98";
-      preview.style.transform = "rotate(1deg)";
-      preview.style.boxShadow = "0 18px 40px color-mix(in srgb, var(--background1) 18%, transparent)";
-      preview.style.background = "var(--background4)";
-      preview.style.zIndex = "9999";
-      document.body.appendChild(preview);
-      dragPreviewRef.current = preview;
-      e.dataTransfer.setDragImage(preview, 24, 24);
-    }
-  };
-
-  const handlePlaylistVideoDragOver = (
-    e: DragEvent<HTMLDivElement>,
-    videoId: string
-  ) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    if (!draggedVideoId || draggedVideoId === videoId) return;
-    setDragOverVideoId(videoId);
-  };
-
-  const handlePlaylistVideoDragEnter = (videoId: string) => {
-    if (!draggedVideoId || draggedVideoId === videoId) return;
-
-    setDragOverVideoId(videoId);
-    setPlaylistVideos((currentVideos) =>
-      reorderPlaylistVideos(currentVideos, draggedVideoId, videoId)
-    );
-  };
-
-  const handlePlaylistVideoDrop = (
-    e: DragEvent<HTMLDivElement>,
-    targetVideoId: string
-  ) => {
-    e.preventDefault();
-    const droppedVideoId =
-      draggedVideoId || e.dataTransfer.getData("text/plain");
-    if (!droppedVideoId) return;
-
-    const previousVideos = dragStartVideosRef.current.length
-      ? dragStartVideosRef.current
-      : playlistVideos;
-    const nextVideos = reorderPlaylistVideos(
-      playlistVideos,
-      droppedVideoId,
-      targetVideoId
-    );
-
+  const handlePlaylistVideoMove = async (videoId: string, targetId: string) => {
+    if (!playlistId || videoMutationRef.current) return;
+    const previousVideos = playlistVideos;
+    const nextVideos = reorderPlaylistVideos(previousVideos, videoId, targetId);
+    if (nextVideos === previousVideos) return;
+    videoMutationRef.current = true;
     setPlaylistVideos(nextVideos);
-    setDraggedVideoId(null);
-    setDragOverVideoId(null);
-    dragStartVideosRef.current = [];
-
-    const previousIndex = previousVideos.findIndex(
-      (video) => video.id === droppedVideoId
-    );
-    const nextIndex = nextVideos.findIndex((video) => video.id === droppedVideoId);
-
-    if (
-      previousIndex === -1 ||
-      nextIndex === -1 ||
-      previousIndex === nextIndex ||
-      !playlistId
-    ) {
-      return;
-    }
-
     setIsReorderingPlaylistVideos(true);
     setError(null);
-
-    fetchFn<{ success: boolean }>({
-      route: `api/playlists-moderation/${playlistId}/items/move`,
-      options: {
-        method: "PATCH",
-        headers: myHeaders.current,
-        body: JSON.stringify({
-          video_id: droppedVideoId,
-          to_position: nextIndex + 1,
-        }),
-      },
-    }).catch((err) => {
-      console.error("Error reordering playlist videos:", err);
+    try {
+      const result = await fetchFn<{ success: boolean }>({
+        route: `api/playlists-moderation/${playlistId}/items/move`,
+        options: { method: "PATCH", headers: myHeaders.current,
+          body: JSON.stringify({ video_id: videoId, to_position: nextVideos.findIndex(video => video.id === videoId) + 1 }) },
+      });
+      if (!result.success) throw new Error("Playlist reorder failed");
+    } catch {
       setPlaylistVideos(previousVideos);
       setError(t("playlistReorderVideosFailed"));
-    }).finally(() => {
-      setIsReorderingPlaylistVideos(false);
-    });
-  };
-
-  const handlePlaylistVideoDragEnd = () => {
-    setDraggedVideoId(null);
-    setDragOverVideoId(null);
-    dragStartVideosRef.current = [];
-    if (dragPreviewRef.current) {
-      dragPreviewRef.current.remove();
-      dragPreviewRef.current = null;
-    }
+    } finally { videoMutationRef.current = false; setIsReorderingPlaylistVideos(false); }
   };
 
   const handleAddPlaylistVideo = async (video: PlaylistVideoT) => {
-    if (!playlistId || isAddingVideoId || isDeletingVideoId) return;
+    if (!playlistId || videoMutationRef.current) return;
+    videoMutationRef.current = true;
 
     setIsAddingVideoId(video.id);
     setError(null);
@@ -620,12 +490,14 @@ function EditPlaylistPage() {
       console.error("Error adding video to playlist:", err);
       setError(t("playlistAddVideoFailed"));
     } finally {
+      videoMutationRef.current = false;
       setIsAddingVideoId(null);
     }
   };
 
   const handleDeletePlaylistVideo = async (videoId: string) => {
-    if (!playlistId || isDeletingVideoId || isAddingVideoId) return;
+    if (!playlistId || videoMutationRef.current) return;
+    videoMutationRef.current = true;
 
     const previousVideos = playlistVideos;
     setIsDeletingVideoId(videoId);
@@ -652,13 +524,14 @@ function EditPlaylistPage() {
       setPlaylistVideos(previousVideos);
       setError(t("playlistDeleteVideoFailed"));
     } finally {
+      videoMutationRef.current = false;
       setIsDeletingVideoId(null);
     }
   };
 
   if (!playlistId) {
     return (
-      <main className="uploadMain">
+      <main className={`uploadMain ${statusStyles.page} ${styles.page}`}>
         <Sidebar />
         <div className="uploadSide max-w-full! w-full">
           <h1>{t("playlistEditTitle")}</h1>
@@ -668,7 +541,7 @@ function EditPlaylistPage() {
             className="cancelBtn mt-4"
             onClick={() => navigate("/my-playlists")}
           >
-            Back to My Playlists
+            {t("navMyPlaylists")}
           </button>
         </div>
       </main>
@@ -677,7 +550,7 @@ function EditPlaylistPage() {
 
   if (isError) {
     return (
-      <main className="uploadMain">
+      <main className={`uploadMain ${statusStyles.page} ${styles.page}`}>
         <Sidebar />
         <div className="uploadSide max-w-full! w-full">
           <h1>{t("playlistEditTitle")}</h1>
@@ -687,7 +560,7 @@ function EditPlaylistPage() {
             className="cancelBtn mt-4"
             onClick={() => navigate("/my-playlists")}
           >
-            Back to My Playlists
+            {t("navMyPlaylists")}
           </button>
         </div>
       </main>
@@ -695,23 +568,23 @@ function EditPlaylistPage() {
   }
 
   return (
-    <main className="uploadMain">
+    <main className={`uploadMain ${statusStyles.page} ${styles.page}`}>
       <Sidebar />
       <div className="uploadSide max-w-full! w-full">
         <h1>{t("playlistEditTitle")}</h1>
         <p className="mt-1 mb-3 links">
-          Make changes to your playlist details and thumbnail.
+          {t("playlistEditHelp")}
         </p>
 
         {error && (
-          <div className="errorBanner">
+          <div className="errorBanner" role="alert">
             <p>{error}</p>
             <button
               type="button"
               onClick={() => setError(null)}
-              className="dismissErrorBtn"
+              className="dismissErrorBtn" aria-label={t("close")}
             >
-              Ã—
+              {CloseSVG}
             </button>
           </div>
         )}
@@ -722,105 +595,22 @@ function EditPlaylistPage() {
             <p>{t("playlistLoading")}</p>
           </div>
         ) : (
-          <div className="stepContentWithPreview">
-            <aside ref={previewAsideRef} className="stepContentSidebar">
-              <div
-                ref={previewStickyRef}
-                className="videoPreviewContainer"
-                style={previewStickyStyle}
-              >
-                {displayedThumbnailUrl ? (
-                  <div className="videoPreviewWrapper">
-                    <img
-                      src={displayedThumbnailUrl}
-                      alt={t("playlistThumbnail")}
-                      style={{
-                        width: "100%",
-                        aspectRatio: "16 / 9",
-                        borderRadius: "8px",
-                        objectFit: "cover",
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <div className="videoPreviewWrapper">
-                    <img
-                      src={DefaultThumbnail}
-                      alt={t("playlistDefaultThumbnail")}
-                      style={{
-                        width: "100%",
-                        aspectRatio: "16 / 9",
-                        borderRadius: "8px",
-                        objectFit: "cover",
-                      }}
-                    />
-                  </div>
-                )}
-
-                <div className="videoPreviewInfo">
-                  <h3 className="videoPreviewTitle">
-                    {title || "Untitled Playlist"}
-                  </h3>
-                  <p className="videoPreviewDuration">
-                    {playlistVideos.length} videos
-                  </p>
-                  <div className="mt-2 text-sm opacity-80">
-                    {formatDescription(description)}
-                  </div>
-                </div>
-              </div>
-            </aside>
-
-            <div className="stepContentMain">
-              <div className="videoDetailsForm">
+          <div className={styles.layout}>
+            <div className="videoDetailsForm">
                 <section className="editSection">
-                  <h2 className="editSectionTitle">{t("thumbnail")}</h2>
+                  <h2 className="editSectionTitle">{t("playlistThumbnail")}</h2>
 
-                  <div
-                    className={`uploadZone ${pendingThumbnailFile ? "hasFile" : ""}`}
-                    onClick={() =>
-                      !pendingThumbnailFile && fileInputRef.current?.click()
-                    }
-                  >
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      accept="image/*"
-                      onChange={handleFileSelect}
-                      hidden
-                    />
-                    {pendingThumbnailFile ? (
-                      <div className="fileInfo">
-                        {UploadSVG}
-                        <p className="fileName">{pendingThumbnailFile.name}</p>
-                        <p className="fileSize">
-                          {(pendingThumbnailFile.size / (1024 * 1024)).toFixed(
-                            2
-                          )}{" "}
-                          MB
-                        </p>
-                        <button
-                          type="button"
-                          className="removeFileBtn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveThumbnail();
-                          }}
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="uploadPrompt">
-                        {UploadSVG}
-                        <p>{t("selectThumbnailImage")}</p>
-                        <span>{t("imageFormatsHint")}</span>
-                        <button type="button" className="selectFileBtn">
-                          Select file
-                        </button>
-                      </div>
-                    )}
+                  <input type="file" ref={fileInputRef} accept="image/*" onChange={handleFileSelect} hidden />
+                  <div className="thumbnailSettingsPreview">
+                    {displayedThumbnailUrl ? <img src={displayedThumbnailUrl} alt={t("playlistThumbnail")} className="thumbnailPickerImage" />
+                      : <div className="thumbnailSettingsEmpty">{UploadSVG}<span>{t("selectThumbnailImage")}</span></div>}
                   </div>
+                  <div className="thumbnailSourceActions">
+                    <button type="button" className="saveCaptionsBtn thumbnailSourceButton" onClick={() => fileInputRef.current?.click()} disabled={isUploadingThumbnail || isRemovingThumbnail}>
+                      {UploadSVG}{t("uploadSelectFile")}
+                    </button>
+                  </div>
+                  <p className="formHint">{pendingThumbnailFile?.name || t("imageFormatsHint")}</p>
 
                   <div className="captionsActions">
                     <div className="captionsButtonGroup">
@@ -837,7 +627,7 @@ function EditPlaylistPage() {
                         {isUploadingThumbnail || isRemovingThumbnail ? (
                           <>
                             <div className="uploadSpinner tiny" />
-                            {thumbnailMarkedForRemoval ? "Saving..." : "Uploading..."}
+                            {t("saving")}
                           </>
                         ) : (
                           t("saveThumbnail")
@@ -860,15 +650,16 @@ function EditPlaylistPage() {
                           type="button"
                           onClick={resetThumbnailSelection}
                           className="cancelBtn thumbnailCancelBtn"
+                          disabled={isUploadingThumbnail || isRemovingThumbnail}
                         >
-                          Cancel
+                          {t("cancel")}
                         </button>
                       )}
                     </div>
                     <p className="formHint thumbnailHint">
                       {thumbnailModified ? (
                         <span className="unsavedIndicator">
-                          • Unsaved thumbnail changes
+                          • {t("editorUnsavedChanges")}
                         </span>
                       ) : (
                         t("selectNewImageHint")
@@ -876,7 +667,6 @@ function EditPlaylistPage() {
                     </p>
                   </div>
                 </section>
-
                 <section className="editSection">
                   <h2 className="editSectionTitle">{t("playlistDetails")}</h2>
 
@@ -914,7 +704,7 @@ function EditPlaylistPage() {
                           {tag}
                           <button
                             type="button"
-                            className="removeTagBtn"
+                            className="removeTagBtn" aria-label={`${t("adminDelete")}: ${tag}`}
                             onClick={() => removeTag(tag)}
                           >
                             {CloseSVG}
@@ -937,6 +727,11 @@ function EditPlaylistPage() {
 
                   <div className="formGroup mt-7.5 mb-5">
                     <label htmlFor="playlistStatus">{t("visibility")}</label>
+                    <p className="formHint">
+                      {status === "public"
+                        ? t("publicVisibilityHelp")
+                        : t("privateVisibilityHelp")}
+                    </p>
                     <CustomSelect
                       id="playlistStatus"
                       value={status}
@@ -946,38 +741,35 @@ function EditPlaylistPage() {
                         { value: "private", label: t("adminPrivate") },
                       ]}
                       ariaLabel={t("visibility")}
+                      rootClassName={statusStyles.compactSelect}
                       triggerClassName="visibilitySelect"
                     />
-                    <p className="formHint">
-                      {status === "public"
-                        ? t("publicVisibilityHelp")
-                        : t("privateVisibilityHelp")}
-                    </p>
                   </div>
 
                   <div className="formGroup mt-7.5 mb-5">
                     <label htmlFor="playlistFeatured">{t("featured")}</label>
+                    <p className="formHint">
+                      {t("playlistFeaturedHelp")}
+                    </p>
                     <CustomSelect
                       id="playlistFeatured"
                       value={featured ? "true" : "false"}
                       onChange={(value) => setFeatured(value === "true")}
                       options={[
-                        { value: "false", label: "No" },
+                        { value: "false", label: t("adminNo") },
                         { value: "true", label: t("adminYes") },
                       ]}
                       ariaLabel={t("featured")}
+                      rootClassName={statusStyles.compactSelect}
                       triggerClassName="visibilitySelect"
                     />
-                    <p className="formHint">
-                      Featured playlists can be highlighted in the app.
-                    </p>
                   </div>
 
                   <div className="captionsActions">
                     <p className="formHint">
                       {detailsModified && (
                         <span className="unsavedIndicator">
-                          • Unsaved changes
+                          • {t("editorUnsavedChanges")}
                         </span>
                       )}
                     </p>
@@ -985,22 +777,23 @@ function EditPlaylistPage() {
                       <button
                         type="button"
                         onClick={handleSaveDetails}
-                        disabled={!detailsModified || isSavingDetails}
+                        disabled={!detailsModified || isSavingDetails || !title.trim()}
                         className="saveCaptionsBtn"
                       >
                         {isSavingDetails ? (
                           <>
                             <div className="uploadSpinner tiny" />
-                            Saving...
+                            {t("saving")}
                           </>
                         ) : (
-                          "Save Details"
+                          t("saveChanges")
                         )}
                       </button>
                     </div>
                   </div>
                 </section>
-
+            </div>
+            <aside className={`videoDetailsForm ${styles.videosColumn}`}>
                 <section className="editSection">
                   <h2 className="editSectionTitle">{t("playlistVideos")}</h2>
 
@@ -1046,17 +839,17 @@ function EditPlaylistPage() {
                                   type="button"
                                   className="saveCaptionsBtn playlistVideoAddBtn"
                                   onClick={() => handleAddPlaylistVideo(video)}
-                                  disabled={isAddingVideoId === video.id}
+                                  disabled={videosBusy || videosLoading || videosError}
                                 >
                                   {isAddingVideoId === video.id ? (
                                     <>
                                       <div className="uploadSpinner tiny" />
-                                      Adding...
+                                      {t("saving")}
                                     </>
                                   ) : (
                                     <>
                                       {AddSVG}
-                                      Add
+                                      {t("addVideo")}
                                     </>
                                   )}
                                 </button>
@@ -1064,8 +857,7 @@ function EditPlaylistPage() {
                             ))
                           ) : (
                             <p className="formHint">
-                              No videos found, or all matching videos are already in
-                              this playlist.
+                              {t("playlistSearchEmpty")}
                             </p>
                           )}
                         </div>
@@ -1076,86 +868,18 @@ function EditPlaylistPage() {
                   </div>
 
                   <div className="formGroup">
-                    {playlistVideos.length ? (
+                    {videosLoading ? <p className="formHint" role="status">{t("playlistLoading")}</p> : videosError ? <div role="alert"><p>{t("playlistLoadFailed")}</p><button type="button" className="saveCaptionsBtn" onClick={() => void reloadVideos()}>{t("usersRetry")}</button></div> : playlistVideos.length ? (
                       <>
-                        <div className="playlistVideoEditorList">
-                          {playlistVideos.map((video, index) => (
-                            <div
-                              key={video.id}
-                              className={`playlistVideoEditorRow ${
-                                draggedVideoId === video.id ? "dragging" : ""
-                              } ${
-                                dragOverVideoId === video.id &&
-                                draggedVideoId !== video.id
-                                  ? "dragOver"
-                                  : ""
-                              }`}
-                              onDragEnter={() =>
-                                handlePlaylistVideoDragEnter(video.id)
-                              }
-                              onDragOver={(e) =>
-                                handlePlaylistVideoDragOver(e, video.id)
-                              }
-                              onDrop={(e) =>
-                                handlePlaylistVideoDrop(e, video.id)
-                              }
-                            >
-                              <button
-                                type="button"
-                                draggable
-                                aria-label={`Reorder ${video.title}`}
-                                className="playlistVideoDragHandle"
-                                disabled={
-                                  isReorderingPlaylistVideos ||
-                                  !!isDeletingVideoId ||
-                                  !!isAddingVideoId
-                                }
-                                onDragStart={(e) =>
-                                  handlePlaylistVideoDragStart(e, video.id)
-                                }
-                                onDragEnd={handlePlaylistVideoDragEnd}
-                              >
-                                <span />
-                                <span />
-                                <span />
-                              </button>
-                              <Link
-                                to={`/video/${video.id}`}
-                                className="playlistVideoEditorLink"
-                              >
-                                <PlaylistVideoRowContent
-                                  video={video}
-                                  index={index}
-                                />
-                              </Link>
-                              <button
-                                type="button"
-                                className="playlistVideoDeleteBtn"
-                                aria-label={`Delete ${video.title} from playlist`}
-                                onClick={() => handleDeletePlaylistVideo(video.id)}
-                                disabled={
-                                  isDeletingVideoId === video.id ||
-                                  isReorderingPlaylistVideos
-                                }
-                              >
-                                {isDeletingVideoId === video.id ? (
-                                  <div className="uploadSpinner tiny" />
-                                ) : (
-                                  DeleteSVG
-                                )}
-                              </button>
-                            </div>
-                          ))}
-                        </div>
+                        <PlaylistVideoList videos={playlistVideos} disabled={videosBusy} onMove={handlePlaylistVideoMove} onDelete={handleDeletePlaylistVideo} />
 
                         <div className="captionsActions">
                           <p className="formHint">
                             {isReorderingPlaylistVideos ? (
                               <span className="unsavedIndicator">
-                                {"\u2022"} Saving playlist order...
+                                {"\u2022"} {t("saving")}
                               </span>
                             ) : (
-                              "Drag videos by the handle to reorder them. Changes are saved immediately."
+                              t("playlistReorderHelp")
                             )}
                           </p>
                         </div>
@@ -1165,21 +889,20 @@ function EditPlaylistPage() {
                     )}
                   </div>
                 </section>
-              </div>
-            </div>
+            </aside>
           </div>
         )}
 
-        <section ref={previewBoundaryRef} className="bottomBtns">
+        <section className="bottomBtns">
           <button
             type="button"
             className="cancelBtn"
             onClick={() => navigate("/my-playlists")}
           >
-            Back to My Playlists
+            {t("navMyPlaylists")}
           </button>
           <Link to={`/playlist/${playlistId}`} className="uploadBtn">
-            View Playlist
+            {t("adminOpenPlaylist")}
           </Link>
         </section>
       </div>

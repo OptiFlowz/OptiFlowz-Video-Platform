@@ -1,4 +1,8 @@
 {
+  "playlistSearchEmpty": "Nessun video corrispondente oppure i video sono già in questa playlist.",
+  "playlistReorderHelp": "Trascina la maniglia per riordinare. Con la tastiera premi Spazio, usa le frecce, poi Spazio per rilasciare o Escape per annullare. Le modifiche vengono salvate automaticamente.",
+  "playlistFeaturedHelp": "Le playlist in evidenza possono essere messe in risalto nell’app.",
+  "playlistEditHelp": "Modifica dettagli, miniatura e ordine dei video.",
   "resumePlaybackFollow": "Segui la riproduzione",
   "accessLoadFailed": "Impossibile caricare i permessi di accesso. Riprova.",
   "usersAllRoles": "Tutti i ruoli",
@@ -412,7 +416,7 @@
   "visibility": "Visibilità",
   "publicVisibilityHelp": "Chiunque può visualizzare questa playlist.",
   "privateVisibilityHelp": "Solo gli utenti con accesso possono visualizzare questa playlist.",
-  "featured": "In primo piano",
+  "featured": "In evidenza",
   "playlistVideos": "Video della playlist",
   "addVideo": "Aggiungi video",
   "searchVideosAddPlaylist": "Cerca video da aggiungere a questa playlist",

@@ -1,4 +1,8 @@
 {
+  "playlistSearchEmpty": "Nincs megfelelő videó, vagy már szerepelnek ezen a listán.",
+  "playlistReorderHelp": "Húzd a fogantyút a sorrend módosításához. Billentyűzettel nyomj szóközt, használd a nyilakat, majd szóközzel helyezd el vagy Escape-pel szakítsd meg. A változások automatikusan mentődnek.",
+  "playlistFeaturedHelp": "A kiemelt lejátszási listák hangsúlyosan jelenhetnek meg az alkalmazásban.",
+  "playlistEditHelp": "Szerkeszd a részleteket, a bélyegképet és a videók sorrendjét.",
   "resumePlaybackFollow": "Lejátszás követése",
   "accessLoadFailed": "Nem sikerült betölteni a hozzáférési engedélyeket. Kérjük, próbálja újra.",
   "usersAllRoles": "Minden szerep",
@@ -420,7 +424,7 @@
   "publicVisibilityHelp": "Bárki megtekintheti ezt a lejátszási listát.",
   "privateVisibilityHelp": "Csak a hozzáféréssel rendelkező felhasználók tekinthetik meg ezt a lejátszási listát.",
   "featured": "Kiemelt",
-  "playlistVideos": "Lejátszási lista videók",
+  "playlistVideos": "A lejátszási lista videói",
   "addVideo": "Videó hozzáadása lehetőségre",
   "searchVideosAddPlaylist": "Keressen videókat, amelyeket hozzáadhat ehhez a lejátszási listához",
   "searchingVideos": "Videók keresése...",

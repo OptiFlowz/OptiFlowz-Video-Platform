@@ -1,4 +1,8 @@
 {
+  "playlistSearchEmpty": "没有匹配的视频，或视频已在此播放列表中。",
+  "playlistReorderHelp": "拖动手柄调整顺序。使用键盘时，按空格键开始，用方向键移动，再按空格键放下或按 Escape 取消。更改会自动保存。",
+  "playlistFeaturedHelp": "精选播放列表可在应用中突出显示。",
+  "playlistEditHelp": "编辑详情、缩略图和视频顺序。",
   "resumePlaybackFollow": "跟随播放",
   "accessLoadFailed": "无法加载您的访问权限。请再试一次。",
   "usersAllRoles": "所有角色",

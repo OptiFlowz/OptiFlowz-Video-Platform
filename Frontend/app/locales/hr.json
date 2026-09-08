@@ -1,4 +1,8 @@
 {
+  "playlistSearchEmpty": "Nema odgovarajućih videozapisa ili su već na ovom popisu.",
+  "playlistReorderHelp": "Povucite ručicu za promjenu redoslijeda. Tipkovnicom pritisnite razmaknicu, koristite strelice, pa razmaknicu za potvrdu ili Escape za odustajanje. Promjene se spremaju automatski.",
+  "playlistFeaturedHelp": "Istaknuti popisi mogu se posebno prikazivati u aplikaciji.",
+  "playlistEditHelp": "Uredite detalje, sličicu i redoslijed videozapisa na popisu.",
   "resumePlaybackFollow": "Prati reprodukciju",
   "accessLoadFailed": "Nije moguće učitati prava pristupa. Pokušajte ponovno.",
   "usersAllRoles": "Sve uloge",
@@ -413,7 +417,7 @@
   "publicVisibilityHelp": "Svatko može vidjeti ovaj popis za reprodukciju.",
   "privateVisibilityHelp": "Samo korisnici s pristupom mogu vidjeti ovaj popis za reprodukciju.",
   "featured": "Istaknuto",
-  "playlistVideos": "Videozapisi popisa za reprodukciju",
+  "playlistVideos": "Videozapisi na popisu",
   "addVideo": "Dodaj video",
   "searchVideosAddPlaylist": "Pretražite videozapise za dodavanje na ovaj popis za reprodukciju",
   "searchingVideos": "Traženje videozapisa...",

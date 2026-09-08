@@ -1,4 +1,8 @@
 {
+  "playlistSearchEmpty": "Sobivaid videoid pole või need on juba selles esitusloendis.",
+  "playlistReorderHelp": "Järjekorra muutmiseks lohista pidet. Klaviatuuril vajuta tühikut, kasuta nooleklahve ja seejärel tühikut paigutamiseks või Escape’i tühistamiseks. Muudatused salvestatakse automaatselt.",
+  "playlistFeaturedHelp": "Esiletõstetud esitusloendeid saab rakenduses silmatorkavamalt kuvada.",
+  "playlistEditHelp": "Muuda üksikasju, pisipilti ja videote järjekorda.",
   "resumePlaybackFollow": "Jälgi taasesitust",
   "accessLoadFailed": "Teie juurdepääsuõigusi ei saa laadida. Palun proovi uuesti.",
   "usersAllRoles": "Kõik rollid",

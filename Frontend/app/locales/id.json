@@ -1,4 +1,8 @@
 {
+  "playlistSearchEmpty": "Tidak ada video yang cocok atau video sudah ada dalam playlist ini.",
+  "playlistReorderHelp": "Seret pegangan untuk mengubah urutan. Dengan keyboard, tekan Spasi, gunakan tombol panah, lalu Spasi untuk meletakkan atau Escape untuk membatalkan. Perubahan disimpan otomatis.",
+  "playlistFeaturedHelp": "Playlist unggulan dapat ditonjolkan dalam aplikasi.",
+  "playlistEditHelp": "Edit detail, thumbnail, dan urutan video.",
   "resumePlaybackFollow": "Ikuti pemutaran",
   "accessLoadFailed": "Tidak dapat memuat izin akses Anda. Silakan coba lagi.",
   "usersAllRoles": "Semua peran",
@@ -423,7 +427,7 @@
   "publicVisibilityHelp": "Siapa pun dapat melihat daftar putar ini.",
   "privateVisibilityHelp": "Hanya pengguna yang memiliki akses yang dapat melihat playlist ini.",
   "featured": "Unggulan",
-  "playlistVideos": "Video Daftar Putar",
+  "playlistVideos": "Video dalam playlist",
   "addVideo": "Tambahkan video",
   "searchVideosAddPlaylist": "Cari video untuk ditambahkan ke playlist ini",
   "searchingVideos": "Menelusuri video...",
