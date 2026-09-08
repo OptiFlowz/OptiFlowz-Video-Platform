@@ -944,7 +944,7 @@ function EditVideoPage() {
     setIsGeneratingChapters(true);
     try {
       const response = (await fetchFn({
-        route: "api/videos/generate-chapters",
+        route: "api/video-moderation/generate-chapters",
         options: {
           method: "POST",
           headers: myHeaders.current,

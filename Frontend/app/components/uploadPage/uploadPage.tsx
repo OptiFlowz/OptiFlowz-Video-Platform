@@ -1033,7 +1033,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
 
     try {
       const response = (await fetchFn({
-        route: "api/videos/generate-chapters",
+        route: "api/video-moderation/generate-chapters",
         options: {
           method: "POST",
           headers: myHeaders.current,
@@ -1066,7 +1066,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
     setProcessingPhase("generating_chapters");
     try {
       const response = (await fetchFn({
-        route: "api/videos/generate-chapters",
+        route: "api/video-moderation/generate-chapters",
         options: {
           method: "POST",
           headers: myHeaders.current,
