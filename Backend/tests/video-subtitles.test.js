@@ -10,7 +10,7 @@ let video;
 mock.module(new URL('../src/database/index.js', import.meta.url).href, {
   namedExports: { readPool: { async query() { return { rows: video ? [video] : [] }; } } },
 });
-const { getSubtitleInternal } = await import('../src/modules/videos/handlers/getSubtitle.js');
+const { getSubtitleInternal } = await import('../src/modules/videos/video-moderation/handlers/getSubtitle.js');
 const { getMuxVttUrl, fetchVttFromMux } = await import('../src/modules/videos/helpers/videoModeration.shared.js');
 const vtt = 'WEBVTT\n\n00:00.000 --> 00:01.000\nHello\n';
 const input = { params: { videoId: '12345678-1234-4234-8234-123456789abc' }, query: { lang: 'en' } };

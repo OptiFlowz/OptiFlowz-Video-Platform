@@ -22,7 +22,7 @@ mock.module(new URL('../src/database/index.js', import.meta.url).href, {
     } },
   },
 });
-const { getVideoByIdInternal } = await import('../src/modules/videos/handlers/getVideoById.js');
+const { getVideoByIdInternal } = await import('../src/modules/videos/video/handlers/getVideoById.js');
 
 function setup(overrides = {}) {
   video = {

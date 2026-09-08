@@ -13,6 +13,27 @@
 
 ## Zašto je ovo lakše za održavanje
 
+Videos module layout:
+
+```text
+src/modules/videos/
+  video/
+    video.routes.js
+    video.controller.js
+    handlers/
+  video-moderation/
+    video-moderation.routes.js
+    video-moderation.controller.js
+    video.middleware.js
+    handlers/
+  helpers/
+  mux.service.js
+```
+
+`video/video.routes.js` is mounted at `/api/videos`; `video-moderation/video-moderation.routes.js`
+is mounted at `/api/video-moderation`. Shared helpers and the Mux service remain
+at the videos module level. Upload middleware belongs to video moderation.
+
 1. Infrastruktura više nije pomešana sa biznis logikom.
 2. Svaki domen ima svoje rute i servise na jednom mestu.
 3. Startup i Express konfiguracija su odvojeni od endpoint logike.

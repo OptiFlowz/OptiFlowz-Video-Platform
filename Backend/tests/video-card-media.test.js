@@ -139,7 +139,7 @@ test('signed images never fall back to unsigned links when keys are absent', asy
 
 test('search responses include enriched card URLs without changing pagination', async () => {
   await setup();
-  const { searchVideosInternal } = await import('../src/modules/videos/handlers/searchVideos.js');
+  const { searchVideosInternal } = await import('../src/modules/videos/video/handlers/searchVideos.js');
   const result = await searchVideosInternal({ limit: 20 });
   assert.equal(result.videos[0].thumbnail_url, null);
   assert.ok(result.videos[0].mux_thumbnail_url);

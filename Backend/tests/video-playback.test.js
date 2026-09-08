@@ -37,7 +37,7 @@ async function loadHandler(overrides = {}, signing = true) {
   // Only generated test credentials are used; no database or Mux API calls occur.
   process.env.MUX_SIGNING_KEY = signing ? 'test-signing-key' : '';
   process.env.MUX_PRIVATE_KEY = signing ? encodedKey : '';
-  const module = await import(`../src/modules/videos/handlers/getVideoPlayback.js?test=${++importId}`);
+  const module = await import(`../src/modules/videos/video/handlers/getVideoPlayback.js?test=${++importId}`);
   return module.getVideoPlaybackInternal;
 }
 
