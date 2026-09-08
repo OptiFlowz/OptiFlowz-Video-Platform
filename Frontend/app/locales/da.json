@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "Forbindelsen er afbrudt. Dit aktuelle arbejde forbliver åbent.",
+  "connectionChecking": "Kontrollerer…",
+  "paginationPage": "Side {{param.page}}",
+  "googleLoginUnavailable": "Google-login er ikke tilgængeligt. Log ind med e-mail.",
+  "googleLoginRetry": "Google-login kunne ikke bekræftes eller fuldføres. Start login igen.",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "Ingen matchende videoer, eller de findes allerede på denne liste.",
   "playlistReorderHelp": "Træk i håndtaget for at ændre rækkefølgen. Tryk på mellemrum, brug piletasterne, og tryk så på mellemrum for at slippe eller Escape for at annullere. Ændringer gemmes automatisk.",
   "playlistFeaturedHelp": "Fremhævede afspilningslister kan vises tydeligere i appen.",

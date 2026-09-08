@@ -2,6 +2,7 @@ import { useI18n } from "~/i18n";
 import { useState, useRef, useEffect, useLayoutEffect, memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchFn } from "~/API";
+import { getToken } from "~/auth/session";
 
 interface Contributor {
   id: string;
@@ -33,9 +34,8 @@ function ContributorSearch({
   const containerRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
-    const user = localStorage.getItem("user");
-    if (user) {
-      const parsedToken = JSON.parse(user).token;
+    const parsedToken = getToken();
+    if (parsedToken) {
       setToken(parsedToken);
       myHeaders.current.set("Authorization", `Bearer ${parsedToken}`);
     }
@@ -64,7 +64,7 @@ function ContributorSearch({
   }, []);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["contributors-search", debouncedQuery],
+    queryKey: ["contributors-search", token, debouncedQuery],
     queryFn: () =>
       fetchFn<{ people: Contributor[] }>({
         route: `api/people/search?q=${encodeURIComponent(debouncedQuery)}`,

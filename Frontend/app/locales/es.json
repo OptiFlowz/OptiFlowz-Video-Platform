@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "La conexión se ha interrumpido. Tu trabajo actual permanece abierto.",
+  "connectionChecking": "Comprobando…",
+  "paginationPage": "Página {{param.page}}",
+  "googleLoginUnavailable": "El inicio de sesión con Google no está disponible. Usa el correo electrónico.",
+  "googleLoginRetry": "No se pudo verificar o completar el inicio de sesión con Google. Vuelve a iniciarlo.",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "No hay vídeos coincidentes o ya están en esta lista.",
   "playlistReorderHelp": "Arrastra el asa para reordenar. Con el teclado, pulsa Espacio, usa las flechas y luego Espacio para soltar o Escape para cancelar. Los cambios se guardan automáticamente.",
   "playlistFeaturedHelp": "Las listas destacadas pueden aparecer resaltadas en la aplicación.",

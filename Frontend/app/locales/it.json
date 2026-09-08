@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "La connessione è interrotta. Il lavoro in corso rimane aperto.",
+  "connectionChecking": "Verifica…",
+  "paginationPage": "Pagina {{param.page}}",
+  "googleLoginUnavailable": "L’accesso con Google non è disponibile. Usa l’email.",
+  "googleLoginRetry": "Non è stato possibile verificare o completare l’accesso con Google. Ricomincia l’accesso.",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "Nessun video corrispondente oppure i video sono già in questa playlist.",
   "playlistReorderHelp": "Trascina la maniglia per riordinare. Con la tastiera premi Spazio, usa le frecce, poi Spazio per rilasciare o Escape per annullare. Le modifiche vengono salvate automaticamente.",
   "playlistFeaturedHelp": "Le playlist in evidenza possono essere messe in risalto nell’app.",

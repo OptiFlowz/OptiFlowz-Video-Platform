@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "Povezava je prekinjena. Vaše trenutno delo ostaja odprto.",
+  "connectionChecking": "Preverjanje…",
+  "paginationPage": "Stran {{param.page}}",
+  "googleLoginUnavailable": "Prijava z Googlom ni na voljo. Uporabite e-pošto.",
+  "googleLoginRetry": "Prijave z Googlom ni bilo mogoče preveriti ali dokončati. Začnite znova.",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "Ni ustreznih videoposnetkov ali pa so že na tem seznamu.",
   "playlistReorderHelp": "Povlecite ročico za spremembo vrstnega reda. S tipkovnico pritisnite preslednico, uporabite puščice in nato preslednico za potrditev ali Escape za preklic. Spremembe se shranijo samodejno.",
   "playlistFeaturedHelp": "Izpostavljeni seznami so lahko posebej prikazani v aplikaciji.",

@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "接続が切断されました。現在の作業は開いたままになります。",
+  "connectionChecking": "確認中…",
+  "paginationPage": "ページ {{param.page}}",
+  "googleLoginUnavailable": "Google ログインは現在利用できません。メールでログインしてください。",
+  "googleLoginRetry": "Google ログインを確認または完了できませんでした。ログインを最初からやり直してください。",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "一致する動画がないか、すでにこのプレイリストに追加されています。",
   "playlistReorderHelp": "ハンドルをドラッグして並べ替えます。キーボードではスペースキーで開始し、矢印キーで移動して、スペースキーで確定または Escape でキャンセルします。変更は自動保存されます。",
   "playlistFeaturedHelp": "注目のプレイリストはアプリ内で目立つように表示できます。",

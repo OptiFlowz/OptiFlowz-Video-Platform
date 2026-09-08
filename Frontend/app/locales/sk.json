@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "Pripojenie bolo prerušené. Vaša aktuálna práca zostáva otvorená.",
+  "connectionChecking": "Kontrola…",
+  "paginationPage": "Strana {{param.page}}",
+  "googleLoginUnavailable": "Prihlásenie cez Google nie je dostupné. Použite e-mail.",
+  "googleLoginRetry": "Prihlásenie cez Google sa nepodarilo overiť alebo dokončiť. Začnite znova.",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "Žiadne zodpovedajúce videá alebo už sú v tomto zozname.",
   "playlistReorderHelp": "Potiahnutím úchytu zmeňte poradie. Na klávesnici stlačte medzerník, použite šípky a potom medzerník na umiestnenie alebo Escape na zrušenie. Zmeny sa ukladajú automaticky.",
   "playlistFeaturedHelp": "Zvýraznené zoznamy môžu byť v aplikácii viac viditeľné.",

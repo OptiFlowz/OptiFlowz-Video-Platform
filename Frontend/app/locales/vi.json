@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "Kết nối bị gián đoạn. Công việc hiện tại của bạn vẫn mở.",
+  "connectionChecking": "Đang kiểm tra…",
+  "paginationPage": "Trang {{param.page}}",
+  "googleLoginUnavailable": "Hiện không thể đăng nhập bằng Google. Vui lòng dùng email.",
+  "googleLoginRetry": "Không thể xác minh hoặc hoàn tất đăng nhập bằng Google. Vui lòng bắt đầu đăng nhập lại.",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "Không có video phù hợp hoặc video đã có trong danh sách này.",
   "playlistReorderHelp": "Kéo tay nắm để đổi thứ tự. Với bàn phím, nhấn phím cách, dùng các phím mũi tên, rồi nhấn phím cách để thả hoặc Escape để hủy. Thay đổi được lưu tự động.",
   "playlistFeaturedHelp": "Danh sách phát nổi bật có thể được làm nổi bật trong ứng dụng.",

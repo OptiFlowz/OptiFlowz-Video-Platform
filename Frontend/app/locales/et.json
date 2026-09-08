@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "Ühendus katkes. Teie praegune töö jääb avatuks.",
+  "connectionChecking": "Kontrollimine…",
+  "paginationPage": "Leht {{param.page}}",
+  "googleLoginUnavailable": "Google’i sisselogimine pole saadaval. Kasutage e-posti.",
+  "googleLoginRetry": "Google’i sisselogimist ei saanud kinnitada või lõpetada. Alustage uuesti.",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "Sobivaid videoid pole või need on juba selles esitusloendis.",
   "playlistReorderHelp": "Järjekorra muutmiseks lohista pidet. Klaviatuuril vajuta tühikut, kasuta nooleklahve ja seejärel tühikut paigutamiseks või Escape’i tühistamiseks. Muudatused salvestatakse automaatselt.",
   "playlistFeaturedHelp": "Esiletõstetud esitusloendeid saab rakenduses silmatorkavamalt kuvada.",

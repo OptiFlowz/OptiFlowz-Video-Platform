@@ -9,6 +9,7 @@ import PopupPortal from "~/components/popupPortal/popupPortal";
 import { OFFICE_EMAIL } from "~/changeables";
 import { usePrivacyPreferences } from "~/privacy/privacyPreferences";
 import { deleteMyAccount } from "./accountApi";
+import { clearSession } from "~/auth/session";
 
 function SettingsPopup({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { locale, setLocale, t } = useI18n();
@@ -71,9 +72,7 @@ function SettingsPopup({ open, onClose }: { open: boolean; onClose: () => void }
       return;
     }
     // Clear account state only after confirmed deletion; keep language and privacy choices.
-    localStorage.removeItem("user");
-    sessionStorage.removeItem("user");
-    localStorage.removeItem("rememberMe");
+    clearSession();
     await queryClient.cancelQueries();
     queryClient.clear();
     window.location.replace("/login");

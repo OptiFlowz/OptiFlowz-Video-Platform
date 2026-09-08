@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "Forbindelsen er brutt. Arbeidet ditt forblir åpent.",
+  "connectionChecking": "Kontrollerer…",
+  "paginationPage": "Side {{param.page}}",
+  "googleLoginUnavailable": "Google-innlogging er ikke tilgjengelig. Bruk e-post.",
+  "googleLoginRetry": "Google-innlogging kunne ikke bekreftes eller fullføres. Start innloggingen på nytt.",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "Ingen samsvarende videoer, eller de finnes allerede i denne spillelisten.",
   "playlistReorderHelp": "Dra i håndtaket for å endre rekkefølgen. Trykk mellomrom, bruk piltastene, og trykk så mellomrom for å slippe eller Escape for å avbryte. Endringer lagres automatisk.",
   "playlistFeaturedHelp": "Fremhevede spillelister kan vises tydeligere i appen.",

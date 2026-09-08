@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "انقطع الاتصال. يظل عملك الحالي مفتوحًا.",
+  "connectionChecking": "جارٍ التحقق…",
+  "paginationPage": "الصفحة {{param.page}}",
+  "googleLoginUnavailable": "تسجيل الدخول باستخدام Google غير متاح حاليًا. استخدم البريد الإلكتروني.",
+  "googleLoginRetry": "تعذر التحقق من تسجيل الدخول باستخدام Google أو إكماله. ابدأ تسجيل الدخول من جديد.",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "لا توجد فيديوهات مطابقة، أو أنها موجودة بالفعل في هذه القائمة.",
   "playlistReorderHelp": "اسحب المقبض لتغيير الترتيب. بلوحة المفاتيح اضغط المسافة واستخدم الأسهم ثم المسافة للإفلات أو Escape للإلغاء. تُحفظ التغييرات تلقائيًا.",
   "playlistFeaturedHelp": "يمكن إبراز قوائم التشغيل المميزة في التطبيق.",

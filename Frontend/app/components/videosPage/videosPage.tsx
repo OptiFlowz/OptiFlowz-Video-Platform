@@ -1,160 +1,76 @@
-import { useInfiniteQuery, type InfiniteData } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { fetchFn } from "~/API";
-import type { fetchVideo } from "~/types";
+import type { VideoT } from "~/types";
 import Item from "../itemSlider/item";
+import Pagination from "~/components/library/pagination";
 import { getToken } from "~/functions";
 import { useI18n } from "~/i18n";
 import { useRouter } from "next/navigation";
 import { usePrivacyPreferences } from "~/privacy/privacyPreferences";
 
-const SkeletonItem = () => (
-    <div className="skeleton-item">
-        <div className="skeleton-thumbnail"></div>
-        <div className="skeleton-content">
-            <div className="skeleton-title"></div>
-            <div className="skeleton-text"></div>
-            <div className="skeleton-text short"></div>
-        </div>
-    </div>
-);
+type VideoCollection = {
+  videos: VideoT[];
+  pagination?: { page: number; limit: number; total?: number; total_pages?: number };
+};
+const collections: Record<string, { route: string; title: string; requiresAuth: boolean }> = {
+  "0": { route: "api/videos/user/continue", title: "continueWatching", requiresAuth: true },
+  "1": { route: "api/videos/user/recommended", title: "recommendedForYou", requiresAuth: true },
+  "2": { route: "api/videos/trending", title: "navTrending", requiresAuth: false },
+  "3": { route: "api/videos/user/liked", title: "savedVideos", requiresAuth: true },
+  "4": { route: "api/videos/user/history", title: "watchHistory", requiresAuth: true },
+};
 
-function VideosPage(){
-    const { t } = useI18n();
-    const { preferences, openPreferences } = usePrivacyPreferences();
-    const {type} = useParams();
-    const token = getToken();
-    const router = useRouter();
-    const loadMoreRef = useRef<HTMLDivElement>(null);
-    const requiresAuth = type === '0' || type === '1' || type === '3' || type === '4';
+function VideoCollectionPage({ type }: { type: string }) {
+  const { t } = useI18n();
+  const { preferences, openPreferences } = usePrivacyPreferences();
+  const token = getToken();
+  const router = useRouter();
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const collection = collections[type];
+  const allowed = !!collection && (!collection.requiresAuth || !!token);
+  const personalizationDisabled = type === "1" && !preferences.personalization;
+  const { data, isPending, isFetching, isError, refetch } = useQuery({
+    queryKey: ["video-collection", token, type, page, limit],
+    queryFn: ({ signal }) => fetchFn<VideoCollection>({
+      route: `${collection.route}?${new URLSearchParams({ page: String(page), limit: String(limit) })}`,
+      options: { headers: token ? { Authorization: `Bearer ${token}` } : {}, signal },
+    }),
+    enabled: allowed && !personalizationDisabled,
+    staleTime: 30_000,
+  });
 
-    const {route, title} = useMemo<{route: string, title: string}>(() => {
-        switch(type){
-            case '0': {
-                return {
-                    route: `api/videos/user/continue`,
-                    title: t("continueWatching")
-                }
-            }
-            case '1': {
-                return {
-                    route: `api/videos/user/recommended`,
-                    title: t("recommendedForYou")
-                }
-            }
-            case '2': {
-                return {
-                    route: `api/videos/trending`,
-                    title: t("navTrending")
-                }
-            }
-            case '3': {
-                return {
-                    route: `api/videos/user/liked`,
-                    title: t("savedVideos")
-                }
-            }
-            case '4': {
-                return {
-                    route: `api/videos/user/history`,
-                    title: t("watchHistory")
-                }
-            }
-            default:
-                return {
-                    route: '',
-                    title: ''
-                }
-        }
-    }, [type]);
+  useEffect(() => {
+    if (!collection?.requiresAuth || token) return;
+    const target = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    router.replace(`/login?redirect=${encodeURIComponent(target)}`);
+  }, [collection, token, router]);
 
-    const {
-        data,
-        fetchNextPage,
-        isFetchingNextPage,
-        status,
-        refetch
-    } = useInfiniteQuery<fetchVideo, Error, InfiniteData<fetchVideo, number>>({
-        queryKey: ["infinite", type],
-        queryFn: ({pageParam}) => fetchFn<fetchVideo>({
-            route: `${route}?page=${pageParam}`,
-            options: {
-                method: "GET",
-                headers: token ? {Authorization: `Bearer ${token}`} : {}
-            }
-        }),
-        getNextPageParam: () => undefined,
-        initialPageParam: 1,
-        staleTime: 5 * 60 * 1000,
-        enabled: !!route && (!requiresAuth || !!token) && (type !== "1" || preferences.personalization)
-    });
-
-    useEffect(() => {
-        if (!route || !requiresAuth || token) return;
-
-        const redirectTarget = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-        router.replace(`/login?redirect=${encodeURIComponent(redirectTarget)}`);
-    }, [requiresAuth, route, router, token]);
-
-    useEffect(() => {
-        if(type === '1' && token && preferences.personalization) refetch();
-    }, [type, token, refetch, preferences.personalization]);
-
-    useEffect(() => {
-        if (isFetchingNextPage) return;
-
-        const observer = new IntersectionObserver(entries => {
-            if(entries[0].isIntersecting) fetchNextPage();
-        }, { rootMargin: "400px" });
-
-        const el = loadMoreRef.current;
-        if(el) observer.observe(el);
-
-        return () => {if(el) observer.unobserve(el)}
-    }, [isFetchingNextPage, fetchNextPage]);
-
-    if (!route || (requiresAuth && !token)) return null;
-
-    if (type === "1" && !preferences.personalization) {
-        return (
-            <main className="videos">
-                <div className="heading">
-                    <h2 className="font-bold -mt-5 text-3xl max-[520px]:text-2xl mb-6">{title}</h2>
-                </div>
-                <div className="watchToRecommend">
-                    <p>{t("privacyPersonalizationDisabled")}</p>
-                    <button type="button" className="privacySettingsButton mt-4" onClick={openPreferences}>
-                        {t("privacyEnablePersonalization")}
-                    </button>
-                </div>
-            </main>
-        );
-    }
-
-    const skeletonArray = Array.from({ length: 12 }).map((_, index) => (
-        <SkeletonItem key={`skeleton-${index}`} />
-    ));
-
-    const itemsArray = data?.pages.flatMap((page) => page.videos)?.map((item, index) => (
-            <Item key={`${type}${index}`} props={item} />
-        ));
-
-    return (
-        <main ref={loadMoreRef} className="videos">
-            <div className="heading">
-                <h2 className="font-bold -mt-5 text-3xl max-[520px]:text-2xl mb-6 max-[1075px]:mb-5 max-[1075px]:mt-1 max-[450px]:mb-5">{title}</h2>
-            </div>
-
-            {itemsArray?.length == 0 && type == '1' ? 
-            <div className="watchToRecommend">{t("watchSomeVideos")}</div> 
-            : 
-            <div className="holder collection mb-15 max-[1075px]:mb-8 max-[450px]:mb-5">
-                {status === 'pending' ? skeletonArray : itemsArray}
-                {isFetchingNextPage && skeletonArray}
-            </div>}
-        </main>
-    );
+  if (!allowed) return null;
+  return <main className="videos">
+    <div className="heading"><h1 className="font-bold text-3xl max-[520px]:text-2xl mb-6">{t(collection.title)}</h1></div>
+    {personalizationDisabled ? <div className="watchToRecommend">
+      <p>{t("privacyPersonalizationDisabled")}</p>
+      <button type="button" className="privacySettingsButton mt-4" onClick={openPreferences}>{t("privacyEnablePersonalization")}</button>
+    </div> : <>
+      {isError ? <div role="alert" className="platformUsersState">
+        <p>{t("searchLoadFailed")}</p><button type="button" className="button" onClick={() => void refetch()}>{t("usersRetry")}</button>
+      </div> : isPending ? <div className="holder collection mb-8" aria-busy="true">
+        {Array.from({ length: 12 }, (_, index) => <div className="skeleton-item" key={index}><div className="skeleton-thumbnail" /><div className="skeleton-content"><div className="skeleton-title" /><div className="skeleton-text" /></div></div>)}
+      </div> : data?.videos.length ? <div className="holder collection mb-8">
+        {data.videos.map(video => <Item key={video.id} props={video} />)}
+      </div> : <p className="platformUsersState">{t(type === "1" && page === 1 ? "watchSomeVideos" : "adminZeroResults")}</p>}
+      <Pagination page={page} limit={limit} total={data?.pagination?.total} totalPages={data?.pagination?.total_pages}
+        itemCount={data?.videos.length} hasNextPage={(data?.videos.length ?? 0) === limit}
+        loading={isFetching || isPending} disabled={isError} label={t(collection.title)}
+        onPageChange={setPage} onLimitChange={value => { setLimit(value); setPage(1); }} />
+    </>}
+  </main>;
 }
 
-export default VideosPage;
+export default function VideosPage() {
+  const { type = "" } = useParams();
+  return <VideoCollectionPage key={type} type={type} />;
+}

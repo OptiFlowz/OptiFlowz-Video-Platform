@@ -421,7 +421,7 @@ main.playlist .buttonHolder button.play {
   background: var(--blueButtonGradient) !important;
 }
 
-main.playlist > div:first-child,
+main.playlist:not(.playlistDetailsPage) > div:first-child,
 main.search > div:first-child,
 main.account > .info,
 main.analyticsPage .analyticsSimple,
@@ -435,7 +435,7 @@ main.myPlaylists table,
   box-shadow: 0 20px 60px color-mix(in srgb, var(--background1) 28%, transparent);
 }
 
-main.playlist > div:first-child {
+main.playlist:not(.playlistDetailsPage) > div:first-child {
   padding: 28px;
   border-radius: 30px;
 }
@@ -650,7 +650,7 @@ header > div,
 .collection .item .duration,
 .videoHolder .item .duration,
 .playlistItem .pins p,
-main.playlist > div:first-child,
+main.playlist:not(.playlistDetailsPage) > div:first-child,
 main.search > div:first-child,
 main.account > .info,
 main.analyticsPage .analyticsSimple,
@@ -15228,3 +15228,33 @@ main.managementPage td .visibility svg path { stroke: currentColor; }
 .sheetState { padding: 1rem; display: flex; flex-direction: column; align-items: flex-start; gap: 1rem; }
 .sheetFollowButton { position: absolute; bottom: max(1rem, env(safe-area-inset-bottom)); right: 1rem; max-width: calc(100% - 2rem); z-index: 1; border: 1px solid var(--border1); padding: 6px 12px; border-radius: var(--bR); background: var(--accentBlue); color: var(--text1); }
 .playerSheet :focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: -2px; }
+
+/* Connection feedback does not replace or remount the active page. */
+.connectionStatus {
+  position: fixed;
+  top: calc(88px + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: max-content;
+  max-width: calc(100vw - 2rem);
+  padding: 0.8rem 1rem;
+  border-radius: 1rem;
+  background: var(--background2);
+  color: var(--text1);
+  border: 1px solid var(--border1);
+  box-shadow: 0 8px 24px var(--seethroughtBlack);
+}
+.connectionStatus button {
+  flex-shrink: 0;
+  padding: 0.4rem 0.7rem;
+  border-radius: 0.5rem;
+  background: var(--background3);
+  color: var(--text1);
+  cursor: pointer;
+}
+.connectionStatus button:hover { background: var(--background4); }
+.connectionStatus button:disabled { opacity: 0.6; cursor: wait; }

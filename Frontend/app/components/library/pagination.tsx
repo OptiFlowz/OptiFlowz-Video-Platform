@@ -8,6 +8,9 @@ type Props = {
   limit: number;
   total?: number;
   totalPages?: number;
+  /** For APIs exposing page/limit without a total count. */
+  itemCount?: number;
+  hasNextPage?: boolean;
   loading?: boolean;
   disabled?: boolean;
   pageSizes?: number[];
@@ -17,13 +20,14 @@ type Props = {
 };
 
 export default function Pagination({
-  page, limit, total, totalPages, loading = false, disabled = false,
+  page, limit, total, totalPages, itemCount, hasNextPage, loading = false, disabled = false,
   pageSizes = [10, 20, 50], label, onPageChange, onLimitChange,
 }: Props) {
   const { t } = useI18n();
   const pages = Math.max(1, totalPages ?? Math.ceil((total ?? 0) / limit));
-  const currentPage = Math.min(Math.max(1, page), pages);
-  const unavailable = disabled || loading || total === undefined;
+  const openEnded = total === undefined && itemCount !== undefined;
+  const currentPage = openEnded ? Math.max(1, page) : Math.min(Math.max(1, page), pages);
+  const unavailable = disabled || loading || (!openEnded && total === undefined);
   const start = total ? Math.min((currentPage - 1) * limit + 1, total) : 0;
   const end = Math.min(currentPage * limit, total ?? 0);
 
@@ -41,7 +45,7 @@ export default function Pagination({
         />
       </div>
       <p className={styles.summary} role="status" aria-live="polite">
-        {loading || total === undefined ? "…" : total > 0
+        {loading ? "…" : openEnded ? (itemCount > 0 ? t("paginationRangeUnknown", { start: (currentPage - 1) * limit + 1, end: (currentPage - 1) * limit + itemCount }) : t("adminZeroResults")) : total === undefined ? "…" : total > 0
           ? t("adminPaginationRange", { start, end, total })
           : t("adminZeroResults")}
       </p>
@@ -58,7 +62,7 @@ export default function Pagination({
             <path d="m14 6-6 6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
-        {getPaginationItems(currentPage, pages).map((item, index) => item === "…" ? (
+        {openEnded ? <span className={styles.pageButton} aria-current="page">{t("paginationPage", { page: currentPage })}</span> : getPaginationItems(currentPage, pages).map((item, index) => item === "…" ? (
           <span key={`gap-${index}`} className={styles.ellipsis} aria-hidden="true">…</span>
         ) : (
           <button
@@ -78,7 +82,7 @@ export default function Pagination({
           className={styles.pageButton}
           aria-label={t("next")}
           title={t("next")}
-          disabled={unavailable || currentPage >= pages}
+          disabled={unavailable || (openEnded ? !hasNextPage : currentPage >= pages)}
           onClick={() => onPageChange(currentPage + 1)}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">

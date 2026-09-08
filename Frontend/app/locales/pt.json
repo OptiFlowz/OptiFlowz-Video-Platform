@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "A ligação foi interrompida. O seu trabalho atual permanece aberto.",
+  "connectionChecking": "A verificar…",
+  "paginationPage": "Página {{param.page}}",
+  "googleLoginUnavailable": "O início de sessão com Google está indisponível. Utilize o email.",
+  "googleLoginRetry": "Não foi possível verificar ou concluir o início de sessão com Google. Comece novamente.",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "Não há vídeos correspondentes ou já estão nesta lista.",
   "playlistReorderHelp": "Arraste a alça para reordenar. No teclado, prima Espaço, use as setas e depois Espaço para soltar ou Escape para cancelar. As alterações são guardadas automaticamente.",
   "playlistFeaturedHelp": "As listas em destaque podem ser realçadas na aplicação.",

@@ -10,7 +10,8 @@ import {
     SearchSVGWhite, TrendingMenuSVG, UserSVG,
 } from "~/constants";
 import DefaultProfile from "../../../assets/DefaultProfile.webp";
-import { getToken } from "~/functions";
+import { getToken, getStoredUser } from "~/functions";
+import { clearSession } from "~/auth/session";
 import type { AuthFetchT } from "~/types";
 import { useI18n } from "~/i18n";
 import { useQueryClient } from "@tanstack/react-query";
@@ -48,7 +49,7 @@ function Header(){
     useEffect(() => {
 
         const handleUpdate = () => {
-            const newUser = localStorage.getItem("user");
+            const newUser = getStoredUser();
 
             if(newUser && headerUserData){
                 queryClient.setQueriesData<AuthFetchT>(
@@ -60,7 +61,7 @@ function Header(){
                           ...old,
                           user: {
                             ...old.user,
-                            image_url: (JSON.parse(newUser) as AuthFetchT).user.image_url
+                            image_url: newUser.user.image_url
                           }
                         };
                       }
@@ -145,7 +146,7 @@ function Header(){
         const searchVal = searchRef1?.current?.value || searchRef2?.current?.value;
 
         if(searchVal && searchVal !== searchValue){
-            navigate(`/search/${searchVal}`);
+            navigate(`/search/${encodeURIComponent(searchVal.trim())}`);
             setSearchOpen(false);
         }
     }
@@ -154,7 +155,7 @@ function Header(){
         const searchVal = searchRef1?.current?.value || searchRef2?.current?.value;
 
         if(searchVal && searchVal !== searchValue){
-            navigate(`/search/${searchVal}`);
+            navigate(`/search/${encodeURIComponent(searchVal.trim())}`);
             setSearchOpen(false);
         }
     }
@@ -166,11 +167,9 @@ function Header(){
     const hasAuthenticatedUser = !!headerUserData?.user && !!token;
 
     const handleLogout = () => {
-        localStorage.removeItem("user");
-        sessionStorage.removeItem("user");
+        clearSession();
         setAccountMenuOpen(false);
         setMobileMenuOpen(false);
-        queryClient.removeQueries({ queryKey: ["accountInfo"] });
         navigate("/login");
     }
 

@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "Koneksi terputus. Pekerjaan Anda saat ini tetap terbuka.",
+  "connectionChecking": "Memeriksa…",
+  "paginationPage": "Halaman {{param.page}}",
+  "googleLoginUnavailable": "Login Google tidak tersedia. Gunakan email.",
+  "googleLoginRetry": "Login Google tidak dapat diverifikasi atau diselesaikan. Mulai login lagi.",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "Tidak ada video yang cocok atau video sudah ada dalam playlist ini.",
   "playlistReorderHelp": "Seret pegangan untuk mengubah urutan. Dengan keyboard, tekan Spasi, gunakan tombol panah, lalu Spasi untuk meletakkan atau Escape untuk membatalkan. Perubahan disimpan otomatis.",
   "playlistFeaturedHelp": "Playlist unggulan dapat ditonjolkan dalam aplikasi.",

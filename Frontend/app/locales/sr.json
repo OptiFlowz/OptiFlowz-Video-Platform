@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "Veza je prekinuta. Vaš trenutni rad ostaje otvoren.",
+  "connectionChecking": "Provera…",
+  "paginationPage": "Strana {{param.page}}",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
+  "googleLoginUnavailable": "Google prijava trenutno nije dostupna. Prijavite se putem imejla.",
+  "googleLoginRetry": "Google prijava nije mogla da se potvrdi ili završi. Pokrenite prijavu ponovo.",
   "playlistSearchEmpty": "Nema odgovarajućih videa ili su već u ovoj plejlisti.",
   "playlistReorderHelp": "Prevucite ručicu za promenu redosleda. Tastaturom pritisnite razmak, koristite strelice, pa razmak za potvrdu ili Escape za otkazivanje. Izmene se čuvaju automatski.",
   "playlistFeaturedHelp": "Istaknute plejliste mogu se posebno prikazivati u aplikaciji.",

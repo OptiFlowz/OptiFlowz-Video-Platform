@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "Savienojums ir pārtraukts. Jūsu pašreizējais darbs paliek atvērts.",
+  "connectionChecking": "Pārbauda…",
+  "paginationPage": "Lapa {{param.page}}",
+  "googleLoginUnavailable": "Google pieteikšanās nav pieejama. Izmantojiet e-pastu.",
+  "googleLoginRetry": "Google pieteikšanos neizdevās pārbaudīt vai pabeigt. Sāciet vēlreiz.",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "Nav atbilstošu video vai tie jau ir šajā sarakstā.",
   "playlistReorderHelp": "Velciet rokturi, lai mainītu secību. Ar tastatūru nospiediet atstarpi, izmantojiet bulttaustiņus un tad atstarpi, lai novietotu, vai Escape, lai atceltu. Izmaiņas tiek saglabātas automātiski.",
   "playlistFeaturedHelp": "Izceltos atskaņošanas sarakstus var īpaši parādīt lietotnē.",

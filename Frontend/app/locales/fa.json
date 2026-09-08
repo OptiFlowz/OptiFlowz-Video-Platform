@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "اتصال قطع شده است. کار فعلی شما باز می‌ماند.",
+  "connectionChecking": "در حال بررسی…",
+  "paginationPage": "صفحه {{param.page}}",
+  "googleLoginUnavailable": "ورود با Google در دسترس نیست. از ایمیل استفاده کنید.",
+  "googleLoginRetry": "ورود با Google تأیید یا تکمیل نشد. ورود را دوباره آغاز کنید.",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "ویدیوی مطابقی یافت نشد یا از قبل در این فهرست است.",
   "playlistReorderHelp": "برای تغییر ترتیب دستگیره را بکشید. با صفحه‌کلید فاصله را بزنید، از کلیدهای جهت استفاده کنید و سپس برای رها کردن فاصله یا برای لغو Escape را بزنید. تغییرات خودکار ذخیره می‌شوند.",
   "playlistFeaturedHelp": "فهرست‌های پخش برجسته می‌توانند در برنامه بیشتر نمایش داده شوند.",

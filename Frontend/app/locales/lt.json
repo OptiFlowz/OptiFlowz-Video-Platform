@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "Ryšys nutrūko. Dabartinis darbas lieka atidarytas.",
+  "connectionChecking": "Tikrinama…",
+  "paginationPage": "Puslapis {{param.page}}",
+  "googleLoginUnavailable": "Prisijungimas per Google nepasiekiamas. Naudokite el. paštą.",
+  "googleLoginRetry": "Nepavyko patvirtinti arba užbaigti prisijungimo per Google. Pradėkite iš naujo.",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "Nėra atitinkančių vaizdo įrašų arba jie jau yra šiame grojaraštyje.",
   "playlistReorderHelp": "Vilkite rankenėlę, kad pakeistumėte tvarką. Klaviatūroje paspauskite tarpą, naudokite rodykles, tada tarpą, kad padėtumėte, arba Escape, kad atšauktumėte. Pakeitimai išsaugomi automatiškai.",
   "playlistFeaturedHelp": "Paryškinti grojaraščiai gali būti išskirti programėlėje.",

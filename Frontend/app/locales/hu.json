@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "A kapcsolat megszakadt. A jelenlegi munkája nyitva marad.",
+  "connectionChecking": "Ellenőrzés…",
+  "paginationPage": "Oldal {{param.page}}",
+  "googleLoginUnavailable": "A Google-bejelentkezés nem érhető el. Használja az e-mail-címét.",
+  "googleLoginRetry": "A Google-bejelentkezést nem sikerült ellenőrizni vagy befejezni. Kezdje újra.",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "Nincs megfelelő videó, vagy már szerepelnek ezen a listán.",
   "playlistReorderHelp": "Húzd a fogantyút a sorrend módosításához. Billentyűzettel nyomj szóközt, használd a nyilakat, majd szóközzel helyezd el vagy Escape-pel szakítsd meg. A változások automatikusan mentődnek.",
   "playlistFeaturedHelp": "A kiemelt lejátszási listák hangsúlyosan jelenhetnek meg az alkalmazásban.",

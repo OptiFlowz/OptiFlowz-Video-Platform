@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "Die Verbindung wurde unterbrochen. Deine aktuelle Arbeit bleibt geöffnet.",
+  "connectionChecking": "Wird geprüft…",
+  "paginationPage": "Seite {{param.page}}",
+  "googleLoginUnavailable": "Die Google-Anmeldung ist nicht verfügbar. Melde dich per E-Mail an.",
+  "googleLoginRetry": "Die Google-Anmeldung konnte nicht bestätigt oder abgeschlossen werden. Starte die Anmeldung erneut.",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "Keine passenden Videos gefunden oder sie sind bereits in dieser Wiedergabeliste.",
   "playlistReorderHelp": "Zum Sortieren am Griff ziehen. Mit der Tastatur: Leertaste, Pfeiltasten und erneut Leertaste zum Ablegen oder Escape zum Abbrechen. Änderungen werden automatisch gespeichert.",
   "playlistFeaturedHelp": "Hervorgehobene Wiedergabelisten können in der App besonders angezeigt werden.",

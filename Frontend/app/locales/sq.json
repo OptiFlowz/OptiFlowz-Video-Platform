@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "Lidhja u ndërpre. Puna juaj aktuale mbetet e hapur.",
+  "connectionChecking": "Po kontrollohet…",
+  "paginationPage": "Faqja {{param.page}}",
+  "googleLoginUnavailable": "Hyrja me Google nuk është e disponueshme. Përdorni emailin.",
+  "googleLoginRetry": "Hyrja me Google nuk u verifikua ose përfundua. Filloni hyrjen përsëri.",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "Nuk ka video përkatëse ose janë tashmë në këtë listë.",
   "playlistReorderHelp": "Tërhiqni dorezën për të ndryshuar renditjen. Në tastierë shtypni hapësirën, përdorni shigjetat, pastaj hapësirën për ta vendosur ose Escape për ta anuluar. Ndryshimet ruhen automatikisht.",
   "playlistFeaturedHelp": "Listat e veçuara mund të theksohen në aplikacion.",

@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "Anslutningen har brutits. Ditt pågående arbete förblir öppet.",
+  "connectionChecking": "Kontrollerar…",
+  "paginationPage": "Sida {{param.page}}",
+  "googleLoginUnavailable": "Google-inloggning är inte tillgänglig. Använd e-post.",
+  "googleLoginRetry": "Google-inloggningen kunde inte verifieras eller slutföras. Börja om.",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "Inga matchande videor hittades, eller så finns de redan i spellistan.",
   "playlistReorderHelp": "Dra i handtaget för att ändra ordning. Tryck på mellanslag, använd piltangenterna och tryck sedan på mellanslag för att släppa eller Escape för att avbryta. Ändringarna sparas automatiskt.",
   "playlistFeaturedHelp": "Utvalda spellistor kan lyftas fram i appen.",

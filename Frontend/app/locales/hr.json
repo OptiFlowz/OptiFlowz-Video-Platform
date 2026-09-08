@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "Veza je prekinuta. Vaš trenutačni rad ostaje otvoren.",
+  "connectionChecking": "Provjera…",
+  "paginationPage": "Stranica {{param.page}}",
+  "googleLoginUnavailable": "Google prijava trenutačno nije dostupna. Prijavite se e-poštom.",
+  "googleLoginRetry": "Google prijavu nije bilo moguće potvrditi ili dovršiti. Pokrenite prijavu ponovno.",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "Nema odgovarajućih videozapisa ili su već na ovom popisu.",
   "playlistReorderHelp": "Povucite ručicu za promjenu redoslijeda. Tipkovnicom pritisnite razmaknicu, koristite strelice, pa razmaknicu za potvrdu ili Escape za odustajanje. Promjene se spremaju automatski.",
   "playlistFeaturedHelp": "Istaknuti popisi mogu se posebno prikazivati u aplikaciji.",

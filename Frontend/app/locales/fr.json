@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "La connexion est interrompue. Votre travail en cours reste ouvert.",
+  "connectionChecking": "Vérification…",
+  "paginationPage": "Page {{param.page}}",
+  "googleLoginUnavailable": "La connexion Google est indisponible. Utilisez votre e-mail.",
+  "googleLoginRetry": "La connexion Google n’a pas pu être vérifiée ou terminée. Recommencez la connexion.",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "Aucune vidéo correspondante, ou elles figurent déjà dans cette playlist.",
   "playlistReorderHelp": "Faites glisser la poignée pour réorganiser. Au clavier, appuyez sur Espace, utilisez les flèches, puis Espace pour déposer ou Échap pour annuler. Les modifications sont enregistrées automatiquement.",
   "playlistFeaturedHelp": "Les playlists à la une peuvent être mises en avant dans l’application.",

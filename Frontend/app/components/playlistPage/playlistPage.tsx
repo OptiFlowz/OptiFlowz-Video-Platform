@@ -72,6 +72,7 @@ function PlaylistPage(){
     }
 
     const toggleDescOpen = () => setDescOpen((current) => !current);
+    useEffect(() => { setDescOpen(false); }, [playlistId]);
 
     const myHeaders = useMemo(() => {
         const headers = new Headers();
@@ -148,7 +149,7 @@ function PlaylistPage(){
 
     useEffect(() => {
         const descriptionElement = descriptionRef.current;
-        if (!descriptionElement) return;
+        if (!descriptionElement || descOpen) return;
 
         let resizeObserver: ResizeObserver | null = null;
 
@@ -184,7 +185,7 @@ function PlaylistPage(){
 
     if (isLoadingPlaylist || isLoadingVideos) {
         return (
-            <main className="playlist">
+            <main className="playlist playlistDetailsPage">
                 <SkeletonHeader />
                 <div className="videoHolder">{skeletonVideoArray}</div>
             </main>
@@ -192,7 +193,7 @@ function PlaylistPage(){
     }
 
     return (
-        <main className="playlist">
+        <main className="playlist playlistDetailsPage">
             <div className="relative flex items-start gap-5">
                 <img className="plBanner w-100 rounded-[15px] z-1" src={data?.thumbnail_url || DefaultThumbnail} alt="" />
 
@@ -210,9 +211,9 @@ function PlaylistPage(){
                         <button onClick={e => sharePlaylistLink(e)} className="clickable bg-(--background2) hover:bg-(--background3) rounded-full flex">{ShareSVG}&nbsp;{t("share")}</button>
                     </span>
 
-                    <p ref={descriptionRef} className={`description ${descOpen ? "open" : ""}`}>{formatDescription(data?.description)}</p>
-                    {data?.description && hasDescriptionOverflow && (
-                        <button className="w-fit hover:underline cursor-pointer" onClick={toggleDescOpen}>{descOpen ? t("readLess") : t("readMore")}</button>
+                    <p id="playlist-description" ref={descriptionRef} className={`description ${descOpen ? "open" : ""}`}>{formatDescription(data?.description)}</p>
+                    {data?.description && (descOpen || hasDescriptionOverflow) && (
+                        <button type="button" aria-expanded={descOpen} aria-controls="playlist-description" className="w-fit hover:underline cursor-pointer" onClick={toggleDescOpen}>{descOpen ? t("readLess") : t("readMore")}</button>
                     )}
                 </span>
             </div>

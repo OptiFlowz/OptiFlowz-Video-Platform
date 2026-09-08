@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "कनेक्शन टूट गया है। आपका मौजूदा काम खुला रहेगा।",
+  "connectionChecking": "जाँच हो रही है…",
+  "paginationPage": "पृष्ठ {{param.page}}",
+  "googleLoginUnavailable": "Google से साइन इन अभी उपलब्ध नहीं है। ईमेल का उपयोग करें।",
+  "googleLoginRetry": "Google साइन इन सत्यापित या पूरा नहीं हो सका। कृपया फिर से साइन इन शुरू करें।",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "कोई मेल खाता वीडियो नहीं है या वे पहले से इस प्लेलिस्ट में हैं।",
   "playlistReorderHelp": "क्रम बदलने के लिए हैंडल खींचें। कीबोर्ड पर स्पेस दबाएँ, तीर कुंजियों का उपयोग करें, फिर छोड़ने के लिए स्पेस या रद्द करने के लिए Escape दबाएँ। बदलाव अपने आप सहेजे जाते हैं।",
   "playlistFeaturedHelp": "विशेष प्लेलिस्ट को ऐप में प्रमुखता से दिखाया जा सकता है।",

@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "De verbinding is onderbroken. Je huidige werk blijft open.",
+  "connectionChecking": "Controleren…",
+  "paginationPage": "Pagina {{param.page}}",
+  "googleLoginUnavailable": "Inloggen met Google is niet beschikbaar. Gebruik e-mail.",
+  "googleLoginRetry": "Inloggen met Google kon niet worden geverifieerd of voltooid. Begin opnieuw.",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "Geen passende video’s gevonden, of ze staan al in deze afspeellijst.",
   "playlistReorderHelp": "Sleep de greep om te sorteren. Druk op het toetsenbord op Spatie, gebruik de pijltjes en druk op Spatie om neer te zetten of Escape om te annuleren. Wijzigingen worden automatisch opgeslagen.",
   "playlistFeaturedHelp": "Uitgelichte afspeellijsten kunnen extra aandacht krijgen in de app.",

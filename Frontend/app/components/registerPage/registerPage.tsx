@@ -7,6 +7,7 @@ import { changeElementClass, getStoredUser } from "~/functions";
 import Loader from "../loaders/loader";
 import MessagePopup from "../messagePopup/messagePopup";
 import { useI18n } from "~/i18n";
+import { saveSession } from "~/auth/session";
 import { LOGO, BRAND_NAME, MARKETING_WEBSITE_URL, LOGIN_BACKGROUND_IMAGE, SUPPORT_EMAIL } from "~/changeables";
 
 const StepIndicator = ({ step }: { step: number }) => (
@@ -120,10 +121,7 @@ function SetupWizardPage() {
                 openMessagePopup(t("invalidCredentials"), false);
             
             if("token" in res && res.token){
-                localStorage.removeItem("user");
-                sessionStorage.removeItem("user");
-                localStorage.setItem("rememberMe", "true");
-                localStorage.setItem("user", JSON.stringify(res));
+                saveSession(res, true);
                 localStorage.autoplay = "true";
 
                 const params = new URLSearchParams();

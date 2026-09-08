@@ -1149,7 +1149,7 @@ class MediaCurrentChapter extends HTMLElement {
         return this.parentElement.classList.add("displayNone");
       else{
         this.parentElement.classList.remove("displayNone");
-        this.querySelector('p').innerHTML = `${e.detail.chapterName ? `${e.detail.chapterIndex} ${e.detail.chapterName}` : "Chapters loading..."}`;
+        this.querySelector('p').textContent = `${e.detail.chapterName ? `${e.detail.chapterIndex} ${e.detail.chapterName}` : "Chapters loading..."}`;
       }
     });
 

@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchFn } from '~/API';
 import { getStoredUser, getToken } from '~/functions';
 import type { AuthFetchT } from '~/types';
+import { updateStoredProfile } from '~/auth/session';
 import { P, accessPermissions, type AccessSection } from './permissions';
 
 export type RoleDefinition = {
@@ -75,11 +76,7 @@ export function AuthorizationProvider({ children }: { children: ReactNode }) {
   });
   useEffect(() => {
     if (!user || !token || getToken() !== token) return;
-    const storage = sessionStorage.getItem('user') ? sessionStorage : localStorage;
-    const stored = getStoredUser();
-    if (!stored) return;
-    const { role: _legacyRole, permissions: _permissions, is_owner: _owner, ...profile } = stored.user ?? {};
-    storage.setItem('user', JSON.stringify({ ...stored, user: { ...profile, ...user, roles: user.roles ?? [] } }));
+    updateStoredProfile({ ...user, roles: user.roles ?? [] }, token);
   }, [user, token]);
   const value = useMemo(() => {
     const roles = needsRoles && !roleQuery.isError ? roleQuery.data?.roles ?? [] : [];

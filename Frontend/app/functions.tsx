@@ -1,6 +1,8 @@
 import { Fragment } from "react";
 import type { ReactNode } from "react";
 import { getCurrentLocale, translate } from "./i18n";
+import { getStoredUser } from "./auth/session";
+export { getStoredUser, getToken } from "./auth/session";
 
 function getIntlLocale(locale: string): string {
     if (locale === "sr") return "sr-Latn-RS";
@@ -214,30 +216,6 @@ export function formatDescription(desc?: string | null): ReactNode[] | null {
   return parts;
 }
 
-export const getStoredUser = () => {
-  if (typeof window === "undefined") return null;
-
-  const raw = sessionStorage.getItem("user") || localStorage.getItem("user");
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    localStorage.removeItem("user");
-    sessionStorage.removeItem("user");
-    return null;
-  }
-};
-
-export const getToken = (): string | null => {
-  const u = getStoredUser();
-  return u?.token ?? null;
-};
-
-let userImageUrl = "";
 export const getUserImageUrl = () => {
-  if (typeof window === "undefined") return "";
-
-  if(userImageUrl == "" && localStorage.user)
-    userImageUrl = JSON.parse(sessionStorage.user || localStorage.user).user.image_url;
-  return userImageUrl;
+  return getStoredUser()?.user.image_url ?? "";
 }

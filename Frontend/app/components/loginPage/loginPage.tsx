@@ -4,6 +4,7 @@ import {
   useRef,
   useState,
   useLayoutEffect,
+  useEffect,
 } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { fetchFn } from "~/API";
@@ -15,11 +16,13 @@ import MessagePopup from "../messagePopup/messagePopup";
 import { LOGO, BRAND_NAME, MARKETING_WEBSITE_URL, LOGIN_BACKGROUND_IMAGE, SUPPORT_EMAIL } from "~/changeables";
 import { useI18n } from "~/i18n";
 import GoogleLoginButton from "./googleLoginButton";
+import { saveSession } from "~/auth/session";
+import { safeRedirect } from "~/auth/safeRedirect";
 
 function LoginPage() {
   const { t } = useI18n();
   const [searchParams] = useSearchParams();
-  const redirect = searchParams.get("redirect");
+  const redirect = safeRedirect(searchParams.get("redirect"));
 
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
@@ -61,19 +64,6 @@ function LoginPage() {
       changeElementClass({element: pageLoaderRef.current});
   }, []);
 
-  async function handleGoogleSuccess(credential: string) {
-    const res = await fetchFn<AuthFetchT>({
-        route: `api/auth/oauth/google`,
-        options: {
-            method: "POST",
-            headers: myHeaders,
-            body: JSON.stringify({credential: credential})
-        }
-    })
-
-    setLoggedToken(res);
-  }
-
   const openMessagePopup = (text: string, isDone: boolean) => {
     setPopupState({
       open: true,
@@ -88,25 +78,23 @@ function LoginPage() {
     setPopupState((prev) => ({ ...prev, open: false }));
   };
 
+  useEffect(() => {
+    if (searchParams.get("password_reset") === "success") {
+      setPopupState({ open: true, message: t("passwordChanged"), autoCloseMs: 5000 });
+      window.history.replaceState(null, "", "/login");
+    }
+  }, [searchParams, t]);
+
   const setLoggedToken = (res: AuthFetchT) => {
     if (res.token) {
         const isRemember =
           rememberMeRef.current?.checked ?? rememberMe;
 
-        localStorage.removeItem("user");
-        sessionStorage.removeItem("user");
-
-        localStorage.setItem("rememberMe", String(isRemember));
-
-        if (isRemember) {
-          localStorage.setItem("user", JSON.stringify(res));
-        } else {
-          sessionStorage.setItem("user", JSON.stringify(res));
-        }
+        saveSession(res, isRemember);
 
         localStorage.autoplay = "true";
         setCurrentNav(0);
-        navigate(redirect || "/");
+        window.location.replace(redirect);
       }
   }
 
@@ -301,7 +289,7 @@ function LoginPage() {
               }
             </button>
 
-            <GoogleLoginButton props={{isLoading: isLoading, rememberMe: rememberMe, onSuccess: handleGoogleSuccess}} />
+            <GoogleLoginButton props={{isLoading: isLoading, rememberMe: rememberMe, redirect}} />
 
             <span className="flex items-center justify-center flex-wrap mt-1 gap-1 text-[.925rem]">
               <p className="font-medium text-(--text2) max-[420px]:text-[0.8rem]!">
@@ -309,7 +297,7 @@ function LoginPage() {
               </p>
               <Link
                 to={`/register${
-                  redirect ? `?redirect=${redirect}` : ""
+                  redirect ? `?redirect=${encodeURIComponent(redirect)}` : ""
                 }`}
                 className="button text-(--accentOrange) font-medium"
               >

@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "החיבור נותק. העבודה הנוכחית שלך נשארת פתוחה.",
+  "connectionChecking": "מתבצעת בדיקה…",
+  "paginationPage": "עמוד {{param.page}}",
+  "googleLoginUnavailable": "ההתחברות באמצעות Google אינה זמינה. יש להשתמש בדוא״ל.",
+  "googleLoginRetry": "לא ניתן היה לאמת או להשלים את ההתחברות באמצעות Google. יש להתחיל מחדש.",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "אין סרטונים מתאימים, או שהם כבר ברשימה הזו.",
   "playlistReorderHelp": "גררו את הידית לשינוי הסדר. במקלדת לחצו על רווח, השתמשו בחצים ואז ברווח להנחה או ב־Escape לביטול. השינויים נשמרים אוטומטית.",
   "playlistFeaturedHelp": "ניתן להבליט רשימות השמעה מומלצות באפליקציה.",

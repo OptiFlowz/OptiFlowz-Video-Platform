@@ -6,6 +6,7 @@ import AccountInfo from "./accountInfo";
 import { useNavigate } from "react-router";
 import ItemSlider from "../itemSlider/itemSlider";
 import { useState } from "react";
+import { clearSession } from "~/auth/session";
 import EditAccountPopup from "./editAccountPopup";
 import SettingsPopup from "./settingsPopup";
 import AccountCertificates from "./accountCertificates";
@@ -40,8 +41,7 @@ function AccountPage(){
     const isAccountContentEmpty = allAccountSlidersEmpty && (!can(P.quizzesCertificates) || certificateState === "empty");
 
     const logoutHandle = () => {
-        localStorage.removeItem("user");
-        sessionStorage.removeItem("user");
+        clearSession();
         navigate("/login");
     }
 

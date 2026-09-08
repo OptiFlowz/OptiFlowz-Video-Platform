@@ -6,6 +6,7 @@ import { changeElementClass } from "~/functions";
 import Loader from "../loaders/loader";
 import MessagePopup from "../messagePopup/messagePopup";
 import { useI18n } from "~/i18n";
+import { clearSession } from "~/auth/session";
 import { LOGO, BRAND_NAME, MARKETING_WEBSITE_URL, LOGIN_BACKGROUND_IMAGE, SUPPORT_EMAIL } from "~/changeables";
 
 const StepIndicator = ({ step }: { step: number }) => (
@@ -191,7 +192,6 @@ function ForgotPasswordPage() {
             return;
         }
 
-        localStorage.clear();
 
         changeElementClass({ element: pageLoaderRef.current, show: true });
 
@@ -209,8 +209,8 @@ function ForgotPasswordPage() {
 
         fetchFn<{ message: string; changed: boolean }>({ route: "api/auth/passwordReset", options: requestOptions }).then((res) => {
             if (res.changed) {
-                changeElementClass({ element: pageLoaderRef.current });
-                openMessagePopup(t("passwordChanged"), true);
+                clearSession();
+                window.location.replace("/login?password_reset=success");
             } else {
                 changeElementClass({ element: pageLoaderRef.current });
                 openMessagePopup(t("passwordNotChanged"), false);

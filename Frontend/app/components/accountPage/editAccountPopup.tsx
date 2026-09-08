@@ -1,4 +1,5 @@
 import type { AuthFetchT } from "~/types";
+import { updateStoredProfile } from "~/auth/session";
 import { CloseSVG, UploadSVG } from "~/constants";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { fetchFn } from "~/API";
@@ -210,9 +211,7 @@ function EditAccountPopup({ open, onClose }: { open: boolean; onClose: () => voi
       }
 
       if (latestUser) {
-        const stored = JSON.parse(localStorage.getItem("user") || "{}");
-        stored.user = latestUser;
-        localStorage.setItem("user", JSON.stringify(stored));
+        if (token) updateStoredProfile(latestUser, token);
 
         window.dispatchEvent(new CustomEvent("update-header"));
 

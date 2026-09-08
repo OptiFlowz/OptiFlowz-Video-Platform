@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "The connection is interrupted. Your current work stays open.",
+  "connectionChecking": "Checking…",
+  "paginationPage": "Page {{param.page}}",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
+  "googleLoginUnavailable": "Google sign-in is currently unavailable. Please use email sign-in.",
+  "googleLoginRetry": "Google sign-in could not be verified or completed. Please start sign-in again.",
   "playlistSearchEmpty": "No matching videos, or they are already in this playlist.",
   "playlistReorderHelp": "Drag the handle to reorder. With a keyboard, press Space, use the arrow keys, then Space to drop or Escape to cancel. Changes save automatically.",
   "playlistFeaturedHelp": "Featured playlists can be highlighted in the app.",

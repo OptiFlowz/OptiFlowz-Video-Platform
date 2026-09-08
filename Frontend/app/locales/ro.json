@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "Conexiunea a fost întreruptă. Lucrul curent rămâne deschis.",
+  "connectionChecking": "Se verifică…",
+  "paginationPage": "Pagina {{param.page}}",
+  "googleLoginUnavailable": "Autentificarea cu Google nu este disponibilă. Folosiți e-mailul.",
+  "googleLoginRetry": "Autentificarea cu Google nu a putut fi verificată sau finalizată. Începeți din nou.",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "Nu există videoclipuri potrivite sau sunt deja în această listă.",
   "playlistReorderHelp": "Trage mânerul pentru reordonare. Pe tastatură apasă Spațiu, folosește săgețile, apoi Spațiu pentru plasare sau Escape pentru anulare. Modificările se salvează automat.",
   "playlistFeaturedHelp": "Listele recomandate pot fi evidențiate în aplicație.",

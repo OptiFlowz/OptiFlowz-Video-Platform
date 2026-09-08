@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "Yhteys katkesi. Nykyinen työsi pysyy avoinna.",
+  "connectionChecking": "Tarkistetaan…",
+  "paginationPage": "Sivu {{param.page}}",
+  "googleLoginUnavailable": "Google-kirjautuminen ei ole käytettävissä. Käytä sähköpostia.",
+  "googleLoginRetry": "Google-kirjautumista ei voitu vahvistaa tai suorittaa loppuun. Aloita uudelleen.",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "Vastaavia videoita ei löydy tai ne ovat jo tällä soittolistalla.",
   "playlistReorderHelp": "Muuta järjestystä vetämällä kahvasta. Paina näppäimistöllä välilyöntiä, käytä nuolia ja paina sitten välilyöntiä pudottaaksesi tai Escapea peruuttaaksesi. Muutokset tallentuvat automaattisesti.",
   "playlistFeaturedHelp": "Nostetut soittolistat voidaan tuoda esiin sovelluksessa.",

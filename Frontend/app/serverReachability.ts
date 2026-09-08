@@ -8,15 +8,16 @@ export async function checkServerReachability(signal?: AbortSignal) {
 
   const abortHandler = () => controller.abort();
   signal?.addEventListener("abort", abortHandler);
+  if (signal?.aborted) controller.abort();
 
   try {
-    await fetch(`${env.apiBaseUrl}/health`, {
+    const response = await fetch(`${env.apiBaseUrl}/health`, {
       method: "GET",
       cache: "no-store",
       signal: controller.signal,
     });
 
-    return true;
+    return response.ok;
   } catch {
     return false;
   } finally {

@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "Tengingin rofnaði. Núverandi vinna þín helst opin.",
+  "connectionChecking": "Athuga…",
+  "paginationPage": "Síða {{param.page}}",
+  "googleLoginUnavailable": "Google-innskráning er ekki tiltæk. Notaðu netfang.",
+  "googleLoginRetry": "Ekki tókst að staðfesta eða ljúka Google-innskráningu. Byrjaðu aftur.",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "Engin samsvarandi myndskeið fundust eða þau eru þegar á listanum.",
   "playlistReorderHelp": "Dragðu handfangið til að breyta röðinni. Ýttu á bilstöng, notaðu örvatakkana og ýttu svo á bilstöng til að sleppa eða Escape til að hætta við. Breytingar vistast sjálfkrafa.",
   "playlistFeaturedHelp": "Valdir spilunarlistar geta verið sýndir á áberandi stað í forritinu.",

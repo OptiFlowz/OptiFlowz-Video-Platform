@@ -1,4 +1,10 @@
 {
+  "connectionInterrupted": "Połączenie zostało przerwane. Bieżąca praca pozostaje otwarta.",
+  "connectionChecking": "Sprawdzanie…",
+  "paginationPage": "Strona {{param.page}}",
+  "googleLoginUnavailable": "Logowanie przez Google jest niedostępne. Użyj e-maila.",
+  "googleLoginRetry": "Nie udało się zweryfikować lub ukończyć logowania przez Google. Rozpocznij ponownie.",
+  "paginationRangeUnknown": "{{param.start}}–{{param.end}}",
   "playlistSearchEmpty": "Brak pasujących filmów lub są już na tej liście odtwarzania.",
   "playlistReorderHelp": "Przeciągnij uchwyt, aby zmienić kolejność. Na klawiaturze naciśnij spację, użyj strzałek, a następnie spacji, aby upuścić, lub Escape, aby anulować. Zmiany zapisują się automatycznie.",
   "playlistFeaturedHelp": "Wyróżnione listy odtwarzania mogą być eksponowane w aplikacji.",

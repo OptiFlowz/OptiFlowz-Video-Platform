@@ -2,26 +2,20 @@
 
 import { AuthorizationProvider } from "~/authorization/authorization";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import PageLoader from "~/components/loaders/pageLoader";
-import MaintenancePage from "~/components/maintenancePage/maintenancePage";
 import { CurrentNavProvider } from "~/context";
-import { I18nProvider } from "~/i18n";
+import { I18nProvider, useI18n } from "~/i18n";
 import { checkServerReachability } from "~/serverReachability";
 import PersistentVideoProvider from "~/components/persistentVideo/persistentVideoProvider";
 import { PrivacyPreferencesProvider } from "~/privacy/privacyPreferences";
-import { usePathname } from "next/navigation";
+import SessionBoundary from "~/auth/sessionBoundary";
 
 import { UploadSessionProvider } from "~/components/uploadPage/uploadSession";
 
-const queryClient = new QueryClient();
-
-export default function Providers({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const [serverState, setServerState] = useState<"initial" | "reachable" | "unreachable" | "retrying">(
-    () => (pathname.startsWith("/video/") ? "reachable" : "initial"),
-  );
+function ConnectionStatus() {
+  const { t } = useI18n();
+  const [serverState, setServerState] = useState<"initial" | "reachable" | "unreachable" | "retrying">("initial");
   const [retryNonce, setRetryNonce] = useState(0);
 
   useEffect(() => {
@@ -31,20 +25,21 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
     const runCheck = async (mode: "initial" | "background" | "retry" = "background") => {
       currentController?.abort();
-      currentController = new AbortController();
+      const controller = new AbortController();
+      currentController = controller;
 
       if (mode === "retry") {
         setServerState("retrying");
       }
 
-      const reachable = await checkServerReachability(currentController.signal);
+      const reachable = await checkServerReachability(controller.signal);
 
-      if (mounted) {
+      if (mounted && !controller.signal.aborted) {
         setServerState(reachable ? "reachable" : "unreachable");
       }
     };
 
-    void runCheck("initial");
+    void runCheck(retryNonce ? "retry" : "initial");
     intervalId = window.setInterval(() => {
       void runCheck("background");
     }, 30000);
@@ -52,18 +47,33 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     const handleOnline = () => {
       void runCheck("background");
     };
+    const handleOffline = () => {
+      currentController?.abort();
+      setServerState("unreachable");
+    };
 
     window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
 
     return () => {
       mounted = false;
       currentController?.abort();
       window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
       if (intervalId) {
         window.clearInterval(intervalId);
       }
     };
   }, [retryNonce]);
+
+  if (serverState === "initial" || serverState === "reachable") return null;
+  return <div className="connectionStatus" role="status" aria-live="polite">
+    <span>{t("connectionInterrupted")}</span>
+    <button type="button" disabled={serverState === "retrying"} onClick={() => setRetryNonce(value => value + 1)}>{t(serverState === "retrying" ? "connectionChecking" : "usersRetry")}</button>
+  </div>;
+}
+
+export default function Providers({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const closeOptiflowzChat = () => {
@@ -103,23 +113,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  if (serverState === "initial") {
-    return null;
-  }
-
-  if (serverState === "unreachable" || serverState === "retrying") {
-    return (
-      <MaintenancePage
-        isChecking={serverState === "retrying"}
-        onRetry={() => setRetryNonce((current) => current + 1)}
-      />
-    );
-  }
-
   return (
-    <QueryClientProvider client={queryClient}>
+    <SessionBoundary>
       <PageLoader />
       <I18nProvider>
+        <ConnectionStatus />
         <AuthorizationProvider>
         <PrivacyPreferencesProvider>
           <CurrentNavProvider>
@@ -128,6 +126,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         </PrivacyPreferencesProvider>
         </AuthorizationProvider>
       </I18nProvider>
-    </QueryClientProvider>
+    </SessionBoundary>
   );
 }
