@@ -17,8 +17,8 @@ mock.module(new URL('../src/database/index.js', import.meta.url).href, {
 const { patchVideoDetailsInternal: patch } = await import('../src/modules/videos/video-moderation/handlers/patchVideoDetails.js');
 const input = body => ({ params: { videoId: 'video-id' }, body });
 
-test('time saves an integer or SQL NULL, including zero', async () => {
-  for (const time of [0, 12, 2147483647, null]) {
+test('time saves fractional seconds or SQL NULL, including zero', async () => {
+  for (const time of [0, 0.125, 12.5, 2147483648, null]) {
     calls = [];
     assert.equal((await patch(input({ time }))).success, true);
     const [sql, params] = calls.find(([sql]) => sql.includes('UPDATE public.videos'));
@@ -38,7 +38,7 @@ test('omitting time leaves the saved timestamp unchanged', async () => {
 
 test('invalid time values and removed fields fail before database access', async () => {
   for (const body of [
-    ...[-1, 1.5, '12', false, {}, [], 2147483648, Infinity].map(time => ({ time })),
+    ...[-1, -0.5, '12', false, {}, [], NaN, Infinity, -Infinity].map(time => ({ time })),
     { thumbnail_url: null }, { thumbnail_url: 'https://example.com/image.jpg' },
     { thumbnail_settings: null }, { time: 5, thumbnail_settings: {} },
   ]) {

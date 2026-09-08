@@ -65,8 +65,8 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
     }
   }
   if (isDefined(time) && time !== null
-    && (!Number.isInteger(time) || time < 0 || time > 2147483647)) {
-    throw new HttpError(400, { message: 'time must be a non-negative integer (up to 2147483647) or null' });
+    && (!Number.isFinite(time) || time < 0)) {
+    throw new HttpError(400, { message: 'time must be a finite non-negative number or null' });
   }
 
   const normTags = isDefined(tags) ? (tags === null ? null : normalizeTags(tags)) : undefined;

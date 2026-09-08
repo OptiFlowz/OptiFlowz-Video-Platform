@@ -33,20 +33,20 @@ async function setup(overrides = {}, signed = true) {
 test('public card URLs preserve custom thumbnails and use saved time and backend image settings', async () => {
   const enrich = await setup({
     thumbnail_url: 'https://cdn.example.test/custom.png',
-    mux_thumbnail_time: 12,
+    mux_thumbnail_time: 12.5,
   }, false);
   const [card] = await enrich([{ id, title: 'Video' }]);
   assert.equal(card.thumbnail_url, 'https://cdn.example.test/custom.png');
   assert.equal(card.title, 'Video');
   const thumb = new URL(card.mux_thumbnail_url);
   assert.equal(thumb.pathname, '/playback-123/thumbnail.webp');
-  assert.deepEqual(Object.fromEntries(thumb.searchParams), { time: '12', width: '1280', height: '720', fit_mode: 'preserve' });
+  assert.deepEqual(Object.fromEntries(thumb.searchParams), { time: '12.5', width: '1280', height: '720', fit_mode: 'preserve' });
   assert.equal(new URL(card.preview_url).searchParams.get('start'), '60');
   assert.equal(card.media_expires_at, null);
 });
 
 test('signed thumbnail and animated WebP URLs contain distinct verifiable image tokens', async () => {
-  const enrich = await setup({ playback_policy: 'signed', mux_thumbnail_time: 12 });
+  const enrich = await setup({ playback_policy: 'signed', mux_thumbnail_time: 12.5 });
   const [card] = await enrich([{ id, progress_seconds: 117 }]);
   for (const [field, audience] of [['mux_thumbnail_url', 't'], ['preview_url', 'g']]) {
     const url = new URL(card[field]);
@@ -55,7 +55,7 @@ test('signed thumbnail and animated WebP URLs contain distinct verifiable image 
     assert.equal(claims.kid, 'test-image-key');
     assert.ok(claims.exp >= card.media_expires_at);
     if (audience === 't') {
-      assert.equal(claims.time, 12);
+      assert.equal(claims.time, 12.5);
       assert.equal(claims.width, 1280);
     } else {
       assert.equal(claims.start, 117);

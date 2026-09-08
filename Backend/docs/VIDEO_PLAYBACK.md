@@ -108,8 +108,9 @@ and fit mode `preserve` are set in the backend. The stored `thumbnail_url` is
 neither changed nor used to infer these settings.
 
 `PATCH /api/video-moderation/video-details/:videoId` accepts `{ "time": 12 }`
-to set the nullable integer `mux_thumbnail_time` column. Time must be a non-negative
-integer in seconds; `{ "time": null }` clears it, and omitting it leaves it
+to set the nullable `double precision` column `mux_thumbnail_time` (default `0`).
+Time accepts finite non-negative seconds, including decimals such as `12.5`;
+`{ "time": null }` clears it, and omitting it leaves it
 unchanged. This endpoint rejects `thumbnail_settings` and `thumbnail_url`.
 Chapter thumbnails use each chapter's start time and the same backend dimensions.
 
