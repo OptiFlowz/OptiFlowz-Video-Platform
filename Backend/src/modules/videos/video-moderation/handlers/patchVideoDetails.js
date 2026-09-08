@@ -1,6 +1,4 @@
 import { writePool } from '../../../../database/index.js';
-import { extractKeyFromPublicUrl, s3, R2_BUCKET } from '../../helpers/videoModeration.shared.js';
-import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { HttpError } from '../../../../common/httpError.js';
 
 function isDefined(v) {
@@ -42,8 +40,7 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
   const {
     title,
     description,
-    thumbnail_url,
-    thumbnail_settings,
+    time,
     tags,
     chapters,
     visibility, // "public" | "private"
@@ -62,13 +59,14 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
     }
   }
 
-  // --- normalizacije sa podrškom za null (null => brisanje) ---
-  if (
-    isDefined(thumbnail_settings)
-    && thumbnail_settings !== null
-    && (typeof thumbnail_settings !== 'object' || Array.isArray(thumbnail_settings))
-  ) {
-    throw new HttpError(400, { message: 'thumbnail_settings must be an object or null' });
+  for (const field of ['thumbnail_settings', 'thumbnail_url']) {
+    if (Object.hasOwn(inputBody || {}, field)) {
+      throw new HttpError(400, { message: field + ' is no longer accepted by this endpoint' });
+    }
+  }
+  if (isDefined(time) && time !== null
+    && (!Number.isInteger(time) || time < 0 || time > 2147483647)) {
+    throw new HttpError(400, { message: 'time must be a non-negative integer (up to 2147483647) or null' });
   }
 
   const normTags = isDefined(tags) ? (tags === null ? null : normalizeTags(tags)) : undefined;
@@ -110,8 +108,7 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
   const anyVideoField =
     isDefined(title) ||
     isDefined(description) ||
-    isDefined(thumbnail_url) ||
-    isDefined(thumbnail_settings) ||
+    isDefined(time) ||
     isDefined(tags) ||
     isDefined(chapters) ||
     isDefined(visibility);
@@ -124,20 +121,6 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
 
   const client = await writePool.connect();
   try {
-    let oldThumbnailKey = null;
-
-    if (isDefined(thumbnail_url)) {
-      const existingThumb = await client.query(
-        `SELECT thumbnail_url FROM public.videos WHERE id = $1 LIMIT 1`,
-        [videoId],
-      );
-
-      if (existingThumb.rowCount > 0) {
-        const oldUrl = existingThumb.rows[0]?.thumbnail_url || null;
-        oldThumbnailKey = extractKeyFromPublicUrl(oldUrl);
-      }
-    }
-
     await client.query('BEGIN');
 
     let updatedVideo = null;
@@ -163,16 +146,9 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
         params.push(description === null ? null : String(description));
       }
 
-      // thumbnail_url: null => NULL, string => value
-      if (isDefined(thumbnail_url)) {
-        set.push(`thumbnail_url = $${i++}`);
-        params.push(thumbnail_url === null ? null : String(thumbnail_url).trim());
-      }
-
-      // Replace the settings object; explicit null clears the SQL column.
-      if (isDefined(thumbnail_settings)) {
-        set.push(`thumbnail_settings = $${i++}::jsonb`);
-        params.push(thumbnail_settings === null ? null : JSON.stringify(thumbnail_settings));
+      if (isDefined(time)) {
+        set.push(`mux_thumbnail_time = $${i++}`);
+        params.push(time);
       }
 
       // tags: null => NULL, array => text[]
@@ -295,23 +271,6 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
 
     await client.query('COMMIT');
 
-    if (isDefined(thumbnail_url)) {
-      const nextUrl = thumbnail_url === null ? null : String(thumbnail_url).trim();
-      const nextKey = extractKeyFromPublicUrl(nextUrl);
-
-      if (oldThumbnailKey && oldThumbnailKey !== nextKey) {
-        try {
-          await s3.send(
-            new DeleteObjectCommand({
-              Bucket: R2_BUCKET,
-              Key: oldThumbnailKey,
-            }),
-          );
-        } catch (e) {
-          console.warn('Old video thumbnail delete failed:', e?.message || e);
-        }
-      }
-    }
     return {
       success: true,
     };

@@ -28,7 +28,7 @@ function setup(overrides = {}) {
   video = {
     id, title: 'Video', mux_status: 'ready', playback_policy: 'public',
     mux_playback_id: 'playback-id', thumbnail_url: 'https://image.mux.com/stored/thumbnail.jpg?time=9',
-    thumbnail_settings: null, duration_seconds: 120,
+    mux_thumbnail_time: null, duration_seconds: 120,
     chapters: [{ title: 'Introduction', startTime: 0 }, { title: 'Example', startTime: 42.5 }],
     ...overrides,
   };
@@ -60,17 +60,17 @@ test('public video details remove stream_url and include card and chapter image 
   assert.ok(!queries[0].sql.includes('stream_url'));
 });
 
-test('signed chapter tokens use each startTime, saved dimensions, and thumbnail audience', async () => {
-  setup({ playback_policy: 'signed', thumbnail_settings: { time: 99, width: 640, height: 360, fit_mode: 'crop' }, progress_seconds: 80 });
+test('signed chapter tokens use each startTime, backend dimensions, and thumbnail audience', async () => {
+  setup({ playback_policy: 'signed', mux_thumbnail_time: 99, progress_seconds: 80 });
   const result = await getVideoByIdInternal(id, owner);
   for (const chapter of result.chapters) {
     const url = new URL(chapter.thumbnail_url);
     assert.deepEqual([...url.searchParams.keys()], ['token']);
     const claims = jwt.verify(url.searchParams.get('token'), publicKey, { algorithms: ['RS256'], audience: 't', subject: 'playback-id' });
     assert.equal(claims.time, chapter.startTime);
-    assert.equal(claims.width, 640);
-    assert.equal(claims.height, 360);
-    assert.equal(claims.fit_mode, 'crop');
+    assert.equal(claims.width, 1280);
+    assert.equal(claims.height, 720);
+    assert.equal(claims.fit_mode, 'preserve');
     assert.ok(claims.exp >= result.media_expires_at);
   }
   const preview = jwt.verify(new URL(result.preview_url).searchParams.get('token'), publicKey, { audience: 'g' });

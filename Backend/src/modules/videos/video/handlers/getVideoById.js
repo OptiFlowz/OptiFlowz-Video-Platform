@@ -11,7 +11,7 @@ export async function getVideoByIdInternal(videoId, userId = null) {
             v.title,
             v.description,
             v.thumbnail_url,
-            v.thumbnail_settings,
+            v.mux_thumbnail_time,
             v.duration_seconds,
             v.tags,
             v.view_count,

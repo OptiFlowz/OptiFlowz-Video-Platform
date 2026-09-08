@@ -4,24 +4,13 @@ import { HttpError } from '../../../common/httpError.js';
 
 const mux = new Mux();
 const IMAGE_LIFETIME_SECONDS = 3600;
-const FIT_MODES = new Set(['preserve', 'stretch', 'crop', 'smartcrop', 'pad']);
-
-function thumbnailParams(video) {
-  // Only image parameters are allowed into JWT claims, never arbitrary settings.
-  const saved = video.thumbnail_settings;
-  const settings = saved && typeof saved === 'object' && !Array.isArray(saved)
-    ? saved
-    : {};
-  const params = { time: 0, width: 1280, height: 720, fit_mode: 'preserve' };
-  for (const key of ['time', 'width', 'height']) {
-    const raw = settings[key];
-    if (raw === null || raw === undefined || raw === '') continue;
-    const value = Number(raw);
-    if (!Number.isFinite(value)) continue;
-    if (key === 'time' && value >= 0) params.time = value;
-    if (key !== 'time' && Number.isInteger(value) && value > 0) params[key] = value;
-  }
-  if (FIT_MODES.has(settings.fit_mode)) params.fit_mode = settings.fit_mode;
+function thumbnailParams(video, time = video.mux_thumbnail_time) {
+  const params = {
+    time: typeof time === 'number' && Number.isFinite(time) && time >= 0 ? time : 0,
+    width: 1280,
+    height: 720,
+    fit_mode: 'preserve',
+  };
   const duration = Number(video.duration_seconds);
   if (duration > 0) params.time = Math.min(params.time, Math.max(0, duration - 0.001));
   return params;
@@ -88,10 +77,7 @@ export async function withVideoDetailsMedia(video) {
     let thumbnailUrl = null;
     if (video.mux_status === 'ready' && video.mux_playback_id
       && typeof start === 'number' && Number.isFinite(start) && start >= 0) {
-      const params = thumbnailParams({
-        ...video,
-        thumbnail_settings: { ...video.thumbnail_settings, time: start },
-      });
+      const params = thumbnailParams(video, start);
       thumbnailUrl = await imageUrl(
         video.mux_playback_id, video.playback_policy, 'thumbnail.webp', 'thumbnail', params,
       );
@@ -106,7 +92,7 @@ export async function withVideoCardMedia(cards, userId = null) {
   // One primary read per list prevents signing stale private/deleted video data
   // returned by a replica, and also supplies fields absent from older card SQL.
   const { rows } = await writePool.query(
-    `SELECT id, thumbnail_url, thumbnail_settings, mux_playback_id,
+    `SELECT id, thumbnail_url, mux_thumbnail_time, mux_playback_id,
             playback_policy, mux_status, duration_seconds
      FROM public.videos
      WHERE id = ANY($1::uuid[])

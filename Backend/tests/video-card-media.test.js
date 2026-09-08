@@ -8,7 +8,7 @@ const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 20
 const encodedKey = Buffer.from(privateKey.export({ type: 'pkcs8', format: 'pem' })).toString('base64');
 const base = {
   id, mux_playback_id: 'playback-123', playback_policy: 'public', mux_status: 'ready',
-  thumbnail_url: null, thumbnail_settings: {}, duration_seconds: 120,
+  thumbnail_url: null, mux_thumbnail_time: null, duration_seconds: 120,
 };
 let rows;
 let queries;
@@ -30,23 +30,23 @@ async function setup(overrides = {}, signed = true) {
   return (await import(`../src/modules/videos/helpers/videoCardMedia.js?test=${++instance}`)).withVideoCardMedia;
 }
 
-test('public card URLs preserve custom thumbnails and use saved image settings', async () => {
+test('public card URLs preserve custom thumbnails and use saved time and backend image settings', async () => {
   const enrich = await setup({
     thumbnail_url: 'https://cdn.example.test/custom.png',
-    thumbnail_settings: { time: 12.5, width: 800, height: 450, fit_mode: 'crop' },
+    mux_thumbnail_time: 12,
   }, false);
   const [card] = await enrich([{ id, title: 'Video' }]);
   assert.equal(card.thumbnail_url, 'https://cdn.example.test/custom.png');
   assert.equal(card.title, 'Video');
   const thumb = new URL(card.mux_thumbnail_url);
   assert.equal(thumb.pathname, '/playback-123/thumbnail.webp');
-  assert.deepEqual(Object.fromEntries(thumb.searchParams), { time: '12.5', width: '800', height: '450', fit_mode: 'crop' });
+  assert.deepEqual(Object.fromEntries(thumb.searchParams), { time: '12', width: '1280', height: '720', fit_mode: 'preserve' });
   assert.equal(new URL(card.preview_url).searchParams.get('start'), '60');
   assert.equal(card.media_expires_at, null);
 });
 
 test('signed thumbnail and animated WebP URLs contain distinct verifiable image tokens', async () => {
-  const enrich = await setup({ playback_policy: 'signed', thumbnail_settings: { time: 12.5, width: 800 } });
+  const enrich = await setup({ playback_policy: 'signed', mux_thumbnail_time: 12 });
   const [card] = await enrich([{ id, progress_seconds: 117 }]);
   for (const [field, audience] of [['mux_thumbnail_url', 't'], ['preview_url', 'g']]) {
     const url = new URL(card[field]);
@@ -55,8 +55,8 @@ test('signed thumbnail and animated WebP URLs contain distinct verifiable image 
     assert.equal(claims.kid, 'test-image-key');
     assert.ok(claims.exp >= card.media_expires_at);
     if (audience === 't') {
-      assert.equal(claims.time, 12.5);
-      assert.equal(claims.width, 800);
+      assert.equal(claims.time, 12);
+      assert.equal(claims.width, 1280);
     } else {
       assert.equal(claims.start, 117);
       assert.equal(claims.end, 120);
@@ -66,11 +66,11 @@ test('signed thumbnail and animated WebP URLs contain distinct verifiable image 
   assert.equal(card.thumbnail_url, null);
 });
 
-test('stored Mux thumbnail URLs stay unchanged and absent settings use defaults for either policy', async () => {
+test('stored Mux thumbnail URLs stay unchanged and absent timestamps use defaults for either policy', async () => {
   const storedUrl = 'https://image.mux.com/old-id/thumbnail.jpg?time=24&width=640&height=360';
   for (const playback_policy of ['public', 'signed']) {
-    for (const thumbnail_settings of [null, undefined, {}]) {
-      const enrich = await setup({ thumbnail_url: storedUrl, thumbnail_settings, playback_policy });
+    for (const mux_thumbnail_time of [null, undefined, 0]) {
+      const enrich = await setup({ thumbnail_url: storedUrl, mux_thumbnail_time, playback_policy });
       const [card] = await enrich([{ id }]);
       assert.equal(card.thumbnail_url, storedUrl);
       const url = new URL(card.mux_thumbnail_url);
@@ -86,7 +86,7 @@ test('stored Mux thumbnail URLs stay unchanged and absent settings use defaults 
   }
 });
 
-test('settings cannot override the token scope or lifetime', async () => {
+test('legacy settings cannot override the token scope or lifetime', async () => {
   const enrich = await setup({ playback_policy: 'signed', thumbnail_settings: {
     sub: 'other-video', aud: 'v', exp: 9999999999, token: 'bad', time: -1, width: 'bad', fit_mode: 'invalid',
   } });

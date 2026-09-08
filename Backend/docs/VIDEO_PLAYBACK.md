@@ -87,7 +87,7 @@ video update permissions, and processing responses are preserved.
 Video-card lists now return these fields directly; no preview endpoint is needed:
 
 - `thumbnail_url`: the database value unchanged, including stored Mux URLs or `null`.
-- `mux_thumbnail_url`: a Mux thumbnail using `thumbnail_settings`, signed or
+- `mux_thumbnail_url`: a Mux thumbnail using `mux_thumbnail_time`, signed or
   unsigned according to `playback_policy`, or `null` when unavailable.
 - `preview_url`: a Mux animated WebP, signed or unsigned, or `null` when unavailable.
 - `media_expires_at`: a conservative Unix refresh deadline in seconds for signed
@@ -103,10 +103,19 @@ continue watching, recommendations, the uploader library, channels, playlist
 videos, quiz requirements, and top-viewed video cards.
 
 `mux_thumbnail_url` is built independently from the playback ID and saved
-`thumbnail_settings`. Missing, null, or empty settings use time 0, width 1280,
-height 720, and fit mode `preserve`. Partial settings override individual
-defaults. The stored `thumbnail_url` is neither changed nor used to infer these
-settings.
+`mux_thumbnail_time`. Missing or null timestamps use time 0. Width 1280, height 720,
+and fit mode `preserve` are set in the backend. The stored `thumbnail_url` is
+neither changed nor used to infer these settings.
+
+`PATCH /api/video-moderation/video-details/:videoId` accepts `{ "time": 12 }`
+to set the nullable integer `mux_thumbnail_time` column. Time must be a non-negative
+integer in seconds; `{ "time": null }` clears it, and omitting it leaves it
+unchanged. This endpoint rejects `thumbnail_settings` and `thumbnail_url`.
+Chapter thumbnails use each chapter's start time and the same backend dimensions.
+
+Apply the replacement migration with `npm run migrate -- up` before deploying
+this code. Existing numeric settings timestamps are rounded down to whole seconds;
+invalid or out-of-range values become null. Other saved settings are discarded.
 
 Previews start at saved watch progress when available, otherwise halfway through
 the video, last up to five seconds, and are clamped to the video duration. Their
