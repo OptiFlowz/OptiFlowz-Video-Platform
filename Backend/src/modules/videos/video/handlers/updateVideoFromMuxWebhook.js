@@ -66,7 +66,7 @@ export async function updateVideoFromMuxWebhookInternal(uploadId, muxData) {
         `
         UPDATE videos
         SET mux_asset_id    = COALESCE(mux_asset_id, $1),
-            mux_playback_id = COALESCE($2, mux_playback_id),
+            mux_playback_id = COALESCE(mux_playback_id, $2),
             mux_status      = 'ready',
             thumbnail_url   = COALESCE($3, thumbnail_url),
             duration_seconds= CASE WHEN $4 IS NOT NULL AND $4 > 0 THEN $4 ELSE duration_seconds END,

@@ -5,6 +5,7 @@ import { Permissions } from '../../authorization/permission.constants.js';
 import { requireVideoAccess } from '../../authorization/resource-authorization.js';
 import {
   handleGenerateChapters,
+  handleUpdateVideoPlaybackPolicy,
   handleGetSubtitle,
   handleReplaceSubtitle,
   handleReplaceSubtitleV2,
@@ -78,6 +79,7 @@ router.get(
 );
 
 router.patch('/video-details/:videoId', requireAuth, requireVideoUpdate, handlePatchVideoDetails);
+router.patch('/:videoId/playback-policy', requireAuth, requireVideoUpdate, handleUpdateVideoPlaybackPolicy);
 router.post(
   '/:videoId/thumbnail',
   requireAuth,

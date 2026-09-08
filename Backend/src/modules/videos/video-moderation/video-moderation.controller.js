@@ -10,6 +10,20 @@ import { patchVideoDetailsInternal } from './handlers/patchVideoDetails.js';
 import { videoThumbnailUploadInternal } from './handlers/videoThumbnailUpload.js';
 import { getMyVideosInternal } from './handlers/getMyVideos.js';
 import { deleteVideoInternal } from './handlers/deleteVideo.js';
+import { updateVideoPlaybackPolicyInternal } from './handlers/updateVideoPlaybackPolicy.js';
+
+export async function handleUpdateVideoPlaybackPolicy(req, res) {
+  try {
+    const result = await updateVideoPlaybackPolicyInternal({ params: req.params, body: req.body });
+    return res.status(200).json({ ...result, success: true });
+  } catch (error) {
+    return res.status(error.status || 500)
+      .json({
+        ...(error.body || { message: error.message || 'Internal server error' }),
+        success: false,
+      });
+  }
+}
 
 export async function handleGetSubtitle(req, res) {
   try {

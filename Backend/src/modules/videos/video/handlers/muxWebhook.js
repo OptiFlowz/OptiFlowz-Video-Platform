@@ -94,7 +94,7 @@ export async function muxWebhookInternal({ body: inputBody, headers: requestHead
             mux_status = 'ready',
             duration_seconds = $2,
             mux_asset_id = $3,
-            mux_playback_id = COALESCE($4, mux_playback_id),
+            mux_playback_id = COALESCE(mux_playback_id, $4),
             thumbnail_url = COALESCE(thumbnail_url, $5)
           WHERE id = $1
           `,

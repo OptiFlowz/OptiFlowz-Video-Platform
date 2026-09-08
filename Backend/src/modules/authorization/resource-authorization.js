@@ -22,13 +22,13 @@ async function authorizeOwnedResource({
 }) {
   try {
     if (!UUID_PATTERN.test(String(resourceId || ''))) {
-      return res.status(400).json({ message: `Invalid ${resourceName} ID` });
+      return res.status(400).json({ success: false, message: `Invalid ${resourceName} ID` });
     }
 
     const resource = await loadResource(resourceId);
 
     if (!resource) {
-      return res.status(404).json({ message: `${resourceName} not found` });
+      return res.status(404).json({ success: false, message: `${resourceName} not found` });
     }
 
     const authorization = req.authorization
@@ -42,6 +42,7 @@ async function authorizeOwnedResource({
 
     if (!authorization.isOwner && !canAccessAny && !canAccessOwn) {
       return res.status(403).json({
+        success: false,
         message: `You cannot access this ${resourceName.toLowerCase()}`,
       });
     }
