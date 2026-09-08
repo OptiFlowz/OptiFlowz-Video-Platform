@@ -1,4 +1,4 @@
-import { readPool } from '../../../database/index.js';
+import { readPool } from '../../../../database/index.js';
 
 export async function getSavedPlaylistsInternal(userId, { limit = 50, offset = 0 } = {}) {
   const safeLimit = Math.min(parseInt(limit, 10) || 50, 100);

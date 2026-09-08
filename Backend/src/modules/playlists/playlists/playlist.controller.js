@@ -1,4 +1,4 @@
-import { logEvent } from '../../common/logger.js';
+import { logEvent } from '../../../common/logger.js';
 import { searchPlaylistsInternal } from './handlers/searchPlaylists.js';
 import { getFeaturedPlaylistsInternal } from './handlers/getFeaturedPlaylists.js';
 import { togglePlaylistSaveInternal } from './handlers/savePlaylist.js';
@@ -6,8 +6,8 @@ import { getSavedPlaylistsInternal } from './handlers/getSavedPlaylists.js';
 import { getPlaylistByIdInternal } from './handlers/getPlaylistById.js';
 import { getPlaylistVideosInternal } from './handlers/getPlaylistVideos.js';
 import { playlistIncrementViewCountInternal } from './handlers/playlistIncrementViewCount.js';
-import { getClientIp } from '../../common/ipUitl.js';
-import { sendSuccess, sendError } from '../../common/response.js';
+import { getClientIp } from '../../../common/ipUitl.js';
+import { sendSuccess, sendError } from '../../../common/response.js';
 
 export async function getPlaylistById(req, res) {
   try {

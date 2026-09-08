@@ -1,7 +1,7 @@
 import express from 'express';
-import { requireAuth, optionalAuth } from '../../middleware/auth.js';
-import { requirePermission } from '../authorization/authorization.middleware.js';
-import { Permissions } from '../authorization/permission.constants.js';
+import { requireAuth, optionalAuth } from '../../../middleware/auth.js';
+import { requirePermission } from '../../authorization/authorization.middleware.js';
+import { Permissions } from '../../authorization/permission.constants.js';
 import * as playlistController from './playlist.controller.js';
 
 const router = express.Router();

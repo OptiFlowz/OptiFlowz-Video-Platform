@@ -1,10 +1,10 @@
 import { z } from 'zod';
-import { writePool } from '../../../database/index.js';
-import { s3 } from '../../storage/r2.client.js';
+import { writePool } from '../../../../database/index.js';
+import { s3 } from '../../../storage/r2.client.js';
 import { DeleteObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import sharp from 'sharp';
 import { randomUUID } from 'crypto';
-import { HttpError } from '../../../common/httpError.js';
+import { HttpError } from '../../../../common/httpError.js';
 
 const R2_BUCKET = process.env.R2_BUCKET;
 

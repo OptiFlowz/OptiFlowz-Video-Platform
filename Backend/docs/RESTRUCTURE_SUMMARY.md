@@ -27,7 +27,7 @@
 ## Old to new mapping
 - `authRoutes.js` -> `src/modules/auth/auth.routes.js`
 - `peopleRoutes.js` -> `src/modules/people/people.routes.js`
-- `playlistRoutes.js` -> `src/modules/playlists/playlist.routes.js`
+- `playlistRoutes.js` -> `src/modules/playlists/playlists/playlist.routes.js`
 - `playlistService.js` -> `src/modules/playlists/playlist.service.js`
 - `reportRoutes.js` -> `src/modules/reports/report.routes.js`
 - `videoRoutes.js` -> `src/modules/videos/video/video.routes.js`

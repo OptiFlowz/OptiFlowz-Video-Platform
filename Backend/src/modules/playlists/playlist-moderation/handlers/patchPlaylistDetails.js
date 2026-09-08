@@ -1,5 +1,5 @@
-import { writePool } from '../../../database/index.js';
-import { HttpError } from '../../../common/httpError.js';
+import { writePool } from '../../../../database/index.js';
+import { HttpError } from '../../../../common/httpError.js';
 
 function isDefined(v) {
   return v !== undefined;

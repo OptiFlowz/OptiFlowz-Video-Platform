@@ -1,7 +1,7 @@
-import { writePool } from '../../../database/index.js';
+import { writePool } from '../../../../database/index.js';
 import { z } from 'zod';
-import { validateOrThrow } from '../../../common/input.validation.js';
-import { hashIp } from '../../../common/ipUitl.js';
+import { validateOrThrow } from '../../../../common/input.validation.js';
+import { hashIp } from '../../../../common/ipUitl.js';
 
 function prerequisites(object) {
   const schema = z.object({

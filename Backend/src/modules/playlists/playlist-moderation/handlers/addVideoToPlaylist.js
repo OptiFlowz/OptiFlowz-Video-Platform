@@ -1,5 +1,5 @@
-import { writePool } from '../../../database/index.js';
-import { HttpError } from '../../../common/httpError.js';
+import { writePool } from '../../../../database/index.js';
+import { HttpError } from '../../../../common/httpError.js';
 
 function toIntOrNull(v) {
   if (v === undefined || v === null || v === '') return null;

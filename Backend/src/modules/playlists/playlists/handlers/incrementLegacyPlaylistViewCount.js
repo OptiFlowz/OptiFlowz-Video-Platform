@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { writePool } from '../../../database/index.js';
+import { writePool } from '../../../../database/index.js';
 
 function hashIp(ip) {
   const salt = process.env.IP_HASH_SALT; // stavi neki random string u env

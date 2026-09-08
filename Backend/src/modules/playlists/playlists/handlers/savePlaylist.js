@@ -1,4 +1,4 @@
-import { writePool } from '../../../database/index.js';
+import { writePool } from '../../../../database/index.js';
 
 export async function togglePlaylistSaveInternal(playlistId, userId) {
   const client = await writePool.connect();

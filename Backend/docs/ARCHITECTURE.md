@@ -34,6 +34,24 @@ src/modules/videos/
 is mounted at `/api/video-moderation`. Shared helpers and the Mux service remain
 at the videos module level. Upload middleware belongs to video moderation.
 
+Playlists module layout:
+
+```text
+src/modules/playlists/
+  playlists/
+    playlist.routes.js
+    playlist.controller.js
+    handlers/
+  playlist-moderation/
+    playlist-moderation.routes.js
+    playlist-moderation.controller.js
+    playlist.middleware.js
+    handlers/
+```
+
+Route and controller filenames are preserved. Playlist upload middleware belongs
+to playlist moderation; existing API paths remain unchanged.
+
 1. Infrastruktura više nije pomešana sa biznis logikom.
 2. Svaki domen ima svoje rute i servise na jednom mestu.
 3. Startup i Express konfiguracija su odvojeni od endpoint logike.

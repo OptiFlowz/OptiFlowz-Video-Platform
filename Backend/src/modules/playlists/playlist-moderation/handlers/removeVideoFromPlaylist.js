@@ -1,5 +1,5 @@
-import { writePool } from '../../../database/index.js';
-import { HttpError } from '../../../common/httpError.js';
+import { writePool } from '../../../../database/index.js';
+import { HttpError } from '../../../../common/httpError.js';
 
 export async function removeVideoFromPlaylistInternal({ params: routeParams }) {
   const { playlistId, videoId } = routeParams;

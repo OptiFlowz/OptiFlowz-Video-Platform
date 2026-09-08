@@ -1,8 +1,8 @@
 import express from 'express';
-import { requireAuth } from '../../middleware/auth.js';
-import { requirePermission } from '../authorization/authorization.middleware.js';
-import { Permissions } from '../authorization/permission.constants.js';
-import { requirePlaylistAccess } from '../authorization/resource-authorization.js';
+import { requireAuth } from '../../../middleware/auth.js';
+import { requirePermission } from '../../authorization/authorization.middleware.js';
+import { Permissions } from '../../authorization/permission.constants.js';
+import { requirePlaylistAccess } from '../../authorization/resource-authorization.js';
 import {
   handleGetMyPlaylists,
   handlePatchPlaylistDetails,

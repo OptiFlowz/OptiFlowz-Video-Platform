@@ -1,5 +1,5 @@
-import { withVideoCardMedia } from '../../videos/helpers/videoCardMedia.js';
-import { readPool } from '../../../database/index.js';
+import { withVideoCardMedia } from '../../../videos/helpers/videoCardMedia.js';
+import { readPool } from '../../../../database/index.js';
 
 export async function getPlaylistWithVideosInternal(playlistId, userId = null) {
   const sql = `

@@ -1,4 +1,4 @@
-import { readPool } from '../../../database/index.js';
+import { readPool } from '../../../../database/index.js';
 
 export async function searchPlaylistsInternal(searchParams) {
   const { query: searchQuery, tags, limit = 20, offset = 0, sortBy = 'relevance' } = searchParams;

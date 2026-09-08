@@ -1,4 +1,4 @@
-import { readPool } from '../../../database/index.js';
+import { readPool } from '../../../../database/index.js';
 
 export async function getFeaturedPlaylistsInternal() {
   const sql = `

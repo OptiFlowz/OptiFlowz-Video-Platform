@@ -1,5 +1,5 @@
-import { readPool } from '../../../database/index.js';
-import { HttpError } from '../../../common/httpError.js';
+import { readPool } from '../../../../database/index.js';
+import { HttpError } from '../../../../common/httpError.js';
 
 export async function getMyPlaylistsInternal({ query: queryParams }, actorUserId = null) {
   try {
