@@ -1,3 +1,4 @@
+import { deleteIndexedTrack } from '../../../video-indexing/indexing.service.js';
 import { readPool } from '../../../../database/index.js';
 import { muxGetAsset, muxDeleteTrack } from '../../helpers/videoModeration.shared.js';
 import { HttpError } from '../../../../common/httpError.js';
@@ -49,7 +50,7 @@ export async function deleteSubtitleInternal({ params: routeParams, query: query
     const trackId = existingLangTrack.id;
 
     // 4) Obriši track
-    await muxDeleteTrack(assetId, trackId);
+    await deleteIndexedTrack(videoId, lang, trackId, () => muxDeleteTrack(assetId, trackId));
 
     return {
       message: 'Subtitle track deleted',

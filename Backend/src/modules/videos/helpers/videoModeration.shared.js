@@ -60,11 +60,12 @@ export async function muxGetAsset(assetId) {
 export async function muxDeleteTrack(assetId, trackId) {
   const resp = await fetch(`https://api.mux.com/video/v1/assets/${assetId}/tracks/${trackId}`, {
     method: 'DELETE',
+    signal: AbortSignal.timeout(15000),
     headers: { Authorization: muxAuthHeader() },
   });
 
   // Mux uglavnom vraća 204, ali i 200 može – tretiraj ok ako je ok
-  if (!resp.ok) {
+  if (!resp.ok && resp.status !== 404) {
     const txt = await resp.text().catch(() => '');
     throw new Error(`MUX_DELETE_TRACK_FAILED:${resp.status}:${txt.slice(0, 300)}`);
   }

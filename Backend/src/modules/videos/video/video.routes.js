@@ -7,6 +7,7 @@ import {
   handleHeartbeat,
   handleMuxWebhook,
   handleSearchVideos,
+  handleSearchVideosVector,
   handleGetTrending,
   handleGetCategories,
   handleGetUserHistory,
@@ -33,6 +34,7 @@ router.post(
 router.post('/heartbeat', optionalAuth, handleHeartbeat);
 router.post('/webhook/mux', handleMuxWebhook);
 router.get('/search', optionalAuth, handleSearchVideos);
+router.get('/search/vector', optionalAuth, handleSearchVideosVector);
 router.get('/trending', optionalAuth, handleGetTrending);
 router.get(
   '/categories',

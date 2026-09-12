@@ -12,6 +12,7 @@ import { getClientIp } from '../helpers/videoRoutes.shared.js';
 import { logEvent } from '../../../common/logger.js';
 import { heartbeatWatchDurationInternal } from './handlers/heartbeatWatchDuration.js';
 import { searchVideosInternal } from './handlers/searchVideos.js';
+import { searchVideosVectorInternal } from './handlers/searchVideosVector.js';
 import { getPersonalizedRecommendationsInternal } from './handlers/getPersonalizedRecommendations.js';
 import { updateWatchProgressInternal } from './handlers/updateWatchProgress.js';
 import { setVideoReactionInternal } from './handlers/setVideoReaction.js';
@@ -114,6 +115,62 @@ export async function handleSearchVideos(req, res) {
     });
   } catch (error) {
     console.error('Search error:', error);
+    res.status(500).json({ message: 'Search failed' });
+  }
+}
+
+export async function handleSearchVideosVector(req, res) {
+  res.set('Cache-Control', 'private, no-store');
+  try {
+    const { q, category, tags, person, sort = 'relevance', limit = '20', page = '1' } = req.query;
+    for (const [name, value] of Object.entries({ q, category, tags, person, sort, limit, page })) {
+      if (value !== undefined && typeof value !== 'string') {
+        throw new HttpError(400, { message: `${name} must be a single string value` });
+      }
+    }
+    const pageNumber = Number(page);
+    const requestedLimit = Number(limit);
+    if (
+      !/^\d+$/.test(page) ||
+      !Number.isSafeInteger(pageNumber) ||
+      pageNumber < 1 ||
+      !/^\d+$/.test(limit) ||
+      !Number.isSafeInteger(requestedLimit) ||
+      requestedLimit < 1
+    ) {
+      throw new HttpError(400, { message: 'page and limit must be positive integers' });
+    }
+    const pageLimit = Math.min(requestedLimit, 100);
+    const offset = (pageNumber - 1) * pageLimit;
+    if (!Number.isSafeInteger(offset)) {
+      throw new HttpError(400, { message: 'Requested page is too large' });
+    }
+
+    const results = await searchVideosVectorInternal(
+      {
+        query: q,
+        category,
+        tags: tags ? tags.split(',').map((tag) => tag.trim()) : null,
+        person,
+        sortBy: sort,
+        limit: pageLimit,
+        offset,
+      },
+      req.user?.sub || null,
+    );
+
+    res.json({
+      videos: results.videos,
+      pagination: {
+        total: results.total,
+        page: pageNumber,
+        limit: results.limit,
+        totalPages: Math.ceil(results.total / results.limit),
+      },
+    });
+  } catch (error) {
+    if (error instanceof HttpError) return res.status(error.status).json(error.body);
+    console.error('Vector search error:', error);
     res.status(500).json({ message: 'Search failed' });
   }
 }

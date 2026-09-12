@@ -1,3 +1,4 @@
+import { invalidateVideo } from '../../../video-indexing/indexing.service.js';
 import { writePool } from '../../../../database/index.js';
 import { muxBasicAuthHeader } from '../../helpers/videoModeration.shared.js';
 import { HttpError } from '../../../../common/httpError.js';
@@ -42,6 +43,8 @@ export async function deleteVideoInternal({ params: routeParams }) {
         details: txt?.slice(0, 500),
       });
     }
+
+    await invalidateVideo(videoId);
 
     // 3) ne brišemo DB ovde — webhook video.asset.deleted će odraditi brisanje + cascade
     return {

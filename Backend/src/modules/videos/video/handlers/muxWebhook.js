@@ -1,3 +1,4 @@
+import { reconcileTracks } from '../../../video-indexing/mux-source.service.js';
 import crypto from 'crypto';
 import { writePool } from '../../../../database/index.js';
 import { HttpError } from '../../../../common/httpError.js';
@@ -29,6 +30,8 @@ function verifyMuxSignature(rawBodyBuf, muxSignatureHeader, secret) {
   }
 
   if (!t || v1s.length === 0) return false;
+  const timestamp = Number(t);
+  if (!Number.isFinite(timestamp) || Math.abs(Date.now() / 1000 - timestamp) > 300) return false;
 
   const payload = Buffer.concat([Buffer.from(`${t}.`), rawBodyBuf]);
   const computed = crypto.createHmac('sha256', s).update(payload).digest('hex');
@@ -67,7 +70,10 @@ export async function muxWebhookInternal({ body: inputBody, headers: requestHead
     }
 
     // tvoj video id iz baze obično dolazi kroz passthrough ili meta.external_id
-    const videoId = data.passthrough || data?.meta?.external_id || null;
+    const candidateVideoId = data.passthrough || data?.meta?.external_id || null;
+    const videoId = typeof candidateVideoId === 'string'
+      && /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(candidateVideoId)
+      ? candidateVideoId : null;
 
     // u sample payload-u asset id je data.id
     const muxAssetId = data.id || event?.object?.id || null;
@@ -77,12 +83,15 @@ export async function muxWebhookInternal({ body: inputBody, headers: requestHead
       Array.isArray(data.playback_ids) && data.playback_ids.length ? data.playback_ids[0].id : null;
 
     switch (type) {
+      case 'video.asset.track.ready':
+      case 'video.asset.track.deleted':
+      case 'video.asset.track.errored': {
+        const assetId = data.asset_id || (event.object?.type === 'asset' ? event.object.id : null);
+        if (!assetId) throw new HttpError(400, { message: 'Missing track asset ID' });
+        await reconcileTracks(assetId);
+        break;
+      }
       case 'video.asset.ready': {
-        if (!videoId) {
-          // nema mapiranja na tvoj DB record
-          break;
-        }
-
         const durationSeconds = Math.round(Number(data.duration || 0));
         const thumbnailUrl = muxPlaybackId ? getDefaultThumbnailUrl(muxPlaybackId) : null;
 
@@ -96,11 +105,14 @@ export async function muxWebhookInternal({ body: inputBody, headers: requestHead
             mux_asset_id = $3,
             mux_playback_id = COALESCE(mux_playback_id, $4),
             thumbnail_url = COALESCE(thumbnail_url, $5)
-          WHERE id = $1
+          WHERE (id = $1::uuid OR mux_asset_id=$3)
+            AND (mux_asset_id IS NULL OR mux_asset_id=$3)
+            AND mux_status IS DISTINCT FROM 'deleted'
           `,
           [videoId, durationSeconds, muxAssetId, muxPlaybackId, thumbnailUrl],
         );
 
+        await reconcileTracks(muxAssetId, videoId);
         break;
       }
 
@@ -112,7 +124,8 @@ export async function muxWebhookInternal({ body: inputBody, headers: requestHead
           UPDATE public.videos
           SET mux_status = 'errored',
               mux_asset_id = COALESCE(mux_asset_id, $2)
-          WHERE id = $1
+          WHERE id = $1 AND mux_status IS DISTINCT FROM 'deleted'
+            AND (mux_asset_id IS NULL OR mux_asset_id=$2)
           `,
           [videoId, muxAssetId],
         );
@@ -120,13 +133,10 @@ export async function muxWebhookInternal({ body: inputBody, headers: requestHead
         break;
       }
       case 'video.asset.deleted': {
-        const videoId = data?.passthrough || data?.meta?.external_id || null;
-
-        if (!videoId) break;
-
         // ako imaš FK veze (playlist_items, watch_progress, itd.) i nemaš ON DELETE CASCADE,
         // moraćeš prvo njih da obrišeš ili da koristiš CASCADE u šemi.
-        await writePool.query(`DELETE FROM public.videos WHERE id = $1`, [videoId]);
+        await writePool.query(`DELETE FROM public.videos WHERE mux_asset_id=$1
+          OR (id=$2::uuid AND mux_asset_id IS NULL)`, [muxAssetId, videoId]);
 
         break;
       }

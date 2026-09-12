@@ -1,3 +1,5 @@
+import { reconcileTracks } from '../../../video-indexing/mux-source.service.js';
+import { deleteIndexedTrack } from '../../../video-indexing/indexing.service.js';
 import { readPool } from '../../../../database/index.js';
 import { randomUUID } from 'crypto';
 import {
@@ -102,7 +104,7 @@ export async function replaceSubtitleV2Internal({
 
     // 5) Obriši samo taj lang track ako postoji
     if (oldTrackId) {
-      await muxDeleteTrack(assetId, oldTrackId);
+      await deleteIndexedTrack(videoId, lang, oldTrackId, () => muxDeleteTrack(assetId, oldTrackId));
     }
 
     // 6) Kreiraj novi track za taj jezik
@@ -127,6 +129,8 @@ export async function replaceSubtitleV2Internal({
         mux_errors: waitRes.errors || null,
       });
     }
+
+    await reconcileTracks(assetId, videoId);
 
     return {
       message: oldTrackId ? 'Subtitle track replaced' : 'Subtitle track created',

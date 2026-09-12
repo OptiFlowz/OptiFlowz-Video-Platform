@@ -1,3 +1,4 @@
+import { scheduleOverview } from '../../../video-indexing/indexing.service.js';
 import Mux from '@mux/mux-node';
 import { writePool } from '../../../../database/index.js';
 import { HttpError } from '../../../../common/httpError.js';
@@ -78,6 +79,7 @@ export async function initiateUploadInternal({ body: inputBody }, actorUserId = 
       videoId,
     ]);
 
+    await scheduleOverview(client, videoId);
     await client.query('COMMIT');
 
     return {

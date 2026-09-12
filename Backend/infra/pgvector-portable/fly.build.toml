@@ -1,0 +1,6 @@
+# Image builds only. Always use --build-only --push with this configuration.
+app = 'optiflowz-pg-recovered'
+primary_region = 'fra'
+
+[build]
+  dockerfile = 'Dockerfile'

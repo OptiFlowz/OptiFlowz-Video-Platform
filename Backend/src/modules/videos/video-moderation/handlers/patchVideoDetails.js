@@ -1,3 +1,4 @@
+import { scheduleOverview } from '../../../video-indexing/indexing.service.js';
 import { writePool } from '../../../../database/index.js';
 import { HttpError } from '../../../../common/httpError.js';
 
@@ -269,6 +270,9 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
       }
     }
 
+    if ([title, description, tags, chapters].some(isDefined)) {
+      await scheduleOverview(client, videoId);
+    }
     await client.query('COMMIT');
 
     return {

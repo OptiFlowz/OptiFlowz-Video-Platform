@@ -11,9 +11,13 @@
     "test:video-details": "node --experimental-test-module-mocks --test tests/video-details.test.js",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "dev:worker": "nodemon --signal SIGTERM src/workers/video-indexing.js",
+    "dev:all": "concurrently --kill-others --names API,INDEXING \"npm run dev\" \"npm run dev:worker\"",
     "postinstall": "puppeteer browsers install chrome",
     "migrate": "node-pg-migrate --migrations-dir src/database/migrations",
-    "migrate:deploy": "node-pg-migrate up --migrations-dir src/database/migrations --advisory-lock-mode wait"
+    "migrate:deploy": "node-pg-migrate up --migrations-dir src/database/migrations --advisory-lock-mode wait",
+    "worker:video-indexing": "node src/workers/video-indexing.js",
+    "backfill:video-indexing": "node src/workers/backfill-video-indexing.js"
   },
   "keywords": [],
   "author": "",
@@ -49,6 +53,7 @@
   },
   "devDependencies": {
     "@flydotio/dockerfile": "^0.7.4",
+    "concurrently": "^10.0.5",
     "nodemon": "^3.1.10"
   },
   "overrides": {

@@ -1,3 +1,5 @@
+import { reconcileTracks } from '../../../video-indexing/mux-source.service.js';
+import { deleteIndexedTrack } from '../../../video-indexing/indexing.service.js';
 import {
   sanitizeLang,
   sanitizeName,
@@ -100,7 +102,7 @@ export async function autogenerateAndReplaceSubtitleInternal({
 
     // 9) Ako postoji, obriši ga (replace). Ako ne postoji, samo create.
     if (oldTrackId) {
-      await muxDeleteTrack(assetId, oldTrackId);
+      await deleteIndexedTrack(videoId, lang, oldTrackId, () => muxDeleteTrack(assetId, oldTrackId));
     }
 
     // 10) Kreiraj novi track za target lang + name
@@ -127,6 +129,8 @@ export async function autogenerateAndReplaceSubtitleInternal({
         mux_errors: waitRes.errors || null,
       });
     }
+
+    await reconcileTracks(assetId, videoId);
 
     return {
       message: oldTrackId
