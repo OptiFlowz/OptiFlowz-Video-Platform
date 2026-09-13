@@ -194,7 +194,9 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
       setIsMiniOpen(false);
     } else if (isOnActiveVideo && anchor && anchorRect) {
       setIsMiniOpen(false);
-    } else if (wasOnActiveVideo) {
+    } else if (wasOnActiveVideo && !isOnActiveVideo) {
+      // A newly mounted or replaced anchor may not have a measured rect yet.
+      // Only leaving the route should close or minimize the playback session.
       if (isPlayingRef.current) {
         setIsMiniOpen(true);
       } else {

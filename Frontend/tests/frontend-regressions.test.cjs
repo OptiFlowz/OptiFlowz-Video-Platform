@@ -662,3 +662,55 @@ for (const scenario of ['invalid-id', 'not-found', 'deleted-cached-video', 'empt
     }
   });
 }
+
+test('a player mounted after video loading survives pending layout measurements and anchor replacement', async t => {
+  const container = dom(t);
+  const video = { id: '8fc293a2-15a8-466d-b8e5-6c21ad64e133', title: 'Existing video', people: [], percentage_watched: 0, progress_seconds: 0 };
+  let pathname = `/video/${video.id}`;
+  let measured = false;
+  let loaded = false;
+  let anchorKey = 0;
+  const resizeCallbacks = new Set();
+  const originals = new Map(['ResizeObserver', 'requestAnimationFrame', 'cancelAnimationFrame'].map(key => [key, globalThis[key]]));
+  globalThis.ResizeObserver = class {
+    constructor(callback) { this.callback = callback; }
+    observe() { resizeCallbacks.add(this.callback); }
+    disconnect() { resizeCallbacks.delete(this.callback); }
+  };
+  globalThis.requestAnimationFrame = callback => setTimeout(callback, 0);
+  globalThis.cancelAnimationFrame = clearTimeout;
+  t.after(() => { for (const [key, value] of originals) { if (value === undefined) delete globalThis[key]; else globalThis[key] = value; } });
+  window.matchMedia = () => ({ matches: false });
+  HTMLElement.prototype.getBoundingClientRect = function () {
+    return { top: 100, left: 50, width: measured ? 800 : 0, height: measured ? 450 : 0 };
+  };
+  const load = modules({
+    'next/navigation': { usePathname: () => pathname, useRouter: () => ({ push: () => {} }) },
+    '~/components/playPage/playerCollection/muxPlayer': { default: ({ videoId }) => React.createElement('div', { 'data-media': videoId }) },
+    './useFloatingMiniPlayer': { useFloatingMiniPlayer: () => ({ miniPlayerRef: React.useRef(null), safeAreaRef: React.useRef(null), isPositionReady: true }) },
+    './usePlayerMorphTransition': { usePlayerMorphTransition: () => false },
+  });
+  const Provider = load('app/components/persistentVideo/persistentVideoProvider.tsx').default;
+  const Player = load('app/components/playPage/playerCollection/playerCollection.tsx').default;
+  const root = createRoot(container); container.mountedRoot = root;
+  const render = () => root.render(React.createElement(Provider, null, loaded ? React.createElement(Player, { key: anchorKey, props: video }) : React.createElement('p', null, 'Loading video')));
+  await act(async () => render());
+  assert.equal(container.querySelector('[data-media]'), null);
+  await act(async () => { loaded = true; render(); });
+  await waitForUpdates();
+  assert.ok(container.querySelector('[data-media]'), 'the playback session must survive until the anchor can be measured');
+  assert.equal(container.querySelector('aside').getAttribute('aria-hidden'), 'true');
+  await act(async () => { measured = true; for (const callback of resizeCallbacks) callback(); });
+  await waitForUpdates();
+  assert.equal(container.querySelector('aside').getAttribute('aria-hidden'), 'false');
+  assert.equal(container.querySelector('aside').style.width, '800px');
+  await act(async () => { measured = false; anchorKey++; render(); });
+  await waitForUpdates();
+  assert.ok(container.querySelector('[data-media]'), 'replacing a player anchor on the same video must not close the session');
+  await act(async () => { measured = true; for (const callback of resizeCallbacks) callback(); });
+  await waitForUpdates();
+  assert.equal(container.querySelector('aside').getAttribute('aria-hidden'), 'false');
+  await act(async () => { pathname = '/'; loaded = false; render(); });
+  await waitForUpdates();
+  assert.equal(container.querySelector('[data-media]'), null, 'leaving a paused video still clears the session');
+});
