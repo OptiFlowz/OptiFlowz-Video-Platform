@@ -11,6 +11,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { AddSVG, CloseSVG, UploadSVG } from "~/constants";
 import { fetchFn } from "~/API";
+import { fetchVectorVideos } from "~/videoDiscovery";
 import { getToken } from "~/functions";
 import type {
   FetchPlaylistT,
@@ -224,12 +225,13 @@ function EditPlaylistPage() {
   const { data: playlistVideoSearchData, isFetching: isSearchingPlaylistVideos } =
     useQuery({
       queryKey: ["playlist-video-search", debouncedPlaylistVideoSearch],
-      queryFn: () =>
-        fetchFn<SearchT>({
+      queryFn: ({ signal }) =>
+        fetchVectorVideos<SearchT>({
           route: `api/videos/search?q=${encodeURIComponent(
             debouncedPlaylistVideoSearch
           )}`,
           options: {
+            signal,
             method: "GET",
             headers: myHeaders.current,
           },

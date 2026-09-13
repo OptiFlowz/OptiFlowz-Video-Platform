@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchFn } from "~/API";
+import { fetchVectorVideos } from "~/videoDiscovery";
 import { useI18n } from "~/i18n";
 import type { PlaylistSearchRes, SearchT } from "~/types";
 import type {
@@ -191,10 +192,11 @@ function CreateQuizSourcePopup({
 
   const { data: videoSearchData, isFetching: isSearchingVideos } = useQuery({
     queryKey: ["quiz-source-video-search", debouncedSourceSearch],
-    queryFn: () =>
-      fetchFn<SearchT>({
+    queryFn: ({ signal }) =>
+      fetchVectorVideos<SearchT>({
         route: `api/videos/search?q=${encodeURIComponent(debouncedSourceSearch)}`,
         options: {
+          signal,
           method: "GET",
           headers: requestHeaders,
         },

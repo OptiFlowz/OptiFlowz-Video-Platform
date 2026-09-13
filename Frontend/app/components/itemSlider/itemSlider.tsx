@@ -6,6 +6,7 @@ import { Link } from "react-router";
 import { ArrowSVG } from "~/constants";
 import { useQuery } from "@tanstack/react-query";
 import { fetchFn } from "~/API";
+import { fetchRecommendedVideos, type RecommendationResult } from "~/videoDiscovery";
 import Item from "./item";
 import { CurrentNavContext } from "~/context";
 import PlaylistItem from "./playlistItem";
@@ -87,16 +88,16 @@ function ItemSlider({props}: {props: ItemSliderT}){
         myHeaders.current.set("Authorization", `Bearer ${userToken}`);
     }, [])
 
-    type SliderData = fetchVideo | fetchFeaturedPlaylist;
+    type SliderData = RecommendationResult<fetchVideo> | fetchFeaturedPlaylist;
 
-    const { data } = useQuery<SliderData>({
+    const { data, isError, refetch } = useQuery<SliderData>({
         queryKey: [isPlaylist ? "playlist" : "video", props.type, props.limit],
-        queryFn: () => {
+        queryFn: ({ signal }) => {
             if (!route) throw new Error("Route is null");
 
             return isPlaylist
-            ? fetchFn<fetchFeaturedPlaylist>({ route, options: { method: "GET", headers: myHeaders.current } })
-            : fetchFn<fetchVideo>({ route, options: { method: "GET", headers: myHeaders.current } });
+            ? fetchFn<fetchFeaturedPlaylist>({ route, options: { method: "GET", headers: myHeaders.current, signal } })
+            : (props.type === 1 ? fetchRecommendedVideos<fetchVideo> : fetchFn<fetchVideo>)({ route, options: { method: "GET", headers: myHeaders.current, signal } });
         },
         enabled: hasLibraryAccess && !!route && (!requiresAuth || !!token) && (props.type !== 1 || preferences.personalization),
         gcTime: 30 * 60 * 1000,
@@ -201,8 +202,13 @@ function ItemSlider({props}: {props: ItemSliderT}){
                 )}
             </span>
 
-            {itemsArray?.length == 0 && props.type == 1 ? 
-                <div className="watchToRecommend">{t("watchSomeVideos")}</div> 
+            {isError && props.type === 1 ?
+                <div className="watchToRecommend" role="alert">
+                    <p>{t("searchLoadFailed")}</p>
+                    <button type="button" className="button mt-4" onClick={() => void refetch()}>{t("usersRetry")}</button>
+                </div>
+                : itemsArray?.length == 0 && props.type == 1 ?
+                <div className="watchToRecommend">{t(data && "hasWatchHistory" in data && data.hasWatchHistory ? "noMoreRecommendations" : "watchSomeVideos")}</div>
                 : 
                 <div
                     className={`collectionViewport ${showLeftFade ? "show-left-fade" : ""} ${showRightFade ? "show-right-fade" : ""} ${props.type == 1 ? 'notscrollable' : ''}`}

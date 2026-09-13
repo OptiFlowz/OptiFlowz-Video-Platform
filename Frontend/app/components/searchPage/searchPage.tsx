@@ -1,13 +1,15 @@
 import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import { useParams, useSearchParams, useNavigate, Link } from "react-router";
-import { useState, useMemo, useEffect, useRef } from "react";
-import { useQueries } from "@tanstack/react-query";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { fetchFn } from "~/API";
+import { fetchVectorVideos } from "~/videoDiscovery";
 import type { SearchT, PlaylistSearchRes, PeopleSearchRes } from "~/types";
 import { getToken } from "~/functions";
 import { useI18n } from "~/i18n";
 import CustomSelect from "~/components/customSelect/customSelect";
-import Pagination from "~/components/library/pagination";
+import InfiniteScroll from "~/components/library/infiniteScroll";
+import { nextResultsPage, uniqueResults } from "~/components/library/infiniteResults";
 import SearchResultCard, { type SearchResult } from "./searchResultCard";
 import { SearchIcon } from "./searchIcons";
 import styles from "./searchPage.module.css";
@@ -21,8 +23,7 @@ function SearchResults({ context }: { context: SearchContext }) {
   const [token, setToken] = useState<string>();
   const [input, setInput] = useState(context.label);
   const [selected, setSelected] = useState(0);
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const limit = 10;
   const [sort, setSort] = useState("relevance");
   const choseCategory = useRef(false);
   useEffect(() => { setToken(getToken() || undefined); }, []);
@@ -33,49 +34,52 @@ function SearchResults({ context }: { context: SearchContext }) {
   else if (context.tag) videoParams.set("tags", context.tag);
   else if (context.person) videoParams.set("person", context.person);
   else videoParams.set("q", context.query);
-  videoParams.set("page", String(selected === 0 ? page : 1));
   videoParams.set("limit", String(limit));
   videoParams.set("sort", sort);
   const videoRoute = `api/videos/search?${videoParams}`;
-  const playlistRoute = `api/playlists/search?${new URLSearchParams({ q: context.label, page: String(selected === 1 ? page : 1), limit: String(limit), sort })}`;
-  const peopleRoute = `api/people/search?${new URLSearchParams({ q: context.label, page: String(selected === 2 ? page : 1), limit: String(limit) })}`;
+  const playlistRoute = `api/playlists/search?${new URLSearchParams({ q: context.label, limit: String(limit), sort })}`;
+  const peopleRoute = `api/people/search?${new URLSearchParams({ q: context.label, limit: String(limit) })}`;
 
-  const [videoQ, playlistQ, peopleQ] = useQueries({ queries: [
-    {
-      queryKey: ["search-videos", token, videoRoute],
-      queryFn: ({ signal }) => fetchFn<SearchT>({ route: videoRoute, options: { headers, signal } }),
-      enabled: !!token && hasSearch,
-      refetchOnWindowFocus: false,
-    },
-    {
-      queryKey: ["search-playlists", token, playlistRoute],
-      queryFn: ({ signal }) => fetchFn<PlaylistSearchRes>({ route: playlistRoute, options: { headers, signal } }),
-      enabled: !!token && !!context.label,
-      refetchOnWindowFocus: false,
-    },
-    {
-      queryKey: ["search-people", token, peopleRoute],
-      queryFn: ({ signal }) => fetchFn<PeopleSearchRes>({ route: peopleRoute, options: { headers, signal } }),
-      enabled: !!token && !!context.label,
-      refetchOnWindowFocus: false,
-    },
-  ] });
+  const videoQ = useInfiniteQuery({
+    queryKey: ["search-videos-infinite", token, videoRoute],
+    initialPageParam: 1,
+    queryFn: ({ signal, pageParam }) => fetchVectorVideos<SearchT>({ route: `${videoRoute}&page=${pageParam}`, options: { headers, signal } }),
+    getNextPageParam: (last, pages, page) => nextResultsPage(last, pages, page, limit, response => response.videos),
+    enabled: !!token && hasSearch,
+    refetchOnWindowFocus: false,
+  });
+  const playlistQ = useInfiniteQuery({
+    queryKey: ["search-playlists-infinite", token, playlistRoute],
+    initialPageParam: 1,
+    queryFn: ({ signal, pageParam }) => fetchFn<PlaylistSearchRes>({ route: `${playlistRoute}&page=${pageParam}`, options: { headers, signal } }),
+    getNextPageParam: (last, pages, page) => nextResultsPage(last, pages, page, limit, response => response.playlists),
+    enabled: !!token && !!context.label,
+    refetchOnWindowFocus: false,
+  });
+  const peopleQ = useInfiniteQuery({
+    queryKey: ["search-people-infinite", token, peopleRoute],
+    initialPageParam: 1,
+    queryFn: ({ signal, pageParam }) => fetchFn<PeopleSearchRes>({ route: `${peopleRoute}&page=${pageParam}`, options: { headers, signal } }),
+    getNextPageParam: (last, pages, page) => nextResultsPage(last, pages, page, limit, response => response.people),
+    enabled: !!token && !!context.label,
+    refetchOnWindowFocus: false,
+  });
+  const videos = uniqueResults(videoQ.data?.pages.flatMap(page => page.videos) ?? []);
+  const playlists = uniqueResults(playlistQ.data?.pages.flatMap(page => page.playlists) ?? []);
+  const people = uniqueResults(peopleQ.data?.pages.flatMap(page => page.people) ?? []);
   const queries = [videoQ, playlistQ, peopleQ];
   const counts = [
-    videoQ.data?.pagination?.total ?? videoQ.data?.videos?.length,
-    playlistQ.data?.pagination?.total ?? playlistQ.data?.playlists?.length,
-    peopleQ.data?.pagination?.total ?? peopleQ.data?.people?.length,
+    videoQ.data?.pages[0]?.pagination?.total ?? (videoQ.data ? videos.length : undefined),
+    playlistQ.data?.pages[0]?.pagination?.total ?? (playlistQ.data ? playlists.length : undefined),
+    peopleQ.data?.pages[0]?.pagination?.total ?? (peopleQ.data ? people.length : undefined),
   ];
   const activeQuery = queries[selected];
-  const total = counts[selected] ?? 0;
   const fetching = hasSearch && (!token || activeQuery.isLoading);
   const initialLoading = hasSearch && (!token || queries.some((query) => query.isLoading));
-  const allCountsKnown = counts.every((count) => count !== undefined);
-  const resultCount = counts.reduce<number>((sum, count) => sum + (count ?? 0), 0);
   const tabs = [
-    { label: t("videosTab"), description: t("searchVideosHint"), icon: "video" as const },
-    { label: t("playlistsTab"), description: t("searchPlaylistsHint"), icon: "playlist" as const },
-    { label: t("contributorsTab"), description: t("searchPeopleHint"), icon: "people" as const },
+    { label: t("videosTab"), icon: "video" as const },
+    { label: t("playlistsTab"), icon: "playlist" as const },
+    { label: t("contributorsTab"), icon: "people" as const },
   ];
 
   useEffect(() => {
@@ -87,24 +91,24 @@ function SearchResults({ context }: { context: SearchContext }) {
     }
   }, [initialLoading, hasSearch, counts[0], counts[1], counts[2]]);
 
-  useEffect(() => {
-    if (activeQuery.data && !activeQuery.isFetching && page > Math.max(1, Math.ceil(total / limit))) {
-      setPage(Math.max(1, Math.ceil(total / limit)));
-    }
-  }, [activeQuery.data, activeQuery.isFetching, page, total, limit]);
+  const { fetchNextPage, refetch, isError, isFetchNextPageError } = activeQuery;
+  const loadMore = useCallback(() => {
+    if (isError && !isFetchNextPageError) void refetch();
+    else void fetchNextPage({ cancelRefetch: false });
+  }, [fetchNextPage, refetch, isError, isFetchNextPageError]);
 
   const results: SearchResult[] = selected === 0
-    ? (videoQ.data?.videos ?? []).map((video) => ({
+    ? videos.map((video) => ({
         id: video.id, kind: "video", title: video.title, href: `/video/${video.id}`,
         thumbnail: getVideoThumbnail(video), preview_url: video.preview_url, author: video.people?.map((person) => person.name).join(", ") || video.uploader_name,
         views: video.view_count, date: video.created_at, duration: video.duration_seconds, progress: video.percentage_watched,
       }))
-    : selected === 1 ? (playlistQ.data?.playlists ?? []).map((playlist) => ({
+    : selected === 1 ? playlists.map((playlist) => ({
         id: playlist.id, kind: "playlist", title: playlist.title, href: `/playlist/${playlist.id}`,
         thumbnail: playlist.thumbnail_url, description: playlist.description || "",
         views: playlist.view_count, date: playlist.created_at, videoCount: playlist.video_count,
       }))
-    : (peopleQ.data?.people ?? []).map((person) => ({
+    : people.map((person) => ({
         id: person.id, kind: "people", title: person.name,
         href: `/search?${new URLSearchParams({ person: person.id, name: person.name })}`,
         thumbnail: person.image_url, description: person.description || t("noDescription"), videoCount: Number(person.total_video_count),
@@ -124,7 +128,6 @@ function SearchResults({ context }: { context: SearchContext }) {
             <h1 id="search-heading">{hasSearch ? t(contextTitle, { value: context.label }) : t("searchLibraryTitle")}</h1>
             <p className={styles.subtitle}>{t("searchLibrarySubtitle")}</p>
           </div>
-          {hasSearch && allCountsKnown ? <div className={styles.totalBadge}><SearchIcon name="search" /><span>{t("searchResultCount", { count: resultCount })}</span></div> : null}
         </div>
         <form className={styles.searchForm} role="search" onSubmit={(event) => {
           event.preventDefault();
@@ -140,30 +143,28 @@ function SearchResults({ context }: { context: SearchContext }) {
 
       <div className={styles.layout}>
         <aside className={styles.sidebar}>
-          <p className={styles.sidebarTitle}>{t("searchContentType")}</p>
           <nav className={styles.categories} aria-label={t("searchContentType")}>
             {tabs.map((tab, index) => (
-              <button key={tab.icon} type="button" aria-pressed={selected === index} onClick={() => { choseCategory.current = true; setSelected(index); setPage(1); }}>
+              <button key={tab.icon} type="button" aria-pressed={selected === index} onClick={() => { choseCategory.current = true; setSelected(index); }}>
                 <span className={styles.categoryIcon}><SearchIcon name={tab.icon} /></span>
-                <span className={styles.categoryText}><strong>{tab.label}</strong><small>{tab.description}</small></span>
+                <span className={styles.categoryText}><strong>{tab.label}</strong></span>
                 <span className={styles.count}>{counts[index] ?? (!hasSearch || queries[index].isError ? "—" : "…")}</span>
               </button>
             ))}
           </nav>
           <div className={styles.browseCard}>
-            <span className={styles.browseIcon}><SearchIcon name="playlist" /></span>
             <h2>{t("searchExploreTitle")}</h2>
             <p>{t("searchExploreText")}</p>
-            <Link to="/">{t("searchExploreAction")}<SearchIcon name="arrow" /></Link>
+            <Link to="/">{t("searchExploreAction")}</Link>
           </div>
         </aside>
 
         <section className={styles.results} aria-labelledby="results-heading" aria-busy={fetching || activeQuery.isFetching}>
           <div className={styles.resultsToolbar}>
-            <div><h2 id="results-heading">{tabs[selected].label}<span>{counts[selected] ?? "—"}</span></h2><p>{t("searchMatchingResults")}</p></div>
+            <div><h2 id="results-heading">{tabs[selected].label}<span>{counts[selected] ?? "—"}</span></h2></div>
             {selected !== 2 && hasSearch ? <div className={styles.sort}><span>{t("searchSortBy")}</span><CustomSelect
               value={sort}
-              onChange={(value) => { setSort(value); setPage(1); }}
+              onChange={(value) => { setSort(value); }}
               options={[{ value: "relevance", label: t("searchSortRelevance") }, { value: "date", label: t("searchSortNewest") }, { value: "views", label: t("searchSortViews") }]}
               ariaLabel={t("searchSortBy")}
               triggerClassName={styles.sortSelect}
@@ -175,16 +176,17 @@ function SearchResults({ context }: { context: SearchContext }) {
             <div className={styles.resultList} aria-label={t("searchLoadingResults")}>
               {[0, 1, 2].map((item) => <div key={item} className={styles.skeleton} aria-hidden="true"><div /><span><i /><i /><i /></span></div>)}
             </div>
-          ) : activeQuery.isError ? (
+          ) : activeQuery.isError && !results.length ? (
             <div className={styles.empty} role="alert"><SearchIcon name="search" /><h3>{t("searchLoadFailed")}</h3><p>{t("searchTryAgain")}</p><button type="button" onClick={() => void activeQuery.refetch()}>{t("usersRetry")}</button></div>
           ) : results.length ? (
             <div className={styles.resultList}>{results.map((result) => <SearchResultCard key={`${result.kind}-${result.id}`} result={result} />)}</div>
           ) : (
             <div className={styles.empty}><SearchIcon name="search" /><h3>{t("noResultsTitle")}</h3><p>{t("noResultsText")}</p><button type="button" onClick={() => { document.getElementById("library-search")?.focus(); }}>{t("searchChangeQuery")}</button></div>
           )}
-          {hasSearch && activeQuery.data && !activeQuery.isError ? <Pagination
-            page={page} limit={limit} total={total} loading={activeQuery.isFetching}
-            label={tabs[selected].label} onPageChange={setPage} onLimitChange={(value) => { setLimit(value); setPage(1); }}
+          {hasSearch && results.length > 0 ? <InfiniteScroll
+            key={`${selected}-${sort}`}
+            hasMore={activeQuery.hasNextPage} fetching={activeQuery.isFetching} error={activeQuery.isError}
+            onLoadMore={loadMore} loadingLabel={t("searchLoadingResults")}
           /> : null}
         </section>
       </div>

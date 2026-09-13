@@ -1,10 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { fetchFn } from "~/API";
+import { fetchRecommendedVideos, fetchVectorVideos, type RecommendationResult } from "~/videoDiscovery";
 import type { VideoT } from "~/types";
 import Item from "../itemSlider/item";
 import Pagination from "~/components/library/pagination";
+import InfiniteScroll from "~/components/library/infiniteScroll";
+import { nextResultsPage, uniqueResults } from "~/components/library/infiniteResults";
 import { getToken } from "~/functions";
 import { useI18n } from "~/i18n";
 import { useRouter } from "next/navigation";
@@ -12,7 +15,7 @@ import { usePrivacyPreferences } from "~/privacy/privacyPreferences";
 
 type VideoCollection = {
   videos: VideoT[];
-  pagination?: { page: number; limit: number; total?: number; total_pages?: number };
+  pagination?: { page: number; limit: number; total?: number; total_pages?: number; totalPages?: number };
 };
 const collections: Record<string, { route: string; title: string; requiresAuth: boolean }> = {
   "0": { route: "api/videos/user/continue", title: "continueWatching", requiresAuth: true },
@@ -32,15 +35,41 @@ function VideoCollectionPage({ type }: { type: string }) {
   const collection = collections[type];
   const allowed = !!collection && (!collection.requiresAuth || !!token);
   const personalizationDisabled = type === "1" && !preferences.personalization;
-  const { data, isPending, isFetching, isError, refetch } = useQuery({
+  const infinite = type === "1" || type === "2";
+  const paginatedQuery = useQuery({
     queryKey: ["video-collection", token, type, page, limit],
     queryFn: ({ signal }) => fetchFn<VideoCollection>({
       route: `${collection.route}?${new URLSearchParams({ page: String(page), limit: String(limit) })}`,
       options: { headers: token ? { Authorization: `Bearer ${token}` } : {}, signal },
     }),
-    enabled: allowed && !personalizationDisabled,
+    enabled: allowed && !infinite,
     staleTime: 30_000,
   });
+  const infiniteQuery = useInfiniteQuery({
+    queryKey: ["video-collection-infinite", token, type, limit],
+    initialPageParam: 1,
+    queryFn: ({ signal, pageParam }): Promise<RecommendationResult<VideoCollection>> => {
+      const request = {
+        route: `${collection.route}?${new URLSearchParams({ page: String(pageParam), limit: String(limit) })}`,
+        options: { headers: new Headers(token ? { Authorization: `Bearer ${token}` } : {}), signal },
+      };
+      if (type !== "1") return fetchFn<VideoCollection>(request);
+      // History only determines the initial empty state, not the end of a loaded list.
+      return pageParam === 1 ? fetchRecommendedVideos<VideoCollection>(request) : fetchVectorVideos<VideoCollection>(request);
+    },
+    getNextPageParam: (last, pages, page) => nextResultsPage(last, pages, page, limit, response => response.videos),
+    enabled: allowed && infinite && !personalizationDisabled,
+    staleTime: 30_000,
+  });
+  const { isPending, isFetching, isError, refetch } = infinite ? infiniteQuery : paginatedQuery;
+  const data = infinite ? infiniteQuery.data?.pages[0] : paginatedQuery.data;
+  const videos = infinite ? uniqueResults(infiniteQuery.data?.pages.flatMap(page => page.videos) ?? []) : data?.videos ?? [];
+  const hasWatchHistory = infiniteQuery.data?.pages[0]?.hasWatchHistory;
+  const { fetchNextPage, isFetchNextPageError } = infiniteQuery;
+  const loadMore = useCallback(() => {
+    if (isError && !isFetchNextPageError) void refetch();
+    else void fetchNextPage({ cancelRefetch: false });
+  }, [fetchNextPage, refetch, isError, isFetchNextPageError]);
 
   useEffect(() => {
     if (!collection?.requiresAuth || token) return;
@@ -55,17 +84,21 @@ function VideoCollectionPage({ type }: { type: string }) {
       <p>{t("privacyPersonalizationDisabled")}</p>
       <button type="button" className="privacySettingsButton mt-4" onClick={openPreferences}>{t("privacyEnablePersonalization")}</button>
     </div> : <>
-      {isError ? <div role="alert" className="platformUsersState">
+      {isError && !videos.length ? <div role="alert" className="platformUsersState">
         <p>{t("searchLoadFailed")}</p><button type="button" className="button" onClick={() => void refetch()}>{t("usersRetry")}</button>
       </div> : isPending ? <div className="holder collection mb-8" aria-busy="true">
         {Array.from({ length: 12 }, (_, index) => <div className="skeleton-item" key={index}><div className="skeleton-thumbnail" /><div className="skeleton-content"><div className="skeleton-title" /><div className="skeleton-text" /></div></div>)}
-      </div> : data?.videos.length ? <div className="holder collection mb-8">
-        {data.videos.map(video => <Item key={video.id} props={video} />)}
-      </div> : <p className="platformUsersState">{t(type === "1" && page === 1 ? "watchSomeVideos" : "adminZeroResults")}</p>}
-      <Pagination page={page} limit={limit} total={data?.pagination?.total} totalPages={data?.pagination?.total_pages}
+      </div> : videos.length ? <div className="holder collection mb-8">
+        {videos.map(video => <Item key={video.id} props={video} />)}
+      </div> : type === "1" ? <div className="watchToRecommend">{t(hasWatchHistory ? "noMoreRecommendations" : "watchSomeVideos")}</div>
+      : <p className="platformUsersState">{t("adminZeroResults")}</p>}
+      {infinite ? (videos.length > 0 ? <InfiniteScroll
+        hasMore={infiniteQuery.hasNextPage} fetching={isFetching} error={isError}
+        onLoadMore={loadMore} loadingLabel={t("videoLoadingData")}
+      /> : null) : <Pagination page={page} limit={limit} total={data?.pagination?.total} totalPages={data?.pagination?.totalPages ?? data?.pagination?.total_pages}
         itemCount={data?.videos.length} hasNextPage={(data?.videos.length ?? 0) === limit}
         loading={isFetching || isPending} disabled={isError} label={t(collection.title)}
-        onPageChange={setPage} onLimitChange={value => { setLimit(value); setPage(1); }} />
+        onPageChange={setPage} onLimitChange={value => { setLimit(value); setPage(1); }} />}
     </>}
   </main>;
 }

@@ -262,13 +262,13 @@ test('a chapter title containing HTML is displayed literally', t => {
   assert.equal(chapter.querySelector('img'), null);
 });
 
-test('video collection navigation requests page 2 and shows only that page', async t => {
+test('watch history retains numbered pagination and shows only the selected page', async t => {
   const container = dom(t);
   const requests = [];
   const load = modules({
     '~/i18n': i18n,
-    '~/functions': { getToken: () => null },
-    'react-router': { useParams: () => ({ type: '2' }) },
+    '~/functions': { getToken: () => 'user' },
+    'react-router': { useParams: () => ({ type: '4' }) },
     'next/navigation': { useRouter: () => ({ replace: () => {} }) },
     '~/privacy/privacyPreferences': { usePrivacyPreferences: () => ({ preferences: { personalization: true }, openPreferences: () => {} }) },
     '~/components/customSelect/customSelect': { default: () => null },
@@ -345,3 +345,320 @@ test('an uninitiated Google callback never exchanges a code or follows its suppl
   assert.match(container.textContent, /googleLoginRetry/);
   assert.equal(container.querySelector('a').getAttribute('href'), '/login?redirect=%2F');
 });
+
+test('vector discovery preserves parameters, authorization, cancellation and response pagination for all supported routes', async () => {
+  for (const route of [
+    'api/videos/search?q=Obrada%20%26%20zvuk&page=2&limit=10&sort=relevance',
+    'api/videos/video-id/similar?page=2&limit=20',
+    'api/videos/user/recommended?page=1&limit=20',
+  ]) {
+    const requests = [];
+    const options = { headers: { Authorization: 'Bearer user' }, signal: new AbortController().signal };
+    const vector = { videos: [{ id: 'semantic' }], pagination: { total: 21, page: 2, limit: 10, totalPages: 3 } };
+    const regular = { videos: [{ id: 'keyword' }], pagination: { total: 1, page: 1, limit: 10, totalPages: 1 } };
+    let vectorResult = vector;
+    const { fetchVectorVideos } = modules({ '~/API': { fetchFn: async request => {
+      requests.push(request);
+      return request.route.includes('/vector') ? vectorResult : regular;
+    } } })('app/videoDiscovery.ts');
+    assert.equal(await fetchVectorVideos({ route, options }), vector);
+    assert.equal(requests.length, 1);
+    assert.equal(requests[0].route, route.replace('?', '/vector?'));
+    assert.equal(requests[0].options, options);
+    requests.length = 0;
+    vectorResult = { videos: [], pagination: { total: 0 } };
+    assert.equal(await fetchVectorVideos({ route, options }), regular);
+    assert.deepEqual(requests.map(request => request.route), [route.replace('?', '/vector?'), route]);
+    assert.ok(requests.every(request => request.options === options));
+  }
+});
+
+test('filter-only browsing stays on ordinary search; unpaginated similar discovery supports fallback', async () => {
+  const requests = [];
+  const { fetchVectorVideos } = modules({ '~/API': { fetchFn: async ({ route }) => {
+    requests.push(route); return { videos: [] };
+  } } })('app/videoDiscovery.ts');
+  for (const query of ['category=category-id', 'tags=tag-id', 'person=person-id', 'q=']) {
+    const route = `api/videos/search?${query}&page=1&limit=10`;
+    await fetchVectorVideos({ route, options: {} });
+    assert.equal(requests.pop(), route);
+    assert.equal(requests.length, 0);
+  }
+  await fetchVectorVideos({ route: 'api/videos/video-id/similar', options: {} });
+  assert.deepEqual(requests, ['api/videos/video-id/similar/vector', 'api/videos/video-id/similar']);
+});
+
+test('vector errors and aborted requests never trigger ordinary search', async () => {
+  for (const error of [Object.assign(new Error('Unauthorized'), { status: 401 }), Object.assign(new Error('Forbidden'), { status: 403 }), new Error('Server unavailable')]) {
+    let calls = 0;
+    const { fetchVectorVideos } = modules({ '~/API': { fetchFn: async () => { calls++; throw error; } } })('app/videoDiscovery.ts');
+    await assert.rejects(fetchVectorVideos({ route: 'api/videos/search?q=topic', options: {} }), actual => actual === error);
+    assert.equal(calls, 1);
+  }
+  const controller = new AbortController();
+  let calls = 0;
+  const { fetchVectorVideos } = modules({ '~/API': { fetchFn: async () => { calls++; controller.abort(); return { videos: [] }; } } })('app/videoDiscovery.ts');
+  await assert.rejects(fetchVectorVideos({ route: 'api/videos/search?q=topic', options: { signal: controller.signal } }), { name: 'AbortError' });
+  assert.equal(calls, 1);
+});
+
+for (const surface of ['page', 'slider']) {
+  for (const scenario of ['new-user', 'watched-all', 'vector-results', 'fallback-results', 'history-error', 'personalization-disabled']) {
+    test(`${surface} recommendations: ${scenario}`, async t => {
+      const container = dom(t);
+      const requests = [];
+      const load = modules({
+        '~/i18n': i18n,
+        '~/functions': { getToken: () => 'user' },
+        'react-router': { useParams: () => ({ type: '1' }), Link: identity },
+        'next/navigation': { useRouter: () => ({ replace: () => {} }) },
+        '~/authorization/authorization': { useAuthorization: () => ({ can: () => true }) },
+        '~/context': { CurrentNavContext: React.createContext({ setCurrentNav: () => {} }) },
+        '~/constants': { ArrowSVG: null },
+        '~/privacy/privacyPreferences': { usePrivacyPreferences: () => ({ preferences: { personalization: scenario !== 'personalization-disabled' }, openPreferences: () => {} }) },
+        '~/components/customSelect/customSelect': { default: () => null },
+        '../itemSlider/item': { default: ({ props }) => React.createElement('p', { 'data-video': props.id }, props.title) },
+        './item': { default: ({ props }) => React.createElement('p', { 'data-video': props.id }, props.title) },
+        './playlistItem': { default: () => null },
+        '~/API': { fetchFn: async ({ route, options }) => {
+          requests.push(route);
+          assert.equal(new Headers(options.headers).get('Authorization'), 'Bearer user');
+          assert.ok(options.signal instanceof AbortSignal);
+          if (route.includes('/history')) {
+            if (scenario === 'history-error') throw new Error('History unavailable');
+            return { videos: scenario === 'watched-all' ? [{ id: 'watched' }] : [] };
+          }
+          const populated = scenario === 'vector-results' || (scenario === 'fallback-results' && !route.includes('/vector'));
+          return { videos: populated ? [{ id: 'result', title: 'Recommended video' }] : [], pagination: { total: populated ? 1 : 0, totalPages: 1 } };
+        } },
+      });
+      const Component = load(surface === 'page' ? 'app/components/videosPage/videosPage.tsx' : 'app/components/itemSlider/itemSlider.tsx').default;
+      const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+      const root = createRoot(container); container.mountedRoot = root;
+      t.after(() => client.clear());
+      await act(async () => root.render(React.createElement(QueryClientProvider, { client }, React.createElement(Component, { props: { type: 1, limit: 20 } }))));
+      await waitForUpdates();
+      if (scenario === 'personalization-disabled') {
+        assert.deepEqual(requests, []);
+        assert.doesNotMatch(container.textContent, /watchSomeVideos|noMoreRecommendations/);
+        return;
+      }
+      assert.match(requests[0], /^api\/videos\/user\/recommended\/vector\?/);
+      if (scenario === 'vector-results' || scenario === 'fallback-results') {
+        assert.match(container.textContent, /Recommended video/);
+        assert.equal(requests.length, scenario === 'vector-results' ? 1 : 2);
+      } else {
+        assert.equal(requests.length, 3);
+        assert.equal(requests[1], requests[0].replace('/vector', ''));
+        assert.equal(requests[2], 'api/videos/user/history?page=1&limit=1');
+        if (scenario === 'history-error') {
+          assert.match(container.querySelector('[role="alert"]').textContent, /searchLoadFailed/);
+          assert.doesNotMatch(container.textContent, /watchSomeVideos|noMoreRecommendations/);
+        } else {
+          assert.match(container.textContent, new RegExp(scenario === 'watched-all' ? 'noMoreRecommendations' : 'watchSomeVideos'));
+          assert.doesNotMatch(container.textContent, new RegExp(scenario === 'watched-all' ? 'watchSomeVideos' : 'noMoreRecommendations'));
+        }
+      }
+    });
+  }
+}
+
+function intersectionObserver(t) {
+  const previous = globalThis.IntersectionObserver;
+  const observers = new Set();
+  globalThis.IntersectionObserver = class {
+    constructor(callback) { this.callback = callback; }
+    observe() { observers.add(this); }
+    disconnect() { observers.delete(this); }
+  };
+  t.after(() => { globalThis.IntersectionObserver = previous; });
+  return async () => {
+    await act(async () => {
+      for (const observer of [...observers]) {
+        // Browsers can report multiple intersections before React commits loading state.
+        observer.callback([{ isIntersecting: true }]);
+        observer.callback([{ isIntersecting: true }]);
+      }
+    });
+    await waitForUpdates();
+  };
+}
+
+test('infinite results respect both pagination formats, unknown totals, empty and repeated pages', () => {
+  const { nextResultsPage, uniqueResults } = modules()('app/components/library/infiniteResults.ts');
+  const getItems = response => response.videos;
+  const first = { videos: [{ id: 'a' }, { id: 'b' }] };
+  const second = { videos: [{ id: 'c' }, { id: 'd' }] };
+  assert.equal(nextResultsPage(first, [first], 1, 2, getItems), 2);
+  assert.equal(nextResultsPage({ ...second, videos: [{ id: 'c' }] }, [first, second], 2, 2, getItems), undefined);
+  for (const pagination of [{ totalPages: 2 }, { total_pages: 2 }, { total: 4 }, { hasNextPage: false }]) {
+    assert.equal(nextResultsPage({ ...second, pagination }, [first, second], 2, 2, getItems), undefined);
+  }
+  assert.equal(nextResultsPage({ ...first, pagination: { total: 4 } }, [first], 1, 2, getItems), 2);
+  assert.equal(nextResultsPage({ ...first, pagination: { total: 8, limit: 2 } }, [first], 1, 20, getItems), 2);
+  assert.equal(nextResultsPage(first, [first, first], 2, 2, getItems), undefined);
+  assert.equal(nextResultsPage({ videos: [], pagination: { total: 100 } }, [first], 2, 2, getItems), undefined);
+  assert.deepEqual(uniqueResults([...first.videos, { id: 'b' }, ...second.videos]).map(item => item.id), ['a', 'b', 'c', 'd']);
+});
+
+for (const type of ['1', '2']) {
+  test(`${type === '1' ? 'recommended' : 'trending'} scroll appends results, retains them on failure, retries and stops at the end`, async t => {
+    const container = dom(t);
+    const scroll = intersectionObserver(t);
+    const requests = [];
+    let fail = true;
+    const load = modules({
+      '~/i18n': i18n,
+      '~/functions': { getToken: () => 'user' },
+      'react-router': { useParams: () => ({ type }) },
+      'next/navigation': { useRouter: () => ({ replace: () => {} }) },
+      '~/privacy/privacyPreferences': { usePrivacyPreferences: () => ({ preferences: { personalization: true }, openPreferences: () => {} }) },
+      '../itemSlider/item': { default: ({ props }) => React.createElement('p', { 'data-video': props.id }, props.title) },
+      '~/API': { fetchFn: async ({ route }) => {
+        const url = new URL(route, 'https://api.example/');
+        const page = Number(url.searchParams.get('page'));
+        requests.push({ path: url.pathname, page });
+        if (page === 2 && fail) throw new Error('Temporary failure');
+        return { videos: page === 1 ? Array.from({ length: 20 }, (_, i) => ({ id: `v${i}`, title: `Video ${i}` })) : [{ id: 'v19', title: 'Duplicate' }, { id: 'v20', title: 'Last video' }], pagination: { totalPages: 2 } };
+      } },
+    });
+    const Page = load('app/components/videosPage/videosPage.tsx').default;
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const root = createRoot(container); container.mountedRoot = root;
+    t.after(() => client.clear());
+    await act(async () => root.render(React.createElement(QueryClientProvider, { client }, React.createElement(Page))));
+    await waitForUpdates();
+    assert.equal(container.querySelectorAll('[data-video]').length, 20);
+    assert.doesNotMatch(container.textContent, /adminRowsPerPage/);
+    await scroll();
+    assert.equal(container.querySelectorAll('[data-video]').length, 20);
+    assert.match(container.querySelector('[role="alert"]').textContent, /searchLoadFailed/);
+    await scroll();
+    assert.equal(requests.length, 2, 'failed pages must not automatically retry on every intersection');
+    fail = false;
+    await act(async () => [...container.querySelectorAll('button')].find(button => button.textContent === 'usersRetry').click());
+    await waitForUpdates();
+    assert.equal(container.querySelectorAll('[data-video]').length, 21);
+    assert.equal(container.querySelectorAll('[data-video="v19"]').length, 1);
+    assert.equal(container.querySelector('[role="alert"]'), null);
+    assert.match(container.textContent, /Last video/);
+    await scroll();
+    assert.deepEqual(requests.map(request => request.page), [1, 2, 2]);
+    assert.ok(requests.every(request => request.path === (type === '1' ? '/api/videos/user/recommended/vector' : '/api/videos/trending')));
+  });
+}
+
+test('search scroll appends each content type independently and resets results for sort and query changes', async t => {
+  const container = dom(t);
+  const scroll = intersectionObserver(t);
+  const requests = [];
+  let searchValue = 'video';
+  const load = modules({
+    '~/i18n': i18n,
+    '~/functions': { getToken: () => 'user' },
+    'react-router': { useParams: () => ({ searchValue }), useSearchParams: () => [new URLSearchParams()], useNavigate: () => () => {}, Link: identity },
+    './searchIcons': { SearchIcon: () => null },
+    './searchResultCard': { default: ({ result }) => React.createElement('p', { 'data-result': `${result.kind}-${result.id}` }, result.title) },
+    '~/components/customSelect/customSelect': { default: ({ onChange }) => React.createElement('button', { onClick: () => onChange('views') }, 'sort-views') },
+    '~/API': { fetchFn: async ({ route }) => {
+      const url = new URL(route, 'https://api.example/');
+      const kind = url.pathname.includes('/videos/') ? 'videos' : url.pathname.includes('/playlists/') ? 'playlists' : 'people';
+      const page = Number(url.searchParams.get('page'));
+      const q = url.searchParams.get('q'); const sort = url.searchParams.get('sort') || 'relevance';
+      requests.push({ kind, page, q, sort });
+      return { [kind]: Array.from({ length: page === 1 ? 10 : 1 }, (_, i) => ({ id: `${q}-${sort}-${page}-${i}`, title: `${q} ${sort}`, name: `${q} ${sort}` })), pagination: { total: 11, limit: 10 } };
+    } },
+  });
+  const Page = load('app/components/searchPage/searchPage.tsx').default;
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const root = createRoot(container); container.mountedRoot = root;
+  t.after(() => client.clear());
+  const render = () => root.render(React.createElement(QueryClientProvider, { client }, React.createElement(Page)));
+  await act(async () => render());
+  await waitForUpdates();
+  assert.equal(container.querySelectorAll('[data-result]').length, 10);
+  assert.doesNotMatch(container.textContent, /adminRowsPerPage/);
+  await scroll();
+  assert.equal(container.querySelectorAll('[data-result]').length, 11);
+  assert.deepEqual(requests.filter(request => request.page === 2).map(request => request.kind), ['videos']);
+  for (const index of [1, 2]) {
+    await act(async () => container.querySelectorAll('[aria-pressed]')[index].click());
+    assert.equal(container.querySelectorAll('[data-result]').length, 10);
+    await scroll();
+    assert.equal(container.querySelectorAll('[data-result]').length, 11);
+  }
+  await act(async () => container.querySelectorAll('[aria-pressed]')[0].click());
+  assert.equal(container.querySelectorAll('[data-result]').length, 11);
+  await act(async () => [...container.querySelectorAll('button')].find(button => button.textContent === 'sort-views').click());
+  await waitForUpdates();
+  assert.equal(container.querySelectorAll('[data-result]').length, 10);
+  assert.ok([...container.querySelectorAll('[data-result]')].every(node => node.textContent === 'video views'));
+  assert.ok(requests.filter(request => request.sort === 'views').every(request => request.page === 1));
+  searchValue = 'new query';
+  await act(async () => render());
+  await waitForUpdates();
+  assert.equal(container.querySelectorAll('[data-result]').length, 10);
+  assert.ok([...container.querySelectorAll('[data-result]')].every(node => node.textContent === 'new query relevance'));
+  assert.ok(requests.filter(request => request.q === 'new query').every(request => request.page === 1));
+});
+
+for (const scenario of ['invalid-id', 'not-found', 'deleted-cached-video', 'empty-response', 'server-error', 'valid-video']) {
+  test(`video page handles ${scenario} without mounting controls for an unavailable video`, async t => {
+    const container = dom(t);
+    window.matchMedia = () => ({ matches: false });
+    const videoId = scenario === 'invalid-id' ? 'f50c7ede-99cf-451d-ada6-d3d0e30a8191h' : 'f50c7ede-99cf-451d-ada6-d3d0e30a8191';
+    const requests = [];
+    const mounted = [];
+    const control = name => ({ props }) => {
+      React.useEffect(() => { mounted.push(name); }, []);
+      return React.createElement('div', { 'data-control': name }, props?.title ?? name);
+    };
+    const load = modules({
+      '~/i18n': i18n,
+      '~/functions': { getToken: () => 'user' },
+      'react-router': { useParams: () => ({ videoId }), useNavigate: () => () => {}, useLocation: () => ({ pathname: `/video/${videoId}`, search: '' }) },
+      './playerCollection/playerCollection': { default: control('player') },
+      './playerCollection/videoInfo': { default: control('info') },
+      './playerCollection/similar': { default: control('similar') },
+      './playerCollection/videoChapters': { default: control('chapters') },
+      './playerCollection/playingPlaylist': { default: control('playlist') },
+      './inPlaylist': { default: control('in-playlist') },
+      './commentsSection': { default: control('comments') },
+      '~/API': { fetchFn: async ({ route, options }) => {
+        requests.push(route);
+        assert.ok(options.signal instanceof AbortSignal);
+        if (route.includes('/similar')) return { videos: [{ id: 'other' }] };
+        if (scenario === 'not-found' || scenario === 'deleted-cached-video') throw Object.assign(new Error('Video not found'), { status: 404 });
+        if (scenario === 'server-error') throw Object.assign(new Error('Unavailable'), { status: 503 });
+        if (scenario === 'empty-response') return null;
+        return { id: videoId, title: 'Playable video' };
+      } },
+    });
+    const Page = load('app/components/playPage/playPage.tsx').default;
+    const client = new QueryClient({ defaultOptions: { queries: { retryDelay: 0 } } });
+    if (scenario === 'deleted-cached-video') client.setQueryData(['video', videoId], { id: videoId, title: 'Cached deleted video' });
+    const root = createRoot(container); container.mountedRoot = root;
+    t.after(() => client.clear());
+    await act(async () => root.render(React.createElement(QueryClientProvider, { client }, React.createElement(Page))));
+    await waitForUpdates();
+    if (scenario === 'valid-video') {
+      assert.ok(container.querySelector('[data-control="player"]'));
+      assert.ok(container.querySelector('[data-control="comments"]'));
+      assert.ok(requests.includes(`api/videos/${videoId}/similar/vector`));
+    } else {
+      assert.deepEqual(mounted, [], 'unavailable videos must never mount the player, comments or related panels');
+      assert.equal(container.querySelector('.player-skeleton'), null);
+      assert.equal(container.querySelector('[aria-busy="true"]'), null);
+      assert.ok(requests.every(route => route === `api/videos/${videoId}`));
+      if (scenario === 'server-error') {
+        assert.match(container.textContent, /videoAnalyticsLoadFailed/);
+        assert.doesNotMatch(container.textContent, /videoNotFound/);
+        assert.ok([...container.querySelectorAll('button')].some(button => button.textContent === 'usersRetry'));
+        assert.equal(requests.length, 3);
+      } else {
+        assert.equal(container.textContent, 'videoNotFound');
+        assert.equal(requests.length, scenario === 'invalid-id' ? 0 : 1);
+      }
+    }
+  });
+}

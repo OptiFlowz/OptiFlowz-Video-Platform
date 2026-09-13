@@ -4,6 +4,7 @@ import Similar from "./playerCollection/similar";
 import VideoInfo from "./playerCollection/videoInfo";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchFn } from "~/API";
+import { fetchVectorVideos } from "~/videoDiscovery";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { SimilarT, VideoT } from "~/types";
 import InPlaylist from "./inPlaylist";
@@ -12,6 +13,8 @@ import { getToken, QUIZ_RETURN_PATH_STORAGE_KEY } from "~/functions";
 import VideoChapters from "./playerCollection/videoChapters";
 import CommentsSection from "./commentsSection";
 import { useI18n } from "~/i18n";
+
+const VIDEO_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function parseVideoSearch(search: string) {
     const params = new URLSearchParams(search);
@@ -135,18 +138,29 @@ function PlayPage(){
         return h;
     }, [token]);
 
-    const { data, isFetchedAfterMount, isLoading } = useQuery({
+    const validVideoId = VIDEO_ID_PATTERN.test(videoId ?? "");
+    const { data, isFetchedAfterMount, isLoading, isError, error, refetch } = useQuery({
         queryKey: ["video", videoId],
-        enabled: Boolean(videoId),
+        enabled: validVideoId,
         staleTime: 4 * 60 * 1000,
         refetchOnMount: "always",
         refetchOnWindowFocus: false,
+        retry: (failureCount, error) => {
+            const status = (error as { status?: number }).status;
+            if (status && status >= 400 && status < 500) return false;
+            return failureCount < 2;
+        },
         queryFn: ({ signal }) =>
-            fetchFn({
+            fetchFn<VideoT | null>({
                 route: `api/videos/${videoId}`,
                 options: { method: "GET", headers: myHeaders, signal },
             }),
     });
+    const videoData = isFetchedAfterMount && !isError ? data ?? undefined : undefined;
+    const isVideoLoading = validVideoId && !isError && (isLoading || !isFetchedAfterMount);
+    const videoStatus = (error as { status?: number } | null)?.status;
+    const videoNotFound = !validVideoId || videoStatus === 404 || videoStatus === 410
+        || (!isVideoLoading && !isError && !videoData?.id);
 
     useEffect(() => {
         return () => {
@@ -228,9 +242,10 @@ function PlayPage(){
 
     const {data: similarData, isLoading: isLoadingSimilar} = useQuery({
         queryKey: ["similar-videos", videoId],
-        queryFn: () => fetchFn({
+        queryFn: ({ signal }) => fetchVectorVideos<SimilarT>({
             route: `api/videos/${videoId}/similar`,
             options: {
+                signal,
                 method: "GET",
                 headers: myHeaders
             }
@@ -238,11 +253,9 @@ function PlayPage(){
         staleTime: 4 * 60 * 1000,
         refetchOnMount: false,
         refetchOnWindowFocus: false,
-        enabled: !!videoId
+        enabled: !!videoData?.id && !videoNotFound
     });
 
-    const videoData = (isFetchedAfterMount ? data : undefined) as VideoT | undefined;
-    const isVideoLoading = isLoading || !isFetchedAfterMount;
     const resolvedSimilarData = similarData as SimilarT | undefined;
     const hasSimilarVideos = (resolvedSimilarData?.videos?.length ?? 0) > 0;
     const hasRelevantPanelsOpen = showChapters || showComments || !!playlistId;
@@ -252,6 +265,31 @@ function PlayPage(){
             {t("quizBackToQuiz")}
         </button>
     ) : null;
+
+    if (videoNotFound) {
+        return <main className="videos"><div className="platformUsersState" role="status">
+            <h1>{t("videoNotFound")}</h1>
+        </div></main>;
+    }
+
+    if (isError) {
+        return <main className="videos"><div className="platformUsersState" role="alert">
+            <p>{t("videoAnalyticsLoadFailed")}</p>
+            <button type="button" className="button" onClick={() => void refetch()}>{t("usersRetry")}</button>
+        </div></main>;
+    }
+
+    if (isVideoLoading) {
+        return <main className="play px-0 py-7.5" aria-busy="true" aria-label={t("videoLoadingData")}>
+            <div className="player aspect-video"><div className="player-skeleton" aria-hidden="true">
+                <div className="player-skeleton__controls">
+                    <span className="player-skeleton__chip player-skeleton__chip--wide" />
+                    <span className="player-skeleton__chip" />
+                    <span className="player-skeleton__chip player-skeleton__chip--short" />
+                </div>
+            </div></div>
+        </main>;
+    }
 
     return <>
         <main className={`play ${isTheater ? "theater pt-23!" : ""} px-0 py-7.5`}>
