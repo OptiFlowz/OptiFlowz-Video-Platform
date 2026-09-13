@@ -62,7 +62,8 @@ export async function setVideoReactionInternal(videoId, userId, reaction) {
       } else {
         // Prebacio sa like -> dislike ili obrnuto
         await client.query(
-          `UPDATE video_reactions SET reaction = $3 WHERE video_id = $1 AND user_id = $2`,
+          `UPDATE video_reactions SET reaction = $3, created_at = NOW()
+           WHERE video_id = $1 AND user_id = $2`,
           [videoId, userId, newVal],
         );
 

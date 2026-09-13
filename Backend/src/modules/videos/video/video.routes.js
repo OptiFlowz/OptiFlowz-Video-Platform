@@ -14,6 +14,7 @@ import {
   handleGetContinueWatching,
   handleGetLikedVideos,
   handleGetRecommended,
+  handleGetPersonalizedRecommendationsVector,
   handleUpdateProgress,
   handleLikeVideo,
   handleDislikeVideo,
@@ -66,6 +67,12 @@ router.get(
   requireAuth,
   requirePermission(Permissions.VIDEOS_LIBRARY_READ),
   handleGetRecommended,
+);
+router.get(
+  '/user/recommended/vector',
+  requireAuth,
+  requirePermission(Permissions.VIDEOS_LIBRARY_READ),
+  handleGetPersonalizedRecommendationsVector,
 );
 router.post(
   '/:id/progress',

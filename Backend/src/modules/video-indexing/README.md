@@ -1,7 +1,8 @@
 # Video indexing
 
 This module generates and stores video embeddings. The video module consumes them
-through `GET /api/videos/search/vector` and `GET /api/videos/:id/similar/vector`.
+through `GET /api/videos/search/vector`, `GET /api/videos/:id/similar/vector`, and
+`GET /api/videos/user/recommended/vector`.
 Existing search and recommendation endpoints continue to use their existing queries.
 
 ## Vector search
@@ -52,6 +53,41 @@ private video owned by the caller. Missing or inaccessible source videos return 
 an accessible source with no usable embeddings returns an empty paginated list.
 Invalid IDs or pagination return 400. This endpoint reuses stored vectors and makes
 no OpenAI requests. No additional migration or configuration is required.
+
+## Personalized recommendations by vector
+
+`GET /api/videos/user/recommended/vector?page=1&limit=20` requires authentication
+and `VIDEOS_LIBRARY_READ`, like the existing recommendations endpoint. The user is
+taken from the authenticated session. It returns the same video cards, including
+`personal_score`, people, media URLs and watch progress, with
+`pagination: { total, page, limit, totalPages }`. Defaults are page 1 and limit 20;
+the page size is capped at 100, and invalid pagination returns 400.
+
+The profile uses at most the latest 10 likes by `video_reactions.created_at` and
+20 watched videos by `watch_progress.last_watched_at`. These limits are constants
+in `getPersonalizedRecommendationsVector.js`, separate from the result page size.
+Watches must have positive progress; disliked and inaccessible videos do not
+contribute. Activity lists are limited before loading embeddings, so missing
+embeddings do not cause older history to enter the profile. A video in both lists
+contributes once with the like weight of 2; watch-only videos have weight 1.
+
+Each seed uses its overview embedding, falling back to its average subtitle
+embedding. Normalized seed vectors are averaged with those weights to form the
+profile. Candidates are ranked by their closest overview or subtitle document to
+the profile, without a similarity cutoff. Only enabled, compatible, successfully
+published documents with nonzero vectors participate, including the last indexed
+revision during reindexing. The primary database is used throughout.
+
+Results contain each video once and only include public, published, ready videos.
+Selected seeds, currently liked or disliked videos, and videos watched more than
+30 percent are excluded. These candidate exclusions apply regardless of activity
+age; older activity does not influence the profile. Ties use views, creation date,
+and ID. No usable recent embeddings means an empty paginated response; there is no
+automatic popularity fallback and no OpenAI request.
+
+Switching between like and dislike refreshes the reaction timestamp so new likes
+sort correctly. Timestamps of older switches made before this change are retained.
+No additional migration or configuration is required.
 
 ## Run
 

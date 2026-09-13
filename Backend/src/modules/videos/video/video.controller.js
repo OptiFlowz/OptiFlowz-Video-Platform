@@ -14,6 +14,7 @@ import { heartbeatWatchDurationInternal } from './handlers/heartbeatWatchDuratio
 import { searchVideosInternal } from './handlers/searchVideos.js';
 import { searchVideosVectorInternal } from './handlers/searchVideosVector.js';
 import { getPersonalizedRecommendationsInternal } from './handlers/getPersonalizedRecommendations.js';
+import { getPersonalizedRecommendationsVectorInternal } from './handlers/getPersonalizedRecommendationsVector.js';
 import { updateWatchProgressInternal } from './handlers/updateWatchProgress.js';
 import { setVideoReactionInternal } from './handlers/setVideoReaction.js';
 import { getSimilarVideosInternal } from './handlers/getSimilarVideos.js';
@@ -198,6 +199,27 @@ export async function handleGetRecommended(req, res) {
   } catch (error) {
     console.error('Get video error:', error);
     res.status(500).json({ message: 'Failed to fetch video' });
+  }
+}
+
+export async function handleGetPersonalizedRecommendationsVector(req, res) {
+  res.set('Cache-Control', 'private, no-store');
+  try {
+    const { limit = '20', page = '1' } = req.query;
+    const results = await getPersonalizedRecommendationsVectorInternal(req.user?.sub, limit, page);
+    res.json({
+      videos: results.videos,
+      pagination: {
+        total: results.total,
+        page: results.page,
+        limit: results.limit,
+        totalPages: Math.ceil(results.total / results.limit),
+      },
+    });
+  } catch (error) {
+    if (error instanceof HttpError) return res.status(error.status).json(error.body);
+    console.error('Get personalized recommendations vector error:', error);
+    res.status(500).json({ message: 'Failed to fetch recommended videos' });
   }
 }
 
