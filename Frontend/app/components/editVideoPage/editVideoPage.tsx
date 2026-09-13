@@ -25,6 +25,7 @@ import { useConstrainedSticky } from "~/components/shared/useConstrainedSticky";
 import { useI18n } from "~/i18n";
 import statusStyles from "../uploadPage/uploadStatus.module.css";
 import CustomSelect from "~/components/customSelect/customSelect";
+import { EditorHeader } from "../shared/editorHeader";
 
 
 
@@ -1161,10 +1162,15 @@ function EditVideoPage() {
     <main className={`uploadMain ${statusStyles.page}`}>
       <Sidebar />
       <div className="uploadSide max-w-full! w-full">
-        <h1>{t("videoEditTitle")}</h1>
-        <p className="mt-1 mb-3 links">
+        <EditorHeader
+          kind="video"
+          id={videoId}
+          resourceTitle={videoData?.title ?? title}
+          heading={t("videoEditTitle")}
+          disabled={!videoData || isVideoLoading}
+        >
           {t("videoDetails")} · {t("uploadCaptionsChapters")}
-        </p>
+        </EditorHeader>
 
         {/* Error Message */}
         {error && (

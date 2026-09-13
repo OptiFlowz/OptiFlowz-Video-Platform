@@ -60,6 +60,85 @@ const waitForUpdates = () => act(() => new Promise(resolve => setTimeout(resolve
 const identity = ({ children }) => children;
 const i18n = { useI18n: () => ({ t: (key, params) => `${key}${params ? JSON.stringify(params) : ''}` }), I18nProvider: identity };
 
+for (const kind of ['video', 'playlist']) {
+  test(`editor ${kind} deletion respects permissions, confirmation, failures and pending requests`, async t => {
+    const container = dom(t);
+    let allowed = false;
+    let confirmed = false;
+    let confirmations = 0;
+    let respond = async () => ({ success: false });
+    const requests = [];
+    const navigations = [];
+    const invalidations = [];
+    const load = modules({
+      '~/i18n': i18n,
+      '~/authorization/authorization': { useAuthorization: () => ({ canAny: () => allowed }) },
+      '~/functions': { getToken: () => 'editor-token' },
+      '~/constants': { DeleteSVG: React.createElement('svg') },
+      '~/API': { fetchFn: async request => { requests.push(request); return respond(); } },
+      'react-router': { useNavigate: () => (...args) => navigations.push(args) },
+      '@tanstack/react-query': { useQueryClient: () => ({ invalidateQueries: options => { invalidations.push(options); return Promise.resolve(); } }) },
+      '~/components/confirmPopup/useConfirm': {
+        useConfirm: () => ({
+          confirm: async options => {
+            confirmations++;
+            assert.match(options.title, /Saved title/);
+            return confirmed;
+          },
+          dialogProps: { open: false },
+        }),
+      },
+      '~/components/confirmPopup/confirmDialog': { ConfirmDialog: () => null },
+    });
+    const { EditorHeader } = load('app/components/shared/editorHeader.tsx');
+    const root = createRoot(container); container.mountedRoot = root;
+    const render = disabled => act(async () => root.render(React.createElement(EditorHeader, {
+      kind, id: 'item-1', resourceTitle: 'Saved title', heading: 'Edit', disabled,
+    }, 'Details')));
+    const click = () => act(async () => container.querySelector('button').click());
+
+    await render(false);
+    assert.equal(container.querySelector('button'), null);
+    allowed = true;
+    await render(true);
+    await click();
+    assert.equal(confirmations, 0);
+    await render(false);
+    await click();
+    assert.equal(confirmations, 1);
+    assert.equal(requests.length, 0, 'cancelling must not delete');
+
+    confirmed = true;
+    await click();
+    assert.equal(navigations.length, 0);
+    assert.ok(container.querySelector('[role="alert"]'));
+    respond = async () => { throw new Error('Network unavailable'); };
+    await click();
+    assert.equal(navigations.length, 0);
+    assert.equal(invalidations.length, 0);
+    assert.equal(container.querySelector('button').disabled, false, 'failure permits retry');
+
+    let finish;
+    respond = () => new Promise(resolve => { finish = resolve; });
+    const count = requests.length;
+    await act(async () => {
+      container.querySelector('button').click();
+      container.querySelector('button').click();
+    });
+    assert.equal(requests.length, count + 1, 'double click sends one request');
+    assert.equal(container.querySelector('button').disabled, true);
+    const request = requests.at(-1);
+    assert.equal(request.route, kind === 'video' ? 'api/video-moderation/video/item-1' : 'api/playlists-moderation/playlist/item-1');
+    assert.equal(request.options.method, 'DELETE');
+    assert.equal(request.options.headers.Authorization, 'Bearer editor-token');
+    await act(async () => finish({ success: true }));
+    const list = kind === 'video' ? 'my-videos' : 'my-playlists';
+    assert.deepEqual(invalidations, [{ queryKey: [list] }]);
+    assert.deepEqual(navigations, [[`/${list}`, { replace: true }]]);
+    assert.equal(container.querySelector('[role="alert"]'), null);
+  });
+}
+
 test('timeline storyboards use the storyboard credential and follow token/video changes', () => {
   const { getPlaybackStoryboardUrl } = modules({
     '~/API': { fetchFn: () => {} },

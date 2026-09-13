@@ -25,6 +25,7 @@ import styles from "./editPlaylistPage.module.css";
 import statusStyles from "../uploadPage/uploadStatus.module.css";
 import { useI18n } from "~/i18n";
 import CustomSelect from "~/components/customSelect/customSelect";
+import { EditorHeader } from "../shared/editorHeader";
 
 function reorderPlaylistVideos(
   videos: PlaylistVideoT[],
@@ -573,10 +574,15 @@ function EditPlaylistPage() {
     <main className={`uploadMain ${statusStyles.page} ${styles.page}`}>
       <Sidebar />
       <div className="uploadSide max-w-full! w-full">
-        <h1>{t("playlistEditTitle")}</h1>
-        <p className="mt-1 mb-3 links">
+        <EditorHeader
+          kind="playlist"
+          id={playlistId}
+          resourceTitle={playlistDetails?.title ?? title}
+          heading={t("playlistEditTitle")}
+          disabled={!playlistDetails || isLoading}
+        >
           {t("playlistEditHelp")}
-        </p>
+        </EditorHeader>
 
         {error && (
           <div className="errorBanner" role="alert">
