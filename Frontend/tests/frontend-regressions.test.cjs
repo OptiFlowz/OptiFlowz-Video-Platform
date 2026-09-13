@@ -60,6 +60,52 @@ const waitForUpdates = () => act(() => new Promise(resolve => setTimeout(resolve
 const identity = ({ children }) => children;
 const i18n = { useI18n: () => ({ t: (key, params) => `${key}${params ? JSON.stringify(params) : ''}` }), I18nProvider: identity };
 
+test('timeline storyboards use the storyboard credential and follow token/video changes', () => {
+  const { getPlaybackStoryboardUrl } = modules({
+    '~/API': { fetchFn: () => {} },
+    '~/functions': { getToken: () => 'user' },
+  })('app/components/playback/useVideoPlayback.ts');
+  const playback = { mux_playback_id: 'video-1', playback_policy: 'signed', tokens: { playback: 'video-token', thumbnail: 'image-token', storyboard: 'storyboard-token' } };
+  const url = new URL(getPlaybackStoryboardUrl(playback));
+  assert.equal(url.origin, 'https://image.mux.com');
+  assert.equal(url.pathname, '/video-1/storyboard.vtt');
+  assert.equal(url.searchParams.get('token'), 'storyboard-token');
+  assert.equal(url.searchParams.get('format'), 'webp');
+  const refreshed = new URL(getPlaybackStoryboardUrl({ ...playback, mux_playback_id: 'video-2', tokens: { storyboard: 'renewed-token' } }));
+  assert.equal(refreshed.pathname, '/video-2/storyboard.vtt');
+  assert.equal(refreshed.searchParams.get('token'), 'renewed-token');
+  assert.equal(getPlaybackStoryboardUrl({ ...playback, tokens: {} }), undefined);
+  assert.equal(getPlaybackStoryboardUrl(undefined), undefined);
+  assert.equal(new URL(getPlaybackStoryboardUrl({ ...playback, playback_policy: 'public', tokens: {} })).searchParams.has('token'), false);
+});
+
+test('search params decode once on refresh and navigation, preserving literal percent signs', async t => {
+  const container = dom(t);
+  let pathname = '/search/Where%20The%20Trade%20Winds%20Blow';
+  let params = { searchValue: ['Where%20The%20Trade%20Winds%20Blow'] };
+  const { useParams } = modules({
+    'next/navigation': { useParams: () => params, usePathname: () => pathname },
+    'next/link': { default: identity },
+  })('next/react-router.tsx');
+  const Consumer = () => React.createElement('output', null, useParams().searchValue);
+  const root = createRoot(container); container.mountedRoot = root;
+  const render = () => act(async () => root.render(React.createElement(Consumer)));
+  await render();
+  assert.equal(container.textContent, 'Where The Trade Winds Blow');
+  params = { searchValue: ['Where The Trade Winds Blow'] };
+  await render();
+  assert.equal(container.textContent, 'Where The Trade Winds Blow');
+  for (const term of ['100% ready', 'literal %20', 'Šta & kako/a+b?', 'two  spaces']) {
+    pathname = `/search/${encodeURIComponent(term)}`;
+    params = { searchValue: [term] };
+    await render();
+    assert.equal(container.textContent, term);
+  }
+  pathname = '/search/bad%ZZ';
+  await render();
+  assert.equal(container.textContent, 'bad%ZZ');
+});
+
 test('redirects retain internal paths and reject executable, external and normalized protocol-relative URLs', () => {
   const { safeRedirect } = modules()('app/auth/safeRedirect.ts');
   for (const value of ['javascript:alert(1)', 'https://evil.example', '//evil.example', '/\\evil.example', '/%2fexample', '/a/..//evil.example', '/%0a/evil', '/a/../%2fexample', '/%zz']) {

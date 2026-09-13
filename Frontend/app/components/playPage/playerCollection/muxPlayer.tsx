@@ -19,7 +19,7 @@ import {
   TRANSCRIPT_REQUEST_EVENT,
 } from "./transcript";
 
-import { useVideoPlayback } from "~/components/playback/useVideoPlayback";
+import { getPlaybackStoryboardUrl, useVideoPlayback } from "~/components/playback/useVideoPlayback";
 import { PlaybackFeedback } from "~/components/playback/playbackFeedback";
 
 interface VideoPlayerProps {
@@ -739,6 +739,7 @@ export default function VideoPlayer({
             updatePlayerReady(false);
           }}
           src={playback.data.stream_url}
+          storyboardSrc={getPlaybackStoryboardUrl(playback.data)}
           autoPlay={autoplay || forceAutoplay}
           preload="auto"
           muted={isAutoplayMuted}

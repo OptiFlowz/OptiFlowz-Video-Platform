@@ -121,6 +121,7 @@ export function useLocation() {
 
 export function useParams<T extends Record<string, string | undefined> = Record<string, string | undefined>>() {
   const params = useNextParams<Record<string, string | string[] | undefined>>();
+  const pathname = usePathname();
 
   return useMemo(() => {
     const normalized: Record<string, string | undefined> = {};
@@ -133,8 +134,19 @@ export function useParams<T extends Record<string, string | undefined> = Record<
       }
     }
 
+    // Read the encoded URL for search terms so refresh and client navigation
+    // decode exactly once, including literal searches such as "%20" or "100%".
+    if (pathname.startsWith("/search/")) {
+      const term = pathname.slice("/search/".length);
+      try {
+        normalized.searchValue = decodeURIComponent(term);
+      } catch {
+        normalized.searchValue = term;
+      }
+    }
+
     return normalized as T;
-  }, [params]);
+  }, [params, pathname]);
 }
 
 export function useSearchParams() {

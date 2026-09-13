@@ -407,7 +407,6 @@ if (template) {
             align-items: stretch;
             gap: calc(0.4 * var(--base));
             padding: calc(0.35 * var(--base));
-            padding-bottom: calc(0.55 * var(--base));
             overflow: hidden;
             color: var(--text1);
             background: var(--preview-card-background);
@@ -437,6 +436,11 @@ if (template) {
             min-height: calc(1.8 * var(--base));
             text-align: center;
             white-space: normal;
+          }
+
+          .preview-card media-preview-chapter-display:not([mediapreviewchapter]),
+          .preview-card media-preview-chapter-display[mediapreviewchapter=""] {
+            display: none;
           }
         </style>
         <media-time-range>

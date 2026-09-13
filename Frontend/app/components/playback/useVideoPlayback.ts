@@ -12,6 +12,17 @@ export type VideoPlayback = {
   expires_at: string | number | null;
 };
 
+export function getPlaybackStoryboardUrl(playback?: VideoPlayback): string | undefined {
+  if (!playback) return undefined;
+  const token = playback.tokens?.storyboard;
+  if (playback.playback_policy === "signed" && !token) return undefined;
+
+  const url = new URL(`https://image.mux.com/${encodeURIComponent(playback.mux_playback_id)}/storyboard.vtt`);
+  url.searchParams.set("format", "webp");
+  if (token) url.searchParams.set("token", token);
+  return url.toString();
+}
+
 export function playbackExpiresAt(value: VideoPlayback["expires_at"]): number {
   if (value == null) return Infinity;
   if (typeof value === "number") return value < 1e12 ? value * 1000 : value;
