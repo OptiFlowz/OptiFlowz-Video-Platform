@@ -18,6 +18,7 @@ import {
   handleLikeVideo,
   handleDislikeVideo,
   handleGetSimilarVideos,
+  handleGetSimilarVideosVector,
   handleGetVideoById,
   handleGetVideoPlayback,
   handleGetComments,
@@ -80,6 +81,7 @@ router.post(
   handleDislikeVideo,
 );
 router.get('/:id/similar', optionalAuth, handleGetSimilarVideos);
+router.get('/:id/similar/vector', optionalAuth, handleGetSimilarVideosVector);
 router.post('/:id/playback', optionalAuth, handleGetVideoPlayback);
 router.get('/:id/comments', optionalAuth, handleGetComments);
 router.get('/:id', optionalAuth, handleGetVideoById);

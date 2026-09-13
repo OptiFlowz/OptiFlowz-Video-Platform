@@ -17,6 +17,7 @@ import { getPersonalizedRecommendationsInternal } from './handlers/getPersonaliz
 import { updateWatchProgressInternal } from './handlers/updateWatchProgress.js';
 import { setVideoReactionInternal } from './handlers/setVideoReaction.js';
 import { getSimilarVideosInternal } from './handlers/getSimilarVideos.js';
+import { getSimilarVideosVectorInternal } from './handlers/getSimilarVideosVector.js';
 import { getVideoByIdInternal } from './handlers/getVideoById.js';
 import { incrementViewCountInternal } from './handlers/incrementViewCount.js';
 
@@ -262,6 +263,32 @@ export async function handleGetSimilarVideos(req, res) {
   } catch (error) {
     console.error('Get video error:', error);
     res.status(500).json({ message: 'Failed to fetch video' });
+  }
+}
+
+export async function handleGetSimilarVideosVector(req, res) {
+  res.set('Cache-Control', 'private, no-store');
+  try {
+    const { limit = '20', page = '1' } = req.query;
+    const results = await getSimilarVideosVectorInternal(
+      req.params.id,
+      req.user?.sub || null,
+      limit,
+      page,
+    );
+    res.json({
+      videos: results.videos,
+      pagination: {
+        total: results.total,
+        page: results.page,
+        limit: results.limit,
+        totalPages: Math.ceil(results.total / results.limit),
+      },
+    });
+  } catch (error) {
+    if (error instanceof HttpError) return res.status(error.status).json(error.body);
+    console.error('Get similar videos vector error:', error);
+    res.status(500).json({ message: 'Failed to fetch similar videos' });
   }
 }
 

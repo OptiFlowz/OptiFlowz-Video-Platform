@@ -1,8 +1,8 @@
 # Video indexing
 
 This module generates and stores video embeddings. The video module consumes them
-through `GET /api/videos/search/vector`. Existing search and recommendation endpoints
-continue to use their existing queries.
+through `GET /api/videos/search/vector` and `GET /api/videos/:id/similar/vector`.
+Existing search and recommendation endpoints continue to use their existing queries.
 
 ## Vector search
 
@@ -29,6 +29,29 @@ videos, without calling OpenAI. Nonempty queries require `OPENAI_API_KEY` in the
 process and incur an embedding request per search. Queries above 6000 UTF-8 bytes
 return 400, missing configuration returns 503, and embedding failures return 502.
 No new database migration is required beyond the video indexing migration.
+
+## Similar videos by vector
+
+`GET /api/videos/:id/similar/vector?page=1&limit=20` returns the usual video cards,
+including `similarity_score`, people, media URLs, and watch progress when signed in.
+Pagination is `{ total, page, limit, totalPages }`, defaults to page 1 with 20 cards,
+and caps the page size at 100. Authentication is optional, like the existing
+`/:id/similar` endpoint.
+
+The reference video uses its published overview embedding, or the average of its
+published subtitle embeddings if no usable overview exists. Other videos are ranked
+by their closest overview or subtitle document using cosine similarity. Results
+exclude the reference video, appear once per video, and include only public,
+published, ready videos. There is no similarity cutoff. Ties are ordered by views,
+creation date, and ID. Disabled sources, incompatible indexing versions, and
+zero vectors are excluded; the last successfully indexed revision remains
+usable while replacement work is pending.
+
+Source-video access matches the details endpoint: a ready public video, or a ready
+private video owned by the caller. Missing or inaccessible source videos return 404;
+an accessible source with no usable embeddings returns an empty paginated list.
+Invalid IDs or pagination return 400. This endpoint reuses stored vectors and makes
+no OpenAI requests. No additional migration or configuration is required.
 
 ## Run
 
