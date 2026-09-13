@@ -1,3 +1,4 @@
+import { withPlaylistCardMedia } from '../playlists/helpers/playlistCardMedia.js';
 import puppeteer from 'puppeteer';
 import { readPool } from '../../database/index.js';
 
@@ -2335,7 +2336,9 @@ export async function generateVideoAnalyticsPdfReport(rawOptions = {}) {
       deviceBreakdown: deviceBreakdownResult.rows || [],
       geographyBreakdown: geographyBreakdownResult.rows || [],
       topVideos: topVideosResult.rows || [],
-      playlists: playlistsResult.rows || [],
+      playlists: (await withPlaylistCardMedia(
+        (playlistsResult.rows || []).map(row => ({ ...row, id: row.playlist_id })),
+      )).map(({ id, ...row }) => row),
       completionBuckets: completionBucketsResult.rows?.[0] || {},
     };
 

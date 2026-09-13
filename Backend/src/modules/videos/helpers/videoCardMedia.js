@@ -87,8 +87,7 @@ export async function withVideoDetailsMedia(video) {
   return result;
 }
 
-export async function withVideoCardMedia(cards, userId = null) {
-  if (!cards.length) return [];
+async function loadCardVideos(cards, userId) {
   // One primary read per list prevents signing stale private/deleted video data
   // returned by a replica, and also supplies fields absent from older card SQL.
   const { rows } = await writePool.query(
@@ -99,6 +98,39 @@ export async function withVideoCardMedia(cards, userId = null) {
        AND (visibility = 'public' OR (visibility = 'private' AND uploaded_by = $2))`,
     [[...new Set(cards.map(card => card.id))], userId],
   );
-  const videos = new Map(rows.map(video => [video.id, video]));
+  return new Map(rows.map(video => [video.id, video]));
+}
+
+// Resolve a display thumbnail without generating unused animated previews.
+export async function withVideoThumbnailMedia(cards, userId = null) {
+  if (!cards.length) return [];
+  const videos = await loadCardVideos(cards, userId);
+  return Promise.all(cards.map(async card => {
+    const video = videos.get(card.id);
+    const stored = video?.thumbnail_url?.trim() || null;
+    let isMuxImage = false;
+    try { isMuxImage = new URL(stored).hostname === 'image.mux.com'; } catch {}
+    if (stored && !isMuxImage) {
+      return { ...card, thumbnail_url: stored, media_expires_at: null };
+    }
+    if (!video || video.mux_status !== 'ready' || !video.mux_playback_id) {
+      return { ...card, thumbnail_url: null, media_expires_at: null };
+    }
+    const expiresAt = Math.floor(Date.now() / 1000) + IMAGE_LIFETIME_SECONDS;
+    const thumbnailUrl = await imageUrl(
+      video.mux_playback_id, video.playback_policy, 'thumbnail.webp', 'thumbnail',
+      thumbnailParams(video),
+    );
+    return {
+      ...card,
+      thumbnail_url: thumbnailUrl,
+      media_expires_at: video.playback_policy === 'signed' ? expiresAt : null,
+    };
+  }));
+}
+
+export async function withVideoCardMedia(cards, userId = null) {
+  if (!cards.length) return [];
+  const videos = await loadCardVideos(cards, userId);
   return Promise.all(cards.map(card => cardMedia(card, videos.get(card.id))));
 }

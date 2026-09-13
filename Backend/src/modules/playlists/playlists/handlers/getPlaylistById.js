@@ -1,3 +1,4 @@
+import { withPlaylistCardMedia } from '../../helpers/playlistCardMedia.js';
 import { readPool } from '../../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../../common/input.validation.js';
@@ -46,5 +47,5 @@ export async function getPlaylistByIdInternal(object, userId = null) {
 
   const result = await readPool.query(query, [id, userId]);
 
-  return result.rows[0] || null;
+  return (await withPlaylistCardMedia(result.rows, userId))[0] || null;
 }

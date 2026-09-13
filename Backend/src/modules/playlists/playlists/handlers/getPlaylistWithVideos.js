@@ -1,3 +1,4 @@
+import { withPlaylistCardMedia } from '../../helpers/playlistCardMedia.js';
 import { withVideoCardMedia } from '../../../videos/helpers/videoCardMedia.js';
 import { readPool } from '../../../../database/index.js';
 
@@ -7,7 +8,7 @@ export async function getPlaylistWithVideosInternal(playlistId, userId = null) {
       p.id,
       p.title,
       p.description,
-      COALESCE(p.thumbnail_url, fv.first_video_thumbnail_url) AS thumbnail_url,
+      p.thumbnail_url,
       p.view_count,
       p.save_count,
       COALESCE(ic.video_count, 0)::int AS video_count,
@@ -29,16 +30,6 @@ export async function getPlaylistWithVideosInternal(playlistId, userId = null) {
       COALESCE(vs.videos, '[]'::json) AS videos
     FROM public.playlists p
 
-    LEFT JOIN LATERAL (
-      SELECT v.thumbnail_url AS first_video_thumbnail_url
-      FROM public.playlist_items pi
-      JOIN public.videos v ON v.id = pi.video_id
-      WHERE pi.playlist_id = p.id
-        AND v.mux_status = 'ready'
-        AND v.published_at IS NOT NULL
-      ORDER BY pi.position ASC
-      LIMIT 1
-    ) fv ON TRUE
 
     LEFT JOIN LATERAL (
       SELECT COUNT(*) AS video_count
@@ -99,5 +90,5 @@ export async function getPlaylistWithVideosInternal(playlistId, userId = null) {
 
   if (!rows[0]) return null;
   rows[0].videos = await withVideoCardMedia(rows[0].videos, userId);
-  return rows[0];
+  return (await withPlaylistCardMedia(rows, userId))[0];
 }

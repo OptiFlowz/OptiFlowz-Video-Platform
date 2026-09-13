@@ -1,6 +1,7 @@
+import { withPlaylistCardMedia } from '../../helpers/playlistCardMedia.js';
 import { readPool } from '../../../../database/index.js';
 
-export async function searchPlaylistsInternal(searchParams) {
+export async function searchPlaylistsInternal(searchParams, userId = null) {
   const { query: searchQuery, tags, limit = 20, offset = 0, sortBy = 'relevance' } = searchParams;
 
   const params = [];
@@ -11,7 +12,7 @@ export async function searchPlaylistsInternal(searchParams) {
       p.id,
       p.title,
       p.description,
-      COALESCE(p.thumbnail_url, fv.first_video_thumbnail_url) AS thumbnail_url,
+      p.thumbnail_url,
       p.view_count,
       ic.video_count,
       p.created_at
@@ -41,16 +42,6 @@ export async function searchPlaylistsInternal(searchParams) {
 
   query += `
     FROM public.playlists p
-    LEFT JOIN LATERAL (
-      SELECT v.thumbnail_url AS first_video_thumbnail_url
-      FROM public.playlist_items pi2
-      JOIN public.videos v ON v.id = pi2.video_id
-      WHERE pi2.playlist_id = p.id
-        AND v.mux_status = 'ready'
-        AND v.published_at IS NOT NULL
-      ORDER BY pi2.position ASC
-      LIMIT 1
-    ) fv ON TRUE
     LEFT JOIN LATERAL (
       SELECT COUNT(*)::int AS video_count
       FROM public.playlist_items pi3
@@ -157,7 +148,7 @@ export async function searchPlaylistsInternal(searchParams) {
   const { rows: countRows } = await readPool.query(countQuery, countParams);
 
   return {
-    playlists: rows,
+    playlists: await withPlaylistCardMedia(rows, userId),
     total: parseInt(countRows[0]?.total ?? '0', 10),
     limit,
     offset,

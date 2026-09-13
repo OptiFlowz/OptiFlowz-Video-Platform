@@ -28,6 +28,7 @@ export async function getChannelVideos(req, res) {
 }
 
 export async function getChannelPlaylists(req, res) {
+  res.set('Cache-Control', 'private, no-store');
   try {
     const result = await getChannelPlaylistsInternal({...req.params, ...req.query,},req.user?.sub || null);
     return sendSuccess(res,  result );

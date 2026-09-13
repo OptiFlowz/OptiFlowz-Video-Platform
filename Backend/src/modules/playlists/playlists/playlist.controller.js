@@ -10,6 +10,7 @@ import { getClientIp } from '../../../common/ipUitl.js';
 import { sendSuccess, sendError } from '../../../common/response.js';
 
 export async function getPlaylistById(req, res) {
+  res.set('Cache-Control', 'private, no-store');
   try {
     const playlist = await getPlaylistByIdInternal(req.params, req.user?.sub || null);
 
@@ -45,6 +46,7 @@ export async function getPlaylistVideos(req, res) {
   }
 }
 export async function searchPlaylists(req, res) {
+  res.set('Cache-Control', 'private, no-store');
   try {
     const { q, tags, sort = 'relevance', limit = 20, page = 1 } = req.query;
 
@@ -61,7 +63,7 @@ export async function searchPlaylists(req, res) {
       offset: (parseInt(page, 10) - 1) * parseInt(limit, 10),
     };
 
-    const results = await searchPlaylistsInternal(searchParams);
+    const results = await searchPlaylistsInternal(searchParams, req.user?.sub || null);
 
     res.json({
       playlists: results.playlists,
@@ -79,9 +81,10 @@ export async function searchPlaylists(req, res) {
 }
 
 export async function getFeaturedPlaylists(req, res) {
+  res.set('Cache-Control', 'private, no-store');
   try {
     logEvent('playlist.featured', { user_id: req.user?.sub, message: 'Visited home page' });
-    const result = await getFeaturedPlaylistsInternal();
+    const result = await getFeaturedPlaylistsInternal(req.user?.sub || null);
     return res.json(result);
   } catch (err) {
     console.error('GET /playlists/featured error:', err);
@@ -113,6 +116,7 @@ export async function savePlaylist(req, res) {
 }
 
 export async function getSavedPlaylists(req, res) {
+  res.set('Cache-Control', 'private, no-store');
   try {
     const userId = req.user?.sub || null;
     if (!userId) {

@@ -191,6 +191,7 @@ export async function deleteQuizAccessRule(req, res) {
 }
 
 export async function getQuizAccessRules(req, res) {
+  res.set('Cache-Control', 'private, no-store');
   try {
     const rules = await getQuizAccessRulesInternal(req.params.quizId, req.user?.sub || null);
     return sendSuccess(res, { rules }, 200);
@@ -266,6 +267,7 @@ export async function deleteQuizQuestionSource(req, res) {
 }
 
 export async function getQuizQuestionSources(req, res) {
+  res.set('Cache-Control', 'private, no-store');
   try {
     const sources = await getQuizQuestionSourcesInternal(
       { ...req.params },

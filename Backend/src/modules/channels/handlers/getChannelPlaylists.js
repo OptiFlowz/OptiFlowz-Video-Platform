@@ -1,3 +1,4 @@
+import { withPlaylistCardMedia } from '../../playlists/helpers/playlistCardMedia.js';
 import { writePool } from '../../../database/index.js';
 import { buildPlaylistCardSelect,buildPlaylistCardJoins,buildPlaylistCardVisibilityWhere } from '../../../database/sql/playlistCardFragments.js';
 import { z } from 'zod';
@@ -64,7 +65,7 @@ export async function getChannelPlaylistsInternal(object, userId = null) {
   const totalPages = Math.ceil(total / limit);
 
   return {
-    playlists: playlistsResult.rows,
+    playlists: await withPlaylistCardMedia(playlistsResult.rows, userId),
     pagination: {
       page,
       limit,

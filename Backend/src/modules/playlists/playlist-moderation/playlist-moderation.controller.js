@@ -9,6 +9,7 @@ import { deletePlaylistInternal } from './handlers/deletePlaylist.js';
 import { createPlaylistInternal } from './handlers/createPlaylist.js';
 
 export async function handleGetMyPlaylists(req, res) {
+  res.set('Cache-Control', 'private, no-store');
   try {
     const result = await getMyPlaylistsInternal({ query: req.query }, req.user?.sub || null);
     return res.status(200).json(result);

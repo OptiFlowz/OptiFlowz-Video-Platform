@@ -1,3 +1,4 @@
+import { withPlaylistCardMedia } from '../../playlists/helpers/playlistCardMedia.js';
 import { readPool } from '../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
@@ -53,5 +54,13 @@ export async function getQuizQuestionSourcesInternal(object, userId) {
     [quizId]
   );
 
-  return rows;
+  const playlists = await withPlaylistCardMedia(
+    rows.filter(row => row.playlist_id).map(row => ({ id: row.playlist_id })), userId,
+  );
+  const thumbnails = new Map(playlists.map(playlist => [playlist.id, playlist]));
+  return rows.map(row => ({
+    ...row,
+    playlist_thumbnail: thumbnails.get(row.playlist_id)?.thumbnail_url ?? null,
+    playlist_media_expires_at: thumbnails.get(row.playlist_id)?.media_expires_at ?? null,
+  }));
 }

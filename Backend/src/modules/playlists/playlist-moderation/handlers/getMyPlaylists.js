@@ -1,3 +1,4 @@
+import { withPlaylistCardMedia } from '../../helpers/playlistCardMedia.js';
 import { readPool } from '../../../../database/index.js';
 import { HttpError } from '../../../../common/httpError.js';
 
@@ -38,7 +39,7 @@ export async function getMyPlaylistsInternal({ query: queryParams }, actorUserId
       SELECT
         p.id,
         p.title,
-        COALESCE(p.thumbnail_url, fv.first_video_thumbnail_url) AS thumbnail_url,
+        p.thumbnail_url,
         p.view_count,
         p.save_count,
         ic.video_count,
@@ -47,15 +48,7 @@ export async function getMyPlaylistsInternal({ query: queryParams }, actorUserId
         p.featured,
         p.description
       FROM public.playlists p
-      LEFT JOIN LATERAL (
-        SELECT v.thumbnail_url AS first_video_thumbnail_url
-        FROM public.playlist_items pi2
-        JOIN public.videos v ON v.id = pi2.video_id
-        WHERE pi2.playlist_id = p.id
-        ORDER BY pi2.position ASC
-        LIMIT 1
-      ) fv ON TRUE
-      LEFT JOIN LATERAL (
+        LEFT JOIN LATERAL (
         SELECT COUNT(*)::int AS video_count
         FROM public.playlist_items pi3
         WHERE pi3.playlist_id = p.id
@@ -75,7 +68,7 @@ export async function getMyPlaylistsInternal({ query: queryParams }, actorUserId
       total_pages: Math.ceil(total / limit),
       sort: sortCol.replace('p.', ''),
       order: order.toLowerCase(),
-      playlists: rows,
+      playlists: await withPlaylistCardMedia(rows, userId),
     };
   } catch (err) {
     if (err instanceof HttpError) throw err;
