@@ -94,7 +94,9 @@ export async function getVideoByIdInternal(videoId, userId = null) {
         FROM public.playlist_items pi
         WHERE pi.playlist_id = p.id
           AND pi.video_id = $1
-    );
+    )
+    ORDER BY COALESCE(p.featured, false) DESC, p.view_count DESC NULLS LAST, p.id ASC
+    LIMIT 5;
   `;
   const { rows: playlistRows } = await readPool.query(playlistq, [videoId]);
 
