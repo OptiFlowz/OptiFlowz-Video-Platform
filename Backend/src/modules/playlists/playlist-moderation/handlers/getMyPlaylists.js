@@ -7,6 +7,25 @@ export async function getMyPlaylistsInternal({ query: queryParams }, actorUserId
     const userId = actorUserId || null;
     if (!userId) throw new HttpError(401, { message: 'Unauthorized' });
 
+    const searchQuery = queryParams.q ?? queryParams.query ?? '';
+    if (typeof searchQuery !== 'string') {
+      throw new HttpError(400, { message: 'Search query must be a single string value' });
+    }
+    const trimmedQuery = searchQuery.trim();
+    const filterParams = [userId];
+    let whereClause = 'p.created_by = $1';
+    if (trimmedQuery) {
+      // Only letters/numbers become query terms; user punctuation cannot inject
+      // tsquery operators. Prefix every term to support search-as-you-type.
+      const terms = trimmedQuery.match(/[\p{L}\p{N}]+/gu) || [];
+      if (terms.length) {
+        filterParams.push(terms.map((term) => `${term}:*`).join(' & '));
+        whereClause += " AND p.search_vector @@ to_tsquery('english', $2)";
+      } else {
+        whereClause += ' AND FALSE';
+      }
+    }
+
     const page = Math.max(parseInt(queryParams.page || '1', 10), 1);
     const limit = Math.min(Math.max(parseInt(queryParams.limit || '20', 10), 1), 100);
     const offset = (page - 1) * limit;
@@ -28,9 +47,9 @@ export async function getMyPlaylistsInternal({ query: queryParams }, actorUserId
       `
       SELECT COUNT(*)::int AS total
       FROM public.playlists p
-      WHERE p.created_by = $1
+      WHERE ${whereClause}
       `,
-      [userId],
+      filterParams,
     );
     const total = countRes.rows[0]?.total || 0;
 
@@ -53,11 +72,11 @@ export async function getMyPlaylistsInternal({ query: queryParams }, actorUserId
         FROM public.playlist_items pi3
         WHERE pi3.playlist_id = p.id
       ) ic ON TRUE
-      WHERE p.created_by = $1
+      WHERE ${whereClause}
       ORDER BY ${orderBy}
-      LIMIT $2 OFFSET $3
+      LIMIT $${filterParams.length + 1} OFFSET $${filterParams.length + 2}
       `,
-      [userId, limit, offset],
+      [...filterParams, limit, offset],
     );
 
     return {
