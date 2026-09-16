@@ -120,11 +120,39 @@ Local `.env` values are not automatically uploaded as Fly secrets.
 
 Deploy the configuration with `fly deploy -a video-platform-template`. After deployment,
 use `fly scale count worker=1 -a video-platform-template` to keep one indexing worker
-without changing the API machine count. The worker uses the configured 1 GB VM size
-and incurs an additional Machine charge. It stays running to poll the database queue.
+without changing the API machine count. Process-specific VM settings allocate 1 GB
+to each API Machine and 256 MB to each worker Machine. The worker incurs an
+additional Machine charge and stays running to poll the database queue.
 These commands target the API application, not the PostgreSQL server application.
 
-See [Fly process groups](https://fly.io/docs/launch/processes/).
+Deploy either process group independently from the same source directory:
+
+```sh
+# API only
+fly deploy -a video-platform-template --process-groups app
+
+# Worker only
+fly deploy -a video-platform-template --process-groups worker
+```
+
+Both commands retain the migration release command. Keep database migrations
+compatible with the other process group's running version. A plain `fly deploy`
+updates both groups. Keep both process definitions in `fly.toml`; use the flag
+to select a deployment instead of removing a process definition.
+
+The VM sizes in `fly.toml` take precedence on deployment over manual memory
+scaling. The 256 MB worker setting has not been load-tested; check memory usage
+during large subtitle indexing jobs and increase the worker's configured memory
+if necessary.
+
+Separate Fly apps are also possible, but require separate app configuration and
+secrets, access to the same database, and coordinated database migrations. Process
+groups already provide separate Machines and targeted deployments while sharing
+app secrets.
+
+See [Fly process groups](https://fly.io/docs/launch/processes/),
+[targeted deployments](https://fly.io/docs/flyctl/deploy/), and
+[VM configuration](https://fly.io/docs/reference/configuration/#the-vm-section).
 
 ## Responsibilities
 
