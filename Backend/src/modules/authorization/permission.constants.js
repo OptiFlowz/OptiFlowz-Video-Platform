@@ -32,6 +32,11 @@ export const Permissions = Object.freeze({
   COMMENTS_MODERATE: 'comments.moderate',
   COMMENTS_REACT: 'comments.react',
 
+  NOTES_READ_OWN: 'notes.read_own',
+  NOTES_CREATE: 'notes.create',
+  NOTES_EDIT_OWN: 'notes.edit_own',
+  NOTES_DELETE_OWN: 'notes.delete_own',
+
   PEOPLE_MANAGE: 'people.manage',
 
   ANALYTICS_VIDEO_OWN_READ: 'analytics.video_own.read',
