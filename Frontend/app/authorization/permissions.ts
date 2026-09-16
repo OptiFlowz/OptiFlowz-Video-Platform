@@ -7,6 +7,7 @@ export const P = {
   playlistsCreate: 'playlists.create', playlistsUpdateOwn: 'playlists.update_own', playlistsUpdateAny: 'playlists.update_any',
   playlistsDeleteOwn: 'playlists.delete_own', playlistsDeleteAny: 'playlists.delete_any', playlistsLibrary: 'playlists.library.read', playlistsSave: 'playlists.save',
   quizzesCreate: 'quizzes.create', quizzesManageOwn: 'quizzes.manage_own', quizzesManageAny: 'quizzes.manage_any', quizzesParticipate: 'quizzes.participate', quizzesCertificates: 'quizzes.certificates',
+  notesReadOwn: 'notes.read_own', notesCreate: 'notes.create', notesEditOwn: 'notes.edit_own', notesDeleteOwn: 'notes.delete_own',
   commentsCreate: 'comments.create', commentsEditOwn: 'comments.edit_own', commentsDeleteOwn: 'comments.delete_own', commentsModerate: 'comments.moderate', commentsReact: 'comments.react',
   peopleManage: 'people.manage', videoAnalyticsOwn: 'analytics.video_own.read', videoAnalyticsAny: 'analytics.video_any.read',
   channelAnalyticsOwn: 'analytics.channel_own.read', channelAnalyticsAny: 'analytics.channel_any.read', platformAnalytics: 'analytics.platform.read', analyticsExport: 'reports.analytics.export',

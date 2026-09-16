@@ -13,7 +13,7 @@ import {
   useEffect,
   useMemo,
 } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AISVG, UploadSVG } from "~/constants";
 import { env } from "~/env";
 import ContributorSearch from "~/components/uploadPage/contributorSearch";
@@ -59,6 +59,7 @@ interface VideoData extends VideoMedia {
   chapters: { startTime: number; title: string }[];
   people: { id: string; name: string; image_url?: string; type: string }[];
   visibility: "public" | "private";
+  published_at?: string | null;
 }
 
 type CaptionStatus = "loading" | "available" | "not_available" | "generating";
@@ -131,8 +132,14 @@ function getInitialThumbnailTime(video?: VideoData | null): number {
   return clampThumbnailTime(duration / 3, duration);
 }
 
+function localDateTimeValue(date: Date): string {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 function EditVideoPage() {
   const { t, locale } = useI18n();
+  const queryClient = useQueryClient();
   const languageNames = useMemo(() => new Intl.DisplayNames([locale === "sr" ? "sr-Latn" : locale], { type: "language" }), [locale]);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -148,6 +155,25 @@ function EditVideoPage() {
   const [chairs, setChairs] = useState<Contributor[]>([]);
   const [oldChairs, setOldChairs] = useState<Contributor[]>([]);
   const [visibility, setVisibility] = useState<"public" | "private">("public");
+  const [scheduleUpload, setScheduleUpload] = useState(false);
+  const [oldScheduleUpload, setOldScheduleUpload] = useState(false);
+  const [scheduledAt, setScheduledAt] = useState("");
+  const [oldScheduledAt, setOldScheduledAt] = useState("");
+  const [scheduleNow, setScheduleNow] = useState(Date.now);
+  const scheduleModified = scheduleUpload !== oldScheduleUpload || (scheduleUpload && scheduledAt !== oldScheduledAt);
+  const scheduledTime = new Date(scheduledAt).getTime();
+  const scheduleInvalid = scheduleModified && scheduleUpload && (!Number.isFinite(scheduledTime) || scheduledTime <= scheduleNow);
+  const scheduleMinimum = localDateTimeValue(new Date(Math.ceil(scheduleNow / 60_000) * 60_000));
+  const scheduleTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  useEffect(() => {
+    if (!scheduleUpload) return;
+    const update = () => setScheduleNow(Date.now());
+    update();
+    const timer = window.setInterval(update, 30_000);
+    window.addEventListener("focus", update);
+    return () => { window.clearInterval(timer); window.removeEventListener("focus", update); };
+  }, [scheduleUpload]);
   const [captions, setCaptions] = useState("");
   const [oldCaptions, setOldCaptions] = useState("");
   const [captionLanguage, setCaptionLanguage] = useState("en");
@@ -265,6 +291,14 @@ function EditVideoPage() {
       setOldTags(videoData.tags || []);
       setVisibility(videoData.visibility || "private");
       setOldVisibility(videoData.visibility || "private");
+      const publishedTime = Date.parse(videoData.published_at || "");
+      const isScheduled = Number.isFinite(publishedTime) && publishedTime > Date.now();
+      const publicationDate = isScheduled ? localDateTimeValue(new Date(publishedTime)) : "";
+      setScheduleUpload(isScheduled);
+      setOldScheduleUpload(isScheduled);
+      setScheduledAt(publicationDate);
+      setOldScheduledAt(publicationDate);
+      setScheduleNow(Date.now());
       const policy = ["signed", "public"].includes(videoData.playback_policy) ? videoData.playback_policy : null;
       setPlaybackPolicy(policy);
       setOldPlaybackPolicy(policy);
@@ -329,7 +363,7 @@ function EditVideoPage() {
     oldTags,
   ]);
 
-  const accessModified = visibility !== oldVisibility || playbackPolicy !== oldPlaybackPolicy;
+  const accessModified = visibility !== oldVisibility || playbackPolicy !== oldPlaybackPolicy || scheduleModified;
 
   const displayedThumbnailUrl = thumbnailMarkedForRemoval
     ? null
@@ -1048,22 +1082,36 @@ function EditVideoPage() {
   // other request fails, so retrying only sends the remaining change.
   const handleSaveAccess = async () => {
     if (!videoId || !accessModified || accessSavePending.current) return;
+    const now = Date.now();
+    setScheduleNow(now);
+    if (scheduleModified && scheduleUpload && (!Number.isFinite(scheduledTime) || scheduledTime <= now)) {
+      setAccessError(t("uploadScheduleInvalid"));
+      return;
+    }
     accessSavePending.current = true;
     setIsSavingAccess(true);
     setAccessError(null);
     let changed = false;
     try {
-      if (visibility !== oldVisibility) {
+      if (visibility !== oldVisibility || scheduleModified) {
         const response = await fetchFn<{ success: boolean }>({
           route: `api/video-moderation/video-details/${videoId}`,
           options: {
             method: "PATCH",
             headers: myHeaders.current,
-            body: JSON.stringify({ visibility }),
+            body: JSON.stringify({
+              visibility,
+              ...(scheduleModified ? {
+                published_at: scheduleUpload ? new Date(scheduledTime).toISOString() : new Date().toISOString(),
+              } : {}),
+            }),
           },
         });
         if (!response?.success) throw new Error("Visibility update failed");
         setOldVisibility(visibility);
+        setOldScheduleUpload(scheduleUpload);
+        setOldScheduledAt(scheduledAt);
+        void queryClient.invalidateQueries({ queryKey: ["my-videos"] });
         changed = true;
       }
       if (playbackPolicy && playbackPolicy !== oldPlaybackPolicy) {
@@ -1524,6 +1572,44 @@ function EditVideoPage() {
                       disabled={isSavingAccess}
                     />
                   </div>
+                  <div className={statusStyles.schedule}>
+                    <label className={statusStyles.scheduleToggle} htmlFor="editScheduleUpload">
+                      <input
+                        id="editScheduleUpload"
+                        type="checkbox"
+                        checked={scheduleUpload}
+                        disabled={isSavingAccess}
+                        onChange={event => {
+                          setScheduleUpload(event.target.checked);
+                          setScheduleNow(Date.now());
+                          setAccessError(null);
+                        }}
+                      />
+                      <span>{t("uploadSchedule")}</span>
+                    </label>
+                    {scheduleUpload && <div className={statusStyles.scheduleFields}>
+                      <label htmlFor="editScheduledPublishedAt">{t("uploadScheduleDateTime")}</label>
+                      <input
+                        id="editScheduledPublishedAt"
+                        type="datetime-local"
+                        value={scheduledAt}
+                        min={scheduleMinimum}
+                        step={60}
+                        required
+                        disabled={isSavingAccess}
+                        aria-invalid={scheduleInvalid}
+                        aria-describedby={`editScheduleTimeHint${scheduleInvalid ? " editScheduleTimeError" : ""}`}
+                        onFocus={() => setScheduleNow(Date.now())}
+                        onChange={event => {
+                          setScheduledAt(event.target.value);
+                          setScheduleNow(Date.now());
+                          setAccessError(null);
+                        }}
+                      />
+                      <p id="editScheduleTimeHint" className="formHint">{t("uploadScheduleTimeZone", { timeZone: scheduleTimeZone })}</p>
+                      {scheduleInvalid && <p id="editScheduleTimeError" className={statusStyles.scheduleError} role="status">{t("uploadScheduleInvalid")}</p>}
+                    </div>}
+                  </div>
                   <div className="formGroup mt-7.5">
                     <label htmlFor="editPlaybackPolicy">{t("playbackProtection")}</label>
                     <p className="formHint">
@@ -1552,7 +1638,7 @@ function EditVideoPage() {
                       <button
                         type="button"
                         onClick={handleSaveAccess}
-                        disabled={!accessModified || isSavingAccess}
+                        disabled={!accessModified || isSavingAccess || scheduleInvalid}
                         className="saveCaptionsBtn"
                       >
                         {isSavingAccess ? <><div className="uploadSpinner tiny" />{t("saving")}</> : t("save")}

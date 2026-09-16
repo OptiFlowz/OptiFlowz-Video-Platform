@@ -1,0 +1,19 @@
+.publication {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text2);
+}
+
+.scheduled {
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--border1);
+  border-radius: 999px;
+  background: var(--background2);
+  color: var(--accentBlue3);
+  font-weight: 600;
+}

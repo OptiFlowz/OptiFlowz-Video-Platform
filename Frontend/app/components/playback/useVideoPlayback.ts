@@ -47,10 +47,13 @@ export function useVideoPlayback(videoId?: string, enabled = true) {
       }
       return data;
     },
-    staleTime: 0,
+    staleTime: ({ state }) => state.data?.playback_policy === "signed"
+      ? Math.max(0, playbackExpiresAt(state.data.expires_at) - state.dataUpdatedAt - 60_000)
+      : Infinity,
     gcTime: 0,
     retry: (count, error) => count < 2 && ![401, 403, 404].includes(Number((error as { status?: number }).status)),
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: ({ state }) => state.data?.playback_policy === "signed" &&
+      playbackExpiresAt(state.data.expires_at) <= Date.now() + 60_000,
     refetchInterval: ({ state }) => state.data?.playback_policy === "signed"
       ? Math.max(1000, Math.min(20 * 60_000, playbackExpiresAt(state.data.expires_at) - Date.now() - 60_000))
       : false,

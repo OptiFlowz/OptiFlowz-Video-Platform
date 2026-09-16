@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type MuxPlayerElement from "@mux/mux-player";
 
 export const TRANSCRIPT_EVENT = "player:transcript";
@@ -11,6 +12,7 @@ export type TranscriptCue = {
 };
 
 export type TranscriptEventDetail = {
+  videoId?: string;
   cues: TranscriptCue[];
   hasTrack: boolean;
   language: string;
@@ -91,10 +93,27 @@ export function readPlayerTranscript(player: MuxPlayerElement | null): Transcrip
   };
 }
 
-export function publishPlayerTranscript(player: MuxPlayerElement | null) {
+export function publishPlayerTranscript(player: MuxPlayerElement | null, videoId: string) {
   window.dispatchEvent(
     new CustomEvent<TranscriptEventDetail>(TRANSCRIPT_EVENT, {
-      detail: readPlayerTranscript(player),
+      detail: { ...readPlayerTranscript(player), videoId },
     }),
   );
+}
+
+// Both entry points follow the active player's tracks, including tracks loaded later.
+export function useTranscriptAvailable(videoId?: string) {
+  const [availability, setAvailability] = useState<{ videoId: string; available: boolean } | null>(null);
+  useEffect(() => {
+    if (!videoId) return;
+    const receive = (event: Event) => {
+      const detail = (event as CustomEvent<TranscriptEventDetail>).detail;
+      if (detail?.videoId !== videoId) return;
+      setAvailability({ videoId, available: detail.hasTrack || detail.cues.length > 0 });
+    };
+    window.addEventListener(TRANSCRIPT_EVENT, receive);
+    window.dispatchEvent(new Event(TRANSCRIPT_REQUEST_EVENT));
+    return () => window.removeEventListener(TRANSCRIPT_EVENT, receive);
+  }, [videoId]);
+  return availability !== null && availability.videoId === videoId && availability.available;
 }

@@ -30,6 +30,8 @@ function MyPlaylistsPage() {
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
+  const [filter, setFilter] = useState("");
+  const [search, setSearch] = useState("");
   const [selectedPlaylists, setSelectedPlaylists] = useState<MyPlaylistT[]>([]);
   const [isCreatePopupOpen, setIsCreatePopupOpen] = useState(false);
   const selectAllRef = useRef<HTMLInputElement>(null);
@@ -44,19 +46,30 @@ function MyPlaylistsPage() {
     myHeaders.current.set("Authorization", `Bearer ${userToken}`);
   }, []);
 
+  useEffect(() => {
+    const next = filter.trim();
+    if (next === search) return;
+    const timer = window.setTimeout(() => {
+      setSearch(next);
+      setPage(1);
+      setSelectedPlaylists([]);
+    }, next ? 300 : 0);
+    return () => window.clearTimeout(timer);
+  }, [filter, search]);
+
   const { data, isFetching, isError } = useQuery<FetchMyPlaylistsT>({
-    queryKey: ["my-playlists", page, limit, sortColumn, sortDirection],
-    queryFn: () => {
+    queryKey: ["my-playlists", page, limit, sortColumn, sortDirection, search],
+    queryFn: ({ signal }) => {
       return fetchFn<FetchMyPlaylistsT>({
-        route: `api/playlists-moderation/my/playlists?sort=${sortColumn}&order=${sortDirection}&page=${page}&limit=${limit}`,
-        options: { method: "GET", headers: myHeaders.current },
+        route: `api/playlists-moderation/my/playlists?sort=${sortColumn}&order=${sortDirection}&page=${page}&limit=${limit}${search ? `&q=${encodeURIComponent(search)}` : ""}`,
+        options: { method: "GET", headers: myHeaders.current, signal },
       });
     },
     enabled: !!token,
     staleTime: 30 * 1000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
-    placeholderData: (previousData) => previousData,
+    placeholderData: (previousData, previousQuery) => previousQuery?.queryKey[5] === search ? previousData : undefined,
   });
 
   const handleSort = (column: SortColumn) => {
@@ -122,7 +135,7 @@ function MyPlaylistsPage() {
     )
       .then(() => {
         queryClient.setQueryData(
-          ["my-playlists", page, limit, sortColumn, sortDirection],
+          ["my-playlists", page, limit, sortColumn, sortDirection, search],
           (old: FetchMyPlaylistsT | undefined) => {
             if (!old) return old;
 
@@ -173,7 +186,7 @@ function MyPlaylistsPage() {
     )
       .then(() => {
         queryClient.setQueryData(
-          ["my-playlists", page, limit, sortColumn, sortDirection],
+          ["my-playlists", page, limit, sortColumn, sortDirection, search],
           (old: FetchMyPlaylistsT | undefined) => {
             if (!old) return old;
 
@@ -191,7 +204,7 @@ function MyPlaylistsPage() {
         setSelectedPlaylists([]);
       })
       .catch(console.error);
-  }, [confirm, limit, page, queryClient, selectedPlaylists, sortColumn, sortDirection, canDelete]);
+  }, [confirm, limit, page, queryClient, selectedPlaylists, sortColumn, sortDirection, search, canDelete]);
 
   useEffect(() => {
     setSelectedPlaylists((prev) => {
@@ -277,7 +290,7 @@ function MyPlaylistsPage() {
     };
 
     queryClient.setQueryData(
-      ["my-playlists", 1, limit, "created_at", "desc"],
+      ["my-playlists", 1, limit, "created_at", "desc", ""],
       (old: FetchMyPlaylistsT | undefined) => {
         if (!old) return old;
 
@@ -295,6 +308,8 @@ function MyPlaylistsPage() {
       }
     );
 
+    setFilter("");
+    setSearch("");
     setSortColumn("created_at");
     setSortDirection("desc");
     setPage(1);
@@ -324,7 +339,7 @@ function MyPlaylistsPage() {
           <div className="managementToolbar">
             <div className="filter">
               {SearchSVG}
-              <input type="search" aria-label={t("filterPlaylists")} placeholder={t("filterPlaylists")} />
+              <input type="search" value={filter} onChange={event => setFilter(event.target.value)} aria-label={t("filterPlaylists")} placeholder={t("filterPlaylists")} />
             </div>
             {can(P.playlistsCreate) && <button
               type="button"
@@ -336,7 +351,7 @@ function MyPlaylistsPage() {
               {AddSVG}
             </button>}
           </div>
-          <div className="libraryTableWrap">
+          <div className="libraryTableWrap" aria-busy={isFetching}>
             <table>
               <thead>
                 <tr>
@@ -405,7 +420,7 @@ function MyPlaylistsPage() {
                 </tr>
               </thead>
 
-              <tbody>{itemsArray}</tbody>
+              <tbody>{itemsArray}{!isFetching && !isError && data && !itemsArray.length && <tr><td colSpan={6} className="p-6 text-center text-(--text2)">{t("noResultsTitle")}</td></tr>}</tbody>
             </table>
           </div>
 

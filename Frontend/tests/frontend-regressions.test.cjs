@@ -839,3 +839,130 @@ test('a player mounted after video loading survives pending layout measurements 
   await waitForUpdates();
   assert.equal(container.querySelector('[data-media]'), null, 'leaving a paused video still clears the session');
 });
+
+test('video notes validate timestamps, normalize API data and share CRUD updates without crossing videos', async t => {
+  const container = dom(t);
+  const grants = new Set(['notes.read_own', 'notes.create', 'notes.edit_own', 'notes.delete_own']);
+  let serverNotes = [{ id: 'n1', video_id: 'video-a', title: 'First', text: 'Remember', timestamp: '42.5', color: 'blue' }];
+  const requests = [];
+  const load = modules({
+    '~/authorization/authorization': { useAuthorization: () => ({ can: key => grants.has(key), loading: false }) },
+    '~/API': { fetchFn: async request => {
+      requests.push(request);
+      const method = request.options.method ?? 'GET';
+      if (method === 'GET') return { success: true, notes: request.route.endsWith('video-a') ? serverNotes : [] };
+      const input = request.options.body ? JSON.parse(request.options.body) : undefined;
+      if (method === 'POST') { const note = { ...input, id: 'n2' }; serverNotes.push(note); return { success: true, note }; }
+      if (method === 'PATCH') { const note = { ...serverNotes.find(n => n.id === 'n2'), ...input }; serverNotes = serverNotes.map(n => n.id === 'n2' ? note : n); return { success: true, note }; }
+      serverNotes = serverNotes.filter(n => n.id !== 'n2'); return { success: true, deleted: true };
+    } },
+  });
+  const auth = load('app/auth/session.ts'); auth.saveSession(session('notes-user'), false);
+  const { useVideoNotes, parseNoteTime, noteColor } = load('app/components/playPage/notes/videoNotes.ts');
+  assert.equal(parseNoteTime('1:02:03.5'), 3723.5);
+  assert.equal(parseNoteTime('0:00'), 0);
+  for (const invalid of ['-1', '1:60', 'Infinity', 'abc', '1:2:3:4', '']) assert.equal(parseNoteTime(invalid), null);
+  assert.equal(noteColor('url(unsafe)'), 'var(--accentBlue3)');
+  const hooks = {};
+  function Probe({ name, video }) { hooks[name] = useVideoNotes(video); return React.createElement('p', { 'data-probe': name }, JSON.stringify(hooks[name].notes)); }
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  t.after(() => client.clear());
+  const root = createRoot(container); container.mountedRoot = root;
+  await act(async () => root.render(React.createElement(QueryClientProvider, { client },
+    React.createElement(Probe, { name: 'panel', video: 'video-a' }), React.createElement(Probe, { name: 'markers', video: 'video-a' }), React.createElement(Probe, { name: 'other', video: 'video-b' }))));
+  await waitForUpdates();
+  assert.equal(hooks.panel.notes[0].timestamp, 42.5);
+  assert.equal(requests.filter(r => r.route.endsWith('video-a')).length, 1, 'panel and markers share a single query');
+  const input = { title: '<b>A note</b>', text: 'Body', timestamp: 0, color: 'green' };
+  await act(async () => hooks.panel.mutation.mutateAsync({ type: 'create', input })); await waitForUpdates();
+  assert.equal(hooks.markers.notes[0].id, 'n2'); assert.equal(hooks.other.notes.length, 0);
+  assert.equal(JSON.parse(requests.find(r => r.options.method === 'POST').options.body).video_id, 'video-a');
+  assert.equal(requests[0].options.headers.Authorization, 'Bearer notes-user');
+  await act(async () => hooks.panel.mutation.mutateAsync({ type: 'edit', id: 'n2', input: { ...input, timestamp: 60 } })); await waitForUpdates();
+  assert.equal(hooks.markers.notes[1].timestamp, 60);
+  grants.delete('notes.delete_own');
+  await act(async () => { await assert.rejects(hooks.panel.mutation.mutateAsync({ type: 'delete', id: 'n2' }), /Not authorized/); });
+  assert.equal(requests.filter(r => r.options.method === 'DELETE').length, 0);
+  grants.add('notes.delete_own');
+  await act(async () => hooks.panel.mutation.mutateAsync({ type: 'delete', id: 'n2' })); await waitForUpdates();
+  assert.equal(hooks.markers.notes.length, 1);
+  await act(async () => auth.clearSession()); await waitForUpdates();
+  assert.equal(hooks.panel.notes.length, 0, 'signing out immediately hides private notes');
+});
+
+test('notes editor keeps a failed draft, seeks from timestamps and cancels deletion without a request', async t => {
+  const container = dom(t);
+  // React was loaded before the DOM; its legacy input fallback needs these in jsdom.
+  window.HTMLElement.prototype.attachEvent = () => {};
+  window.HTMLElement.prototype.detachEvent = () => {};
+  const note = { id: 'n1', video_id: 'video-a', title: '<img src=x>', text: 'Original body', timestamp: 12, color: 'purple' };
+  const writes = [];
+  const load = modules({
+    '~/i18n': i18n,
+    '~/constants': { BookmarkSVG: null, EditSVG: null, DeleteSVG: null },
+    'react-router': { Link: ({ to, children }) => React.createElement('a', { href: to }, children) },
+    '~/authorization/authorization': { useAuthorization: () => ({ can: () => true, loading: false }) },
+    '~/API': { fetchFn: async request => {
+      if (!request.options.method) return { success: true, notes: [note] };
+      writes.push(request); throw new Error('Network unavailable');
+    } },
+  });
+  load('app/auth/session.ts').saveSession(session('notes-user'), false);
+  const NotesPanel = load('app/components/playPage/notes/notesPanel.tsx').default;
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } }); t.after(() => client.clear());
+  const root = createRoot(container); container.mountedRoot = root;
+  await act(async () => root.render(React.createElement(QueryClientProvider, { client }, React.createElement(NotesPanel, { videoId: 'video-a', duration: 120 })))); await waitForUpdates();
+  assert.equal(container.querySelector('article h3').textContent, note.title); assert.equal(container.querySelector('img'), null);
+  let seek; window.addEventListener('player:seek', e => seek = e.detail, { once: true });
+  await act(async () => container.querySelector('article button').click()); assert.deepEqual(seek, { videoId: 'video-a', seconds: 12 });
+  await act(async () => container.querySelector('[aria-label="notesDelete"]').click());
+  const cancel = [...container.querySelectorAll('button')].find(b => b.textContent === 'cancel');
+  await act(async () => cancel.click()); assert.equal(writes.length, 0);
+  await act(async () => container.querySelector('[aria-label="notesEdit"]').click());
+  assert.equal(container.querySelector('input').value, note.title);
+  await act(async () => container.querySelector('form').dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true })));
+  await waitForUpdates();
+  assert.equal(writes[0].options.method, 'PATCH');
+  assert.equal(container.querySelector('input').value, note.title);
+  assert.equal(container.querySelector('textarea').value, note.text);
+  assert.match(container.querySelector('[role="alert"]').textContent, /notesSaveError/);
+  assert.equal(container.querySelector('fieldset').disabled, false);
+});
+
+test('note markers position against the actual seek track, seek and open scoped editing', async t => {
+  const container = dom(t);
+  const previousResize = globalThis.ResizeObserver;
+  globalThis.ResizeObserver = class { observe() {} disconnect() {} };
+  t.after(() => { if (previousResize) globalThis.ResizeObserver = previousResize; else delete globalThis.ResizeObserver; });
+  const controller = document.createElement('div'); document.body.append(controller);
+  const range = document.createElement('media-time-range'); const shadow = range.attachShadow({ mode: 'open' });
+  const track = document.createElement('div'); track.id = 'track'; shadow.append(track); controller.append(range);
+  controller.getBoundingClientRect = () => ({ left: 10, top: 10 });
+  track.getBoundingClientRect = () => ({ left: 30, top: 450, width: 800 });
+  let paused = false;
+  const player = Object.assign(new window.EventTarget(), { mediaController: controller, duration: 120, currentTime: 0, pause: () => { paused = true; } });
+  const note = { id: 'n1', video_id: 'v1', title: 'At halfway', text: 'A private note', timestamp: 60, color: 'green' };
+  const load = modules({
+    '~/i18n': i18n,
+    '~/constants': { BookmarkSVG: null, EditSVG: null, DeleteSVG: null, CloseSVG: null },
+    '~/authorization/authorization': { useAuthorization: () => ({ can: () => true, loading: false }) },
+    '~/API': { fetchFn: async () => ({ success: true, notes: [note] }) },
+  });
+  load('app/auth/session.ts').saveSession(session('notes-user'), false);
+  const NoteMarkers = load('app/components/playPage/notes/noteMarkers.tsx').default;
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } }); t.after(() => client.clear());
+  const root = createRoot(container); container.mountedRoot = root;
+  const render = compact => act(async () => root.render(React.createElement(QueryClientProvider, { client }, React.createElement(NoteMarkers, { player, videoId: 'v1', compact }))));
+  await render(false); await waitForUpdates();
+  const marker = controller.querySelector('.video-note-marker');
+  assert.equal(marker.style.left, '50%'); assert.equal(controller.querySelector('.video-note-markers').style.left, '20px');
+  await act(async () => marker.click());
+  assert.equal(controller.querySelector('.video-note-popup h3').textContent, note.title);
+  await act(async () => controller.querySelector('.video-note-popup header button').click());
+  assert.equal(player.currentTime, 60);
+  let request; window.addEventListener('player:open-notes', event => request = event.detail, { once: true });
+  await act(async () => controller.querySelector('[aria-label="notesEdit"]').click());
+  assert.equal(paused, true); assert.deepEqual(request, { videoId: 'v1', noteId: 'n1', action: 'edit' });
+  await render(true);
+  assert.equal(controller.querySelector('.video-note-markers'), null, 'mini player does not retain crowded interactive markers');
+});

@@ -10,6 +10,7 @@ import React, {
 } from "react";
 import MuxPlayer from "@mux/mux-player-react";
 import type MuxPlayerElement from "@mux/mux-player";
+import type { MediaTimeRange } from "media-chrome";
 import { env } from "~/env";
 import type { ChapterT } from "~/types";
 import { getToken } from "~/functions";
@@ -19,7 +20,8 @@ import {
   TRANSCRIPT_REQUEST_EVENT,
 } from "./transcript";
 
-import { getPlaybackStoryboardUrl, useVideoPlayback } from "~/components/playback/useVideoPlayback";
+import { getPlaybackStoryboardUrl, useVideoPlayback, type VideoPlayback } from "~/components/playback/useVideoPlayback";
+import NoteMarkers from "../notes/noteMarkers";
 import { PlaybackFeedback } from "~/components/playback/playbackFeedback";
 
 interface VideoPlayerProps {
@@ -52,6 +54,23 @@ function getNativeVideo(player: MuxPlayerElement | null) {
   );
 }
 
+function syncSeekBar(player: MuxPlayerElement | null) {
+  if (!player || !Number.isFinite(player.currentTime)) return;
+  const time = player.currentTime;
+  player.mediaController?.querySelectorAll<MediaTimeRange>("media-time-range").forEach(range => {
+    if (range.dragging) return;
+    const start = Number.isFinite(range.mediaSeekableStart) ? range.mediaSeekableStart : 0;
+    const end = Number.isFinite(range.mediaDuration) ? range.mediaDuration : range.mediaSeekableEnd;
+    if (end == null || !Number.isFinite(end) || end <= start) return;
+
+    // Media Chrome smooths small backward changes during playback. Explicit
+    // seeks must reset the range as well, including when playback is paused.
+    range.mediaCurrentTime = time;
+    range.range.valueAsNumber = Math.max(0, Math.min(1, (time - start) / (end - start)));
+    range.updateBar();
+  });
+}
+
 export default function VideoPlayer({
   videoId,
   videoTitle,
@@ -70,7 +89,8 @@ export default function VideoPlayer({
   forceAutoplay = false,
 }: VideoPlayerProps) {
   const playback = useVideoPlayback(videoId);
-  const playbackId = playback.data?.mux_playback_id;
+  const [playbackSource, setPlaybackSource] = useState<VideoPlayback>();
+  const playbackId = playbackSource?.mux_playback_id;
   const { can } = useAuthorization();
   const canSaveProgress = can(P.videosProgress);
   const playerRef = useRef<MuxPlayerElement | null>(null);
@@ -88,11 +108,12 @@ export default function VideoPlayer({
   const [isThemeReady, setIsThemeReady] = useState(false);
   const [isAutoplayMuted, setIsAutoplayMuted] = useState(false);
   const didInitialSeek = useRef(false);
+  const initialAutoplayAttemptedRef = useRef(false);
   const isPlayerReadyRef = useRef(false);
   const recoveryAttemptsRef = useRef(0);
   const recoveryTimersRef = useRef<number[]>([]);
-  const wasPageHiddenRef = useRef(false);
   const resumeAfterRecoveryRef = useRef(false);
+  const restoringPlaybackRef = useRef(false);
   const lastKnownTimeRef = useRef(Number.isFinite(currentTimee) ? (currentTimee ?? 0) : 0);
   const pendingRecoveryTimeRef = useRef<number | null>(null);
   const previousCompactControlsRef = useRef(compactControls);
@@ -133,6 +154,9 @@ export default function VideoPlayer({
     updatePlayerReady(false);
     setIsAutoplayMuted(false);
     didInitialSeek.current = false;
+    initialAutoplayAttemptedRef.current = false;
+    resumeAfterRecoveryRef.current = false;
+    restoringPlaybackRef.current = false;
     recoveryAttemptsRef.current = 0;
     pendingRecoveryTimeRef.current = null;
     lastKnownTimeRef.current = Number.isFinite(currentTimee) ? (currentTimee ?? 0) : 0;
@@ -143,15 +167,23 @@ export default function VideoPlayer({
     recoveryTimersRef.current = [];
   }, []);
 
-  const previousStreamUrl = useRef<string | undefined>(undefined);
   useEffect(() => {
-    const streamUrl = playback.data?.stream_url;
-    if (previousStreamUrl.current && streamUrl && previousStreamUrl.current !== streamUrl) {
-      pendingRecoveryTimeRef.current = lastKnownTimeRef.current;
-      resumeAfterRecoveryRef.current = !(playerRef.current?.paused ?? true);
+    const nextSource = playback.data;
+    if (!nextSource || nextSource === playbackSource) return;
+
+    // Capture state before passing a renewed signed URL to the media element.
+    const player = playerRef.current;
+    if (player && playbackSource?.video_id === nextSource.video_id &&
+        playbackSource.mux_playback_id === nextSource.mux_playback_id &&
+        playbackSource.stream_url !== nextSource.stream_url) {
+      const video = getNativeVideo(player);
+      const time = video?.currentTime ?? player.currentTime;
+      pendingRecoveryTimeRef.current = Number.isFinite(time) ? time : lastKnownTimeRef.current;
+      resumeAfterRecoveryRef.current = !(video?.paused ?? player.paused);
+      restoringPlaybackRef.current = true;
     }
-    previousStreamUrl.current = streamUrl;
-  }, [playback.data?.stream_url]);
+    setPlaybackSource(nextSource);
+  }, [playback.data, playbackSource]);
 
   const recoverPlayer = useCallback((allowReload: boolean) => {
     const player = playerRef.current;
@@ -180,23 +212,16 @@ export default function VideoPlayer({
       if (resumeAfterRecoveryRef.current) {
         resumeAfterRecoveryRef.current = false;
         void player.play().catch(() => {});
-      } else if (video?.paused && Number.isFinite(video.currentTime)) {
-        // Re-present a paused frame after the browser recreates its video
-        // compositor layer during a tab or full/mini transition.
-        const maxTime = Number.isFinite(video.duration)
-          ? Math.max(video.duration - 0.01, 0)
-          : video.currentTime + 0.01;
-        const repaintTime = Math.min(video.currentTime + 0.01, maxTime);
-        if (repaintTime !== video.currentTime) video.currentTime = repaintTime;
       }
       return;
     }
 
-    updatePlayerReady(false);
     if (!allowReload || recoveryAttemptsRef.current >= 2) return;
+    updatePlayerReady(false);
 
     recoveryAttemptsRef.current += 1;
     pendingRecoveryTimeRef.current = lastKnownTimeRef.current;
+    restoringPlaybackRef.current = true;
     setMetadataLoaded(false);
     player.load();
   }, [updatePlayerReady]);
@@ -210,7 +235,8 @@ export default function VideoPlayer({
   }, [clearRecoveryTimers, recoverPlayer]);
 
   useEffect(() => {
-    const capturePlaybackState = () => {
+    const handlePageHide = () => {
+      clearRecoveryTimers();
       const player = playerRef.current;
       if (!player) return;
       const video = getNativeVideo(player);
@@ -223,25 +249,14 @@ export default function VideoPlayer({
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
-        wasPageHiddenRef.current = true;
-        capturePlaybackState();
-        return;
+        clearRecoveryTimers();
       }
-
-      if (!wasPageHiddenRef.current) return;
-      wasPageHiddenRef.current = false;
-      schedulePlayerRecovery();
     };
 
-    const handlePageHide = () => {
-      wasPageHiddenRef.current = true;
-      capturePlaybackState();
-    };
-
-    const handlePageShow = () => {
-      if (!wasPageHiddenRef.current) return;
-      wasPageHiddenRef.current = false;
-      schedulePlayerRecovery();
+    const handlePageShow = (event: PageTransitionEvent) => {
+      // A normal tab switch keeps the same media element and playback state.
+      // Only restoration from the back/forward cache may need recovery.
+      if (event.persisted) schedulePlayerRecovery();
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -294,7 +309,7 @@ export default function VideoPlayer({
     let lastTranscriptSignature = "";
     let pollingAttempts = 0;
 
-    const publishTranscript = () => publishPlayerTranscript(player);
+    const publishTranscript = () => publishPlayerTranscript(player, videoId);
 
     const publishIfChanged = () => {
       const tracks = Array.from(video.textTracks).filter(
@@ -346,17 +361,18 @@ export default function VideoPlayer({
         track.removeEventListener("cuechange", publishIfChanged);
       });
     };
-  }, [metadataLoaded, playbackId]);
+  }, [metadataLoaded, playbackId, videoId]);
 
   useEffect(() => {
     const el = playerRef.current;
-    if (!el || !metadataLoaded || !isPlayerReady || (!autoplay && !forceAutoplay)) return;
+    if (!el || !metadataLoaded || !isPlayerReady || initialAutoplayAttemptedRef.current || (!autoplay && !forceAutoplay)) return;
 
     let cancelled = false;
 
     const tryAutoplay = async () => {
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-      if (cancelled) return;
+      if (cancelled || initialAutoplayAttemptedRef.current) return;
+      initialAutoplayAttemptedRef.current = true;
 
       try {
         await el.play?.();
@@ -385,10 +401,12 @@ export default function VideoPlayer({
     const handler = (e: any) => {
       const el = playerRef.current;
       const seconds = e.detail?.seconds;
+      if (e.detail?.videoId && e.detail.videoId !== videoId) return;
       if (!Number.isFinite(seconds)) return;
       if (!el) return;
 
       el.currentTime = seconds;
+      syncSeekBar(el);
       el.play?.().catch?.(() => {});
     };
 
@@ -403,7 +421,7 @@ export default function VideoPlayer({
       window.removeEventListener("player:seek", handler as any);
       playerRef.current?.removeEventListener("contextmenu", disableContextMenu);
     }
-  }, []);
+  }, [videoId]);
 
   const sortedChapters = useMemo(() => {
     return (chapters ?? [])
@@ -437,6 +455,18 @@ export default function VideoPlayer({
     },
     [sortedChapters]
   );
+
+  useEffect(() => {
+    const respond = (event: Event) => {
+      if ((event as CustomEvent<{ videoId: string }>).detail?.videoId !== videoId) return;
+      const seconds = playerRef.current?.currentTime ?? 0;
+      window.dispatchEvent(new CustomEvent("player:time", {
+        detail: { videoId, seconds, ...getActiveChapter(seconds) },
+      }));
+    };
+    window.addEventListener("player:time-request", respond);
+    return () => window.removeEventListener("player:time-request", respond);
+  }, [videoId, getActiveChapter]);
 
   // Add mux chapters after metadata is loaded
   const muxChapters = useMemo(
@@ -477,13 +507,14 @@ export default function VideoPlayer({
     window.dispatchEvent(
       new CustomEvent("player:time", {
         detail: {
+          videoId,
           seconds: start,
           chapterName,
           chapterIndex,
         },
       })
     );
-  }, [metadataLoaded, currentTimee, getActiveChapter, playbackId]);
+  }, [metadataLoaded, currentTimee, getActiveChapter, playbackId, videoId]);
 
   // ---------------------------
   // PROGRESS SAVING (every ~10s or seek)
@@ -532,6 +563,7 @@ export default function VideoPlayer({
     window.dispatchEvent(
       new CustomEvent("player:time", {
         detail: {
+          videoId,
           seconds: current,
           chapterName,
           chapterIndex,
@@ -544,7 +576,7 @@ export default function VideoPlayer({
       void sendProgress(current);
       lastSentProgressRef.current = current;
     }
-  }, [sendProgress, getActiveChapter]);
+  }, [sendProgress, getActiveChapter, videoId]);
 
   // ---------------------------
   // HEARTBEAT (watch time)
@@ -650,6 +682,8 @@ export default function VideoPlayer({
   }
 
   const handlePlay = useCallback(() => {
+    initialAutoplayAttemptedRef.current = true;
+    restoringPlaybackRef.current = false;
     resumeAfterRecoveryRef.current = false;
     hbIsPlayingRef.current = true;
     onPlayingChange?.(true);
@@ -658,7 +692,10 @@ export default function VideoPlayer({
   }, [onPlayingChange, sendHeartbeat, startHeartbeat]);
 
   const handlePause = useCallback(() => {
-    resumeAfterRecoveryRef.current = false;
+    if (!restoringPlaybackRef.current) {
+      resumeAfterRecoveryRef.current = false;
+      if (isPlayerReadyRef.current) initialAutoplayAttemptedRef.current = true;
+    }
     hbIsPlayingRef.current = false;
     onPlayingChange?.(false);
     stopHeartbeat();                // PREKINI interval da ne šalje false non-stop
@@ -680,11 +717,15 @@ export default function VideoPlayer({
     };
   }, [sendProgress]);
 
-  if (!playback.data && playback.isError) {
+  // Keep the existing element mounted while an expired signed URL is renewed.
+  const hasPlaybackSource = playbackSource?.video_id === videoId &&
+    (!!playback.data || playback.isFetching);
+
+  if (!playback.data && playback.isError && !playback.isFetching) {
     return <PlaybackFeedback error retry={() => void playback.refetch()} />;
   }
 
-  const isLoadingPlayer = !playback.data || !isThemeReady || !isPlayerReady;
+  const isLoadingPlayer = !hasPlaybackSource || !isThemeReady || !isPlayerReady;
 
   return (
     <div id="playerCanvas" style={{ height: "100%" }} aria-busy={isLoadingPlayer}>
@@ -697,7 +738,7 @@ export default function VideoPlayer({
           </div>
         </div>
       )}
-      {isThemeReady && playback.data && (
+      {isThemeReady && hasPlaybackSource && playbackSource && (
         <MuxPlayer
           theme="optiflowz-theme"
           themeProps={{
@@ -723,6 +764,7 @@ export default function VideoPlayer({
           onCanPlay={() => {
             recoveryAttemptsRef.current = 0;
             updatePlayerReady(true);
+            restoringPlaybackRef.current = false;
             if (resumeAfterRecoveryRef.current) {
               resumeAfterRecoveryRef.current = false;
               void playerRef.current?.play().catch(() => {});
@@ -738,15 +780,17 @@ export default function VideoPlayer({
             setMetadataLoaded(false);
             updatePlayerReady(false);
           }}
-          src={playback.data.stream_url}
-          storyboardSrc={getPlaybackStoryboardUrl(playback.data)}
-          autoPlay={autoplay || forceAutoplay}
+          src={playbackSource.stream_url}
+          storyboardSrc={getPlaybackStoryboardUrl(playbackSource)}
+          autoPlay={false}
           preload="auto"
           muted={isAutoplayMuted}
           playsInline
           accentColor={accentColor}
           volume={0.1}
           onTimeUpdate={handleTimeUpdate}
+          onSeeking={() => syncSeekBar(playerRef.current)}
+          onSeeked={() => syncSeekBar(playerRef.current)}
           ref={setPlayerRef as any}
           onPlay={handlePlay}
           onEnded={handleEnded}
@@ -759,6 +803,7 @@ export default function VideoPlayer({
           }}
         />
       )}
+      {metadataLoaded && <NoteMarkers player={playerRef.current} videoId={videoId} compact={compactControls} />}
     </div>
   );
 }

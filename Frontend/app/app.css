@@ -2595,6 +2595,9 @@ mux-player::part(menu-item) {
   max-height: 400px;
 }
 
+.sidePlaylists.sideChapters.notesView .similar { padding: 0; min-height: 0; flex: 1 1 auto; overflow-y: auto; }
+.sideChapters .inVideoTabs .tags { flex-wrap: wrap; }
+
 .playerSheetHandle { display: none; }
 
 .sideChapters .transcriptList {
@@ -3106,7 +3109,7 @@ mux-player::part(menu-item) {
 
 .videoInfo .videoPanelActions{
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
   gap: 0.75rem;
   margin-top: 10px;
 }

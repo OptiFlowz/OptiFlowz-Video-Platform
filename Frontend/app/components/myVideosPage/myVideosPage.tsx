@@ -31,6 +31,8 @@ function MyVideos() {
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
+  const [filter, setFilter] = useState("");
+  const [search, setSearch] = useState("");
   const [selectedVideos, setSelectedVideos] = useState<VideoT[]>([]);
   const { confirm, dialogProps } = useConfirm();
 
@@ -46,20 +48,39 @@ function MyVideos() {
     myHeaders.current.set("Authorization", `Bearer ${userToken}`);
   }, []);
 
+  useEffect(() => {
+    const next = filter.trim();
+    if (next === search) return;
+    const timer = window.setTimeout(() => {
+      setSearch(next);
+      setPage(1);
+      setSelectedVideos([]);
+    }, next ? 300 : 0);
+    return () => window.clearTimeout(timer);
+  }, [filter, search]);
+
   const { data, isFetching, isError } = useQuery<fetchVideo>({
-    queryKey: ["my-videos", page, limit, sortColumn, sortDirection],
-    queryFn: () => {
+    queryKey: ["my-videos", page, limit, sortColumn, sortDirection, search],
+    queryFn: ({ signal }) => {
       return fetchFn<fetchVideo>({
-        route: `api/video-moderation/my/videos?page=${page}&limit=${limit}&sort_by=${sortColumn}&sort_dir=${sortDirection}`,
-        options: { method: "GET", headers: myHeaders.current },
+        route: `api/video-moderation/my/videos?page=${page}&limit=${limit}&sort_by=${sortColumn}&sort_dir=${sortDirection}${search ? `&q=${encodeURIComponent(search)}` : ""}`,
+        options: { method: "GET", headers: myHeaders.current, signal },
       });
     },
     enabled: !!token,
     staleTime: 30 * 1000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
-    placeholderData: (previousData) => previousData,
+    placeholderData: (previousData, previousQuery) => previousQuery?.queryKey[5] === search ? previousData : undefined,
   });
+
+  useEffect(() => {
+    setSelectedVideos([]);
+    if (selectAllRef.current) {
+      selectAllRef.current.checked = false;
+      selectAllRef.current.indeterminate = false;
+    }
+  }, [search, page]);
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
@@ -133,7 +154,7 @@ function MyVideos() {
     ))
     .then(async () => {
       queryClient.setQueryData(
-        ["my-videos", page, limit, sortColumn, sortDirection],
+        ["my-videos", page, limit, sortColumn, sortDirection, search],
         (old: fetchVideo | undefined) => {
           if (!old) return old;
 
@@ -163,7 +184,7 @@ function MyVideos() {
   };
 
   const itemsArray = sortedVideos.map((item, index) => (
-    <VideoRow key={`${item.id}${index}`} props={{...item, setSelectedVideos: setSelectedVideos}} />
+    <VideoRow key={`${search}:${page}:${item.id}:${index}`} props={{...item, setSelectedVideos: setSelectedVideos}} />
   ));
 
   const total = data?.total ?? 0;
@@ -198,7 +219,7 @@ function MyVideos() {
       })
     )).then(async () => {
       queryClient.setQueryData(
-        ["my-videos", page, limit, sortColumn, sortDirection],
+        ["my-videos", page, limit, sortColumn, sortDirection, search],
         (old: fetchVideo | undefined) => {
           if (!old) return old;
 
@@ -214,7 +235,7 @@ function MyVideos() {
 
       setSelectedVideos([]);
     }).catch(console.error);
-  }, [selectedVideos, canDelete]);
+  }, [selectedVideos, canDelete, confirm, t, queryClient, page, limit, sortColumn, sortDirection, search]);
 
   useEffect(() => {
     const el = selectAllRef.current;
@@ -254,7 +275,7 @@ function MyVideos() {
           <div className="managementToolbar">
             <div className="filter">
               {SearchSVG}
-              <input type="search" aria-label={t("filterVideos")} placeholder={t("filterVideos")} />
+              <input type="search" value={filter} onChange={event => setFilter(event.target.value)} aria-label={t("filterVideos")} placeholder={t("filterVideos")} />
             </div>
             {can(P.videosCreate) && <button
               type="button"
@@ -268,7 +289,7 @@ function MyVideos() {
               {AddSVG}
             </button>}
           </div>
-          <div className="libraryTableWrap">
+          <div className="libraryTableWrap" aria-busy={isFetching}>
           <table>
             <thead>
               <tr>
@@ -331,7 +352,7 @@ function MyVideos() {
               </tr>
             </thead>
 
-            <tbody>{itemsArray}</tbody>
+            <tbody>{itemsArray}{!isFetching && !isError && data && !itemsArray.length && <tr><td colSpan={6} className="p-6 text-center text-(--text2)">{t("noResultsTitle")}</td></tr>}</tbody>
           </table>
           </div>
 

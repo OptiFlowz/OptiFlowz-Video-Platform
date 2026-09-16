@@ -1,5 +1,5 @@
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, useId } from "react";
-import { ChaptersSVG, CloseSVG, TranscriptSVG } from "~/constants";
+import { ChaptersSVG, CloseSVG, TranscriptSVG, NotesSVG } from "~/constants";
 import { env } from "~/env";
 import { formatDuration, getToken } from "~/functions";
 import type { VideoT } from "~/types";
@@ -10,28 +10,39 @@ import {
   TRANSCRIPT_EVENT,
   TRANSCRIPT_REQUEST_EVENT,
   parseVttTranscript,
+  useTranscriptAvailable,
   type TranscriptCue,
   type TranscriptEventDetail,
 } from "./transcript";
 
-type PanelView = "chapters" | "transcript";
+import NotesPanel from "../notes/notesPanel";
+import type { OpenNotesDetail } from "../notes/videoNotes";
+
+export type PanelView = "chapters" | "transcript" | "notes";
 type TranscriptStatus = "loading" | "ready" | "empty";
 
 function VideoChapters({
   props,
   onClose,
   initialView = "chapters",
+  notesRequest,
 }: {
   props: VideoT;
   onClose: () => void;
   initialView?: PanelView;
+  notesRequest?: OpenNotesDetail;
 }) {
   const { t } = useI18n();
   const [playerTime, setPlayerTime] = useState(0);
-  const [activeView, setActiveView] = useState<PanelView>(props.chapters?.length ? initialView : "transcript");
+  const [requestedView, setActiveView] = useState<PanelView>(initialView === "chapters" && !props.chapters?.length ? "transcript" : initialView);
+  const hasTranscript = useTranscriptAvailable(props.id);
+  const activeView = requestedView === "transcript" && !hasTranscript
+    ? (props.chapters?.length ? "chapters" : "notes") : requestedView;
   const [transcriptCues, setTranscriptCues] = useState<TranscriptCue[]>([]);
   const [transcriptStatus, setTranscriptStatus] = useState<TranscriptStatus>("loading");
   const [transcriptLanguage, setTranscriptLanguage] = useState("en");
+
+  useEffect(() => { if (notesRequest) setActiveView("notes"); }, [notesRequest]);
 
   const tabId = useId();
   const [following, setFollowing] = useState(true);
@@ -72,6 +83,7 @@ function VideoChapters({
 
     const handleTranscript = (event: Event) => {
       const detail = (event as CustomEvent<TranscriptEventDetail>).detail;
+      if (detail?.videoId && detail.videoId !== props.id) return;
       const language = (detail?.language || "en").split("-")[0].toLowerCase();
       if (language !== transcriptLanguageRef.current) {
         transcriptLanguageRef.current = language;
@@ -93,7 +105,7 @@ function VideoChapters({
       window.removeEventListener("player:time", handlePlayerTime);
       window.removeEventListener(TRANSCRIPT_EVENT, handleTranscript);
     };
-  }, []);
+  }, [props.id]);
 
   useEffect(() => {
     if (activeView !== "transcript") return;
@@ -229,7 +241,7 @@ function VideoChapters({
   };
 
   return (
-    <PlayerSheet label={t("inThisVideo")} className="sideChapters" onClose={onClose} header={handleClose => (<>
+    <PlayerSheet label={t("inThisVideo")} className={`sideChapters ${activeView === "notes" ? "notesView" : ""}`} onClose={onClose} header={handleClose => (<>
         <span className="titleBar">
           <h2>{t("inThisVideo")}</h2>
           <button onClick={handleClose} aria-label={t("close")}>
@@ -241,7 +253,9 @@ function VideoChapters({
           <span className="tags" role="tablist" aria-label={t("inThisVideo")} onKeyDown={event => {
             if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
             event.preventDefault();
-            const view = !chapters.length || event.key === "End" ? "transcript" : event.key === "Home" ? "chapters" : activeView === "chapters" ? "transcript" : "chapters";
+            const views: PanelView[] = [...(chapters.length ? ["chapters" as const] : []), ...(hasTranscript ? ["transcript" as const] : []), "notes"];
+            const index = views.indexOf(activeView);
+            const view = event.key === "Home" ? views[0] : event.key === "End" ? views[views.length - 1] : views[(index + (event.key === "ArrowRight" ? 1 : -1) + views.length) % views.length];
             selectView(view);
             document.getElementById(`${tabId}-${view}`)?.focus();
           }}>
@@ -249,17 +263,20 @@ function VideoChapters({
               {ChaptersSVG}
               {t("chapters")}
             </button>}
-            <button id={`${tabId}-transcript`} aria-controls={`${tabId}-panel`} tabIndex={activeView === "transcript" ? 0 : -1} type="button" className={activeView === "transcript" ? "whiteTag" : ""} role="tab" aria-selected={activeView === "transcript"} onClick={() => selectView("transcript")}>
+            {hasTranscript && <button id={`${tabId}-transcript`} aria-controls={`${tabId}-panel`} tabIndex={activeView === "transcript" ? 0 : -1} type="button" className={activeView === "transcript" ? "whiteTag" : ""} role="tab" aria-selected={activeView === "transcript"} onClick={() => selectView("transcript")}>
               {TranscriptSVG}
               {t("transcript")}
+            </button>}
+            <button id={`${tabId}-notes`} aria-controls={`${tabId}-panel`} tabIndex={activeView === "notes" ? 0 : -1} type="button" className={activeView === "notes" ? "whiteTag" : ""} role="tab" aria-selected={activeView === "notes"} onClick={() => selectView("notes")}>
+              {NotesSVG}{t("myNotes")}
             </button>
           </span>
         </span>
-        {!following && <button type="button" className="sheetFollowButton" onClick={resumeFollowing}>{t("resumePlaybackFollow")}</button>}
+        {activeView !== "notes" && !following && <button type="button" className="sheetFollowButton" onClick={resumeFollowing}>{t("resumePlaybackFollow")}</button>}
       </>)}>
 
       <div className="similar" ref={holderRef} id={`${tabId}-panel`} role="tabpanel" tabIndex={0} aria-labelledby={`${tabId}-${activeView}`}>
-        {activeView === "chapters" ? (
+        {activeView === "notes" ? <NotesPanel key={props.id} videoId={props.id} duration={Number(props.duration_seconds) || 0} request={notesRequest} /> : activeView === "chapters" ? (
           <div className="holder">{chaptersArray}</div>
         ) : (
           <div className="transcriptPanel">

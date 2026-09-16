@@ -1,8 +1,9 @@
+import { useTranscriptAvailable } from "./transcript";
 import DefaultThumbnail from "../../../../assets/DefaultThumbnail.webp";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { ShareSVG, ArrowSVG, LikeSVG, DislikeSVG, InfoSVG, CommentSVG, AIButtonSVG, TranscriptSVG } from "~/constants";
+import { ShareSVG, ArrowSVG, LikeSVG, DislikeSVG, InfoSVG, CommentSVG, AIButtonSVG, TranscriptSVG, NotesSVG } from "~/constants";
 import { fetchFn } from "~/API";
 import { env } from "~/env";
 import { formatDate, formatViews, formatDescription, getToken } from "~/functions";
@@ -194,6 +195,7 @@ function VideoInfo({
     isLoading,
     onOpenChapter,
     onOpenTranscript,
+    onOpenNotes,
     onOpenComments,
     topAction,
 }: {
@@ -201,12 +203,14 @@ function VideoInfo({
     isLoading?: boolean,
     onOpenChapter: () => void,
     onOpenTranscript: () => void,
+    onOpenNotes?: () => void,
     onOpenComments?: () => void,
     topAction?: ReactNode,
 }) {
     const { t } = useI18n();
     const { can } = useAuthorization();
     const location = useLocation();
+    const hasTranscript = useTranscriptAvailable(props?.id);
 
     const tagsArray = props?.tags?.map((item, index) => (
         <Link to={`/search?tag=${item}`} key={`tag${index}`} className="tag noHover">#{item}</Link>
@@ -593,7 +597,7 @@ function VideoInfo({
                         </button>
 
                         )}
-                        <button className="viewVideoChapters viewVideoTranscript noHover"
+                        {hasTranscript && <button className="viewVideoChapters viewVideoTranscript noHover"
                             onMouseEnter={() => setIsHoveringTags(true)}
                             onMouseLeave={() => setIsHoveringTags(false)}
                             onPointerEnter={() => setIsHoveringTags(true)}
@@ -602,7 +606,11 @@ function VideoInfo({
                         >
                             <span className="descriptionActionIcon">{TranscriptSVG}</span>
                             <p>{t("transcript")} {ArrowSVG}</p>
-                        </button>
+                        </button>}
+                        {onOpenNotes && <button className="viewVideoChapters viewVideoTranscript noHover" onClick={onOpenNotes}>
+                            <span className="descriptionActionIcon">{NotesSVG}</span>
+                            <p>{t("myNotes")} {ArrowSVG}</p>
+                        </button>}
                     </div>
                 )}
 

@@ -590,23 +590,29 @@ export function styleMuxPlayerCaptions(player: MuxPlayerElement | null) {
   video.textTracks.addEventListener("change", syncTextTracks);
 
   const controller = player?.mediaController;
+  const controlBar = controller?.querySelector<HTMLElement>("media-control-bar");
+  const timeRange = controller?.querySelector<HTMLElement>("media-time-range");
   const syncCaptionPosition = () => {
     const controlsVisible = overlay.dataset.controlsVisible === "true";
     if (!controlsVisible) return;
 
-    const controlBar = controller?.querySelector<HTMLElement>(
-      "media-control-bar",
-    );
     const controllerRect = controller?.getBoundingClientRect();
     const controlBarRect = controlBar?.getBoundingClientRect();
+    const timeRangeRect = timeRange?.getBoundingClientRect();
     const isCompactPlayer = video.clientWidth <= 768;
     const fallbackClearance = Math.max(
       video.clientHeight * (isCompactPlayer ? 0.24 : 0.12),
       isCompactPlayer ? 56 : 40,
     );
+    // Clear the seek bar's entire hit area as well as the button row, leaving
+    // room for the caption background that extends beyond the text box.
+    const controlsTop = Math.min(
+      timeRangeRect?.height ? timeRangeRect.top : Infinity,
+      controlBarRect?.height ? controlBarRect.top : Infinity,
+    );
     const measuredClearance =
-      controllerRect && controlBarRect
-        ? controllerRect.bottom - controlBarRect.top + 12
+      controllerRect && Number.isFinite(controlsTop)
+        ? controllerRect.bottom - controlsTop + 12
         : 0;
     const clearance = Math.min(
       Math.max(measuredClearance, fallbackClearance),
@@ -624,6 +630,8 @@ export function styleMuxPlayerCaptions(player: MuxPlayerElement | null) {
     syncCaptionPosition();
   });
   resizeObserver.observe(video);
+  if (controlBar) resizeObserver.observe(controlBar);
+  if (timeRange) resizeObserver.observe(timeRange);
 
   const syncControlVisibility = () => {
     const controlsVisible =

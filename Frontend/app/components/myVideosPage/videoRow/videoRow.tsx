@@ -26,9 +26,46 @@ import { ConfirmDialog } from "~/components/confirmPopup/confirmDialog";
 import { useConfirm } from "~/components/confirmPopup/useConfirm";
 import { fetchFn } from "~/API";
 import { useI18n } from "~/i18n";
+import styles from "./videoRow.module.css";
 
 function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatch<React.SetStateAction<VideoT[]>>}}) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const [now, setNow] = useState(Date.now);
+  const publishedAt = Date.parse(props.published_at);
+  const isScheduled = Number.isFinite(publishedAt) && publishedAt > now;
+  const publicationDate = isScheduled
+    ? new Intl.DateTimeFormat(locale === "sr" ? "sr-Latn" : locale, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZoneName: "short",
+      }).format(publishedAt)
+    : "";
+
+  useEffect(() => {
+    if (!Number.isFinite(publishedAt)) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const updatePublicationStatus = () => {
+      clearTimeout(timer);
+      const currentTime = Date.now();
+      setNow(currentTime);
+      if (publishedAt > currentTime) {
+        timer = setTimeout(
+          updatePublicationStatus,
+          Math.min(publishedAt - currentTime + 1, 2_147_483_647),
+        );
+      }
+    };
+    updatePublicationStatus();
+    window.addEventListener("focus", updatePublicationStatus);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("focus", updatePublicationStatus);
+    };
+  }, [publishedAt]);
+
   const { canAny } = useAuthorization();
   const canDelete = canAny([P.videosDeleteOwn, P.videosDeleteAny]);
   const canReadAnalytics = canAny([P.videoAnalyticsOwn, P.videoAnalyticsAny]);
@@ -265,6 +302,14 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
               <h5 className="line-clamp-1 font-light!">
                 {formatDescription(props?.description || t("adminNoDescription"))}
               </h5>
+              {isScheduled && (
+                <div className={styles.publication}>
+                  <span className={styles.scheduled}>{t("videoScheduled")}</span>
+                  <time dateTime={new Date(publishedAt).toISOString()}>
+                    {publicationDate}
+                  </time>
+                </div>
+              )}
               <div className="videoActions">
                 <Link
                   to={`/video/${props?.id}`}

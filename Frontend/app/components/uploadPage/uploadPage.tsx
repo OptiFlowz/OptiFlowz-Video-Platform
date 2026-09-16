@@ -149,6 +149,11 @@ function getInitialThumbnailTime(video?: VideoData | null): number {
   return clampThumbnailTime(duration / 3, duration);
 }
 
+function localDateTimeValue(date: Date): string {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) => void; onFinish?: () => void } = {}) {
   const { t, locale } = useI18n();
   const languageNames = useMemo(() => new Intl.DisplayNames([locale === "sr" ? "sr-Latn" : locale], { type: "language" }), [locale]);
@@ -165,6 +170,23 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
   const [chairs, setChairs] = useState<Contributor[]>([]);
   const [oldChairs, setOldChairs] = useState<Contributor[]>([]);
   const [visibility, setVisibility] = useState<"public" | "private">("private");
+  const [scheduleUpload, setScheduleUpload] = useState(false);
+  const [scheduledAt, setScheduledAt] = useState("");
+  const [scheduleNow, setScheduleNow] = useState(() => Date.now());
+  const scheduledTime = new Date(scheduledAt).getTime();
+  const scheduleInvalid = scheduleUpload && (!Number.isFinite(scheduledTime) || scheduledTime <= scheduleNow);
+  const scheduleMinimum = localDateTimeValue(new Date(Math.ceil(scheduleNow / 60_000) * 60_000));
+  const scheduleTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  useEffect(() => {
+    if (!scheduleUpload) return;
+    const update = () => setScheduleNow(Date.now());
+    update();
+    const timer = window.setInterval(update, 30_000);
+    window.addEventListener("focus", update);
+    return () => { window.clearInterval(timer); window.removeEventListener("focus", update); };
+  }, [scheduleUpload]);
+
   const [captions, setCaptions] = useState("");
   const [oldCaptions, setOldCaptions] = useState("");
   const [spokenLanguage, setSpokenLanguage] = useState("auto");
@@ -1156,6 +1178,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
           headers: myHeaders.current,
           body: JSON.stringify({
             title: title.trim(),
+            published_at: new Date().toISOString(),
             language_code: spokenLanguage,
             ...(selectedLang ? { language_name: selectedLang.name } : {}),
             playback_policy: playbackPolicy,
@@ -1263,6 +1286,17 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
     setChapters(chapters.filter((_, i) => i !== index));
   };
 
+  const validateSchedule = () => {
+    const now = Date.now();
+    setScheduleNow(now);
+    if (scheduleUpload && (!Number.isFinite(scheduledTime) || scheduledTime <= now)) {
+      setProcessingErrorKey("uploadScheduleInvalid");
+      setCurrentStep(2);
+      return false;
+    }
+    return true;
+  };
+
   const handleNext = () => {
     if (currentStep === 1) {
       if (videoId) {
@@ -1272,6 +1306,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
         initiateUpload();
       }
     } else if (currentStep < 3) {
+      if (!validateSchedule()) return;
       setCurrentStep(prev => prev + 1);
       document.scrollingElement?.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -1289,7 +1324,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
       case 1:
         return !!videoFile && title.trim().length > 0;
       case 2:
-        return true;
+        return !scheduleInvalid;
       case 3:
         return title.trim().length > 0;
       default:
@@ -1299,6 +1334,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
 
   const handleSubmit = async () => {
     if (!isUploaded || !videoId || isSavingDetails) return;
+    if (!validateSchedule()) return;
 
     setIsSavingDetails(true);
     try {
@@ -1326,6 +1362,8 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
         setSavedPlaybackPolicy(policyResponse.playback_policy);
         await refreshVideoPreview();
       }
+      if (!validateSchedule()) return;
+      const publishedAt = scheduleUpload ? new Date(scheduledTime).toISOString() : new Date().toISOString();
       const response = await fetchFn<{ success: boolean }>({
         route: `api/video-moderation/video-details/${videoId}`,
         options: {
@@ -1336,6 +1374,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
             description,
             tags,
             visibility,
+            published_at: publishedAt,
             speakers: speakers.map((person) => person.id),
             chairs: chairs.map((person) => person.id),
             chapters: chapters.map((chapter) => ({ title: chapter.title, startTime: parseTimestampToSeconds(chapter.timestamp) })),
@@ -2166,6 +2205,26 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                         triggerClassName="visibilitySelect"
                         disabled={isSavingDetails}
                       />
+                    </div>
+                    <div className={statusStyles.schedule}>
+                      <label className={statusStyles.scheduleToggle} htmlFor="scheduleUpload">
+                        <input id="scheduleUpload" type="checkbox" checked={scheduleUpload} disabled={isSavingDetails} onChange={event => {
+                          setScheduleUpload(event.target.checked);
+                          setScheduleNow(Date.now());
+                          if (processingErrorKey === "uploadScheduleInvalid") setProcessingErrorKey(null);
+                        }} />
+                        <span>{t("uploadSchedule")}</span>
+                      </label>
+                      {scheduleUpload && <div className={statusStyles.scheduleFields}>
+                        <label htmlFor="scheduledPublishedAt">{t("uploadScheduleDateTime")}</label>
+                        <input id="scheduledPublishedAt" type="datetime-local" value={scheduledAt} min={scheduleMinimum} step={60} required disabled={isSavingDetails} aria-invalid={scheduleInvalid} aria-describedby="scheduleTimeHint scheduleTimeError" onFocus={() => setScheduleNow(Date.now())} onChange={event => {
+                          setScheduledAt(event.target.value);
+                          setScheduleNow(Date.now());
+                          if (processingErrorKey === "uploadScheduleInvalid") setProcessingErrorKey(null);
+                        }} />
+                        <p id="scheduleTimeHint" className="formHint">{t("uploadScheduleTimeZone", { timeZone: scheduleTimeZone })}</p>
+                        {scheduleInvalid && <p id="scheduleTimeError" className={statusStyles.scheduleError} role="status">{t("uploadScheduleInvalid")}</p>}
+                      </div>}
                     </div>
                     <div className="formGroup mt-7.5">
                       <label htmlFor="uploadDetailsPlaybackPolicy">{t("playbackProtection")}</label>

@@ -179,6 +179,10 @@ export const SettingsSVG = <svg width="20" height="20" viewBox="0 0 20 20" fill=
     <path d="M11.1777 10C11.1777 10.5523 10.7195 11 10.1543 11C9.58907 11 9.13088 10.5523 9.13088 10C9.13088 9.44772 9.58907 9 10.1543 9C10.7195 9 11.1777 9.44772 11.1777 10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
 </svg>
 
+export const NotesSVG = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M20 13L13 20H6C4.89543 20 4 19.1046 4 18V6C4 4.89543 4.89543 4 6 4H18C19.1046 4 20 4.89543 20 6V13ZM13 20V14C13 13.4477 13.4477 13 14 13H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+</svg>;
+
 export const BookmarkSVG = <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path fillRule="evenodd" clipRule="evenodd" d="M6 6.5C6 5.39543 6.89543 4.5 8 4.5H16C17.1046 4.5 18 5.39543 18 6.5V19.2268C18 20.0969 16.9657 20.5519 16.3243 19.9639L12 16L7.67573 19.9639C7.03432 20.5519 6 20.0969 6 19.2268V6.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
 </svg>

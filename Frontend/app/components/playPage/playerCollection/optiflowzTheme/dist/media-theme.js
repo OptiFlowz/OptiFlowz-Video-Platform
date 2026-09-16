@@ -17,6 +17,32 @@ if (template) {
   template.innerHTML = String.raw/*html*/`
     <!-- Optiflowz Theme -->
     <style>
+
+  /* Visual pins sit behind the seek track; their hit targets and popup stay above it. */
+  .video-note-pins { position: absolute; height: 0; z-index: 1; pointer-events: none; }
+  .video-note-pin { position: absolute; bottom: -3px; width: 7px; height: 13px; background: var(--note-color); border-radius: 5px 5px 1px 1px; transform: translateX(-50%); transition: height 150ms ease; }
+  .video-note-pin[data-active=true] { height: 19px; }
+  .video-note-markers { position: absolute; height: 0; z-index: 4; pointer-events: none; color: var(--text1); font: 14px/1.4 var(--media-font-family); }
+  .video-note-markers button { font: inherit; color: inherit; cursor: pointer; }
+  .video-note-markers button:focus-visible { outline: 2px solid var(--accentBlue3); outline-offset: 3px; }
+  .video-note-marker { position: absolute; bottom: 0; width: 22px; height: 24px; padding: 0; border: 0; background: transparent; transform: translateX(-50%); pointer-events: auto; display: flex; align-items: flex-end; justify-content: center; }
+  .video-note-popup { position: absolute; bottom: 36px; box-sizing: border-box; pointer-events: auto; padding: 28px 20px 14px; border: 1px solid var(--border1); border-radius: 20px; background: var(--background1); opacity: 0; transform: translateY(6px); pointer-events: none; transition: opacity 180ms ease, transform 180ms ease; }
+  .video-note-popup[data-open=true] { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* Bridge the gap so the pointer can travel from the pin to the card. */
+  .video-note-popup::before { content: ''; position: absolute; top: 100%; left: 0; width: 100%; height: 36px; }
+  .video-note-popup::after { content: ''; position: absolute; bottom: -7px; left: var(--note-arrow-left); width: 12px; height: 12px; background: var(--background1); border-right: 1px solid var(--border1); border-bottom: 1px solid var(--border1); transform: rotate(45deg); }
+  .video-note-popup .note-popup-icon { position: absolute; top: -9px; left: 12px; display: flex; color: var(--note-color); }
+  .video-note-popup .note-popup-icon svg { width: 32px; height: 32px; }
+  .video-note-popup .note-popup-icon path { fill: currentColor; }
+  .video-note-popup svg { width: 19px; height: 19px; flex-shrink: 0; }
+  .video-note-popup h3 { margin: 0 0 6px; font-size: 15px; font-weight: 600; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text1); }
+  .video-note-popup p { margin: 0; font-size: 14px; color: var(--text2); line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 5.6em; overflow: auto; }
+  .video-note-popup button { border: 0; border-radius: 8px; background: transparent; padding: 5px; display: inline-flex; align-items: center; justify-content: center; }
+  .video-note-popup button:hover { background: var(--background2); }
+  .video-note-popup footer { position: relative; display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; color: var(--note-color); }
+  .video-note-popup .note-delete { color: var(--accentRed3); }
+  @media (prefers-reduced-motion: reduce) { .video-note-pin, .video-note-popup { transition: none; } }
+
       :host {
         --_primary-color: var(--media-primary-color, var(--text1));
         --_secondary-color: var(--media-secondary-color, transparent);
@@ -375,6 +401,8 @@ if (template) {
         <style>
           media-time-range {
               position: absolute;
+              /* Keep the seek preview above the custom caption overlay. */
+              z-index: 2;
               bottom: calc(2.1 * var(--base));
               left: calc(0.25 * var(--base));
               height: calc(2 * var(--base));
@@ -400,6 +428,7 @@ if (template) {
           }
 
           .preview-card {
+            position: relative;
             box-sizing: border-box;
             display: flex;
             width: calc(10 * var(--base));
@@ -438,14 +467,32 @@ if (template) {
             white-space: normal;
           }
 
-          .preview-card media-preview-chapter-display:not([mediapreviewchapter]),
-          .preview-card media-preview-chapter-display[mediapreviewchapter=""] {
+          .preview-card media-preview-time-display {
+            --media-text-background: var(--background2);
+            --media-text-color: var(--text1);
+            --media-control-padding: calc(0.15 * var(--base)) calc(0.3 * var(--base));
+            --media-font-size: calc(0.6 * var(--base));
+            --media-font-weight: 600;
+            --media-text-content-height: 1.2;
+            position: absolute;
+            top: calc(0.6 * var(--base));
+            left: calc(0.6 * var(--base));
+            z-index: 1;
+            border-radius: calc(0.25 * var(--base));
+            font-variant-numeric: tabular-nums;
+            pointer-events: none;
+          }
+
+          /* Media Chrome keeps the last title and aria-valuetext during fade-out,
+             but removes mediapreviewchapter immediately on pointer leave. */
+          .preview-card media-preview-chapter-display:not([aria-valuetext]) {
             display: none;
           }
         </style>
         <media-time-range>
           <div class="preview-card" slot="preview">
             <media-preview-thumbnail mediacontroller="media-controller"></media-preview-thumbnail>
+            <media-preview-time-display mediacontroller="media-controller"></media-preview-time-display>
             <media-preview-chapter-display mediacontroller="media-controller"></media-preview-chapter-display>
           </div>
           <div slot="preview" part="arrow" aria-hidden="true"></div>
@@ -622,6 +669,8 @@ if (template) {
       <style>
         media-control-bar {
           position: absolute;
+          /* Preserve button hit targets where the seek hit area overlaps. */
+          z-index: 2;
           height: calc(2 * var(--base));
           line-height: calc(2 * var(--base));
           bottom: calc(0.5 * var(--base));
