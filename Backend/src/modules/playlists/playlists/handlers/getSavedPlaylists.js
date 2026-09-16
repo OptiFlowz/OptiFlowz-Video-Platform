@@ -18,7 +18,10 @@ export async function getSavedPlaylistsInternal(userId, { limit = 50, offset = 0
     LEFT JOIN LATERAL (
       SELECT COUNT(*)::int AS video_count
       FROM public.playlist_items pi3
+      JOIN public.videos v3 ON v3.id = pi3.video_id
       WHERE pi3.playlist_id = p.id
+        AND v3.mux_status = 'ready' AND v3.visibility = 'public'
+        AND v3.published_at <= NOW()
     ) ic ON TRUE
     WHERE sp.user_id = $1
       AND p.status = 'public'

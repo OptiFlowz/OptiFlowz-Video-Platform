@@ -50,7 +50,7 @@ export async function getChannelVideosInternal(object, userId = null) {
     WHERE v.uploaded_by = $1
       AND v.mux_status = 'ready'
       AND v.visibility = 'public'
-      AND v.published_at IS NOT NULL
+      AND v.published_at <= NOW()
   `;
 
   const [videosResult, countResult] = await Promise.all([

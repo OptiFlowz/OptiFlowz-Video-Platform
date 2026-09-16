@@ -1,6 +1,7 @@
 import { scheduleOverview } from '../../../video-indexing/indexing.service.js';
 import { writePool } from '../../../../database/index.js';
 import { HttpError } from '../../../../common/httpError.js';
+import { z } from 'zod';
 
 function isDefined(v) {
   return v !== undefined;
@@ -45,6 +46,7 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
     tags,
     chapters,
     visibility, // "public" | "private"
+    published_at,
     chairs,
     speakers,
   } = inputBody || {};
@@ -58,6 +60,14 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
         message: "visibility must be 'public' or 'private' (or null -> private)",
       });
     }
+  }
+
+  if (isDefined(published_at) && published_at !== null
+    && !z.iso.datetime({ offset: true }).safeParse(published_at).success) {
+    throw new HttpError(400, { message: 'published_at must be an ISO timestamp with a timezone, or null' });
+  }
+  if (visibilityNorm === 'private' && published_at != null) {
+    throw new HttpError(400, { message: 'Cannot set a publication date while making a video private' });
   }
 
   for (const field of ['thumbnail_settings', 'thumbnail_url']) {
@@ -112,7 +122,8 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
     isDefined(time) ||
     isDefined(tags) ||
     isDefined(chapters) ||
-    isDefined(visibility);
+    isDefined(visibility) ||
+    isDefined(published_at);
 
   const anyPeopleField = isDefined(chairs) || isDefined(speakers);
 
@@ -179,8 +190,15 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
         set.push(`visibility = $${i++}`);
         params.push(v);
 
-        if (v === 'public') set.push(`published_at = NOW()`);
-        else set.push(`published_at = NULL`);
+        if (!isDefined(published_at)) {
+          if (v === 'public') set.push(`published_at = COALESCE(published_at, NOW())`);
+          else set.push(`published_at = NULL`);
+        }
+      }
+
+      if (isDefined(published_at)) {
+        set.push(`published_at = $${i++}::timestamptz`);
+        params.push(published_at);
       }
 
       set.push(`updated_at = NOW()`);
@@ -279,8 +297,8 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
       success: true,
     };
   } catch (err) {
-    if (err instanceof HttpError) throw err;
     await client.query('ROLLBACK').catch(() => {});
+    if (err instanceof HttpError) throw err;
     console.error('update video error:', err);
     throw new HttpError(500, { message: 'Server error' });
   } finally {

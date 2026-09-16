@@ -51,7 +51,7 @@ export async function getSimilarVideosVectorInternal(videoId, userId = null, lim
          AND vector_norm(d.embedding) > 0
      ) reference ON TRUE
      WHERE v.id = $1 AND v.mux_status = 'ready'
-       AND (v.visibility = 'public' OR (v.visibility = 'private' AND v.uploaded_by = $2))`,
+       AND ((v.visibility = 'public' AND v.published_at <= NOW()) OR (v.visibility IN ('public', 'private') AND v.uploaded_by = $2))`,
     [videoId, userId, MODEL, INDEX_VERSION],
   );
   if (!sourceRows.length) throw new HttpError(404, { message: 'Video not found' });

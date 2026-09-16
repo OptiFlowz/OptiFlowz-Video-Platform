@@ -109,7 +109,8 @@ test('stale inaccessible cards receive no media URLs; lookup batches IDs and che
   assert.equal(card.preview_url, null);
   assert.equal(queries.length, 1);
   assert.deepEqual(queries[0].params, [[id], 'viewer-id']);
-  assert.match(queries[0].sql, /visibility = 'public' OR \(visibility = 'private' AND uploaded_by = \$2\)/);
+  assert.match(queries[0].sql, /visibility = 'public' AND published_at <= NOW\(\)/);
+  assert.match(queries[0].sql, /visibility IN \('public', 'private'\) AND uploaded_by = \$2/);
 });
 
 test('unready videos retain stored thumbnails and empty lists skip the database', async () => {

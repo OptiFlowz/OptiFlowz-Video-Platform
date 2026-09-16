@@ -36,7 +36,7 @@ export async function getAllPeopleInternal(object) {
         p.name,
         p.image_url,
         p.description,
-        COUNT(DISTINCT vc.video_id) FILTER (WHERE v.mux_status = 'ready') AS total_video_count
+        COUNT(DISTINCT vc.video_id) FILTER (WHERE v.mux_status = 'ready' AND v.visibility = 'public' AND v.published_at <= NOW()) AS total_video_count
       FROM public.people p
       LEFT JOIN public.video_chairs vc ON vc.person_id = p.id
       LEFT JOIN public.videos v ON v.id = vc.video_id

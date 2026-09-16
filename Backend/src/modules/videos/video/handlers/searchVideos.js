@@ -79,7 +79,7 @@ export async function searchVideosInternal(searchParams, userId = null) {
       ) p
     ) ppl ON TRUE
     WHERE v.mux_status = 'ready' AND v.visibility = 'public'
-      AND v.published_at IS NOT NULL
+      AND v.published_at <= NOW()
   `;
 
   // Enhanced search filter
@@ -163,7 +163,7 @@ export async function searchVideosInternal(searchParams, userId = null) {
     SELECT COUNT(*) AS total
     FROM videos v
     WHERE v.mux_status = 'ready' AND v.visibility = 'public'
-      AND v.published_at IS NOT NULL
+      AND v.published_at <= NOW()
   `;
 
   const countParams = [];

@@ -11,12 +11,16 @@ export async function withPlaylistCardMedia(cards, userId = null) {
      LEFT JOIN LATERAL (
        SELECT pi.video_id
        FROM public.playlist_items pi
+       JOIN public.videos v ON v.id = pi.video_id
        WHERE pi.playlist_id = p.id
+         AND v.mux_status = 'ready'
+         AND ((v.visibility = 'public' AND v.published_at <= NOW())
+           OR (v.visibility IN ('public', 'private') AND v.uploaded_by = $2))
        ORDER BY pi.position ASC, pi.video_id
        LIMIT 1
      ) first_item ON TRUE
      WHERE p.id = ANY($1::uuid[])`,
-    [[...new Set(cards.map(card => card.id))]],
+    [[...new Set(cards.map(card => card.id))], userId],
   );
   const playlists = new Map(rows.map(row => [row.id, row]));
   const videoIds = [...new Set(rows

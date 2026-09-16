@@ -38,7 +38,7 @@ function createSteps(total = 0) {
   return [
     { sql: /^BEGIN ISOLATION LEVEL READ COMMITTED$/ },
     { sql: /SELECT id FROM public.users WHERE id = \$1 FOR UPDATE/, params: [userId], rows: [{ id: userId }] },
-    { sql: /FROM public.videos[\s\S]*mux_status = 'ready'[\s\S]*visibility = 'public'[\s\S]*visibility = 'private' AND uploaded_by = \$2/, params: [videoId, userId], rows: [{ id: videoId }] },
+    { sql: /FROM public.videos[\s\S]*mux_status = 'ready'[\s\S]*visibility = 'public' AND published_at <= NOW\(\)[\s\S]*visibility IN \('public', 'private'\) AND uploaded_by = \$2/, params: [videoId, userId], rows: [{ id: videoId }] },
     { sql: /COUNT\(\*\)[\s\S]*user_id = \$1 AND video_id = \$2/, params: [userId, videoId], rows: [{ total }] },
   ];
 }

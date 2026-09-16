@@ -38,7 +38,7 @@ export async function searchPeopleInternal(object) {
         rp.name,
         rp.image_url,
         rp.description,
-        COUNT(DISTINCT vc.video_id) FILTER (WHERE v.mux_status = 'ready') AS total_video_count,
+        COUNT(DISTINCT vc.video_id) FILTER (WHERE v.mux_status = 'ready' AND v.visibility = 'public' AND v.published_at <= NOW()) AS total_video_count,
         rp.rank
       FROM ranked_people rp
       LEFT JOIN video_chairs vc ON vc.person_id = rp.id

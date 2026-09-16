@@ -178,7 +178,7 @@ function getBucketExpr(groupBy, column) {
 }
 
 function publicVideosCondition(alias = 'v', includePrivate = false) {
-  return includePrivate ? 'TRUE' : `${alias}.visibility = 'public'`;
+  return includePrivate ? 'TRUE' : `(${alias}.visibility = 'public' AND ${alias}.published_at <= NOW())`;
 }
 
 function publicPlaylistsCondition(alias = 'p', includePrivate = false) {

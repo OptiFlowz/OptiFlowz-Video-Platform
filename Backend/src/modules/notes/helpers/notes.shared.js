@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { HttpError } from '../../../common/httpError.js';
+export { requireVisibleVideo } from '../../../common/videoAccess.js';
 
 export const MAX_NOTES_PER_VIDEO = 100;
 export const NOTE_COLUMNS = 'id, user_id, video_id, title, text, timestamp, color';
@@ -24,14 +25,4 @@ export const editNoteSchema = z.object(noteFields).partial().strict().refine(
 
 export function requireNoteUser(userId) {
   if (!userId) throw new HttpError(401, { message: 'Unauthorized' });
-}
-
-export async function requireVisibleVideo(database, videoId, userId) {
-  const { rows } = await database.query(
-    `SELECT id FROM public.videos
-     WHERE id = $1 AND mux_status = 'ready'
-       AND (visibility = 'public' OR (visibility = 'private' AND uploaded_by = $2))`,
-    [videoId, userId],
-  );
-  if (!rows.length) throw new HttpError(404, { message: 'Video not found' });
 }

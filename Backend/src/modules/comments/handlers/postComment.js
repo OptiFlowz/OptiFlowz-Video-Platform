@@ -2,6 +2,7 @@ import { writePool } from '../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
 import { moderateText } from '../../../common/moderateText.js';
+import { requireVisibleVideo } from '../../../common/videoAccess.js';
 
 function prerequisites(object, userId) {
   const schema = z.object({
@@ -31,16 +32,7 @@ function prerequisites(object, userId) {
 export async function postCommentInternal(object, userId) { 
   const { video_id, parent_id = null, content } = prerequisites(object,userId);
 
-  const videoCheck = await writePool.query(
-    `SELECT id FROM public.videos WHERE id = $1 LIMIT 1`,
-    [video_id]
-  );
-
-  if (videoCheck.rowCount === 0) {
-    const error = new Error('Video not found');
-    error.status = 404;
-    throw error;
-  }
+  await requireVisibleVideo(writePool, video_id, userId);
 
   if (parent_id) {
     const parentCheck = await writePool.query(

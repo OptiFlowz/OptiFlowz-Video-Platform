@@ -13,7 +13,8 @@ export async function getVideoPlaybackInternal(videoId, userId = null) {
   // Use the primary so recent visibility changes apply when issuing new tokens.
   const { rows } = await writePool.query(
     `SELECT id, uploaded_by, visibility, mux_status, mux_playback_id,
-            playback_policy, duration_seconds
+            playback_policy, duration_seconds,
+            (published_at <= NOW()) AS publication_due
      FROM public.videos
      WHERE id = $1
      LIMIT 1`,
@@ -21,8 +22,8 @@ export async function getVideoPlaybackInternal(videoId, userId = null) {
   );
   const video = rows[0];
   const canView = video && (
-    video.visibility === 'public'
-    || (video.visibility === 'private' && userId && video.uploaded_by === userId)
+    (video.visibility === 'public' && video.publication_due === true)
+    || (['public', 'private'].includes(video.visibility) && userId && video.uploaded_by === userId)
   );
 
   if (!canView) {

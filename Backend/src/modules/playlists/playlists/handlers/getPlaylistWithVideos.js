@@ -37,7 +37,7 @@ export async function getPlaylistWithVideosInternal(playlistId, userId = null) {
       JOIN public.videos v ON v.id = pi.video_id
       WHERE pi.playlist_id = p.id
         AND v.mux_status = 'ready'
-        AND v.published_at IS NOT NULL
+        AND v.visibility = 'public' AND v.published_at <= NOW()
     ) ic ON TRUE
 
     LEFT JOIN LATERAL (
@@ -78,7 +78,7 @@ export async function getPlaylistWithVideosInternal(playlistId, userId = null) {
       ) ppl ON TRUE
       WHERE pi.playlist_id = p.id
         AND v.mux_status = 'ready'
-        AND v.published_at IS NOT NULL
+        AND v.visibility = 'public' AND v.published_at <= NOW()
     ) vs ON TRUE
 
     WHERE p.id = $1

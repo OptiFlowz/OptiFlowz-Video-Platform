@@ -11,7 +11,9 @@ export async function getSimilarVideosInternal(videoId, userId, limit = 10, page
         COALESCE(array_agg(vc.category_id), '{}')::uuid[] AS category_ids
       FROM videos v
       LEFT JOIN video_categories vc ON vc.video_id = v.id
-      WHERE v.id = $1
+      WHERE v.id = $1 AND v.mux_status = 'ready'
+        AND ((v.visibility = 'public' AND v.published_at <= NOW())
+          ${userId ? "OR (v.visibility IN ('public', 'private') AND v.uploaded_by = $4)" : ''})
       GROUP BY v.id
     ),
     target_cats AS (
@@ -74,7 +76,7 @@ export async function getSimilarVideosInternal(videoId, userId, limit = 10, page
             ) ppl ON TRUE
     WHERE v.id <> $1
       AND v.mux_status = 'ready' AND v.visibility = 'public'
-      AND v.published_at IS NOT NULL
+      AND v.published_at <= NOW()
       AND (
         (COALESCE(v.tags, '{}')::text[] && cv.tags)
         OR (tc.cats && cv.category_ids)

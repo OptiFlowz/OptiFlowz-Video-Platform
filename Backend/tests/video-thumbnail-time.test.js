@@ -47,3 +47,45 @@ test('invalid time values and removed fields fail before database access', async
     assert.deepEqual(calls, []);
   }
 });
+
+test('publication dates accept timezone-aware timestamps and null, independently of other fields', async () => {
+  for (const published_at of ['2030-09-20T18:00:00+02:00', '2030-09-20T16:00:00Z', null]) {
+    calls = [];
+    await patch(input({ published_at }));
+    const [sql, params] = calls.find(([sql]) => sql.includes('UPDATE public.videos'));
+    assert.match(sql, /published_at = \$2::timestamptz/);
+    assert.deepEqual(params, ['video-id', published_at]);
+    assert.ok(!sql.includes('visibility ='));
+  }
+});
+
+test('visibility-only updates preserve existing public schedules and clear private publication dates', async () => {
+  calls = [];
+  await patch(input({ visibility: 'public' }));
+  assert.match(calls.find(([sql]) => sql.includes('UPDATE public.videos'))[0], /published_at = COALESCE\(published_at, NOW\(\)\)/);
+  calls = [];
+  await patch(input({ visibility: 'private' }));
+  assert.match(calls.find(([sql]) => sql.includes('UPDATE public.videos'))[0], /published_at = NULL/);
+});
+
+test('an explicit publication date takes precedence over visibility defaults', async () => {
+  for (const published_at of ['2030-09-20T16:00:00Z', null]) {
+    calls = [];
+    await patch(input({ visibility: 'public', published_at }));
+    const [sql, params] = calls.find(([sql]) => sql.includes('UPDATE public.videos'));
+    assert.match(sql, /published_at = \$3::timestamptz/);
+    assert.deepEqual(params, ['video-id', 'public', published_at]);
+    assert.equal((sql.match(/published_at =/g) || []).length, 1);
+  }
+});
+
+test('invalid publication dates and contradictory private schedules fail before database access', async () => {
+  for (const published_at of ['', 'now', '2030-02-30T12:00:00Z', '2030-09-20T12:00:00', 0, false, {}, [], 'Infinity']) {
+    calls = [];
+    await assert.rejects(patch(input({ published_at })), { status: 400 });
+    assert.deepEqual(calls, []);
+  }
+  calls = [];
+  await assert.rejects(patch(input({ visibility: 'private', published_at: '2030-09-20T12:00:00Z' })), { status: 400 });
+  assert.deepEqual(calls, []);
+});

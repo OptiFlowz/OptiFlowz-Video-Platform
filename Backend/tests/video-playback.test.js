@@ -11,6 +11,7 @@ const baseVideo = {
   id: videoId,
   uploaded_by: ownerId,
   visibility: 'public',
+  publication_due: true,
   mux_status: 'ready',
   mux_playback_id: 'stored-playback-id',
   playback_policy: 'signed',
@@ -127,4 +128,25 @@ test('each request rechecks access after a visibility change', async () => {
   video.visibility = 'private';
   await assert.rejects(getPlayback(videoId), { status: 404 });
   assert.equal(queries.length, 2);
+});
+
+test('scheduled videos and drafts are hidden from guests and other users but allow owner previews', async () => {
+  for (const publication_due of [false, null]) {
+    for (const playback_policy of ['public', 'signed']) {
+      const getPlayback = await loadHandler({ publication_due, playback_policy });
+      await assert.rejects(getPlayback(videoId), { status: 404 });
+      await assert.rejects(getPlayback(videoId, 'another-user'), { status: 404 });
+      assert.equal((await getPlayback(videoId, ownerId)).video_id, videoId);
+      assert.match(queries[0].sql, /published_at <= NOW\(\)/);
+    }
+  }
+});
+
+test('a due video becomes available on the next request without a state-changing job', async () => {
+  const getPlayback = await loadHandler({ publication_due: false });
+  await assert.rejects(getPlayback(videoId), { status: 404 });
+  video.publication_due = true;
+  assert.equal((await getPlayback(videoId)).video_id, videoId);
+  video.publication_due = false;
+  await assert.rejects(getPlayback(videoId), { status: 404 });
 });

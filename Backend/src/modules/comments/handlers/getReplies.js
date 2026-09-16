@@ -1,4 +1,5 @@
-import { readPool } from '../../../database/index.js';
+import { readPool, writePool } from '../../../database/index.js';
+import { requireVisibleVideo } from '../../../common/videoAccess.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
 
@@ -43,6 +44,7 @@ export async function getRepliesInternal(object, userId = null) {
   }
 
   const video_id = parentRes.rows[0].video_id;
+  await requireVisibleVideo(writePool, video_id, userId);
 
   const countRes = await readPool.query(
     `

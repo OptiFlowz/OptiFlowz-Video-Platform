@@ -48,6 +48,6 @@ export function buildVideoCardVisibilityWhere() {
   return `
     v.mux_status = 'ready'
     AND v.visibility = 'public'
-    AND v.published_at IS NOT NULL
+    AND v.published_at <= NOW()
   `;
 }

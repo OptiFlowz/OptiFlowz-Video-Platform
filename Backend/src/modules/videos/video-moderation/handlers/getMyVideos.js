@@ -69,6 +69,7 @@ export async function getMyVideosInternal({ query: queryParams }, actorUserId = 
         like_count,
         dislike_count,
         created_at,
+        published_at,
         visibility
       FROM public.videos
       WHERE ${whereClause}

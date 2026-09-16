@@ -32,7 +32,9 @@ export async function getVideoByIdInternal(videoId, userId = null) {
         LEFT JOIN users u ON v.uploaded_by = u.id
         ${userId ? 'LEFT JOIN watch_progress wp ON v.id = wp.video_id AND wp.user_id = $2' : ''}
         ${userId ? 'LEFT JOIN video_reactions vr ON v.id = vr.video_id AND vr.user_id = $2' : ''}
-        WHERE v.id = $1 AND v.mux_status = 'ready' AND (v.visibility = 'public'  ${userId ? "OR (v.visibility = 'private' AND v.uploaded_by = $2)" : ''})
+        WHERE v.id = $1 AND v.mux_status = 'ready'
+          AND ((v.visibility = 'public' AND v.published_at <= NOW())
+            ${userId ? "OR (v.visibility IN ('public', 'private') AND v.uploaded_by = $2)" : ''})
     `;
 
   const params = [videoId];
@@ -70,6 +72,7 @@ export async function getVideoByIdInternal(videoId, userId = null) {
     JOIN video_chairs vc_all ON p.id = vc_all.person_id
 	  JOIN videos vid ON vc_all.video_id = vid.id
     WHERE vc.video_id = $1 AND vid.mux_status = 'ready' AND vid.visibility = 'public'
+      AND vid.published_at <= NOW()
     GROUP BY p.id, p.name, p.image_url, vc.type;
     `;
   const { rows: chairRows } = await readPool.query(chairq, [videoId]);
@@ -86,7 +89,10 @@ export async function getVideoByIdInternal(videoId, userId = null) {
     LEFT JOIN LATERAL (
       SELECT COUNT(*)::int AS video_count
       FROM public.playlist_items pi3
+      JOIN public.videos v3 ON v3.id = pi3.video_id
       WHERE pi3.playlist_id = p.id
+        AND v3.mux_status = 'ready' AND v3.visibility = 'public'
+        AND v3.published_at <= NOW()
     ) ic ON TRUE
     WHERE p.status = 'public'
       AND EXISTS (

@@ -39,7 +39,7 @@ export async function getUserHistoryInternal({ query: queryParams }, actorUserId
                 ) p
             ) ppl ON TRUE
             WHERE wp.user_id = $1
-                AND v.mux_status = 'ready' AND v.visibility = 'public'
+                AND v.mux_status = 'ready' AND v.visibility = 'public' AND v.published_at <= NOW()
             ORDER BY wp.last_watched_at DESC
             LIMIT $2 OFFSET $3
         `;

@@ -65,7 +65,7 @@ export async function getPersonalizedRecommendationsInternal(userId, limit = 20,
         ) p
       ) ppl ON TRUE
       WHERE v.mux_status = 'ready' AND v.visibility = 'public'
-        AND v.published_at IS NOT NULL
+        AND v.published_at <= NOW()
         AND NOT EXISTS (
           SELECT 1
           FROM watch_progress wp2

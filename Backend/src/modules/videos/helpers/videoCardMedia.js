@@ -95,7 +95,7 @@ async function loadCardVideos(cards, userId) {
             playback_policy, mux_status, duration_seconds
      FROM public.videos
      WHERE id = ANY($1::uuid[])
-       AND (visibility = 'public' OR (visibility = 'private' AND uploaded_by = $2))`,
+       AND ((visibility = 'public' AND published_at <= NOW()) OR (visibility IN ('public', 'private') AND uploaded_by = $2))`,
     [[...new Set(cards.map(card => card.id))], userId],
   );
   return new Map(rows.map(video => [video.id, video]));
