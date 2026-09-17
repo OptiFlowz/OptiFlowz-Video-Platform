@@ -1,9 +1,10 @@
 import { withPlaylistCardMedia } from '../playlists/helpers/playlistCardMedia.js';
+import { withVideoThumbnailMedia } from '../videos/helpers/videoCardMedia.js';
 import puppeteer from 'puppeteer';
 import { readPool } from '../../database/index.js';
 
-const FRONTEND_VIDEO_BASE = 'https://videoplatform.optiflowz.com/video/';
-const REPORT_LOGO_URL = 'https://videoplatform.optiflowz.com/_next/static/media/OptiFlowzLogo.6e965059.webp';
+const FRONTEND_VIDEO_BASE = process.env.FRONTEND_VIDEO_BASE || 'https://videoplatform.optiflowz.com/video/';
+const REPORT_LOGO_URL = process.env.REPORT_LOGO_URL || 'https://template.optiflowzstorage.com/image_14.png';
 function escapeHtml(value = '') {
   return String(value)
     .replace(/&/g, '&amp;')
@@ -2328,6 +2329,15 @@ export async function generateVideoAnalyticsPdfReport(rawOptions = {}) {
       readPool.query(getCompletionBucketsSql(options.includePrivate), params),
     ]);
 
+    const [topVideos, playlists] = await Promise.all([
+      withVideoThumbnailMedia(
+        (topVideosResult.rows || []).map(row => ({ ...row, id: row.video_id })),
+      ),
+      withPlaylistCardMedia(
+        (playlistsResult.rows || []).map(row => ({ ...row, id: row.playlist_id })),
+      ),
+    ]);
+
     const report = {
       overview: overviewResult.rows?.[0] || {},
       timeline: timelineResult.rows || [],
@@ -2335,10 +2345,8 @@ export async function generateVideoAnalyticsPdfReport(rawOptions = {}) {
       userSignupsTimeline: userSignupsTimelineResult.rows || [],
       deviceBreakdown: deviceBreakdownResult.rows || [],
       geographyBreakdown: geographyBreakdownResult.rows || [],
-      topVideos: topVideosResult.rows || [],
-      playlists: (await withPlaylistCardMedia(
-        (playlistsResult.rows || []).map(row => ({ ...row, id: row.playlist_id })),
-      )).map(({ id, ...row }) => row),
+      topVideos: topVideos.map(({ id, ...row }) => row),
+      playlists: playlists.map(({ id, ...row }) => row),
       completionBuckets: completionBucketsResult.rows?.[0] || {},
     };
 
