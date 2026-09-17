@@ -1,3 +1,4 @@
+import { createAnalyticsReportPreview } from "./analyticsReportPreview";
 import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
@@ -814,11 +815,14 @@ function Analytics() {
     setIsGeneratingReport(true);
     const reportWindow = window.open("", "_blank");
 
+    let preview: ReturnType<typeof createAnalyticsReportPreview> | undefined;
     try {
-      if (reportWindow) {
-        reportWindow.document.write("<title>Generating analytics PDF...</title><p style=\"font-family: sans-serif; padding: 16px;\">Generating analytics PDF...</p>");
-        reportWindow.document.close();
-      }
+      if (reportWindow) preview = createAnalyticsReportPreview(reportWindow, {
+        generating: t("analyticsGeneratingPdf"),
+        report: t("platformAnalytics"),
+        failed: t("editorGenerateFailed"),
+        close: t("close"),
+      });
 
       const response = await fetchApiResponse(reportUrl, { method: "GET", headers: headers.current });
       if (!response.ok) throw new Error("Failed to fetch analytics report.");
@@ -826,30 +830,14 @@ function Analytics() {
       const pdfBlob = await response.blob();
       const filename = getFilenameFromDisposition(response.headers.get("content-disposition"));
       const pdfUrl = URL.createObjectURL(new Blob([pdfBlob], { type: "application/pdf" }));
-      const reportBackground = getComputedStyle(document.documentElement)
-        .getPropertyValue("--background1")
-        .trim();
-
-      if (reportWindow) {
-        reportWindow.document.open();
-        reportWindow.document.write(`
-          <title>${filename}</title>
-          <style>
-            html, body { margin: 0; height: 100%; background: ${reportBackground}; }
-            iframe { border: 0; width: 100%; height: 100%; }
-          </style>
-          <iframe src="${pdfUrl}" title="${filename}"></iframe>
-        `);
-        reportWindow.document.close();
+      if (preview) {
+        preview.showPdf(pdfUrl, filename);
       } else {
         window.open(pdfUrl, "_blank");
       }
     } catch (error) {
       console.error("Error opening analytics report:", error);
-      if (reportWindow) {
-        reportWindow.document.body.innerHTML =
-          "<p style=\"font-family: sans-serif; padding: 16px;\">Failed to generate analytics PDF.</p>";
-      }
+      preview?.showError();
     } finally {
       setIsGeneratingReport(false);
     }
