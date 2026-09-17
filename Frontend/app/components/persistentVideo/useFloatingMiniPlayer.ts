@@ -37,6 +37,14 @@ type DragState = {
   moved: boolean;
 };
 
+export const MINI_RESIZE_CORNERS = ["nw", "ne", "sw", "se"] as const;
+type ResizeCorner = typeof MINI_RESIZE_CORNERS[number];
+const DESKTOP_RESIZE_QUERY = "(min-width: 801px) and (hover: hover) and (pointer: fine)";
+type ResizeState = {
+  pointerId: number; corner: ResizeCorner; pointer: Position; position: Position;
+  width: number; height: number; extraHeight: number; maxWidth: number;
+};
+
 const DEFAULT_SNAP: SnapPoint = { horizontal: "right", vertical: "bottom" };
 const HORIZONTAL_SNAPS: HorizontalSnap[] = ["left", "right"];
 const VERTICAL_SNAPS: VerticalSnap[] = ["top", "bottom"];
@@ -94,6 +102,10 @@ export function useFloatingMiniPlayer(active: boolean) {
   const safeAreaRef = useRef<HTMLDivElement | null>(null);
   const positionRef = useRef<Position | null>(null);
   const snapPointRef = useRef<SnapPoint>(DEFAULT_SNAP);
+  const resizeRef = useRef<ResizeState | null>(null);
+  const freePositionRef = useRef(false);
+  const [resizeWidth, setResizeWidth] = useState<number | null>(null);
+  const [isResizing, setIsResizing] = useState(false);
   const dragRef = useRef<DragState | null>(null);
   const lastDragEndRef = useRef(Number.NEGATIVE_INFINITY);
   const animationFrameRef = useRef(0);
@@ -277,8 +289,7 @@ export function useFloatingMiniPlayer(active: boolean) {
 
   const handlePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLElement>) => {
-      if (!active || event.button !== 0) return;
-
+      if (!active || event.button !== 0 || resizeRef.current) return;
       const layout = getLayout();
       const current = positionRef.current ?? resolveSnapPoint(snapPointRef.current, layout);
       if (!layout || !current) return;
@@ -307,6 +318,7 @@ export function useFloatingMiniPlayer(active: boolean) {
       if (!drag.moved && Math.hypot(totalX, totalY) < 4) return;
 
       if (!drag.moved) {
+        freePositionRef.current = false;
         drag.moved = true;
         event.currentTarget.setPointerCapture(event.pointerId);
         setIsDragging(true);
@@ -345,6 +357,8 @@ export function useFloatingMiniPlayer(active: boolean) {
         event.currentTarget.releasePointerCapture(event.pointerId);
       }
       dragRef.current = null;
+      resizeRef.current = null;
+      setIsResizing(false);
       setIsDragging(false);
 
       if (drag.moved) {
@@ -360,6 +374,85 @@ export function useFloatingMiniPlayer(active: boolean) {
     [snapFromVelocity],
   );
 
+  const startResize = useCallback((event: ReactPointerEvent<HTMLElement>, corner: ResizeCorner) => {
+    event.stopPropagation();
+    if (!active || event.button !== 0 || event.pointerType === "touch" || !window.matchMedia(DESKTOP_RESIZE_QUERY).matches) return;
+    const layout = getLayout();
+    const current = positionRef.current;
+    if (!layout || !current) return;
+    if (miniPlayerRef.current?.getAnimations().some(animation => animation.playState === "running")) return;
+    event.preventDefault();
+    stopAnimation();
+    dragRef.current = null;
+    const west = corner.includes("w");
+    const north = corner.includes("n");
+    const extraHeight = layout.height - layout.width * 9 / 16;
+    const availableWidth = west ? current.x + layout.width - layout.minX : layout.maxX + layout.width - current.x;
+    const availableHeight = north ? current.y + layout.height - layout.minY : layout.maxY + layout.height - current.y;
+    resizeRef.current = {
+      pointerId: event.pointerId, corner, pointer: { x: event.clientX, y: event.clientY },
+      position: current, width: layout.width, height: layout.height, extraHeight,
+      maxWidth: Math.max(1, Math.min(640, availableWidth, (availableHeight - extraHeight) * 16 / 9)),
+    };
+    freePositionRef.current = true;
+    setIsResizing(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }, [active, getLayout, stopAnimation]);
+
+  const moveResize = useCallback((event: ReactPointerEvent<HTMLElement>) => {
+    const resize = resizeRef.current;
+    if (!resize || resize.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const west = resize.corner.includes("w");
+    const north = resize.corner.includes("n");
+    const dx = (event.clientX - resize.pointer.x) * (west ? -1 : 1);
+    const dy = (event.clientY - resize.pointer.y) * (north ? -1 : 1);
+    const ratio = 9 / 16;
+    // Project onto the aspect-ratio diagonal instead of switching between
+    // horizontal and vertical deltas, which jumps when the dominant axis changes.
+    const delta = (dx + dy * ratio) / (1 + ratio * ratio);
+    const width = clamp(resize.width + delta, Math.min(280, resize.maxWidth), resize.maxWidth);
+    const height = width * ratio + resize.extraHeight;
+    const nextPosition = {
+      x: west ? resize.position.x + resize.width - width : resize.position.x,
+      y: north ? resize.position.y + resize.height - height : resize.position.y,
+    };
+    // Rebase at every step so reversing at a size limit responds immediately,
+    // without first having to undo pointer movement beyond the limit.
+    resize.pointer = { x: event.clientX, y: event.clientY };
+    resize.width = width;
+    resize.height = height;
+    resize.position = nextPosition;
+    setResizeWidth(width);
+    updatePosition(nextPosition);
+  }, [updatePosition]);
+
+  const finishResize = useCallback((event: ReactPointerEvent<HTMLElement>) => {
+    if (resizeRef.current?.pointerId !== event.pointerId) return;
+    event.stopPropagation();
+    resizeRef.current = null;
+    freePositionRef.current = false;
+    setIsResizing(false);
+    lastDragEndRef.current = performance.now();
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+
+    // Wait for the final width to render before measuring the snap target.
+    // Reserve the animation frame so the layout observer cannot snap instantly
+    // before the spring starts. Keep the same corner chosen before resizing.
+    stopAnimation();
+    animationFrameRef.current = requestAnimationFrame(() => {
+      animationFrameRef.current = 0;
+      const target = resolveSnapPoint(snapPointRef.current);
+      if (!target) return;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        updatePosition(target);
+      } else {
+        springTo(target, { x: 0, y: 0 });
+      }
+    });
+  }, [resolveSnapPoint, springTo, stopAnimation, updatePosition]);
+
   const handleClickCapture = useCallback((event: ReactMouseEvent<HTMLElement>) => {
     if (performance.now() - lastDragEndRef.current >= 300) return;
 
@@ -371,6 +464,8 @@ export function useFloatingMiniPlayer(active: boolean) {
   useLayoutEffect(() => {
     if (!active) {
       dragRef.current = null;
+      resizeRef.current = null;
+      setIsResizing(false);
       setIsDragging(false);
       setIsPositionReady(false);
       stopAnimation();
@@ -379,12 +474,21 @@ export function useFloatingMiniPlayer(active: boolean) {
 
     let scheduledFrame = 0;
     const reposition = () => {
-      if (dragRef.current?.moved || animationFrameRef.current) return;
+      if (resizeRef.current || dragRef.current?.moved || animationFrameRef.current) return;
       const player = miniPlayerRef.current;
       if (player?.getAnimations().some((animation) => animation.playState === "running")) {
         return;
       }
-      const target = resolveSnapPoint(snapPointRef.current);
+      const layout = getLayout();
+      if (layout && window.matchMedia(DESKTOP_RESIZE_QUERY).matches) {
+        const extraHeight = layout.height - layout.width * 9 / 16;
+        const maxWidth = Math.min(640, layout.maxX + layout.width - layout.minX,
+          (window.innerHeight - layout.gap - layout.minY - extraHeight) * 16 / 9);
+        setResizeWidth(current => current === null ? null : Math.min(current, Math.max(1, maxWidth)));
+      }
+      const target = freePositionRef.current && layout && positionRef.current
+        ? { x: clamp(positionRef.current.x, layout.minX, layout.maxX), y: clamp(positionRef.current.y, layout.minY, layout.maxY) }
+        : resolveSnapPoint(snapPointRef.current, layout);
       if (target) {
         updatePosition(target);
         setIsPositionReady(true);
@@ -393,6 +497,15 @@ export function useFloatingMiniPlayer(active: boolean) {
     const scheduleReposition = () => {
       cancelAnimationFrame(scheduledFrame);
       scheduledFrame = requestAnimationFrame(reposition);
+    };
+
+    const handleViewportResize = () => {
+      // Manual resizing preserves the opposite corner only within the current
+      // viewport. After a viewport change, anchor to the last snapped corner
+      // using the new player dimensions (including the mobile layout).
+      freePositionRef.current = false;
+      stopAnimation();
+      scheduleReposition();
     };
 
     const initialTarget = resolveSnapPoint(snapPointRef.current);
@@ -407,7 +520,7 @@ export function useFloatingMiniPlayer(active: boolean) {
     if (safeAreaRef.current) resizeObserver.observe(safeAreaRef.current);
     const appHeader = document.querySelector<HTMLElement>("[data-app-header]");
     if (appHeader) resizeObserver.observe(appHeader);
-    window.addEventListener("resize", scheduleReposition);
+    window.addEventListener("resize", handleViewportResize);
 
     // The chat widget is injected asynchronously, so periodically re-check its
     // actual visible geometry while the floating player is open.
@@ -416,11 +529,11 @@ export function useFloatingMiniPlayer(active: boolean) {
     return () => {
       cancelAnimationFrame(scheduledFrame);
       resizeObserver.disconnect();
-      window.removeEventListener("resize", scheduleReposition);
+      window.removeEventListener("resize", handleViewportResize);
       window.clearInterval(chatCheckInterval);
       stopAnimation();
     };
-  }, [active, resolveSnapPoint, stopAnimation, updatePosition]);
+  }, [active, getLayout, resolveSnapPoint, stopAnimation, updatePosition]);
 
   return {
     miniPlayerRef,
@@ -428,6 +541,16 @@ export function useFloatingMiniPlayer(active: boolean) {
     position,
     isPositionReady,
     isDragging,
+    isResizing,
+    resizeWidth,
+    resizeHandleProps: (corner: ResizeCorner) => ({
+      onPointerDown: (event: ReactPointerEvent<HTMLElement>) => startResize(event, corner),
+      onPointerMove: moveResize,
+      onPointerUp: finishResize,
+      onPointerCancel: finishResize,
+      onLostPointerCapture: finishResize,
+      onClick: (event: ReactMouseEvent<HTMLElement>) => { event.preventDefault(); event.stopPropagation(); },
+    }),
     dragSurfaceProps: {
       onPointerDown: handlePointerDown,
       onPointerMove: handlePointerMove,

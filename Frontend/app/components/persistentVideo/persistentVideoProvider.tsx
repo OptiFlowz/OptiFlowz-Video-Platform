@@ -11,11 +11,12 @@ import {
   useRef,
   useState,
   type ReactNode,
+  type CSSProperties,
 } from "react";
 import type { VideoT } from "~/types";
 import VideoPlayer from "~/components/playPage/playerCollection/muxPlayer";
 import type MuxPlayerElement from "@mux/mux-player";
-import { useFloatingMiniPlayer } from "./useFloatingMiniPlayer";
+import { MINI_RESIZE_CORNERS, useFloatingMiniPlayer } from "./useFloatingMiniPlayer";
 import {
   usePlayerMorphTransition,
   type PersistentPlayerMode,
@@ -305,7 +306,7 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
       {session ? (
         <aside
           ref={floatingPlayer.miniPlayerRef}
-          className={`persistent-video-player ${showMiniPlayer ? "persistent-video-player--mini" : "persistent-video-player--full"} ${isVisible ? "is-visible" : ""} ${floatingPlayer.isDragging ? "is-dragging" : ""} ${isMorphing ? "is-morphing" : ""} ${isClosing ? "is-closing" : ""}`}
+          className={`persistent-video-player ${showMiniPlayer ? "persistent-video-player--mini" : "persistent-video-player--full"} ${isVisible ? "is-visible" : ""} ${floatingPlayer.isDragging ? "is-dragging" : ""} ${floatingPlayer.isResizing ? "is-resizing" : ""} ${isMorphing ? "is-morphing" : ""} ${isClosing ? "is-closing" : ""}`}
           style={
             showFullPlayer && anchorRect
               ? {
@@ -316,6 +317,7 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
                 }
               : showMiniPlayer && floatingPlayer.position
                 ? {
+                    ...({ "--mini-player-width": floatingPlayer.resizeWidth ? `${floatingPlayer.resizeWidth}px` : undefined } as CSSProperties),
                     top: floatingPlayer.position.y,
                     left: floatingPlayer.position.x,
                     right: "auto",
@@ -416,6 +418,14 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
               <span>{miniPlayerByline}</span>
             </button>
           ) : null}
+          {showMiniPlayer && MINI_RESIZE_CORNERS.map(corner => (
+            <div
+              key={corner}
+              className={`persistent-video-player__resize persistent-video-player__resize--${corner}`}
+              aria-hidden="true"
+              {...floatingPlayer.resizeHandleProps(corner)}
+            />
+          ))}
         </aside>
       ) : null}
     </PersistentVideoContext.Provider>
