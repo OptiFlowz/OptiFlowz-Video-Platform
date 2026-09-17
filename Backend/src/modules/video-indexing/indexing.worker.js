@@ -67,6 +67,15 @@ async function snapshot(job) {
       source.source_track_id !== job.source_track_id
     )
       throw new Error('Indexing source changed');
+    if (source.document_type === 'overview') {
+      const { rows: people } = await client.query(
+        `SELECT DISTINCT p.id, p.name, vc.type
+         FROM video_chairs vc JOIN people p ON p.id = vc.person_id
+         WHERE vc.video_id = $1 ORDER BY p.name, p.id, vc.type`,
+        [video.id],
+      );
+      video.people = people;
+    }
     return { video, source };
   });
 }

@@ -5,6 +5,7 @@ import { reconcileTracks } from '../modules/video-indexing/mux-source.service.js
 
 // Enqueue only. The separate worker performs all paid embedding requests.
 const force = process.argv.includes('--force');
+const overviewOnly = process.argv.includes('--overview-only');
 let cursor = null;
 let scheduled = 0;
 try {
@@ -27,7 +28,7 @@ try {
           );
           if (force || !existing.rowCount) await scheduleOverview(client, video.id);
         });
-        if (video.mux_asset_id) await reconcileTracks(video.mux_asset_id, video.id, { force });
+        if (!overviewOnly && video.mux_asset_id) await reconcileTracks(video.mux_asset_id, video.id, { force });
         scheduled++;
       } catch (error) {
         process.exitCode = 1;

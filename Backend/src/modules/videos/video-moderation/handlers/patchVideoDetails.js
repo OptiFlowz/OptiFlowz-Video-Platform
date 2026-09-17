@@ -135,6 +135,15 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
   try {
     await client.query('BEGIN');
 
+    // Lock new associations before the video, matching person rename/delete
+    // operations so they cannot miss a concurrently attached video.
+    if (anyPeopleField) {
+      await client.query(
+        'SELECT id FROM people WHERE id = ANY($1::uuid[]) ORDER BY id FOR KEY SHARE',
+        [[...new Set([...(chairIds || []), ...(speakerIds || [])])]],
+      );
+    }
+
     let updatedVideo = null;
 
     if (anyVideoField) {
@@ -217,7 +226,7 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
       }
       updatedVideo = r.rows[0];
     } else {
-      const r = await client.query(`SELECT id FROM public.videos WHERE id = $1 LIMIT 1`, [videoId]);
+      const r = await client.query(`SELECT id FROM public.videos WHERE id = $1 FOR UPDATE`, [videoId]);
       if (r.rowCount === 0) {
         await client.query('ROLLBACK');
         throw new HttpError(404, { message: 'Video not found' });
@@ -288,7 +297,7 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
       }
     }
 
-    if ([title, description, tags, chapters].some(isDefined)) {
+    if ([title, description, tags, chapters, chairs, speakers].some(isDefined)) {
       await scheduleOverview(client, videoId);
     }
     await client.query('COMMIT');

@@ -2,7 +2,7 @@ import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { z } from 'zod';
 
 import { s3 } from '../../storage/r2.client.js';
-import { writePool } from '../../../database/index.js';
+import { transaction, scheduleOverview } from '../../video-indexing/indexing.service.js';
 import { validateOrThrow } from '../../../common/input.validation.js';
 
 const R2_BUCKET = process.env.R2_BUCKET;
@@ -31,32 +31,28 @@ function prerequisites(params, userId) {
 export async function deletePersonInternal(params, userId) {
   const { personId } = prerequisites(params, userId);
 
-  const existing = await writePool.query(
-    `
-      SELECT id, image_url
-      FROM public.people
-      WHERE id = $1
-      LIMIT 1
-    `,
-    [personId]
-  );
-
-  if (!existing.rowCount) {
-    const error = new Error('Person not found');
-    error.status = 404;
-    throw error;
-  }
-
-  const oldUrl = existing.rows[0]?.image_url || null;
+  const oldUrl = await transaction(async client => {
+    await client.query('SELECT id FROM people WHERE id=$1 FOR UPDATE', [personId]);
+    const { rows: videos } = await client.query(
+      'SELECT DISTINCT video_id FROM video_chairs WHERE person_id=$1 ORDER BY video_id',
+      [personId],
+    );
+    // Lock affected videos before cascading association deletion and invalidation.
+    for (const video of videos) {
+      await client.query('SELECT id FROM videos WHERE id=$1 FOR UPDATE', [video.video_id]);
+    }
+    const deleted = await client.query(
+      'DELETE FROM public.people WHERE id=$1 RETURNING image_url', [personId],
+    );
+    if (!deleted.rowCount) {
+      const error = new Error('Person not found');
+      error.status = 404;
+      throw error;
+    }
+    for (const video of videos) await scheduleOverview(client, video.video_id);
+    return deleted.rows[0].image_url || null;
+  });
   const oldKey = extractKeyFromPublicUrl(oldUrl);
-
-  await writePool.query(
-    `
-      DELETE FROM public.people
-      WHERE id = $1
-    `,
-    [personId]
-  );
 
   if (oldKey && R2_BUCKET) {
     try {

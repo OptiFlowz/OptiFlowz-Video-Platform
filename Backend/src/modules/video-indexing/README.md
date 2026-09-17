@@ -168,9 +168,19 @@ video route handlers call the service. The worker uses the primary database only
 
 ## Behavior
 
-Creation and patches containing title, description, tags, or chapters enqueue an
+Creation and patches containing title, description, tags, chapters, chairs, or speakers enqueue an
 overview in the same transaction as the video edit. Other patches do not enqueue it.
 Repeated content may create a revision, but identical stored text reuses its embedding.
+Overview text includes associated people's names and their chair/speaker roles from
+`video_chairs` and `people`. Names are deduplicated and sorted within `Chairs:` and
+`Speakers:` lines under `People:`; empty groups are omitted. Unknown roles use an
+`Other:` line. Association order does not change the embedding. Renaming or deleting a person also schedules affected
+videos in the same database transaction; description/image changes do not.
+
+To refresh existing overviews with people, run
+`npm run backfill:video-indexing -- --force --overview-only` with the indexing worker
+running. This only queues overviews and skips Mux subtitle reconciliation. The worker
+embeds changed text; overviews whose text is unchanged reuse their existing vectors.
 
 One subtitle track is selected per language. Reconciliation keeps the current track
 when present, otherwise chooses a ready track deterministically by ID. Duplicate
@@ -192,15 +202,19 @@ transaction. Deleted or outdated work cannot publish. An already running externa
 request may finish before the next check; cancellation does not guarantee avoiding
 that request's cost. PostgreSQL cascades clean up a deleted video's records.
 
-Overview input reserves UTF-8 byte budgets for title (800), description (3000),
-tags (700), and chapters (1300), truncating longer fields. Subtitle chunks have
+Overview input reserves UTF-8 byte budgets for title (800), description (3000 without
+people, 2200 with people), tags (700), chapters (1300), and people (800), truncating
+longer fields while keeping the complete input below 6000 bytes. Subtitle chunks have
 a 6000-byte ceiling and normally span at most 90 seconds; an individual long cue
 retains its original timestamps. Files over 10 MB are rejected. Chunks currently
 do not overlap. Each embedding request contains at most 16 texts.
 
 The fixed model is `text-embedding-3-small`, dimensions 1536, indexing version 1.
 Changing the model/dimensions requires a compatible schema and full reindex.
-Changing preparation logic requires advancing `INDEX_VERSION` and forcing backfill.
+This additive overview update keeps indexing version 1: the model and vector space
+remain compatible, existing documents stay searchable, and changed text produces a
+new content hash. Incompatible indexing changes require advancing `INDEX_VERSION`
+and forcing backfill.
 
 Monitor `video_indexing_jobs` grouped by status and sources where
 `enabled AND desired_revision > indexed_revision`. Completed and cancelled jobs
