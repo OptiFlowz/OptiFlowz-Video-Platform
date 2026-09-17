@@ -20,8 +20,12 @@ and tag overlap behave like the existing search.
 With a nonempty `q`, the API embeds the trimmed query using the indexing model and
 ranks each video by its highest cosine similarity across overview and subtitle
 documents. Each video appears once. Only public, published, ready videos with an
-enabled source and compatible published documents qualify. There is no similarity
-cutoff: pagination totals count all qualifying indexed videos after the filters.
+enabled source and compatible published documents qualify. A video must have at
+least one document with cosine similarity `>= 0.35`; zero vectors are excluded.
+The threshold applies before pagination for every sort mode, and totals count only
+videos meeting it. If nothing meets it, the response contains an empty video list
+and total 0. `MIN_RELEVANCE` in `searchVideosVector.js` is an initial tuning value,
+not a probability or a guarantee of relevance; adjust it against actual queries.
 The last published documents remain searchable during reindexing; disabled sources
 are excluded. The handler reads the primary database to check current visibility.
 

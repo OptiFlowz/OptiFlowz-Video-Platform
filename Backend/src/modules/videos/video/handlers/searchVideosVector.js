@@ -9,6 +9,9 @@ import { MODEL, INDEX_VERSION } from '../../../video-indexing/documents.js';
 import { withVideoCardMedia } from '../../helpers/videoCardMedia.js';
 import { searchVideosInternal } from './searchVideos.js';
 
+// Starting cutoff for cosine similarity; tune against actual search results.
+const MIN_RELEVANCE = 0.35;
+
 export async function searchVideosVectorInternal(searchParams, userId = null) {
   const {
     query,
@@ -36,7 +39,7 @@ export async function searchVideosVectorInternal(searchParams, userId = null) {
     throw new HttpError(502, { message: 'Could not embed the search query. Please try again.' });
   }
 
-  const filterParams = [MODEL, INDEX_VERSION];
+  const filterParams = [MODEL, INDEX_VERSION, JSON.stringify(embedding), MIN_RELEVANCE];
   const bindFilter = (value) => `$${filterParams.push(value)}`;
   let eligibleDocuments = `
     FROM videos v
@@ -47,6 +50,8 @@ export async function searchVideosVectorInternal(searchParams, userId = null) {
       AND d.source_revision = s.indexed_revision
       AND d.embedding_model = $1
       AND d.index_version = $2
+      AND vector_norm(d.embedding) > 0
+      AND 1 - (d.embedding <=> $3::vector) >= $4
   `;
 
   if (category) {
@@ -65,7 +70,6 @@ export async function searchVideosVectorInternal(searchParams, userId = null) {
 
   const params = [...filterParams];
   const bind = (value) => `$${params.push(value)}`;
-  const vectorParam = bind(JSON.stringify(embedding));
   const userParam = userId ? bind(userId) : null;
   const orderBy = {
     relevance: 'ranked.relevance DESC, v.created_at DESC, v.id',
@@ -80,7 +84,7 @@ export async function searchVideosVectorInternal(searchParams, userId = null) {
   const [{ rows }, { rows: countRows }] = await Promise.all([
     writePool.query(
       `WITH ranked AS (
-        SELECT v.id, MAX(1 - (d.embedding <=> ${vectorParam}::vector)) AS relevance
+        SELECT v.id, MAX(1 - (d.embedding <=> $3::vector)) AS relevance
         ${eligibleDocuments}
         GROUP BY v.id
       )
