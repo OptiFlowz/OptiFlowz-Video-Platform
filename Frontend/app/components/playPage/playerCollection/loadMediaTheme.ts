@@ -134,15 +134,18 @@ function setupCaptionPreferenceMenus(player: MuxPlayerElement) {
     captionSettingsMenu.shadowRoot?.querySelector<HTMLElement>("#container");
   let settingsMenuBaseSize: { height: number; width: number } | undefined;
   const refreshSettingsMenuBaseSize = () => {
-    const naturalSize = getNaturalMenuSize(settingsMenu);
-    settingsMenuBaseSize = {
-      height: Math.max(settingsMenuBaseSize?.height ?? 0, naturalSize.height),
-      width: Math.max(
-        settingsMenuBaseSize?.width ?? 0,
-        settingsMenu.offsetWidth,
-        naturalSize.width,
-      ),
-    };
+    // Removing min-width normally animates from the mobile width. Measuring
+    // during that transition caches the old width again, so measure without it.
+    const transition = settingsMenu.style.getPropertyValue("transition");
+    const priority = settingsMenu.style.getPropertyPriority("transition");
+    settingsMenu.style.setProperty("transition", "none", "important");
+    settingsMenu.style.removeProperty("min-width");
+    settingsMenu.style.removeProperty("min-height");
+    settingsContainer?.style.removeProperty("height");
+    settingsContainer?.style.removeProperty("min-height");
+    settingsMenuBaseSize = getNaturalMenuSize(settingsMenu);
+    if (transition) settingsMenu.style.setProperty("transition", transition, priority);
+    else settingsMenu.style.removeProperty("transition");
   };
   const setSettingsMenuSize = (height: number, width: number) => {
     settingsContainer?.style.setProperty("height", `${height}px`);
@@ -162,9 +165,8 @@ function setupCaptionPreferenceMenus(player: MuxPlayerElement) {
   };
   const restoreSettingsMenuSize = () => {
     /*
-     * Native Playback/Audio/Quality rows are populated asynchronously. Read
-     * the root slot when it is presented and retain the largest complete
-     * measurement instead of caching its early theme-initialisation height.
+     * Reuse the root measurement only within this opening. It is measured
+     * again on the next opening, after removing the previous layout's sizes.
      */
     if (!settingsMenuBaseSize) refreshSettingsMenuBaseSize();
     if (!settingsMenuBaseSize) return;
@@ -173,10 +175,9 @@ function setupCaptionPreferenceMenus(player: MuxPlayerElement) {
       "min-height",
       `${settingsMenuBaseSize.height}px`,
     );
-    settingsMenu.style.setProperty(
-      "min-width",
-      `${settingsMenuBaseSize.width}px`,
-    );
+    // Only expanded submenus need an explicit width. Let the root return to
+    // the theme's intrinsic desktop width instead of pinning a sheet measurement.
+    settingsMenu.style.removeProperty("min-width");
   };
   const resetCaptionSettingsMenuSize = () => {
     captionContainer?.style.removeProperty("height");
@@ -211,7 +212,6 @@ function setupCaptionPreferenceMenus(player: MuxPlayerElement) {
       return;
     }
 
-    refreshSettingsMenuBaseSize();
     const { height, width } = getNaturalMenuSize(submenu);
     setSettingsMenuSize(height, width);
   });
@@ -226,10 +226,18 @@ function setupCaptionPreferenceMenus(player: MuxPlayerElement) {
    * root. This keeps the root's background, border and 24px radius around the
    * complete panel instead of positioning a bare inner container over it.
    */
-  const captionSettingsBaseSize = getNaturalMenuSize(captionSettingsMenu);
+  let captionSettingsBaseSize = getNaturalMenuSize(captionSettingsMenu);
 
   captionSettingsMenu.addEventListener("toggle", (event) => {
-    if (event.target === captionSettingsMenu) return;
+    if (event.target === captionSettingsMenu) {
+      if (!captionSettingsMenu.hidden) {
+        resetCaptionSettingsMenuSize();
+        captionSettingsMenu.style.removeProperty("min-width");
+        captionSettingsMenu.style.removeProperty("min-height");
+        captionSettingsBaseSize = getNaturalMenuSize(captionSettingsMenu);
+      }
+      return;
+    }
 
     event.stopPropagation();
     if (captionSettingsMenu.hidden) return;
