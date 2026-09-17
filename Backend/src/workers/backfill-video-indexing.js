@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { setTimeout } from 'node:timers/promises';
 import { writePool, readPool } from '../database/index.js';
 import { transaction, scheduleOverview } from '../modules/video-indexing/indexing.service.js';
 import { reconcileTracks } from '../modules/video-indexing/mux-source.service.js';
@@ -28,7 +29,21 @@ try {
           );
           if (force || !existing.rowCount) await scheduleOverview(client, video.id);
         });
-        if (!overviewOnly && video.mux_asset_id) await reconcileTracks(video.mux_asset_id, video.id, { force });
+        if (!overviewOnly && video.mux_asset_id) {
+          for (let attempt = 0; ; attempt++) {
+            try {
+              await reconcileTracks(video.mux_asset_id, video.id, { force });
+              break;
+            } catch (error) {
+              if (!error.muxRateLimited || attempt >= 4) throw error;
+              const delay = Math.max(error.retryAfterSeconds, 5 * 2 ** attempt);
+              console.warn(`[video-indexing] Mux rate limit: retrying video=${video.id} in ${delay}s`);
+              // reconcileTracks has rolled back, so no database locks are held here.
+              await setTimeout((delay + Math.random() * 5) * 1000);
+            }
+          }
+          await setTimeout(500);
+        }
         scheduled++;
       } catch (error) {
         process.exitCode = 1;

@@ -147,6 +147,10 @@ export async function publishDocuments(job, source, documents) {
 }
 
 async function failJob(job, error) {
+  const delay = Math.max(
+    Math.min(300, 5 * 2 ** (job.attempts - 1)),
+    error.muxRateLimited ? error.retryAfterSeconds : 0,
+  ) + (error.muxRateLimited ? Math.random() * 5 : 0);
   await writePool.query(
     `UPDATE video_indexing_jobs j SET
     status=CASE WHEN NOT EXISTS (SELECT 1 FROM video_indexing_sources s WHERE s.id=j.source_id
@@ -163,10 +167,21 @@ async function failJob(job, error) {
     [
       job.id,
       job.lease_token,
-      Math.min(300, 5 * 2 ** (job.attempts - 1)),
+      delay,
       String(error.message).slice(0, 500),
     ],
   );
+  if (error.muxRateLimited) {
+    // Pause pending subtitle lookups across workers; overview jobs can continue.
+    await writePool.query(
+      `UPDATE video_indexing_jobs j
+       SET available_at=GREATEST(j.available_at, now()+$1*interval '1 second'),updated_at=now()
+       FROM video_indexing_sources s
+       WHERE s.id=j.source_id AND s.document_type='transcript_chunk' AND j.status='pending'`,
+      [delay],
+    );
+    console.warn(`[video-indexing] Mux rate limit: subtitle jobs delayed ${Math.ceil(delay)}s`);
+  }
 }
 
 export async function processJob(job, signal) {
@@ -195,7 +210,9 @@ export async function processJob(job, signal) {
         if (bytes > 10 * 1024 * 1024) throw new Error('Subtitle file exceeds 10 MB');
         chunks.push(chunk);
       }
-      documents = transcriptDocuments(Buffer.concat(chunks).toString('utf8'));
+      documents = transcriptDocuments(Buffer.concat(chunks).toString('utf8'), warning => {
+        console.warn(`[video-indexing] job=${job.id} track=${job.source_track_id}: ${warning}`);
+      });
     }
     // Reuse identical text from the current source without another paid API call.
     const { rows: existing } = await writePool.query(

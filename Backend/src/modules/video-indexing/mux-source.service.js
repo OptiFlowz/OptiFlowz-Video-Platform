@@ -14,7 +14,18 @@ export async function retrieveAsset(assetId, signal) {
     },
   );
   if (response.status === 404) return null;
-  if (!response.ok) throw new Error(`Mux asset lookup failed (${response.status})`);
+  if (!response.ok) {
+    const error = new Error(`Mux asset lookup failed (${response.status})`);
+    if (response.status === 429) {
+      const header = response.headers.get('retry-after');
+      const seconds = header && /^\d+(\.\d+)?$/.test(header.trim())
+        ? Number(header)
+        : (Date.parse(header) - Date.now()) / 1000;
+      error.muxRateLimited = true;
+      error.retryAfterSeconds = Number.isFinite(seconds) ? Math.max(1, Math.ceil(seconds)) : 30;
+    }
+    throw error;
+  }
   return (await response.json()).data;
 }
 

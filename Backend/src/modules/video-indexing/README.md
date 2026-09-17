@@ -195,6 +195,12 @@ processes can run. Claims last 120 seconds and renew between bounded API calls.
 A crashed worker's lease expires and another worker can reclaim it with a fresh
 token. Up to five attempts use exponential delays starting at five seconds, capped
 at five minutes. Shutdown aborts active HTTP calls and releases the job for retry.
+Mux asset lookup 429 responses respect `Retry-After` (seconds or HTTP date), with
+a 30-second fallback and jitter. Pending subtitle jobs are postponed together so
+other workers do not immediately repeat the same burst; overview jobs remain
+available. In-flight requests may still finish, and retries retain the five-attempt
+limit. Backfill spaces asset reconciliation calls by 500 ms and retries a 429 up to
+four times, waiting outside database transactions.
 
 Publication locks video, source, and job in that order, checks the revision, track,
 enabled state, and lease, then replaces documents and completes the job in one
@@ -208,6 +214,11 @@ longer fields while keeping the complete input below 6000 bytes. Subtitle chunks
 a 6000-byte ceiling and normally span at most 90 seconds; an individual long cue
 retains its original timestamps. Files over 10 MB are rejected. Chunks currently
 do not overlap. Each embedding request contains at most 16 texts.
+Zero-duration cues (`end = start`) are accepted and their text is indexed with the
+original timestamps. Apply the zero-duration transcript migration before running
+the updated worker. Malformed timestamps and negative cue ranges are skipped with a warning that
+identifies the job and track. Valid cues are still indexed. If invalid cues leave
+no usable content, the job fails and preserves the previously published documents.
 
 The fixed model is `text-embedding-3-small`, dimensions 1536, indexing version 1.
 Changing the model/dimensions requires a compatible schema and full reindex.

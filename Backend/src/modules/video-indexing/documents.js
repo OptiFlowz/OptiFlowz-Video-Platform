@@ -49,10 +49,11 @@ export function overviewDocuments(video) {
 
 function seconds(value) {
   const parts = value.split(':').map(Number);
+  if (parts.at(-1) >= 60 || parts.at(-2) >= 60) return NaN;
   return parts.reduce((total, part) => total * 60 + part, 0);
 }
 
-export function transcriptDocuments(vtt) {
+export function transcriptDocuments(vtt, onWarning = () => {}) {
   if (
     !vtt
       .replace(/^\uFEFF/, '')
@@ -61,18 +62,25 @@ export function transcriptDocuments(vtt) {
   )
     throw new Error('Invalid WebVTT header');
   const cues = [];
+  let invalidCues = 0;
   for (const block of vtt.replace(/\r\n?/g, '\n').split(/\n\s*\n/)) {
     if (/^(NOTE|STYLE|REGION)(\s|$)/.test(block.trim())) continue;
     const lines = block.split('\n');
     const i = lines.findIndex((l) => l.includes('-->'));
     if (i < 0) continue;
     const match = lines[i].match(
-      /^\s*((?:\d+:)?\d{2}:\d{2}\.\d{3})\s+-->\s+((?:\d+:)?\d{2}:\d{2}\.\d{3})/,
+      /^\s*((?:\d+:)?\d{2}:\d{2}\.\d{3})\s+-->\s+((?:\d+:)?\d{2}:\d{2}\.\d{3})(?=\s|$)/,
     );
-    if (!match) throw new Error('Invalid WebVTT timestamp');
+    if (!match) {
+      invalidCues++;
+      continue;
+    }
     const start = seconds(match[1]),
       end = seconds(match[2]);
-    if (!Number.isFinite(end) || end <= start) throw new Error('Invalid WebVTT cue range');
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) {
+      invalidCues++;
+      continue;
+    }
     const text = lines
       .slice(i + 1)
       .join(' ')
@@ -89,6 +97,10 @@ export function transcriptDocuments(vtt) {
       cues.push({ text: part, start_seconds: start, end_seconds: end });
       remainder = remainder.slice(part.length);
     }
+  }
+  if (invalidCues) {
+    if (!cues.length) throw new Error(`No usable WebVTT cues (${invalidCues} invalid cues)`);
+    onWarning(`Skipped ${invalidCues} invalid WebVTT cues`);
   }
   cues.sort((a, b) => a.start_seconds - b.start_seconds);
   const documents = [];
