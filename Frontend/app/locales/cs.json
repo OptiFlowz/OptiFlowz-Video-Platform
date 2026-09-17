@@ -5,10 +5,10 @@
   "uploadScheduleTimeZone": "Time zone: {{param.timeZone}}",
   "uploadScheduleInvalid": "Choose a date and time in the future.",
   "myNotes": "Moje poznámky",
-  "notesAdd": "Add note",
+  "notesAdd": "Přidat poznámku",
   "notesEdit": "Edit note",
   "notesDelete": "Delete note",
-  "notesPrivate": "Only you can see these notes.",
+  "notesPrivate": "Tyto poznámky vidíte pouze vy.",
   "notesEmpty": "Your thoughts, saved here",
   "notesEmptyHint": "Add a note at the current moment to remember a key point or return to it later.",
   "notesSignIn": "Sign in to save your own notes on this video.",
@@ -1212,5 +1212,11 @@
   "editorNoCaptions": "Zatím žádné titulky pro jazyk {{param.language}}.",
   "editorCaptionsReadyHelp": "Titulky se zde zobrazí, jakmile budou připraveny.",
   "editorCaptionsCreateHelp": "Vygenerujte titulky pomocí AI nebo je vložte níže ve formátu VTT.",
-  "editorWatchVideo": "Přehrát video"
+  "editorWatchVideo": "Přehrát video",
+  "playing": "Právě se přehrává",
+  "askAI": "Zeptejte se AI",
+  "channelSortMostPopular": "Nejpopulárnější",
+  "channelSortNewest": "Nejnovější",
+  "channelSortLeastPopular": "Nejméně populární",
+  "channelSortOldest": "Nejstarší"
 }

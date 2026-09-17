@@ -529,7 +529,7 @@ export default function AccessAndRoles() {
           body: JSON.stringify({
             name,
             position,
-            is_default: isDefault,
+            ...(isDefault ? { is_default: true } : {}),
             permissions: [...permissions.map((id) => ({ id, effect: "allow" as const })), ...deniedPermissions.filter(id => !permissions.includes(id)).map(id => ({ id, effect: "deny" as const }))],
           }),
         },

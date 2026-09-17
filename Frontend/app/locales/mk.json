@@ -5,10 +5,10 @@
   "uploadScheduleTimeZone": "Time zone: {{param.timeZone}}",
   "uploadScheduleInvalid": "Choose a date and time in the future.",
   "myNotes": "Мои белешки",
-  "notesAdd": "Add note",
+  "notesAdd": "Додај белешка",
   "notesEdit": "Edit note",
   "notesDelete": "Delete note",
-  "notesPrivate": "Only you can see these notes.",
+  "notesPrivate": "Само вие можете да ги видите овие белешки.",
   "notesEmpty": "Your thoughts, saved here",
   "notesEmptyHint": "Add a note at the current moment to remember a key point or return to it later.",
   "notesSignIn": "Sign in to save your own notes on this video.",
@@ -1212,5 +1212,11 @@
   "editorNoCaptions": "Сè уште нема титлови за јазикот {{param.language}}.",
   "editorCaptionsReadyHelp": "Титловите ќе се појават тука кога ќе бидат подготвени.",
   "editorCaptionsCreateHelp": "Генерирајте титлови со ВИ или залепете ги подолу во VTT формат.",
-  "editorWatchVideo": "Гледај видео"
+  "editorWatchVideo": "Гледај видео",
+  "playing": "Се репродуцира",
+  "askAI": "Прашај ја ВИ",
+  "channelSortMostPopular": "Најпопуларни",
+  "channelSortNewest": "Најнови",
+  "channelSortLeastPopular": "Најмалку популарни",
+  "channelSortOldest": "Најстари"
 }

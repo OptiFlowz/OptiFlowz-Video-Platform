@@ -17,7 +17,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AISVG, UploadSVG } from "~/constants";
 import { env } from "~/env";
 import ContributorSearch from "~/components/uploadPage/contributorSearch";
-import { fetchFn } from "~/API";
+import { fetchFn, fetchApiResponse } from "~/API";
 import { getToken } from "~/functions";
 import { EUROPEAN_LANGUAGES } from "~/constants";
 import Sidebar from "../myVideosPage/sidebar/sidebar";
@@ -662,7 +662,7 @@ function EditVideoPage() {
     setCaptionsModified(false);
 
     try {
-      const response = await fetch(
+      const response = await fetchApiResponse(
         `${env.apiBaseUrl || ""}/api/video-moderation/subtitle/${videoId}?lang=${lang}`,
         {
           method: "GET",
@@ -704,7 +704,7 @@ function EditVideoPage() {
     setCaptionStatus("generating");
 
     try {
-      const response = await fetch(
+      const response = await fetchApiResponse(
         `${env.apiBaseUrl || ""}/api/video-moderation/subtitle/autogenerate/${videoId}?lang=${captionLanguage}&name=${encodeURIComponent(selectedLang.name)}`,
         {
           method: "GET",
@@ -742,7 +742,7 @@ function EditVideoPage() {
 
     setLoading(true);
     try {
-      const response = await fetch(
+      const response = await fetchApiResponse(
         `${env.apiBaseUrl || ""}/api/video-moderation/details/autogenerate/${videoId}?type=${type}`,
         {
           method: "GET",
@@ -786,7 +786,7 @@ function EditVideoPage() {
 
     setIsSavingCaptions(true);
     try {
-      const response = await fetch(
+      const response = await fetchApiResponse(
         `${env.apiBaseUrl || ""}/api/video-moderation/subtitle/replacev2/${videoId}?lang=${captionLanguage}&name=${selectedLang.name}`,
         {
           method: "POST",
@@ -826,7 +826,7 @@ function EditVideoPage() {
 
     setIsDeletingCaptions(true);
     try {
-      const response = await fetch(
+      const response = await fetchApiResponse(
         `${env.apiBaseUrl || ""}/api/video-moderation/subtitle/${videoId}?lang=${captionLanguage}`,
         {
           method: "DELETE",

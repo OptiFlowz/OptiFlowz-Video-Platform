@@ -1,3 +1,4 @@
+import { fetchApiResponse } from "~/API";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
 // VideoPlayer.tsx
@@ -529,7 +530,7 @@ export default function VideoPlayer({
       if (!token) return;
 
       try {
-        await fetch(`${apiBaseUrl}/api/videos/${videoId}/progress`, {
+        await fetchApiResponse(`${apiBaseUrl}/api/videos/${videoId}/progress`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -639,7 +640,7 @@ export default function VideoPlayer({
       if (token) heartbeatHeaders.set("Authorization", `Bearer ${token}`);
 
       try {
-        await fetch(`${apiBaseUrl}/api/videos/heartbeat`, {
+        await fetchApiResponse(`${apiBaseUrl}/api/videos/heartbeat`, {
           method: "POST",
           headers: heartbeatHeaders,
           body: JSON.stringify(payload),

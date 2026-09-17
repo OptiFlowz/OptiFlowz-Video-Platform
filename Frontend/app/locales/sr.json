@@ -750,10 +750,10 @@
   "noSimilarVideos": "Nema sličnih video snimaka",
   "featuredInPlaylists": "Istaknuto u plejlistama",
   "videoChapters": "Poglavlja videa",
-  "inThisVideo": "In this video",
-  "transcript": "Transcript",
-  "loadingTranscript": "Loading transcript...",
-  "transcriptUnavailable": "No transcript is available for this video.",
+  "inThisVideo": "U ovom videu",
+  "transcript": "Transkript",
+  "loadingTranscript": "Učitavanje transkripta...",
+  "transcriptUnavailable": "Transkript za ovaj video nije dostupan.",
   "close": "Zatvori",
   "toggleAutoplay": "Uključi ili isključi automatsku reprodukciju",
   "on": "Uključeno",
@@ -1118,5 +1118,11 @@
   "editorNoCaptions": "Još nema titlova za jezik: {{param.language}}.",
   "editorCaptionsReadyHelp": "Titlovi će se pojaviti ovde kada budu spremni.",
   "editorCaptionsCreateHelp": "Generišite titlove pomoću AI ili ih unesite ispod u VTT formatu.",
-  "editorWatchVideo": "Gledaj video"
+  "editorWatchVideo": "Gledaj video",
+  "playing": "Trenutno se reprodukuje",
+  "askAI": "Pitaj AI",
+  "channelSortMostPopular": "Najpopularnije",
+  "channelSortNewest": "Najnovije",
+  "channelSortLeastPopular": "Najmanje popularne",
+  "channelSortOldest": "Najstarije"
 }

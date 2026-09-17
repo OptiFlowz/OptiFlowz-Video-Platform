@@ -18,7 +18,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AISVG, CloseSVG, UploadSVG } from "~/constants";
 import { env } from "~/env";
 import ContributorSearch from "./contributorSearch";
-import { fetchFn } from "~/API";
+import { fetchFn, fetchApiResponse } from "~/API";
 import { getToken } from "~/functions";
 import { EUROPEAN_LANGUAGES, MUX_SPOKEN_LANGUAGES } from "~/constants";
 import Sidebar from "../myVideosPage/sidebar/sidebar";
@@ -634,7 +634,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
 
 
     try {
-      const response = await fetch(
+      const response = await fetchApiResponse(
         `${env.apiBaseUrl || ""}/api/video-moderation/subtitle/${videoId}?lang=${lang}`,
         {
           method: "GET",
@@ -677,7 +677,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
     setCaptionStatus("generating");
 
     try {
-      const response = await fetch(
+      const response = await fetchApiResponse(
         `${env.apiBaseUrl || ""}/api/video-moderation/subtitle/autogenerate/${videoId}?lang=${captionLanguage}&name=${encodeURIComponent(selectedLang.name)}`,
         {
           method: "GET",
@@ -717,7 +717,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
 
     setIsSavingCaptions(true);
     try {
-      const response = await fetch(
+      const response = await fetchApiResponse(
         `${env.apiBaseUrl || ""}/api/video-moderation/subtitle/replacev2/${videoId}?lang=${captionLanguage}&name=${selectedLang.name}`,
         {
           method: "POST",
@@ -759,7 +759,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
 
     setIsDeletingCaptions(true);
     try {
-      const response = await fetch(
+      const response = await fetchApiResponse(
         `${env.apiBaseUrl || ""}/api/video-moderation/subtitle/${videoId}?lang=${captionLanguage}`,
         {
           method: "DELETE",
@@ -954,7 +954,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
     const poll = async () => {
       if (!mountedRef.current) return;
       try {
-        const response = await fetch(
+        const response = await fetchApiResponse(
         `${env.apiBaseUrl || ""}/api/video-moderation/subtitle/${vid}?lang=${lang}`,
           {
             method: "GET",
@@ -1128,7 +1128,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
 
     setLoading(true);
     try {
-      const response = await fetch(
+      const response = await fetchApiResponse(
         `${env.apiBaseUrl || ""}/api/video-moderation/details/autogenerate/${videoId}?type=${type}`,
         {
           method: "GET",

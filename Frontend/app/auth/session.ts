@@ -1,3 +1,4 @@
+import { safeRedirect } from "./safeRedirect";
 import type { AuthFetchT } from "../types";
 
 const SESSION_EVENT = "optiflowz-session-change";
@@ -56,4 +57,17 @@ export function subscribeToSession(onChange: () => void) {
     window.removeEventListener(SESSION_EVENT, onChange);
     window.removeEventListener("storage", onStorage);
   };
+}
+
+let redirectingToLogin = false;
+export const isRedirectingToLogin = () => redirectingToLogin;
+
+/** Hide the outgoing page before clearing its session and navigating. */
+export function redirectToLogin(returnTo?: string) {
+  if (typeof window === "undefined" || redirectingToLogin) return;
+  redirectingToLogin = true;
+  // clearSession notifies SessionBoundary of both changes in a single snapshot.
+  clearSession();
+  const target = returnTo ? `/login?redirect=${encodeURIComponent(safeRedirect(returnTo))}` : "/login";
+  window.location.replace(target);
 }

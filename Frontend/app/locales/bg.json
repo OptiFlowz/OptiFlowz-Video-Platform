@@ -5,10 +5,10 @@
   "uploadScheduleTimeZone": "Time zone: {{param.timeZone}}",
   "uploadScheduleInvalid": "Choose a date and time in the future.",
   "myNotes": "Моите бележки",
-  "notesAdd": "Add note",
+  "notesAdd": "Добавяне на бележка",
   "notesEdit": "Edit note",
   "notesDelete": "Delete note",
-  "notesPrivate": "Only you can see these notes.",
+  "notesPrivate": "Само вие можете да виждате тези бележки.",
   "notesEmpty": "Your thoughts, saved here",
   "notesEmptyHint": "Add a note at the current moment to remember a key point or return to it later.",
   "notesSignIn": "Sign in to save your own notes on this video.",
@@ -1212,5 +1212,11 @@
   "editorNoCaptions": "Все още няма субтитри за {{param.language}}.",
   "editorCaptionsReadyHelp": "Субтитрите ще се появят тук, когато са готови.",
   "editorCaptionsCreateHelp": "Генерирайте субтитри с ИИ или ги поставете по-долу във формат VTT.",
-  "editorWatchVideo": "Гледане на видео"
+  "editorWatchVideo": "Гледане на видео",
+  "playing": "В момента се възпроизвежда",
+  "askAI": "Попитай ИИ",
+  "channelSortMostPopular": "Най-популярни",
+  "channelSortNewest": "Най-нови",
+  "channelSortLeastPopular": "Най-малко популярни",
+  "channelSortOldest": "Най-стари"
 }

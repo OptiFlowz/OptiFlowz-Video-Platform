@@ -17,7 +17,7 @@ import {
   YAxis,
   type TooltipContentProps,
 } from "recharts";
-import { fetchFn } from "~/API";
+import { fetchFn, fetchApiResponse } from "~/API";
 import PlatformSidebar from "~/components/platformPage/sidebar/platformSidebar";
 import { AnalyticsSVG, FilterSVG, PlaylistSVG } from "~/constants";
 import { env } from "~/env";
@@ -820,7 +820,7 @@ function Analytics() {
         reportWindow.document.close();
       }
 
-      const response = await fetch(reportUrl, { method: "GET", headers: headers.current });
+      const response = await fetchApiResponse(reportUrl, { method: "GET", headers: headers.current });
       if (!response.ok) throw new Error("Failed to fetch analytics report.");
 
       const pdfBlob = await response.blob();

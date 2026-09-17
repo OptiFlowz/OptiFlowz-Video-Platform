@@ -2799,7 +2799,7 @@ mux-player::part(menu-item) {
 }
 
 .sidePlaylists .similar .playCard.active::after {
-  content: "Playing";
+  content: attr(data-playing-label);
   position: absolute;
   top: -2px;
   left: -2px;

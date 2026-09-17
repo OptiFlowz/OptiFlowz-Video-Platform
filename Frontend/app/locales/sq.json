@@ -5,10 +5,10 @@
   "uploadScheduleTimeZone": "Time zone: {{param.timeZone}}",
   "uploadScheduleInvalid": "Choose a date and time in the future.",
   "myNotes": "Shënimet e mia",
-  "notesAdd": "Add note",
+  "notesAdd": "Shto shënim",
   "notesEdit": "Edit note",
   "notesDelete": "Delete note",
-  "notesPrivate": "Only you can see these notes.",
+  "notesPrivate": "Vetëm ju mund t’i shihni këto shënime.",
   "notesEmpty": "Your thoughts, saved here",
   "notesEmptyHint": "Add a note at the current moment to remember a key point or return to it later.",
   "notesSignIn": "Sign in to save your own notes on this video.",
@@ -1212,5 +1212,11 @@
   "editorNoCaptions": "Ende nuk ka titra për {{param.language}}.",
   "editorCaptionsReadyHelp": "Titrat do të shfaqen këtu kur të jenë gati.",
   "editorCaptionsCreateHelp": "Gjeneroni titra me IA ose ngjitini më poshtë në formatin VTT.",
-  "editorWatchVideo": "Shiko videon"
+  "editorWatchVideo": "Shiko videon",
+  "playing": "Po luhet",
+  "askAI": "Pyet inteligjencën artificiale",
+  "channelSortMostPopular": "Më të njohurat",
+  "channelSortNewest": "Më të rejat",
+  "channelSortLeastPopular": "Më pak të njohurat",
+  "channelSortOldest": "Më të vjetrat"
 }

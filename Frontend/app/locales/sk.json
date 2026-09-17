@@ -5,10 +5,10 @@
   "uploadScheduleTimeZone": "Time zone: {{param.timeZone}}",
   "uploadScheduleInvalid": "Choose a date and time in the future.",
   "myNotes": "Moje poznámky",
-  "notesAdd": "Add note",
+  "notesAdd": "Pridať poznámku",
   "notesEdit": "Edit note",
   "notesDelete": "Delete note",
-  "notesPrivate": "Only you can see these notes.",
+  "notesPrivate": "Tieto poznámky vidíte iba vy.",
   "notesEmpty": "Your thoughts, saved here",
   "notesEmptyHint": "Add a note at the current moment to remember a key point or return to it later.",
   "notesSignIn": "Sign in to save your own notes on this video.",
@@ -1212,5 +1212,11 @@
   "editorNoCaptions": "Zatiaľ žiadne titulky pre jazyk {{param.language}}.",
   "editorCaptionsReadyHelp": "Titulky sa tu zobrazia, keď budú pripravené.",
   "editorCaptionsCreateHelp": "Vygenerujte titulky pomocou AI alebo ich vložte nižšie vo formáte VTT.",
-  "editorWatchVideo": "Pozrieť video"
+  "editorWatchVideo": "Pozrieť video",
+  "playing": "Práve sa prehráva",
+  "askAI": "Opýtať sa AI",
+  "channelSortMostPopular": "Najpopulárnejšie",
+  "channelSortNewest": "Najnovšie",
+  "channelSortLeastPopular": "Najmenej populárne",
+  "channelSortOldest": "Najstaršie"
 }

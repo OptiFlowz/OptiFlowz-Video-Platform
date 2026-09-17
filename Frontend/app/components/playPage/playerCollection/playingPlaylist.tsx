@@ -5,7 +5,7 @@ import { memo, useLayoutEffect, useState, useCallback, useMemo, useRef } from "r
 import { AutoPlaySVG, BookmarkSVG, CloseSVG, ShareSVG } from "~/constants";
 import { env } from "~/env";
 import type { FetchPlaylistT, PlaylistVideosT } from "~/types";
-import { fetchFn } from "~/API";
+import { fetchFn, fetchApiResponse } from "~/API";
 import PlaylistVideos from "./playlistVideos";
 import PlayerSheet from "./playerSheet";
 import { Link, useLocation } from "react-router";
@@ -122,7 +122,7 @@ function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, vi
             myHeaders.set("Authorization", `Bearer ${token}`);
             myHeaders.set("Content-Type", "application/json");
 
-            const response = await fetch(
+            const response = await fetchApiResponse(
                 `${env.apiBaseUrl}/api/playlists/${data.id}/save`,
                 { method: "POST", headers: myHeaders, redirect: "follow" }
             );

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { fetchFn } from "~/API";
+import { fetchFn, fetchApiResponse } from "~/API";
 import { env } from "~/env";
 import { formatDate, getToken } from "~/functions";
 import { useI18n } from "~/i18n";
@@ -89,7 +89,7 @@ function AccountCertificates({ onDataStateChange }: Props) {
     setDownloadingAttemptId(certificate.attempt_id);
 
     try {
-      const response = await fetch(`${env.apiBaseUrl}/api/quizzes/certificate/generate`, {
+      const response = await fetchApiResponse(`${env.apiBaseUrl}/api/quizzes/certificate/generate`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

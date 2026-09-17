@@ -5,10 +5,10 @@
   "uploadScheduleTimeZone": "Time zone: {{param.timeZone}}",
   "uploadScheduleInvalid": "Choose a date and time in the future.",
   "myNotes": "Omat muistiinpanot",
-  "notesAdd": "Add note",
+  "notesAdd": "Lisää muistiinpano",
   "notesEdit": "Edit note",
   "notesDelete": "Delete note",
-  "notesPrivate": "Only you can see these notes.",
+  "notesPrivate": "Vain sinä näet nämä muistiinpanot.",
   "notesEmpty": "Your thoughts, saved here",
   "notesEmptyHint": "Add a note at the current moment to remember a key point or return to it later.",
   "notesSignIn": "Sign in to save your own notes on this video.",
@@ -1132,5 +1132,11 @@
   "editorNoCaptions": "Ei vielä tekstityksiä kielelle {{param.language}}.",
   "editorCaptionsReadyHelp": "Tekstitykset näkyvät tässä, kun ne ovat valmiit.",
   "editorCaptionsCreateHelp": "Luo tekstitykset tekoälyllä tai liitä ne alle VTT-muodossa.",
-  "editorWatchVideo": "Katso video"
+  "editorWatchVideo": "Katso video",
+  "playing": "Toistetaan",
+  "askAI": "Kysy tekoälyltä",
+  "channelSortMostPopular": "Suosituimmat",
+  "channelSortNewest": "Uusimmat",
+  "channelSortLeastPopular": "Vähiten suositut",
+  "channelSortOldest": "Vanhimmat"
 }

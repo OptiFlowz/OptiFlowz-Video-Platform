@@ -5,10 +5,10 @@
   "uploadScheduleTimeZone": "Time zone: {{param.timeZone}}",
   "uploadScheduleInvalid": "Choose a date and time in the future.",
   "myNotes": "Jegyzeteim",
-  "notesAdd": "Add note",
+  "notesAdd": "Jegyzet hozzáadása",
   "notesEdit": "Edit note",
   "notesDelete": "Delete note",
-  "notesPrivate": "Only you can see these notes.",
+  "notesPrivate": "Ezeket a jegyzeteket csak te láthatod.",
   "notesEmpty": "Your thoughts, saved here",
   "notesEmptyHint": "Add a note at the current moment to remember a key point or return to it later.",
   "notesSignIn": "Sign in to save your own notes on this video.",
@@ -1212,5 +1212,11 @@
   "editorNoCaptions": "Még nincs felirat ehhez a nyelvhez: {{param.language}}.",
   "editorCaptionsReadyHelp": "A feliratok itt jelennek meg, ha elkészültek.",
   "editorCaptionsCreateHelp": "Hozzon létre feliratokat MI-vel, vagy illessze be őket alább VTT-formátumban.",
-  "editorWatchVideo": "Videó megtekintése"
+  "editorWatchVideo": "Videó megtekintése",
+  "playing": "Lejátszás alatt",
+  "askAI": "Kérdezd az MI-t",
+  "channelSortMostPopular": "Legnépszerűbb",
+  "channelSortNewest": "Legújabb",
+  "channelSortLeastPopular": "Legkevésbé népszerű",
+  "channelSortOldest": "Legrégebbi"
 }

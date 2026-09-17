@@ -5,10 +5,10 @@
   "uploadScheduleTimeZone": "Time zone: {{param.timeZone}}",
   "uploadScheduleInvalid": "Choose a date and time in the future.",
   "myNotes": "Mano užrašai",
-  "notesAdd": "Add note",
+  "notesAdd": "Pridėti pastabą",
   "notesEdit": "Edit note",
   "notesDelete": "Delete note",
-  "notesPrivate": "Only you can see these notes.",
+  "notesPrivate": "Šias pastabas galite matyti tik jūs.",
   "notesEmpty": "Your thoughts, saved here",
   "notesEmptyHint": "Add a note at the current moment to remember a key point or return to it later.",
   "notesSignIn": "Sign in to save your own notes on this video.",
@@ -1132,5 +1132,11 @@
   "editorNoCaptions": "Kalbai {{param.language}} subtitrų dar nėra.",
   "editorCaptionsReadyHelp": "Subtitrai bus rodomi čia, kai bus paruošti.",
   "editorCaptionsCreateHelp": "Generuokite subtitrus su DI arba įklijuokite juos žemiau VTT formatu.",
-  "editorWatchVideo": "Žiūrėti vaizdo įrašą"
+  "editorWatchVideo": "Žiūrėti vaizdo įrašą",
+  "playing": "Dabar leidžiama",
+  "askAI": "Klausti DI",
+  "channelSortMostPopular": "Populiariausi",
+  "channelSortNewest": "Naujausi",
+  "channelSortLeastPopular": "Mažiausiai populiarūs",
+  "channelSortOldest": "Seniausi"
 }

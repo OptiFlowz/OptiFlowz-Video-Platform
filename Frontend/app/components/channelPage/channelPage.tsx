@@ -21,10 +21,10 @@ const CHANNEL_SORT_OPTIONS: Array<{
     value: `${ChannelSortBy}:${ChannelSortOrder}`;
     label: string;
 }> = [
-    { value: "view_count:desc", label: "Most Popular" },
-    { value: "created_at:desc", label: "Newest" },
-    { value: "view_count:asc", label: "Least Popular" },
-    { value: "created_at:asc", label: "Oldest" },
+    { value: "view_count:desc", label: "channelSortMostPopular" },
+    { value: "created_at:desc", label: "channelSortNewest" },
+    { value: "view_count:asc", label: "channelSortLeastPopular" },
+    { value: "created_at:asc", label: "channelSortOldest" },
 ];
 
 type ChannelSortValue = `${ChannelSortBy}:${ChannelSortOrder}`;
@@ -264,7 +264,7 @@ function ChannelPage() {
                 <div className="channelSortControl">
                     <CustomSelect
                         value={activeTab === "videos" ? `${videoSortBy}:${videoSortOrder}` : `${playlistSortBy}:${playlistSortOrder}`}
-                        options={CHANNEL_SORT_OPTIONS}
+                        options={CHANNEL_SORT_OPTIONS.map(option => ({ ...option, label: t(option.label) }))}
                         onChange={(value) => activeTab === "videos"
                             ? handleVideoSortChange(value as ChannelSortValue)
                             : handlePlaylistSortChange(value as ChannelSortValue)}

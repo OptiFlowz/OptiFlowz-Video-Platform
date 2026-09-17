@@ -5,7 +5,7 @@ import { useLayoutEffect, useState, useCallback, useEffect, useMemo } from "reac
 import { env } from "~/env";
 import { formatDescription, getToken } from "~/functions";
 import { useParams } from "react-router";
-import { fetchFn } from "~/API";
+import { fetchFn, fetchApiResponse } from "~/API";
 import { BookmarkSVG, PlaySVG, ShareSVG } from "~/constants";
 import DefaultThumbnail from "../../../assets/DefaultThumbnail.webp";
 import type { FetchPlaylistT, PlaylistT, PlaylistVideosT, VideoT } from "~/types";
@@ -124,7 +124,7 @@ function PlaylistPage(){
             myHeaders.set("Authorization", `Bearer ${token}`);
             myHeaders.set("Content-Type", "application/json");
 
-            const response = await fetch(
+            const response = await fetchApiResponse(
                 `${env.apiBaseUrl}/api/playlists/${data.id}/save`,
                 { method: "POST", headers: myHeaders, redirect: "follow" }
             );

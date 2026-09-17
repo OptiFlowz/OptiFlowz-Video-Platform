@@ -5,10 +5,10 @@
   "uploadScheduleTimeZone": "Time zone: {{param.timeZone}}",
   "uploadScheduleInvalid": "Choose a date and time in the future.",
   "myNotes": "Мои заметки",
-  "notesAdd": "Add note",
+  "notesAdd": "Добавить заметку",
   "notesEdit": "Edit note",
   "notesDelete": "Delete note",
-  "notesPrivate": "Only you can see these notes.",
+  "notesPrivate": "Только вы можете видеть эти заметки.",
   "notesEmpty": "Your thoughts, saved here",
   "notesEmptyHint": "Add a note at the current moment to remember a key point or return to it later.",
   "notesSignIn": "Sign in to save your own notes on this video.",
@@ -1212,5 +1212,11 @@
   "editorNoCaptions": "Пока нет субтитров для языка {{param.language}}.",
   "editorCaptionsReadyHelp": "Субтитры появятся здесь, когда будут готовы.",
   "editorCaptionsCreateHelp": "Создайте субтитры с помощью ИИ или вставьте их ниже в формате VTT.",
-  "editorWatchVideo": "Смотреть видео"
+  "editorWatchVideo": "Смотреть видео",
+  "playing": "Сейчас воспроизводится",
+  "askAI": "Спросить ИИ",
+  "channelSortMostPopular": "Самые популярные",
+  "channelSortNewest": "Сначала новые",
+  "channelSortLeastPopular": "Наименее популярные",
+  "channelSortOldest": "Сначала старые"
 }

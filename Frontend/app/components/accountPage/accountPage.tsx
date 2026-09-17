@@ -3,10 +3,9 @@ import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
 import { EditSVG, LogOutSVG, SettingsSVG } from "~/constants";
 import AccountInfo from "./accountInfo";
-import { useNavigate } from "react-router";
 import ItemSlider from "../itemSlider/itemSlider";
 import { useState } from "react";
-import { clearSession } from "~/auth/session";
+import { redirectToLogin } from "~/auth/session";
 import EditAccountPopup from "./editAccountPopup";
 import SettingsPopup from "./settingsPopup";
 import AccountCertificates from "./accountCertificates";
@@ -20,7 +19,6 @@ function AccountPage(){
   useLocalizedPageTitle("footerAccount");
     const { t } = useI18n();
     const { can } = useAuthorization();
-    const navigate = useNavigate();
     const [isEditPopupOpen, setIsEditPopupOpen] = useState(false);
     const [isSettingsPopupOpen, setIsSettingsPopupOpen] = useState(false);
     const [sliderStates, setSliderStates] = useState<Record<number, SliderStatus>>({
@@ -41,8 +39,7 @@ function AccountPage(){
     const isAccountContentEmpty = allAccountSlidersEmpty && (!can(P.quizzesCertificates) || certificateState === "empty");
 
     const logoutHandle = () => {
-        clearSession();
-        navigate("/login");
+        redirectToLogin();
     }
 
     return (

@@ -5,10 +5,10 @@
   "uploadScheduleTimeZone": "Time zone: {{param.timeZone}}",
   "uploadScheduleInvalid": "Choose a date and time in the future.",
   "myNotes": "Mine notater",
-  "notesAdd": "Add note",
+  "notesAdd": "Legg til notat",
   "notesEdit": "Edit note",
   "notesDelete": "Delete note",
-  "notesPrivate": "Only you can see these notes.",
+  "notesPrivate": "Bare du kan se disse notatene.",
   "notesEmpty": "Your thoughts, saved here",
   "notesEmptyHint": "Add a note at the current moment to remember a key point or return to it later.",
   "notesSignIn": "Sign in to save your own notes on this video.",
@@ -1132,5 +1132,11 @@
   "editorNoCaptions": "Ingen undertekster for {{param.language}} ennå.",
   "editorCaptionsReadyHelp": "Undertekstene vises her når de er klare.",
   "editorCaptionsCreateHelp": "Generer undertekster med KI eller lim dem inn nedenfor i VTT-format.",
-  "editorWatchVideo": "Se video"
+  "editorWatchVideo": "Se video",
+  "playing": "Spilles av",
+  "askAI": "Spør KI",
+  "channelSortMostPopular": "Mest populære",
+  "channelSortNewest": "Nyeste",
+  "channelSortLeastPopular": "Minst populære",
+  "channelSortOldest": "Eldste"
 }

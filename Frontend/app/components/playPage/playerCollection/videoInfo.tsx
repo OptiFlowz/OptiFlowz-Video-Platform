@@ -4,7 +4,7 @@ import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { ShareSVG, ArrowSVG, LikeSVG, DislikeSVG, InfoSVG, CommentSVG, AIButtonSVG, TranscriptSVG, NotesSVG } from "~/constants";
-import { fetchFn } from "~/API";
+import { fetchFn, fetchApiResponse } from "~/API";
 import { env } from "~/env";
 import { formatDate, formatViews, formatDescription, getToken } from "~/functions";
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -350,7 +350,7 @@ function VideoInfo({
             myHeaders.append("Authorization", `Bearer ${token}`);
             myHeaders.append("Content-Type", "application/json");
 
-            const response = await fetch(
+            const response = await fetchApiResponse(
                 `${env.apiBaseUrl}/api/videos/${props.id}/like`,
             { method: "POST", headers: myHeaders, redirect: "follow" }
             );
@@ -383,7 +383,7 @@ function VideoInfo({
             myHeaders.append("Authorization", `Bearer ${token}`);
             myHeaders.append("Content-Type", "application/json");
 
-            const response = await fetch(
+            const response = await fetchApiResponse(
                 `${env.apiBaseUrl}/api/videos/${props.id}/dislike`,
             { method: "POST", headers: myHeaders, redirect: "follow" }
             );
@@ -492,9 +492,9 @@ function VideoInfo({
                         <p>{t("share")}</p>
                     </button>
 
-                    <button className={`aiButton ${aiButtonAnimation ? "ai-bubbly-animate" : ""}`} onClick={askAIAQuestion} title="Ask AI">
+                    <button className={`aiButton ${aiButtonAnimation ? "ai-bubbly-animate" : ""}`} onClick={askAIAQuestion} title={t("askAI")}>
                         <span className="aiIconWrap">{AIButtonSVG}</span>
-                        <p>Ask AI</p>
+                        <p>{t("askAI")}</p>
                     </button>
 
                     <button className="p-1.75!" onClick={viewVideoCopyrights} title={t("viewCopyrightInfo")}>

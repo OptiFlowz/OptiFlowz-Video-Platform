@@ -1,3 +1,4 @@
+import { fetchApiResponse } from "~/API";
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, useId } from "react";
 import { ChaptersSVG, CloseSVG, TranscriptSVG, NotesSVG } from "~/constants";
 import { env } from "~/env";
@@ -118,7 +119,7 @@ function VideoChapters({
 
     const loadFullTranscript = async () => {
       try {
-        const response = await fetch(
+        const response = await fetchApiResponse(
           `${env.apiBaseUrl || ""}/api/video-moderation/subtitle/${props.id}?lang=${encodeURIComponent(language)}`,
           {
             method: "GET",

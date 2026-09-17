@@ -273,7 +273,7 @@ test('HTTP 503 is unhealthy; successful health and aborted requests are handled'
   assert.equal(await checkServerReachability(), false);
 });
 
-test('late 401 from a previous login and unauthenticated 401 cannot clear the current session', async t => {
+test('late 401 cannot clear a newer session, while an expired current token is cleared', async t => {
   dom(t);
   const original = globalThis.fetch;
   t.after(() => { globalThis.fetch = original; });
@@ -284,12 +284,119 @@ test('late 401 from a previous login and unauthenticated 401 cannot clear the cu
   auth.saveSession(session('B'), false);
   await assert.rejects(fetchFn({ route: 'api/private', options: { headers: { Authorization: 'Bearer A' } } }), error => error.status === 401);
   assert.equal(auth.getToken(), 'B');
-  await assert.rejects(fetchFn({ route: 'api/public', options: {} }), error => error.status === 401);
-  assert.equal(auth.getToken(), 'B');
   window.history.replaceState(null, '', '/login');
   await assert.rejects(fetchFn({ route: 'api/private', options: { headers: { Authorization: 'Bearer B' } } }), error => error.status === 401);
   assert.equal(auth.getToken(), null);
 });
+
+test('API unauthorized handling is global, preserves return URLs and avoids login loops or stale redirects', async t => {
+  const originalFetch = globalThis.fetch;
+  const originalWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+    if (originalWindow) Object.defineProperty(globalThis, 'window', originalWindow);
+    else delete globalThis.window;
+  });
+  for (const scenario of [
+    { name: 'anonymous arbitrary endpoint', token: null, status: 401, redirect: true },
+    { name: 'expired session', token: 'A', bearer: 'A', status: 401, redirect: true },
+    { name: 'raw PDF endpoint', token: null, status: 401, raw: true, redirect: true },
+    { name: 'invalid login credentials', token: null, status: 401, login: true },
+    { name: 'forbidden is not unauthenticated', token: 'A', bearer: 'A', status: 403 },
+    { name: 'old authenticated request', token: 'A', bearer: 'A', nextToken: 'B', status: 401 },
+    { name: 'anonymous request completed after login', token: null, nextToken: 'B', status: 401 },
+  ]) {
+    await t.test(scenario.name, async () => {
+      let token = scenario.token;
+      let clears = 0;
+      let redirecting = false;
+      const navigations = [];
+      const pathname = scenario.login ? '/login' : '/account';
+      Object.defineProperty(globalThis, 'window', { configurable: true, value: { location: {
+        pathname, search: '?section=settings', hash: '#preferences',
+        replace: target => navigations.push(target),
+      } } });
+      globalThis.fetch = async () => {
+        if ('nextToken' in scenario) token = scenario.nextToken;
+        return new Response('not-json', { status: scenario.status });
+      };
+      const load = modules({
+        './env': { env: { apiBaseUrl: 'https://api.example' } },
+        './auth/session': {
+          getToken: () => token, clearSession: () => { token = null; clears++; },
+          redirectToLogin: target => {
+            if (redirecting) return;
+            redirecting = true; token = null; clears++;
+            navigations.push(`/login?redirect=${encodeURIComponent(target)}`);
+          },
+        },
+      });
+      const { fetchFn, fetchApiResponse } = load('app/API.ts');
+      const options = scenario.bearer ? { headers: { Authorization: `Bearer ${scenario.bearer}` } } : {};
+      const request = () => scenario.raw
+        ? fetchApiResponse('https://api.example/api/reports/export.pdf', options)
+        : fetchFn({ route: 'api/arbitrary-resource', options });
+      await assert.rejects(request(), error => error.status === scenario.status);
+      assert.deepEqual(navigations, scenario.redirect ? ['/login?redirect=%2Faccount%3Fsection%3Dsettings%23preferences'] : []);
+      assert.equal(token, scenario.redirect ? null : (scenario.nextToken ?? scenario.token));
+      assert.equal(clears, scenario.redirect ? 1 : 0);
+      if (scenario.redirect) {
+        await assert.rejects(request(), error => error.status === 401);
+        assert.equal(navigations.length, 1, 'parallel/retried failures must not trigger multiple navigations');
+      }
+    });
+  }
+});
+
+for (const mode of ['anonymous401', 'expired401', 'logout']) {
+  test(`login transition hides outgoing errors without remounting the page: ${mode}`, async t => {
+    const container = dom(t);
+    const realWindow = window;
+    const navigations = [];
+    globalThis.window = new Proxy(realWindow, {
+      get(target, key) {
+        if (key === 'location') return { pathname: '/account', search: '?tab=videos', hash: '', replace: url => navigations.push(url) };
+        const value = Reflect.get(target, key, target);
+        return ['addEventListener', 'removeEventListener', 'dispatchEvent'].includes(key) ? value.bind(target) : value;
+      },
+    });
+    const originalFetch = globalThis.fetch;
+    t.after(() => { globalThis.fetch = originalFetch; });
+    let respond;
+    globalThis.fetch = () => new Promise(resolve => { respond = resolve; });
+    const load = modules({ './env': { env: { apiBaseUrl: 'https://api.example' } } });
+    const auth = load('app/auth/session.ts');
+    const { fetchFn } = load('app/API.ts');
+    const Boundary = load('app/auth/sessionBoundary.tsx').default;
+    if (mode !== 'anonymous401') auth.saveSession(session('A'), false);
+    let mounts = 0;
+    const renders = [];
+    function Page() {
+      React.useEffect(() => { mounts++; }, []);
+      const query = useQuery({ queryKey: ['protected-resource'], retry: false,
+        queryFn: () => fetchFn({ route: 'api/anything', options: { headers: auth.getToken() ? { Authorization: `Bearer ${auth.getToken()}` } : {} } }),
+      });
+      const text = query.isError ? 'RED ERROR' : 'Outgoing page';
+      renders.push(text);
+      return React.createElement('p', null, text);
+    }
+    const root = createRoot(container); container.mountedRoot = root;
+    await act(async () => root.render(React.createElement(Boundary, null, React.createElement(Page))));
+    assert.equal(container.textContent, 'Outgoing page');
+    if (mode === 'logout') await act(async () => auth.redirectToLogin());
+    await act(async () => respond(new Response('unauthorized', { status: 401 })));
+    await waitForUpdates();
+    assert.ok(container.querySelector('.loader'));
+    assert.equal(renders.includes('RED ERROR'), false);
+    assert.equal(mounts, 1, 'do not remount the old page as an anonymous session');
+    assert.equal(auth.getToken(), null);
+    assert.deepEqual(navigations, [mode === 'logout' ? '/login' : '/login?redirect=%2Faccount%3Ftab%3Dvideos']);
+    await act(async () => root.unmount());
+    container.mountedRoot = null;
+    globalThis.window = realWindow;
+    await waitForUpdates();
+  });
+}
 
 test('switching accounts replaces legacy caches, aborts in-flight work and resets component state', async t => {
   const container = dom(t);
@@ -321,6 +428,9 @@ test('switching accounts replaces legacy caches, aborts in-flight work and reset
   assert.notEqual(clients.get('A'), clients.get('B'));
   assert.equal(clients.get('A').getQueryCache().getAll().length, 0);
   assert.ok(cancelled.has('A'));
+  await act(async () => root.unmount());
+  container.mountedRoot = null;
+  await waitForUpdates(); // Drain cancellation notifications before removing the test DOM.
 });
 
 test('connection failures and retry keep the active form mounted with its draft', async t => {

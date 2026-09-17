@@ -5,10 +5,10 @@
   "uploadScheduleTimeZone": "Time zone: {{param.timeZone}}",
   "uploadScheduleInvalid": "Choose a date and time in the future.",
   "myNotes": "ההערות שלי",
-  "notesAdd": "Add note",
+  "notesAdd": "הוספת הערה",
   "notesEdit": "Edit note",
   "notesDelete": "Delete note",
-  "notesPrivate": "Only you can see these notes.",
+  "notesPrivate": "רק אתם יכולים לראות את ההערות האלה.",
   "notesEmpty": "Your thoughts, saved here",
   "notesEmptyHint": "Add a note at the current moment to remember a key point or return to it later.",
   "notesSignIn": "Sign in to save your own notes on this video.",
@@ -1132,5 +1132,11 @@
   "editorNoCaptions": "אין עדיין כתוביות עבור {{param.language}}.",
   "editorCaptionsReadyHelp": "הכתוביות יופיעו כאן כשיהיו מוכנות.",
   "editorCaptionsCreateHelp": "צרו כתוביות בעזרת AI או הדביקו אותן למטה בפורמט VTT.",
-  "editorWatchVideo": "צפייה בסרטון"
+  "editorWatchVideo": "צפייה בסרטון",
+  "playing": "מתנגן כעת",
+  "askAI": "שאלו את הבינה המלאכותית",
+  "channelSortMostPopular": "הפופולריים ביותר",
+  "channelSortNewest": "החדשים ביותר",
+  "channelSortLeastPopular": "הפחות פופולריים",
+  "channelSortOldest": "הישנים ביותר"
 }

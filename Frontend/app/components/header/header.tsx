@@ -11,7 +11,7 @@ import {
 } from "~/constants";
 import DefaultProfile from "../../../assets/DefaultProfile.webp";
 import { getToken, getStoredUser } from "~/functions";
-import { clearSession } from "~/auth/session";
+import { redirectToLogin } from "~/auth/session";
 import type { AuthFetchT } from "~/types";
 import { useI18n } from "~/i18n";
 import { useQueryClient } from "@tanstack/react-query";
@@ -167,10 +167,7 @@ function Header(){
     const hasAuthenticatedUser = !!headerUserData?.user && !!token;
 
     const handleLogout = () => {
-        clearSession();
-        setAccountMenuOpen(false);
-        setMobileMenuOpen(false);
-        navigate("/login");
+        redirectToLogin();
     }
 
     return <>

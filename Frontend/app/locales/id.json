@@ -5,10 +5,10 @@
   "uploadScheduleTimeZone": "Time zone: {{param.timeZone}}",
   "uploadScheduleInvalid": "Choose a date and time in the future.",
   "myNotes": "Catatan saya",
-  "notesAdd": "Add note",
+  "notesAdd": "Tambah catatan",
   "notesEdit": "Edit note",
   "notesDelete": "Delete note",
-  "notesPrivate": "Only you can see these notes.",
+  "notesPrivate": "Hanya Anda yang dapat melihat catatan ini.",
   "notesEmpty": "Your thoughts, saved here",
   "notesEmptyHint": "Add a note at the current moment to remember a key point or return to it later.",
   "notesSignIn": "Sign in to save your own notes on this video.",
@@ -1132,5 +1132,11 @@
   "editorNoCaptions": "Belum ada subtitle untuk {{param.language}}.",
   "editorCaptionsReadyHelp": "Subtitle akan muncul di sini saat siap.",
   "editorCaptionsCreateHelp": "Buat subtitle dengan AI atau tempel di bawah dalam format VTT.",
-  "editorWatchVideo": "Tonton video"
+  "editorWatchVideo": "Tonton video",
+  "playing": "Sedang diputar",
+  "askAI": "Tanya AI",
+  "channelSortMostPopular": "Paling populer",
+  "channelSortNewest": "Terbaru",
+  "channelSortLeastPopular": "Paling tidak populer",
+  "channelSortOldest": "Terlama"
 }

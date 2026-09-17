@@ -5,10 +5,10 @@
   "uploadScheduleTimeZone": "Time zone: {{param.timeZone}}",
   "uploadScheduleInvalid": "Choose a date and time in the future.",
   "myNotes": "Мої нотатки",
-  "notesAdd": "Add note",
+  "notesAdd": "Додати нотатку",
   "notesEdit": "Edit note",
   "notesDelete": "Delete note",
-  "notesPrivate": "Only you can see these notes.",
+  "notesPrivate": "Тільки ви можете бачити ці нотатки.",
   "notesEmpty": "Your thoughts, saved here",
   "notesEmptyHint": "Add a note at the current moment to remember a key point or return to it later.",
   "notesSignIn": "Sign in to save your own notes on this video.",
@@ -1212,5 +1212,11 @@
   "editorNoCaptions": "Ще немає субтитрів для мови {{param.language}}.",
   "editorCaptionsReadyHelp": "Субтитри з’являться тут, коли будуть готові.",
   "editorCaptionsCreateHelp": "Створіть субтитри за допомогою ШІ або вставте їх нижче у форматі VTT.",
-  "editorWatchVideo": "Переглянути відео"
+  "editorWatchVideo": "Переглянути відео",
+  "playing": "Зараз відтворюється",
+  "askAI": "Запитати ШІ",
+  "channelSortMostPopular": "Найпопулярніші",
+  "channelSortNewest": "Спочатку нові",
+  "channelSortLeastPopular": "Найменш популярні",
+  "channelSortOldest": "Спочатку старі"
 }

@@ -1132,5 +1132,11 @@
   "editorNoCaptions": "No captions for {{param.language}} yet.",
   "editorCaptionsReadyHelp": "Captions will appear here when ready.",
   "editorCaptionsCreateHelp": "Generate captions with AI or paste them below in VTT format.",
-  "editorWatchVideo": "Watch video"
+  "editorWatchVideo": "Watch video",
+  "playing": "Playing",
+  "askAI": "Ask AI",
+  "channelSortMostPopular": "Most Popular",
+  "channelSortNewest": "Newest",
+  "channelSortLeastPopular": "Least Popular",
+  "channelSortOldest": "Oldest"
 }
