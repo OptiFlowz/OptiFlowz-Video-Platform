@@ -1,3 +1,5 @@
+import { useI18n } from "~/i18n";
+import { setupMobilePlayerSettings } from "./mobilePlayerSettings";
 import { fetchApiResponse } from "~/API";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
@@ -89,6 +91,9 @@ export default function VideoPlayer({
   compactControls = false,
   forceAutoplay = false,
 }: VideoPlayerProps) {
+  const { t } = useI18n();
+  const settingsLabel = t("settings");
+  const closeLabel = t("close");
   const playback = useVideoPlayback(videoId);
   const [playbackSource, setPlaybackSource] = useState<VideoPlayback>();
   const playbackId = playbackSource?.mux_playback_id;
@@ -137,6 +142,15 @@ export default function VideoPlayer({
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!isThemeReady) return;
+    let cleanup = () => {};
+    const frame = requestAnimationFrame(() => {
+      cleanup = setupMobilePlayerSettings(playerRef.current, { settings: settingsLabel, close: closeLabel });
+    });
+    return () => { cancelAnimationFrame(frame); cleanup(); };
+  }, [isThemeReady, playbackId, isPlayerReady, settingsLabel, closeLabel]);
 
   useEffect(() => {
     if (!isThemeReady) return;
@@ -741,6 +755,8 @@ export default function VideoPlayer({
       )}
       {isThemeReady && hasPlaybackSource && playbackSource && (
         <MuxPlayer
+          // Prefer the track-aware HLS engine; Mux falls back to native HLS when MSE is unavailable.
+          preferPlayback="mse"
           theme="optiflowz-theme"
           themeProps={{
             videotitlee: videoTitle,

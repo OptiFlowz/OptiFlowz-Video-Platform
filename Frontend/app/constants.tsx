@@ -123,8 +123,9 @@ export const ArrowForwardSVG = <svg width="24" height="24" viewBox="0 0 24 24" f
 <path d="M13 6L19 12M19 12L13 18M19 12H5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
 </svg>;
 
+export const CLOSE_ICON_PATH = "M6 18L18 6M6 6l12 12";
 export const CloseSVG = <svg className="w-6 h-6 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={CLOSE_ICON_PATH} />
 </svg>;
 
 export const InfoSVG = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
