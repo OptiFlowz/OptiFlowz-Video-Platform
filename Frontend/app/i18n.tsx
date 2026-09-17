@@ -70,6 +70,16 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     setCurrentLocaleValue(locale);
   }, [locale]);
 
+  useEffect(() => {
+    const syncStoredLocale = (event: StorageEvent) => {
+      if (event.storageArea !== localStorage) return;
+      if (event.key !== STORAGE_KEY && event.key !== null) return;
+      setLocaleState(readStoredLocale());
+    };
+    window.addEventListener("storage", syncStoredLocale);
+    return () => window.removeEventListener("storage", syncStoredLocale);
+  }, []);
+
   const value = useMemo<I18nContextType>(
     () => ({
       locale,

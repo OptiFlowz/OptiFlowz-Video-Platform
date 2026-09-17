@@ -4,7 +4,7 @@
   "uploadScheduleDateTime": "Publish date and time",
   "uploadScheduleTimeZone": "Time zone: {{param.timeZone}}",
   "uploadScheduleInvalid": "Choose a date and time in the future.",
-  "myNotes": "My notes",
+  "myNotes": "マイノート",
   "notesAdd": "Add note",
   "notesEdit": "Edit note",
   "notesDelete": "Delete note",

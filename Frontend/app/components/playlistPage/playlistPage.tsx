@@ -1,7 +1,7 @@
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
 import { useQuery } from "@tanstack/react-query";
-import { useLayoutEffect, useRef, useState, useCallback, useEffect, useMemo } from "react";
+import { useLayoutEffect, useState, useCallback, useEffect, useMemo } from "react";
 import { env } from "~/env";
 import { formatDescription, getToken } from "~/functions";
 import { useParams } from "react-router";
@@ -48,7 +48,7 @@ function PlaylistPage(){
     const token = getToken() ?? "";
     const [descOpen, setDescOpen] = useState(false);
     const [hasDescriptionOverflow, setHasDescriptionOverflow] = useState(false);
-    const descriptionRef = useRef<HTMLParagraphElement>(null);
+    const [descriptionElement, setDescriptionElement] = useState<HTMLParagraphElement | null>(null);
     const [isSaved, setIsSaved] = useState(false);
     const [saveCount, setSaveCount] = useState(0);
 
@@ -147,13 +147,16 @@ function PlaylistPage(){
         }
     }, [data?.is_saved, data?.save_count]);
 
-    useEffect(() => {
-        const descriptionElement = descriptionRef.current;
+    // Measure the actual mounted node: playlist details can resolve before
+    // the videos request removes the loading header.
+    useLayoutEffect(() => {
         if (!descriptionElement || descOpen) return;
 
         let resizeObserver: ResizeObserver | null = null;
+        let disposed = false;
 
         const measureOverflow = () => {
+            if (disposed) return;
             const hasOverflow = descriptionElement.scrollHeight > descriptionElement.clientHeight + 1;
             setHasDescriptionOverflow(hasOverflow);
         };
@@ -166,12 +169,18 @@ function PlaylistPage(){
         }
 
         window.addEventListener("resize", measureOverflow);
+        // A font can change overflow without resizing the clamped two-line box.
+        const fonts = document.fonts;
+        void fonts?.ready.then(measureOverflow);
+        fonts?.addEventListener("loadingdone", measureOverflow);
 
         return () => {
+            disposed = true;
             resizeObserver?.disconnect();
             window.removeEventListener("resize", measureOverflow);
+            fonts?.removeEventListener("loadingdone", measureOverflow);
         };
-    }, [data?.description, descOpen]);
+    }, [descriptionElement, data?.description, descOpen]);
 
     const skeletonVideoArray = Array.from({ length: 8 }).map((_, index) => (
         <SkeletonVideoItem key={`skeleton-video-${index}`} />
@@ -211,7 +220,7 @@ function PlaylistPage(){
                         <button onClick={e => sharePlaylistLink(e)} className="clickable bg-(--background2) hover:bg-(--background3) rounded-full flex">{ShareSVG}&nbsp;{t("share")}</button>
                     </span>
 
-                    <p id="playlist-description" ref={descriptionRef} className={`description ${descOpen ? "open" : ""}`}>{formatDescription(data?.description)}</p>
+                    <p id="playlist-description" ref={setDescriptionElement} className={`description ${descOpen ? "open" : ""}`}>{formatDescription(data?.description)}</p>
                     {data?.description && (descOpen || hasDescriptionOverflow) && (
                         <button type="button" aria-expanded={descOpen} aria-controls="playlist-description" className="w-fit hover:underline cursor-pointer" onClick={toggleDescOpen}>{descOpen ? t("readLess") : t("readMore")}</button>
                     )}

@@ -36,7 +36,7 @@ function modules(mocks = {}) {
 
 function dom(t) {
   require("@tanstack/react-query").onlineManager.setOnline(true);
-  const instance = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', { url: 'https://app.example/' });
+  const instance = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', { url: 'https://app.example/', pretendToBeVisual: true });
   const descriptors = new Map();
   const globals = ['window', 'document', 'navigator', 'localStorage', 'sessionStorage', 'Event', 'CustomEvent', 'StorageEvent', 'HTMLElement', 'Element', 'HTMLAnchorElement', 'customElements'];
   for (const key of globals) {
@@ -965,4 +965,113 @@ test('note markers position against the actual seek track, seek and open scoped 
   assert.equal(paused, true); assert.deepEqual(request, { videoId: 'v1', noteId: 'n1', action: 'edit' });
   await render(true);
   assert.equal(controller.querySelector('.video-note-markers'), null, 'mini player does not retain crowded interactive markers');
+});
+
+for (const firstResponse of ['details', 'videos']) {
+  test(`playlist read more measures the mounted description when ${firstResponse} arrive first`, async t => {
+    const container = dom(t);
+    let detailsLoading = true;
+    let videosLoading = true;
+    let scrollHeight = 160;
+    const playlist = { id: 'p1', title: 'Playlist', description: 'A long description', video_count: 0 };
+    Object.defineProperty(window.HTMLElement.prototype, 'clientHeight', { configurable: true, get: () => 40 });
+    Object.defineProperty(window.HTMLElement.prototype, 'scrollHeight', { configurable: true, get: () => scrollHeight });
+    let fontsReady;
+    const fonts = new window.EventTarget();
+    fonts.ready = new Promise(resolve => { fontsReady = resolve; });
+    Object.defineProperty(document, 'fonts', { configurable: true, value: fonts });
+    const load = modules({
+      '~/i18n': i18n,
+      '~/env': { env: { siteUrl: 'https://example.invalid', apiBaseUrl: 'https://api.example.invalid' } },
+      '~/authorization/authorization': { useAuthorization: () => ({ can: () => false }) },
+      '~/constants': { BookmarkSVG: null, PlaySVG: null, ShareSVG: null },
+      '~/functions': { getToken: () => '', formatDescription: value => value },
+      '~/API': { fetchFn: async () => ({}) },
+      'react-router': { useParams: () => ({ id: 'p1' }) },
+      '../itemSlider/item': { default: () => null },
+      '@tanstack/react-query': { useQuery: ({ queryKey }) => queryKey[0].startsWith('playlist-videos')
+        ? { isLoading: videosLoading, data: videosLoading ? undefined : { videos: [] } }
+        : { isLoading: detailsLoading, data: detailsLoading ? undefined : { playlist } } },
+    });
+    const PlaylistPage = load('app/components/playlistPage/playlistPage.tsx').default;
+    const root = createRoot(container); container.mountedRoot = root;
+    const render = () => act(async () => root.render(React.createElement(PlaylistPage)));
+    const toggle = () => container.querySelector('[aria-controls="playlist-description"]');
+    await render();
+    if (firstResponse === 'details') detailsLoading = false; else videosLoading = false;
+    await render();
+    assert.equal(container.querySelector('#playlist-description'), null, 'still showing the loading header');
+    detailsLoading = false; videosLoading = false;
+    await render();
+    assert.ok(toggle(), 'long description needs read more without a resize or navigation');
+    await act(async () => toggle().click());
+    assert.equal(toggle().getAttribute('aria-expanded'), 'true');
+    assert.ok(container.querySelector('#playlist-description').classList.contains('open'));
+    await act(async () => toggle().click());
+    assert.equal(toggle().getAttribute('aria-expanded'), 'false');
+
+    // The visible two-line box can stay the same height while font metrics
+    // change its scrollHeight, so ResizeObserver alone is insufficient.
+    scrollHeight = 40;
+    await act(async () => window.dispatchEvent(new Event('resize')));
+    assert.equal(toggle(), null);
+    scrollHeight = 160;
+    await act(async () => fontsReady());
+    assert.ok(toggle(), 'remeasure after the initial font load');
+    scrollHeight = 40;
+    await act(async () => fonts.dispatchEvent(new Event('loadingdone')));
+    assert.equal(toggle(), null, 'short descriptions do not retain a toggle');
+    scrollHeight = 160;
+    await act(async () => fonts.dispatchEvent(new Event('loadingdone')));
+    assert.ok(toggle(), 'later font loads also remeasure');
+
+    videosLoading = true; await render();
+    videosLoading = false; await render();
+    assert.ok(toggle(), 'reattach measurement when identical content remounts');
+  });
+}
+
+
+test('channel dropdowns independently sort videos and playlists with all four orders', async t => {
+  const container = dom(t);
+  const requests = [];
+  const load = modules({
+    '~/i18n': i18n,
+    '~/env': { env: { siteUrl: 'https://app.example' } },
+    '~/functions': { getToken: () => 'token', formatDescription: value => value },
+    '~/constants': {},
+    'react-router': { useParams: () => ({ id: 'channel' }), Link: ({ children, to, ...props }) => React.createElement('a', { ...props, href: to }, children) },
+    '../itemSlider/item': { default: () => null },
+    '../itemSlider/playlistItem': { default: () => null },
+    '~/API': { fetchFn: async ({ route }) => {
+      requests.push(route);
+      if (route.includes('/videos?')) return { videos: [{ id: 'video' }] };
+      if (route.includes('/playlists?')) return { playlists: [{ id: 'playlist' }] };
+      return { channel: { id: 'channel', name: 'Channel', description: '' } };
+    } },
+  });
+  const ChannelPage = load('app/components/channelPage/channelPage.tsx').default;
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  t.after(() => client.clear());
+  const root = createRoot(container); container.mountedRoot = root;
+  await act(async () => root.render(React.createElement(QueryClientProvider, { client }, React.createElement(ChannelPage))));
+  await waitForUpdates();
+  const select = container.querySelector('.channelSortSelect');
+  assert.equal(container.querySelectorAll('.channelSortSelect').length, 1);
+  for (const [index, kind] of ['videos', 'playlists'].entries()) {
+    await act(async () => container.querySelectorAll('[role="tab"]')[index].click());
+    assert.equal(container.querySelectorAll('[role="tabpanel"]')[index].hidden, false);
+    assert.equal(container.querySelectorAll('[role="tabpanel"]')[1 - index].hidden, true);
+    for (const [label, by, order] of [
+      ['Most Popular', 'view_count', 'desc'], ['Least Popular', 'view_count', 'asc'],
+      ['Oldest', 'created_at', 'asc'], ['Newest', 'created_at', 'desc'],
+    ]) {
+      await act(async () => select.querySelector('.customSelectTrigger').click());
+      const option = [...select.querySelectorAll('[role="option"]')].find(node => node.textContent === label);
+      await act(async () => option.click()); await waitForUpdates();
+      assert.equal(select.querySelector('.customSelectValue').textContent, label);
+      assert.ok(requests.some(route => route.includes(`/${kind}?sortBy=${by}&sortOrder=${order}`)));
+
+    }
+  }
 });

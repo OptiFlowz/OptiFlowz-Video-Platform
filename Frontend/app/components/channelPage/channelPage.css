@@ -1,0 +1,60 @@
+main.channelPage { padding-top: 73px; }
+main.channelPage .channelHero { position: relative; isolation: isolate; width: 100vw; margin-inline: calc(50% - 50vw); background: var(--background2); overflow: hidden; }
+main.channelPage .channelHeroBackground { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; }
+main.channelPage .channelHeroInner { width: min(var(--contentWidth), calc(100vw - 40px)); min-height: 320px; margin-inline: auto; padding-block: 44px; display: flex; align-items: center; gap: clamp(20px, 2.5vw, 32px); }
+main.channelPage .channelAvatar { width: clamp(160px, 14vw, 190px); height: auto; aspect-ratio: 1; flex-shrink: 0; border-radius: 50%; object-fit: cover; background: var(--background1); border: 4px solid var(--background1); box-shadow: 0 3px 12px var(--headerShadowColor); }
+main.channelPage .channelIdentity { min-width: 0; flex: 1; padding: var(--profile-info-padding); border: 1px solid var(--profile-info-border); border-radius: var(--profile-info-radius); background: var(--profile-info-background); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: var(--text1); }
+main.channelPage .channelIdentity h1 { font-size: clamp(1.7rem, 3vw, 2.5rem); font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; }
+main.channelPage .channelVideoCount { margin-top: 8px; color: var(--text2); }
+main.channelPage .channelAbout { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border1); }
+main.channelPage .channelDescription { line-height: 1.6; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+main.channelPage .channelDescription.isExpanded { display: block; }
+main.channelPage .channelReadMore { margin-top: 8px; color: var(--accentBlue); font-weight: 600; cursor: pointer; }
+main.channelPage .channelNavigation { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding-top: 14px; border-bottom: 1px solid var(--border1); }
+main.channelPage .channelNavigation .channelTabs { display: flex; flex-direction: row; flex-wrap: nowrap; flex: 1; min-width: 0; align-self: stretch; gap: 8px; overflow-x: auto; overscroll-behavior-inline: contain; scrollbar-width: none; }
+main.channelPage .channelTabs::-webkit-scrollbar { display: none; }
+main.channelPage .channelTabs button { position: relative; width: auto; flex: 0 0 auto; white-space: nowrap; text-align: center; padding: 16px 20px; background: transparent; color: var(--text2); border-radius: 12px 12px 0 0; font-size: 1.05rem; font-weight: 600; cursor: pointer; transition: color .15s, background .15s; }
+main.channelPage .channelTabs button::after { content: ""; position: absolute; inset-inline: 16px; bottom: 0; height: 3px; border-radius: 3px; background: transparent; }
+main.channelPage .channelTabs button:hover { background: var(--background2); color: var(--text1); }
+main.channelPage .channelTabs button:focus-visible { outline-offset: -4px; }
+main.channelPage .channelTabs button[aria-selected="true"] { background: var(--background2); color: var(--accentBlue2); }
+main.channelPage .channelTabs button[aria-selected="true"]::after { background: var(--accentBlue2); }
+main.channelPage .channelSortControl { min-width: 0; padding-bottom: 10px; }
+main.channelPage .channelActions { display: flex; flex-direction: row; flex: 0 0 auto; gap: 10px; padding-bottom: 10px; }
+main.channelPage .channelActions > * { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 18px; border-radius: var(--bR); background: var(--background2); color: var(--text1); font-weight: 600; cursor: pointer; }
+main.channelPage .channelActions svg { width: 20px; height: 20px; }
+main.channelPage .channelActions svg [stroke]:not([stroke="none"]) { stroke: currentColor; }
+main.channelPage .channelActions svg [fill]:not([fill="none"]) { fill: currentColor; }
+main.channelPage .channelActions > *:hover { opacity: .85; }
+main.channelPage .channelPanel { min-width: 0; padding-bottom: 24px; }
+main.channelPage .channelPanel[hidden] { display: none; }
+main.channelPage .channelPanel .videoHolder, main.channelPage .channelPlaylistGrid { margin-top: 24px; }
+main.channelPage .channelEmpty { padding-block: 24px; color: var(--text2); }
+main.channelPage button:focus-visible, main.channelPage a:focus-visible { outline: 2px solid var(--accentBlue); outline-offset: 4px; }
+@media (min-width: 1200px) {
+  main.channelPage .channelHeroInner { padding-inline: 48px; }
+}
+@media (max-width: 760px) {
+  main.channelPage .channelHeroInner { min-height: 260px; padding-block: 28px; gap: 20px; }
+  main.channelPage .channelAvatar { width: 120px; border-width: 3px; }
+  main.channelPage .channelIdentity { padding: 18px; }
+  main.channelPage .channelDescription { font-size: .9rem; }
+}
+@media (max-width: 540px) {
+  main.channelPage .channelHero .channelHeroInner { display: grid; grid-template-columns: 88px minmax(0, 1fr); min-height: 0; margin-block: 24px; padding: 18px; gap: 16px; background: var(--profile-info-background); border: 1px solid var(--profile-info-border); border-radius: 18px; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+  main.channelPage .channelAvatar { width: 88px; grid-column: 1; grid-row: 1; }
+  main.channelPage .channelIdentity { display: contents; }
+  main.channelPage .channelIdentityHeading { grid-column: 2; grid-row: 1; min-width: 0; align-self: center; }
+  main.channelPage .channelIdentity h1 { font-size: 1.5rem; }
+  main.channelPage .channelVideoCount { margin-top: 6px; font-size: .85rem; }
+  main.channelPage .channelAbout { grid-column: 1 / -1; margin-top: 0; padding-top: 14px; }
+  main.channelPage .channelNavigation { grid-template-columns: minmax(0, 1fr); gap: 0; padding-top: 4px; border-bottom: 0; }
+  main.channelPage .channelNavigation .channelTabs { width: 100%; gap: 4px; border-bottom: 1px solid var(--border1); }
+  main.channelPage .channelSortControl { padding-block: 16px 0; }
+  main.channelPage .channelSortControl .channelSortSelect { width: 100%; }
+  main.channelPage .channelPanel .videoHolder, main.channelPage .channelPlaylistGrid { margin-top: 16px; }
+  main.channelPage .channelTabs button { padding: 15px 18px; font-size: 1rem; }
+  main.channelPage .channelActions { display: none; }
+}
+
+main.channelPage.playlist > div.channelHero:first-child, main.channelPage .channelHeroBackground { border-radius: 0; }

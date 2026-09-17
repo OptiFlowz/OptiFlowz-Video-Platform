@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { formatDate, formatViews } from "~/functions";
-import { translateContentTitle } from "~/i18n";
+import { translateContentTitle, useI18n } from "~/i18n";
 
 type Props = {
     title: string,
@@ -9,6 +9,8 @@ type Props = {
 }
 
 function PlaylistInfo({props}: {props: Props}){
+    // Subscribe even when props stay unchanged: these formatters use the active locale.
+    useI18n();
     const title = translateContentTitle(props.title);
 
     return (

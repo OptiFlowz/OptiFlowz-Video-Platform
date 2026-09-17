@@ -5315,7 +5315,25 @@ mux-player::part(menu-item) {
 .playCard .info {
   width: 100%;
   overflow: hidden;
+  min-width: 0;
 }
+.playCard .playCardMetadata {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.65rem;
+  min-width: 0;
+}
+
+.playCard .playCardMetadata > p {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .playCard .info h2 {
   font-size: 1rem;
   font-weight: 600;
@@ -5983,15 +6001,23 @@ main.account.accountPage {
   object-fit: cover;
 }
 
+/* Shared account/channel profile card surface. */
+.accountHero, main.channelPage {
+  --profile-info-background: linear-gradient(180deg, color-mix(in srgb, var(--borderWhite) 8%, transparent), color-mix(in srgb, var(--borderWhite) 4%, transparent));
+  --profile-info-border: color-mix(in srgb, var(--borderWhite) 8%, transparent);
+  --profile-info-radius: 26px;
+  --profile-info-padding: 18px 28px;
+}
+
 .accountHero .userInfo {
   min-width: 0;
   width: 100%;
-  padding: 18px 28px;
+  padding: var(--profile-info-padding);
   display: flex;
   flex-direction: column;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--borderWhite) 8%, transparent), color-mix(in srgb, var(--borderWhite) 4%, transparent));
-  border: 1px solid color-mix(in srgb, var(--borderWhite) 8%, transparent);
-  border-radius: 26px;
+  background: var(--profile-info-background);
+  border: 1px solid var(--profile-info-border);
+  border-radius: var(--profile-info-radius);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
@@ -15229,7 +15255,7 @@ main.managementPage td .visibility svg path { stroke: currentColor; }
 }
 
 .sheetState { padding: 1rem; display: flex; flex-direction: column; align-items: flex-start; gap: 1rem; }
-.sheetFollowButton { position: absolute; bottom: max(1rem, env(safe-area-inset-bottom)); right: 1rem; max-width: calc(100% - 2rem); z-index: 1; border: 1px solid var(--border1); padding: 6px 12px; border-radius: var(--bR); background: var(--accentBlue); color: var(--text1); }
+.sidePlaylists .playlistHeader button.sheetFollowButton { position: absolute; bottom: max(1rem, env(safe-area-inset-bottom)); right: 1rem; max-width: calc(100% - 2rem); z-index: 1; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 1px solid var(--border1); padding: 6px 12px; border-radius: var(--bR); background: var(--background2); color: var(--text1); }
 .playerSheet :focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: -2px; }
 
 /* Connection feedback does not replace or remount the active page. */
@@ -15261,3 +15287,9 @@ main.managementPage td .visibility svg path { stroke: currentColor; }
 }
 .connectionStatus button:hover { background: var(--background4); }
 .connectionStatus button:disabled { opacity: 0.6; cursor: wait; }
+
+/* Channel sorting uses the shared keyboard-accessible dropdown. */
+main.playlist .channelVideosHeader { align-items: center; width: 100%; }
+main.playlist .channelSortSelect { width: 220px; max-width: 100%; min-width: 0; }
+main.playlist .channelSortSelect .customSelectTrigger { width: 100%; background: var(--background2); border-color: var(--border1); color: var(--text1); }
+main.playlist .channelPlaylistsSection .channelVideosHeader { flex-direction: row; }

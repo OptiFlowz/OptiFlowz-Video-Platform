@@ -1,15 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useMemo, useRef, useState, useEffect } from "react";
+import { useCallback, useMemo, useRef, useState, useEffect, useId } from "react";
 import { useParams } from "react-router";
 import { fetchFn } from "~/API";
-import { PlaySVG, ShareSVG } from "~/constants";
+import { ShareSVG } from "~/constants";
 import { env } from "~/env";
 import { formatDescription, getToken } from "~/functions";
 import { useI18n } from "~/i18n";
 import type { ChannelPlaylistsT, ChannelT, ChannelVideosT, FetchChannelT, VideoT, VideoPlaylistT } from "~/types";
+import CustomSelect from "../customSelect/customSelect";
 import Item from "../itemSlider/item";
 import PlaylistItem from "../itemSlider/playlistItem";
 import DefaultProfile from "../../../assets/DefaultProfile.webp";
+import backgroundImage from "../../../assets/LoginBackground.webp";
+import "./channelPage.css";
 
 type ChannelSortBy = "view_count" | "created_at";
 type ChannelSortOrder = "asc" | "desc";
@@ -57,13 +60,16 @@ const SkeletonHeader = () => (
 function ChannelPage() {
     const { t } = useI18n();
     const { id: channelId } = useParams();
+    const [activeTab, setActiveTab] = useState<"videos" | "playlists">("videos");
+    const tabsId = useId();
+    const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
     const [descOpen, setDescOpen] = useState(false);
     const [hasDescriptionOverflow, setHasDescriptionOverflow] = useState(false);
     const [videoSortBy, setVideoSortBy] = useState<ChannelSortBy>("created_at");
     const [videoSortOrder, setVideoSortOrder] = useState<ChannelSortOrder>("desc");
     const [playlistSortBy, setPlaylistSortBy] = useState<ChannelSortBy>("created_at");
     const [playlistSortOrder, setPlaylistSortOrder] = useState<ChannelSortOrder>("desc");
-    const descriptionRef = useRef<HTMLParagraphElement>(null);
+    const [descriptionElement, setDescriptionElement] = useState<HTMLParagraphElement | null>(null);
     const token = getToken();
 
     const headers = useMemo(() => {
@@ -90,10 +96,6 @@ function ChannelPage() {
             return navigator.clipboard.writeText(fullPath);
         }
     }, []);
-
-    function playChannel() {
-        document.querySelector<HTMLAnchorElement>(".playlistStartVideo")?.click();
-    }
 
     const toggleDescOpen = () => setDescOpen((current) => !current);
 
@@ -144,7 +146,6 @@ function ChannelPage() {
     const normalizedPlaylists = channelPlaylistsData?.playlists ?? [];
 
     useEffect(() => {
-        const descriptionElement = descriptionRef.current;
         if (!descriptionElement) return;
 
         let resizeObserver: ResizeObserver | null = null;
@@ -167,7 +168,7 @@ function ChannelPage() {
             resizeObserver?.disconnect();
             window.removeEventListener("resize", measureOverflow);
         };
-    }, [channel?.description, descOpen]);
+    }, [descriptionElement, channel?.description, descOpen]);
 
     const videoArray = normalizedVideos.map((video) => (
         <Item key={video.id} props={video as VideoT} />
@@ -197,7 +198,7 @@ function ChannelPage() {
         setPlaylistSortOrder(nextSortOrder);
     };
 
-    if ((isLoadingChannel && !channelData) || (isLoadingVideos && !channelVideosData) || (isLoadingPlaylists && !channelPlaylistsData)) {
+    if (isLoadingChannel && !channelData) {
         return (
             <main className="playlist">
                 <SkeletonHeader />
@@ -210,86 +211,81 @@ function ChannelPage() {
     }
 
     return (
-        <main className="playlist">
-            <div className="relative flex items-start gap-5">
-                <img
-                    className="plBanner w-50 rounded-[15px] z-1"
-                    src={channel?.image_url || DefaultProfile}
-                    alt={channel?.full_name || "Channel"}
-                />
-
-                <span className="flex flex-col gap-3 z-1 w-full">
-                    <h2 className="subTitle pb-0!">{channel?.full_name}</h2>
-
-                    <p className="mobileViewAndLikeCount -mb-1.25">
-                        {t("videosLabel", { count: channelVideosData?.pagination?.total || normalizedVideos.length })}
-                    </p>
-
-                    <span className="buttonHolder">
-                        <button className="play rounded-full! flex! bg-(--accentBlue)! text-(--text1)! font-semibold!" onClick={playChannel}>
-                            {PlaySVG}&nbsp;{t("playAll")}
-                        </button>
-
-                        <button onClick={shareChannelLink} className="clickable bg-(--background2) hover:bg-(--background3) rounded-full flex">
-                            {ShareSVG}&nbsp;{t("share")}
-                        </button>
-                    </span>
-
-                    <p ref={descriptionRef} className={`description ${descOpen ? "open" : ""}`}>{formatDescription(channel?.description)}</p>
-                    {channel?.description && hasDescriptionOverflow && (
-                        <button className="w-fit hover:underline cursor-pointer" onClick={toggleDescOpen}>
-                            {descOpen ? t("readLess") : t("readMore")}
-                        </button>
-                    )}
-                </span>
-            </div>
-
-            <div className="channelVideosHeader">
-                <h3 className="channelVideosTitle">{t("videosTab")}</h3>
-                <div className="channelSortChips" role="tablist" aria-label="Sort videos">
-                    {CHANNEL_SORT_OPTIONS.map((option) => (
-                        <button
-                            key={option.value}
-                            type="button"
-                            role="tab"
-                            aria-selected={`${videoSortBy}:${videoSortOrder}` === option.value}
-                            className={`channelSortChip ${`${videoSortBy}:${videoSortOrder}` === option.value ? "active" : ""}`}
-                            onClick={() => handleVideoSortChange(option.value)}
-                        >
-                            {option.label}
-                        </button>
-                    ))}
+        <main className="playlist channelPage">
+            <div className="channelHero">
+                <img className="channelHeroBackground" src={backgroundImage} alt="" aria-hidden="true" />
+                <div className="channelHeroInner">
+                    <img
+                        className="channelAvatar"
+                        src={channel?.image_url || DefaultProfile}
+                        alt={channel?.full_name || t("channelLabel")}
+                        onError={(event) => { event.currentTarget.src = DefaultProfile; }}
+                    />
+                    <div className="channelIdentity">
+                        <div className="channelIdentityHeading">
+                            <h1>{channel?.full_name}</h1>
+                            <p className="channelVideoCount">{t("videosLabel", { count: channelVideosData?.pagination?.total ?? normalizedVideos.length })}</p>
+                        </div>
+                        {channel?.description && <div className="channelAbout">
+                            <p ref={setDescriptionElement} className={`channelDescription ${descOpen ? "isExpanded" : ""}`}>{formatDescription(channel.description)}</p>
+                            {(hasDescriptionOverflow || descOpen) && (
+                                <button className="channelReadMore" onClick={toggleDescOpen} aria-expanded={descOpen}>
+                                    {descOpen ? t("readLess") : t("readMore")}
+                                </button>
+                            )}
+                        </div>}
+                    </div>
                 </div>
             </div>
 
-            <div className="videoHolder">{videoArray}</div>
+            <div className="channelNavigation">
+                <div className="channelTabs" role="tablist" aria-label={t("channelLabel")}>
+                    {(["videos", "playlists"] as const).map((tab, index) => (
+                        <button
+                            key={tab}
+                            ref={(element) => { tabRefs.current[index] = element; }}
+                            id={`${tabsId}-${tab}-tab`}
+                            role="tab"
+                            type="button"
+                            aria-selected={activeTab === tab}
+                            aria-controls={`${tabsId}-${tab}-panel`}
+                            tabIndex={activeTab === tab ? 0 : -1}
+                            onClick={() => setActiveTab(tab)}
+                            onKeyDown={(event) => {
+                                if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+                                event.preventDefault();
+                                const next = event.key === "Home" ? 0 : event.key === "End" ? 1 : 1 - index;
+                                setActiveTab(next === 0 ? "videos" : "playlists");
+                                tabRefs.current[next]?.focus();
+                            }}
+                        >{t(tab === "videos" ? "videosTab" : "playlistsTab")}</button>
+                    ))}
+                </div>
+                <div className="channelSortControl">
+                    <CustomSelect
+                        value={activeTab === "videos" ? `${videoSortBy}:${videoSortOrder}` : `${playlistSortBy}:${playlistSortOrder}`}
+                        options={CHANNEL_SORT_OPTIONS}
+                        onChange={(value) => activeTab === "videos"
+                            ? handleVideoSortChange(value as ChannelSortValue)
+                            : handlePlaylistSortChange(value as ChannelSortValue)}
+                        ariaLabel={`${t("searchSortBy")}: ${t(activeTab === "videos" ? "videosTab" : "playlistsTab")}`}
+                        rootClassName="channelSortSelect"
+                    />
+                </div>
+                <div className="channelActions">
+                    <button type="button" onClick={shareChannelLink}>{ShareSVG}{t("share")}</button>
+                </div>
+            </div>
 
-            {normalizedVideos.length === 0 && (
-                <p className="noVideosMessage">{t("noVideosInPlaylist")}</p>
-            )}
+            <div className="channelPanel" role="tabpanel" id={`${tabsId}-videos-panel`} aria-labelledby={`${tabsId}-videos-tab`} hidden={activeTab !== "videos"} tabIndex={0}>
+                <div className="videoHolder">{isLoadingVideos ? skeletonVideoArray : videoArray}</div>
+                {!isLoadingVideos && normalizedVideos.length === 0 && <p className="channelEmpty">{t("channelAnalyticsBestVideosEmpty")}</p>}
+            </div>
 
-            {normalizedPlaylists.length > 0 && (
-                <section className="channelPlaylistsSection">
-                    <div className="channelVideosHeader">
-                        <h3 className="channelVideosTitle">{t("playlistsTab")}</h3>
-                        <div className="channelSortChips" role="tablist" aria-label="Sort playlists">
-                            {CHANNEL_SORT_OPTIONS.map((option) => (
-                                <button
-                                    key={`playlists-${option.value}`}
-                                    type="button"
-                                    role="tab"
-                                    aria-selected={`${playlistSortBy}:${playlistSortOrder}` === option.value}
-                                    className={`channelSortChip ${`${playlistSortBy}:${playlistSortOrder}` === option.value ? "active" : ""}`}
-                                    onClick={() => handlePlaylistSortChange(option.value)}
-                                >
-                                    {option.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                    <div className="collection notscrollable">{playlistArray}</div>
-                </section>
-            )}
+            <div className="channelPanel" role="tabpanel" id={`${tabsId}-playlists-panel`} aria-labelledby={`${tabsId}-playlists-tab`} hidden={activeTab !== "playlists"} tabIndex={0}>
+                <div className="collection notscrollable channelPlaylistGrid">{isLoadingPlaylists ? skeletonPlaylistArray : playlistArray}</div>
+                {!isLoadingPlaylists && normalizedPlaylists.length === 0 && <p className="channelEmpty">{t("quizNoPlaylistsFound")}</p>}
+            </div>
         </main>
     );
 }

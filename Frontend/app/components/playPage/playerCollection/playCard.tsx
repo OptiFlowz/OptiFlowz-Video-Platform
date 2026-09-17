@@ -1,3 +1,4 @@
+import { useI18n } from "~/i18n";
 import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import { memo, useState } from "react";
 import { Link } from "react-router";
@@ -8,6 +9,10 @@ type PlayCardVideoT = SimilarVideoT | PlaylistVideoT;
 
 function PlayCard({props, playedVideoId, playlistId, nextVideo} : {props: PlayCardVideoT, playedVideoId: string, playlistId: string, nextVideo?: PlayCardVideoT}){
 
+    const { t } = useI18n();
+
+    const viewsLabel = formatViews(props?.view_count);
+    const dateLabel = formatDate(props?.created_at);
     const newThumbnailUrl = getVideoThumbnail(props);
     const animGifUrl = props.preview_url || undefined;
     const isWatched = props?.percentage_watched < 5 ? false : props?.progress_seconds;
@@ -41,10 +46,11 @@ function PlayCard({props, playedVideoId, playlistId, nextVideo} : {props: PlayCa
             <span className="info flex flex-col gap-1">
                 <h2 title={props?.title}>{props?.title}</h2>
 
-                <p className="author weakText">{props?.people.map(person => person.name).join(", ") || props?.uploader_name || "Unknown author"}</p>
+                <p className="author weakText">{props?.people.map(person => person.name).join(", ") || props?.uploader_name || t("unknownSpeakers")}</p>
             
-                <span className="flex items-center">
-                    <p><b>{formatViews(props?.view_count)}</b></p>&nbsp;·&nbsp;<p className="weakText">{formatDate(props?.created_at)}</p>
+                <span className="playCardMetadata">
+                    <p title={viewsLabel}><b>{viewsLabel}</b></p>
+                    <p className="weakText" title={dateLabel}>{dateLabel}</p>
                 </span>
             </span>
         </Link>
