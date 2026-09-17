@@ -1,5 +1,6 @@
 const defaultOrigins = [
   'https://videoplatform.optiflowz.com',
+  'https://videocorner.eaes.eu',
   'https://optiflowz.com',
   'https://www.optiflowz.com',
   'https://mux.com',
