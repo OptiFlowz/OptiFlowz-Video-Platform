@@ -1185,3 +1185,79 @@ test('channel dropdowns independently sort videos and playlists with all four or
     }
   }
 });
+
+for (const remember of [false, true]) {
+  test(`Google callback stays on the loader across session remounts (remember=${remember})`, async t => {
+    const container = dom(t);
+    const realWindow = window;
+    const navigations = [];
+    let search = '';
+    globalThis.window = new Proxy(realWindow, {
+      get(target, key) {
+        if (key === 'location') return { search, replace: url => navigations.push(url) };
+        const value = Reflect.get(target, key, target);
+        return ['addEventListener', 'removeEventListener', 'dispatchEvent'].includes(key) ? value.bind(target) : value;
+      },
+    });
+    let respond;
+    let exchanges = 0;
+    const load = modules({
+      '~/i18n': i18n,
+      'react-router': { Link: ({ to, children }) => React.createElement('a', { href: to }, children) },
+      'next/navigation': { useRouter: () => ({}) },
+      '~/API': { fetchFn: () => { exchanges++; return new Promise(resolve => { respond = resolve; }); } },
+    });
+    const oauth = load('app/auth/googleOAuth.ts');
+    const auth = load('app/auth/session.ts');
+    const state = oauth.startGoogleAttempt('/video/example?t=42', remember);
+    search = `?code=google-code&state=${state}`;
+    const Boundary = load('app/auth/sessionBoundary.tsx').default;
+    const Callback = load('app/routes/googleCallback.tsx').default;
+    const root = createRoot(container); container.mountedRoot = root;
+    let version = 0;
+    const render = () => act(async () => root.render(React.createElement(Boundary, null, React.createElement(React.StrictMode, null, React.createElement(Callback, { key: version })))));
+    await render();
+    assert.equal(exchanges, 1);
+    assert.ok(container.querySelector('.loader'));
+    version++;
+    await render();
+    assert.equal(exchanges, 1, 'a pending remount must reuse the exchange');
+    assert.ok(!container.querySelector('[role="alert"]'));
+    await act(async () => respond(session('google-user')));
+    await waitForUpdates();
+    assert.ok(!container.querySelector('[role="alert"]'), 'successful login must not flash the retry error after saveSession remounts the callback');
+    assert.ok(container.querySelector('.loader'), 'keep the loader until the browser finishes navigation');
+    assert.equal(auth.getToken(), 'google-user');
+    assert.equal(!!localStorage.getItem('user'), remember);
+    assert.equal(!!sessionStorage.getItem('user'), !remember);
+    version++;
+    await render();
+    assert.ok(!container.querySelector('[role="alert"]'));
+    assert.equal(exchanges, 1, 'never exchange the single-use code twice');
+    assert.deepEqual(navigations, ['/video/example?t=42']);
+    await act(async () => root.unmount());
+    container.mountedRoot = null;
+    globalThis.window = realWindow;
+    await waitForUpdates();
+  });
+}
+
+test('Google exchange failure still offers retry without storing a session', async t => {
+  const container = dom(t);
+  let exchanges = 0;
+  const load = modules({
+    '~/i18n': i18n,
+    'react-router': { Link: ({ to, children }) => React.createElement('a', { href: to }, children) },
+    '~/API': { fetchFn: async () => { exchanges++; throw new Error('Network failure'); } },
+  });
+  const oauth = load('app/auth/googleOAuth.ts');
+  const state = oauth.startGoogleAttempt('/playlist/example', false);
+  window.history.replaceState({}, '', `/google-callback?code=failed-code&state=${state}`);
+  const Callback = load('app/routes/googleCallback.tsx').default;
+  const root = createRoot(container); container.mountedRoot = root;
+  await act(async () => root.render(React.createElement(React.StrictMode, null, React.createElement(Callback))));
+  assert.equal(exchanges, 1);
+  assert.ok(container.querySelector('[role="alert"]'));
+  assert.equal(container.querySelector('a').getAttribute('href'), '/login?redirect=%2Fplaylist%2Fexample');
+  assert.equal(load('app/auth/session.ts').getToken(), null);
+});
