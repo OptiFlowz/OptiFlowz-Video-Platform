@@ -48,7 +48,6 @@ function SetupWizardPage() {
     const firstName = useRef<HTMLInputElement>(null);
     const lastName = useRef<HTMLInputElement>(null);
     const bio = useRef<HTMLTextAreaElement>(null);
-    const eaesMember = useRef<HTMLInputElement>(null);
     const pageLoaderRef = useRef<HTMLDivElement>(null);
     const isRegisteringRef = useRef<number>(0);
 
@@ -99,7 +98,7 @@ function SetupWizardPage() {
             "email": email.current.value,
             "password": password.current.value,
             "description": bio.current?.value || "",
-            "eaes_member": eaesMember.current?.checked
+            "eaes_member": false
         });
 
         const requestOptions: RequestInit = {
@@ -302,19 +301,6 @@ function SetupWizardPage() {
                                     placeholder={t("bioPlaceholder")}
                                     maxLength={300}
                                 />
-
-                                <span className="flex items-center gap-2 mt-2">
-                                    <input 
-                                        ref={eaesMember}
-                                        className="appearance-none rounded-md! p-2.25! border-2 cursor-pointer checked:bg-(--accentOrange)! transition-colors relative
-                                        checked:after:content-['✓'] checked:after:absolute checked:after:text-(--text1) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2" 
-                                        type="checkbox" 
-                                        id="rememberMe" 
-                                    />
-                                    <label htmlFor="rememberMe" className="opacity-60 font-medium text-[.95rem] cursor-pointer">
-                                        {t("eaesMember")}
-                                    </label>
-                                </span>
 
                                 <span className="flex items-start gap-2 mt-5">
                                     <input

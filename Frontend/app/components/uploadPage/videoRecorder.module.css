@@ -1,0 +1,63 @@
+.recorder {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  border: 2px dashed var(--border1);
+  border-radius: 1.25rem;
+  background: var(--background2);
+  color: var(--text1);
+  min-width: 0;
+}
+.recorder h3 { font-size: 1.2rem; margin: 0; }
+.recorder p { margin: .75rem 0; line-height: 1.5; }
+.intro, .heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.intro p { color: var(--text2); margin-bottom: 0; }
+:global(main.uploadMain) .recorder button { font: inherit; }
+:global(main.uploadMain) .recorder button:disabled { opacity: .5; cursor: not-allowed; }
+:global(main.uploadMain) .recorder button:focus-visible { outline: 2px solid var(--accentBlue); outline-offset: 3px; }
+:global(main.uploadMain) .recorder .primary,
+:global(main.uploadMain) .recorder .secondary,
+:global(main.uploadMain) .recorder .stop {
+  display: inline-flex; align-items: center; justify-content: center; gap: .6rem;
+  padding: .85rem 1.25rem; min-height: 2.75rem; border-radius: .8rem;
+  font-weight: 600; border: 1px solid transparent; cursor: pointer; line-height: 1.35;
+}
+.primary { background: var(--accentBlue); color: var(--onAccent, var(--borderWhite)); }
+.secondary { background: var(--background1); color: var(--text1); }
+.stop { background: var(--accentRed); color: var(--onAccent, var(--borderWhite)); }
+.recorder button > svg { width: 1.4rem; height: 1.4rem; flex-shrink: 0; }
+.intro > button { flex-shrink: 0; }
+.modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin: 1.25rem 0; }
+:global(main.uploadMain) .recorder .modes button {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .6rem;
+  padding: 1rem .75rem; border: 1px solid var(--border1); border-radius: .85rem;
+  background: var(--background1); color: var(--text1); cursor: pointer;
+}
+:global(main.uploadMain) .recorder .modes button[aria-pressed="true"] {
+  border-color: var(--accentBlue); color: var(--accentBlue);
+  box-shadow: inset 0 0 0 1px var(--accentBlue);
+}
+.audio { display: flex; flex-wrap: wrap; gap: 1rem 2rem; margin: 1rem 0; }
+.audio label { display: inline-flex; align-items: center; gap: .6rem; cursor: pointer; font-size: .95rem; }
+.audio input:focus-visible { outline: 2px solid var(--accentBlue); outline-offset: 3px; }
+.hint { color: var(--text2); font-size: .9rem; }
+.preview { position: relative; margin: 1rem 0; background: var(--playerBlack, var(--background1)); border-radius: .85rem; overflow: hidden; line-height: 0; }
+.preview > video { display: block; width: 100%; max-height: none; }
+.preview > .camera { position: absolute; width: 24%; aspect-ratio: 16 / 9; object-fit: cover; pointer-events: none; }
+.top-left { top: 2cqw; left: 2%; }
+.top-right { top: 2cqw; right: 2%; }
+.bottom-left { bottom: 2cqw; left: 2%; }
+.bottom-right { bottom: 2cqw; right: 2%; }
+.preview { container-type: inline-size; }
+.cornerPicker, .qualityPicker { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: 1rem 0; }
+.cornerPicker > div, .qualityPicker > div { min-width: 12rem; }
+.actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .75rem; margin-top: 1.25rem; }
+.timer { display: inline-flex; align-items: center; gap: .5rem; font-variant-numeric: tabular-nums; }
+.timer > span { width: .6rem; height: .6rem; border-radius: 50%; background: var(--accentRed); }
+.error { color: var(--accentRed); }
+@media (max-width: 640px) {
+  .recorder { padding: 1rem; }
+  .intro { align-items: stretch; flex-direction: column; }
+  .modes { gap: .5rem; }
+  .cornerPicker, .qualityPicker { flex-direction: column; align-items: stretch; gap: .5rem; }
+  .actions > button { flex: 1 1 auto; }
+}

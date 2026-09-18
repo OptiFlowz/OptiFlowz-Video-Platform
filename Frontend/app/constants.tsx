@@ -479,3 +479,34 @@ export const TwoFactorShieldSVG = (
     <text x="16" y="21" fill="currentColor" fontFamily="sans-serif" fontSize="10" fontWeight="700" textAnchor="middle">2FA</text>
   </svg>
 );
+
+
+export const RecordCameraSVG = (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="2" y="5" width="13" height="14" rx="3" />
+    <path d="m15 9 7-4v14l-7-4" />
+  </svg>
+);
+
+export const RecordScreenSVG = (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="2" y="3" width="20" height="14" rx="2" />
+    <path d="M12 17v4M8 21h8" />
+  </svg>
+);
+
+export const RecordVideoSVG = (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="2" y="3" width="20" height="16" rx="2" />
+    <rect x="13" y="11" width="7" height="6" rx="1" />
+    <path d="M8 22h8M12 19v3" />
+    <circle cx="7" cy="8" r="1.5" fill="currentColor" stroke="none" />
+  </svg>
+);
+
+export const TrimVideoSVG = (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" />
+    <path d="m8.2 8.2 12.8 12.8M8.2 15.8 21 3" />
+  </svg>
+);

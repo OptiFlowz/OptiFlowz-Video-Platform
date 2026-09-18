@@ -26,6 +26,8 @@ import { useConstrainedSticky } from "../shared/useConstrainedSticky";
 import { useI18n } from "~/i18n";
 import type { UploadStatus } from "./uploadSession";
 import statusStyles from "./uploadStatus.module.css";
+import VideoRecorder from "./videoRecorder";
+import LocalVideoEditor from "./localVideoEditor";
 import CustomSelect from "~/components/customSelect/customSelect";
 
 
@@ -161,6 +163,8 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
   const [currentStep, setCurrentStep] = useState(1);
   const [isDragging, setIsDragging] = useState(false);
   const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [recordingOpen, setRecordingOpen] = useState(false);
+  const [trimEditing, setTrimEditing] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState<string[]>([]);
@@ -273,8 +277,8 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
     : processingPhase === "idle" ? "" : t(`uploadPhase_${processingPhase}`);
 
   useEffect(() => {
-    onStatus?.({ label: processingError || phaseLabel, busy: isProcessing, hasDraft: !!videoFile });
-  }, [onStatus, phaseLabel, processingError, isProcessing, videoFile]);
+    onStatus?.({ label: processingError || phaseLabel || (recordingOpen ? t("recorderTitle") : ""), busy: isProcessing || recordingOpen || trimEditing, hasDraft: !!videoFile || recordingOpen });
+  }, [onStatus, phaseLabel, processingError, isProcessing, videoFile, recordingOpen, trimEditing, t]);
 
   useEffect(() => {
     if (!isProcessing) return;
@@ -1159,7 +1163,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
   };
 
   const initiateUpload = async () => {
-    if (!videoFile || !title.trim() || isProcessing) return;
+    if (!videoFile || !title.trim() || isProcessing || recordingOpen || trimEditing) return;
 
     setProcessingPhase("initializing");
     setProcessingErrorKey(null);
@@ -1212,7 +1216,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    if (!isUploaded && !isProcessing) {
+    if (!isUploaded && !isProcessing && !recordingOpen && !trimEditing) {
       setIsDragging(true);
     }
   };
@@ -1225,7 +1229,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
-    if (isUploaded || isProcessing) return;
+    if (isUploaded || isProcessing || recordingOpen || trimEditing) return;
 
     const file = e.dataTransfer.files[0];
     if (file && file.type.startsWith("video/")) {
@@ -1234,7 +1238,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (isUploaded || isProcessing) return;
+    if (isUploaded || isProcessing || recordingOpen || trimEditing) return;
 
     const file = e.target.files?.[0];
     if (file && file.type.startsWith("video/")) {
@@ -1257,7 +1261,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
   };
 
   const removeVideo = () => {
-    if (isUploaded || isProcessing) return;
+    if (isUploaded || isProcessing || recordingOpen || trimEditing) return;
 
     setVideoFile(null);
     if (fileInputRef.current) {
@@ -1322,7 +1326,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
   const canProceed = () => {
     switch (currentStep) {
       case 1:
-        return !!videoFile && title.trim().length > 0;
+        return !!videoFile && title.trim().length > 0 && !recordingOpen && !trimEditing;
       case 2:
         return !scheduleInvalid;
       case 3:
@@ -1550,12 +1554,13 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
               )}
 
               <div
-                className={`uploadZone ${isDragging ? "dragging" : ""} ${videoFile ? "hasFile" : ""} ${isUploaded || isProcessing ? "disabled" : ""}`}
+                style={recordingOpen ? { display: "none" } : undefined}
+                className={`uploadZone ${isDragging ? "dragging" : ""} ${videoFile ? "hasFile" : ""} ${isUploaded || isProcessing || recordingOpen ? "disabled" : ""}`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onClick={() =>
-                  !videoFile && !isUploaded && fileInputRef.current?.click()
+                  !videoFile && !isUploaded && !isProcessing && !recordingOpen && !trimEditing && fileInputRef.current?.click()
                 }
               >
                 <input
@@ -1564,39 +1569,11 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                   accept="video/*"
                   onChange={handleFileSelect}
                   hidden
-                  disabled={isUploaded || isProcessing}
+                  disabled={isUploaded || isProcessing || recordingOpen || trimEditing}
                 />
                 {videoFile ? (
-                  <div className="fileInfo">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="48"
-                      height="48"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <polygon points="23 7 16 12 23 17 23 7" />
-                      <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-                    </svg>
-                    <p className="fileName">{videoFile.name}</p>
-                    <p className="fileSize">
-                      {(videoFile.size / (1024 * 1024)).toFixed(2)} MB
-                    </p>
-                    {!isUploaded && !isProcessing && (
-                      <button
-                        type="button"
-                        className="removeFileBtn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeVideo();
-                        }}
-                      >
-                        {t("quizRemove")}
-                      </button>
-                    )}
-                  </div>
+                  <LocalVideoEditor file={videoFile} disabled={isUploaded || isProcessing || recordingOpen}
+                    onChange={setVideoFile} onRemove={removeVideo} onEditingChange={setTrimEditing} />
                 ) : (
                   <div className="uploadPrompt">
                     {UploadSVG}
@@ -1608,6 +1585,9 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                   </div>
                 )}
               </div>
+              {!videoFile && !isUploaded && !isProcessing && !trimEditing && (
+                <VideoRecorder onAccept={(file) => { setVideoFile(file); setRecordingOpen(false); }} onActiveChange={setRecordingOpen} />
+              )}
               <div className="formGroup mt-7.5">
                 <label htmlFor="uploadVideoTitle">{t("title")}</label>
                 <input

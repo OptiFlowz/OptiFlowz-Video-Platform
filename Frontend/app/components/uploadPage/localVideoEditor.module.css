@@ -1,0 +1,74 @@
+.editor { width: 100%; min-width: 0; text-align: left; color: var(--text1); }
+.video { display: block; width: 100%; max-height: 65vh; object-fit: contain; border-radius: .85rem; background: var(--playerBlack, var(--background1)); }
+.fileHeader { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1rem; }
+.fileHeader > div:first-child { min-width: 0; }
+:global(main.uploadMain) .editor .name { overflow-wrap: anywhere; font-weight: 600; margin: 0 0 .3rem; }
+:global(main.uploadMain) .editor .size,
+:global(main.uploadMain) .editor .hint { font-size: .9rem; color: var(--text2); }
+.hint { margin: .75rem 0 1rem; line-height: 1.5; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .75rem; }
+:global(main.uploadMain) .editor button { font: inherit; }
+:global(main.uploadMain) .editor .primary,
+:global(main.uploadMain) .editor .secondary,
+:global(main.uploadMain) .editor .remove {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+  padding: .8rem 1.1rem; min-height: 2.75rem; border: 1px solid transparent;
+  border-radius: .8rem; font-weight: 600; cursor: pointer; line-height: 1.35;
+}
+.primary { background: var(--accentBlue); color: var(--onAccent, var(--borderWhite)); }
+.secondary { background: var(--background1); color: var(--text1); }
+.remove { background: var(--accentRed); color: var(--onAccent, var(--borderWhite)); }
+:global(main.uploadMain) .editor button > svg { width: 1.25rem; height: 1.25rem; }
+:global(main.uploadMain) .editor button:disabled { opacity: .5; cursor: not-allowed; }
+.editor button:focus-visible, .editor input:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: 3px; }
+.trimPanel { margin-top: 1.5rem; border-top: 1px solid var(--border1); padding-top: 1.25rem; }
+.trimPanel h3 { margin: 0; font-size: 1.15rem; }
+.timelineInset { padding: 2.5rem .75rem .35rem; }
+.timeline {
+  position: relative; height: 4.75rem; border-radius: .5rem; cursor: pointer;
+  background: var(--background1); touch-action: none; isolation: isolate;
+}
+.filmstrip { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); overflow: hidden; border-radius: .5rem; pointer-events: none; }
+.frame { min-width: 0; height: 100%; background: var(--background2); border-right: 1px solid var(--border1); }
+.frame:last-child { border: 0; }
+.frame img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.timeline::before, .timeline::after { content: ""; position: absolute; top: 0; bottom: 0; background: color-mix(in srgb, var(--playerBlack, var(--background1)) 65%, transparent); pointer-events: none; z-index: 1; }
+.timeline::before { left: 0; width: var(--trim-start); border-radius: .5rem 0 0 .5rem; }
+.timeline::after { left: var(--trim-end); right: 0; border-radius: 0 .5rem .5rem 0; }
+.selection { position: absolute; inset-block: 0; left: var(--trim-start); width: calc(var(--trim-end) - var(--trim-start)); border-block: 3px solid var(--accentBlue2); pointer-events: none; z-index: 2; }
+.playhead { position: absolute; inset-block: .3rem; width: 2px; left: var(--trim-position); background: var(--borderWhite); box-shadow: 0 0 0 1px var(--playButtonBg1); pointer-events: none; z-index: 3; }
+:global(main.uploadMain) .editor .handle {
+  position: absolute; top: 0; bottom: 0; width: 1.25rem; padding: 0; margin: 0; border: 0; border-radius: .3rem;
+  background: var(--accentBlue2); color: var(--onAccent, var(--borderWhite)); cursor: ew-resize;
+  transform: translateX(-50%); z-index: 4; touch-action: none; user-select: none;
+  display: flex; align-items: center; justify-content: center;
+}
+:global(main.uploadMain) .editor .handle[data-active="true"] { z-index: 5; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accentBlue2) 25%, transparent); }
+.handle.start { left: var(--trim-start); }
+.handle.end { left: var(--trim-end); }
+.grip { width: 3px; height: 1.4rem; border-radius: 999px; background: currentColor; pointer-events: none; }
+:global(main.uploadMain) .editor .handleTime {
+  position: absolute; bottom: calc(100% + .65rem); transform: translateX(-50%); z-index: 6;
+  background: var(--accentBlue2); color: var(--onAccent, var(--borderWhite)); padding: .4rem .65rem;
+  border-radius: .5rem; font-size: .85rem; line-height: 1.25; font-weight: 600; font-variant-numeric: tabular-nums;
+  white-space: nowrap; pointer-events: none;
+}
+.handleTime::after { content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: .3rem solid transparent; border-top-color: var(--accentBlue2); }
+.ruler { display: flex; justify-content: space-between; margin: .35rem .75rem 0; }
+:global(main.uploadMain) .editor .ruler span { font-size: .75rem; color: var(--text2); font-variant-numeric: tabular-nums; }
+.times { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; margin: 1.25rem 0; }
+.timeInput { display: flex; flex: 1 1 8rem; min-width: 0; flex-direction: column; gap: .4rem; }
+:global(main.uploadMain) .editor .timeInput span,
+:global(main.uploadMain) .editor .length > span { font-size: .85rem; color: var(--text2); }
+.timeInput input { width: 100%; padding: .7rem .8rem; border: 1px solid var(--border1); border-radius: .6rem; background: var(--background1); color: var(--text1); font: inherit; font-variant-numeric: tabular-nums; }
+.length { flex: 1 1 8rem; display: flex; flex-direction: column; gap: .4rem; padding-bottom: .7rem; font-variant-numeric: tabular-nums; }
+.trimPanel > .actions { margin-top: 1rem; }
+.error { color: var(--accentRed); margin-top: .75rem; }
+@media (max-width: 640px) {
+  .fileHeader { flex-direction: column; align-items: stretch; }
+  .actions > button { flex: 1 1 auto; }
+  .times { gap: .75rem; }
+  .timeline { height: 3.75rem; }
+  .filmstrip { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .frame:nth-child(even) { display: none; }
+}

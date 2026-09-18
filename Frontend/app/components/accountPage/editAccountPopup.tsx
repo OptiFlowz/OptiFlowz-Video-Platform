@@ -10,6 +10,7 @@ import { useI18n } from "~/i18n";
 import Loader from "../loaders/loader";
 import MessagePopup from "../messagePopup/messagePopup";
 import PopupPortal from "~/components/popupPortal/popupPortal";
+import ProfileImageCropper from "./profileImageCropper";
 
 function EditAccountPopup({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useI18n();
@@ -17,6 +18,8 @@ function EditAccountPopup({ open, onClose }: { open: boolean; onClose: () => voi
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [pictureRemoved, setPictureRemoved] = useState(false);
+  const [selectedPicture, setSelectedPicture] = useState<File | null>(null);
+  const [cropFile, setCropFile] = useState<File | null>(null);
   const [token, setToken] = useState<string | undefined>(undefined);
   
   const [popupState, setPopupState] = useState<{
@@ -43,51 +46,41 @@ function EditAccountPopup({ open, onClose }: { open: boolean; onClose: () => voi
 
   const fullNameInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
-  const eaesInputRef = useRef<HTMLInputElement>(null);
   const profilePictureInputRef = useRef<HTMLInputElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
   const myHeaders = useRef(new Headers());
+  const initialized = useRef(false);
+
+  useEffect(() => {
+    if (!selectedPicture) { setPreviewUrl(null); return; }
+    const url = URL.createObjectURL(selectedPicture);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [selectedPicture]);
+
+  useEffect(() => {
+    if (!open) { setCropFile(null); setSelectedPicture(null); }
+  }, [open]);
 
   const handlePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
-
     if (!file.type.startsWith("image/")) {
       openMessagePopup(t("selectImageAlert"));
-      e.target.value = "";
-      setPreviewUrl(null);
-      setPictureRemoved(false);
       return;
     }
-
-    const maxBytes = 4 * 1024 * 1024;
-    if (file.size > maxBytes) {
+    if (file.size > 4 * 1024 * 1024) {
       openMessagePopup(t("imageTooLargeAlert"));
-      e.target.value = "";
-      setPreviewUrl(null);
-      setPictureRemoved(false);
       return;
     }
-
-    setPictureRemoved(false);
-
-    const url = URL.createObjectURL(file);
-    setPreviewUrl((old) => {
-      if (old) URL.revokeObjectURL(old);
-      return url;
-    });
+    setCropFile(file);
   };
 
   const handleRemovePicture = () => {
-    if (profilePictureInputRef.current) {
-      profilePictureInputRef.current.value = "";
-    }
-
-    setPreviewUrl((old) => {
-      if (old) URL.revokeObjectURL(old);
-      return null;
-    });
-
+    if (profilePictureInputRef.current) profilePictureInputRef.current.value = "";
+    setSelectedPicture(null);
+    setCropFile(null);
     setPictureRemoved(true);
   };
 
@@ -114,14 +107,14 @@ function EditAccountPopup({ open, onClose }: { open: boolean; onClose: () => voi
   });
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) { initialized.current = false; return; }
+    if (initialized.current || !userData?.user) return;
+    initialized.current = true;
 
-    // reset local state za sliku svaki put kad otvoriš
+    // Initialize once per opening; background refetches must not discard a crop or form edits.
     setPictureRemoved(false);
-    setPreviewUrl((old) => {
-      if (old) URL.revokeObjectURL(old);
-      return null;
-    });
+    setSelectedPicture(null);
+    setCropFile(null);
 
     if (profilePictureInputRef.current) {
       profilePictureInputRef.current.value = "";
@@ -133,21 +126,19 @@ function EditAccountPopup({ open, onClose }: { open: boolean; onClose: () => voi
 
     if (fullNameInputRef.current) fullNameInputRef.current.value = u.full_name ?? "";
     if (descriptionInputRef.current) descriptionInputRef.current.value = u.description ?? "";
-    if (eaesInputRef.current) eaesInputRef.current.checked = !!u.eaes_member;
   }, [open, userData]);
 
   const handleUserUpdate = async () => {
-    if (!fullNameInputRef.current || !descriptionInputRef.current || !eaesInputRef.current) return;
-    if (!token) return;
+    if (!fullNameInputRef.current || !descriptionInputRef.current) return;
+    if (!token || cropFile) return;
 
     const fullName = fullNameInputRef.current.value.trim();
     const description = descriptionInputRef.current.value.trim();
-    const eaesMember = eaesInputRef.current.checked;
 
     try {
       let latestUser = userData?.user;
 
-      const file = profilePictureInputRef.current?.files?.[0];
+      const file = selectedPicture;
 
       if (pictureRemoved || file) {
         const imgHeaders = new Headers();
@@ -194,7 +185,6 @@ function EditAccountPopup({ open, onClose }: { open: boolean; onClose: () => voi
       const raw = JSON.stringify({
         full_name: fullName,
         description,
-        eaes_member: eaesMember,
       });
 
       const updateRes = await fetchFn<AuthFetchT>({
@@ -230,12 +220,6 @@ function EditAccountPopup({ open, onClose }: { open: boolean; onClose: () => voi
     }
   };
 
-  useEffect(() => {
-    if (eaesInputRef.current) {
-      eaesInputRef.current.checked = !!userData?.user?.eaes_member;
-    }
-  }, [userData?.user?.eaes_member]);
-
   const hasCurrentPicture = !!previewUrl || !!userData?.user?.image_url;
 
   return <>
@@ -243,10 +227,13 @@ function EditAccountPopup({ open, onClose }: { open: boolean; onClose: () => voi
       <div className={`popup editAccountPopup ${open ? "active" : ""}`}>
       <div className="popup-content">
         <h2>
-          {t("accountSettings")} <button onClick={onClose}>{CloseSVG}</button>
+          {t(cropFile ? "profileCropTitle" : "accountSettings")} <button onClick={cropFile ? () => setCropFile(null) : onClose}>{CloseSVG}</button>
         </h2>
 
-        <section>
+        {open && cropFile && <ProfileImageCropper file={cropFile} onCancel={() => setCropFile(null)}
+          onApply={(file) => { setSelectedPicture(file); setPictureRemoved(false); setCropFile(null); }} />}
+
+        <section style={cropFile ? { display: "none" } : undefined}>
           <span className="userPictureInput">
             <label htmlFor="profilePictureInput">
               <img
@@ -302,23 +289,11 @@ function EditAccountPopup({ open, onClose }: { open: boolean; onClose: () => voi
             />
           </span>
 
-          <span className="checkInputField flex items-center gap-2">
-            <input
-              ref={eaesInputRef}
-              className="appearance-none rounded-lg! p-3.5! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative
-              checked:after:content-['✓'] checked:after:absolute checked:after:text-(--text1) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2"
-              type="checkbox"
-              id="rememberMe"
-              defaultChecked={!!userData?.user?.eaes_member}
-            />
-            <label htmlFor="rememberMe" className="cursor-pointer">
-              {t("eaesMember")}
-            </label>
-          </span>
+
 
         </section>
 
-        <div className="editButtons">
+        <div className="editButtons" style={cropFile ? { display: "none" } : undefined}>
           <button onClick={onClose}>{t("cancel")}</button>
           <button onClick={handleUserUpdate}>{t("saveChanges")}</button>
         </div>
