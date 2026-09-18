@@ -3,7 +3,8 @@ import { clearSession, getToken, redirectToLogin } from "./auth/session";
 
 type Props = {
     route: string,
-    options: RequestInit
+    options: RequestInit,
+    handleUnauthorizedLocally?: boolean
 }
 
 class FetchError extends Error {
@@ -17,7 +18,7 @@ class FetchError extends Error {
 }
 
 /** Backend requests share 401 handling regardless of endpoint or response format. */
-export async function fetchApiResponse(url: string, options: RequestInit = {}): Promise<Response> {
+export async function fetchApiResponse(url: string, options: RequestInit = {}, handleUnauthorizedLocally = false): Promise<Response> {
   const sessionToken = getToken();
   const requestToken = new Headers(options.headers).get("Authorization")?.replace(/^Bearer\s+/i, "");
   const res = await fetch(url, options);
@@ -26,7 +27,7 @@ export async function fetchApiResponse(url: string, options: RequestInit = {}): 
     const currentToken = getToken();
     // Ignore stale failures from requests belonging to a previous session.
     const sameSession = sessionToken === currentToken && (!requestToken || requestToken === currentToken);
-    if (typeof window !== "undefined" && sameSession) {
+    if (!handleUnauthorizedLocally && typeof window !== "undefined" && sameSession) {
       const { pathname, search, hash } = window.location;
       // A failed login stays on the form so it can display invalid credentials.
       if (pathname !== "/login") redirectToLogin(`${pathname}${search}${hash}`);
@@ -40,7 +41,7 @@ export async function fetchApiResponse(url: string, options: RequestInit = {}): 
 }
 
 export async function fetchFn<T>(props: Props): Promise<T> {
-  const res = await fetchApiResponse(`${env.apiBaseUrl}/${props.route}`, props.options);
+  const res = await fetchApiResponse(`${env.apiBaseUrl}/${props.route}`, props.options, props.handleUnauthorizedLocally);
   const body = await res.json().catch(() => null);
 
   if (!res.ok) {

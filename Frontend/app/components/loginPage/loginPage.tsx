@@ -18,12 +18,15 @@ import { useI18n } from "~/i18n";
 import GoogleLoginButton from "./googleLoginButton";
 import { saveSession } from "~/auth/session";
 import { safeRedirect } from "~/auth/safeRedirect";
+import { isTwoFactorChallenge, type LoginResult } from "~/auth/twoFactor";
+import TwoFactorLoginForm from "./twoFactorLoginForm";
 
 function LoginPage() {
   const { t } = useI18n();
   const [searchParams] = useSearchParams();
   const redirect = safeRedirect(searchParams.get("redirect"));
 
+  const [challenge, setChallenge] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -86,7 +89,7 @@ function LoginPage() {
   }, [searchParams, t]);
 
   const setLoggedToken = (res: AuthFetchT) => {
-    if (res.token) {
+    if (res.token && res.user) {
         const isRemember =
           rememberMeRef.current?.checked ?? rememberMe;
 
@@ -129,30 +132,25 @@ function LoginPage() {
 
     if(isLoggingRef.current !== 1) return;
 
-    fetchFn<AuthFetchT>({
+    fetchFn<LoginResult>({
       route: "api/auth/login",
       options: requestOptions,
     })
     .then((res) => {
-      if (
-        "message" in res &&
-        (res.message === "Invalid credentials" ||
-          res.message === "Invalid data")
-      ) {
+      if (isTwoFactorChallenge(res)) {
+        setChallenge(res.twoFactorToken);
+        if (password.current) password.current.value = "";
         setIsLoading(false);
         changeElementClass({ element: pageLoaderRef.current });
         return;
       }
-
+      if (!res || res.success !== true || !("token" in res) || !res.token || !res.user) throw new Error("Missing session");
       setLoggedToken(res);
     })
     .catch((err) => {
       setIsLoading(false);
       changeElementClass({ element: pageLoaderRef.current });
-      if (err.status === 401) {
-        err.message = err.message == "Invalid credentials" ? t("passwordIncorrect") : err.message;
-        openMessagePopup(err.message, false);
-      }
+      openMessagePopup(t(err.status === 401 ? "passwordIncorrect" : "twoFactorFailed"), false);
     })
     .finally(() => {
       isLoggingRef.current = 0;
@@ -201,6 +199,7 @@ function LoginPage() {
 
         <div className="holder">
           <div className="form">
+            {challenge ? <TwoFactorLoginForm challenge={challenge} onComplete={setLoggedToken} onBack={() => { setChallenge(null); setIsLoading(false); }} /> : <>
             <h1 className="mb-2 text-[1.8rem] text-(--text1) font-bold tracking-[.1rem]">
               {t("login")}
             </h1>
@@ -304,6 +303,7 @@ function LoginPage() {
                 {t("registerHere")}
               </Link>
             </span>
+            </>}
           </div>
         </div>
 

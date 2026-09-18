@@ -5348,6 +5348,14 @@ mux-player::part(menu-item) {
 .playCard .info .author {
   font-size: 0.75rem;
 }
+.similar .playCard .info .author {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
 .playCard .info > span p {
   font-size: 0.8rem;
 }
@@ -6056,16 +6064,20 @@ main.account.accountPage {
   stroke: currentColor;
 }
 
-.accountHero .userInfo .desc {
-  max-height: 110px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--accentBlue2) transparent;
+.accountHero .accountName { color: var(--text1); font-size: clamp(1.7rem, 3vw, 2.5rem); font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; }
+.accountHero .accountEmail { margin-top: 8px; color: var(--text2); overflow-wrap: anywhere; }
+.accountHero .accountAbout { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border1); }
+.accountHero .accountDescription { color: var(--text1); line-height: 1.6; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+.accountHero .accountDescription.isExpanded { display: block; }
+.accountHero .accountDescription a { color: var(--accentBlue2); text-decoration: underline; }
+.accountHero .accountReadMore { margin-top: 8px; color: var(--accentBlue); font-weight: 600; cursor: pointer; }
+.accountHero .accountReadMore:focus-visible { outline: 2px solid var(--accentBlue); outline-offset: 4px; }
+@media (max-width: 760px) {
+  .accountHero .accountDescription { font-size: .9rem; }
 }
-
-.accountHero .userInfo .desc a {
-  color: var(--accentBlue2);
-  text-decoration: underline;
+@media (max-width: 540px) {
+  .accountHero .accountName { font-size: 1.5rem; }
+  .accountHero .accountEmail { font-size: .85rem; }
 }
 
 .accountHero .accountActions,
@@ -15299,8 +15311,8 @@ main.playlist .channelPlaylistsSection .channelVideosHeader { flex-direction: ro
 @media (min-width: 801px) and (hover: hover) and (pointer: fine) {
   .persistent-video-player--mini { width: min(var(--mini-player-width, 400px), calc(100vw - 48px)); }
   .persistent-video-player__resize {
-    display: block; position: absolute; width: 20px; height: 20px; z-index: 7; touch-action: none;
-    clip-path: polygon(0 0, 100% 0, 100% 35%, 35% 35%, 35% 100%, 0 100%);
+    display: block; position: absolute; width: 32px; height: 32px; z-index: 7; touch-action: none;
+    clip-path: polygon(0 0, 100% 0, 100% 40%, 40% 40%, 40% 100%, 0 100%);
   }
   .persistent-video-player__resize--nw { top: 0; left: 0; cursor: nwse-resize; }
   .persistent-video-player__resize--ne { top: 0; right: 0; transform: rotate(90deg); cursor: nesw-resize; }
@@ -15309,3 +15321,58 @@ main.playlist .channelPlaylistsSection .channelVideosHeader { flex-direction: ro
   .persistent-video-player--mini.is-resizing { transition: none; }
   .persistent-video-player--mini.is-resizing mux-player { pointer-events: none; }
 }
+
+/* Account security and the shared password/Google authenticator step. */
+.twoFactorSettings { border-block: 1px solid var(--border1); }
+.settingsPopup .twoFactorSettings + .settingsRow { border-top: 0; }
+.twoFactorStatus { display: inline-flex; align-items: center; align-self: flex-start; gap: .5rem; width: fit-content; margin-top: .55rem; padding: .35rem .75rem; border-radius: var(--bR); background: color-mix(in srgb, currentColor 12%, transparent); font-size: .8rem; font-weight: 600; }
+.twoFactorStatus.enabled { color: var(--accentGreen2); }
+.twoFactorStatus.disabled { color: var(--analyticsViewsOverTime); }
+.twoFactorStatus svg { width: 20px; height: 23px; flex-shrink: 0; }
+.twoFactorForm { display: flex; flex-direction: column; gap: 1rem; width: 100%; min-width: 0; color: var(--text1); }
+.twoFactorForm h1 { font-size: 1.6rem; font-weight: 600; line-height: 1.3; }
+.twoFactorForm h3 { font-size: 1rem; font-weight: 600; }
+.twoFactorForm p, .twoFactorManual { color: var(--text2); font-size: .85rem; line-height: 1.6; }
+.twoFactorForm label { display: flex; flex-direction: column; gap: .5rem; font-size: .85rem; font-weight: 500; }
+.twoFactorForm input { width: 100%; min-height: 48px; padding: .75rem 1rem; background: var(--background2); color: var(--text1); border: 1px solid var(--border1); border-radius: 12px; font: inherit; }
+.twoFactorForm input:focus-visible, .twoFactorForm button:focus-visible, .twoFactorForm summary:focus-visible { outline: 2px solid var(--accentOrange); outline-offset: 3px; }
+.twoFactorForm input.twoFactorCode { font-size: 1.3rem; letter-spacing: .4em; text-align: center; direction: ltr; unicode-bidi: isolate; font-variant-numeric: tabular-nums; }
+.twoFactorPanel { margin-bottom: 1rem; padding: 1.15rem; border: 1px solid var(--border1); border-radius: 16px; background: var(--background1); }
+.twoFactorForm .twoFactorQr { display: block; width: 220px; max-width: 100%; height: auto; align-self: center; border-radius: 12px; }
+.twoFactorManual summary { cursor: pointer; color: var(--text1); }
+.twoFactorManual p { margin-top: .6rem; overflow-wrap: anywhere; }
+.twoFactorManual code { display: block; padding: .75rem; margin-top: .5rem; background: var(--background2); border-radius: 8px; color: var(--text1); overflow-wrap: anywhere; user-select: all; font-size: .85rem; }
+.twoFactorActions { display: flex; gap: .75rem; margin-top: 1rem; }
+.twoFactorActions > button { flex: 1; min-width: 0; }
+.twoFactorPrimary, .twoFactorSecondary { display: inline-flex; align-items: center; justify-content: center; gap: .6rem; min-height: 48px; padding: .75rem 1rem; border-radius: 12px; font: inherit; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background-color .15s ease; }
+.twoFactorPrimary { background: var(--accentOrange); color: var(--text1); }
+.twoFactorPrimary:hover { background: var(--accentOrange2); }
+.twoFactorSecondary { background: var(--background2); color: var(--text1); }
+.twoFactorSecondary:hover { background: var(--background3); }
+.twoFactorForm button:disabled { opacity: .55; cursor: not-allowed; }
+.twoFactorForm a { color: var(--accentOrange); text-decoration: underline; text-underline-offset: 3px; }
+.twoFactorForm .twoFactorError, .twoFactorError { color: var(--accentRed3); font-size: .85rem; line-height: 1.5; }
+.twoFactorError, .twoFactorLoading { margin-bottom: 1rem; }
+.twoFactorLoading { display: flex; align-items: center; gap: .6rem; color: var(--text2); font-size: .85rem; }
+.loader.twoFactorSpinner { display: inline-grid; position: static; width: 20px; height: 20px; opacity: 1; background: transparent; flex-shrink: 0; }
+.loader.twoFactorSpinner .loadingSpinner { width: 20px; height: 20px; margin: 0; }
+.loader.twoFactorSpinner circle { stroke: currentColor; }
+main.login.twoFactorCallback { position: fixed; inset: 0; display: grid; place-items: center; width: 100%; height: 100dvh; max-width: none; margin: 0; padding: 24px; overflow-y: auto; background: var(--background1); }
+main.login.twoFactorCallback > .twoFactorCallbackCard { display: flex; flex-direction: column; gap: 1rem; width: 100%; max-width: 460px; height: auto; min-height: 0; margin: auto; padding: 2rem; border: 1px solid var(--border1); border-radius: 24px; background: var(--background1); color: var(--text1); }
+@media (max-width: 500px) {
+  .twoFactorPanel { padding: .9rem; }
+  main.login.twoFactorCallback { padding: 12px; }
+  main.login.twoFactorCallback > .twoFactorCallbackCard { padding: 1.25rem; }
+}
+
+@media screen and (max-width: 570px) {
+  .settingsPopup .twoFactorSettings > .settingsRow { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .settingsPopup .twoFactorSettings > .settingsRow > .settingsRowText { display: contents; }
+  .settingsPopup .twoFactorSettings .settingsRowText > h3,
+  .settingsPopup .twoFactorSettings .settingsRowText > p { grid-column: 1 / -1; }
+  .settingsPopup .twoFactorSettings .twoFactorStatus { grid-column: 1; grid-row: 3; align-self: center; margin-top: 0; max-width: 100%; }
+  .settingsPopup .twoFactorSettings > .settingsRow > .accountSettingsAction { grid-column: 2; grid-row: 3; justify-self: end; max-width: 100%; }
+}
+
+.twoFactorGoogleIcon { display: inline-flex; flex-shrink: 0; }
+.twoFactorGoogleIcon svg { width: 20px; height: 20px; }

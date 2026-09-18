@@ -10,6 +10,7 @@ import { OFFICE_EMAIL } from "~/changeables";
 import { usePrivacyPreferences } from "~/privacy/privacyPreferences";
 import { deleteMyAccount } from "./accountApi";
 import { clearSession } from "~/auth/session";
+import TwoFactorSettings from "./twoFactorSettings";
 
 function SettingsPopup({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { locale, setLocale, t } = useI18n();
@@ -95,7 +96,7 @@ function SettingsPopup({ open, onClose }: { open: boolean; onClose: () => void }
             if (confirmDelete) showConfirmation(false); else requestClose();
           }
           if (event.key !== "Tab") return;
-          const focusable = Array.from(panelRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), [tabindex="0"]') ?? []).filter(element => element.tabIndex >= 0 && element.getClientRects().length > 0);
+          const focusable = Array.from(panelRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), summary, [tabindex="0"]') ?? []).filter(element => element.tabIndex >= 0 && element.getClientRects().length > 0);
           const first = focusable[0];
           const last = focusable[focusable.length - 1];
           if (!first) { event.preventDefault(); panelRef.current?.focus(); }
@@ -129,6 +130,7 @@ function SettingsPopup({ open, onClose }: { open: boolean; onClose: () => void }
                 <div className="settingsRowText"><h3>{t("accountResetPassword")}</h3><p>{t("accountResetPasswordHelp")}</p></div>
                 <Link className="accountSettingsAction" to={resetPasswordUrl}>{t("resetPassword")}</Link>
               </div>
+              {open && <TwoFactorSettings resetPasswordUrl={resetPasswordUrl} />}
               <div className="settingsRow">
                 <div className="settingsRowText"><h3>{t("accountPrivacyChoices")}</h3><p>{t("accountPrivacyChoicesHelp")}</p></div>
                 <button type="button" className="accountSettingsAction" onClick={() => { requestClose(); openPreferences(); }}>{t("accountManagePrivacy")}</button>

@@ -96,6 +96,8 @@ export type AuthFetchT = {
         id?: string,
         roles: Array<{ id: string | number; name: string }>,
         eaes_member: boolean,
+        is_2fa_enabled?: boolean,
+        login_methods?: { google: boolean; password: boolean },
         description: string
     },
     token: string,
