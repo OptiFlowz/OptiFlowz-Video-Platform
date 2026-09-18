@@ -15376,3 +15376,8 @@ main.login.twoFactorCallback > .twoFactorCallbackCard { display: flex; flex-dire
 
 .twoFactorGoogleIcon { display: inline-flex; flex-shrink: 0; }
 .twoFactorGoogleIcon svg { width: 20px; height: 20px; }
+
+.twoFactorMethods { display: flex; gap: .35rem; padding: .3rem; border: 1px solid var(--border1); border-radius: 12px; background: var(--background2); }
+.twoFactorMethods > button { display: inline-flex; flex: 1; align-items: center; justify-content: center; gap: .5rem; min-width: 0; min-height: 42px; padding: .6rem .75rem; border-radius: 8px; color: var(--text2); font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer; transition: background-color .15s ease, color .15s ease; }
+.twoFactorMethods > button:hover { background: var(--background3); color: var(--text1); }
+.twoFactorMethods > button[aria-pressed="true"] { background: var(--background1); color: var(--text1); box-shadow: 0 0 0 1px var(--border1); }

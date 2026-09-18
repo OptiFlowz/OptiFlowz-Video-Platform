@@ -17,6 +17,7 @@ export default function TwoFactorSettings({ resetPasswordUrl }: { resetPasswordU
   const client = useQueryClient();
   const [step, setStep] = useState<"idle" | "setup" | "verify" | "disable">("idle");
   const [password, setPassword] = useState("");
+  const [selectedMethod, setSelectedMethod] = useState<"google" | "password">("google");
   const [googleCode, setGoogleCode] = useState("");
   const [code, setCode] = useState("");
   const [setup, setSetup] = useState<TwoFactorSetup | null>(null);
@@ -32,11 +33,19 @@ export default function TwoFactorSettings({ resetPasswordUrl }: { resetPasswordU
   });
   const enabled = profile.data?.user?.is_2fa_enabled;
   const loginMethods = profile.data?.user?.login_methods;
-  const preferGoogle = loginMethods?.google === true;
-  const statusReady = typeof enabled === "boolean" && !profile.isError && (preferGoogle || loginMethods?.password === true);
-  const needsGoogle = step !== "verify" && preferGoogle && !googleCode;
+  const hasBothMethods = loginMethods?.google === true && loginMethods?.password === true;
+  const useGoogle = loginMethods?.google === true && (!hasBothMethods || selectedMethod === "google");
+  const statusReady = typeof enabled === "boolean" && !profile.isError && (useGoogle || loginMethods?.password === true);
+  const needsGoogle = step !== "verify" && useGoogle && !googleCode;
   const resetForm = () => {
+    setSelectedMethod("google");
     setGoogleCode(""); setPassword(""); setCode(""); setSetup(null); setError(""); setStep("idle");
+  };
+
+  const changeMethod = (method: "google" | "password") => {
+    if (pending.current || !hasBothMethods || step === "verify") return;
+    setSelectedMethod(method);
+    setPassword(""); setGoogleCode(""); setCode(""); setError("");
   };
 
   return <div className="twoFactorSettings">
@@ -44,20 +53,20 @@ export default function TwoFactorSettings({ resetPasswordUrl }: { resetPasswordU
       <div className="settingsRowText"><h3>{t("twoFactorTitle")}</h3><p>{t("twoFactorHelp")}</p>
         {statusReady && <span className={`twoFactorStatus ${enabled ? "enabled" : "disabled"}`} role="status" aria-live="polite" aria-atomic="true">{TwoFactorShieldSVG}{t(enabled ? "twoFactorEnabled" : "twoFactorDisabled")}</span>}
       </div>
-      <button type="button" className="accountSettingsAction" disabled={!statusReady || profile.isFetching || busy || step !== "idle"} onClick={() => { setError(""); setStep(enabled ? "disable" : "setup"); }}>{t(enabled ? "twoFactorDisable" : "twoFactorEnable")}</button>
+      <button type="button" className="accountSettingsAction" disabled={!statusReady || profile.isFetching || busy || step !== "idle"} onClick={() => { setSelectedMethod("google"); setError(""); setStep(enabled ? "disable" : "setup"); }}>{t(enabled ? "twoFactorDisable" : "twoFactorEnable")}</button>
     </div>
     {profile.isFetching && !statusReady && <div role="status" className="twoFactorLoading"><Loader classes="twoFactorSpinner" /><span>{t("twoFactorLoading")}</span></div>}
     {!profile.isFetching && !statusReady && <div className="twoFactorError" role="alert"><p>{t("twoFactorFailed")}</p><button type="button" className="accountSettingsAction" onClick={() => void profile.refetch()}>{t("usersRetry")}</button></div>}
     {step !== "idle" && <form className="twoFactorForm twoFactorPanel" aria-busy={busy} onSubmit={async event => {
       event.preventDefault();
       if (pending.current || !token) return;
-      if (step !== "verify" && !preferGoogle && !password) return;
+      if (step !== "verify" && !useGoogle && !password) return;
       if (step !== "setup" && !needsGoogle && !/^\d{6}$/.test(code)) return;
       pending.current = true; setBusy(true); setError("");
       const controller = new AbortController();
       request.current = controller;
       try {
-        let credentials: TwoFactorCredentials = preferGoogle ? { googleCode } : { password };
+        let credentials: TwoFactorCredentials = useGoogle ? { googleCode } : { password };
         if (needsGoogle) {
           const freshCode = await requestGoogleReauthentication(profile.data?.user?.email ?? "", controller.signal);
           if (controller.signal.aborted || getToken() !== token) return;
@@ -104,9 +113,17 @@ export default function TwoFactorSettings({ resetPasswordUrl }: { resetPasswordU
       }
     }}>
       <h3>{t(step === "disable" ? "twoFactorDisable" : "twoFactorEnable")}</h3>
+      {step !== "verify" && hasBothMethods && <div className="twoFactorMethods" role="group" aria-label={t("twoFactorTitle")}>
+        <button type="button" aria-pressed={useGoogle} disabled={busy} onClick={() => changeMethod("google")}>
+          <span className="twoFactorGoogleIcon">{GoogleSVG}</span>Google
+        </button>
+        <button type="button" aria-pressed={!useGoogle} disabled={busy} onClick={() => changeMethod("password")}>
+          {t("password")}
+        </button>
+      </div>}
       {needsGoogle && <p>{t("twoFactorGoogleHelp")}</p>}
-      {step === "disable" && preferGoogle && googleCode && <p>{t("twoFactorCodeHelp")}</p>}
-      {step !== "verify" && !preferGoogle && <>
+      {step === "disable" && useGoogle && googleCode && <p>{t("twoFactorCodeHelp")}</p>}
+      {step !== "verify" && !useGoogle && <>
         <p>{t("twoFactorPasswordHelp")} <Link to={resetPasswordUrl}>{t("resetPassword")}</Link></p>
         <label htmlFor={`${id}-password`}>{t("password")}
           <input autoFocus id={`${id}-password`} name="current-password" type="password" autoComplete="current-password" maxLength={1024} value={password} onChange={event => setPassword(event.target.value)} required disabled={busy} />
@@ -118,12 +135,12 @@ export default function TwoFactorSettings({ resetPasswordUrl }: { resetPasswordU
         <details className="twoFactorManual"><summary>{t("twoFactorManual")}</summary><p dir="auto">{setup.manual.codeName}</p><code dir="ltr">{setup.manual.yourKey}</code></details>
       </>}
       {step !== "setup" && !needsGoogle && <label htmlFor={`${id}-code`}>{t("twoFactorCode")}
-        <input key={step} autoFocus={step === "verify" || preferGoogle} id={`${id}-code`} className="twoFactorCode" name="otp" type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" minLength={6} maxLength={6} value={code} onChange={event => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))} required disabled={busy} />
+        <input key={step} autoFocus={step === "verify" || useGoogle} id={`${id}-code`} className="twoFactorCode" name="otp" type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" minLength={6} maxLength={6} value={code} onChange={event => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))} required disabled={busy} />
       </label>}
       {error && <p role="alert" className="twoFactorError">{t(error)}</p>}
       <div className="twoFactorActions">
         <button type="button" className="button twoFactorSecondary" disabled={busy} onClick={resetForm}>{t("cancel")}</button>
-        <button type="submit" className="button twoFactorPrimary" disabled={busy || (step !== "verify" && !preferGoogle && !password) || (step !== "setup" && !needsGoogle && code.length !== 6)}>{busy ? <Loader classes="twoFactorSpinner" /> : needsGoogle ? <span className="twoFactorGoogleIcon">{GoogleSVG}</span> : null}{t(needsGoogle ? "continueWithGoogle" : step === "setup" ? "quizContinue" : step === "verify" ? "twoFactorVerify" : "twoFactorDisable")}</button>
+        <button type="submit" className="button twoFactorPrimary" disabled={busy || (step !== "verify" && !useGoogle && !password) || (step !== "setup" && !needsGoogle && code.length !== 6)}>{busy ? <Loader classes="twoFactorSpinner" /> : needsGoogle ? <span className="twoFactorGoogleIcon">{GoogleSVG}</span> : null}{t(needsGoogle ? "continueWithGoogle" : step === "setup" ? "quizContinue" : step === "verify" ? "twoFactorVerify" : "twoFactorDisable")}</button>
       </div>
     </form>}
     {step === "idle" && error && <p role="alert" className="twoFactorError">{t(error)}</p>}
