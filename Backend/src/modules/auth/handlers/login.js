@@ -25,7 +25,7 @@ export async function loginInternal({ body: inputBody }) {
     }
 
     const user = rows[0];
-    const ok = await bcrypt.compare(password, user.password_hash);
+    const ok = user.password_hash !== null && await bcrypt.compare(password, user.password_hash);
     if (!ok) {
       logEvent('auth.login_failed', { email: email, message: 'Wrong password' });
       throw new HttpError(401, { message: 'Invalid credentials' });

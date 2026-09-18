@@ -13,6 +13,14 @@ export async function getMeInternal(actorUserId = null) {
           u.description,
           u.eaes_member,
           u.is_2fa_enabled,
+          jsonb_build_object(
+            'password', u.password_hash IS NOT NULL,
+            'google', EXISTS (
+              SELECT 1
+              FROM public.auth_identities ai
+              WHERE ai.user_id = u.id AND ai.provider = 'google'
+            )
+          ) AS login_methods,
           COALESCE(
             (
               SELECT jsonb_agg(

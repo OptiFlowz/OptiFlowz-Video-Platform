@@ -132,11 +132,11 @@ export async function handlePasswordReset(req, res) {
 export async function handleGetMe(req, res) {
   try {
     const result = await getMeInternal(req.user?.sub || null);
-    return res.status(200).json(result);
+    return res.status(200).json({ ...result, success: true });
   } catch (error) {
     return res
       .status(error.status || 500)
-      .json(error.body || { message: error.message || 'Internal server error' });
+      .json({ ...(error.body || { message: error.message || 'Internal server error' }), success: false });
   }
 }
 

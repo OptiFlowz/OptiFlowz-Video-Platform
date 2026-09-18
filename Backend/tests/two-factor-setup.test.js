@@ -23,10 +23,10 @@ async function query(sql, params) {
   }
   assert.match(sql, /UPDATE public.users/);
   assert.match(sql, /is_2fa_enabled = false AND status = 'active'/);
-  assert.match(sql, /password_hash = \$3 AND authz_version = \$4/);
+  assert.match(sql, /password_hash IS NOT DISTINCT FROM \$3 AND authz_version = \$4/);
   assert.match(sql, /totp_secret_encrypted IS NOT DISTINCT FROM \$5/);
   assert.match(sql, /totp_last_used_step = -1/);
-  assert.deepEqual(params.slice(2), [user.password_hash, user.authz_version, user.totp_secret_encrypted]);
+  assert.deepEqual(params.slice(2), [user.password_hash, user.authz_version, user.totp_secret_encrypted, null]);
   if (conflict) return { rows: [], rowCount: 0 };
   user.totp_secret_encrypted = params[1];
   return { rows: [{ id: userId }], rowCount: 1 };
@@ -153,6 +153,21 @@ test('missing or malformed encryption keys fail before storing any secret', asyn
   }
   assert.equal(user.totp_secret_encrypted, null);
   assert.ok(calls.every(call => /^\s*SELECT/.test(call.sql)));
+});
+
+test('passwordless accounts receive a clear setup error without calling bcrypt or changing the secret', async () => {
+  user.password_hash = null;
+  const compare = mock.method(bcrypt, 'compare', () => { throw new Error('bcrypt must not receive null'); });
+  try {
+    const res = await request({ password });
+    assert.equal(res.status, 400);
+    assert.deepEqual(await res.json(), { success: false, message: 'This account does not have a password' });
+    assert.equal(compare.mock.callCount(), 0);
+    assert.equal(user.totp_secret_encrypted, null);
+    assert.ok(calls.every(call => /^\s*SELECT/.test(call.sql)));
+  } finally {
+    compare.mock.restore();
+  }
 });
 
 test('a repeated setup replaces an unconfirmed secret', async () => {

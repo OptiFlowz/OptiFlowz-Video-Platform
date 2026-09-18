@@ -29,7 +29,7 @@ async function query(sql, params) {
   assert.match(sql, /SET is_2fa_enabled = false, totp_secret_encrypted = NULL,/);
   assert.match(sql, /totp_last_used_step = -1/);
   assert.match(sql, /WHERE id = \$1 AND status = 'active'/);
-  assert.match(sql, /password_hash = \$2 AND authz_version = \$3/);
+  assert.match(sql, /password_hash IS NOT DISTINCT FROM \$2 AND authz_version = \$3/);
   assert.match(sql, /is_2fa_enabled = \$4/);
   assert.match(sql, /totp_secret_encrypted IS NOT DISTINCT FROM \$5/);
   assert.match(sql, /\$6::bigint IS NULL OR totp_last_used_step < \$6/);
@@ -133,6 +133,18 @@ test('a code consumed by enrollment or login cannot disable 2FA', async () => {
   user.totp_last_used_step = String(step);
   await assert.rejects(remove({ password, token: code() }), { status: 401 });
   assert.equal(user.is_2fa_enabled, true);
+  assert.ok(calls.every(call => /^\s*SELECT/.test(call.sql)));
+});
+
+test('passwordless accounts cannot bypass password-based disabling', async () => {
+  user.password_hash = null;
+  const compare = mock.method(bcrypt, 'compare', () => { throw new Error('bcrypt must not receive null'); });
+  const res = await request({ password, token: code() });
+  assert.equal(res.status, 400);
+  assert.deepEqual(await res.json(), { success: false, message: 'This account does not have a password' });
+  assert.equal(compare.mock.callCount(), 0);
+  assert.equal(user.is_2fa_enabled, true);
+  assert.ok(user.totp_secret_encrypted);
   assert.ok(calls.every(call => /^\s*SELECT/.test(call.sql)));
 });
 

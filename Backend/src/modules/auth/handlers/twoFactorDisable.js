@@ -1,14 +1,15 @@
-import bcrypt from 'bcrypt';
 import speakeasy from 'speakeasy';
 import { z } from 'zod';
 import { writePool } from '../../../database/index.js';
 import { HttpError } from '../../../common/httpError.js';
 import { decryptTotpSecret } from '../helpers/totpSecret.js';
+import { verifyTwoFactorReauthentication } from '../helpers/twoFactorReauthentication.js';
 
 const disableSchema = z.object({
-  password: z.string().min(1).max(1024),
+  password: z.string().min(1).max(1024).optional(),
+  googleCode: z.string().trim().min(1).max(4096).optional(),
   token: z.string().regex(/^\d{6}$/).optional(),
-}).strict();
+}).strict().refine(data => (data.password !== undefined) !== (data.googleCode !== undefined));
 
 export async function twoFactorDisableInternal({ body }, actorUserId = null) {
   if (!actorUserId) throw new HttpError(401, { message: 'Unauthorized' });
@@ -26,9 +27,7 @@ export async function twoFactorDisableInternal({ body }, actorUserId = null) {
     if (!user || user.status !== 'active') {
       throw new HttpError(401, { message: 'Unauthorized' });
     }
-    if (!(await bcrypt.compare(parsed.data.password, user.password_hash))) {
-      throw new HttpError(401, { message: 'Invalid password' });
-    }
+    const googleSubject = await verifyTwoFactorReauthentication(parsed.data, user, actorUserId);
 
     let step = null;
     if (user.is_2fa_enabled) {
@@ -50,7 +49,7 @@ export async function twoFactorDisableInternal({ body }, actorUserId = null) {
       }
     }
 
-    // Also permits cancelling unconfirmed setup with the current password.
+    // Also permits cancelling unconfirmed setup after reauthentication.
     // Recheck every credential/state used above so concurrent changes cannot
     // disable a new secret or bypass a factor enabled during this request.
     const { rowCount } = await writePool.query(
@@ -58,13 +57,17 @@ export async function twoFactorDisableInternal({ body }, actorUserId = null) {
        SET is_2fa_enabled = false, totp_secret_encrypted = NULL,
            totp_last_used_step = -1
        WHERE id = $1 AND status = 'active'
-         AND password_hash = $2 AND authz_version = $3
+         AND password_hash IS NOT DISTINCT FROM $2 AND authz_version = $3
          AND is_2fa_enabled = $4
          AND totp_secret_encrypted IS NOT DISTINCT FROM $5
          AND ($6::bigint IS NULL OR totp_last_used_step < $6)
+         AND ($7::text IS NULL OR EXISTS (
+           SELECT 1 FROM public.auth_identities
+           WHERE user_id = $1 AND provider = 'google' AND provider_user_id = $7
+         ))
        RETURNING id`,
       [actorUserId, user.password_hash, user.authz_version,
-        user.is_2fa_enabled, user.totp_secret_encrypted, step],
+        user.is_2fa_enabled, user.totp_secret_encrypted, step, googleSubject],
     );
     if (rowCount !== 1) {
       throw new HttpError(409, { message: 'Account changed while disabling 2FA. Please try again.' });

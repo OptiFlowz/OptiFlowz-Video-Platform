@@ -1,5 +1,13 @@
 # Two-factor authentication
 
+New Google accounts store `password_hash = NULL`. Apply
+`1789689600001_allow-null-user-password.sql` before deploying that signup change.
+Existing password hashes are preserved: generated placeholders cannot reliably
+be distinguished from passwords a user actually set. Password login rejects
+accounts with a null hash. Password-based 2FA setup/disable return a clear error;
+these accounts can use Google reauthentication for both management endpoints.
+Google login and its 2FA login step already support a null password hash.
+
 Apply `1789689600000_add-two-factor-authentication.sql` before using this endpoint.
 Set `TWO_FACTOR_ENCRYPTION_KEY` to a base64-encoded, random 32-byte key. Generate
 it once and store it in the server's environment/secrets:
@@ -17,15 +25,34 @@ it makes existing TOTP secrets unreadable unless they are explicitly migrated.
 { "password": "current password" }
 ```
 
+Alternatively, send a fresh Google OAuth authorization code:
+
+```json
+{ "googleCode": "fresh Google authorization code" }
+```
+
+Send exactly one of `password` or `googleCode`. Google verification exchanges the
+code using the existing `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and
+`GOOGLE_REDIRECT_URI` configuration. Request `openid email profile` scopes, as
+for Google login. The server verifies the returned ID token, its audience and
+verified email, and enforces `GOOGLE_ALLOWED_HD` if configured. Its Google subject
+must already be linked to the authenticated user in `auth_identities`; matching
+email alone is insufficient. This works for linked accounts with or without a
+local password and never creates or links accounts.
+
+Obtain a new authorization code for each request; codes are single-use and cannot
+be reused from login. A failed later check (such as an invalid authenticator code)
+also requires a new Google code on retry. A fresh authorization code confirms
+the Google account; it does not necessarily force Google to ask for its password.
+
 The response contains `success: true`, `qr` (a PNG data URL), and `manual` with `codeName` and
 `yourKey` (the Base32 secret). Treat the entire response as sensitive; do not
 log or cache it. QR generation happens locally without a third-party service.
 
-Setup checks the current password, rejects already-enabled accounts, and stores
+Setup verifies the password or linked Google account, rejects already-enabled accounts, and stores
 only the AES-256-GCM encrypted secret. It leaves `is_2fa_enabled` false until
 confirmation succeeds.
-Repeating setup replaces an unconfirmed secret. Google-only accounts need a
-separate reauthentication flow before they can enroll without a local password.
+Repeating setup replaces an unconfirmed secret.
 
 `POST /api/auth/2fa/verify` confirms enrollment. It requires the same bearer access
 token and a six-digit authenticator code as a string (preserving leading zeros):
@@ -40,18 +67,24 @@ the current 30-second time step or one step either side. It rejects invalid/used
 codes (401), missing setup (400), and already-enabled or concurrently changed
 accounts (409). It does not return the secret or an access token.
 
-`POST /api/auth/2fa/disable` requires a bearer access token, the current password,
+`POST /api/auth/2fa/disable` requires a bearer access token, the current password or a fresh Google code,
 and an unused authenticator code when 2FA is enabled:
 
 ```json
 { "password": "current password", "token": "123456" }
 ```
 
+Or, with Google reauthentication:
+
+```json
+{ "googleCode": "fresh Google authorization code", "token": "123456" }
+```
+
 On success it returns `{ "success": true, "message": "2FA disabled" }`, sets
 `is_2fa_enabled` false, clears `totp_secret_encrypted`, and resets
 `totp_last_used_step` to -1. An invalid password, invalid/used code, or missing
 required code returns 401. Concurrent account changes return 409.
-If 2FA is already disabled, the password alone can cancel unconfirmed setup or
+If 2FA is already disabled, password or Google verification alone can cancel unconfirmed setup or
 return success for an already-cleared account. It cannot disable active 2FA
 without a code. A code just used for enrollment/login cannot be reused here;
 wait for the next authenticator code.
@@ -62,6 +95,10 @@ validation, authentication, and rate-limit errors. HTTP status codes are preserv
 ## Account settings status
 
 `GET /api/auth/me` includes `user.is_2fa_enabled` for the authenticated account.
+It also returns `user.login_methods`, for example `{ "password": false, "google": true }`.
+`password` indicates a non-null password hash; `google` indicates an existing
+Google link in `auth_identities`. Legacy generated password hashes count as set.
+The response includes `success: true` on success and `success: false` on errors.
 The frontend reads this boolean when opening account settings and updates its
 profile cache only after setup verification or disabling succeeds. Deploy this
 profile field together with the 2FA endpoints for both frontend installations.

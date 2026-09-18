@@ -65,7 +65,9 @@ const pool = {
         if (/FROM public.auth_identities/.test(sql)) return rows(googleMode === 'existing' ? user : null);
         if (/FROM public.users/.test(sql)) return rows(user);
         if (/INSERT INTO public.users/.test(sql)) {
-          user = { ...baseUser(), is_2fa_enabled: false, totp_secret_encrypted: null, password_hash: params[1] };
+          assert.match(sql, /VALUES \(\$1, NULL, \$2, \$3\)/);
+          assert.deepEqual(params, [googlePayload.email, googlePayload.name, googlePayload.picture]);
+          user = { ...baseUser(), is_2fa_enabled: false, totp_secret_encrypted: null, password_hash: null };
           return rows(user);
         }
         if (/FROM roles/.test(sql)) return rows({ id: 1 });
@@ -219,14 +221,44 @@ test('users without 2FA still receive immediate sessions from either login metho
 });
 
 test('new Google accounts and existing email links go through the common gate', async () => {
+  const originalPasswordHash = user.password_hash;
   googleMode = 'link';
   const linked = await googleLogin();
   assert.equal(assertPending(linked).context.linked_existing_account, true);
+  assert.equal(user.password_hash, originalPasswordHash);
   googleMode = 'new'; user = null;
   const created = await googleLogin();
   assert.equal(created.success, true);
   assert.equal(created.is_new_user, true);
   assert.ok(created.token);
+  assert.equal(user.password_hash, null);
+});
+
+test('passwordless accounts cannot use password login and never pass null to bcrypt', async () => {
+  user.password_hash = null;
+  const compare = mock.method(bcrypt, 'compare', () => { throw new Error('bcrypt must not receive null'); });
+  const { response, result } = await post('/login', { email: user.email, password });
+  assert.equal(response.status, 401);
+  assert.deepEqual(result, { success: false, message: 'Invalid credentials' });
+  assert.equal(compare.mock.callCount(), 0);
+  assert.equal(connections, 0);
+});
+
+test('passwordless Google accounts support immediate login and the full 2FA flow', async () => {
+  user.password_hash = null;
+  const pending = await googleLogin();
+  assertPending(pending);
+  assert.equal((await finish(pending.twoFactorToken)).success, true);
+  user.is_2fa_enabled = false;
+  assert.equal((await googleLogin()).success, true);
+});
+
+test('adding a local password invalidates a pending passwordless Google login', async () => {
+  user.password_hash = null;
+  const pending = await googleLogin();
+  user.password_hash = passwordHash;
+  await assert.rejects(finish(pending.twoFactorToken), { status: 401 });
+  assert.equal(user.last_login_at, null);
 });
 
 test('invalid password or Google identity never produces a pending token', async () => {

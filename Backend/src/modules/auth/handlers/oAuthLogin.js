@@ -1,7 +1,5 @@
 import { OAuth2Client } from 'google-auth-library';
 import { writePool } from '../../../database/index.js';
-import crypto from 'crypto';
-import bcrypt from 'bcrypt';
 import { assignDefaultRole } from '../helpers/auth.shared.js';
 import { finishFirstFactor } from '../helpers/login.shared.js';
 import { HttpError } from '../../../common/httpError.js';
@@ -144,17 +142,13 @@ export async function oAuthLoginInternal({ params: routeParams, body: inputBody 
       } else {
         is_new_user = true;
 
-        const saltRounds = Number(process.env.BCRYPT_ROUNDS || 12);
-        const randomPass = crypto.randomBytes(32).toString('hex');
-        const randomHash = await bcrypt.hash(randomPass, saltRounds);
-
         const insUser = await client.query(
           `
           INSERT INTO public.users (email, password_hash, full_name, image_url)
-          VALUES ($1, $2, $3, $4)
+          VALUES ($1, NULL, $2, $3)
           RETURNING id, email, full_name, image_url, description, eaes_member, authz_version
           `,
-          [email, randomHash, full_name, picture],
+          [email, full_name, picture],
         );
 
         userRow = insUser.rows[0];
