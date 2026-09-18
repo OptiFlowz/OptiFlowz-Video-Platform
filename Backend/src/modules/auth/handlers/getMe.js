@@ -12,6 +12,7 @@ export async function getMeInternal(actorUserId = null) {
           u.image_url,
           u.description,
           u.eaes_member,
+          u.is_2fa_enabled,
           COALESCE(
             (
               SELECT jsonb_agg(

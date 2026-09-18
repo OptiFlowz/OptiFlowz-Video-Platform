@@ -59,6 +59,13 @@ wait for the next authenticator code.
 All 2FA endpoints return `success: false` with a `message` on failure, including
 validation, authentication, and rate-limit errors. HTTP status codes are preserved.
 
+## Account settings status
+
+`GET /api/auth/me` includes `user.is_2fa_enabled` for the authenticated account.
+The frontend reads this boolean when opening account settings and updates its
+profile cache only after setup verification or disabling succeeds. Deploy this
+profile field together with the 2FA endpoints for both frontend installations.
+
 ## Login with password or Google
 
 Set `TWO_FACTOR_TOKEN_SECRET` to a separate random secret of at least 32 bytes.
