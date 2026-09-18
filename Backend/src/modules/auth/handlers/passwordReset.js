@@ -33,7 +33,8 @@ export async function passwordResetInternal({ body: inputBody }) {
     await writePool.query(
       `
       UPDATE users
-      SET password_hash = $1
+      SET password_hash = $1,
+          authz_version = authz_version + 1
       WHERE id = $2
       `,
       [newHash, rec.user_id],
