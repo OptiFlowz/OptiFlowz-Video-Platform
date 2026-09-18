@@ -1202,5 +1202,13 @@
   "profileCropHint": "Prevuci sliku da je namestiš unutar kruga, pa podesi uvećanje. Možeš da je pomeraš i strelicama na tastaturi.",
   "profileCropZoom": "Uvećanje",
   "profileCropApply": "Koristi sliku",
-  "profileCropError": "Sliku nije moguće iseći. Otkaži i izaberi drugu sliku."
+  "profileCropError": "Sliku nije moguće iseći. Otkaži i izaberi drugu sliku.",
+  "personNotFound": "Osoba nije pronađena",
+  "personLoadFailed": "Podaci o osobi nisu mogli da se učitaju.",
+  "personVideosFailed": "Video-snimci ove osobe nisu mogli da se učitaju. Pokušaj ponovo.",
+  "personNoVideos": "Još nema objavljenih video-snimaka u kojima ova osoba učestvuje.",
+  "personBackToLibrary": "Nazad u biblioteku",
+  "personLinkCopied": "Link je kopiran",
+  "personShareFailed": "Link nije mogao da se podeli. Možeš da ga kopiraš iz adresne trake.",
+  "personVideosHeading": "Videi u kojima učestvuje"
 }

@@ -1216,5 +1216,13 @@
   "profileCropHint": "Drag the photo to position it inside the circle, then adjust the zoom. You can also use the arrow keys to move it.",
   "profileCropZoom": "Zoom",
   "profileCropApply": "Use photo",
-  "profileCropError": "This image could not be cropped. Please cancel and choose another image."
+  "profileCropError": "This image could not be cropped. Please cancel and choose another image.",
+  "personNotFound": "Person not found",
+  "personLoadFailed": "Could not load this person.",
+  "personVideosFailed": "Could not load this person’s videos. Please try again.",
+  "personNoVideos": "No published videos featuring this person yet.",
+  "personBackToLibrary": "Back to library",
+  "personLinkCopied": "Link copied",
+  "personShareFailed": "Could not share the link. You can copy it from your address bar.",
+  "personVideosHeading": "Videos they appear in"
 }

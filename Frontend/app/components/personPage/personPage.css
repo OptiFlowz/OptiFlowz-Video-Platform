@@ -1,0 +1,85 @@
+main.personPage {
+  --personSpacing: 20px;
+  width: calc(100% - var(--personSpacing) - var(--personSpacing));
+  max-width: none;
+  margin-inline: auto;
+  padding-top: calc(var(--headerHeight, 90px) + var(--personSpacing));
+  padding-bottom: 56px;
+  color: var(--text1);
+}
+.personPage .personLayout {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--personSpacing);
+}
+.personPage .personProfile {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--border1);
+  border-radius: 24px;
+  background: var(--background2);
+}
+.personPage .personPortrait {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 16px;
+  background: var(--background1);
+}
+.personPage .personIdentity { min-width: 0; }
+.personPage .personEyebrow { color: var(--accentBlue2); font-size: .8rem; font-weight: 600; margin-bottom: 8px; }
+.personPage .personIdentity h1 { font-size: clamp(1.6rem, 2.3vw, 2.1rem); font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; }
+.personPage .personVideoCount { margin-top: 12px; font-size: .9rem; color: var(--text2); }
+.personPage .personAbout { padding-top: 20px; border-top: 1px solid var(--border1); }
+.personPage .personDescription { line-height: 1.7; font-size: .95rem; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 6; overflow: hidden; }
+.personPage .personDescription.isExpanded { display: block; }
+.personPage .personDescription a, .personPage .personReadMore { color: var(--accentBlue2); }
+.personPage .personReadMore { margin-top: 10px; font-weight: 600; cursor: pointer; }
+.personPage .personShare { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 18px; border-radius: 12px; border: 1px solid var(--border1); background: var(--background1); color: var(--text1); font-weight: 600; cursor: pointer; }
+.personPage .personShare:hover { background: var(--background2); }
+.personPage .personShare svg { width: 20px; height: 20px; }
+.personPage .personShare svg [stroke]:not([stroke="none"]) { stroke: currentColor; }
+.personPage .personShare svg [fill]:not([fill="none"]) { fill: currentColor; }
+.personPage .personShareStatus { font-size: .85rem; color: var(--text2); }
+.personPage .personVideos { min-width: 0; }
+.personPage .personVideosToolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding-bottom: var(--personSpacing); margin-bottom: var(--personSpacing); border-bottom: 1px solid var(--border1); }
+.personPage .personVideosToolbar h2 { display: flex; align-items: center; gap: 12px; min-width: 0; overflow-wrap: anywhere; font-size: 1.4rem; font-weight: 700; }
+.personPage .personVideosToolbar h2 span { flex-shrink: 0; padding: 4px 10px; border-radius: 8px; background: var(--background2); color: var(--text2); font-size: .85rem; font-weight: 600; }
+.personPage .personSortSelect { width: 200px; max-width: 100%; }
+.personPage .personSortSelect .customSelectTrigger { background: var(--background2); color: var(--text1); border-color: var(--border1); }
+.personPage .personVideoGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--personSpacing); }
+.personPage .personVideoGrid > .item { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.personPage .personVideoGrid .info > span { flex-wrap: wrap; }
+.personPage .personEmpty { padding-block: 32px; color: var(--text2); }
+.personPage .personProfileSkeleton { display: flex; flex-direction: column; gap: 20px; }
+.personPage .personProfileSkeleton .skeleton-thumbnail { aspect-ratio: 1; }
+.personPage .personStatus { padding-block: 32px; display: flex; flex-direction: column; align-items: flex-start; gap: 16px; color: var(--text1); }
+.personPage .personStatus button, .personPage .personStatus a { padding: 10px 18px; border-radius: 12px; background: var(--background2); color: var(--text1); cursor: pointer; }
+.personPage button:focus-visible, .personPage a:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: 4px; }
+@media (max-width: 1000px) {
+  .personPage .personLayout { grid-template-columns: minmax(220px, 260px) minmax(0, 1fr); gap: var(--personSpacing); }
+  .personPage .personVideoGrid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  main.personPage { padding-top: calc(var(--headerHeight, 90px) + var(--personSpacing)); }
+  .personPage .personLayout { grid-template-columns: minmax(0, 1fr); gap: var(--personSpacing); }
+  .personPage .personProfile { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 18px; }
+  .personPage .personPortrait { grid-column: 1; grid-row: 1; }
+  .personPage .personIdentity { align-self: center; }
+  .personPage .personIdentity h1 { font-size: 1.5rem; }
+  .personPage .personVideoCount { margin-top: 8px; }
+  .personPage .personAbout, .personPage .personShareStatus, .personPage .personProfileSkeleton { grid-column: 1 / -1; }
+  .personPage .personShare { grid-column: 1 / -1; justify-self: start; }
+  .personPage .personProfileSkeleton .skeleton-thumbnail { width: 100px; }
+  .personPage .personVideoGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 540px) {
+  .personPage .personProfile { padding: 16px; grid-template-columns: 80px minmax(0, 1fr); }
+  .personPage .personVideoGrid { grid-template-columns: minmax(0, 1fr); }
+  .personPage .personVideosToolbar { gap: 12px; }
+  .personPage .personSortSelect { width: 170px; }
+}

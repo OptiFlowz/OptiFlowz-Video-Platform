@@ -8,7 +8,7 @@ function ChairPopup({props, open, type, onClose}: {props: VideoT, open: boolean,
     const { t } = useI18n();
 
     const personArray = props?.people?.filter((person) => person?.type == type)?.map((item, index) => (
-        <Link to={`/search?person=${item.id}&name=${item.name}`} key={`person${index}`} className="chairItem">
+        <Link to={`/person/${encodeURIComponent(item.id)}`} onClick={onClose} key={`person${index}`} className="chairItem">
             <img src={item?.image_url} alt="Profile" />
             <span>
                 <h3>{item?.name}</h3>

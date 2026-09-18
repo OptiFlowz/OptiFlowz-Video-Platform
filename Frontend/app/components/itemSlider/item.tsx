@@ -3,10 +3,10 @@ import { Link } from "react-router";
 import { useContext, useState } from "react";
 import ContentInfo from "~/components/contentInfo";
 import { formatDuration } from "~/functions";
-import type { VideoT } from "~/types";
+import type { PlaylistVideoT } from "~/types";
 import { CurrentNavContext } from "~/context";
 
-function  Item({props, playlistIndex, playlistId}: {props: VideoT, playlistIndex?: number, playlistId?: string}){
+function  Item({props, playlistIndex, playlistId}: {props: PlaylistVideoT, playlistIndex?: number, playlistId?: string}){
     const newThumbnailUrl = getVideoThumbnail(props);
     const animGifUrl = props.preview_url || undefined;
     const isWatched = (props?.percentage_watched ?? 0) >= 5 && !!props?.progress_seconds;
