@@ -97,4 +97,10 @@ export type TranslationEntry = string | {
   zero?: string;
 };
 
-export const catalogues = { sq, ar, bg, zh, hr, cs, da, nl, en, et, fi, fr, de, el, he, hi, hu, is, id, it, ja, ko, lv, lt, mk, nb, fa, pl, pt, ro, ru, sr, sk, sl, es, sv, th, tr, uk, vi } satisfies Record<Locale, Record<keyof typeof en, unknown>>;
+// Non-English catalogues may omit newer messages; formatTranslation falls back to English.
+// Validate message shapes without requiring duplicated English placeholders.
+// JSON imports widen literal strings, including the plural rule discriminator.
+type CatalogueEntry = string | (Omit<Exclude<TranslationEntry, string>, "rule"> & { rule: string });
+type Catalogue = Partial<Record<keyof typeof en, CatalogueEntry>>;
+
+export const catalogues = { sq, ar, bg, zh, hr, cs, da, nl, en, et, fi, fr, de, el, he, hi, hu, is, id, it, ja, ko, lv, lt, mk, nb, fa, pl, pt, ro, ru, sr, sk, sl, es, sv, th, tr, uk, vi } satisfies Record<Locale, Catalogue>;

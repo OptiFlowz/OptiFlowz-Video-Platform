@@ -6,7 +6,7 @@ Each of the 40 supported languages has one JSON catalogue named after its locale
 - `formatTranslation.ts` resolves parameters, branding, and count variants.
 - `../i18n.tsx` provides the existing React hook, language persistence, and document language/direction.
 
-Add a new translation key to every catalogue. English is the fallback catalogue, and TypeScript checks that the other catalogues include its keys. Keep parameter names unchanged across languages.
+Add new message keys to English and provide translations in every supported language when localizing a feature. English is the fallback for messages not yet translated; omit those entries rather than duplicating English placeholders. TypeScript checks message shapes in every catalogue. Keep parameter names unchanged across languages.
 
 ```json
 {

@@ -1,3 +1,5 @@
+import type { Conversion as MediaConversion } from "mediabunny";
+
 // Loaded only when a user trims a local file (or its duration needs parsing).
 export async function readLocalVideoDuration(file: File, signal: AbortSignal) {
   const { Input, BlobSource, ALL_FORMATS } = await import("mediabunny");
@@ -31,7 +33,7 @@ export async function trimVideoFile(
     const input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS });
     const target = new BufferTarget();
     const output = new Output({ format, target });
-    let conversion: InstanceType<typeof Conversion> | undefined;
+    let conversion: MediaConversion | undefined;
     const abort = () => { if (conversion) void conversion.cancel().catch(() => {}); };
     signal.addEventListener("abort", abort, { once: true });
     try {
