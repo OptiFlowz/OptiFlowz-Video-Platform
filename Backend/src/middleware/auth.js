@@ -46,7 +46,7 @@ function bearerToken(req) {
 
 export async function requireAuth(req, res, next) {
   const token = bearerToken(req);
-  if (!token) return res.status(401).json({ message: 'Missing token' });
+  if (!token) return res.status(401).json({ success: false, message: 'Missing token' });
 
   try {
     req.user = await authenticateToken(token);
@@ -55,7 +55,7 @@ export async function requireAuth(req, res, next) {
     const message = error.code === 'AUTHORIZATION_CHANGED'
       ? error.message
       : 'Invalid or expired token';
-    return res.status(401).json({ message });
+    return res.status(401).json({ success: false, message });
   }
 }
 
@@ -69,7 +69,7 @@ export async function optionalAuth(req, res, next) {
 
   const token = bearerToken(req);
   if (!token) {
-    return res.status(401).json({ message: 'Invalid authorization header' });
+    return res.status(401).json({ success: false, message: 'Invalid authorization header' });
   }
 
   try {
@@ -79,6 +79,6 @@ export async function optionalAuth(req, res, next) {
     const message = error.code === 'AUTHORIZATION_CHANGED'
       ? error.message
       : 'Invalid or expired token';
-    return res.status(401).json({ message });
+    return res.status(401).json({ success: false, message });
   }
 }

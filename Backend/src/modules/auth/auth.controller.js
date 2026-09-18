@@ -7,6 +7,48 @@ import { passwordResetInternal } from './handlers/passwordReset.js';
 import { getMeInternal } from './handlers/getMe.js';
 import { userUpdateInternal } from './handlers/userUpdate.js';
 import { oAuthLoginInternal } from './handlers/oAuthLogin.js';
+import { twoFactorSetupInternal } from './handlers/twoFactorSetup.js';
+import { twoFactorVerifyInternal } from './handlers/twoFactorVerify.js';
+import { twoFactorDisableInternal } from './handlers/twoFactorDisable.js';
+
+export async function handleTwoFactorDisable(req, res) {
+  res.set('Cache-Control', 'no-store');
+  try {
+    const result = await twoFactorDisableInternal({ body: req.body }, req.user?.sub || null);
+    return res.status(200).json({ ...result, success: true });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      ...(error.body || { message: 'Unable to disable two-factor authentication' }),
+      success: false,
+    });
+  }
+}
+
+export async function handleTwoFactorVerify(req, res) {
+  res.set('Cache-Control', 'no-store');
+  try {
+    const result = await twoFactorVerifyInternal({ body: req.body }, req.user?.sub || null);
+    return res.status(200).json({ ...result, success: true });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      ...(error.body || { message: 'Unable to verify two-factor authentication' }),
+      success: false,
+    });
+  }
+}
+
+export async function handleTwoFactorSetup(req, res) {
+  res.set('Cache-Control', 'no-store');
+  try {
+    const result = await twoFactorSetupInternal({ body: req.body }, req.user?.sub || null);
+    return res.status(200).json({ ...result, success: true });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      ...(error.body || { message: 'Unable to set up two-factor authentication' }),
+      success: false,
+    });
+  }
+}
 
 export async function handleProfilePictureUpload(req, res) {
   try {

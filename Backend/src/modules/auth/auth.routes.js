@@ -10,12 +10,18 @@ import {
   handleGetMe,
   handleUserUpdate,
   handleOAuthLogin,
+  handleTwoFactorSetup,
+  handleTwoFactorVerify,
+  handleTwoFactorDisable,
 } from './auth.controller.js';
 import {
   profilePictureUploadMiddleware,
   resetLimiter,
   resetRequestLimiter,
   resetVerifyLimiter,
+  twoFactorSetupLimiter,
+  twoFactorVerifyLimiter,
+  twoFactorDisableLimiter,
 } from './auth.middleware.js';
 
 const router = express.Router();
@@ -28,6 +34,9 @@ router.post(
 );
 router.post('/register', handleRegister);
 router.post('/login', handleLogin);
+router.post('/2fa/setup', requireAuth, twoFactorSetupLimiter, handleTwoFactorSetup);
+router.post('/2fa/verify', requireAuth, twoFactorVerifyLimiter, handleTwoFactorVerify);
+router.post('/2fa/disable', requireAuth, twoFactorDisableLimiter, handleTwoFactorDisable);
 router.post('/passwordResetRequest', resetRequestLimiter, handlePasswordResetRequest);
 router.post('/passwordReset/verify', resetVerifyLimiter, handlePasswordResetVerify);
 router.post('/passwordReset', resetLimiter, handlePasswordReset);

@@ -8,6 +8,34 @@ const upload = multer({
 
 export const profilePictureUploadMiddleware = upload.single('file');
 
+// Mounted after requireAuth; limit password attempts by authenticated account.
+export const twoFactorSetupLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.user.sub,
+  message: { success: false, message: 'Too many setup attempts. Try again in 10 minutes.' },
+});
+
+export const twoFactorVerifyLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.user.sub,
+  message: { success: false, message: 'Too many verification attempts. Try again in 10 minutes.' },
+});
+
+export const twoFactorDisableLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.user.sub,
+  message: { success: false, message: 'Too many disable attempts. Try again in 10 minutes.' },
+});
+
 export const resetRequestLimiter = rateLimit({
   windowMs: 10 * 1000,
   limit: 1,
