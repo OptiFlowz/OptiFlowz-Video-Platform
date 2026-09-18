@@ -1,5 +1,6 @@
 import multer from 'multer';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
+import { verifyTwoFactorToken } from './helpers/twoFactorToken.js';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -7,6 +8,32 @@ const upload = multer({
 });
 
 export const profilePictureUploadMiddleware = upload.single('file');
+
+// Verify the signed identity before using it as an account-wide rate-limit key.
+export function requireTwoFactorLoginToken(req, res, next) {
+  res.set('Cache-Control', 'no-store');
+  const token = req.body?.twoFactorToken;
+  if (typeof token !== 'string' || token.length === 0 || token.length > 4096) {
+    return res.status(400).json({ success: false, message: 'A temporary two-factor token is required' });
+  }
+  try {
+    req.twoFactorLoginUserId = verifyTwoFactorToken(token).sub;
+    return next();
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      ...(error.body || { message: 'Unable to complete two-factor login' }), success: false,
+    });
+  }
+}
+
+export const twoFactorLoginLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.twoFactorLoginUserId,
+  message: { success: false, message: 'Too many 2FA login attempts. Try again in 10 minutes.' },
+});
 
 // Mounted after requireAuth; limit password attempts by authenticated account.
 export const twoFactorSetupLimiter = rateLimit({

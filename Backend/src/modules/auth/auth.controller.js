@@ -10,6 +10,18 @@ import { oAuthLoginInternal } from './handlers/oAuthLogin.js';
 import { twoFactorSetupInternal } from './handlers/twoFactorSetup.js';
 import { twoFactorVerifyInternal } from './handlers/twoFactorVerify.js';
 import { twoFactorDisableInternal } from './handlers/twoFactorDisable.js';
+import { twoFactorLoginInternal } from './handlers/twoFactorLogin.js';
+
+export async function handleTwoFactorLogin(req, res) {
+  res.set('Cache-Control', 'no-store');
+  try {
+    return res.status(200).json(await twoFactorLoginInternal({ body: req.body }));
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      ...(error.body || { message: 'Unable to complete two-factor login' }), success: false,
+    });
+  }
+}
 
 export async function handleTwoFactorDisable(req, res) {
   res.set('Cache-Control', 'no-store');
@@ -73,13 +85,14 @@ export async function handleRegister(req, res) {
 }
 
 export async function handleLogin(req, res) {
+  res.set('Cache-Control', 'no-store');
   try {
     const result = await loginInternal({ body: req.body });
-    return res.status(201).json(result);
+    return res.status(result.requires2fa ? 200 : 201).json(result);
   } catch (error) {
-    return res
-      .status(error.status || 500)
-      .json(error.body || { message: error.message || 'Internal server error' });
+    return res.status(error.status || 500).json({
+      ...(error.body || { message: 'Unable to log in' }), success: false,
+    });
   }
 }
 
@@ -139,12 +152,13 @@ export async function handleUserUpdate(req, res) {
 }
 
 export async function handleOAuthLogin(req, res) {
+  res.set('Cache-Control', 'no-store');
   try {
     const result = await oAuthLoginInternal({ params: req.params, body: req.body });
     return res.status(200).json(result);
   } catch (error) {
-    return res
-      .status(error.status || 500)
-      .json(error.body || { message: error.message || 'Internal server error' });
+    return res.status(error.status || 500).json({
+      ...(error.body || { message: 'OAuth login failed' }), success: false,
+    });
   }
 }

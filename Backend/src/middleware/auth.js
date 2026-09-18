@@ -3,6 +3,10 @@ import { writePool } from '../database/index.js';
 
 async function authenticateToken(token) {
   const payload = jwt.verify(token, process.env.JWT_SECRET);
+  // Legacy access JWTs have no purpose. Explicitly reject temporary tokens.
+  if (payload.purpose !== undefined && payload.purpose !== 'access') {
+    throw new Error('Invalid token purpose');
+  }
 
   const { rows } = await writePool.query(
     `

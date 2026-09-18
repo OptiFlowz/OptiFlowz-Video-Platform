@@ -13,6 +13,7 @@ import {
   handleTwoFactorSetup,
   handleTwoFactorVerify,
   handleTwoFactorDisable,
+  handleTwoFactorLogin,
 } from './auth.controller.js';
 import {
   profilePictureUploadMiddleware,
@@ -22,6 +23,8 @@ import {
   twoFactorSetupLimiter,
   twoFactorVerifyLimiter,
   twoFactorDisableLimiter,
+  requireTwoFactorLoginToken,
+  twoFactorLoginLimiter,
 } from './auth.middleware.js';
 
 const router = express.Router();
@@ -34,6 +37,7 @@ router.post(
 );
 router.post('/register', handleRegister);
 router.post('/login', handleLogin);
+router.post('/2fa/login', requireTwoFactorLoginToken, twoFactorLoginLimiter, handleTwoFactorLogin);
 router.post('/2fa/setup', requireAuth, twoFactorSetupLimiter, handleTwoFactorSetup);
 router.post('/2fa/verify', requireAuth, twoFactorVerifyLimiter, handleTwoFactorVerify);
 router.post('/2fa/disable', requireAuth, twoFactorDisableLimiter, handleTwoFactorDisable);

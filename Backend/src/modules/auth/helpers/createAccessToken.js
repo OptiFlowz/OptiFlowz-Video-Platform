@@ -5,6 +5,7 @@ export function createAccessToken(user) {
     {
       sub: user.id,
       authzVersion: user.authz_version,
+      purpose: 'access',
     },
     process.env.JWT_SECRET,
     {

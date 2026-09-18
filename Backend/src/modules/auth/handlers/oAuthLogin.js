@@ -3,7 +3,7 @@ import { writePool } from '../../../database/index.js';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import { assignDefaultRole } from '../helpers/auth.shared.js';
-import { createAccessToken } from '../helpers/createAccessToken.js';
+import { finishFirstFactor } from '../helpers/login.shared.js';
 import { HttpError } from '../../../common/httpError.js';
 
 const googleClient = new OAuth2Client(
@@ -64,6 +64,9 @@ export async function oAuthLoginInternal({ params: routeParams, body: inputBody 
     if (!provider_user_id || !email) {
       throw new HttpError(400, { message: 'Invalid Google token payload' });
     }
+    if (p.email_verified !== true) {
+      throw new HttpError(401, { message: 'Google email must be verified' });
+    }
 
     const allowedHd = process.env.GOOGLE_ALLOWED_HD;
     if (allowedHd && p?.hd !== allowedHd) {
@@ -115,7 +118,6 @@ export async function oAuthLoginInternal({ params: routeParams, body: inputBody 
         } catch (e) {
           if (e instanceof HttpError) throw e;
           if (e?.code === '23505') {
-            await client.query('ROLLBACK');
             throw new HttpError(409, {
               message: 'This Google account is already linked to another user.',
               code: 'PROVIDER_ALREADY_LINKED',
@@ -169,36 +171,16 @@ export async function oAuthLoginInternal({ params: routeParams, body: inputBody 
       }
     }
 
-    await client.query(
-      `
-      UPDATE public.users
-      SET last_login_at = NOW()
-      WHERE id = $1
-      `,
-      [userRow.id],
-    );
+    const result = await finishFirstFactor(userRow, {
+      provider, is_new_user, linked_existing_account,
+    }, client);
 
     await client.query('COMMIT');
 
-    const token = createAccessToken(userRow);
-
-    return {
-      user: {
-        email: userRow.email,
-        full_name: userRow.full_name,
-        image_url: userRow.image_url,
-        description: userRow.description,
-        eaes_member: userRow.eaes_member,
-      },
-      token,
-      provider,
-      is_new_user,
-      linked_existing_account,
-    };
+    return result;
   } catch (err) {
-    if (err instanceof HttpError) throw err;
     if (client) await client.query('ROLLBACK').catch(() => {});
-    console.error('OAuth login error:', err);
+    if (err instanceof HttpError) throw err;
     throw new HttpError(500, { message: 'OAuth login failed' });
   } finally {
     if (client) client.release();

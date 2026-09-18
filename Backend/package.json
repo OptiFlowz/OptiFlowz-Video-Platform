@@ -13,6 +13,7 @@
     "test:2fa-setup": "node --experimental-test-module-mocks --test tests/two-factor-setup.test.js",
     "test:2fa-verify": "node --experimental-test-module-mocks --test tests/two-factor-verify.test.js",
     "test:2fa-disable": "node --experimental-test-module-mocks --test tests/two-factor-disable.test.js",
+    "test:2fa-login": "node --experimental-test-module-mocks --test tests/two-factor-login.test.js",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "dev:worker": "nodemon --signal SIGTERM src/workers/video-indexing.js",
