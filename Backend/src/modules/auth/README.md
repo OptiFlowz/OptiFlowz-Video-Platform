@@ -19,6 +19,16 @@ node -e "console.log(require('node:crypto').randomBytes(32).toString('base64'))"
 Keep this key separate from `JWT_SECRET` and stable across deployments. Changing
 it makes existing TOTP secrets unreadable unless they are explicitly migrated.
 
+Optionally set the authenticator issuer name in `.env`:
+
+```dotenv
+TWO_FACTOR_ISSUER="OptiFlowz"
+```
+
+Missing or blank values default to `OptiFlowz`. This name is used in newly
+generated QR codes and manual setup labels; existing authenticator entries
+keep their previously enrolled name.
+
 `POST /api/auth/2fa/setup` requires a bearer access token and JSON body:
 
 ```json

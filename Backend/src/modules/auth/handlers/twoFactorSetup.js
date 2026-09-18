@@ -35,7 +35,7 @@ export async function twoFactorSetupInternal({ body }, actorUserId = null) {
 
     const secret = speakeasy.generateSecret({ length: 32 }).base32;
     const encryptedSecret = encryptTotpSecret(secret, actorUserId);
-    const issuer = 'OptiFlowz';
+    const issuer = process.env.TWO_FACTOR_ISSUER?.trim() || 'OptiFlowz';
     const label = `${issuer}:${user.email}`;
     const otpauthUrl = speakeasy.otpauthURL({
       secret, label, issuer, encoding: 'base32',
