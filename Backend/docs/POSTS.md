@@ -4,6 +4,11 @@ Apply the posts, posts-permissions, posts-status, and post-option-positions migr
 The option-position migration backfills existing options in their previous UUID display order.
 All mutation endpoints require a Bearer access token. Reading a public post allows anonymous access.
 
+Post cards (`GET /api/posts/my`), user and recommended feeds, and post details
+include `author_full_name` and `author_image_url` on each post. These come from
+the author's current `users.full_name` and `users.image_url`; a missing profile
+picture is returned as `null`. The field names match comment author metadata.
+
 ## Create the post
 
 `POST /api/posts` requires `posts.create` and accepts only post metadata:

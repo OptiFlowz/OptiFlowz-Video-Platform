@@ -16,8 +16,11 @@ export async function getUserPostsInternal(userIdOrIds, query, viewerId = null) 
   // results use one primary-database snapshot and always exclude private posts.
   const { rows } = await writePool.query(
     `WITH page_posts AS (
-       SELECT id, user_id, title, status, created_at FROM public.posts
-       WHERE user_id = ANY($1::uuid[]) AND status = 'public'
+       SELECT p.id, p.user_id, p.title, p.status, p.created_at,
+         u.full_name AS author_full_name, u.image_url AS author_image_url
+       FROM public.posts p
+       LEFT JOIN public.users u ON u.id = p.user_id
+       WHERE p.user_id = ANY($1::uuid[]) AND p.status = 'public'
        ORDER BY ${orderBy} LIMIT $2 OFFSET $3
      )
      SELECT

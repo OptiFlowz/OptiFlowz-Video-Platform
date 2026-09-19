@@ -19,8 +19,10 @@ export async function getMyPostsInternal(query, userId) {
   // the requested page is empty or the owner has just edited a post.
   const { rows } = await writePool.query(
     `WITH post_cards AS (
-       SELECT p.id, p.title, summary.text, p.status, p.created_at, summary.block_types
+       SELECT p.id, p.title, summary.text, p.status, p.created_at, summary.block_types,
+         u.full_name AS author_full_name, u.image_url AS author_image_url
        FROM public.posts p
+       LEFT JOIN public.users u ON u.id = p.user_id
        CROSS JOIN LATERAL (
          SELECT
            COALESCE(string_agg(
@@ -36,7 +38,8 @@ export async function getMyPostsInternal(query, userId) {
        COALESCE((
          SELECT jsonb_agg(to_jsonb(post_page) ORDER BY ${orderBy})
          FROM (
-           SELECT id, title, text, status, created_at, block_types FROM post_cards
+           SELECT id, title, text, status, created_at, block_types,
+             author_full_name, author_image_url FROM post_cards
            ORDER BY ${orderBy} LIMIT $2 OFFSET $3
          ) post_page
        ), '[]'::jsonb) AS posts`,
