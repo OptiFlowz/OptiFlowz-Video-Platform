@@ -1,6 +1,7 @@
 import { readPool } from '../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
+import { searchPeopleInternal } from './searchPeople.js';
 
 function prerequisites(object) {
   const schema = z.object({
@@ -25,6 +26,10 @@ function getOrderByClause(sortBy, sortOrder) {
 }
 
 export async function getAllPeopleInternal(object) {
+  if (object?.q !== undefined) {
+    return searchPeopleInternal(object);
+  }
+
   const { limit, page, sortBy, sortOrder } = prerequisites(object);
   const offset = (page - 1) * limit;
   const orderByClause = getOrderByClause(sortBy, sortOrder);
