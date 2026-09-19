@@ -66,9 +66,6 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
     && !z.iso.datetime({ offset: true }).safeParse(published_at).success) {
     throw new HttpError(400, { message: 'published_at must be an ISO timestamp with a timezone, or null' });
   }
-  if (visibilityNorm === 'private' && published_at != null) {
-    throw new HttpError(400, { message: 'Cannot set a publication date while making a video private' });
-  }
 
   for (const field of ['thumbnail_settings', 'thumbnail_url']) {
     if (Object.hasOwn(inputBody || {}, field)) {

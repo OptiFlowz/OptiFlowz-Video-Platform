@@ -69,23 +69,22 @@ test('visibility-only updates preserve existing public schedules and clear priva
 });
 
 test('an explicit publication date takes precedence over visibility defaults', async () => {
-  for (const published_at of ['2030-09-20T16:00:00Z', null]) {
-    calls = [];
-    await patch(input({ visibility: 'public', published_at }));
-    const [sql, params] = calls.find(([sql]) => sql.includes('UPDATE public.videos'));
-    assert.match(sql, /published_at = \$3::timestamptz/);
-    assert.deepEqual(params, ['video-id', 'public', published_at]);
-    assert.equal((sql.match(/published_at =/g) || []).length, 1);
+  for (const visibility of ['public', 'private']) {
+    for (const published_at of ['2030-09-20T16:00:00Z', null]) {
+      calls = [];
+      await patch(input({ visibility, published_at }));
+      const [sql, params] = calls.find(([sql]) => sql.includes('UPDATE public.videos'));
+      assert.match(sql, /published_at = \$3::timestamptz/);
+      assert.deepEqual(params, ['video-id', visibility, published_at]);
+      assert.equal((sql.match(/published_at =/g) || []).length, 1);
+    }
   }
 });
 
-test('invalid publication dates and contradictory private schedules fail before database access', async () => {
+test('invalid publication dates fail before database access', async () => {
   for (const published_at of ['', 'now', '2030-02-30T12:00:00Z', '2030-09-20T12:00:00', 0, false, {}, [], 'Infinity']) {
     calls = [];
     await assert.rejects(patch(input({ published_at })), { status: 400 });
     assert.deepEqual(calls, []);
   }
-  calls = [];
-  await assert.rejects(patch(input({ visibility: 'private', published_at: '2030-09-20T12:00:00Z' })), { status: 400 });
-  assert.deepEqual(calls, []);
 });
