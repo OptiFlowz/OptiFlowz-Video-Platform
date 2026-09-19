@@ -16,7 +16,7 @@ import DefaultThumbnail from "../../../../assets/DefaultThumbnail.webp";
 import {
   DeleteSVG,
   EditSVG,
-  PlaySVG,
+  PermissionEyeSVG,
   PrivateSVG,
   PublicSVG,
   ThreeDotMenuSVG,
@@ -290,7 +290,7 @@ function PlaylistRow({
               </h5>
               <div className="videoActions">
                 <Link to={`/playlist/${props?.id}`} title={t("adminOpenPlaylist")}>
-                  {PlaySVG}
+                  {PermissionEyeSVG}
                 </Link>
                 <Link
                   to={`/edit-playlist?playlist=${props?.id}&status=${props?.status}`}
@@ -346,8 +346,8 @@ function PlaylistRow({
                     onClick={handleOpenPlaylist}
                     className="flex items-center gap-4 px-4 py-3 text-left hover:bg-(--background2) active:bg-(--background3) transition-colors cursor-pointer"
                   >
-                    <span className="w-6 h-6 flex items-center justify-center playSvg">
-                      {PlaySVG}
+                    <span className="w-6 h-6 flex items-center justify-center playSvg [&>svg]:size-5">
+                      {PermissionEyeSVG}
                     </span>
                     <span>{t("adminOpenPlaylist")}</span>
                   </button>

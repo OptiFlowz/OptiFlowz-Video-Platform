@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import CustomSelect from "~/components/customSelect/customSelect";
 import Pagination from "~/components/library/pagination";
 import PlatformSidebar from "~/components/platformPage/sidebar/platformSidebar";
-import { SearchSVG, PermissionEyeSVG, FilterSVG } from "~/constants";
+import { SearchSVG, EditSVG, FilterSVG } from "~/constants";
 import { getToken } from "~/functions";
 import { useI18n } from "~/i18n";
 import { getErrorStatus, retryUserRequest, searchPlatformUsers, type PlatformUser, type UserSearch, type UserSortBy } from "./platformUsersApi";
@@ -125,8 +125,8 @@ export default function PlatformUsersPage() {
                   <div className="platformUserEmail" role="cell">{user.email}</div>
                   <div role="cell"><UserRoleBadges roles={user.roles} /></div>
                   <div className="platformUserJoined" role="cell"><span className="platformUserMobileLabel">{t("usersJoined")}: </span>{formatUserDate(user.created_at, locale)}</div>
-                  <div className="roleActionsCell platformUserActions" role="cell">
-                    <button type="button" className="edit" onClick={() => setSelectedUser(user)} aria-label={`${t("usersViewDetails")}: ${user.full_name || user.email}`} title={t("usersViewDetails")}>{PermissionEyeSVG}</button>
+                  <div className="managementRowActions platformUserActions" role="cell">
+                    <button type="button" className="edit" onClick={() => setSelectedUser(user)} aria-label={`${t("usersViewDetails")}: ${user.full_name || user.email}`} title={t("usersViewDetails")}>{EditSVG}</button>
                   </div>
                 </div>
               ))}

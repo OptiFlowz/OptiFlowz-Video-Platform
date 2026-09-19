@@ -9,7 +9,7 @@ import {
   AnalyticsSVG,
   DeleteSVG,
   EditSVG,
-  PlaySVG,
+  PermissionEyeSVG,
   PrivateSVG,
   PublicSVG,
   ThreeDotMenuSVG,
@@ -315,7 +315,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                   to={`/video/${props?.id}`}
                   title={t("adminWatchVideo")}
                 >
-                  {PlaySVG}
+                  {PermissionEyeSVG}
                 </Link>
                 <Link to={`/edit?video=${props?.id}`}  title={t("adminEditVideo")}>{EditSVG}</Link>
                 {canReadAnalytics && <Link to={`/video-analytics?video=${props?.id}`} title={t("adminVideoAnalytics")}>
@@ -370,8 +370,8 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                     onClick={handleWatch}
                     className="flex items-center gap-4 px-4 py-3 text-left hover:bg-(--background2) active:bg-(--background3) transition-colors cursor-pointer"
                   >
-                    <span className="w-6 h-6 flex items-center justify-center playSvg">
-                      {PlaySVG}
+                    <span className="w-6 h-6 flex items-center justify-center playSvg [&>svg]:size-5">
+                      {PermissionEyeSVG}
                     </span>
                   <span>{t("adminWatchVideo")}</span>
                   </button>

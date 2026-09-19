@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import DefaultProfile from "../../../assets/DefaultProfile.webp";
 import { CloseSVG, UploadSVG } from "~/constants";
 import { useI18n } from "~/i18n";
+import ProfileImageCropper from "../accountPage/profileImageCropper";
 
 export type CreatePersonPayload = {
   first_name: string;
@@ -49,6 +50,8 @@ function CreatePersonPopup({
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const initialized = useRef(false);
   const firstNameRef = useRef<HTMLInputElement>(null);
   const profilePictureInputRef = useRef<HTMLInputElement>(null);
   const closeTimeoutRef = useRef<number | null>(null);
@@ -58,22 +61,22 @@ function CreatePersonPopup({
       if (closeTimeoutRef.current) {
         window.clearTimeout(closeTimeoutRef.current);
       }
-
-      revokePreviewUrl(previewUrl);
     };
-  }, [previewUrl]);
+  }, []);
+
+  useEffect(() => () => revokePreviewUrl(previewUrl), [previewUrl]);
 
   useEffect(() => {
     if (open) {
+      if (initialized.current) return;
+      initialized.current = true;
+      if (closeTimeoutRef.current) window.clearTimeout(closeTimeoutRef.current);
+      setCropFile(null);
       setMounted(true);
       setVisible(false);
       setForm(initialValues ?? emptyForm);
       setError(null);
       setIsSubmitting(false);
-      setPreviewUrl((old) => {
-        revokePreviewUrl(old);
-        return null;
-      });
       setPreviewUrl(initialValues?.image_url || null);
 
       if (profilePictureInputRef.current) {
@@ -89,6 +92,8 @@ function CreatePersonPopup({
       return;
     }
 
+    initialized.current = false;
+    setCropFile(null);
     setVisible(false);
     closeTimeoutRef.current = window.setTimeout(() => setMounted(false), DURATION);
   }, [initialValues, open]);
@@ -98,13 +103,14 @@ function CreatePersonPopup({
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape" && !isSubmitting) {
-        onClose();
+        if (cropFile) setCropFile(null);
+        else onClose();
       }
     };
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isSubmitting, onClose, open]);
+  }, [cropFile, isSubmitting, onClose, open]);
 
   const setField = (field: keyof CreatePersonPayload, value: string) => {
     setForm((current) => ({
@@ -115,41 +121,26 @@ function CreatePersonPopup({
 
   const handlePictureChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    event.target.value = "";
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
       setError(t("personSelectImageFile"));
-      event.target.value = "";
-      setPreviewUrl((old) => {
-        revokePreviewUrl(old);
-        return null;
-      });
-      setForm((current) => ({ ...current, image_file: null }));
       return;
     }
-
-    const maxBytes = 4 * 1024 * 1024;
-    if (file.size > maxBytes) {
+    if (file.size > 4 * 1024 * 1024) {
       setError(t("imageTooLargeAlert"));
-      event.target.value = "";
-      setPreviewUrl((old) => {
-        revokePreviewUrl(old);
-        return null;
-      });
-      setForm((current) => ({ ...current, image_file: null }));
       return;
     }
 
-    const url = URL.createObjectURL(file);
-    setPreviewUrl((old) => {
-      revokePreviewUrl(old);
-      return url;
-    });
-    setForm((current) => ({
-      ...current,
-      image_file: file,
-    }));
     setError(null);
+    setCropFile(file);
+  };
+
+  const applyCroppedPicture = (file: File) => {
+    setPreviewUrl(URL.createObjectURL(file));
+    setForm((current) => ({ ...current, image_file: file }));
+    setCropFile(null);
   };
 
   const handleRemovePicture = () => {
@@ -157,10 +148,7 @@ function CreatePersonPopup({
       profilePictureInputRef.current.value = "";
     }
 
-    setPreviewUrl((old) => {
-      revokePreviewUrl(old);
-      return null;
-    });
+    setPreviewUrl(null);
     setForm((current) => ({
       ...current,
       image_file: null,
@@ -170,6 +158,7 @@ function CreatePersonPopup({
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (cropFile || isSubmitting) return;
 
     const first_name = form.first_name.trim();
     const last_name = form.last_name.trim();
@@ -207,7 +196,7 @@ function CreatePersonPopup({
       }`}
       role="dialog"
       aria-modal="true"
-      aria-label={mode === "edit" ? t("adminEditPerson") : t("personCreate")}
+      aria-label={cropFile ? t("profileCropTitle") : mode === "edit" ? t("adminEditPerson") : t("personCreate")}
       onMouseDown={() => {
         if (!isSubmitting) onClose();
       }}
@@ -227,9 +216,9 @@ function CreatePersonPopup({
         <div className="flex items-start justify-between gap-4">
           <div>
             <h3 className="text-xl font-semibold">
-              {mode === "edit" ? t("adminEditPerson") : t("personAdd")}
+              {cropFile ? t("profileCropTitle") : mode === "edit" ? t("adminEditPerson") : t("personAdd")}
             </h3>
-            <p className="mt-2 text-sm opacity-80">
+            <p className="mt-2 text-sm opacity-80" hidden={!!cropFile}>
               {mode === "edit"
                 ? t("personEditDescription")
                 : t("personCreateDescription")}
@@ -237,7 +226,11 @@ function CreatePersonPopup({
           </div>
         </div>
 
-        <form className="mt-5 flex flex-col gap-4" onSubmit={handleSubmit}>
+        {open && cropFile && <div className="personCropEditor">
+          <ProfileImageCropper file={cropFile} onCancel={() => setCropFile(null)} onApply={applyCroppedPicture} />
+        </div>}
+
+        <form className="mt-5 flex flex-col gap-4" style={cropFile ? { display: "none" } : undefined} onSubmit={handleSubmit}>
           <span className="userPictureInput mx-auto">
             <label htmlFor="personPictureInput">
               <img
@@ -251,7 +244,7 @@ function CreatePersonPopup({
             </label>
 
             {previewUrl && (
-              <button type="button" className="remove" onClick={handleRemovePicture}>
+              <button type="button" className="remove" disabled={isSubmitting} onClick={handleRemovePicture}>
                 {CloseSVG}
               </button>
             )}
@@ -262,6 +255,7 @@ function CreatePersonPopup({
               type="file"
               name="personPicture"
               accept="image/jpeg,image/png,image/webp"
+              disabled={isSubmitting}
               onChange={handlePictureChange}
             />
           </span>

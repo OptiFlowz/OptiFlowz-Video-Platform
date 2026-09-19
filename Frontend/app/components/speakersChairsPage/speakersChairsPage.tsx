@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import DefaultProfile from "../../../assets/DefaultProfile.webp";
 import { fetchFn } from "~/API";
@@ -161,13 +161,13 @@ async function deletePerson(token: string, personId: string) {
   });
 }
 
-async function fetchPeoplePage(token: string, page: number, limit: number) {
+async function fetchPeoplePage(token: string, page: number, limit: number, search: string, signal: AbortSignal) {
   const headers = new Headers();
   headers.set("Authorization", `Bearer ${token}`);
 
   const response = await fetchFn<PeopleApiResponse>({
-    route: `api/people?page=${page}&limit=${limit}&sortBy=name&sortOrder=asc`,
-    options: { method: "GET", headers },
+    route: `api/people?page=${page}&limit=${limit}&sortBy=name&sortOrder=asc${search ? `&q=${encodeURIComponent(search)}` : ""}`,
+    options: { method: "GET", headers, signal },
   });
 
   return {
@@ -181,10 +181,19 @@ function SpeakersChairsPage() {
   const queryClient = useQueryClient();
   const { confirm, dialogProps } = useConfirm();
   const [token, setToken] = useState<string | null>(null);
-  const [people, setPeople] = useState<PersonRecord[]>([]);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
   const [search, setSearch] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    if (search.trim() === searchQuery) return;
+    const timeout = window.setTimeout(() => {
+      setSearchQuery(search.trim());
+      setPage(1);
+    }, 300);
+    return () => window.clearTimeout(timeout);
+  }, [search, searchQuery]);
   const [isCreatePopupOpen, setIsCreatePopupOpen] = useState(false);
   const [editingPersonId, setEditingPersonId] = useState<string | null>(null);
 
@@ -210,16 +219,12 @@ function SpeakersChairsPage() {
     isFetching,
     isError,
   } = useQuery({
-    queryKey: ["people", token, page, limit],
-    queryFn: () => fetchPeoplePage(token as string, page, limit),
+    queryKey: ["people", token, page, limit, searchQuery],
+    queryFn: ({ signal }) => fetchPeoplePage(token as string, page, limit, searchQuery, signal),
     enabled: !!token,
   });
 
-  useEffect(() => {
-    if (data?.people) {
-      setPeople(data.people);
-    }
-  }, [data]);
+  const people = data?.people ?? [];
 
   const total = data?.pagination?.total ?? 0;
   const totalPages = Math.max(
@@ -233,24 +238,6 @@ function SpeakersChairsPage() {
     }
   }, [data, isFetching, isError, page, totalPages]);
 
-
-  const filteredPeople = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
-
-    return people.filter((person) => {
-      if (!normalizedSearch) return true;
-
-      return [
-        person.first_name,
-        person.last_name,
-        person.biography,
-        String(person.total_video_count),
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(normalizedSearch);
-    });
-  }, [people, search]);
 
   const handleCreatePerson = async (payload: CreatePersonPayload) => {
     if (!token) {
@@ -382,7 +369,6 @@ function SpeakersChairsPage() {
                 value={search}
                 onChange={(event) => {
                   setSearch(event.target.value);
-                  setPage(1);
                 }}
                 placeholder={t("searchPlaceholder")}
               />
@@ -406,7 +392,7 @@ function SpeakersChairsPage() {
                 <span role="columnheader">{t("adminTableVideos")}</span>
                 <span role="columnheader">{t("adminTableActions")}</span>
               </div>
-              {isLoading || isError || !filteredPeople.length ? (
+              {isLoading || isError || !people.length ? (
                 <div role="row">
                   <div role="cell" aria-colspan={4}>
                     <div className="platformUsersState" role={isError ? "alert" : "status"}>
@@ -415,7 +401,7 @@ function SpeakersChairsPage() {
                     </div>
                   </div>
                 </div>
-              ) : filteredPeople.map((person) => {
+              ) : people.map((person) => {
                 const fullName = `${person.first_name} ${person.last_name}`.trim();
                 return (
                   <div key={person.id} className="managementPeopleRow" role="row">

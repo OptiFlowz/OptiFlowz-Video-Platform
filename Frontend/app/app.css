@@ -1137,7 +1137,9 @@ header nav a.active {
 		visibility 0s linear 0s;
 }
 
-.customSelectMenuScroll {
+.customSelectMenuScroll,
+.createPersonPopup,
+.createPersonPopup textarea {
 	overflow-y: auto;
 	overscroll-behavior: contain;
 	scrollbar-width: thin;
@@ -1145,26 +1147,36 @@ header nav a.active {
 	-webkit-overflow-scrolling: touch;
 }
 
-.customSelectMenuScroll::-webkit-scrollbar {
+.customSelectMenuScroll::-webkit-scrollbar,
+.createPersonPopup::-webkit-scrollbar,
+.createPersonPopup textarea::-webkit-scrollbar {
 	width: 5px;
 }
 
-.customSelectMenuScroll::-webkit-scrollbar-track {
+.customSelectMenuScroll::-webkit-scrollbar-track,
+.createPersonPopup::-webkit-scrollbar-track,
+.createPersonPopup textarea::-webkit-scrollbar-track {
 	margin-block: 8px;
 	background: transparent;
 }
 
-.customSelectMenuScroll::-webkit-scrollbar-thumb {
+.customSelectMenuScroll::-webkit-scrollbar-thumb,
+.createPersonPopup::-webkit-scrollbar-thumb,
+.createPersonPopup textarea::-webkit-scrollbar-thumb {
 	min-height: 32px;
 	border-radius: var(--bR);
 	background: var(--accentBlue2);
 }
 
-.customSelectMenuScroll::-webkit-scrollbar-thumb:hover {
+.customSelectMenuScroll::-webkit-scrollbar-thumb:hover,
+.createPersonPopup::-webkit-scrollbar-thumb:hover,
+.createPersonPopup textarea::-webkit-scrollbar-thumb:hover {
 	background: var(--accentBlue3);
 }
 
-.customSelectMenuScroll::-webkit-scrollbar-button {
+.customSelectMenuScroll::-webkit-scrollbar-button,
+.createPersonPopup::-webkit-scrollbar-button,
+.createPersonPopup textarea::-webkit-scrollbar-button {
 	display: none;
 }
 
@@ -6489,21 +6501,48 @@ main.account.accountPage {
   opacity: 0;
 }
 
+.createPersonPopup {
+  max-height: calc(100dvh - 32px);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.createPersonPopup form,
+.createPersonPopup label,
+.createPersonPopup input,
+.createPersonPopup textarea {
+  min-width: 0;
+}
+
+.createPersonPopup textarea {
+  max-width: 100%;
+  overflow-x: hidden;
+  resize: vertical;
+}
+
+.createPersonPopup .personCropEditor { margin-top: 20px; }
+.createPersonPopup .personCropEditor .editButtons { display: flex; justify-content: flex-end; gap: 12px; }
+.createPersonPopup .personCropEditor .editButtons button { padding: 10px 20px; border-radius: 999px; background: var(--background2); color: var(--text1); cursor: pointer; }
+.createPersonPopup .personCropEditor .editButtons button:nth-child(2) { background: var(--accentBlue); color: var(--text1); }
+
 .createPersonPopup .userPictureInput {
   position: relative;
+  width: 150px;
+  height: 150px;
+  flex-shrink: 0;
 }
 
 .createPersonPopup .userPictureInput label {
   position: relative;
   display: flex;
-  width: fit-content;
+  width: 100%;
+  height: 100%;
   cursor: pointer;
 }
 
 .createPersonPopup .userPictureInput label img {
   width: 100%;
-  aspect-ratio: 1 / 1;
-  max-width: 150px;
+  height: 100%;
   object-fit: cover;
   border-radius: 999px;
   box-shadow: 0 5px 30px var(--background2);
@@ -6563,6 +6602,12 @@ main.account.accountPage {
   position: absolute;
   top: 0;
   left: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
   opacity: 0;
 }
 
@@ -15123,11 +15168,8 @@ main.platformUsersPage .filter input:focus-visible { outline: none; }
 main.platformUsersPage .platformUsersFilterControls:focus-within { border-color: var(--accentBlue2); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accentBlue2) 16%, transparent); }
 .platformUsersFilterControls { display: flex; flex-wrap: wrap; gap: .65rem; }
 .platformUsersFilterControls .customSelect { min-width: 145px; }
-.platformUsersTable { overflow: hidden; border: 1px solid var(--border1); border-radius: 20px; background: var(--background2); }
 .platformUsersRow { display: grid; grid-template-columns: minmax(150px, 1.1fr) minmax(160px, 1.3fr) minmax(125px, 1fr) minmax(100px, .65fr) 65px; gap: 1rem; align-items: center; padding: 1rem 1.25rem; color: var(--text2); font-size: .88rem; }
 .platformUsersRow + .platformUsersRow { border-top: 1px solid var(--border1); }
-.platformUsersRow:not(.platformUsersTableHeader):hover { background: var(--background3); }
-.platformUsersTableHeader { background: var(--background3); font-size: .76rem; font-weight: 500; }
 .platformUsersSortButton { display: inline-flex; align-items: center; flex-wrap: nowrap; white-space: nowrap; gap: .4rem; padding: .25rem 0; color: inherit; font: inherit; text-align: start; cursor: pointer; }
 .platformUsersSortButton:hover, .platformUsersTableHeader [aria-sort="ascending"], .platformUsersTableHeader [aria-sort="descending"] { color: var(--accentBlue2); }
 .platformUsersSortArrow { display: block; flex-shrink: 0; width: 1rem; height: 1rem; }
@@ -15199,7 +15241,7 @@ main.managementPage .filter input:focus-visible { outline: none; }
 main.managementPage .playlistAddBtn { width: 46px; min-width: 46px; height: 46px; border-radius: 50%; border-color: var(--border1); background: var(--background2); box-shadow: none; }
 main.managementPage .playlistAddBtn:hover { background: var(--background3); }
 main.managementPage .playlistAddBtn svg path { stroke: var(--accentBlue2); }
-main.managementPage .libraryTableWrap, .managementPeopleTable { overflow: hidden; border: 1px solid var(--border1); border-radius: 20px; background: var(--background2); }
+main.managementPage .libraryTableWrap, .managementPeopleTable, .platformUsersTable { overflow: hidden; border: 1px solid var(--border1); border-radius: 20px; background: var(--background2); }
 main.managementPage table th { background: var(--background3); text-transform: none; letter-spacing: normal; font-size: .76rem; }
 main.managementPage table th.notHoverable:hover { background: var(--background3); }
 main.managementPage table th, main.managementPage table td { padding: 1rem 1.25rem; }
@@ -15243,8 +15285,8 @@ main.managementPage td .visibility svg path { stroke: currentColor; }
 .managementPeopleRow { display: grid; grid-template-columns: minmax(160px, 1.1fr) minmax(180px, 1.5fr) minmax(70px, .4fr) 90px; gap: 1rem; align-items: center; padding: 1rem 1.25rem; color: var(--text2); font-size: .88rem; }
 .managementPeopleRow > * { min-width: 0; }
 .managementPeopleRow + .managementPeopleRow { border-top: 1px solid var(--border1); }
-.managementPeopleRow:not(.managementPeopleHeader):hover { background: var(--background3); }
-.managementPeopleHeader { background: var(--background3); font-size: .76rem; font-weight: 500; }
+.managementPeopleRow:not(.managementPeopleHeader):hover, .platformUsersRow:not(.platformUsersTableHeader):hover { background: var(--background3); }
+.managementPeopleHeader, .platformUsersTableHeader { background: var(--background3); font-size: .76rem; font-weight: 500; }
 .managementPersonIdentity { display: flex; align-items: center; gap: .75rem; }
 .managementPersonBio { overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 .managementPage button:focus-visible, .managementPage a:focus-visible, .managementPage input:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: 3px; }
