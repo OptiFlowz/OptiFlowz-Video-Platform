@@ -21,7 +21,7 @@ html:is([lang="ar"], [lang="he"], [lang="fa"]) :where(
   --gabarito: var(--font-gabarito), ui-sans-serif, system-ui, sans-serif;
   --solitreo: var(--font-solitreo), ui-rounded, "Segoe Print", cursive;
 
-  --contentWidth: 1400px;
+  --contentWidth: 1480px;
 
   --bR: calc(infinity * 1px);
 
@@ -2135,6 +2135,13 @@ main.play {
   display: flex;
   justify-content: space-between;
   gap: 2rem;
+}
+
+@media screen and (min-width: 1076px) {
+  main.play:not(.theater) {
+    /* Desktop header (73px) plus the same 20px gutter used at the sides. */
+    padding-top: 93px;
+  }
 }
 
 main.play > div:nth-child(1) {

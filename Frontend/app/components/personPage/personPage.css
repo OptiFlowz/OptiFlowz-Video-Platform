@@ -1,7 +1,7 @@
 main.personPage {
   --personSpacing: 20px;
   width: calc(100% - var(--personSpacing) - var(--personSpacing));
-  max-width: none;
+  max-width: var(--contentWidth);
   margin-inline: auto;
   padding-top: calc(var(--headerHeight, 90px) + var(--personSpacing));
   padding-bottom: 56px;
@@ -18,11 +18,10 @@ main.personPage {
   flex-direction: column;
   gap: 22px;
   min-width: 0;
-  padding: 20px;
-  border: 1px solid var(--border1);
-  border-radius: 24px;
-  background: var(--background2);
+  position: relative;
+  align-self: stretch;
 }
+
 .personPage .personPortrait {
   width: 100%;
   aspect-ratio: 1;
@@ -35,7 +34,7 @@ main.personPage {
 .personPage .personIdentity h1 { font-size: clamp(1.6rem, 2.3vw, 2.1rem); font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; }
 .personPage .personVideoCount { margin-top: 12px; font-size: .9rem; color: var(--text2); }
 .personPage .personAbout { padding-top: 20px; border-top: 1px solid var(--border1); }
-.personPage .personDescription { line-height: 1.7; font-size: .95rem; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 6; overflow: hidden; }
+.personPage .personDescription { line-height: 1.7; font-size: .95rem; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; }
 .personPage .personDescription.isExpanded { display: block; }
 .personPage .personDescription a, .personPage .personReadMore { color: var(--accentBlue2); }
 .personPage .personReadMore { margin-top: 10px; font-weight: 600; cursor: pointer; }
@@ -68,6 +67,7 @@ main.personPage {
   main.personPage { padding-top: calc(var(--headerHeight, 90px) + var(--personSpacing)); }
   .personPage .personLayout { grid-template-columns: minmax(0, 1fr); gap: var(--personSpacing); }
   .personPage .personProfile { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 18px; }
+
   .personPage .personPortrait { grid-column: 1; grid-row: 1; }
   .personPage .personIdentity { align-self: center; }
   .personPage .personIdentity h1 { font-size: 1.5rem; }
@@ -78,7 +78,7 @@ main.personPage {
   .personPage .personVideoGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 540px) {
-  .personPage .personProfile { padding: 16px; grid-template-columns: 80px minmax(0, 1fr); }
+  .personPage .personProfile { grid-template-columns: 80px minmax(0, 1fr); }
   .personPage .personVideoGrid { grid-template-columns: minmax(0, 1fr); }
   .personPage .personVideosToolbar { gap: 12px; }
   .personPage .personSortSelect { width: 170px; }
