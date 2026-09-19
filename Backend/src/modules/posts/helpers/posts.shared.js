@@ -5,7 +5,7 @@ export const MAX_POST_BLOCKS = 50;
 export const MAX_BLOCK_OPTIONS = 20;
 export const POST_COLUMNS = 'id, user_id, title, status, created_at';
 export const BLOCK_COLUMNS = 'id, post_id, type, position, content';
-export const OPTION_COLUMNS = 'id, block_id, text, image_url';
+export const OPTION_COLUMNS = 'id, block_id, text, image_url, position';
 
 const blockText = z.string().trim().max(10000);
 const textContent = z.object({ text: blockText.min(1) }).strict();
@@ -16,12 +16,20 @@ const videoContent = z.object({
 }).strict();
 const optionFields = {
   text: z.string().trim().min(1).max(500),
+  position: z.number().int().min(0).max(MAX_BLOCK_OPTIONS - 1).optional(),
 };
 const pollOption = z.object(optionFields).strict();
 const questionerOption = z.object({
   ...optionFields,
   is_correct: z.boolean().optional().default(false),
 }).strict();
+
+function blockOptions(schema) {
+  return z.array(schema).min(2).max(MAX_BLOCK_OPTIONS).refine(options => {
+    const positions = options.map((option, index) => option.position ?? index);
+    return new Set(positions).size === options.length && positions.every(position => position < options.length);
+  }, { message: 'Option positions must be unique and cover zero through the last option index' });
+}
 
 export const postBlockSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('text'), content: textContent }).strict(),
@@ -36,12 +44,12 @@ export const postBlockSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('poll'),
     content: textContent,
-    options: z.array(pollOption).min(2).max(MAX_BLOCK_OPTIONS),
+    options: blockOptions(pollOption),
   }).strict(),
   z.object({
     type: z.literal('questioner'),
     content: textContent,
-    options: z.array(questionerOption).min(2).max(MAX_BLOCK_OPTIONS).refine(
+    options: blockOptions(questionerOption).refine(
       options => options.some(option => option.is_correct),
       { message: 'A questioner must have at least one correct option' },
     ),
@@ -115,9 +123,10 @@ export const editBlockSchemas = {
 };
 export const createOptionSchemas = { poll: pollOption, questioner: questionerOption };
 export const editOptionSchemas = {
-  poll: z.object({ text: optionFields.text.optional() }).strict(),
+  poll: z.object({ text: optionFields.text.optional(), position: optionFields.position }).strict(),
   questioner: z.object({
     text: optionFields.text.optional(),
+    position: optionFields.position,
     is_correct: z.boolean().optional(),
   }).strict(),
 };

@@ -51,10 +51,11 @@ function participationSql(type, viewerExpression) {
     'selected_option_ids', (SELECT option_ids FROM selection),
     'options', COALESCE(jsonb_agg(
       jsonb_build_object('id', id, 'block_id', block_id, 'text', text,
+        'position', position,
         'image_url', image_url, 'is_selected', id = ANY(selected_option_ids),
         '${countKey}', response_count)
       ${questioner ? `|| jsonb_build_object('is_correct', is_correct)` : ''}
-      ORDER BY id
+      ORDER BY position, id
     ), '[]'::jsonb)
   ) || jsonb_build_object('${totalKey}', COALESCE(MAX(total), 0))
       ${questioner ? `|| jsonb_build_object(

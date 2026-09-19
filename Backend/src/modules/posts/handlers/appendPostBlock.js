@@ -49,17 +49,18 @@ export async function appendPostBlockInternal(params, body, files = {}, userId, 
         const imageUrl = file ? await uploadPostImage(postId, file, uploadedObjects) : null;
         const { rows } = input.type === 'poll'
           ? await client.query(
-            `INSERT INTO public.poll_options (block_id, text, image_url)
-             VALUES ($1, $2, $3) RETURNING ${OPTION_COLUMNS}`,
-            [block.id, option.text, imageUrl],
+            `INSERT INTO public.poll_options (block_id, text, image_url, position)
+             VALUES ($1, $2, $3, $4) RETURNING ${OPTION_COLUMNS}`,
+            [block.id, option.text, imageUrl, option.position ?? index],
           )
           : await client.query(
-            `INSERT INTO public.questioner_options (block_id, text, image_url, is_correct)
-             VALUES ($1, $2, $3, $4) RETURNING ${OPTION_COLUMNS}, is_correct`,
-            [block.id, option.text, imageUrl, option.is_correct],
+            `INSERT INTO public.questioner_options (block_id, text, image_url, position, is_correct)
+             VALUES ($1, $2, $3, $4, $5) RETURNING ${OPTION_COLUMNS}, is_correct`,
+            [block.id, option.text, imageUrl, option.position ?? index, option.is_correct],
           );
         block.options.push(rows[0]);
       }
+      block.options.sort((a, b) => a.position - b.position);
     }
 
     commitStarted = true;

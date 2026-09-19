@@ -82,6 +82,7 @@ async function getParticipationResults(client, block, storage, selectedOptions) 
     const count = countsById.get(option.id) || 0;
     return {
       id: option.id,
+      position: option.position,
       text: option.text,
       image_url: option.image_url,
       [isQuestioner ? 'answer_count' : 'vote_count']: count,

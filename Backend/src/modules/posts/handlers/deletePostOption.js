@@ -1,7 +1,7 @@
 import { validateOrThrow } from '../../../common/input.validation.js';
 import { HttpError } from '../../../common/httpError.js';
 import { postOptionIdSchema, requirePostUser } from '../helpers/posts.shared.js';
-import { withPostBlockMutation, lockBlockOptions, findBlockOption, requireNoBlockResponses, requireCorrectOption } from '../helpers/postMutations.js';
+import { withPostBlockMutation, lockBlockOptions, findBlockOption, requireNoBlockResponses, requireCorrectOption, saveOptionOrder } from '../helpers/postMutations.js';
 import { getPostImageObjects } from '../helpers/postImages.js';
 
 export async function deletePostOptionInternal(params, userId, authorization) {
@@ -17,6 +17,7 @@ export async function deletePostOptionInternal(params, userId, authorization) {
     requireCorrectOption(block, storage.options.filter(item => item.id !== option.id));
     removedImages.push(...getPostImageObjects(block.post_id, [option.image_url]));
     await client.query(`DELETE FROM ${storage.table} WHERE id = $1 AND block_id = $2`, [option.id, block.id]);
+    await saveOptionOrder(client, block, storage, storage.options.filter(item => item.id !== option.id));
     return { deleted: true, option_id: option.id };
   });
 }

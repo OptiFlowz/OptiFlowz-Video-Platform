@@ -1,6 +1,7 @@
 # Posts
 
-Apply the posts, posts-permissions, and posts-status migrations before using these endpoints.
+Apply the posts, posts-permissions, posts-status, and post-option-positions migrations before using these endpoints.
+The option-position migration backfills existing options in their previous UUID display order.
 All mutation endpoints require a Bearer access token. Reading a public post allows anonymous access.
 
 ## Create the post
@@ -40,7 +41,7 @@ be valid. Private posts are always excluded, even for their author or an adminis
 Newest posts appear first by default; use `sortOrder=asc` for oldest first.
 Post IDs break timestamp ties. Invalid user UUIDs or query parameters return 400.
 Pagination is applied to posts before expanding their blocks, so a post is never
-split between pages. Blocks are ordered by position and options by ID.
+split between pages. Blocks and options are ordered by ascending position.
 
 HTTP 200 uses the same `posts`, `pagination`, and `sorting` structure as `/my`,
 with full posts instead of cards:
@@ -78,7 +79,7 @@ with full posts instead of cards:
 }
 ```
 
-Poll/questioner options include `id`, `block_id`, `text`, and `image_url`.
+Poll/questioner options include `id`, `block_id`, `position`, `text`, and `image_url`.
 The feed includes the viewer's saved selection and per-option counts. Percentages
 are calculated by the frontend and displayed only after participation. Questioner
 options include `is_correct` before answering so the UI can give instant feedback. Individual response records and
@@ -192,8 +193,8 @@ it must be valid; invalid/expired tokens return 401 even for public posts.
 
 Blocks are ordered by ascending `position`; an empty post returns `blocks: []`.
 Poll and questioner blocks additionally include an `options` array with `id`,
-`block_id`, `text`, and `image_url`. Options are ordered by ID because the current
-schema has no option-position column. Questioner `is_correct` fields are returned
+`block_id`, `position`, `text`, and `image_url`. Options are ordered by ascending
+position. Questioner `is_correct` fields are returned
 to every reader with access to the post, including before answering. Viewer selection and results follow the participation rules below.
 Individual vote/answer records and respondent identities are not included.
 
@@ -282,6 +283,12 @@ questioners require 2–20 options with text (1–500 characters each). Question
 options accept `is_correct` (boolean, default `false`); at least one must be true.
 Editing, single-post GET, and public-feed responses include option correctness
 flags, including before the viewer answers.
+
+Option positions start at zero. When appending a block, each option may include
+`position`; omitted positions default to the option's index in the request array.
+The resulting positions must be unique and cover `0` through `options.length - 1`.
+The returned options are sorted by position. Multipart `option_0`, `option_1`, etc.
+still refer to request-array indices, regardless of explicit positions.
 
 Video IDs must be UUIDs. The shared video-access check requires a ready video
 that is published/public or owned by the caller; inaccessible videos return 404.
@@ -446,6 +453,20 @@ other block types are rejected. Empty edits without a file return 400.
 ### Add or edit an option
 
 POST a new poll option with raw JSON `{ "text": "Another topic" }`.
+An optional `position` inserts it at that zero-based index and shifts later
+options right. Omitting it appends the option. For addition, valid positions are
+`0` through the current option count (subject to the 20-option limit).
+
+PATCH an existing option with `{ "position": 0 }` to move it to the start.
+Position can be combined with text, correctness, or image edits. For edits, it
+must be an existing index (`0` through the option count minus one). Other options
+shift to preserve their relative order. Deleting an option closes the gap.
+Positions must be integers; negative, duplicate initial, or out-of-range positions
+return 400. All option responses include `position`, including image removal,
+votes, and answers. Reordering preserves IDs and follows the existing rule that
+options cannot change after the block has responses (409). Reload post details
+after a mutation to retrieve all shifted positions.
+
 For a questioner, `is_correct` may also be supplied and defaults to `false`:
 
 ```json
@@ -501,7 +522,7 @@ Explicit option/image DELETE operations require storage deletion before commit,
 return 502 on storage failure, and retain database records for a request retry.
 As with block deletion, storage and PostgreSQL cannot roll back together.
 
-No additional database migration is required for these editing routes.
+These editing routes require the post-option-positions migration listed above.
 
 ## Poll voting and questioner answers
 
@@ -549,6 +570,7 @@ HTTP 200 example after voting:
     {
       "id": "12345678-1234-4234-8234-123456789aaa",
       "text": "Basics",
+      "position": 0,
       "image_url": null,
       "vote_count": 3,
       "is_selected": true
@@ -556,6 +578,7 @@ HTTP 200 example after voting:
     {
       "id": "12345678-1234-4234-8234-123456789ccc",
       "text": "Advanced",
+      "position": 1,
       "image_url": null,
       "vote_count": 1,
       "is_selected": false
@@ -580,7 +603,7 @@ returns current results without changing timestamps or adding answers.
 The HTTP 200 response has `post_id`, `block_id`, `selected_option_id`,
 `selected_option_ids`, `total_answers`, and an `options` array. The array contains
 all saved selections; the singular field is null unless exactly one was selected. Each option contains `id`, `text`,
-`image_url`, `answer_count`, `is_selected`, and `is_correct`.
+`position`, `image_url`, `answer_count`, `is_selected`, and `is_correct`.
 Top-level `is_correct` is true only when the selected set contains every correct
 option and no incorrect options. `correct_option_ids` lists every correct option.
 `total_answers` counts option selections, not distinct respondents.
@@ -598,6 +621,7 @@ option and no incorrect options. `correct_option_ids` lists every correct option
     {
       "id": "12345678-1234-4234-8234-123456789aaa",
       "text": "200",
+      "position": 0,
       "image_url": null,
       "answer_count": 1,
       "is_selected": true,
@@ -606,6 +630,7 @@ option and no incorrect options. `correct_option_ids` lists every correct option
     {
       "id": "12345678-1234-4234-8234-123456789ccc",
       "text": "201",
+      "position": 1,
       "image_url": null,
       "answer_count": 0,
       "is_selected": false,
@@ -617,7 +642,7 @@ option and no incorrect options. `correct_option_ids` lists every correct option
 
 ### Results and concurrency
 
-Results include all options, ordered by ID, including zero-response choices.
+Results include all options with `position`, ordered by position, including zero-response choices.
 The API returns counts, not percentages. The frontend calculates
 `option count / block total * 100`, rounded to two decimal places; rounding may
 make the sum differ slightly from 100. Counts include the current submission
@@ -685,7 +710,7 @@ selection, and counts are read in the same SQL statement/database snapshot.
 `selected_option_ids` contains all saved selections (empty before participation).
 `selected_option_id` is set only for exactly one selection; otherwise it is null.
 Options always contain
-`id`, `block_id`, `text`, `image_url`, `is_selected`, and `vote_count` or
+`id`, `block_id`, `position`, `text`, `image_url`, `is_selected`, and `vote_count` or
 `answer_count`. Block totals (`total_votes`/`total_answers`) are also returned.
 The API no longer includes `percentage`. Counts are intentionally available
 before participation so the UI can calculate percentages instantly on click,
@@ -715,5 +740,5 @@ the existing mutation guards remain authoritative.
 The frontend creates metadata as private, appends sections/uploads, and publishes
 only after those requests succeed. Multi-request content saves are not atomic:
 completed mutations remain saved if a later request fails. The editor checkpoints
-returned IDs for retries and preserves pending input. There are no new migrations
-beyond the three migrations listed at the top of this document.
+returned IDs for retries and preserves pending input. Apply all four migrations
+listed at the top of this document before deploying these routes.

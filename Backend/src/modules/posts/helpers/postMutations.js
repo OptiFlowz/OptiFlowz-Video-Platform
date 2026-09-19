@@ -57,10 +57,26 @@ export async function lockBlockOptions(client, block) {
   // Lock every choice before checking responses. FK inserts for votes/answers
   // must finish first or wait, preventing a response-check/delete race.
   const { rows: options } = await client.query(
-    `SELECT ${storage.columns} FROM ${storage.table} WHERE block_id = $1 ORDER BY id FOR UPDATE`,
+    `SELECT ${storage.columns} FROM ${storage.table} WHERE block_id = $1 ORDER BY position, id FOR UPDATE`,
     [block.id],
   );
   return { ...storage, options };
+}
+
+// Call while holding the post/block/options locks. Move positions out of the
+// occupied range first because the per-block uniqueness constraint is immediate.
+export async function saveOptionOrder(client, block, storage, options) {
+  const offset = Math.max(0, ...options.map(option => option.position)) + options.length + 1;
+  await client.query(
+    `UPDATE ${storage.table} SET position = position + $2 WHERE block_id = $1`,
+    [block.id, offset],
+  );
+  await client.query(
+    `UPDATE ${storage.table} o SET position = ordering.position::int - 1
+     FROM unnest($2::uuid[]) WITH ORDINALITY AS ordering(id, position)
+     WHERE o.block_id = $1 AND o.id = ordering.id`,
+    [block.id, options.map(option => option.id)],
+  );
 }
 
 export async function requireNoBlockResponses(client, block, storage) {
