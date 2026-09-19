@@ -1238,5 +1238,7 @@
   "twoFactorChanged": "Cilësimet e llogarisë kanë ndryshuar. Kontrolloni gjendjen dhe provoni përsëri.",
   "twoFactorFailed": "Kërkesa nuk mund të përfundohej. Provoni përsëri.",
   "twoFactorLoading": "Duke ngarkuar cilësimet e sigurisë…",
-  "personVideosHeading": "Videot ku shfaqet"
+  "personVideosHeading": "Videot ku shfaqet",
+  "navMyPosts": "Postimet e mia",
+  "postsTab": "Postime"
 }

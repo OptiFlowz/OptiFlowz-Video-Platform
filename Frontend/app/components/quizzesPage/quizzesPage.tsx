@@ -1,3 +1,4 @@
+import QuizStatusPicker from "./quizStatusPicker";
 import Pagination from "~/components/library/pagination";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
@@ -697,11 +698,23 @@ function QuizzesPage() {
                         </div>
                       </td>
                       <td>
-                        <span
-                          className={`managementStatus ${quiz.is_active ? "active" : "inactive"}`}
-                        >
-                          {quiz.is_active ? t("adminActive") : t("adminInactive")}
-                        </span>
+                        <QuizStatusPicker
+                          active={quiz.is_active}
+                          title={quiz.title}
+                          disabled={isDeletingQuizId === quiz.id || isBulkDeleting}
+                          onSave={async (active) => {
+                            const result = await fetchFn<{ success?: boolean }>({
+                              route: `api/quizzes/${quiz.id}`,
+                              options: {
+                                method: "PATCH",
+                                headers: headersRef.current,
+                                body: JSON.stringify({ is_active: active }),
+                              },
+                            });
+                            if (result?.success === false) throw new Error(t("errorUnexpected"));
+                            await refetch();
+                          }}
+                        />
                       </td>
                       <td>{quiz.question_count}</td>
                       <td>

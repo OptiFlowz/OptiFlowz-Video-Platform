@@ -1135,5 +1135,7 @@
   "twoFactorChanged": "As definições da conta foram alteradas. Verifique o estado e tente novamente.",
   "twoFactorFailed": "Não foi possível concluir o pedido. Tente novamente.",
   "twoFactorLoading": "A carregar definições de segurança…",
-  "personVideosHeading": "Vídeos em que participa"
+  "personVideosHeading": "Vídeos em que participa",
+  "navMyPosts": "Minhas publicações",
+  "postsTab": "Publicações"
 }

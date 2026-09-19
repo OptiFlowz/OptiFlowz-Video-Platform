@@ -15,7 +15,7 @@ export async function getPostInternal(params, userId = null, authorization = nul
   // Explicit option fields keep respondent identities out of the response.
   const { rows } = await writePool.query(
     `SELECT p.id, p.user_id, p.title, p.status, p.created_at,
-       ${postBlocksSql('p.user_id = $2::uuid OR $3::boolean')} AS blocks
+       ${postBlocksSql('$2::uuid')} AS blocks
      FROM public.posts p
      WHERE p.id = $1
        AND (p.status = 'public' OR p.user_id = $2::uuid OR $3::boolean)`,

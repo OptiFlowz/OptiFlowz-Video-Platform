@@ -1158,5 +1158,7 @@
   "twoFactorChanged": "Tilin asetukset ovat muuttuneet. Tarkista tila ja yritä uudelleen.",
   "twoFactorFailed": "Pyyntöä ei voitu suorittaa. Yritä uudelleen.",
   "twoFactorLoading": "Ladataan suojausasetuksia…",
-  "personVideosHeading": "Videot, joilla tämä henkilö esiintyy"
+  "personVideosHeading": "Videot, joilla tämä henkilö esiintyy",
+  "navMyPosts": "Omat julkaisut",
+  "postsTab": "Julkaisut"
 }

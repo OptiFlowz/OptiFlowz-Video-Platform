@@ -1238,5 +1238,7 @@
   "twoFactorChanged": "A fiók beállításai megváltoztak. Ellenőrizd az állapotot, és próbáld újra.",
   "twoFactorFailed": "A kérés nem teljesíthető. Próbáld újra.",
   "twoFactorLoading": "Biztonsági beállítások betöltése…",
-  "personVideosHeading": "Videók ezzel a közreműködővel"
+  "personVideosHeading": "Videók ezzel a közreműködővel",
+  "navMyPosts": "Saját bejegyzések",
+  "postsTab": "Bejegyzések"
 }

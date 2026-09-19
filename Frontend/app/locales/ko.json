@@ -1158,5 +1158,7 @@
   "twoFactorChanged": "계정 설정이 변경되었습니다. 상태를 확인하고 다시 시도하세요.",
   "twoFactorFailed": "요청을 완료할 수 없습니다. 다시 시도하세요.",
   "twoFactorLoading": "보안 설정 불러오는 중…",
-  "personVideosHeading": "출연한 동영상"
+  "personVideosHeading": "출연한 동영상",
+  "navMyPosts": "내 게시물",
+  "postsTab": "게시물"
 }

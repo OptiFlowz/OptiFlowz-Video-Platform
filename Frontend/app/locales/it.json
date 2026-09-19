@@ -1133,5 +1133,7 @@
   "twoFactorChanged": "Le impostazioni dell’account sono cambiate. Controlla lo stato e riprova.",
   "twoFactorFailed": "Impossibile completare la richiesta. Riprova.",
   "twoFactorLoading": "Caricamento delle impostazioni di sicurezza…",
-  "personVideosHeading": "Video a cui partecipa"
+  "personVideosHeading": "Video a cui partecipa",
+  "navMyPosts": "I miei post",
+  "postsTab": "Post"
 }

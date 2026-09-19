@@ -1,6 +1,7 @@
+import ChannelPosts from '../posts/ChannelPosts';
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo, useRef, useState, useEffect, useId } from "react";
-import { useParams } from "react-router";
+import { useLocation, useNavigate, useParams } from "react-router";
 import { fetchFn } from "~/API";
 import { ShareSVG } from "~/constants";
 import { env } from "~/env";
@@ -60,7 +61,16 @@ const SkeletonHeader = () => (
 function ChannelPage() {
     const { t } = useI18n();
     const { id: channelId } = useParams();
-    const [activeTab, setActiveTab] = useState<"videos" | "playlists">("videos");
+    const { pathname } = useLocation();
+    const navigate = useNavigate();
+    const channelPath = `/channel/${encodeURIComponent(channelId || '')}`;
+    const tabSegment = pathname.replace(/\/$/, '').split('/')[3];
+    const activeTab = tabSegment === 'playlists' || tabSegment === 'posts' ? tabSegment : 'videos';
+    const selectTab = (tab: 'videos' | 'playlists' | 'posts') => {
+        if (tab === activeTab) return;
+        navigate(tab === 'videos' ? channelPath : `${channelPath}/${tab}`, { preventScrollReset: true });
+    };
+    const [postAscending, setPostAscending] = useState(false);
     const tabsId = useId();
     const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
     const [descOpen, setDescOpen] = useState(false);
@@ -240,7 +250,7 @@ function ChannelPage() {
 
             <div className="channelNavigation">
                 <div className="channelTabs" role="tablist" aria-label={t("channelLabel")}>
-                    {(["videos", "playlists"] as const).map((tab, index) => (
+                    {(["videos", "playlists", "posts"] as const).map((tab, index) => (
                         <button
                             key={tab}
                             ref={(element) => { tabRefs.current[index] = element; }}
@@ -250,19 +260,19 @@ function ChannelPage() {
                             aria-selected={activeTab === tab}
                             aria-controls={`${tabsId}-${tab}-panel`}
                             tabIndex={activeTab === tab ? 0 : -1}
-                            onClick={() => setActiveTab(tab)}
+                            onClick={() => selectTab(tab)}
                             onKeyDown={(event) => {
                                 if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
                                 event.preventDefault();
-                                const next = event.key === "Home" ? 0 : event.key === "End" ? 1 : 1 - index;
-                                setActiveTab(next === 0 ? "videos" : "playlists");
+                                const next = event.key === "Home" ? 0 : event.key === "End" ? 2 : (index + (event.key === "ArrowRight" ? 1 : -1) + 3) % 3;
+                                selectTab((["videos", "playlists", "posts"] as const)[next]);
                                 tabRefs.current[next]?.focus();
                             }}
-                        >{t(tab === "videos" ? "videosTab" : "playlistsTab")}</button>
+                        >{t(`${tab}Tab`)}</button>
                     ))}
                 </div>
                 <div className="channelSortControl">
-                    <CustomSelect
+                    {activeTab === 'posts' ? <CustomSelect value={postAscending ? 'asc' : 'desc'} options={[{value:'desc', label:t('channelSortNewest')}, {value:'asc', label:t('channelSortOldest')}]} onChange={value => setPostAscending(value === 'asc')} ariaLabel={t('searchSortBy')} rootClassName="channelSortSelect" /> : <CustomSelect
                         value={activeTab === "videos" ? `${videoSortBy}:${videoSortOrder}` : `${playlistSortBy}:${playlistSortOrder}`}
                         options={CHANNEL_SORT_OPTIONS.map(option => ({ ...option, label: t(option.label) }))}
                         onChange={(value) => activeTab === "videos"
@@ -270,7 +280,7 @@ function ChannelPage() {
                             : handlePlaylistSortChange(value as ChannelSortValue)}
                         ariaLabel={`${t("searchSortBy")}: ${t(activeTab === "videos" ? "videosTab" : "playlistsTab")}`}
                         rootClassName="channelSortSelect"
-                    />
+                    />}
                 </div>
                 <div className="channelActions">
                     <button type="button" onClick={shareChannelLink}>{ShareSVG}{t("share")}</button>
@@ -285,6 +295,9 @@ function ChannelPage() {
             <div className="channelPanel" role="tabpanel" id={`${tabsId}-playlists-panel`} aria-labelledby={`${tabsId}-playlists-tab`} hidden={activeTab !== "playlists"} tabIndex={0}>
                 <div className="collection notscrollable channelPlaylistGrid">{isLoadingPlaylists ? skeletonPlaylistArray : playlistArray}</div>
                 {!isLoadingPlaylists && normalizedPlaylists.length === 0 && <p className="channelEmpty">{t("quizNoPlaylistsFound")}</p>}
+            </div>
+            <div className="channelPanel" role="tabpanel" id={`${tabsId}-posts-panel`} aria-labelledby={`${tabsId}-posts-tab`} hidden={activeTab !== 'posts'} tabIndex={0}>
+                {activeTab === 'posts' && channel && <ChannelPosts channelId={channelId || ''} author={channel} videos={normalizedVideos} ascending={postAscending} />}
             </div>
         </main>
     );

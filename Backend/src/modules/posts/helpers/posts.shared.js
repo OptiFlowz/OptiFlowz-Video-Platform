@@ -53,7 +53,14 @@ export const createPostSchema = z.object({
   status: z.enum(['private', 'public']).optional().default('private'),
 }).strict();
 
+export const editPostSchema = z.object({
+  title: z.string().trim().min(1).max(255).optional(),
+  status: z.enum(['private', 'public']).optional(),
+  block_order: z.array(z.string().uuid()).max(MAX_POST_BLOCKS).refine(ids => new Set(ids).size === ids.length, { message: 'Duplicate block IDs' }).optional(),
+}).strict().refine(data => Object.keys(data).length > 0, { message: 'Provide a field to update' });
+
 export const myPostsQuerySchema = z.object({
+  q: z.string().trim().max(255).optional().default(''),
   page: z.coerce.number().int().min(1).max(Number.MAX_SAFE_INTEGER).optional().default(1),
   limit: z.coerce.number().int().min(1).max(100).optional().default(20),
   sortBy: z.enum(['title', 'status', 'created_at', 'content']).optional().default('created_at'),
@@ -88,6 +95,16 @@ export const postOptionIdSchema = postBlockIdSchema.extend({
 export const postResponseSchema = z.object({
   option_id: z.string().uuid('Invalid post option id'),
 }).strict();
+
+export const questionerAnswerSchema = z.union([
+  postResponseSchema,
+  z.object({ option_ids: z.array(z.string().uuid('Invalid post option id'))
+    .min(1).max(20).refine(ids => new Set(ids.map(id => id.toLowerCase())).size === ids.length, { message: 'Duplicate option IDs' }) }).strict(),
+]);
+
+export const pollVoteSchema = postResponseSchema.extend({
+  remove: z.boolean().optional().default(false),
+});
 
 export const editBlockSchemas = {
   text: z.object({ content: textContent }).strict(),

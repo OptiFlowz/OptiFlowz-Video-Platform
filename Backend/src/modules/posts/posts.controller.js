@@ -1,3 +1,4 @@
+import { editPostInternal } from './handlers/editPost.js';
 import { sendSuccess, sendError } from '../../common/response.js';
 import { createPostInternal } from './handlers/createPost.js';
 import { getPostInternal } from './handlers/getPost.js';
@@ -46,7 +47,7 @@ export async function getMyPosts(req, res) {
 
 export async function getUserPosts(req, res) {
   try {
-    const result = await getUserPostsInternal(req.params, req.query);
+    const result = await getUserPostsInternal(req.params, req.query, req.user?.sub || null);
     return sendSuccess(res, result);
   } catch (error) {
     if (!error.status || error.status >= 500) console.error('getUserPosts error:', error);
@@ -154,4 +155,11 @@ export async function answerPostQuestioner(req, res) {
     if (!error.status || error.status >= 500) console.error('answerPostQuestioner error:', error);
     return sendError(res, error.message, error.status || 500);
   }
+}
+
+export async function editPost(req, res) {
+  try {
+    const post = await editPostInternal(req.params, req.body, req.user?.sub, req.authorization);
+    return sendSuccess(res, { post });
+  } catch (error) { return sendError(res, error.message, error.status || 500); }
 }

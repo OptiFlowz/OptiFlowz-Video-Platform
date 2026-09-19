@@ -1,3 +1,4 @@
+import { PostSVG } from "~/constants";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
 import { memo, useEffect, useRef, useState } from "react";
@@ -445,6 +446,12 @@ function Header(){
                         <span>{t("navMyPlaylists")}</span>
                     </NavLink>
                     : ""}
+                    {canAccess('posts') && <NavLink to="/my-posts" end
+                        className={({ isActive }) => `mobileSideMenuItem p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
+                        onClick={closeMobileMenu}>
+                        <span className="mobileSideMenuIcon" aria-hidden="true">{PostSVG}</span>
+                        <span>{t("navMyPosts")}</span>
+                    </NavLink>}
                     {canAccess('quizzes') ?
                     <NavLink 
                         to="/quizzes" 

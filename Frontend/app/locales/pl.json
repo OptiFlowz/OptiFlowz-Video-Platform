@@ -1133,5 +1133,7 @@
   "twoFactorChanged": "Ustawienia konta uległy zmianie. Sprawdź stan i spróbuj ponownie.",
   "twoFactorFailed": "Nie udało się zrealizować żądania. Spróbuj ponownie.",
   "twoFactorLoading": "Wczytywanie ustawień zabezpieczeń…",
-  "personVideosHeading": "Filmy z udziałem tej osoby"
+  "personVideosHeading": "Filmy z udziałem tej osoby",
+  "navMyPosts": "Moje wpisy",
+  "postsTab": "Wpisy"
 }

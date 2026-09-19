@@ -1148,5 +1148,7 @@
   "twoFactorChanged": "La configuración de tu cuenta ha cambiado. Comprueba el estado e inténtalo de nuevo.",
   "twoFactorFailed": "No se pudo completar la solicitud. Inténtalo de nuevo.",
   "twoFactorLoading": "Cargando ajustes de seguridad…",
-  "personVideosHeading": "Vídeos en los que participa"
+  "personVideosHeading": "Vídeos en los que participa",
+  "navMyPosts": "Mis publicaciones",
+  "postsTab": "Publicaciones"
 }

@@ -1158,5 +1158,7 @@
   "twoFactorChanged": "تنظیمات حساب تغییر کرده است. وضعیت را بررسی کنید و دوباره تلاش کنید.",
   "twoFactorFailed": "درخواست تکمیل نشد. دوباره تلاش کنید.",
   "twoFactorLoading": "در حال بارگیری تنظیمات امنیتی…",
-  "personVideosHeading": "ویدیوهایی با حضور این فرد"
+  "personVideosHeading": "ویدیوهایی با حضور این فرد",
+  "navMyPosts": "پست‌های من",
+  "postsTab": "پست‌ها"
 }

@@ -1158,5 +1158,7 @@
   "twoFactorChanged": "账户设置已更改。请检查状态后重试。",
   "twoFactorFailed": "无法完成请求。请重试。",
   "twoFactorLoading": "正在加载安全设置…",
-  "personVideosHeading": "参与的视频"
+  "personVideosHeading": "参与的视频",
+  "navMyPosts": "我的帖子",
+  "postsTab": "帖子"
 }

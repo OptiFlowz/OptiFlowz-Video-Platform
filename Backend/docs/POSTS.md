@@ -79,9 +79,10 @@ with full posts instead of cards:
 ```
 
 Poll/questioner options include `id`, `block_id`, `text`, and `image_url`.
-The feed always omits `is_correct`, votes, answers, and respondent identities,
-including for signed-in authors and editors. They can use the single-post route
-for authorized correctness visibility. Image/video text is returned in `content`.
+The feed includes the viewer's saved selection and per-option counts. Percentages
+are calculated by the frontend and displayed only after participation. Questioner
+options include `is_correct` before answering so the UI can give instant feedback. Individual response records and
+respondent identities are never exposed. Image/video text is returned in `content`.
 Video blocks do not grant playback access beyond the existing video policy.
 
 Empty posts contain `blocks: []`. Empty or out-of-range pages return `posts: []`
@@ -193,8 +194,8 @@ Blocks are ordered by ascending `position`; an empty post returns `blocks: []`.
 Poll and questioner blocks additionally include an `options` array with `id`,
 `block_id`, `text`, and `image_url`. Options are ordered by ID because the current
 schema has no option-position column. Questioner `is_correct` fields are returned
-only to the author or users with `posts.update_any`; they are omitted for other
-readers. Vote/answer records and respondent identities are not included.
+to every reader with access to the post, including before answering. Viewer selection and results follow the participation rules below.
+Individual vote/answer records and respondent identities are not included.
 
 The post and all nested data use one primary-database query for a consistent
 snapshot and current visibility. Video blocks contain their stored `video_id`;
@@ -279,8 +280,8 @@ optional, trimmed, and limited to 10,000 characters; `""` clears their text.
 Omitting media text when appending remains supported. Polls and
 questioners require 2–20 options with text (1–500 characters each). Questioner
 options accept `is_correct` (boolean, default `false`); at least one must be true.
-The editing response includes correctness flags; single-post GET includes them
-only for the author or users with `posts.update_any`. The public feed omits them.
+Editing, single-post GET, and public-feed responses include option correctness
+flags, including before the viewer answers.
 
 Video IDs must be UUIDs. The shared video-access check requires a ready video
 that is published/public or owned by the caller; inaccessible videos return 404.
@@ -347,7 +348,7 @@ images are retained to avoid breaking a potentially saved block.
 
 Storage uses the existing public R2 image delivery setup: `private` restricts
 access to the post but does not make an uploaded image's direct URL private.
-No post-metadata/publish endpoint is included in this module yet.
+Metadata, visibility and section ordering can be updated through the PATCH endpoint described below.
 
 ## Delete a block
 
@@ -524,8 +525,16 @@ does not replace the participation permission required below.
 
 The user has one selection per poll block. Sending a different option deletes
 their previous vote in this block and inserts the new choice in one transaction.
-Sending the same option again keeps one vote, rather than toggling it off.
-Other users' votes and votes in other blocks are unaffected.
+Clicking the selected option again sends the same request with `remove: true`
+and clears the user's vote in that block. This explicit removal is idempotent:
+retrying it cannot add the vote back. A normal request without `remove` continues
+to select the given option, so retries of a vote are also safe. Other users' votes
+and votes in other blocks are unaffected. `remove` is accepted only for polls,
+never for questioner answers.
+
+After removal the response has `selected_option_id: null`, `has_responses`, and
+options with updated counts but no percentages. The frontend hides results again.
+`has_responses` indicates whether any other responses remain in the block.
 
 HTTP 200 example after voting:
 
@@ -542,7 +551,6 @@ HTTP 200 example after voting:
       "text": "Basics",
       "image_url": null,
       "vote_count": 3,
-      "percentage": 75,
       "is_selected": true
     },
     {
@@ -550,7 +558,6 @@ HTTP 200 example after voting:
       "text": "Advanced",
       "image_url": null,
       "vote_count": 1,
-      "percentage": 25,
       "is_selected": false
     }
   ]
@@ -561,16 +568,22 @@ HTTP 200 example after voting:
 
 `POST /api/posts/:postId/blocks/:blockId/answer` requires `posts.questioner.answer`.
 
-Only the user's first answer is saved. A different answer afterward returns 409
-and leaves the original untouched. Retrying the same option returns current
-results without changing its answer timestamp or adding another answer.
+Send `{ "option_id": "<uuid>" }` for a single answer, or
+`{ "option_ids": ["<uuid>", "<uuid>"] }` for multiple answers. The array must
+contain 1–20 unique IDs belonging to this block. A questioner with exactly one
+correct option accepts only one selected option.
+
+Only the user's first answer set is saved, atomically. A different set afterward
+returns 409 and leaves the original untouched. Retrying the same set in any order
+returns current results without changing timestamps or adding answers.
 
 The HTTP 200 response has `post_id`, `block_id`, `selected_option_id`,
-`total_answers`, and an `options` array. Each option contains `id`, `text`,
-`image_url`, `answer_count`, `percentage`, `is_selected`, and `is_correct`.
-Top-level `is_correct` reports whether the user's choice was correct, and
-`correct_option_ids` lists every correct option. The existing questioner schema
-supports more than one correct option; each user still chooses only one.
+`selected_option_ids`, `total_answers`, and an `options` array. The array contains
+all saved selections; the singular field is null unless exactly one was selected. Each option contains `id`, `text`,
+`image_url`, `answer_count`, `is_selected`, and `is_correct`.
+Top-level `is_correct` is true only when the selected set contains every correct
+option and no incorrect options. `correct_option_ids` lists every correct option.
+`total_answers` counts option selections, not distinct respondents.
 
 ```json
 {
@@ -587,7 +600,6 @@ supports more than one correct option; each user still chooses only one.
       "text": "200",
       "image_url": null,
       "answer_count": 1,
-      "percentage": 100,
       "is_selected": true,
       "is_correct": false
     },
@@ -596,7 +608,6 @@ supports more than one correct option; each user still chooses only one.
       "text": "201",
       "image_url": null,
       "answer_count": 0,
-      "percentage": 0,
       "is_selected": false,
       "is_correct": true
     }
@@ -607,15 +618,17 @@ supports more than one correct option; each user still chooses only one.
 ### Results and concurrency
 
 Results include all options, ordered by ID, including zero-response choices.
-Percentages are `option count / block total * 100`, rounded to two decimal
-places; rounding may make the sum differ slightly from 100. Counts include the
-current submission and never expose other respondents' identities.
+The API returns counts, not percentages. The frontend calculates
+`option count / block total * 100`, rounded to two decimal places; rounding may
+make the sum differ slightly from 100. Counts include the current submission
+and never expose other respondents' identities.
 
 Participation locks the post, then its block and options, matching content
 mutation lock order. This serializes concurrent submissions and prevents
 overlapping requests from replacing a final answer or leaving multiple poll
 choices through these routes. The existing schema has uniqueness per
-option/user; single-choice-per-block behavior is enforced by these transactions.
+option/user; these transactions enforce one current choice per poll and one
+immutable answer set per questioner.
 Future writers must follow the same locking and response rules.
 
 Malformed input or the wrong block type returns 400; missing login returns 401;
@@ -624,8 +637,8 @@ mismatched block/option returns 404. Attempting to change a questioner answer
 returns 409. Both successful routes return 200, including retries. No additional
 database migration or cleanup worker is needed.
 
-GET responses continue to follow their documented visibility rules; correctness
-is revealed to respondents by the answer endpoint after submission.
+GET responses include counts, the viewer's selection, and questioner option
+correctness. The answer endpoint validates and returns the recorded result.
 
 ## Module structure
 
@@ -643,10 +656,64 @@ is revealed to respondents by the answer endpoint after submission.
 - `handlers/addPostOption.js`, `handlers/editPostOption.js`: option creation and partial edits.
 - `handlers/deletePostOption.js`, `handlers/deletePostOptionImage.js`: option and option-image removal.
 - `handlers/votePostPoll.js`: replaceable single-choice poll votes.
-- `handlers/answerPostQuestioner.js`: final single-choice questioner answers.
+- `handlers/answerPostQuestioner.js`: final questioner answer sets.
 - `helpers/posts.shared.js`: schemas, limits, and column definitions.
 - `helpers/postAccess.js`: post ownership, edit permissions, and delete permissions.
 - `helpers/postImages.js`: image validation, processing, upload, and cleanup.
 - `helpers/postMutations.js`: shared transactions, option locking, and response/correctness guards.
-- `helpers/postBlocksSql.js`: shared ordered block/option projection with correctness visibility.
-- `helpers/postParticipation.js`: shared participation validation, visibility, locking, and result percentages.
+- `helpers/postBlocksSql.js`: shared ordered block/option projection with counts and questioner correctness.
+- `helpers/postParticipation.js`: shared participation validation, visibility, locking, and result counts.
+
+## Frontend integration additions
+
+`PATCH /api/posts/:postId` accepts changed `title`, `status` (`private`/`public`),
+and/or `block_order` (the complete ordered array of current block UUIDs).
+It requires the same edit permission as block mutations, locks the post, and
+commits metadata and ordering together. Invalid, duplicate, missing, or foreign
+block IDs are rejected; a stale section list returns 409. IDs and all responses
+are preserved. The response is `{ success: true, post: { ...metadata } }`.
+
+`GET /api/posts/my` also accepts optional `q` (up to 255 characters). It searches
+title and card text case-insensitively before counting and paginating.
+
+`GET /api/posts/:userId` and `GET /api/posts/details/:postId` embed the
+current viewer's participation directly in each poll/questioner block. The viewer
+is identified only by the optional Bearer token, not by the channel's `userId`.
+There is no separate results route or per-block results request. Blocks, options,
+selection, and counts are read in the same SQL statement/database snapshot.
+
+`selected_option_ids` contains all saved selections (empty before participation).
+`selected_option_id` is set only for exactly one selection; otherwise it is null.
+Options always contain
+`id`, `block_id`, `text`, `image_url`, `is_selected`, and `vote_count` or
+`answer_count`. Block totals (`total_votes`/`total_answers`) are also returned.
+The API no longer includes `percentage`. Counts are intentionally available
+before participation so the UI can calculate percentages instantly on click,
+but the UI hides results until submission. Questioners with multiple correct
+options allow toggling selections and require **Submit answers**; those with one
+correct option submit immediately on click. The UI optimistically subtracts the
+previous selections (if any) and adds each newly submitted selection, then reconciles with POST response
+counts. Removal subtracts the vote and hides results. Failed writes roll back
+the optimistic state and try to recover the saved selection through details.
+
+All questioners include `correct_option_ids` and an explicit `is_correct` boolean
+on every option, even for anonymous readers and before answering. Block-level
+`is_correct` is included only when a saved selection exists. The frontend uses
+these preloaded flags to immediately mark the optimistic answer red/green and
+show feedback, without first showing a neutral selection. The backend still
+validates, saves, and locks the first answer; failures roll back the UI. This
+intentionally makes correct options available in the readable post response.
+Respondent identities are never returned.
+
+Successful vote/answer POST responses retain their participation result shape,
+so the frontend updates the loaded feed without requesting results again.
+
+Blocks returned by details and the public feed now include `has_responses`.
+Editors use this to disable question/option edits after responses have arrived;
+the existing mutation guards remain authoritative.
+
+The frontend creates metadata as private, appends sections/uploads, and publishes
+only after those requests succeed. Multi-request content saves are not atomic:
+completed mutations remain saved if a later request fails. The editor checkpoints
+returned IDs for retries and preserves pending input. There are no new migrations
+beyond the three migrations listed at the top of this document.

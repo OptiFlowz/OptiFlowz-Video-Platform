@@ -1158,5 +1158,7 @@
   "twoFactorChanged": "Pengaturan akun telah berubah. Periksa status dan coba lagi.",
   "twoFactorFailed": "Permintaan tidak dapat diselesaikan. Coba lagi.",
   "twoFactorLoading": "Memuat pengaturan keamanan…",
-  "personVideosHeading": "Video yang menampilkan kontributor ini"
+  "personVideosHeading": "Video yang menampilkan kontributor ini",
+  "navMyPosts": "Postingan saya",
+  "postsTab": "Postingan"
 }

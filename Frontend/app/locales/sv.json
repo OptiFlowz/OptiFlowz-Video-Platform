@@ -1158,5 +1158,7 @@
   "twoFactorChanged": "Dina kontoinställningar har ändrats. Kontrollera statusen och försök igen.",
   "twoFactorFailed": "Det gick inte att slutföra begäran. Försök igen.",
   "twoFactorLoading": "Läser in säkerhetsinställningar…",
-  "personVideosHeading": "Videor där personen medverkar"
+  "personVideosHeading": "Videor där personen medverkar",
+  "navMyPosts": "Mina inlägg",
+  "postsTab": "Inlägg"
 }

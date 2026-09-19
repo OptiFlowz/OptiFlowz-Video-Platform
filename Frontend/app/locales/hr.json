@@ -1133,5 +1133,7 @@
   "twoFactorChanged": "Postavke računa su promijenjene. Provjeri status i pokušaj ponovno.",
   "twoFactorFailed": "Zahtjev nije moguće izvršiti. Pokušaj ponovno.",
   "twoFactorLoading": "Učitavanje sigurnosnih postavki…",
-  "personVideosHeading": "Videozapisi u kojima sudjeluje"
+  "personVideosHeading": "Videozapisi u kojima sudjeluje",
+  "navMyPosts": "Moje objave",
+  "postsTab": "Objave"
 }

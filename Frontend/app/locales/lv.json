@@ -1158,5 +1158,7 @@
   "twoFactorChanged": "Konta iestatījumi ir mainīti. Pārbaudiet statusu un mēģiniet vēlreiz.",
   "twoFactorFailed": "Neizdevās izpildīt pieprasījumu. Mēģiniet vēlreiz.",
   "twoFactorLoading": "Ielādē drošības iestatījumus…",
-  "personVideosHeading": "Videoklipi ar šīs personas dalību"
+  "personVideosHeading": "Videoklipi ar šīs personas dalību",
+  "navMyPosts": "Manas ziņas",
+  "postsTab": "Ziņas"
 }

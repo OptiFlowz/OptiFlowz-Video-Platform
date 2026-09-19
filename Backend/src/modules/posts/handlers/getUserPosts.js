@@ -3,7 +3,7 @@ import { validateOrThrow } from '../../../common/input.validation.js';
 import { postUserIdSchema, publicPostsQuerySchema, PUBLIC_POST_SORT_FIELDS } from '../helpers/posts.shared.js';
 import { postBlocksSql } from '../helpers/postBlocksSql.js';
 
-export async function getUserPostsInternal(params, query) {
+export async function getUserPostsInternal(params, query, viewerId = null) {
   const { userId } = validateOrThrow(postUserIdSchema.safeParse(params));
   const { page, limit, sortBy, sortOrder } = validateOrThrow(publicPostsQuerySchema.safeParse(query));
   const offset = (page - 1) * limit;
@@ -22,12 +22,12 @@ export async function getUserPostsInternal(params, query) {
        (SELECT COUNT(*)::int FROM public.posts WHERE user_id = $1 AND status = 'public') AS total,
        COALESCE((
          SELECT jsonb_agg(
-           to_jsonb(p) || jsonb_build_object('blocks', ${postBlocksSql()})
+           to_jsonb(p) || jsonb_build_object('blocks', ${postBlocksSql('$4::uuid')})
            ORDER BY ${orderBy}
          )
          FROM page_posts p
        ), '[]'::jsonb) AS posts`,
-    [userId, limit, offset],
+    [userId, limit, offset, viewerId],
   );
   const { posts, total } = rows[0];
   const totalPages = Math.ceil(total / limit);

@@ -1133,5 +1133,7 @@
   "twoFactorChanged": "Nastavitve računa so se spremenile. Preveri stanje in poskusi znova.",
   "twoFactorFailed": "Zahteve ni bilo mogoče izvesti. Poskusi znova.",
   "twoFactorLoading": "Nalaganje varnostnih nastavitev…",
-  "personVideosHeading": "Videoposnetki, v katerih sodeluje"
+  "personVideosHeading": "Videoposnetki, v katerih sodeluje",
+  "navMyPosts": "Moje objave",
+  "postsTab": "Objave"
 }

@@ -1133,5 +1133,7 @@
   "twoFactorChanged": "Setările contului s-au modificat. Verifică starea și încearcă din nou.",
   "twoFactorFailed": "Solicitarea nu a putut fi finalizată. Încearcă din nou.",
   "twoFactorLoading": "Se încarcă setările de securitate…",
-  "personVideosHeading": "Videoclipuri în care apare"
+  "personVideosHeading": "Videoclipuri în care apare",
+  "navMyPosts": "Postările mele",
+  "postsTab": "Postări"
 }

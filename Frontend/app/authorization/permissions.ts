@@ -1,5 +1,8 @@
 // These keys match the backend authorization permissions, not role names.
 export const P = {
+  postsCreate: 'posts.create', postsUpdateOwn: 'posts.update_own', postsUpdateAny: 'posts.update_any',
+  postsDeleteOwn: 'posts.delete_own', postsDeleteAny: 'posts.delete_any',
+  postsPollVote: 'posts.poll.vote', postsQuestionerAnswer: 'posts.questioner.answer',
   rolesManage: 'roles.manage', usersSearch: 'users.search', usersAssignRoles: 'users.assign_roles',
   videosCreate: 'videos.create', videosUpdateOwn: 'videos.update_own', videosUpdateAny: 'videos.update_any',
   videosDeleteOwn: 'videos.delete_own', videosDeleteAny: 'videos.delete_any', videosLibrary: 'videos.library.read',
@@ -14,6 +17,7 @@ export const P = {
 } as const;
 
 export const accessPermissions = {
+  posts: [P.postsCreate, P.postsUpdateOwn, P.postsUpdateAny, P.postsDeleteOwn, P.postsDeleteAny],
   videos: [P.videosUpdateOwn], upload: [P.videosCreate], editVideo: [P.videosUpdateOwn, P.videosUpdateAny],
   playlists: [P.playlistsUpdateOwn], editPlaylist: [P.playlistsUpdateOwn, P.playlistsUpdateAny],
   quizzes: [P.quizzesManageOwn], participate: [P.quizzesParticipate], people: [P.peopleManage],

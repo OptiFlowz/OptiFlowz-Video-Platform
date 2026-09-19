@@ -11,7 +11,7 @@ const SORT_FIELDS = {
 
 export async function getMyPostsInternal(query, userId) {
   requirePostUser(userId);
-  const { page, limit, sortBy, sortOrder } = validateOrThrow(myPostsQuerySchema.safeParse(query));
+  const { page, limit, sortBy, sortOrder, q } = validateOrThrow(myPostsQuerySchema.safeParse(query));
   const offset = (page - 1) * limit;
   // Only validated, fixed SQL expressions are interpolated. IDs break sort ties.
   const orderBy = `${SORT_FIELDS[sortBy]} ${sortOrder.toUpperCase()}, id ${sortOrder.toUpperCase()}`;
@@ -29,7 +29,7 @@ export async function getMyPostsInternal(query, userId) {
            COALESCE(array_agg(DISTINCT b.type ORDER BY b.type), ARRAY[]::text[]) AS block_types
          FROM public.post_blocks b WHERE b.post_id = p.id
        ) summary
-       WHERE p.user_id = $1
+       WHERE p.user_id = $1 AND ($4 = '' OR strpos(lower(p.title || E'\\n' || summary.text), lower($4)) > 0)
      )
      SELECT
        (SELECT COUNT(*)::int FROM post_cards) AS total,
@@ -40,7 +40,7 @@ export async function getMyPostsInternal(query, userId) {
            ORDER BY ${orderBy} LIMIT $2 OFFSET $3
          ) post_page
        ), '[]'::jsonb) AS posts`,
-    [userId, limit, offset],
+    [userId, limit, offset, q],
   );
   const { posts, total } = rows[0];
   const totalPages = Math.ceil(total / limit);

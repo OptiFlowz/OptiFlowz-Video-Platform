@@ -1158,5 +1158,7 @@
   "twoFactorChanged": "Stillingar aðgangsins hafa breyst. Athugaðu stöðuna og reyndu aftur.",
   "twoFactorFailed": "Ekki tókst að ljúka beiðninni. Reyndu aftur.",
   "twoFactorLoading": "Hleð öryggisstillingum…",
-  "personVideosHeading": "Myndbönd með þessum þátttakanda"
+  "personVideosHeading": "Myndbönd með þessum þátttakanda",
+  "navMyPosts": "Færslurnar mínar",
+  "postsTab": "Færslur"
 }

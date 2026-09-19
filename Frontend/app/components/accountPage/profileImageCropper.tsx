@@ -89,6 +89,7 @@ export default function ProfileImageCropper({ file, onCancel, onApply }: {
           onLoad={(event) => { setSize({ width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight }); setError(false); }}
           onError={() => setError(true)}
           style={{ width: shortest ? `${size.width / shortest * zoom * 100}%` : "100%", height: shortest ? `${size.height / shortest * zoom * 100}%` : "100%", left: `${50 + offset.x * 100}%`, top: `${50 + offset.y * 100}%` }} />}
+        {ready && <div className={styles.grid} aria-hidden="true" />}
         <div className={styles.mask} aria-hidden="true" />
       </div>
       <label className={styles.zoom}>

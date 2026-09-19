@@ -1134,5 +1134,7 @@
   "twoFactorChanged": "Les paramètres de votre compte ont changé. Vérifiez l’état et réessayez.",
   "twoFactorFailed": "La demande n’a pas pu être traitée. Veuillez réessayer.",
   "twoFactorLoading": "Chargement des paramètres de sécurité…",
-  "personVideosHeading": "Vidéos avec cette personne"
+  "personVideosHeading": "Vidéos avec cette personne",
+  "navMyPosts": "Mes publications",
+  "postsTab": "Publications"
 }

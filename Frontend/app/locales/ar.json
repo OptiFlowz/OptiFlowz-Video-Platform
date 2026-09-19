@@ -1133,5 +1133,7 @@
   "twoFactorChanged": "تغيّرت إعدادات حسابك. تحقّق من الحالة وحاول مجدداً.",
   "twoFactorFailed": "تعذّر إكمال الطلب. حاول مجدداً.",
   "twoFactorLoading": "جارٍ تحميل إعدادات الأمان…",
-  "personVideosHeading": "الفيديوهات التي يشارك فيها"
+  "personVideosHeading": "الفيديوهات التي يشارك فيها",
+  "navMyPosts": "منشوراتي",
+  "postsTab": "المنشورات"
 }

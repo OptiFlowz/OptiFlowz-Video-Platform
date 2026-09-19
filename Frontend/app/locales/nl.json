@@ -1133,5 +1133,7 @@
   "twoFactorChanged": "Je accountinstellingen zijn gewijzigd. Controleer de status en probeer het opnieuw.",
   "twoFactorFailed": "Het verzoek kon niet worden voltooid. Probeer het opnieuw.",
   "twoFactorLoading": "Beveiligingsinstellingen laden…",
-  "personVideosHeading": "Video's waarin deze persoon voorkomt"
+  "personVideosHeading": "Video's waarin deze persoon voorkomt",
+  "navMyPosts": "Mijn berichten",
+  "postsTab": "Berichten"
 }

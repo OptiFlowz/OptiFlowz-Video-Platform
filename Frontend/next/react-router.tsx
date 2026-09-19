@@ -83,11 +83,11 @@ export function useNavigate() {
         : `${to.pathname ?? ""}${to.search ?? ""}${to.hash ?? ""}`;
 
     if (options?.replace) {
-      router.replace(href);
+      router.replace(href, { scroll: !options?.preventScrollReset });
       return;
     }
 
-    router.push(href);
+    router.push(href, { scroll: !options?.preventScrollReset });
   };
 }
 

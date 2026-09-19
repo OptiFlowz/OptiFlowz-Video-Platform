@@ -1158,5 +1158,7 @@
   "twoFactorChanged": "Paskyros nustatymai pasikeitė. Patikrinkite būseną ir bandykite dar kartą.",
   "twoFactorFailed": "Nepavyko įvykdyti užklausos. Bandykite dar kartą.",
   "twoFactorLoading": "Įkeliami saugos nustatymai…",
-  "personVideosHeading": "Vaizdo įrašai, kuriuose dalyvauja"
+  "personVideosHeading": "Vaizdo įrašai, kuriuose dalyvauja",
+  "navMyPosts": "Mano įrašai",
+  "postsTab": "Įrašai"
 }

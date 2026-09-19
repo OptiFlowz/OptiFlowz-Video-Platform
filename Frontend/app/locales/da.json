@@ -1158,5 +1158,7 @@
   "twoFactorChanged": "Dine kontoindstillinger er ændret. Kontrollér status, og prøv igen.",
   "twoFactorFailed": "Anmodningen kunne ikke gennemføres. Prøv igen.",
   "twoFactorLoading": "Indlæser sikkerhedsindstillinger…",
-  "personVideosHeading": "Videoer med denne person"
+  "personVideosHeading": "Videoer med denne person",
+  "navMyPosts": "Mine opslag",
+  "postsTab": "Opslag"
 }

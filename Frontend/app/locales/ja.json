@@ -1158,5 +1158,7 @@
   "twoFactorChanged": "アカウント設定が変更されました。状態を確認して再試行してください。",
   "twoFactorFailed": "リクエストを完了できませんでした。再試行してください。",
   "twoFactorLoading": "セキュリティ設定を読み込み中…",
-  "personVideosHeading": "出演している動画"
+  "personVideosHeading": "出演している動画",
+  "navMyPosts": "自分の投稿",
+  "postsTab": "投稿"
 }

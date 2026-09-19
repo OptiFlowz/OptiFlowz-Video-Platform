@@ -4,6 +4,10 @@
 .viewport { position: relative; flex-shrink: 0; width: min(100%, 320px, 42vh); aspect-ratio: 1; overflow: hidden; border-radius: .9rem; background: var(--background2); cursor: grab; touch-action: none; user-select: none; }
 .viewport[data-dragging="true"] { cursor: grabbing; }
 .viewport img { position: absolute; max-width: none; max-height: none; transform: translate(-50%, -50%); pointer-events: none; object-fit: fill; }
+.grid { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; pointer-events: none; }
+.grid::before, .grid::after { content: ""; position: absolute; filter: drop-shadow(0 1px 1px var(--seethroughtBlack)); }
+.grid::before { inset: 0 calc(100% / 3); border-inline: 1px solid var(--seeThroughtWhite); }
+.grid::after { inset: calc(100% / 3) 0; border-block: 1px solid var(--seeThroughtWhite); }
 .mask { position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--accentOrange); box-shadow: 0 0 0 100vmax var(--seethroughtBlack); pointer-events: none; }
 .zoom { width: min(100%, 320px); display: flex; flex-direction: column; gap: .75rem; color: var(--text1); }
 .zoom > span { display: flex; justify-content: space-between; gap: 1rem; font-size: .9rem; }

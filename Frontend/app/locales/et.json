@@ -1158,5 +1158,7 @@
   "twoFactorChanged": "Konto seaded on muutunud. Kontrolli olekut ja proovi uuesti.",
   "twoFactorFailed": "Päringut ei saanud lõpule viia. Proovi uuesti.",
   "twoFactorLoading": "Turvaseadete laadimine…",
-  "personVideosHeading": "Videod, milles see inimene osaleb"
+  "personVideosHeading": "Videod, milles see inimene osaleb",
+  "navMyPosts": "Minu postitused",
+  "postsTab": "Postitused"
 }

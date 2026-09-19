@@ -1158,5 +1158,7 @@
   "twoFactorChanged": "Cài đặt tài khoản đã thay đổi. Hãy kiểm tra trạng thái và thử lại.",
   "twoFactorFailed": "Không thể hoàn tất yêu cầu. Vui lòng thử lại.",
   "twoFactorLoading": "Đang tải cài đặt bảo mật…",
-  "personVideosHeading": "Video có sự xuất hiện của người này"
+  "personVideosHeading": "Video có sự xuất hiện của người này",
+  "navMyPosts": "Bài đăng của tôi",
+  "postsTab": "Bài đăng"
 }

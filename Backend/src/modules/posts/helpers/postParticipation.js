@@ -3,7 +3,7 @@ import { validateOrThrow } from '../../../common/input.validation.js';
 import { HttpError } from '../../../common/httpError.js';
 import { hasPermission, loadAuthorization } from '../../authorization/authorization.service.js';
 import { Permissions } from '../../authorization/permission.constants.js';
-import { postBlockIdSchema, postResponseSchema, requirePostUser } from './posts.shared.js';
+import { postBlockIdSchema, questionerAnswerSchema, pollVoteSchema, requirePostUser } from './posts.shared.js';
 import { lockBlockOptions, findBlockOption, requireCorrectOption } from './postMutations.js';
 
 const PARTICIPATION_PERMISSIONS = {
@@ -14,7 +14,8 @@ const PARTICIPATION_PERMISSIONS = {
 export async function withPostParticipation(params, body, userId, authorization, type, participate) {
   requirePostUser(userId);
   const { postId, blockId } = validateOrThrow(postBlockIdSchema.safeParse(params));
-  const { option_id } = validateOrThrow(postResponseSchema.safeParse(body));
+  const data = validateOrThrow((type === 'poll' ? pollVoteSchema : questionerAnswerSchema).safeParse(body));
+  const optionIds = data.option_ids || [data.option_id];
   const client = await writePool.connect();
   try {
     await client.query('BEGIN ISOLATION LEVEL READ COMMITTED');
@@ -42,11 +43,15 @@ export async function withPostParticipation(params, body, userId, authorization,
     if (!block) throw new HttpError(404, { message: 'Post block not found' });
     if (block.type !== type) throw new HttpError(400, { message: `This route requires a ${type} block` });
     const storage = await lockBlockOptions(client, block);
-    const option = findBlockOption(storage.options, option_id);
+    const selectedOptions = optionIds.map(id => findBlockOption(storage.options, id));
+    const option = selectedOptions[0];
+    if (type === 'questioner' && storage.options.filter(item => item.is_correct).length === 1 && selectedOptions.length !== 1) {
+      throw new HttpError(400, { message: 'This questioner accepts one answer' });
+    }
     requireCorrectOption(block, storage.options);
 
-    await participate({ client, block, storage, option });
-    const result = await getParticipationResults(client, block, storage, option);
+    const selection = await participate({ client, block, storage, option, selectedOptions, remove: data.remove === true });
+    const result = await getParticipationResults(client, block, storage, selection === null ? [] : selectedOptions);
     await client.query('COMMIT');
     return result;
   } catch (error) {
@@ -59,7 +64,8 @@ export async function withPostParticipation(params, body, userId, authorization,
   }
 }
 
-async function getParticipationResults(client, block, storage, selectedOption) {
+async function getParticipationResults(client, block, storage, selectedOptions) {
+  const selectedIds = selectedOptions.map(option => option.id);
   // LEFT JOIN includes choices that have no votes/answers. Only counts are
   // returned; participant identities are never exposed.
   const { rows: counts } = await client.query(
@@ -79,19 +85,20 @@ async function getParticipationResults(client, block, storage, selectedOption) {
       text: option.text,
       image_url: option.image_url,
       [isQuestioner ? 'answer_count' : 'vote_count']: count,
-      percentage: total ? Math.round(count / total * 10000) / 100 : 0,
-      is_selected: option.id === selectedOption.id,
-      ...(isQuestioner ? { is_correct: option.is_correct } : {}),
+      is_selected: selectedIds.includes(option.id),
+      ...(isQuestioner && selectedIds.length ? { is_correct: option.is_correct } : {}),
     };
   });
   return {
     post_id: block.post_id,
     block_id: block.id,
-    selected_option_id: selectedOption.id,
+    selected_option_id: selectedIds.length === 1 ? selectedIds[0] : null,
+    selected_option_ids: selectedIds,
+    has_responses: total > 0,
     [isQuestioner ? 'total_answers' : 'total_votes']: total,
     options,
-    ...(isQuestioner ? {
-      is_correct: selectedOption.is_correct,
+    ...(isQuestioner && selectedIds.length ? {
+      is_correct: storage.options.every(option => option.is_correct === selectedIds.includes(option.id)),
       correct_option_ids: storage.options.filter(option => option.is_correct).map(option => option.id),
     } : {}),
   };

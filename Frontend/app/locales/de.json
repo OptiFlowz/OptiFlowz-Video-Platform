@@ -1133,5 +1133,7 @@
   "twoFactorChanged": "Deine Kontoeinstellungen wurden geändert. Prüfe den Status und versuche es erneut.",
   "twoFactorFailed": "Die Anfrage konnte nicht abgeschlossen werden. Bitte versuche es erneut.",
   "twoFactorLoading": "Sicherheitseinstellungen werden geladen…",
-  "personVideosHeading": "Videos mit dieser Person"
+  "personVideosHeading": "Videos mit dieser Person",
+  "navMyPosts": "Meine Beiträge",
+  "postsTab": "Beiträge"
 }

@@ -2,7 +2,7 @@ import { useAuthorization } from "~/authorization/authorization";
 import { NavLink } from "react-router";
 import { getStoredUser } from "~/functions";
 import DefaultProfile from "../../../../assets/DefaultProfile.webp";
-import { AnalyticsSVG, PeopleSVG, PlaylistSVG, PlaySVG, QuizSVG } from "~/constants";
+import { AnalyticsSVG, PeopleSVG, PostSVG, PlaylistSVG, PlaySVG, QuizSVG } from "~/constants";
 import backgroundImage from "../../../../assets/LoginBackground.webp";
 import { memo, useRef } from "react";
 import { useConstrainedSticky } from "~/components/shared/useConstrainedSticky";
@@ -44,6 +44,9 @@ function Sidebar() {
                     </NavLink>}
                     {canAccess('playlists') && <NavLink to="/my-playlists" end className={({ isActive }) => (isActive ? "active" : "")}>
                         {PlaylistSVG}&nbsp;{t("navMyPlaylists")}
+                    </NavLink>}
+                    {canAccess('posts') && <NavLink to="/my-posts" end className={({ isActive }) => (isActive ? "active" : "")}>
+                        {PostSVG}&nbsp;{t("navMyPosts")}
                     </NavLink>}
                     {canAccess('people') && <NavLink to="/speakers-chairs" end className={({ isActive }) => (isActive ? "active" : "")}>
                         {PeopleSVG}&nbsp;{t("navSpeakersChairs")}

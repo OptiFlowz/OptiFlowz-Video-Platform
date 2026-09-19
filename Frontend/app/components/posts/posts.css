@@ -1,0 +1,211 @@
+.channelPostsFeed { width: min(100%, 680px); display: flex; flex-direction: column; gap: 20px; padding-block: 24px; }
+.postCard { padding: 20px; border-radius: 18px; background: var(--background2); color: var(--text1); min-width: 0; overflow-wrap: anywhere; }
+.postCard > .postAuthor,
+main.channelPage .postCard > .postAuthor { display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center; justify-content: flex-start; gap: 10px; margin-bottom: 20px; text-align: left; }
+.postAuthor > div { min-width: 0; }
+.postAuthor > img { width: 40px; height: 40px; flex: 0 0 40px; object-fit: cover; border-radius: 50%; }
+.postAuthor strong { display: block; font-size: .95rem; line-height: 1.25; }
+.postAuthor time { display: block; color: var(--text2); font-size: .8rem; line-height: 1.25; margin-top: 1px; }
+.postBlocks { display: flex; flex-direction: column; gap: 16px; }
+.postBlocks p, .postBlocks figcaption, .postText { white-space: pre-wrap; line-height: 1.6; }
+.postInset { padding: 14px; border-radius: 10px; background: var(--background2); }
+.postImage { width: 100%; max-height: 600px; object-fit: cover; border-radius: 8px; }
+.postInset figcaption { margin-bottom: 10px; }
+.postOptions { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.postOption { position: relative; isolation: isolate; overflow: hidden; display: flex; align-items: center; gap: 10px; width: 100%; min-height: 50px; padding: 12px 14px; border-radius: 10px; background: var(--background2); color: var(--text1); text-align: start; cursor: pointer; }
+.postOptionFill { position: absolute; inset-block: 0; inset-inline-start: 0; z-index: -1; border-radius: inherit; background: var(--background2); min-width: 0; transition: width .55s cubic-bezier(.22, 1, .36, 1), min-width .55s cubic-bezier(.22, 1, .36, 1), background-color .25s ease; }
+.postOption.isSelected .postOptionFill { background: var(--accentOrange); }
+.postOption.isIncorrect .postOptionFill { background: var(--accentRed); }
+.postOption.isCorrect .postOptionFill { background: var(--accentGreen2); }
+.postOption.isCorrect .postOptionLabel, .postOption.isSelected .postOptionLabel { color: var(--borderWhite); }
+.postOption > img { width: 70px; height: 70px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
+.postOptionDot { display: grid; place-items: center; width: 18px; height: 18px; flex-shrink: 0; background: var(--background2); border-radius: 50%; color: var(--borderWhite); }
+.postOption.isSelected .postOptionDot { background: var(--borderWhite); }
+.postOption .postOptionDot.isResultIcon { background: transparent; color: var(--borderWhite); }
+.postOptionDot svg { display: block; width: 16px; height: 16px; flex-shrink: 0; }
+.postOption.isSelected > img { outline: 2px solid var(--borderWhite); outline-offset: -2px; }
+.postOption.isSelected .postOptionLabel { font-weight: 600; }
+.postOptionLabel { flex: 1; min-width: 0; }
+.postOptionLabel small { display: block; }
+.postOptionPercent { font-size: .9rem; font-variant-numeric: tabular-nums; opacity: 0; transform: translateY(3px); transition: opacity .3s ease, transform .3s ease; }
+.postOptionPercent.isVisible { opacity: 1; transform: translateY(0); }
+.postPollSubmit { display: flex; justify-content: flex-end; margin-top: 14px; }
+.postPollSubmit button:disabled { opacity: .5; cursor: not-allowed; }
+.postPollFeedback { font-size: .8rem; color: var(--text2); margin-top: 10px; }
+.postPollResultFeedback { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .4s cubic-bezier(.22, 1, .36, 1), opacity .3s ease; }
+.postPollResultFeedback[data-visible="true"] { grid-template-rows: 1fr; opacity: 1; }
+.postPollResultFeedback > div { min-height: 0; overflow: hidden; }
+.postPollResultFeedback .postPollFeedback { margin: 0; padding-top: 10px; }
+
+.postVideoBlock > p { margin-bottom: 14px; }
+.postVideoMention { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 10px; background: var(--background2); color: var(--text1); }
+.postVideoMention > img { width: 32%; aspect-ratio: 16/9; object-fit: cover; border-radius: 8px; }
+.postVideoMention > div { min-width: 0; }
+.postVideoMention strong { font-size: .95rem; line-height: 1.4; display: block; }
+.postVideoMention small { display: block; margin-block: 4px 8px; color: var(--text2); }
+.postVideoMeta { display: flex; flex-wrap: wrap; gap: 6px; font-size: .75rem; }
+.postVideoMeta span { padding: 3px 8px; border-radius: var(--bR); background: var(--background2); }
+.postDemoNote { color: var(--text2); font-size: .85rem; line-height: 1.6; }
+.myPostsPage .postDemoNote { margin-bottom: 18px; }
+.postManagementSummary { display: flex; align-items: center; gap: 12px; min-width: 240px; padding-block: 8px; }
+.postManagementSummary > div { min-width: 0; }
+.postManagementSummary strong { display: block; font-size: .88rem; font-weight: 500; line-height: 1.35; overflow-wrap: anywhere; }
+.postManagementSummary p { display: -webkit-box; max-width: 46ch; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; color: var(--text2); font-size: .8rem; line-height: 1.35; margin-block: 4px 0; }
+.postManagementIcon { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; background: var(--background2); color: var(--accentBlue3); }
+.postManagementIcon svg { width: 24px; height: 24px; }
+.myPostsPage .postsTable { min-width: 760px; }
+.myPostsPage .postsTable td { vertical-align: middle; }
+.postStatus, .postTypeTags > span { display: inline-block; padding: 5px 10px; border-radius: 8px; background: var(--background2); font-size: .85rem; }
+.postTypeTags { display: flex; flex-wrap: wrap; gap: 6px; }
+.postDialog { position: fixed; inset: 0; margin: auto; width: min(760px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); padding: 24px; border: 1px solid var(--border1); border-radius: 24px; background: var(--background1); color: var(--text1); overflow-x: hidden; box-sizing: border-box; }
+.postDialog::backdrop { background: var(--backgroundC2); }
+.postDialogHeading { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; }
+.postDialogHeading h2 { font-size: 1.4rem; font-weight: 600; }
+.postDialog button { cursor: pointer; }
+.postDialog button:disabled { cursor: not-allowed; opacity: .5; }
+.postIconButton, .postBlockActions button { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; flex-shrink: 0; background: var(--background2); color: var(--text1); border-radius: 50%; }
+.postDialog svg { width: 20px; height: 20px; flex-shrink: 0; }
+.postEditorTabs { display: flex; gap: 8px; margin-block: 20px; }
+.postEditorTabs button { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 10px; background: var(--background2); color: var(--text1); }
+.postEditorTabs button[aria-pressed="true"] { background: var(--accentBlue); color: var(--borderWhite); }
+.postEditorTabs button svg path { stroke: currentColor; }
+.postEditorForm, .postEditorBlock, .postEditorOptions, .postEditorOption { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.postEditorForm label { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.postEditorMeta { display: grid; grid-template-columns: minmax(0, 1fr) 160px; align-items: end; gap: 16px; }
+.postEditorForm input:not([type="file"]):not([type="radio"]), .postEditorForm textarea { width: 100%; min-width: 0; max-width: 100%; padding: 12px; border: 1px solid var(--border1); border-radius: 12px; background: var(--background2); color: var(--text1); font: inherit; }
+.postEditorForm textarea { resize: vertical; overflow-x: hidden; }
+.postEditorForm input[type="radio"] { accent-color: var(--accentBlue); }
+.postEditorBlock { border: 1px solid var(--border1); padding: 18px; border-radius: 16px; }
+.postEditorBlockHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.postEditorBlock h3 { font-size: 1rem; font-weight: 600; }
+.postBlockActions { display: flex; gap: 6px; }
+.postEditorOption { background: var(--background2); padding: 14px; border-radius: 12px; }
+.postEditorOption input:not([type="file"]):not([type="radio"]) { background: var(--background1); }
+.postImageInput { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.postImageInput > img { width: 70px; height: 70px; object-fit: cover; border-radius: 10px; }
+.postUpload { padding: 10px; border: 1px dashed var(--border1); border-radius: 10px; font-size: .85rem; flex: 1; }
+.postUpload input { width: 100%; min-width: 0; }
+.postOptionActions { display: flex; justify-content: space-between; align-items: center; }
+.postOptionActions label { flex-direction: row; align-items: center; font-size: .85rem; }
+.postAddBlock { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.postAddBlock .customSelect { flex: 1; }
+.postPrimary, .postSecondary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 18px; border-radius: var(--bR); font-weight: 600; background: var(--background2); color: var(--text1); }
+.postPrimary { background: var(--accentBlue); color: var(--borderWhite); }
+.postEditorFooter { display: flex; justify-content: flex-end; gap: 12px; padding-top: 8px; }
+.postError { color: var(--accentRed); }
+.postDialog :is(button, input, textarea):focus-visible, .postCard :is(button, a):focus-visible { outline: 2px solid var(--accentBlue); outline-offset: 2px; }
+@media (max-width: 540px) {
+  .postCard { padding: 16px; }
+  .postDialog { padding: 16px; max-height: calc(100dvh - 24px); }
+  .postEditorMeta { grid-template-columns: minmax(0, 1fr); }
+  .postEditorBlock { padding: 12px; }
+  .postOption > img { width: 48px; height: 48px; }
+  .postVideoMention { align-items: flex-start; }
+  .postVideoMeta { display: none; }
+}
+
+.postCard .postOption:disabled { cursor: default; opacity: 1; }
+
+main.myPostsPage td button.postStatus { padding: .35rem .6rem; border: 0; border-radius: 6px; font-size: .76rem; font-weight: 600; line-height: 1.5; }
+main.myPostsPage td button.postStatus.public { color: var(--accentBlue2); }
+main.myPostsPage td button.postStatus.draft { color: var(--analyticsViewsOverTime); }
+
+/* Compose directly in the same card and content surfaces as the channel feed. */
+.postComposerToolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+.postComposerToolbar .postDemoNote { flex: 1 1 230px; font-size: .75rem; }
+.postComposerToolbar .postEditorTabs { margin: 0; }
+.postComposerToolbar .postEditorTabs button { padding: 8px 12px; font-size: .85rem; }
+.postComposerTitle { font-size: .8rem; color: var(--text2); }
+.postComposerForm .postComposerTitle input { padding: 8px 0; background: transparent; border: 0; border-bottom: 1px solid var(--border1); border-radius: 0; color: var(--text1); font-size: 1rem; font-weight: 500; }
+.postComposer { width: 100%; align-self: stretch; }
+.postComposer > .postAuthor { flex-wrap: wrap; }
+.postComposer > .postAuthor > div:not(.postComposerStatus) { flex: 1 1 100px; }
+.postComposerStatus { margin-inline-start: auto; max-width: 180px; }
+.postComposerStatus .customSelectTrigger { padding: 8px 10px; font-size: .8rem; }
+.postComposerBlocks { display: flex; flex-direction: column; }
+.postComposerSection { min-width: 0; }
+.postComposerSectionTools { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; color: var(--text2); }
+.postComposerSectionTools > span { display: inline-flex; align-items: center; gap: 6px; font-size: .7rem; }
+.postComposerSectionTools > span svg { width: 14px; height: 14px; }
+.postComposerSectionTools .postBlockActions button { width: 28px; height: 28px; background: transparent; color: var(--text2); }
+.postComposerSectionTools .postBlockActions button:hover { background: var(--background2); color: var(--text1); }
+.postArrowUp, .postArrowDown { display: flex; }
+.postArrowUp { transform: rotate(-90deg); }
+.postArrowDown { transform: rotate(90deg); }
+.postComposerSectionTools svg path, .postComposerAdd svg path, .postComposerAddMenu svg path, .postImageUpload svg path { stroke: currentColor; }
+.postComposerForm textarea.postInlineText { display: block; box-sizing: border-box; width: 100%; padding: 12px; border: 1px solid var(--border1); border-radius: 12px; background: var(--background2); color: var(--text1); font: inherit; line-height: 1.6; min-height: calc(1.6em + 26px); resize: none; overflow: hidden; transition: border-color .15s ease; }
+.postComposerForm textarea.postInlineText::placeholder { color: var(--text2); }
+.postComposerForm textarea.postInlineText:focus-visible { border-color: var(--accentBlue3); outline: 2px solid var(--accentBlue3); outline-offset: 2px; }
+.postComposerForm textarea.postInlineText:disabled { opacity: .65; }
+.postComposerVideo { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+.postComposerImage { position: relative; margin-top: 12px; border-radius: 8px; min-width: 0; }
+.postComposerImage > img { width: 100%; max-height: 600px; object-fit: cover; border-radius: 8px; }
+.postComposerImageControls { display: flex; align-items: center; gap: 8px; }
+.postComposerImage.hasImage > .postComposerImageControls { position: absolute; inset-inline-end: 10px; bottom: 10px; }
+.postComposerForm .postImageUpload { position: relative; display: inline-flex; flex-direction: row; align-items: center; justify-content: center; gap: 8px; cursor: pointer; padding: 10px 14px; border-radius: 8px; background: var(--background1); color: var(--text1); font-size: .8rem; }
+.postComposerImage:not(.hasImage):not(.isCompact) .postImageUpload { width: 100%; min-height: 160px; flex-direction: column; border: 1px dashed var(--border1); background: var(--background2); }
+.postImageUpload:focus-within { outline: 2px solid var(--accentBlue2); outline-offset: 2px; }
+.postComposerImageControls > .postIconButton { background: var(--background1); }
+.postComposerImage .postError { margin-top: 8px; font-size: .75rem; }
+.postComposerImage.isCompact { flex: 0 0 auto; margin: 0; }
+.postComposerImage.isCompact > img { width: 64px; height: 64px; object-fit: cover; }
+.postComposerImage.isCompact .postImageUpload { width: 30px; height: 30px; padding: 5px; background: transparent; }
+.postComposerImage.isCompact.hasImage .postImageUpload, .postComposerImage.isCompact.hasImage .postIconButton { width: 24px; height: 24px; padding: 4px; background: var(--background1); }
+.postComposerImage.isCompact.hasImage .postComposerImageControls { inset-inline-end: 3px; bottom: 3px; gap: 3px; }
+.postComposerImage.isCompact.hasImage .postComposerImageControls svg { width: 14px; height: 14px; }
+.postComposerImage.isCompact .postError { max-width: 110px; }
+.postComposerOption { padding: 12px 14px; border-radius: 10px; background: var(--background2); }
+.postComposerOptionRow { display: flex; align-items: center; gap: 10px; }
+.postComposerOptionRow > textarea { flex: 1; }
+.postComposerOptionRow > .postIconButton { width: 28px; height: 28px; background: transparent; color: var(--text2); }
+.postComposerOption.isCorrect { outline: 1px solid var(--accentGreen2); }
+.postComposerForm .postCorrectChoice { position: relative; display: flex; flex: 0 0 18px; width: 18px; height: 18px; cursor: pointer; }
+.postCorrectChoice > span { display: grid; place-items: center; width: 18px; height: 18px; border: 1px solid var(--border1); border-radius: 50%; background: var(--background2); }
+.postCorrectChoice input:checked + span { border-color: var(--accentGreen2); background: var(--accentGreen2); color: var(--borderWhite); }
+.postCorrectChoice input:focus-visible + span { outline: 2px solid var(--accentBlue2); outline-offset: 3px; }
+.postCorrectChoice svg { width: 12px; height: 12px; }
+.postComposerCorrectLabel { display: block; margin-top: 6px; margin-inline-start: 28px; color: var(--accentGreen2); font-size: .75rem; }
+.postComposerOptionFooter { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.postComposerOptionFooter > span { color: var(--text2); font-size: .7rem; }
+.postComposerAddOption { display: inline-flex; align-items: center; gap: 6px; padding: 8px 0; color: var(--accentBlue2); font-size: .8rem; }
+.postComposerInsert { position: relative; display: flex; flex-wrap: wrap; justify-content: center; margin-block: 8px; }
+.postComposerInsert::before { content: ''; position: absolute; inset-inline: 0; top: 14px; height: 1px; background: var(--border1); }
+.postComposerInsert > button { position: relative; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--background1); color: var(--text2); }
+.postComposerInsert > .postComposerAddMenu { flex-basis: 100%; margin-top: 8px; }
+.postComposerAdd { margin-top: 24px; padding-top: 16px; border-top: 1px dashed var(--border1); }
+.postComposerAdd > span { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; color: var(--text2); font-size: .8rem; }
+.postComposerAddMenu { display: flex; flex-wrap: wrap; gap: 8px; }
+.postComposerAddMenu button { display: inline-flex; align-items: center; gap: 6px; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border1); background: transparent; color: var(--text1); font-size: .75rem; transition: background .15s; }
+.postComposerAddMenu button:hover { background: var(--background2); }
+.postComposerForm .postEditorFooter { position: sticky; bottom: -24px; z-index: 3; padding-block: 16px; background: var(--background1); }
+@media (max-width: 540px) {
+  .postComposer { padding: 14px; }
+  .postComposerStatus { max-width: 140px; }
+  .postComposerOption { padding: 10px; }
+  .postComposerOptionRow { gap: 6px; }
+  .postComposerImage.isCompact > img { width: 48px; height: 48px; }
+  .postComposerImage.isCompact.hasImage .postComposerImageControls { position: static; margin-top: 4px; }
+  .postComposerAddMenu button { flex: 1 1 auto; justify-content: center; }
+  .postComposerForm .postEditorFooter { bottom: -16px; }
+}
+
+.postComposerAddOption svg path, .postComposerInsert > button svg path, .postComposerImageControls svg path { stroke: currentColor; }
+
+/* Match the 200 ms fade and 24 px slide used by the person and quiz popups. */
+.postDialog { opacity: 0; transform: translateY(24px); transition: opacity 200ms ease-out, transform 200ms ease-out; box-shadow: 0 25px 50px -12px var(--seethroughtBlack); }
+.postDialog[data-visible="true"] { opacity: 1; transform: translateY(0); }
+.postDialog::backdrop { opacity: 0; transition: opacity 200ms ease-out; }
+.postDialog[data-visible="true"]::backdrop { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .postOptionFill, .postOptionPercent, .postPollResultFeedback { transition: none; }
+  .postDialog, .postDialog[data-visible="true"] { transform: none; transition: opacity 200ms ease-out; }
+}
+
+.postEditorFields { display: flex; flex-direction: column; gap: 16px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.postSectionFields { min-width: 0; margin: 0; border: 0; }
+.postSectionFields:not(.postInset) { padding: 0; }
+.postSectionFields:disabled .postInlineText { cursor: default; }
+main.myPostsPage td button.postStatus.private { color: var(--accentRed3); }
+.postComposerToolbar { justify-content: flex-end; }
+.postOption.isCorrect .postOptionFill,
+.postOption.isSelected .postOptionFill { min-width: min(100%, 10px); }

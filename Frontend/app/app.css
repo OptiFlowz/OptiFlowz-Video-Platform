@@ -15457,3 +15457,7 @@ progress::-moz-progress-bar {
   background: var(--progressAccentOrange);
   border-radius: 999px;
 }
+
+.rowVisibilityPopup .visibilityOptionIcon, .rowVisibilitySheet .visibilityOptionIcon { display: inline-flex; flex-shrink: 0; color: var(--text1); }
+.rowVisibilityPopup .visibilityOptionIcon svg, .rowVisibilitySheet .visibilityOptionIcon svg { width: 20px; height: 20px; }
+.rowVisibilityPopup .visibilityOptionIcon svg path, .rowVisibilitySheet .visibilityOptionIcon svg path { stroke: currentColor; }

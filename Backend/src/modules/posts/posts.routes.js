@@ -13,6 +13,7 @@ router.get('/:userId', optionalAuth, postsController.getUserPosts);
 
 router.use(requireAuth);
 router.post('/', requirePermission(Permissions.POSTS_CREATE), postsController.createPost);
+router.patch('/:postId', requirePostEditAccess, postsController.editPost);
 router.delete('/:postId', requirePostDeleteAccess, postsController.deletePost);
 router.post('/:postId/blocks', requirePostEditAccess, postBlockUpload, postsController.appendPostBlock);
 router.post('/:postId/blocks/:blockId/vote', requirePermission(Permissions.POSTS_POLL_VOTE), postsController.votePostPoll);

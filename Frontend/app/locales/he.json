@@ -1158,5 +1158,7 @@
   "twoFactorChanged": "הגדרות החשבון השתנו. בדקו את המצב ונסו שוב.",
   "twoFactorFailed": "לא ניתן להשלים את הבקשה. נסו שוב.",
   "twoFactorLoading": "טעינת הגדרות אבטחה…",
-  "personVideosHeading": "סרטונים בהשתתפותם"
+  "personVideosHeading": "סרטונים בהשתתפותם",
+  "navMyPosts": "הפוסטים שלי",
+  "postsTab": "פוסטים"
 }

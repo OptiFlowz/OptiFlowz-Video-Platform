@@ -1238,5 +1238,7 @@
   "twoFactorChanged": "Nastavení účtu se změnilo. Zkontrolujte stav a zkuste to znovu.",
   "twoFactorFailed": "Požadavek se nepodařilo dokončit. Zkuste to znovu.",
   "twoFactorLoading": "Načítání nastavení zabezpečení…",
-  "personVideosHeading": "Videa s účastí této osoby"
+  "personVideosHeading": "Videa s účastí této osoby",
+  "navMyPosts": "Moje příspěvky",
+  "postsTab": "Příspěvky"
 }
