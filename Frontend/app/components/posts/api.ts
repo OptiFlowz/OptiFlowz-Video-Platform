@@ -1,10 +1,11 @@
 import { fetchFn } from '~/API';
+import type { ChannelVideoT } from '~/types';
 import { getToken } from '~/functions';
 import type { Post, PostBlock, PostOption, PostSummary } from './model';
 
 export type ApiOption = { id: string; position?: number; text: string; image_url?: string | null; is_correct?: boolean; vote_count?: number; answer_count?: number };
-export type ApiBlock = { id: string; type: 'text' | 'image' | 'video' | 'poll' | 'questioner'; content: { text?: string; url?: string; video_id?: string }; options?: ApiOption[]; has_responses?: boolean; selected_option_id?: string | null; selected_option_ids?: string[]; correct_option_ids?: string[] };
-export type ApiPost = { id: string; user_id: string; title: string; status: Post['status']; created_at: string; blocks: ApiBlock[] };
+export type ApiBlock = { id: string; type: 'text' | 'image' | 'video' | 'poll' | 'questioner'; content: { text?: string; url?: string; video_id?: string }; video_card?: ChannelVideoT | null; options?: ApiOption[]; has_responses?: boolean; selected_option_id?: string | null; selected_option_ids?: string[]; correct_option_ids?: string[] };
+export type ApiPost = { id: string; user_id: string; author_full_name?: string | null; author_image_url?: string | null; title: string; status: Post['status']; created_at: string; blocks: ApiBlock[] };
 export type PaginationData = { page: number; limit: number; total: number; totalPages: number; hasNextPage: boolean };
 export type Participation = { has_responses?: boolean; selected_option_id: string | null; selected_option_ids?: string[]; options: ApiOption[]; correct_option_ids?: string[]; is_correct?: boolean; total_votes?: number; total_answers?: number };
 export function postRequest<T>(route: string, method = 'GET', body?: unknown, signal?: AbortSignal): Promise<T> {
@@ -23,11 +24,11 @@ export function fromOptions(options: ApiOption[]): PostOption[] {
 export function fromBlock(block: ApiBlock): PostBlock {
   const base = { id: block.id, text: block.content.text || '', hasResponses: block.has_responses };
   if (block.type === 'image') return { ...base, type: 'image', image: block.content.url || '' };
-  if (block.type === 'video') return { ...base, type: 'video', videoId: block.content.video_id || '' };
+  if (block.type === 'video') return { ...base, type: 'video', videoId: block.content.video_id || '', video: block.video_card };
   if (block.type === 'poll' || block.type === 'questioner') return { ...base, type: block.type === 'questioner' ? 'questionnaire' : 'poll', options: fromOptions(block.options || []), selectedOptionId: block.selected_option_id ?? null, selectedOptionIds: block.selected_option_ids ?? (block.selected_option_id ? [block.selected_option_id] : []), correctIds: block.correct_option_ids ?? block.options?.filter(option => option.is_correct).map(option => option.id) };
   return { ...base, type: 'text' };
 }
-export const fromPost = (post: ApiPost): Post => ({ id: post.id, userId: post.user_id, title: post.title, status: post.status, createdAt: post.created_at, blocks: post.blocks.map(fromBlock), persisted: true });
+export const fromPost = (post: ApiPost): Post => ({ id: post.id, userId: post.user_id, author: { full_name: post.author_full_name || undefined, image_url: post.author_image_url }, title: post.title, status: post.status, createdAt: post.created_at, blocks: post.blocks.map(fromBlock), persisted: true });
 export async function getPost(id: string, signal?: AbortSignal) { return fromPost((await postRequest<{ post: ApiPost }>(`/details/${id}`, 'GET', undefined, signal)).post); }
 export async function getMyPosts(page: number, limit: number, ascending: boolean, search: string, signal?: AbortSignal) {
   const params = new URLSearchParams({ page: String(page), limit: String(limit), sortBy: 'created_at', sortOrder: ascending ? 'asc' : 'desc', q: search });
@@ -36,6 +37,13 @@ export async function getMyPosts(page: number, limit: number, ascending: boolean
 }
 export async function getChannelPosts(id: string, page: number, ascending: boolean, signal?: AbortSignal) {
   const data = await postRequest<{ posts: ApiPost[]; pagination: PaginationData }>(`/${id}?page=${page}&limit=20&sortBy=created_at&sortOrder=${ascending ? 'asc' : 'desc'}`, 'GET', undefined, signal);
+  return { ...data, posts: data.posts.map(fromPost) };
+}
+
+export async function getRecommendedPosts(userIds: string[], signal?: AbortSignal) {
+  const data = await postRequest<{ posts: ApiPost[]; pagination: PaginationData }>(
+    '/recommended?page=1&limit=10&sortBy=created_at&sortOrder=desc', 'POST', { user_ids: userIds }, signal,
+  );
   return { ...data, posts: data.posts.map(fromPost) };
 }
 
@@ -81,7 +89,9 @@ export async function savePost(input: Post, session: SaveSession, checkpoint: (d
         const data = { type: block.type === 'questionnaire' ? 'questioner' : block.type, content: { text: block.text.trim(), ...(block.type === 'video' ? { video_id: block.videoId } : {}) }, ...('options' in block ? { options: block.options.map((option, position) => ({ position, text: option.text.trim(), ...(block.type === 'questionnaire' ? { is_correct: !!block.correctIds?.includes(option.id) } : {}) })) } : {}) };
         const files: Array<[string, File | undefined]> = block.type === 'image' ? [['file', imageFile(block.image)]] : 'options' in block ? block.options.map((option, i) => [`option_${i}`, imageFile(option.image)]) : [];
         const response = await postRequest<{ block: ApiBlock }>(`${base}/blocks`, 'POST', payload(data, files, 'block'));
-        block = fromBlock(response.block); draft.blocks[index] = block; current.blocks.push(structuredClone(block));
+        const appended = fromBlock(response.block);
+        if (appended.type === 'video' && block.type === 'video' && appended.video === undefined) appended.video = block.video;
+        block = appended; draft.blocks[index] = block; current.blocks.push(structuredClone(block));
         checkpoint(structuredClone(draft));
         continue;
       }
@@ -94,7 +104,10 @@ export async function savePost(input: Post, session: SaveSession, checkpoint: (d
         const result = fromBlock((await postRequest<{ block: ApiBlock }>(route, 'PATCH', payload({ content }, [['file', file]]))).block);
         old.text = result.text;
         if (result.type === 'image' && old.type === 'image' && block.type === 'image') old.image = block.image = result.image;
-        if (result.type === 'video' && old.type === 'video') old.videoId = result.videoId;
+        if (result.type === 'video' && old.type === 'video' && block.type === 'video') {
+          old.videoId = result.videoId;
+          old.video = result.video !== undefined ? result.video : block.video;
+        }
       }
       if ('options' in block && 'options' in old) {
         const desired = block;

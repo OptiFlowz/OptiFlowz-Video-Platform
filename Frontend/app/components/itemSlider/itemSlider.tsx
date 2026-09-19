@@ -1,3 +1,4 @@
+import LatestPosts from "../posts/LatestPosts";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
 import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -25,7 +26,7 @@ const SkeletonItem = () => (
     </div>
 );
 
-function ItemSlider({props}: {props: ItemSliderT}){
+function ItemSlider({props, showLatestPosts = false}: {props: ItemSliderT; showLatestPosts?: boolean}){
     const { t } = useI18n();
     const { preferences } = usePrivacyPreferences();
     // const { onDataStateChange } = props;
@@ -171,6 +172,8 @@ function ItemSlider({props}: {props: ItemSliderT}){
     : null;
 
     return (
+        <>
+        {showLatestPosts && props.type === 1 && data && "videos" in data && <LatestPosts videos={data.videos} />}
         <div className="contentSection mt-8 max-[450px]:mt-3">
             <span className="collection-header">
                 <span className="flex items-center gap-5">
@@ -223,6 +226,7 @@ function ItemSlider({props}: {props: ItemSliderT}){
                 </div>
             }
         </div>
+        </>
     );
 }
 

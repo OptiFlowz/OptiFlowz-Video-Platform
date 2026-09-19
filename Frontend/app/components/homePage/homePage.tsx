@@ -72,7 +72,7 @@ function HomePage(){
             <ItemSlider props={{type: 5}} />
             <ItemSlider props={{type: 0}} />
             <ItemSlider props={{type: 2}} />
-            <ItemSlider props={{type: 1}} />
+            <ItemSlider props={{type: 1}} showLatestPosts />
         </main>
         <MessagePopup
             open={popupState.open}

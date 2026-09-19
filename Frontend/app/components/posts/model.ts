@@ -3,10 +3,10 @@ export type PostOption = { id: string; position?: number; text: string; image?: 
 export type PostBlock = { hasResponses?: boolean } & (
   | { id: string; type: 'text'; text: string }
   | { id: string; type: 'image'; image: string; text: string }
-  | { id: string; type: 'video'; videoId: string; text: string; video?: ChannelVideoT }
+  | { id: string; type: 'video'; videoId: string; text: string; video?: ChannelVideoT | null }
   | { id: string; type: 'poll' | 'questionnaire'; text: string; options: PostOption[]; correctIds?: string[]; selectedOptionId?: string | null; selectedOptionIds?: string[] }
 );
-export type Post = { id: string; title: string; createdAt: string; status: 'public' | 'private'; blocks: PostBlock[]; persisted?: boolean; userId?: string };
+export type Post = { id: string; title: string; createdAt: string; status: 'public' | 'private'; blocks: PostBlock[]; persisted?: boolean; userId?: string; author?: PostAuthor };
 export type PostSummary = Omit<Post, 'blocks'> & { text: string; blockTypes: PostBlock['type'][] };
 export type PostAuthor = { full_name?: string; image_url?: string | null };
 export const blockTypes = ['text', 'image', 'poll', 'questionnaire', 'video'] as const;

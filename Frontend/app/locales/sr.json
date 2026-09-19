@@ -1271,5 +1271,7 @@
   "postSelectedVideo": "Izabrani video",
   "postWrongAnswer": "Netačno. Tačan odgovor je označen.",
   "postSignInVote": "Prijavi se da odgovoriš.",
-  "postCannotVote": "Nemaš dozvolu da odgovoriš na ovo pitanje."
+  "postCannotVote": "Nemaš dozvolu da odgovoriš na ovo pitanje.",
+  "latestPosts": "Najnoviji postovi",
+  "postOpen": "Otvori post"
 }

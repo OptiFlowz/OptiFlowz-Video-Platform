@@ -1,12 +1,11 @@
 import { CheckSVG, CloseSVG } from "~/constants";
 import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import { useRef, useState, type ReactNode } from 'react';
-import { useQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
-import { fetchFn } from '~/API';
+import { useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { getToken } from '~/functions';
 import { redirectToLogin } from '~/auth/session';
 import { useAuthorization } from '~/authorization/authorization';
-import { fromOptions, getPost, getChannelPosts, postRequest, type Participation } from './api';
+import { fromOptions, getPost, getChannelPosts, getRecommendedPosts, postRequest, type Participation } from './api';
 import { Link } from 'react-router';
 import { useI18n } from '~/i18n';
 import { formatDate, formatViews } from '~/functions';
@@ -39,6 +38,11 @@ function Poll({ block, postId, interactive, readOnly }: { block: PollBlock; post
   const correctIds = persisted ? current.correctIds : block.correctIds;
   const applyBlock = (next: PollBlock) => {
     setUpdated({ source: block, token, value: next });
+    client.setQueriesData<Awaited<ReturnType<typeof getRecommendedPosts>>>({
+      queryKey: ['posts', 'recommended'], predicate: query => query.queryKey[2] === token,
+    }, data => data ? { ...data, posts: data.posts.map(post => post.id === postId ? { ...post,
+      blocks: post.blocks.map(item => item.id === block.id ? next : item),
+    } : post) } : data);
     // Reuse the vote response in every cached sort/page for this viewer.
     client.setQueriesData<InfiniteData<Awaited<ReturnType<typeof getChannelPosts>>>>({
       queryKey: ['posts', 'channel'], predicate: query => query.queryKey[3] === token,
@@ -63,7 +67,10 @@ function Poll({ block, postId, interactive, readOnly }: { block: PollBlock; post
     inFlight.current = true; setBusy(true); setError('');
     setOptimistic({ token, value: withOptimisticVote(previous, remove ? [] : optionIds) });
     try {
-      await client.cancelQueries({ queryKey: ['posts', 'channel'], predicate: query => query.queryKey[3] === token });
+      await Promise.all([
+        client.cancelQueries({ queryKey: ['posts', 'channel'], predicate: query => query.queryKey[3] === token }),
+        client.cancelQueries({ queryKey: ['posts', 'recommended'], predicate: query => query.queryKey[2] === token }),
+      ]);
       const result = await postRequest<Participation>(`/${postId}/blocks/${block.id}/${block.type === 'questionnaire' ? 'answer' : 'vote'}`, 'POST', multiple ? { option_ids: optionIds } : { option_id: optionId, ...(remove ? { remove: true } : {}) });
       applyBlock({ ...previous, selectedOptionId: result.selected_option_id,
         selectedOptionIds: result.selected_option_ids ?? (result.selected_option_id ? [result.selected_option_id] : []),
@@ -113,18 +120,13 @@ function Poll({ block, postId, interactive, readOnly }: { block: PollBlock; post
     </div>
   </section>;
 }
-export function PostAuthorHeader({ author, createdAt, children }: { author: PostAuthor; createdAt: string; children?: ReactNode }) {
+export function PostAuthorHeader({ author, createdAt, channelId, children }: { author: PostAuthor; createdAt: string; channelId?: string; children?: ReactNode }) {
   const { t } = useI18n();
-  return <div className="postAuthor"><img src={author.image_url || DefaultProfile} alt="" /><div><strong>{author.full_name || t('channelLabel')}</strong><time dateTime={createdAt}>{formatDate(createdAt)}</time></div>{children}</div>;
+  return <div className="postAuthor"><img src={author.image_url || DefaultProfile} alt="" /><div><strong>{channelId ? <Link className="postAuthorLink" to={`/channel/${channelId}`}>{author.full_name || t('channelLabel')}</Link> : author.full_name || t('channelLabel')}</strong><time dateTime={createdAt}>{formatDate(createdAt)}</time></div>{children}</div>;
 }
 
-export function PostVideoPreview({ video: suppliedVideo, videoId, linked = false }: { video?: ChannelVideoT; videoId?: string; linked?: boolean }) {
-  const token = getToken();
-  const query = useQuery({ queryKey: ['post-video', videoId, token], enabled: !!videoId && !suppliedVideo, retry: false,
-    queryFn: ({ signal }) => fetchFn<ChannelVideoT>({ route: `api/videos/${videoId}`, options: { signal, headers: token ? { Authorization: `Bearer ${token}` } : {} } }) });
-  const video = suppliedVideo || query.data;
+export function PostVideoPreview({ video, linked = false }: { video?: ChannelVideoT | null; linked?: boolean }) {
   const { t } = useI18n();
-  if (!video && videoId && query.isPending) return <div className="postInset">{t('postLoading')}</div>;
   if (!video) return <div className="postInset">{t('postVideoUnavailable')}</div>;
   const content = <>
     <img src={getVideoThumbnail(video) || DefaultThumbnail} onError={event => { event.currentTarget.onerror = null; event.currentTarget.src = DefaultThumbnail; }} alt="" />
@@ -133,16 +135,16 @@ export function PostVideoPreview({ video: suppliedVideo, videoId, linked = false
   return linked ? <Link className="postVideoMention" to={`/video/${video.id}`}>{content}</Link> : <div className="postVideoMention">{content}</div>;
 }
 
-export default function PostCard({ post, author, videos = [], interactive = false, readOnly = false }: { post: Post; author: PostAuthor; videos?: ChannelVideoT[]; interactive?: boolean; readOnly?: boolean }) {
+export default function PostCard({ post, author, videos = [], interactive = false, readOnly = false, linkAuthor = false }: { post: Post; author: PostAuthor; videos?: ChannelVideoT[]; interactive?: boolean; readOnly?: boolean; linkAuthor?: boolean }) {
   return <article className="postCard" aria-label={post.title}>
-    <PostAuthorHeader author={author} createdAt={post.createdAt} />
+    <PostAuthorHeader author={author} createdAt={post.createdAt} channelId={linkAuthor ? post.userId : undefined} />
     <div className="postBlocks">{post.blocks.map(block => {
       if (block.type === 'text') return <div key={block.id} className="postInset postText">{block.text}</div>;
       if (block.type === 'image') return <figure key={block.id} className="postInset">{block.text && <figcaption>{block.text}</figcaption>}{block.image && <img className="postImage" src={block.image} alt={block.text} />}</figure>;
       if (block.type === 'poll' || block.type === 'questionnaire') return <Poll key={`${post.id}-${block.id}`} block={block} postId={post.id} interactive={interactive} readOnly={readOnly} />;
       if (block.type !== 'video') return null;
-      const video = videos.find(video => video.id === block.videoId) ?? block.video;
-      return <section key={block.id} className="postVideoBlock">{block.text && <p>{block.text}</p>}<PostVideoPreview video={video} videoId={block.videoId} linked /></section>;
+      const video = block.video !== undefined ? block.video : videos.find(video => video.id === block.videoId);
+      return <section key={block.id} className="postVideoBlock">{block.text && <p>{block.text}</p>}<PostVideoPreview video={video} linked /></section>;
     })}</div>
   </article>;
 }

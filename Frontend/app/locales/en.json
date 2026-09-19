@@ -1285,5 +1285,7 @@
   "postSelectedVideo": "Selected video",
   "postWrongAnswer": "Not quite. The correct answer is highlighted.",
   "postSignInVote": "Sign in to submit your answer.",
-  "postCannotVote": "You do not have permission to answer this question."
+  "postCannotVote": "You do not have permission to answer this question.",
+  "latestPosts": "Latest Posts",
+  "postOpen": "Open post"
 }
