@@ -1,21 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
-import { fetchFn, fetchApiResponse } from "~/API";
+import { useEffect, useState } from "react";
+import { fetchApiResponse } from "~/API";
 import { env } from "~/env";
 import { formatDate, getToken } from "~/functions";
 import { useI18n } from "~/i18n";
 
-type Certificate = {
-  quiz_id: string;
-  quiz_title: string;
-  attempt_id: string;
-  date_of_completion?: string | null;
-};
-
-type CertificatesResponse = {
-  success: boolean;
-  certificates?: Certificate[];
-};
+import { accountCertificatesQuery, type Certificate } from "./accountQueries";
 
 type CertificateStatus = "loading" | "empty" | "has-data";
 
@@ -50,38 +40,18 @@ function AccountCertificates({ onDataStateChange }: Props) {
   const { t } = useI18n();
   const token = getToken();
   const [downloadingAttemptId, setDownloadingAttemptId] = useState<string | null>(null);
-  const headers = useMemo(() => {
-    const nextHeaders = new Headers();
-    if (token) nextHeaders.set("Authorization", `Bearer ${token}`);
-    return nextHeaders;
-  }, [token]);
-
-  const { data, isLoading, isFetching, isError } = useQuery({
-    queryKey: ["quizCertificates", token],
-    queryFn: () =>
-      fetchFn<CertificatesResponse>({
-        route: "api/quizzes/certificates",
-        options: {
-          method: "GET",
-          headers,
-        },
-      }),
-    enabled: !!token,
-    staleTime: 0,
-    refetchOnMount: "always",
-    refetchOnWindowFocus: false,
-  });
+  const { data, isLoading, isError, refetch } = useQuery(accountCertificatesQuery(token));
 
   const certificates = data?.certificates ?? [];
 
   useEffect(() => {
-    if (isLoading || (isFetching && certificates.length === 0)) {
+    if (isLoading) {
       onDataStateChange?.("loading");
       return;
     }
 
     onDataStateChange?.(certificates.length > 0 ? "has-data" : "empty");
-  }, [certificates.length, isFetching, isLoading, onDataStateChange]);
+  }, [certificates.length, isLoading, onDataStateChange]);
 
   const handleDownloadCertificate = async (certificate: Certificate) => {
     if (!token || downloadingAttemptId) return;
@@ -122,7 +92,7 @@ function AccountCertificates({ onDataStateChange }: Props) {
     }
   };
 
-  if (isLoading || (isFetching && certificates.length === 0)) {
+  if (isLoading) {
     return (
       <section className="accountCertificates contentSection mt-8 max-[450px]:mt-3" aria-label={t("accountCertificatesTitle")}>
         <span className="collection-header">
@@ -138,8 +108,14 @@ function AccountCertificates({ onDataStateChange }: Props) {
     );
   }
 
-  if (isError || certificates.length === 0) {
-    return null;
+  if (isError) {
+    return <div className="platformUsersState" role="alert">
+      <p>{t('searchLoadFailed')}</p>
+      <button type="button" className="button" onClick={() => void refetch()}>{t('usersRetry')}</button>
+    </div>;
+  }
+  if (certificates.length === 0) {
+    return <p className="watchToRecommend">{t('accountCertificatesEmpty')}</p>;
   }
 
   return (

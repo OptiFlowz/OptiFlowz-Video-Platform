@@ -122,7 +122,13 @@ function Poll({ block, postId, interactive, readOnly }: { block: PollBlock; post
 }
 export function PostAuthorHeader({ author, createdAt, channelId, children }: { author: PostAuthor; createdAt: string; channelId?: string; children?: ReactNode }) {
   const { t } = useI18n();
-  return <div className="postAuthor"><img src={author.image_url || DefaultProfile} alt="" /><div><strong>{channelId ? <Link className="postAuthorLink" to={`/channel/${channelId}`}>{author.full_name || t('channelLabel')}</Link> : author.full_name || t('channelLabel')}</strong><time dateTime={createdAt}>{formatDate(createdAt)}</time></div>{children}</div>;
+  const name = author.full_name || t('channelLabel');
+  const avatar = <img src={author.image_url || DefaultProfile} alt="" />;
+  return <div className="postAuthor">
+    {channelId ? <Link className="postAuthorAvatarLink" to={`/channel/${channelId}`} aria-label={name}>{avatar}</Link> : avatar}
+    <div><strong>{channelId ? <Link className="postAuthorLink" to={`/channel/${channelId}`}>{name}</Link> : name}</strong><time dateTime={createdAt}>{formatDate(createdAt)}</time></div>
+    {children}
+  </div>;
 }
 
 export function PostVideoPreview({ video, linked = false }: { video?: ChannelVideoT | null; linked?: boolean }) {

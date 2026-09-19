@@ -6183,12 +6183,12 @@ main.account.accountPage {
 
 @media screen and (max-width: 760px) {
   .accountHero {
-    min-height: 390px;
+    min-height: 0;
   }
 
   .accountHeroContent {
     width: calc(100vw - 40px);
-    padding: 62px 0 24px;
+    padding: 24px 0;
     display: flex;
     flex-direction: column;
     justify-content: center;

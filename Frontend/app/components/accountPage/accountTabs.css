@@ -1,0 +1,33 @@
+main.accountPage .accountTabNavigation { padding-top: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border1); }
+main.accountPage .accountTabsViewport { position: relative; min-width: 0; }
+main.accountPage .accountTabsViewport::before,
+main.accountPage .accountTabsViewport::after { content: ''; position: absolute; top: 0; bottom: 0; width: 32px; z-index: 1; pointer-events: none; opacity: 0; transition: opacity .15s ease; }
+main.accountPage .accountTabsViewport::before { left: 0; background: linear-gradient(to right, var(--background1), transparent); }
+main.accountPage .accountTabsViewport::after { right: 0; background: linear-gradient(to left, var(--background1), transparent); }
+main.accountPage .accountTabsViewport[data-overflow-left="true"]::before,
+main.accountPage .accountTabsViewport[data-overflow-right="true"]::after { opacity: 1; }
+main.accountPage .accountTabs { display: flex; gap: 8px; overflow-x: auto; overscroll-behavior-inline: contain; scrollbar-width: none; }
+main.accountPage .accountTabs::-webkit-scrollbar { display: none; }
+main.accountPage .accountTabs button { flex: 0 0 auto; white-space: nowrap; padding: 16px 20px; background: var(--background2); color: var(--text1); border-radius: 12px 12px 0 0; font-size: 1.05rem; font-weight: 600; cursor: pointer; transition: color .15s, background .15s; }
+main.accountPage .accountTabs button:focus-visible { outline-offset: -4px; }
+main.accountPage .accountTabs button[aria-selected="true"] { background: var(--accentBlue3); color: var(--borderWhite); }
+main.accountPage .accountTabPanel { min-width: 0; padding-block: 24px; }
+main.accountPage .accountTabPanel[hidden] { display: none; }
+main.accountPage .accountLibraryGrid, main.accountPage .accountCertificatesGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px 20px; overflow: visible; }
+main.accountPage .accountLibraryGrid > .item, main.accountPage .accountLibraryGrid > .skeleton-item, main.accountPage .accountCertificatesGrid > .certificateCard { width: 100%; min-width: 0; }
+main.accountPage .accountTabPanel .accountCertificates { margin-top: 0; }
+main.accountPage .accountTabPanel .accountCertificates .collection-header { display: none; }
+@media (max-width: 1075px) {
+    main.accountPage .accountLibraryGrid, main.accountPage .accountCertificatesGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 650px) {
+    main.accountPage .accountTabs { gap: 4px; }
+    main.accountPage .accountTabs button { padding: 15px 18px; font-size: 1rem; }
+    main.accountPage .accountLibraryGrid, main.accountPage .accountCertificatesGrid { grid-template-columns: minmax(0, 1fr); }
+    main.accountPage .accountTabPanel { padding-block: 20px; }
+}
+
+@media (max-width: 760px) {
+    main.accountPage .accountTabsViewport { margin-inline: -20px; }
+    main.accountPage .accountTabs { padding-inline: 20px; scroll-padding-inline: 20px; }
+}

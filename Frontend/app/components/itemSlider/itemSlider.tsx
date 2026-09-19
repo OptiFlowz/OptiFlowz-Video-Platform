@@ -42,6 +42,7 @@ function ItemSlider({props, showLatestPosts = false}: {props: ItemSliderT; showL
 
     let route = null;
     const isPlaylist = props.type === 5 || props.type === 6;
+    const isGrid = props.type === 1 || props.type === 2;
     const { can } = useAuthorization();
     const hasLibraryAccess = !requiresAuth || can(props.type === 6 ? P.playlistsLibrary : P.videosLibrary);
     switch(props.type){
@@ -106,8 +107,9 @@ function ItemSlider({props, showLatestPosts = false}: {props: ItemSliderT; showL
         refetchOnWindowFocus: false,
     });
 
-    // Provera da li postoji overflow
+    // Only horizontal collections need scroll controls and edge fades.
     useEffect(() => {
+        if (isGrid) return;
         const updateScrollState = () => {
             if (!collectionRef.current) return;
 
@@ -130,7 +132,7 @@ function ItemSlider({props, showLatestPosts = false}: {props: ItemSliderT; showL
             currentCollection?.removeEventListener('scroll', updateScrollState);
             window.removeEventListener('resize', updateScrollState);
         };
-    }, [data]);
+    }, [data, isGrid]);
 
     if (!hasLibraryAccess || !route || (requiresAuth && !token) || (props.type === 1 && !preferences.personalization)) return null;
 
@@ -162,7 +164,7 @@ function ItemSlider({props, showLatestPosts = false}: {props: ItemSliderT; showL
 
     const itemsArray = data &&
     ("videos" in data)
-        ? data.videos.map((item, index) => (
+        ? data.videos.slice(0, props.limit).map((item, index) => (
             <Item key={`${props.type}${index}`} props={item} />
         ))
         : data && ("playlists" in data)
@@ -179,13 +181,13 @@ function ItemSlider({props, showLatestPosts = false}: {props: ItemSliderT; showL
                 <span className="flex items-center gap-5">
                     <h2 className="subTitle p-0!">{sliderTitle.current}</h2>
 
-                    {props.type != 1 && itemsArray && itemsArray.length >= 5 && <Link className="button flex items-center gap-2 z-1" to={`/videos/${props.type}`} onClick={() => setCurrentNav(-1)}>
+                    {props.type != 1 && itemsArray && (props.type === 2 ? itemsArray.length > 0 : itemsArray.length >= 5) && <Link className="button flex items-center gap-2 z-1" to={`/videos/${props.type}`} onClick={() => setCurrentNav(-1)}>
                         <p className="font-semibold">{t("viewAll")}</p>
                         {ArrowSVG}
                     </Link>}
                 </span>
                 
-                {data && props.type != 1 && hasOverflow && (
+                {data && !isGrid && hasOverflow && (
                     <div className="scroll-buttons">
                         <button 
                             className="scrollLeftBtn" 
@@ -214,15 +216,11 @@ function ItemSlider({props, showLatestPosts = false}: {props: ItemSliderT; showL
                 <div className="watchToRecommend">{t(data && "hasWatchHistory" in data && data.hasWatchHistory ? "noMoreRecommendations" : "watchSomeVideos")}</div>
                 : 
                 <div
-                    className={`collectionViewport ${showLeftFade ? "show-left-fade" : ""} ${showRightFade ? "show-right-fade" : ""} ${props.type == 1 ? 'notscrollable' : ''}`}
+                    className={`collectionViewport ${!isGrid && showLeftFade ? "show-left-fade" : ""} ${!isGrid && showRightFade ? "show-right-fade" : ""} ${isGrid ? 'notscrollable' : ''}`}
                 >
-                    <div ref={collectionRef} className={`collection ${props.type == 1 ? 'notscrollable' : ''} ${isPlaylist ? "featuredColl" : ""}`}>
+                    <div ref={collectionRef} className={`collection ${isGrid ? 'notscrollable' : ''} ${isPlaylist ? "featuredColl" : ""}`}>
                         {!data ? skeletonArray : itemsArray}
                     </div>
-                    {/* <div ref={collectionRef} className={`collection ${props.type == 1 ? 'notscrollable' : ''} ${isPlaylist ? "featuredColl" : ""}`}>
-                        
-                        {skeletonArray}
-                    </div> */}
                 </div>
             }
         </div>
