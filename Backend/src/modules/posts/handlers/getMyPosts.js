@@ -1,6 +1,7 @@
 import { writePool } from '../../../database/index.js';
 import { validateOrThrow } from '../../../common/input.validation.js';
 import { myPostsQuerySchema, requirePostUser } from '../helpers/posts.shared.js';
+import { withPostVideoCards } from '../helpers/postVideoCards.js';
 
 const SORT_FIELDS = {
   title: 'lower(title)',
@@ -36,7 +37,16 @@ export async function getMyPostsInternal(query, userId) {
      SELECT
        (SELECT COUNT(*)::int FROM post_cards) AS total,
        COALESCE((
-         SELECT jsonb_agg(to_jsonb(post_page) ORDER BY ${orderBy})
+         SELECT jsonb_agg(to_jsonb(post_page) || jsonb_build_object(
+           'video_blocks', COALESCE((
+             SELECT jsonb_agg(jsonb_build_object(
+               'id', b.id, 'post_id', b.post_id, 'type', b.type,
+               'position', b.position, 'content', b.content
+             ) ORDER BY b.position, b.id)
+             FROM public.post_blocks b
+             WHERE b.post_id = post_page.id AND b.type = 'video'
+           ), '[]'::jsonb)
+         ) ORDER BY ${orderBy})
          FROM (
            SELECT id, title, text, status, created_at, block_types,
              author_full_name, author_image_url FROM post_cards
@@ -48,7 +58,7 @@ export async function getMyPostsInternal(query, userId) {
   const { posts, total } = rows[0];
   const totalPages = Math.ceil(total / limit);
   return {
-    posts,
+    posts: await withPostVideoCards(posts, userId),
     pagination: {
       page,
       limit,

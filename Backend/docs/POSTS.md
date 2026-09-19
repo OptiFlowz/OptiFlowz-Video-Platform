@@ -9,6 +9,23 @@ include `author_full_name` and `author_image_url` on each post. These come from
 the author's current `users.full_name` and `users.image_url`; a missing profile
 picture is returned as `null`. The field names match comment author metadata.
 
+Video blocks in user/recommended feeds and post details include `video_card`
+alongside their existing `content.video_id` and optional caption. `/my` summary
+cards include a `video_blocks` array with these same video blocks, ordered by
+block position (empty when the post has no video blocks).
+
+`video_card` uses the standard video-card fields: `id`, `title`, `duration_seconds`,
+`view_count`, `created_at`, `uploader_id`, `uploader_name`, `people`, `thumbnail_url`,
+`mux_thumbnail_url`, `preview_url`, and `media_expires_at`. Authenticated viewers
+also receive `progress_seconds` and `percentage_watched`. Media URLs use the
+existing video-card signing rules. Referenced videos are loaded in a batch per
+response, including when multiple blocks reference the same video.
+
+Missing, unready, or inaccessible videos return `video_card: null`; the block and
+caption remain present. Public videos must be published; owners may also see
+their ready private or scheduled videos. Access to a post does not grant access
+to someone else's private video. No migration is needed.
+
 ## Create the post
 
 `POST /api/posts` requires `posts.create` and accepts only post metadata:
@@ -234,9 +251,10 @@ position. Questioner `is_correct` fields are returned
 to every reader with access to the post, including before answering. Viewer selection and results follow the participation rules below.
 Individual vote/answer records and respondent identities are not included.
 
-The post and all nested data use one primary-database query for a consistent
-snapshot and current visibility. Video blocks contain their stored `video_id`;
-this endpoint does not grant access to the referenced video's playback.
+The post, blocks, and participation use one primary-database query for a consistent
+snapshot and current visibility. Video cards are then loaded in a batch with the
+viewer's video access checked on the primary database. Video blocks retain their
+stored `content.video_id`; this endpoint does not grant playback access.
 
 ## Delete a post
 

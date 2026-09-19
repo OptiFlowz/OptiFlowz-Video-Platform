@@ -3,6 +3,7 @@ import { validateOrThrow } from '../../../common/input.validation.js';
 import { HttpError } from '../../../common/httpError.js';
 import { postIdSchema } from '../helpers/posts.shared.js';
 import { postBlocksSql } from '../helpers/postBlocksSql.js';
+import { withPostVideoCards } from '../helpers/postVideoCards.js';
 import { hasPermission, loadAuthorization } from '../../authorization/authorization.service.js';
 import { Permissions } from '../../authorization/permission.constants.js';
 
@@ -24,5 +25,6 @@ export async function getPostInternal(params, userId = null, authorization = nul
     [postId, userId, canUpdateAny],
   );
   if (!rows.length) throw new HttpError(404, { message: 'Post not found' });
-  return rows[0];
+  const [post] = await withPostVideoCards(rows, userId);
+  return post;
 }

@@ -2,6 +2,7 @@ import { writePool } from '../../../database/index.js';
 import { validateOrThrow } from '../../../common/input.validation.js';
 import { postUserIdsSchema, publicPostsQuerySchema, PUBLIC_POST_SORT_FIELDS } from '../helpers/posts.shared.js';
 import { postBlocksSql } from '../helpers/postBlocksSql.js';
+import { withPostVideoCards } from '../helpers/postVideoCards.js';
 
 export async function getUserPostsInternal(userIdOrIds, query, viewerId = null) {
   const userIds = validateOrThrow(postUserIdsSchema.safeParse(
@@ -37,7 +38,7 @@ export async function getUserPostsInternal(userIdOrIds, query, viewerId = null) 
   const { posts, total } = rows[0];
   const totalPages = Math.ceil(total / limit);
   return {
-    posts,
+    posts: await withPostVideoCards(posts, viewerId),
     pagination: {
       page,
       limit,
