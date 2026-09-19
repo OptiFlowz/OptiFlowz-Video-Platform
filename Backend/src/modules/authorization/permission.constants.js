@@ -12,6 +12,14 @@ export const Permissions = Object.freeze({
   VIDEOS_PROGRESS_UPDATE: 'videos.progress.update',
   VIDEOS_REACT: 'videos.react',
 
+  POSTS_CREATE: 'posts.create',
+  POSTS_UPDATE_OWN: 'posts.update_own',
+  POSTS_UPDATE_ANY: 'posts.update_any',
+  POSTS_DELETE_OWN: 'posts.delete_own',
+  POSTS_DELETE_ANY: 'posts.delete_any',
+  POSTS_POLL_VOTE: 'posts.poll.vote',
+  POSTS_QUESTIONER_ANSWER: 'posts.questioner.answer',
+
   PLAYLISTS_CREATE: 'playlists.create',
   PLAYLISTS_UPDATE_OWN: 'playlists.update_own',
   PLAYLISTS_UPDATE_ANY: 'playlists.update_any',

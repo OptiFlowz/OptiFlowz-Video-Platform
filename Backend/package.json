@@ -10,6 +10,7 @@
     "test:subtitles": "node --experimental-test-module-mocks --test tests/video-subtitles.test.js",
     "test:video-details": "node --experimental-test-module-mocks --test tests/video-details.test.js",
     "test:notes": "node --experimental-test-module-mocks --test tests/notes.test.js",
+    "test:posts": "node --experimental-test-module-mocks --test tests/posts.test.js",
     "test:2fa-setup": "node --experimental-test-module-mocks --test tests/two-factor-setup.test.js",
     "test:2fa-verify": "node --experimental-test-module-mocks --test tests/two-factor-verify.test.js",
     "test:2fa-disable": "node --experimental-test-module-mocks --test tests/two-factor-disable.test.js",

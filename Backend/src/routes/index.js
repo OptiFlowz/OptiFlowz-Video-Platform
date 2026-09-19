@@ -12,6 +12,7 @@ import analyticsRoutes from '../modules/analytics/analytics.routes.js';
 import roleRoutes from '../modules/roles/role.routes.js';
 import usersRoutes from '../modules/users/users.routes.js';
 import notesRoutes from '../modules/notes/notes.routes.js';
+import postsRoutes from '../modules/posts/posts.routes.js';
 
 export function registerRoutes(app) {
   app.get('/health', (_req, res) => res.json({ ok: true }));
@@ -30,4 +31,5 @@ export function registerRoutes(app) {
   app.use('/api/roles', roleRoutes);
   app.use('/api/users', usersRoutes);
   app.use('/api/notes', notesRoutes);
+  app.use('/api/posts', postsRoutes);
 }
