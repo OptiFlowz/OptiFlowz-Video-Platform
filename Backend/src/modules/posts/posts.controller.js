@@ -1,5 +1,7 @@
 import { editPostInternal } from './handlers/editPost.js';
 import { sendSuccess, sendError } from '../../common/response.js';
+import { validateOrThrow } from '../../common/input.validation.js';
+import { recommendedPostsSchema } from './helpers/posts.shared.js';
 import { createPostInternal } from './handlers/createPost.js';
 import { getPostInternal } from './handlers/getPost.js';
 import { getMyPostsInternal } from './handlers/getMyPosts.js';
@@ -47,10 +49,21 @@ export async function getMyPosts(req, res) {
 
 export async function getUserPosts(req, res) {
   try {
-    const result = await getUserPostsInternal(req.params, req.query, req.user?.sub || null);
+    const result = await getUserPostsInternal(req.params.userId, req.query, req.user?.sub || null);
     return sendSuccess(res, result);
   } catch (error) {
     if (!error.status || error.status >= 500) console.error('getUserPosts error:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export async function getRecommendedPosts(req, res) {
+  try {
+    const { user_ids } = validateOrThrow(recommendedPostsSchema.safeParse(req.body));
+    const result = await getUserPostsInternal(user_ids, req.query, req.user?.sub || null);
+    return sendSuccess(res, result);
+  } catch (error) {
+    if (!error.status || error.status >= 500) console.error('getRecommendedPosts error:', error);
     return sendError(res, error.message, error.status || 500);
   }
 }

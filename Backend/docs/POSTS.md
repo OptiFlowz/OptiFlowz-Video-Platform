@@ -95,6 +95,37 @@ To add another sort field later, update `PUBLIC_POST_SORT_FIELDS` in
 map. SQL expressions must be trusted constants referring to selected post fields.
 If sorting by a new column, also select it in the feed's `page_posts` query.
 
+## Recommended posts from multiple users
+
+`POST /api/posts/recommended?page=1&limit=20&sortBy=created_at&sortOrder=desc`
+
+Send a JSON body containing the users whose posts should appear:
+
+```json
+{
+  "user_ids": [
+    "12345678-1234-4234-8234-123456789abc",
+    "12345678-1234-4234-8234-123456789def"
+  ]
+}
+```
+
+Accepts up to 100 user UUIDs. Duplicate IDs are ignored, including differences
+in letter case. An empty array returns an empty feed; it never selects all users.
+Missing `user_ids`, invalid UUIDs, non-array values, and unknown body fields
+return 400. Unknown or invalid pagination/sorting parameters also return 400.
+
+Uses the same query parameters, defaults, optional Bearer authentication, and
+HTTP 200 `{ "success": true, "posts": [...], "pagination": {...}, "sorting": {...} }`
+response as `GET /api/posts/:userId`. Only public posts are included. Sorting and
+pagination apply to the combined set of posts across all supplied users, with
+post IDs breaking timestamp ties. Each post includes its blocks, options, and
+the authenticated viewer's participation. Nonexistent users contribute no posts.
+
+The existing `GET /api/posts/:userId` URL and response remain unchanged. Both
+controllers use `getUserPostsInternal`, which accepts a single user UUID or an
+array of user UUIDs. No database migration is needed.
+
 ## List the current user's post cards
 
 `GET /api/posts/my?page=1&limit=20&sortBy=created_at&sortOrder=desc`
@@ -673,7 +704,7 @@ correctness. The answer endpoint validates and returns the recorded result.
 - `handlers/createPost.js`: metadata-only creation.
 - `handlers/getPost.js`: visibility-aware retrieval with ordered blocks and nested options.
 - `handlers/getMyPosts.js`: owner-only post cards with pagination and sorting metadata.
-- `handlers/getUserPosts.js`: one user's public posts with full blocks, pagination, and sorting.
+- `handlers/getUserPosts.js`: one or multiple users' public posts with full blocks, pagination, and sorting.
 - `handlers/deletePost.js`: post deletion, cascades, and referenced-image cleanup.
 - `handlers/appendPostBlock.js`: serialized block insertion and option persistence.
 - `handlers/deletePostBlock.js`: block deletion, cascading records, and image cleanup.

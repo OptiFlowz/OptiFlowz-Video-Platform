@@ -8,6 +8,7 @@ import { requirePostEditAccess, requirePostDeleteAccess, postBlockUpload, postEd
 const router = express.Router();
 
 router.get('/my', requireAuth, postsController.getMyPosts);
+router.post('/recommended', optionalAuth, postsController.getRecommendedPosts);
 router.get('/details/:postId', optionalAuth, postsController.getPost);
 router.get('/:userId', optionalAuth, postsController.getUserPosts);
 

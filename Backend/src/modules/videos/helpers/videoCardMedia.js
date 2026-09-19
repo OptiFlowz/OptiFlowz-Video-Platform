@@ -91,7 +91,7 @@ async function loadCardVideos(cards, userId) {
   // One primary read per list prevents signing stale private/deleted video data
   // returned by a replica, and also supplies fields absent from older card SQL.
   const { rows } = await writePool.query(
-    `SELECT id, thumbnail_url, mux_thumbnail_time, mux_playback_id,
+    `SELECT id, uploaded_by AS uploader_id, thumbnail_url, mux_thumbnail_time, mux_playback_id,
             playback_policy, mux_status, duration_seconds
      FROM public.videos
      WHERE id = ANY($1::uuid[])
@@ -132,5 +132,8 @@ export async function withVideoThumbnailMedia(cards, userId = null) {
 export async function withVideoCardMedia(cards, userId = null) {
   if (!cards.length) return [];
   const videos = await loadCardVideos(cards, userId);
-  return Promise.all(cards.map(card => cardMedia(card, videos.get(card.id))));
+  return Promise.all(cards.map(card => {
+    const video = videos.get(card.id);
+    return cardMedia({ ...card, uploader_id: video?.uploader_id ?? null }, video);
+  }));
 }

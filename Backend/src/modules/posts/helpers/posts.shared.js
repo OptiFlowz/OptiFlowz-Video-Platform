@@ -94,6 +94,9 @@ export const publicPostsQuerySchema = z.object({
 
 export const postIdSchema = z.object({ postId: z.string().uuid('Invalid post id') });
 export const postUserIdSchema = z.object({ userId: z.string().uuid('Invalid user id') });
+export const postUserIdsSchema = z.array(postUserIdSchema.shape.userId).max(100)
+  .transform(ids => [...new Set(ids.map(id => id.toLowerCase()))]);
+export const recommendedPostsSchema = z.object({ user_ids: postUserIdsSchema }).strict();
 export const postBlockIdSchema = postIdSchema.extend({
   blockId: z.string().uuid('Invalid post block id'),
 });
