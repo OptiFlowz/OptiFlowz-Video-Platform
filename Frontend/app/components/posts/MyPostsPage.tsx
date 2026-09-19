@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useAuthorization } from '~/authorization/authorization';
 import { fetchFn } from '~/API';
@@ -34,9 +34,26 @@ export default function MyPostsPage() {
   const [saveError, setSaveError] = useState('');
   const [busy, setBusy] = useState<string>();
   const [querySearch, setQuerySearch] = useState('');
+  const selectAllRef = useRef<HTMLInputElement>(null);
+  const bulkInFlight = useRef(false);
+  const selectionScope = JSON.stringify([channelId, getToken(), page, limit, ascending, search]);
+  const [selection, setSelection] = useState<{ scope: string; ids: string[] }>({ scope: selectionScope, ids: [] });
   useEffect(() => { const timer = setTimeout(() => { setQuerySearch(search.trim().slice(0, 255)); setPage(1); }, 300); return () => clearTimeout(timer); }, [search]);
   const { posts, pagination, refresh, loading, error } = usePosts(channelId, page, limit, ascending, querySearch);
   useEffect(() => { if (pagination && page > Math.max(1, pagination.totalPages)) setPage(Math.max(1, pagination.totalPages)); }, [pagination, page]);
+  useEffect(() => { setSelection(current => current.scope === selectionScope ? current : { scope: selectionScope, ids: [] }); }, [selectionScope]);
+  const selectedPosts = selection.scope === selectionScope ? posts.filter(post => selection.ids.includes(post.id)) : [];
+  const allSelected = posts.length > 0 && selectedPosts.length === posts.length;
+  const canSelect = canEdit || canDelete;
+  const selectionDisabled = !!busy || loading || !!error || search.trim().slice(0, 255) !== querySearch;
+  const checkboxClass = "appearance-none rounded-lg! p-3! border! border-(--border1)! cursor-pointer bg-(--background2) checked:bg-(--accentOrange)! transition-colors relative checked:after:content-['✓'] checked:after:absolute checked:after:text-(--text1) checked:after:text-sm checked:after:left-1/2 checked:after:top-1/2 checked:after:-translate-x-1/2 checked:after:-translate-y-1/2 postSelectionCheckbox";
+  useEffect(() => {
+    if (selectAllRef.current) selectAllRef.current.indeterminate = selectedPosts.length > 0 && !allSelected;
+  }, [selectedPosts.length, allSelected]);
+  const toggleSelection = (id: string, checked: boolean) => setSelection(current => {
+    const ids = current.scope === selectionScope ? current.ids : [];
+    return { scope: selectionScope, ids: checked ? [...new Set([...ids, id])] : ids.filter(item => item !== id) };
+  });
   const openPost = async (id: string, edit: boolean) => {
     setBusy(id); setSaveError('');
     try { const post = await getPost(id); if (edit) setEditing(post); else setPreview(post); }
@@ -44,6 +61,34 @@ export default function MyPostsPage() {
     finally { setBusy(undefined); }
   };
   const { confirm, dialogProps } = useConfirm();
+  const runBulkAction = async (action: 'delete' | Post['status']) => {
+    if (bulkInFlight.current || selectionDisabled || !selectedPosts.length || (action === 'delete' ? !canDelete : !canEdit)) return;
+    const targets = selectedPosts;
+    bulkInFlight.current = true;
+    setBusy('bulk');
+    setSaveError('');
+    try {
+      if (action === 'delete' && !await confirm({
+        title: t('postBulkDeleteTitle', { count: targets.length }),
+        message: t('postBulkDeleteMessage'), yesText: t('adminDelete'), noText: t('adminCancel'),
+      })) return;
+      const failedIds: string[] = [];
+      // Bound concurrent writes, and retain only failures for a safe retry.
+      for (let index = 0; index < targets.length; index += 4) {
+        const batch = targets.slice(index, index + 4);
+        const results = await Promise.allSettled(batch.map(post =>
+          action !== 'delete' && post.status === action ? Promise.resolve() :
+          postRequest(`/${post.id}`, action === 'delete' ? 'DELETE' : 'PATCH', action === 'delete' ? undefined : { status: action })
+        ));
+        results.forEach((result, index) => { if (result.status === 'rejected') failedIds.push(batch[index].id); });
+      }
+      setSelection({ scope: selectionScope, ids: failedIds });
+      if (failedIds.length) setSaveError(t('postBulkFailed', { count: failedIds.length, total: targets.length }));
+      await refresh();
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : t('postSaveError'));
+    } finally { bulkInFlight.current = false; setBusy(undefined); }
+  };
   const videosQuery = useInfiniteQuery({
     queryKey: ['post-video-picker', channelId], initialPageParam: 1, enabled: !!channelId,
     queryFn: ({ pageParam, signal }) => fetchFn<ChannelVideosT>({ route: `api/channels/${channelId}/videos?page=${pageParam}&limit=20&sortBy=created_at&sortOrder=desc`, options: { headers: { Authorization: `Bearer ${getToken()}` }, signal } }),
@@ -58,14 +103,21 @@ export default function MyPostsPage() {
     {preview && <PostDialog title={t('postPreview')} onClose={() => setPreview(undefined)}><PostCard post={preview} author={user || {}} videos={videos} readOnly /></PostDialog>}
     <div className="content libraryContent"><div className="holder libraryShell">
       <div className="libraryHeader"><div className="libraryHeading"><h1>{t('navMyPosts')}</h1><p>{t('postManageDescription')}</p></div></div>
-      <div className="managementToolbar"><div className="filter">{SearchSVG}<input type="search" aria-label={t('postSearch')} placeholder={t('postSearch')} value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} /></div>
-        <button type="button" className="playlistAddBtn" aria-label={t('postCreate')} title={t('postCreate')} disabled={!channelId || !can('posts.create') || !canEdit} onClick={() => setEditing({ id: newId(), title: '', createdAt: new Date().toISOString(), status: 'private', blocks: [newBlock('text')] })}>{AddSVG}</button></div>
+      <div className="managementToolbar"><div className="filter">{SearchSVG}<input type="search" disabled={!!busy} aria-label={t('postSearch')} placeholder={t('postSearch')} value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} /></div>
+        <button type="button" className="playlistAddBtn" aria-label={t('postCreate')} title={t('postCreate')} disabled={!!busy || !channelId || !can('posts.create') || !canEdit} onClick={() => setEditing({ id: newId(), title: '', createdAt: new Date().toISOString(), status: 'private', blocks: [newBlock('text')] })}>{AddSVG}</button></div>
       {(error || saveError) && <p role="alert" className="postError">{saveError || t('postLoadError')}{error && <button type="button" className="postSecondary" onClick={() => void refresh()}>{t('postRetry')}</button>}</p>}
       {loading && <p role="status">{t('postLoading')}</p>}
-      <div className="libraryTableWrap" aria-busy={loading}><table className="postsTable"><thead><tr>
-        <th>{t('postLabel')}</th><th>{t('adminTableStatus')}</th><th aria-sort={ascending ? 'ascending' : 'descending'}><LibrarySortButton label={t('adminTableDate')} direction={ascending ? 'asc' : 'desc'} onClick={() => { setAscending(!ascending); setPage(1); }} /></th><th>{t('postParts')}</th><th>{t('adminTableActions')}</th>
+      <div className="libraryTableWrap" aria-busy={loading || busy === 'bulk'}><table className="postsTable"><thead><tr>
+        <th className="notHoverable"><span className="postSelectionHeading">{canSelect && <input ref={selectAllRef} type="checkbox" className={checkboxClass} aria-label={t('postSelectPage')} checked={allSelected} disabled={selectionDisabled || !posts.length} onChange={event => setSelection({ scope: selectionScope, ids: event.target.checked ? posts.map(post => post.id) : [] })} />}<p className="py-3">{t('postLabel')}</p>
+          {selectedPosts.length > 0 && <span id="selectedButtons" role="group" aria-label={t('postBulkActions')} aria-busy={busy === 'bulk'}>
+            {busy === 'bulk' && <span className="uploadSpinner tiny" aria-hidden="true" />}
+            {canDelete && <button type="button" className="button bg-(--accentRed) text-(--text1)" disabled={selectionDisabled} onClick={() => void runBulkAction('delete')}>{t('adminDeleteAll')}</button>}
+            {canEdit && selectedPosts.some(post => post.status !== 'private') && <button type="button" className="button bg-(--background2) text-(--text1)!" disabled={selectionDisabled} onClick={() => void runBulkAction('private')}>{t('postMakeDraft')}</button>}
+            {canEdit && selectedPosts.some(post => post.status !== 'public') && <button type="button" className="button bg-(--background2) text-(--text1)!" disabled={selectionDisabled} onClick={() => void runBulkAction('public')}>{t('adminMakePublic')}</button>}
+          </span>}
+        </span></th><th>{t('adminTableStatus')}</th><th aria-sort={ascending ? 'ascending' : 'descending'}><LibrarySortButton label={t('adminTableDate')} direction={ascending ? 'asc' : 'desc'} onClick={() => { if (!busy) { setAscending(!ascending); setPage(1); } }} /></th><th>{t('postParts')}</th><th>{t('adminTableActions')}</th>
       </tr></thead><tbody>{posts.map(post => <tr key={post.id}>
-        <td><div className="postManagementSummary"><span className="postManagementIcon">{PostSVG}</span><div><strong>{post.title}</strong><p>{post.text}</p></div></div></td>
+        <td><div className="postManagementSummary">{canSelect && <input type="checkbox" className={checkboxClass} aria-label={t('postSelectOne', { title: post.title })} checked={selectedPosts.some(selected => selected.id === post.id)} disabled={selectionDisabled} onChange={event => toggleSelection(post.id, event.target.checked)} />}<span className="postManagementIcon">{PostSVG}</span><div><strong>{post.title}</strong><p>{post.text}</p></div></div></td>
         <td><StatusPicker<Post['status']>
           value={post.status}
           title={post.title}
@@ -87,7 +139,7 @@ export default function MyPostsPage() {
           }}>{DeleteSVG}</button>
         </div></td>
       </tr>)}{!loading && !error && !posts.length && <tr><td colSpan={5}>{t('noResultsTitle')}</td></tr>}</tbody></table></div>
-      <Pagination page={page} limit={limit} total={pagination?.total ?? 0} totalPages={pagination?.totalPages ?? 0} loading={loading} disabled={!!error} label={t('navMyPosts')} onPageChange={setPage} onLimitChange={value => { setLimit(value); setPage(1); }} />
+      <Pagination page={page} limit={limit} total={pagination?.total ?? 0} totalPages={pagination?.totalPages ?? 0} loading={loading} disabled={!!error || !!busy} label={t('navMyPosts')} onPageChange={setPage} onLimitChange={value => { setLimit(value); setPage(1); }} />
     </div></div>
   </main>;
 }

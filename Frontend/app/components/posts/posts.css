@@ -209,3 +209,11 @@ main.myPostsPage td button.postStatus.private { color: var(--accentRed3); }
 .postComposerToolbar { justify-content: flex-end; }
 .postOption.isCorrect .postOptionFill,
 .postOption.isSelected .postOptionFill { min-width: min(100%, 10px); }
+
+.postSelectionHeading { align-items: center; }
+.postSelectionCheckbox { flex: 0 0 auto; }
+.postSelectionCheckbox:disabled { opacity: .5; cursor: default; }
+.postSelectionCheckbox:indeterminate { background: var(--accentOrange); }
+.postSelectionCheckbox:indeterminate::after { content: '−'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--text1); }
+
+main.myPostsPage #selectedButtons button:disabled { opacity: .5; cursor: default; }
