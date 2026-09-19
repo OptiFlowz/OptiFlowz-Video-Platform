@@ -94,5 +94,5 @@ test('option image uploads use the multipart block contract and browser boundary
   assert.ok(upload.options.body instanceof FormData);
   assert.ok(upload.options.body.get('option_0') instanceof File);
   assert.equal(upload.options.headers['Content-Type'], undefined);
-  assert.deepEqual(JSON.parse(upload.options.body.get('block')).options, [{ text: 'A' }, { text: 'B' }]);
+  assert.deepEqual(JSON.parse(upload.options.body.get('block')).options, [{ position: 0, text: 'A' }, { position: 1, text: 'B' }]);
 });

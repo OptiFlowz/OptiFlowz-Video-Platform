@@ -1,5 +1,5 @@
 import type { ChannelVideoT } from '~/types';
-export type PostOption = { id: string; text: string; image?: string; votes: number; isCorrect?: boolean };
+export type PostOption = { id: string; position?: number; text: string; image?: string; votes: number; isCorrect?: boolean };
 export type PostBlock = { hasResponses?: boolean } & (
   | { id: string; type: 'text'; text: string }
   | { id: string; type: 'image'; image: string; text: string }

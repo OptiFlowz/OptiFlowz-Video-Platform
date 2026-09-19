@@ -2,7 +2,7 @@ import { fetchFn } from '~/API';
 import { getToken } from '~/functions';
 import type { Post, PostBlock, PostOption, PostSummary } from './model';
 
-export type ApiOption = { id: string; text: string; image_url?: string | null; is_correct?: boolean; vote_count?: number; answer_count?: number };
+export type ApiOption = { id: string; position?: number; text: string; image_url?: string | null; is_correct?: boolean; vote_count?: number; answer_count?: number };
 export type ApiBlock = { id: string; type: 'text' | 'image' | 'video' | 'poll' | 'questioner'; content: { text?: string; url?: string; video_id?: string }; options?: ApiOption[]; has_responses?: boolean; selected_option_id?: string | null; selected_option_ids?: string[]; correct_option_ids?: string[] };
 export type ApiPost = { id: string; user_id: string; title: string; status: Post['status']; created_at: string; blocks: ApiBlock[] };
 export type PaginationData = { page: number; limit: number; total: number; totalPages: number; hasNextPage: boolean };
@@ -14,12 +14,17 @@ export function postRequest<T>(route: string, method = 'GET', body?: unknown, si
   if (body !== undefined && !multipart) headers['Content-Type'] = 'application/json';
   return fetchFn<T>({ route: `api/posts${route}`, options: { method, headers, signal, ...(body === undefined ? {} : { body: multipart ? body : JSON.stringify(body) }) } });
 }
-export const fromOption = (option: ApiOption): PostOption => ({ id: option.id, text: option.text, image: option.image_url || undefined, votes: option.vote_count ?? option.answer_count ?? 0, isCorrect: option.is_correct });
+export const fromOption = (option: ApiOption): PostOption => ({ id: option.id, position: option.position, text: option.text, image: option.image_url || undefined, votes: option.vote_count ?? option.answer_count ?? 0, isCorrect: option.is_correct });
+// Keep the API's explicit ordering for feed, preview, editor, and vote results.
+export function fromOptions(options: ApiOption[]): PostOption[] {
+  return options.map((option, index) => ({ ...fromOption(option), position: option.position ?? index }))
+    .sort((a, b) => a.position - b.position);
+}
 export function fromBlock(block: ApiBlock): PostBlock {
   const base = { id: block.id, text: block.content.text || '', hasResponses: block.has_responses };
   if (block.type === 'image') return { ...base, type: 'image', image: block.content.url || '' };
   if (block.type === 'video') return { ...base, type: 'video', videoId: block.content.video_id || '' };
-  if (block.type === 'poll' || block.type === 'questioner') return { ...base, type: block.type === 'questioner' ? 'questionnaire' : 'poll', options: (block.options || []).map(fromOption), selectedOptionId: block.selected_option_id ?? null, selectedOptionIds: block.selected_option_ids ?? (block.selected_option_id ? [block.selected_option_id] : []), correctIds: block.correct_option_ids ?? block.options?.filter(option => option.is_correct).map(option => option.id) };
+  if (block.type === 'poll' || block.type === 'questioner') return { ...base, type: block.type === 'questioner' ? 'questionnaire' : 'poll', options: fromOptions(block.options || []), selectedOptionId: block.selected_option_id ?? null, selectedOptionIds: block.selected_option_ids ?? (block.selected_option_id ? [block.selected_option_id] : []), correctIds: block.correct_option_ids ?? block.options?.filter(option => option.is_correct).map(option => option.id) };
   return { ...base, type: 'text' };
 }
 export const fromPost = (post: ApiPost): Post => ({ id: post.id, userId: post.user_id, title: post.title, status: post.status, createdAt: post.created_at, blocks: post.blocks.map(fromBlock), persisted: true });
@@ -73,7 +78,7 @@ export async function savePost(input: Post, session: SaveSession, checkpoint: (d
       let block = draft.blocks[index];
       let old = current.blocks.find(item => item.id === block.id);
       if (!old) {
-        const data = { type: block.type === 'questionnaire' ? 'questioner' : block.type, content: { text: block.text.trim(), ...(block.type === 'video' ? { video_id: block.videoId } : {}) }, ...('options' in block ? { options: block.options.map(option => ({ text: option.text.trim(), ...(block.type === 'questionnaire' ? { is_correct: !!block.correctIds?.includes(option.id) } : {}) })) } : {}) };
+        const data = { type: block.type === 'questionnaire' ? 'questioner' : block.type, content: { text: block.text.trim(), ...(block.type === 'video' ? { video_id: block.videoId } : {}) }, ...('options' in block ? { options: block.options.map((option, position) => ({ position, text: option.text.trim(), ...(block.type === 'questionnaire' ? { is_correct: !!block.correctIds?.includes(option.id) } : {}) })) } : {}) };
         const files: Array<[string, File | undefined]> = block.type === 'image' ? [['file', imageFile(block.image)]] : 'options' in block ? block.options.map((option, i) => [`option_${i}`, imageFile(option.image)]) : [];
         const response = await postRequest<{ block: ApiBlock }>(`${base}/blocks`, 'POST', payload(data, files, 'block'));
         block = fromBlock(response.block); draft.blocks[index] = block; current.blocks.push(structuredClone(block));
@@ -107,7 +112,7 @@ export async function savePost(input: Post, session: SaveSession, checkpoint: (d
             if (desired.options.some(item => item.id === option.id)) continue;
             if (saved.type === 'questionnaire' && saved.correctIds?.includes(option.id) && saved.correctIds.length === 1) continue;
             await postRequest(`${route}/options/${option.id}`, 'DELETE');
-            saved.options = saved.options.filter(item => item.id !== option.id);
+            saved.options = saved.options.filter(item => item.id !== option.id).map((item, position) => ({ ...item, position }));
             saved.correctIds = saved.correctIds?.filter(id => id !== option.id);
           }
         };
@@ -117,7 +122,7 @@ export async function savePost(input: Post, session: SaveSession, checkpoint: (d
         for (const option of additions) {
           const localId = option.id;
           const isCorrect = !!desired.correctIds?.includes(localId);
-          const data = { text: option.text.trim(), ...(desired.type === 'questionnaire' ? { is_correct: isCorrect } : {}) };
+          const data = { position: saved.options.length, text: option.text.trim(), ...(desired.type === 'questionnaire' ? { is_correct: isCorrect } : {}) };
           const added = fromOption((await postRequest<{ option: ApiOption }>(`${route}/options`, 'POST', payload(data, [['file', imageFile(option.image)]]))).option);
           Object.assign(option, added);
           desired.correctIds = desired.correctIds?.map(id => id === localId ? added.id : id);
@@ -145,6 +150,19 @@ export async function savePost(input: Post, session: SaveSession, checkpoint: (d
           }
         }
         await removeUnneeded();
+        // Correct choices may have been added first to satisfy backend validation.
+        // Restore the editor order once all additions/deletions have succeeded.
+        for (let position = 0; position < desired.options.length; position++) {
+          const option = desired.options[position];
+          const savedIndex = saved.options.findIndex(item => item.id === option.id);
+          if (savedIndex !== position) {
+            await postRequest(`${route}/options/${option.id}`, 'PATCH', { position });
+            const [moved] = saved.options.splice(savedIndex, 1);
+            saved.options.splice(position, 0, moved);
+            saved.options.forEach((item, index) => { item.position = index; });
+          }
+          option.position = position;
+        }
       }
       checkpoint(structuredClone(draft));
     }

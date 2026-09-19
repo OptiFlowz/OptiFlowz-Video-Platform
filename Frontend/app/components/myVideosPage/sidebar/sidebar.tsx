@@ -1,6 +1,5 @@
 import { useAuthorization } from "~/authorization/authorization";
-import { NavLink } from "react-router";
-import { getStoredUser } from "~/functions";
+import { Link, NavLink } from "react-router";
 import DefaultProfile from "../../../../assets/DefaultProfile.webp";
 import { AnalyticsSVG, PeopleSVG, PostSVG, PlaylistSVG, PlaySVG, QuizSVG } from "~/constants";
 import backgroundImage from "../../../../assets/LoginBackground.webp";
@@ -10,8 +9,7 @@ import { useI18n } from "~/i18n";
 
 function Sidebar() {
     const { t } = useI18n();
-    const { canAccess } = useAuthorization();
-    const user = getStoredUser()?.user;
+    const { canAccess, user } = useAuthorization();
     const channelName = user?.full_name?.trim() || t("yourChannel");
     const asideRef = useRef<HTMLElement | null>(null);
     const stickyRef = useRef<HTMLDivElement | null>(null);
@@ -24,6 +22,14 @@ function Sidebar() {
         bottomGap: 16,
     });
 
+    const channelPath = user?.id ? `/channel/${user.id}` : undefined;
+    const photo = <img src={user?.image_url || DefaultProfile} alt={channelName} />;
+    const identity = <>
+        <span className="videoAsideEyebrow">{t("channelLabel")}</span>
+        <h3>{channelName}</h3>
+        <p>{user?.email}</p>
+    </>;
+
     return (
         <aside ref={asideRef} className="videoAside">
             <div ref={stickyRef} className="videoAsideSticky" style={stickyStyle}>
@@ -31,12 +37,10 @@ function Sidebar() {
                     <img className="w-full h-full" src={backgroundImage} alt="Background" />
                 </div>
                 <section>
-                    <img src={user?.image_url || DefaultProfile} alt={channelName} />
-                    <div className="videoAsideIdentity">
-                        <span className="videoAsideEyebrow">{t("channelLabel")}</span>
-                        <h3>{channelName}</h3>
-                        <p>{user?.email}</p>
-                    </div>
+                    {channelPath ? <>
+                        <Link to={channelPath} className="videoAsidePhotoLink" aria-label={`${t("channelLabel")}: ${channelName}`}>{photo}</Link>
+                        <Link to={channelPath} className="videoAsideIdentity videoAsideChannelLink">{identity}</Link>
+                    </> : <>{photo}<div className="videoAsideIdentity">{identity}</div></>}
                 </section>
                 <nav>
                     {canAccess('videos') && <NavLink to="/my-videos" end className={({ isActive }) => (isActive ? "active" : "")}>

@@ -6,7 +6,7 @@ import { fetchFn } from '~/API';
 import { getToken } from '~/functions';
 import { redirectToLogin } from '~/auth/session';
 import { useAuthorization } from '~/authorization/authorization';
-import { fromOption, getPost, getChannelPosts, postRequest, type Participation } from './api';
+import { fromOptions, getPost, getChannelPosts, postRequest, type Participation } from './api';
 import { Link } from 'react-router';
 import { useI18n } from '~/i18n';
 import { formatDate, formatViews } from '~/functions';
@@ -67,7 +67,7 @@ function Poll({ block, postId, interactive, readOnly }: { block: PollBlock; post
       const result = await postRequest<Participation>(`/${postId}/blocks/${block.id}/${block.type === 'questionnaire' ? 'answer' : 'vote'}`, 'POST', multiple ? { option_ids: optionIds } : { option_id: optionId, ...(remove ? { remove: true } : {}) });
       applyBlock({ ...previous, selectedOptionId: result.selected_option_id,
         selectedOptionIds: result.selected_option_ids ?? (result.selected_option_id ? [result.selected_option_id] : []),
-        options: result.options.map(fromOption), correctIds: result.correct_option_ids, hasResponses: result.has_responses ?? true });
+        options: fromOptions(result.options), correctIds: result.correct_option_ids, hasResponses: result.has_responses ?? true });
     } catch (error) {
       setOptimistic(undefined);
       applyBlock(previous);
