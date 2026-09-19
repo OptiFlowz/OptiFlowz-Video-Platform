@@ -1,9 +1,9 @@
 import { PostSVG } from "~/constants";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
-import { memo, useEffect, useRef, useState } from "react";
+import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Link, NavLink, useNavigate, useParams } from "react-router";
+import { Link, NavLink, useLocation, useNavigate, useParams } from "react-router";
 import {
     AnalyticsSVG, ChannelMenuSVG, CloseSVG, EditModeSVG, ExternalSiteMenuSVG,
     HomeMenuSVG, LanguageMenuSVG, LogOutSVG, MenuSVG, PeopleSVG,
@@ -19,8 +19,88 @@ import { useQueryClient } from "@tanstack/react-query";
 import { LOGO, BRAND_NAME, MARKETING_WEBSITE_URL } from "~/changeables";
 import LanguageSelect from "~/components/languageSelect/languageSelect";
 
+// Next remounts this page-level header during navigation. Retain only the route,
+// then measure its link again so the underline can continue across that remount.
+let previousNavigationPath: string | null = null;
+
 function Header(){
     const { locale, setLocale, t } = useI18n();
+    const { pathname } = useLocation();
+    const navigationRef = useRef<HTMLElement>(null);
+    const navigationMeasuredRef = useRef(false);
+    const navigationStartingPathRef = useRef<string | null | undefined>(undefined);
+    const [navigationIndicator, setNavigationIndicator] = useState<{ left: number; width: number; visible: boolean } | null>(null);
+
+    useLayoutEffect(() => {
+        const navigation = navigationRef.current;
+        if (!navigation) return;
+        if (navigationStartingPathRef.current === undefined) {
+            navigationStartingPathRef.current = previousNavigationPath;
+        }
+        let firstFrame = 0;
+        let secondFrame = 0;
+        let entering = false;
+
+        const measureLink = (link: HTMLAnchorElement) => {
+            const navigationBounds = navigation.getBoundingClientRect();
+            const linkBounds = link.getBoundingClientRect();
+            const style = getComputedStyle(link);
+            const paddingLeft = parseFloat(style.paddingLeft) || 0;
+            const paddingRight = parseFloat(style.paddingRight) || 0;
+            return {
+                left: linkBounds.left - navigationBounds.left + paddingLeft,
+                width: linkBounds.width - paddingLeft - paddingRight,
+                visible: true,
+            };
+        };
+
+        const updateIndicator = () => {
+            if (entering) return;
+            const activeLink = navigation.querySelector<HTMLAnchorElement>("a.active");
+            if (!activeLink || !activeLink.getClientRects().length) {
+                setNavigationIndicator(previous => previous?.visible ? { ...previous, visible: false } : previous);
+                return;
+            }
+
+            const { left, width } = measureLink(activeLink);
+            setNavigationIndicator(previous =>
+                previous?.visible && previous.left === left && previous.width === width
+                    ? previous
+                    : { left, width, visible: true },
+            );
+        };
+
+        const previousLink = Array.from(navigation.querySelectorAll<HTMLAnchorElement>("a"))
+            .find(link => link.getAttribute("href") === navigationStartingPathRef.current);
+        if (!navigationMeasuredRef.current && navigationStartingPathRef.current !== pathname &&
+            previousLink?.getClientRects().length && navigation.querySelector("a.active") &&
+            !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            setNavigationIndicator(measureLink(previousLink));
+            entering = true;
+            // Paint the starting position before transitioning to the new link.
+            firstFrame = requestAnimationFrame(() => {
+                secondFrame = requestAnimationFrame(() => {
+                    entering = false;
+                    navigationMeasuredRef.current = true;
+                    updateIndicator();
+                });
+            });
+        } else {
+            navigationMeasuredRef.current = true;
+            updateIndicator();
+        }
+        previousNavigationPath = pathname;
+        const observer = new ResizeObserver(updateIndicator);
+        observer.observe(navigation);
+        navigation.querySelectorAll("a").forEach(link => observer.observe(link));
+        window.addEventListener("resize", updateIndicator);
+        return () => {
+            cancelAnimationFrame(firstFrame);
+            cancelAnimationFrame(secondFrame);
+            observer.disconnect();
+            window.removeEventListener("resize", updateIndicator);
+        };
+    }, [pathname, locale]);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
     const [searchFocusArmed, setSearchFocusArmed] = useState(false);
@@ -188,11 +268,20 @@ function Header(){
                 </Link>
 
                 {/* Desktop Navigation */}
-                <nav className="flex gap-2 font-regular max-[800px]:hidden">
-                    <Link to={MARKETING_WEBSITE_URL}>{BRAND_NAME}</Link>
+                <nav ref={navigationRef} className="primaryNavigation flex max-[800px]:hidden">
+                    <Link className="primaryNavigationBrand" to={MARKETING_WEBSITE_URL}>{BRAND_NAME}</Link>
                     <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : "")}>{t("navHome")}</NavLink>
                     <NavLink to="/videos/1" end className={({ isActive }) => (isActive ? "active" : "")}>{t("navRecommended")}</NavLink>
                     <NavLink to="/videos/2" end className={({ isActive }) => (isActive ? "active" : "")}>{t("navTrending")}</NavLink>
+                    {navigationIndicator && <span
+                        className="primaryNavigationIndicator"
+                        aria-hidden="true"
+                        style={{
+                            transform: `translateX(${navigationIndicator.left}px)`,
+                            width: navigationIndicator.width,
+                            opacity: navigationIndicator.visible ? 1 : 0,
+                        }}
+                    />}
                 </nav>
 
                 <div className={`flex ${hasManagementAccess ? "gap-3" : "gap-1"} max-[650px]:gap-2 max-[500px]:gap-0.5 items-center`}>

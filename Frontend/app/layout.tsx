@@ -3,18 +3,20 @@ import "./app.css";
 import type { Metadata, Viewport } from "next";
 import Providers from "./providers";
 import { defaultMetadata } from "./metadata";
-import { Gabarito, Solitreo } from "next/font/google";
+import localFont from "next/font/local";
 import { SITE_URL } from "./metadata";
 import { themeColor } from "./theme/serverColors";
 
-const gabarito = Gabarito({
-  subsets: ["latin"],
-  variable: "--font-gabarito",
+const outfit = localFont({
+  src: "./fonts/outfit/Outfit-Variable.ttf",
+  weight: "100 900",
+  style: "normal",
+  variable: "--font-outfit",
   display: "swap",
 });
 
-const solitreo = Solitreo({
-  subsets: ["latin"],
+const solitreo = localFont({
+  src: "./fonts/solitreo/Solitreo-Regular.ttf",
   weight: "400",
   variable: "--font-solitreo",
   display: "swap",
@@ -48,7 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   };
 
   return (
-    <html lang="en" dir="ltr" className={`${gabarito.variable} ${solitreo.variable}`}>
+    <html lang="en" dir="ltr" className={`${outfit.variable} ${solitreo.variable}`}>
       <body>
         <script
           type="application/ld+json"

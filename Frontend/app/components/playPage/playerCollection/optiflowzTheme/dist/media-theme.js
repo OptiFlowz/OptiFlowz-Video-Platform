@@ -81,8 +81,8 @@ if (template) {
         --media-tooltip-container-margin: 18px;
 
         font-size: calc(0.75 * var(--base));
-    font-family: 'Gabarito', Roboto, Arial, sans-serif;
-    --media-font-family: 'Gabarito', Roboto, helvetica neue, segoe ui, arial, sans-serif;
+    font-family: var(--font-outfit), Arial, sans-serif;
+    --media-font-family: var(--font-outfit), Arial, sans-serif;
         -webkit-font-smoothing: antialiased;
 
         --media-primary-color: var(--text1);
@@ -235,7 +235,7 @@ if (template) {
         stroke: none;
         font-size: 6px;
         font-weight: 700;
-    font-family: 'Gabarito', Roboto, Arial, sans-serif;
+    font-family: var(--font-outfit), Arial, sans-serif;
       }
     </style>
 
@@ -318,7 +318,7 @@ if (template) {
           left: 0;
           max-width: calc(100% - 2.5 * var(--base));
           width: calc(35 * var(--base));
-    font-family: 'Gabarito';
+    font-family: var(--font-outfit), Arial, sans-serif;
           padding: calc(0.75 * var(--base));
           border-radius:  calc(0.75 * var(--base));
           background-color: color-mix(in srgb, var(--background1) 72%, transparent);
@@ -1193,7 +1193,10 @@ class MediaTheaterModeButton extends HTMLElement {
     });
   }
 }
-globalThis.customElements.define('media-theater-mode-button', MediaTheaterModeButton);
+// Hot reload can evaluate this module again while the browser registry persists.
+if (globalThis.customElements && !globalThis.customElements.get('media-theater-mode-button')) {
+  globalThis.customElements.define('media-theater-mode-button', MediaTheaterModeButton);
+}
 
 class MediaCurrentChapter extends HTMLElement {
   connectedCallback(){
@@ -1223,7 +1226,9 @@ class MediaCurrentChapter extends HTMLElement {
     });
   }
 }
-globalThis.customElements.define('media-current-chapter', MediaCurrentChapter);
+if (globalThis.customElements && !globalThis.customElements.get('media-current-chapter')) {
+  globalThis.customElements.define('media-current-chapter', MediaCurrentChapter);
+}
 
 const CAPTION_PREFERENCES_KEY = 'optiflowz-caption-preferences';
 const CAPTION_PREFERENCES_EVENT = 'optiflowz-caption-preferences-change';
