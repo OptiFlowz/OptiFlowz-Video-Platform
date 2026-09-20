@@ -802,7 +802,7 @@ header .primaryNavigation .primaryNavigationBrand::before {
   flex-direction: column;
   overflow: hidden;
   border-left: 1px solid var(--border1);
-  background: var(--background3);
+  background: var(--headerSurface);
   box-shadow: 0 20px 60px var(--seethroughtBlack);
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
@@ -962,7 +962,8 @@ header .primaryNavigation .primaryNavigationBrand::before {
 
 .adminAvatarDropdown {
   position: fixed;
-  min-width: 180px;
+  width: 252px;
+  max-width: calc(100vw - 32px);
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -990,6 +991,45 @@ header .primaryNavigation .primaryNavigationBrand::before {
   display: flex;
   align-items: center;
   gap: 0.7rem;
+}
+
+/* Account identity uses the same type, surface and icons as the header. */
+.adminAvatarIdentitySection { padding-bottom: 5px; margin-bottom: 3px; border-bottom: 1px solid var(--headerBorderColor); }
+.adminAvatarDropdown .adminAvatarIdentity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+}
+.adminAvatarIdentityImage {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.adminAvatarIdentityText { min-width: 0; }
+.adminAvatarIdentityText strong,
+.adminAvatarIdentityText span {
+  display: block;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.adminAvatarIdentityText strong { color: var(--text1); font-size: 0.9rem; font-weight: 600; line-height: 1.4; }
+.adminAvatarIdentityText span { color: var(--text2); font-size: 0.75rem; font-weight: 400; line-height: 1.4; opacity: 0.8; }
+.adminAvatarDropdown .adminAvatarDropdownItem,
+.adminAvatarDropdown .customLanguageSelect--menu .customLanguageTrigger { min-height: 40px; padding: 0.55rem 0.7rem; font-size: 0.875rem; }
+.adminAvatarDropdown .customLanguageText strong { font-size: inherit; }
+.adminAvatarDropdown .customLanguageText small { font-size: 0.75rem; }
+.adminAvatarSignOut { padding-top: 5px; margin-top: 3px; border-top: 1px solid var(--headerBorderColor); }
+.adminAvatarSignOut .adminAvatarDropdownIcon svg path { stroke: var(--accentRed); }
+.adminAvatarDropdown a:focus-visible,
+.adminAvatarDropdown button:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: -2px; }
+@media (prefers-reduced-motion: reduce) {
+  .adminAvatarDropdown.animate-slideIn { animation: none; }
 }
 
 .adminAvatarDropdownIcon,

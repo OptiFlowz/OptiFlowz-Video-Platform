@@ -122,6 +122,25 @@ function Header(){
     const searchRef2 = useRef<HTMLInputElement>(null);
     const accountMenuRef = useRef<HTMLDivElement>(null);
     const accountDropdownRef = useRef<HTMLDivElement>(null);
+    const accountCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const cancelAccountClose = () => {
+        if (accountCloseTimer.current) clearTimeout(accountCloseTimer.current);
+        accountCloseTimer.current = null;
+    };
+    const openAccountMenu = () => {
+        cancelAccountClose();
+        const bounds = accountMenuRef.current?.getBoundingClientRect();
+        if (bounds) setAccountMenuPosition({ top: bounds.bottom + 10, right: Math.max(16, window.innerWidth - bounds.right) });
+        setAccountMenuOpen(true);
+    };
+    const scheduleAccountClose = () => {
+        cancelAccountClose();
+        accountCloseTimer.current = setTimeout(() => setAccountMenuOpen(false), 250);
+    };
+    useEffect(() => () => {
+        if (accountCloseTimer.current) clearTimeout(accountCloseTimer.current);
+    }, []);
+
 
     const hydrated = useHydrated();
     const token = hydrated ? getToken() : null;
@@ -176,7 +195,7 @@ function Header(){
     useEffect(() => {
         if (!accountMenuOpen) return;
 
-        const handleClickOutside = (event: MouseEvent) => {
+        const handleClickOutside = (event: Event) => {
             const target = event.target as Node;
             if (
                 !accountMenuRef.current?.contains(target) &&
@@ -187,16 +206,20 @@ function Header(){
         };
 
         const handleEscape = (event: KeyboardEvent) => {
-            if (event.key === "Escape") {
+            if (event.key === "Escape" && !event.defaultPrevented) {
+                cancelAccountClose();
                 setAccountMenuOpen(false);
+                accountMenuRef.current?.querySelector("button")?.focus();
             }
         };
 
         document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("focusin", handleClickOutside);
         document.addEventListener("keydown", handleEscape);
 
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("focusin", handleClickOutside);
             document.removeEventListener("keydown", handleEscape);
         };
     }, [accountMenuOpen]);
@@ -330,18 +353,16 @@ function Header(){
                             <button
                                 type="button"
                                 className={`adminAvatarTrigger flex items-center ${hasManagementAccess ? "bg-(--accentOrange) p-1" : "p-1 pl-3 max-[1075px]:pl-1"} rounded-full transition-all duration-200 cursor-pointer`}
-                                onClick={(event) => {
-                                    if (!accountMenuOpen) {
-                                        const triggerBounds = event.currentTarget.getBoundingClientRect();
-                                        setAccountMenuPosition({
-                                            top: triggerBounds.bottom + 10,
-                                            right: Math.max(16, window.innerWidth - triggerBounds.right),
-                                        });
-                                    }
-                                    setAccountMenuOpen((prev) => !prev);
+                                onPointerEnter={event => { if (event.pointerType === "mouse") openAccountMenu(); }}
+                                onPointerLeave={event => { if (event.pointerType === "mouse") scheduleAccountClose(); }}
+                                onClick={event => {
+                                    cancelAccountClose();
+                                    if (event.detail === 0 && accountMenuOpen) setAccountMenuOpen(false);
+                                    else openAccountMenu();
                                 }}
                                 aria-haspopup="menu"
                                 aria-expanded={accountMenuOpen}
+                                aria-controls={accountMenuOpen ? "header-account-menu" : undefined}
                                 aria-label={t("accountMenuAria")}
                             >
                                 {!hasManagementAccess ? (
@@ -362,10 +383,27 @@ function Header(){
                             {accountMenuOpen && typeof document !== "undefined" ? createPortal(
                                 <div
                                     ref={accountDropdownRef}
+                                    id="header-account-menu"
                                     className="adminAvatarDropdown darkSVG animate-slideIn"
+                                    onPointerEnter={cancelAccountClose}
+                                    onPointerLeave={event => { if (event.pointerType === "mouse") scheduleAccountClose(); }}
                                     role="menu"
+                                    aria-label={t("accountMenuAria")}
                                     style={accountMenuPosition}
                                 >
+                                    <div className="adminAvatarIdentitySection" role="group">
+                                        <Link to="/account" className="adminAvatarIdentity" role="menuitem" onClick={() => setAccountMenuOpen(false)}>
+                                            <img className="adminAvatarIdentityImage"
+                                                src={headerUserData.user.image_url || DefaultProfile}
+                                                alt=""
+                                                onError={event => { event.currentTarget.src = DefaultProfile; }}
+                                            />
+                                            <div className="adminAvatarIdentityText">
+                                                <strong title={headerUserData.user.full_name}>{headerUserData.user.full_name}</strong>
+                                                <span title={headerUserData.user.email}>{headerUserData.user.email}</span>
+                                            </div>
+                                        </Link>
+                                    </div>
                                     <Link
                                         to="/account"
                                         className="adminAvatarDropdownItem"
@@ -410,15 +448,17 @@ function Header(){
                                             <span>{t("navPlatform")}</span>
                                         </Link>
                                     ) : null}
-                                    <button
-                                        type="button"
-                                        className="adminAvatarDropdownItem"
-                                        role="menuitem"
-                                        onClick={handleLogout}
-                                    >
-                                        <span className="adminAvatarDropdownIcon" aria-hidden="true">{LogOutSVG}</span>
-                                        <span>{t("accountLogout")}</span>
-                                    </button>
+                                    <div className="adminAvatarSignOut" role="group">
+                                        <button
+                                            type="button"
+                                            className="adminAvatarDropdownItem"
+                                            role="menuitem"
+                                            onClick={handleLogout}
+                                        >
+                                            <span className="adminAvatarDropdownIcon" aria-hidden="true">{LogOutSVG}</span>
+                                            <span>{t("accountLogout")}</span>
+                                        </button>
+                                    </div>
                                 </div>,
                                 document.body
                             ) : null}
