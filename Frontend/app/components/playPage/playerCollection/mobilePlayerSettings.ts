@@ -122,6 +122,13 @@ export function setupMobilePlayerSettings(player: MuxPlayerElement | null, label
   let closeTimer: ReturnType<typeof setTimeout> | undefined;
   let releaseScroll: (() => void) | undefined;
 
+  // Native dialogs also move/restore focus; clear it within this player's shadow tree.
+  const clearPlayerFocus = () => {
+    let active = root.activeElement;
+    while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+    if (active instanceof HTMLElement) active.blur();
+  };
+
   const restore = () => {
     clearTimeout(closeTimer);
     cancelAnimationFrame(openingFrame);
@@ -161,13 +168,14 @@ export function setupMobilePlayerSettings(player: MuxPlayerElement | null, label
     menu.removeAttribute("anchor");
     dialog.append(menu);
     dialog.setAttribute("data-preparing", "");
+    clearPlayerFocus();
     dialog.showModal();
     menu.hidden = false;
     button.setAttribute("aria-expanded", "true");
     const overflow = document.documentElement.style.overflow;
     document.documentElement.style.overflow = "hidden";
     releaseScroll = () => { document.documentElement.style.overflow = overflow; };
-    closeButton.focus({ preventScroll: true });
+    clearPlayerFocus();
     // Let the relocated menu settle at its mobile size before sliding the whole sheet in.
     openingFrame = requestAnimationFrame(() => {
       openingFrame = requestAnimationFrame(() => {
@@ -181,7 +189,7 @@ export function setupMobilePlayerSettings(player: MuxPlayerElement | null, label
     // A queued close event from the previous opening must not close a new sheet.
     if (dialog.open || !releaseScroll) return;
     restore();
-    button.focus({ preventScroll: true });
+    clearPlayerFocus();
   };
   const onToggle = (event: Event) => { if (event.target === menu && menu.hidden) close(); };
   const onResize = () => { if (!media.matches) finishClose(); };
