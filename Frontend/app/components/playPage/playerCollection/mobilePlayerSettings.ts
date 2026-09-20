@@ -27,12 +27,12 @@ const styles = `
 .player-settings-sheet[data-preparing] { transform: translateY(100%); transition: none; }
 .player-settings-sheet[data-preparing]::backdrop { opacity: 0; transition: none; }
 .player-settings-sheet[data-opening] { animation: settings-sheet-in 280ms cubic-bezier(.2,.8,.2,1) both; transition: none; }
-.player-settings-sheet[data-opening]::backdrop { animation: settings-backdrop-in 280ms ease-out both; }
+.player-settings-sheet[data-opening]::backdrop { transition: opacity 280ms ease-out; }
 .player-settings-sheet:is([data-preparing], [data-opening]) media-settings-menu {
   --media-menu-transition-in: none; --media-menu-transition-out: none;
 }
 .player-settings-sheet[data-preparing] media-settings-menu::part(container) { transition: none; }
-.player-settings-sheet::backdrop { background: var(--seethroughtBlack); transition: opacity 220ms ease; }
+.player-settings-sheet::backdrop { background: var(--seethroughtBlack); opacity: 1; transition: opacity 220ms ease; }
 .player-settings-sheet[data-closing] { animation: none; transform: translateY(100%); }
 .player-settings-sheet[data-closing]::backdrop { opacity: 0; }
 .player-settings-sheet[data-dragging] { animation: none; transition: none; user-select: none; }
@@ -67,7 +67,6 @@ const styles = `
 .player-settings-sheet media-chrome-menu-item[aria-checked="true"],
 .player-settings-sheet [role="menu"]::part(menu-item checked) { color: var(--media-accent-color); background: var(--background2); }
 @keyframes settings-sheet-in { from { transform: translateY(100%); } to { transform: translateY(0); } }
-@keyframes settings-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .player-settings-sheet[open] { animation: none; transition: none; } .player-settings-sheet::backdrop { animation: none; transition: none; } }
 `;
 
