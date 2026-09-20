@@ -132,34 +132,9 @@ html:is([lang="ar"], [lang="he"], [lang="fa"]) :where(
 }
 
 /* OPTIFLOWZ DESIGN SYNC */
-body::before,
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-}
-
-body::before {
-  background:
-    radial-gradient(circle at 15% 25%, color-mix(in srgb, var(--accentBlue3) 28%, transparent), transparent 24%),
-    radial-gradient(circle at 68% 14%, color-mix(in srgb, var(--accentBlue2) 24%, transparent), transparent 26%),
-    radial-gradient(circle at 82% 48%, color-mix(in srgb, var(--accentBlue3) 20%, transparent), transparent 20%),
-    radial-gradient(circle at 35% 78%, color-mix(in srgb, var(--accentBlue2) 14%, transparent), transparent 18%),
-    linear-gradient(180deg, color-mix(in srgb, var(--background1) 28%, transparent), color-mix(in srgb, var(--background1) 96%, transparent));
-  filter: blur(6px);
-  opacity: 0.95;
-}
-
-body::after {
-  background:
-    radial-gradient(circle at center, transparent 0%, color-mix(in srgb, var(--background1) 18%, transparent) 45%, color-mix(in srgb, var(--background1) 58%, transparent) 100%);
-}
-
 body {
   position: relative;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--background1) 98%, transparent), var(--background1));
+  background: var(--background1);
 }
 
 main {
@@ -314,12 +289,17 @@ main.homePage .collection-header{
   letter-spacing: -0.04em;
 }
 
-.collection-header a.button {
-  padding: 0.75rem 1rem;
+.collection-header :is(a.button, .latestPostsViewAll) {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.9rem;
+  line-height: 1.25rem;
+  gap: 6px;
+  color: var(--text1);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--borderWhite) 3%, transparent);
-  border: 1px solid color-mix(in srgb, var(--borderWhite) 10%, transparent);
+  background: var(--background2);
+  border: 0;
 }
+.collection-header :is(a.button, .latestPostsViewAll):is(:hover, :focus-visible) { background: var(--background3); }
 
 .scroll-buttons {
   background: color-mix(in srgb, var(--borderWhite) 4%, transparent);
@@ -624,7 +604,6 @@ body {
 
 /* Remove the bright hairline highlight from glass/bordered elements. */
 header > div,
-.collection-header a.button,
 .scroll-buttons,
 .scrollLeftBtn,
 .scrollRightBtn,
@@ -1844,8 +1823,10 @@ main .collection.notscrollable {
   height: 60px;
 }
 
+.collection-header a.button svg { width: 7px; height: 13px; flex-shrink: 0; }
+
 .collection-header a svg path {
-  stroke: var(--accentBlue2);
+  stroke: currentColor;
 }
 
 .scroll-buttons {

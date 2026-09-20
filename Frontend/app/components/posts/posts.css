@@ -223,8 +223,8 @@ main.myPostsPage #selectedButtons button:disabled { opacity: .5; cursor: default
 
 /* Homepage previews open the interactive post in a dialog. */
 .latestPostsGrid { display: grid; align-items: stretch; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
-.latestPostCard { position: relative; display: flex; flex-direction: column; gap: 12px; min-width: 0; padding: 16px; border: 0; border-radius: 20px; background: var(--background2); color: var(--text1); text-decoration: none; transition: background-color .2s ease, transform .2s ease; }
-.latestPostCard:hover, .latestPostCard:has(.latestPostTrigger:focus-visible) { background: var(--background3); transform: translateY(-3px); }
+.latestPostCard { position: relative; isolation: isolate; display: flex; flex-direction: column; gap: 12px; min-width: 0; padding: 16px; border: 0; border-radius: 20px; background: var(--background2); color: var(--text1); text-decoration: none; transition: background-color .2s ease; }
+.latestPostCard:hover, .latestPostCard:has(.latestPostTrigger:focus-visible) { background: var(--background3); }
 .latestPostCard:focus-within { outline: none; }
 .latestPostTrigger { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; border: 0; border-radius: inherit; background: transparent; cursor: pointer; }
 .latestPostTrigger:focus, .latestPostTrigger:focus-visible { outline: none; }
@@ -233,24 +233,31 @@ main.myPostsPage #selectedButtons button:disabled { opacity: .5; cursor: default
 .latestPostAuthor strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .9rem; font-weight: 600; }
 .latestPostAuthor time { display: block; color: var(--text2); font-size: .75rem; margin-top: 2px; }
 .latestPostAvatar { width: 38px; flex: 0 0 38px; height: 38px; border-radius: 50%; object-fit: cover; background: var(--background2); }
-.latestPostBody { display: flex; flex-direction: column; align-items: stretch; gap: 10px; overflow: hidden; min-width: 0; }
+.latestPostBody { flex: 1; display: flex; flex-direction: column; align-items: stretch; gap: 10px; overflow: hidden; min-width: 0; }
 .latestPostText { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; white-space: pre-wrap; }
 .latestPostText { font-size: .9rem; line-height: 1.5; color: var(--text2); -webkit-line-clamp: 3; line-clamp: 3; }
+.latestPostCardMultipleBlocks .latestPostText { display: block; white-space: nowrap; text-overflow: ellipsis; -webkit-line-clamp: 1; line-clamp: 1; }
 .latestPostTextInset { padding: 12px; border-radius: 10px; background: var(--background2); }
 .latestPostTextInset .latestPostText { color: var(--text1); }
-.latestPostCopy { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.latestPostCopy { flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .latestPostCopy:empty { display: none; }
-.latestPostBodyWithImage { display: grid; grid-template-columns: minmax(0, 1fr) 96px; align-items: start; gap: 12px; }
-.latestPostImage { grid-column: 2; width: 96px; height: 80px; object-fit: cover; border-radius: 10px; }
-.latestPostType { flex-shrink: 0; max-width: 42%; overflow-wrap: anywhere; padding: 3px 8px; background: var(--background2); border-radius: 6px; font-size: .72rem; color: var(--text2); }
+.latestPostImage { flex-shrink: 0; width: 100%; height: 140px; object-fit: cover; border-radius: 10px; }
 .latestPostOptions { display: flex; align-items: center; gap: 7px; min-width: 0; }
 .latestPostOptions > div { display: flex; flex: 1; min-width: 0; align-items: center; gap: 7px; padding: 7px 9px; background: var(--background2); border-radius: 8px; font-size: .85rem; }
 .latestPostOptions > div > span:last-child { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .latestPostOptionDot { flex: 0 0 13px; height: 13px; border: 1px solid var(--border1); border-radius: 50%; }
 .latestPostOptions small { flex-shrink: 0; color: var(--text2); font-size: .75rem; }
-.latestPostOpen { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; padding-top: 10px; border-top: 1px solid var(--border1); font-size: .85rem; font-weight: 500; color: var(--accentBlue3); }
-.latestPostOpen svg { width: 8px; height: 15px; flex-shrink: 0; }
-.latestPostOpen svg path { stroke: currentColor; stroke-width: 1px; }
+.latestPostCard:not(.latestPostCardMultipleBlocks) .latestPostOptions { flex-direction: column; align-items: stretch; }
+.latestPostCard:not(.latestPostCardMultipleBlocks) .latestPostOptions > div { flex: none; }
+.latestPostOptionsSpace { position: relative; flex: 1; min-height: calc(2 * (1.275rem + 12px) + 1.125rem + 14px); }
+.latestPostOptionsSpace > .latestPostOptions { position: absolute; inset: 0; overflow: hidden; }
+.latestPostOptionsSpace .latestPostOptions > div { padding-block: 6px; line-height: 1.5; }
+.latestPostOptionsSpace .latestPostOptions small { line-height: 1.5; }
+.latestPostBody > .postVideoMention { flex-shrink: 0; }
+.latestPostBody > .postVideoMention > img { flex-shrink: 0; }
+.latestPostBody > .postVideoMention strong { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+.latestPostBody > .postVideoMention small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 @media (max-width: 1075px) {
   .latestPostsGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .latestPostCard:nth-child(n + 3) { display: none; }
@@ -258,9 +265,8 @@ main.myPostsPage #selectedButtons button:disabled { opacity: .5; cursor: default
 @media (max-width: 650px) {
   .latestPostsGrid { grid-template-columns: minmax(0, 1fr); }
   .latestPostCard:nth-child(n + 2) { display: none; }
-  .latestPostCard:hover, .latestPostCard:has(.latestPostTrigger:focus-visible) { transform: none; }
 }
-@media (prefers-reduced-motion: reduce) { .latestPostCard, .latestPostCard:hover, .latestPostCard:has(.latestPostTrigger:focus-visible) { transition: none; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .latestPostCard { transition: none; } }
 
 .latestPostsSection .collection-header { width: 100%; margin-inline: 0; padding-inline: 0; }
 .latestPostsHeading { display: flex; align-items: center; gap: 20px; }
@@ -279,5 +285,3 @@ main.myPostsPage #selectedButtons button:disabled { opacity: .5; cursor: default
   .latestPostsDialog > .postDialogHeading { padding: 16px; }
   .latestPostsDialogFeed { padding: 0 16px 16px; gap: 16px; }
 }
-.latestPostsSection .latestPostsViewAll { padding: .75rem 1rem; border-radius: 999px; background: color-mix(in srgb, var(--borderWhite) 3%, transparent); border: 1px solid transparent; }
-.latestPostsSection .latestPostsViewAll:hover, .latestPostsSection .latestPostsViewAll:focus-visible { background: var(--background3); }

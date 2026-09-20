@@ -1,12 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
-import type { Post } from './model';
+import type { Post, PostOption } from './model';
 import PostDialog from './PostDialog';
-import PostCard from './PostCard';
+import PostCard, { PostVideoPreview } from './PostCard';
 import { ArrowSVG } from '~/constants';
 import { formatDate, getToken } from '~/functions';
 import { useI18n } from '~/i18n';
-import { getVideoThumbnail } from '~/components/shared/videoMedia';
 import type { VideoT } from '~/types';
 import { getRecommendedPosts } from './api';
 import { recommendedPostAuthors } from './recommendations';
@@ -46,36 +45,71 @@ export default function LatestPosts({ videos }: { videos: VideoT[] }) {
       const textBlock = post.blocks.find(block => block.text);
       const text = textBlock?.text;
       const feature = post.blocks.find(block => block.type !== 'text');
-      const contentType = feature?.type || post.blocks[0]?.type;
       const video = feature?.type === 'video'
         ? (feature.video !== undefined ? feature.video : videos.find(item => item.id === feature.videoId))
         : undefined;
-      const image = feature?.type === 'image' ? feature.image : video ? getVideoThumbnail(video) : undefined;
-      return <article key={post.id} className="latestPostCard">
+      const image = feature?.type === 'image' ? feature.image : undefined;
+      return <article key={post.id} className={`latestPostCard${post.blocks.length > 1 ? ' latestPostCardMultipleBlocks' : ''}`}>
         <button type="button" className="latestPostTrigger" aria-haspopup="dialog" aria-label={`${t('postOpen')}: ${text || post.author?.full_name || author?.uploader_name || t('channelLabel')}`} onClick={() => setSelection({ id: post.id, token })} />
         <div className="latestPostAuthor">
           <img className="latestPostAvatar" src={post.author?.image_url || DefaultProfile} alt="" loading="lazy" onError={event => { event.currentTarget.onerror = null; event.currentTarget.src = DefaultProfile; }} />
           <div><strong>{post.author?.full_name || author?.uploader_name || t('channelLabel')}</strong><time dateTime={post.createdAt}>{formatDate(post.createdAt)}</time></div>
-          {contentType && <span className="latestPostType">{t(`postType_${contentType}`)}</span>}
         </div>
-        <div className={`latestPostBody${image ? ' latestPostBodyWithImage' : ''}`}>
+        <div className="latestPostBody">
           <div className="latestPostCopy">
             {text && <div className={textBlock?.type === 'text' ? 'latestPostTextInset' : undefined}><p className="latestPostText">{text}</p></div>}
             {feature?.text && feature.text !== text && <p className="latestPostText">{feature.text}</p>}
           </div>
           {image && <img className="latestPostImage" src={image} alt="" loading="lazy" />}
-          {feature && 'options' in feature && <div className="latestPostOptions" aria-hidden="true">
-            {feature.options.slice(0, 2).map(option => <div key={option.id}><span className="latestPostOptionDot" /><span>{option.text}</span></div>)}
-            {feature.options.length > 2 && <small>+{feature.options.length - 2}</small>}
-          </div>}
+          {feature?.type === 'video' && <PostVideoPreview video={video} />}
+          {feature && 'options' in feature && <LatestPostOptions options={feature.options} compact={post.blocks.length > 1} />}
         </div>
-        <span className="latestPostOpen">{t('postOpen')}{ArrowSVG}</span>
       </article>;
     })}</div>
     {popupOpen && <PostDialog title={t('latestPosts')} className="latestPostsDialog" onClose={() => setSelection(undefined)}>
       <LatestPostsFeed posts={posts} videos={videos} initialPostId={selection.id} />
     </PostDialog>}
   </section>;
+}
+
+function LatestPostOptions({ options, compact }: { options: PostOption[]; compact: boolean }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const firstOptionRef = useRef<HTMLDivElement>(null);
+  const remainingRef = useRef<HTMLElement>(null);
+  const [visibleCount, setVisibleCount] = useState(2);
+
+  useEffect(() => {
+    if (compact) return;
+    const container = containerRef.current;
+    const firstOption = firstOptionRef.current;
+    const remaining = remainingRef.current;
+    if (!container || !firstOption || !remaining) return;
+    const measure = () => {
+      const height = container.clientHeight;
+      const rowHeight = firstOption.getBoundingClientRect().height;
+      if (!height || !rowHeight) return;
+      const gap = parseFloat(getComputedStyle(firstOption.parentElement!).rowGap) || 0;
+      const allFit = options.length * rowHeight + Math.max(0, options.length - 1) * gap <= height;
+      const count = allFit ? options.length
+        : Math.floor((height - remaining.getBoundingClientRect().height) / (rowHeight + gap));
+      setVisibleCount(Math.min(options.length, Math.max(2, count)));
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(container);
+    observer.observe(firstOption);
+    observer.observe(remaining);
+    measure();
+    return () => observer.disconnect();
+  }, [compact, options.length]);
+
+  const count = compact ? 2 : visibleCount;
+  const content = <>
+    {options.slice(0, count).map((option, index) => <div key={option.id} ref={index === 0 ? firstOptionRef : undefined}><span className="latestPostOptionDot" /><span>{option.text}</span></div>)}
+    <small ref={remainingRef} hidden={compact && options.length <= count} style={{ visibility: options.length > count ? 'visible' : 'hidden' }}>+{Math.max(0, options.length - count)}</small>
+  </>;
+  return compact
+    ? <div className="latestPostOptions" aria-hidden="true">{content}</div>
+    : <div ref={containerRef} className="latestPostOptionsSpace" aria-hidden="true"><div className="latestPostOptions">{content}</div></div>;
 }
 
 function LatestPostsFeed({ posts, videos, initialPostId }: { posts: Post[]; videos: VideoT[]; initialPostId?: string }) {

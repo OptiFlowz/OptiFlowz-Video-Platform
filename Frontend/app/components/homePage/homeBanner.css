@@ -1,0 +1,51 @@
+.homeBanner { position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: space-between; width: 100%; min-height: 320px; padding: 32px 36px 18px; overflow: hidden; border: 1px solid var(--headerBorderColor); border-radius: 20px; background: var(--background1); color: var(--text1); }
+.homeBannerArtwork { position: absolute; z-index: -1; inset: 0 0 0 24%; overflow: hidden; }
+.homeBannerArtwork img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: right center; opacity: 0; transition: opacity 1.4s ease-in-out; }
+.homeBannerArtwork img.isSelected { opacity: 1; }
+.homeBannerArtwork::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,
+    var(--background1) 0%,
+    color-mix(in srgb, var(--background1) 98%, transparent) 9%,
+    color-mix(in srgb, var(--background1) 90%, transparent) 18%,
+    color-mix(in srgb, var(--background1) 79%, transparent) 27%,
+    color-mix(in srgb, var(--background1) 65%, transparent) 36%,
+    color-mix(in srgb, var(--background1) 50%, transparent) 45%,
+    color-mix(in srgb, var(--background1) 35%, transparent) 54%,
+    color-mix(in srgb, var(--background1) 21%, transparent) 63%,
+    color-mix(in srgb, var(--background1) 10%, transparent) 72%,
+    color-mix(in srgb, var(--background1) 2%, transparent) 81%,
+    transparent 90%);
+}
+.homeBannerCopy { position: relative; display: flex; align-items: center; flex: 1; width: 56%; padding-block: 12px 24px; }
+.homeBannerCopy h1 { margin: 0; font-size: clamp(1.7rem, 2.8vw, 2.7rem); line-height: 1.12; font-weight: 500; letter-spacing: -.035em; overflow-wrap: anywhere; }
+.homeBannerCopy h1 > span { display: block; }
+.homeBannerCopy h1 > span:last-child { color: var(--accentBlue3); }
+.homeBannerNavigation { position: relative; display: flex; justify-content: flex-start; }
+.homeBannerIndicators { display: flex; align-items: center; gap: 0; }
+.homeBannerIndicators button { display: grid; place-items: center; width: 22px; height: 32px; padding: 0; cursor: pointer; background: transparent; transition: width .3s ease; }
+.homeBannerIndicators button[aria-current="true"] { width: 54px; }
+.homeBannerIndicatorTrack { position: relative; display: block; width: 8px; height: 8px; overflow: hidden; border-radius: 999px; background: color-mix(in srgb, var(--text1) 35%, transparent); transition: width .3s ease, background-color .2s ease; }
+.homeBannerIndicators button[aria-current="true"] .homeBannerIndicatorTrack { width: 48px; background: color-mix(in srgb, var(--accentBlue3) 25%, var(--background1)); }
+.homeBannerIndicatorFill { position: absolute; inset: 0 auto 0 0; width: 8px; border-radius: inherit; background: var(--accentBlue3); animation: homeBannerProgress 9s linear forwards; }
+.homeBannerIndicators.isPaused .homeBannerIndicatorFill { animation-play-state: paused; }
+.homeBannerIndicators button:is(:hover, :focus-visible) .homeBannerIndicatorTrack { background: color-mix(in srgb, var(--text1) 55%, transparent); }
+@keyframes homeBannerProgress { from { width: 8px; } to { width: 100%; } }
+@media (max-width: 900px) {
+  .homeBanner { min-height: 280px; padding: 26px 24px 16px; }
+  .homeBannerCopy { width: 65%; }
+  .homeBannerArtwork { left: 20%; }
+}
+@media (max-width: 540px) {
+  .homeBanner { min-height: 250px; padding: 22px 20px 12px; border-radius: 16px; }
+  .homeBannerCopy { width: 100%; }
+  .homeBannerCopy h1 { max-width: 17ch; font-size: clamp(1.45rem, 6vw, 1.85rem); }
+  .homeBannerArtwork { left: 0; opacity: .32; }
+  .homeBannerArtwork::after { background: linear-gradient(90deg, var(--background1), color-mix(in srgb, var(--background1) 72%, transparent) 55%, color-mix(in srgb, var(--background1) 32%, transparent)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .homeBannerArtwork img, .homeBannerIndicators button, .homeBannerIndicatorTrack { transition: none; }
+  .homeBannerIndicatorFill { animation: none; width: 100%; }
+}
