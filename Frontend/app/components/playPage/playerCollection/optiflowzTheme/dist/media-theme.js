@@ -214,10 +214,9 @@ if (template) {
         height: calc(1.2 * var(--base));
       }
 
-      .center media-play-button svg path{
-        fill: none;
-        stroke: var(--text1);
-        stroke-width: 2;
+      media-play-button svg path{
+        fill: var(--text1);
+        stroke: none;
       }
 
       .center media-seek-backward-button svg path,

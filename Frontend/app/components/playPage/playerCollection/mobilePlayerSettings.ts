@@ -5,6 +5,22 @@ import type MuxPlayerElement from "@mux/mux-player";
 export const MOBILE_PLAYER_QUERY = "(max-width: 800px), (hover: none) and (pointer: coarse)";
 
 const styles = `
+@media (max-width: 550px) {
+  media-time-range {
+    bottom: 0; left: 0; width: 100%; height: 4px; border-radius: 0;
+    opacity: 1 !important;
+    --media-preview-box-display: none;
+    --media-range-padding: 0px;
+    --media-range-track-height: 4px;
+    --media-range-track-border-radius: 0px;
+    --media-time-range-hover-height: 24px;
+    --media-time-range-hover-bottom: 0px;
+  }
+  media-control-bar { bottom: 24px; }
+  .player-button-group.play { display: none; }
+  media-controller media-time-display:not([showduration]) { display: none !important; }
+  media-controller media-time-display[showduration] { display: inline-flex !important; white-space: nowrap; }
+}
 @media ${MOBILE_PLAYER_QUERY} {
   media-time-range { --media-preview-box-display: none; }
   media-time-range [slot="preview"] { display: none !important; }

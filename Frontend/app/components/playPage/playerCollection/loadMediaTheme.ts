@@ -322,6 +322,14 @@ const captionStyles = `
     bottom: var(--optiflowz-caption-controls-bottom, max(12%, 48px));
   }
 
+  @media (max-width: 550px) {
+    #${CAPTION_OVERLAY_ID},
+    #${CAPTION_OVERLAY_ID}[data-controls-visible="true"] {
+      bottom: calc(4% + 6px);
+      transition: none;
+    }
+  }
+
   #${CAPTION_OVERLAY_ID} .optiflowz-caption-cue {
     display: block;
     position: relative;
@@ -543,7 +551,8 @@ export function styleMuxPlayerCaptions(player: MuxPlayerElement | null) {
       size.min,
       Math.min(size.max, video.clientWidth * size.scale),
     );
-    overlay.style.fontSize = `${fontSize}px`;
+    const phoneScale = window.matchMedia("(max-width: 550px)").matches ? 1.15 : 1;
+    overlay.style.fontSize = `${fontSize * phoneScale}px`;
     scheduleCaptionBackgroundUpdate();
   };
 
