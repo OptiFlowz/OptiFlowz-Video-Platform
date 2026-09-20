@@ -19,10 +19,8 @@ function SessionQueries({ children }: { children: React.ReactNode }) {
 export default function SessionBoundary({ children }: { children: React.ReactNode }) {
   const redirecting = useSyncExternalStore(subscribeToSession, isRedirectingToLogin, () => false);
   const token = useSyncExternalStore(subscribeToSession, getToken, () => null);
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  // Storage is browser-owned. Mount consumers only after the initial snapshot.
-  if (!mounted) return null;
+  // The server/first hydration snapshot is anonymous. Public content can render
+  // immediately; a stored session receives its own fresh cache after hydration.
   if (redirecting) return <Loader />;
   return <SessionQueries key={token ?? "anonymous"}>{children}</SessionQueries>;
 }

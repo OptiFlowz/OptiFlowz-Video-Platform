@@ -1,3 +1,5 @@
+import "flag-icons/css/flag-icons.min.css";
+import { WorldMapSVG, type WorldMapCountry } from "./lazyWorldMap";
 import {
   forwardRef,
   useCallback,
@@ -11,8 +13,6 @@ import { createPortal } from "react-dom";
 import {
   ArrowSVG,
   CloseSVG,
-  WorldMapSVG,
-  type WorldMapCountry,
 } from "~/constants";
 import { useI18n } from "~/i18n";
 
@@ -204,6 +204,10 @@ function GeographicBreakdownSection({
     );
   }, []);
 
+  const restoreMapView = useCallback(() => {
+    applyMapView(mapViewRef.current);
+  }, [applyMapView]);
+
   const scheduleMapView = useCallback((view: MapView) => {
     mapViewRef.current = view;
     pendingMapViewRef.current = view;
@@ -219,8 +223,8 @@ function GeographicBreakdownSection({
 
   useLayoutEffect(() => {
     if (isLoading || isError) return;
-    applyMapView(mapViewRef.current);
-  }, [applyMapView, isError, isLoading]);
+    restoreMapView();
+  }, [restoreMapView, isError, isLoading]);
 
   useEffect(() => () => {
     if (mapPanFrameRef.current != null) window.cancelAnimationFrame(mapPanFrameRef.current);
@@ -353,6 +357,7 @@ function GeographicBreakdownSection({
               }}
             >
               <WorldMapSVG
+                onReady={restoreMapView}
                 getFill={(country) => (
                   (breakdown[country.id.toUpperCase()]?.totalViews ?? 0) > 0
                     ? "var(--accentBlue2)"

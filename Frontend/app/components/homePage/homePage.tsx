@@ -2,13 +2,10 @@ import ItemSlider from "../itemSlider/itemSlider";
 import HomeBanner from "./HomeBanner";
 import { useEffect, useRef, useState } from "react";
 import { useI18n } from "~/i18n";
-import { useSearchParams } from "react-router";
 import MessagePopup from "../messagePopup/messagePopup";
 
 function HomePage(){
     const { t } = useI18n();
-    const [searchParams] = useSearchParams();
-    const registeredStatus = searchParams.get("registered");
     const hasHandledRegisteredPopup = useRef(false);
     const [popupState, setPopupState] = useState({
         open: false,
@@ -17,6 +14,8 @@ function HomePage(){
     });
 
     useEffect(() => {
+        const searchParams = new URLSearchParams(window.location.search);
+        const registeredStatus = searchParams.get("registered");
         if (registeredStatus !== "success" || hasHandledRegisteredPopup.current) return;
 
         hasHandledRegisteredPopup.current = true;
@@ -33,7 +32,7 @@ function HomePage(){
         const nextUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ""}${window.location.hash}`;
 
         window.history.replaceState(null, "", nextUrl);
-    }, [registeredStatus, searchParams, t]);
+    }, [t]);
 
     return <>
         <main className="homePage pb-10">

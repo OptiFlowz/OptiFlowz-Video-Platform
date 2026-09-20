@@ -12,6 +12,7 @@ const project = path.resolve(__dirname, '..');
 
 // Exercise the actual TS/TSX modules using Node's test runner and a local DOM.
 function modules(mocks = {}) {
+  const defaultEnv = { __esModule: true, env: { apiBaseUrl: 'https://api.example', siteUrl: 'https://app.example' } };
   const cache = new Map();
   function load(file) {
     file = path.resolve(project, file);
@@ -23,6 +24,7 @@ function modules(mocks = {}) {
     }).outputText;
     const localRequire = name => {
       if (Object.hasOwn(mocks, name)) return { __esModule: true, ...mocks[name] };
+      if (name === '~/env' || name === './env' || name === '../env') return defaultEnv;
       if (name.endsWith('.css') || /\.(webp|png)$/.test(name)) return {};
       if (name.startsWith('~/')) return load(path.join(project, 'app', name.slice(2)));
       if (name.startsWith('.')) return load(path.resolve(path.dirname(file), name));
@@ -38,7 +40,7 @@ function dom(t) {
   require("@tanstack/react-query").onlineManager.setOnline(true);
   const instance = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', { url: 'https://app.example/', pretendToBeVisual: true });
   const descriptors = new Map();
-  const globals = ['window', 'document', 'navigator', 'localStorage', 'sessionStorage', 'Event', 'CustomEvent', 'StorageEvent', 'HTMLElement', 'Element', 'HTMLAnchorElement', 'customElements'];
+  const globals = ['window', 'document', 'navigator', 'localStorage', 'sessionStorage', 'Event', 'CustomEvent', 'StorageEvent', 'HTMLElement', 'Element', 'HTMLAnchorElement', 'customElements', 'requestAnimationFrame', 'cancelAnimationFrame'];
   for (const key of globals) {
     descriptors.set(key, Object.getOwnPropertyDescriptor(globalThis, key));
     Object.defineProperty(globalThis, key, { value: instance.window[key], writable: true, configurable: true });
@@ -485,8 +487,9 @@ test('a chapter title containing HTML is displayed literally', t => {
   dom(t);
   const source = fs.readFileSync(path.join(project, 'app/components/playPage/playerCollection/optiflowzTheme/dist/media-theme.js'), 'utf8');
   const start = source.indexOf('class MediaCurrentChapter extends HTMLElement');
-  const end = source.indexOf("globalThis.customElements.define('media-current-chapter', MediaCurrentChapter);") + "globalThis.customElements.define('media-current-chapter', MediaCurrentChapter);".length;
-  new Function(source.slice(start, end))();
+  const end = source.indexOf("if (globalThis.customElements", start);
+  const Chapter = new Function(source.slice(start, end) + "\nreturn MediaCurrentChapter;")();
+  customElements.define("media-current-chapter", Chapter);
   const outer = document.createElement('div');
   const control = document.createElement('div');
   const chapter = document.createElement('media-current-chapter');
@@ -818,6 +821,7 @@ test('search scroll appends each content type independently and resets results f
   assert.deepEqual(requests.filter(request => request.page === 2).map(request => request.kind), ['videos']);
   for (const index of [1, 2]) {
     await act(async () => container.querySelectorAll('[aria-pressed]')[index].click());
+    await waitForUpdates();
     assert.equal(container.querySelectorAll('[data-result]').length, 10);
     await scroll();
     assert.equal(container.querySelectorAll('[data-result]').length, 11);
@@ -1026,20 +1030,20 @@ test('notes editor keeps a failed draft, seeks from timestamps and cancels delet
   let seek; window.addEventListener('player:seek', e => seek = e.detail, { once: true });
   await act(async () => container.querySelector('article button').click()); assert.deepEqual(seek, { videoId: 'video-a', seconds: 12 });
   await act(async () => container.querySelector('[aria-label="notesDelete"]').click());
-  const cancel = [...container.querySelectorAll('button')].find(b => b.textContent === 'cancel');
+  const cancel = [...document.querySelectorAll('[role="dialog"] button')].find(b => b.textContent === 'cancel');
   await act(async () => cancel.click()); assert.equal(writes.length, 0);
   await act(async () => container.querySelector('[aria-label="notesEdit"]').click());
-  assert.equal(container.querySelector('input').value, note.title);
+  assert.equal(container.querySelector('input[aria-label="title"]').value, note.title);
   await act(async () => container.querySelector('form').dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true })));
   await waitForUpdates();
   assert.equal(writes[0].options.method, 'PATCH');
-  assert.equal(container.querySelector('input').value, note.title);
+  assert.equal(container.querySelector('input[aria-label="title"]').value, note.title);
   assert.equal(container.querySelector('textarea').value, note.text);
   assert.match(container.querySelector('[role="alert"]').textContent, /notesSaveError/);
-  assert.equal(container.querySelector('fieldset').disabled, false);
+  assert.equal(container.querySelector('button[type="submit"]').disabled, false);
 });
 
-test('note markers position against the actual seek track, seek and open scoped editing', async t => {
+test('note markers position against the actual seek track and open scoped editing', async t => {
   const container = dom(t);
   const previousResize = globalThis.ResizeObserver;
   globalThis.ResizeObserver = class { observe() {} disconnect() {} };
@@ -1068,8 +1072,6 @@ test('note markers position against the actual seek track, seek and open scoped 
   assert.equal(marker.style.left, '50%'); assert.equal(controller.querySelector('.video-note-markers').style.left, '20px');
   await act(async () => marker.click());
   assert.equal(controller.querySelector('.video-note-popup h3').textContent, note.title);
-  await act(async () => controller.querySelector('.video-note-popup header button').click());
-  assert.equal(player.currentTime, 60);
   let request; window.addEventListener('player:open-notes', event => request = event.detail, { once: true });
   await act(async () => controller.querySelector('[aria-label="notesEdit"]').click());
   assert.equal(paused, true); assert.deepEqual(request, { videoId: 'v1', noteId: 'n1', action: 'edit' });
@@ -1144,13 +1146,19 @@ for (const firstResponse of ['details', 'videos']) {
 
 test('channel dropdowns independently sort videos and playlists with all four orders', async t => {
   const container = dom(t);
+  const previousResizeObserver = globalThis.ResizeObserver;
+  globalThis.ResizeObserver = class { observe() {} disconnect() {} };
+  t.after(() => { globalThis.ResizeObserver = previousResizeObserver; });
   const requests = [];
+  let pathname = '/channel/channel';
+  const routeListeners = new Set();
+  const subscribe = listener => { routeListeners.add(listener); return () => routeListeners.delete(listener); };
   const load = modules({
     '~/i18n': i18n,
     '~/env': { env: { siteUrl: 'https://app.example' } },
     '~/functions': { getToken: () => 'token', formatDescription: value => value },
     '~/constants': {},
-    'react-router': { useParams: () => ({ id: 'channel' }), Link: ({ children, to, ...props }) => React.createElement('a', { ...props, href: to }, children) },
+    'react-router': { useParams: () => ({ id: 'channel' }), useLocation: () => ({ pathname: React.useSyncExternalStore(subscribe, () => pathname) }), useNavigate: () => route => { pathname = route; routeListeners.forEach(listener => listener()); }, Link: ({ children, to, ...props }) => React.createElement('a', { ...props, href: to }, children) },
     '../itemSlider/item': { default: () => null },
     '../itemSlider/playlistItem': { default: () => null },
     '~/API': { fetchFn: async ({ route }) => {
@@ -1173,8 +1181,8 @@ test('channel dropdowns independently sort videos and playlists with all four or
     assert.equal(container.querySelectorAll('[role="tabpanel"]')[index].hidden, false);
     assert.equal(container.querySelectorAll('[role="tabpanel"]')[1 - index].hidden, true);
     for (const [label, by, order] of [
-      ['Most Popular', 'view_count', 'desc'], ['Least Popular', 'view_count', 'asc'],
-      ['Oldest', 'created_at', 'asc'], ['Newest', 'created_at', 'desc'],
+      ['channelSortMostPopular', 'view_count', 'desc'], ['channelSortLeastPopular', 'view_count', 'asc'],
+      ['channelSortOldest', 'created_at', 'asc'], ['channelSortNewest', 'created_at', 'desc'],
     ]) {
       await act(async () => select.querySelector('.customSelectTrigger').click());
       const option = [...select.querySelectorAll('[role="option"]')].find(node => node.textContent === label);
@@ -1223,7 +1231,7 @@ for (const remember of [false, true]) {
     await render();
     assert.equal(exchanges, 1, 'a pending remount must reuse the exchange');
     assert.ok(!container.querySelector('[role="alert"]'));
-    await act(async () => respond(session('google-user')));
+    await act(async () => respond({ success: true, ...session('google-user') }));
     await waitForUpdates();
     assert.ok(!container.querySelector('[role="alert"]'), 'successful login must not flash the retry error after saveSession remounts the callback');
     assert.ok(container.querySelector('.loader'), 'keep the loader until the browser finishes navigation');

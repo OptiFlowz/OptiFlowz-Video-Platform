@@ -1,0 +1,368 @@
+
+main.platformSettingsPage .platformSettingsShell{
+  width: 100%;
+  max-width: 1120px;
+  gap: 1rem;
+}
+
+.platformSettingsHeader{
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-inline: 0.1rem;
+}
+
+.platformSettingsTabs{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem;
+  border: 1px solid var(--border1);
+  border-radius: 18px;
+  background: var(--background2);
+}
+
+.platformSettingsTabs a {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0.65rem 0.8rem;
+  border-radius: 12px;
+  background: var(--background2);
+  color: var(--text1);
+  font-size: 0.84rem;
+  font-weight: 500;
+  text-align: center;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.platformSettingsTabs a:hover{
+  background: var(--background3);
+}
+
+.platformSettingsTabs a.active{
+  background: var(--accentBlue);
+  color: var(--text1);
+}
+
+.platformSettingsTabs a svg {
+  flex-shrink: 0;
+}
+
+.platformSettingsTabs a svg path {
+  stroke: var(--text1);
+}
+
+.platformSettingsTabs a.active svg path {
+  stroke: var(--text1);
+}
+
+.platformSettingsTabs a.active:hover{
+  background: var(--accentBlue2);
+}
+
+.platformSettingsTabs a span {
+  flex-shrink: 0;
+}
+
+.platformSettingsTabs svg{
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.platformGuideUpload,
+.platformSettingsCard{
+  border: 1px solid var(--border1);
+  border-radius: 18px;
+  background: var(--background2);
+}
+
+.platformGuideUpload{
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.15rem 1.25rem;
+}
+
+.platformGuideUpload p{
+  margin: 0;
+  color: var(--text1);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.platformGuideUpload input[type="file"]{
+  display: none;
+}
+
+.platformGuideUpload button{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.7rem 1rem;
+  border-radius: 12px;
+  background: var(--background2);
+  color: var(--text1);
+  font-size: 0.86rem;
+  cursor: pointer;
+  transition: background-color 0.18s ease;
+}
+
+.platformGuideUpload button:hover{
+  background: var(--background3);
+}
+
+.platformGuideUpload button svg{
+  width: 22px;
+  height: 22px;
+}
+
+.platformSettingsGrid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 1rem;
+}
+
+.platformSettingsCard{
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  min-width: 0;
+  padding: 1.25rem;
+}
+
+.platformSettingsCard h2{
+  margin: 0;
+  color: var(--text1);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.platformLogoPreview{
+  display: flex;
+  align-items: center;
+  min-height: 112px;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: var(--background2);
+}
+
+.platformLogoPreview > div{
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.8rem;
+  border-radius: 10px 0 0 10px;
+  background: var(--background3);
+}
+
+.platformLogoPreview img{
+  width: 42px;
+  height: 42px;
+}
+
+.platformLogoPreview strong{
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  justify-content: center;
+  padding-right: 1rem;
+  border-radius: 0 10px 10px 0;
+  background: var(--background3);
+  color: var(--text1);
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.platformLogoPreview small{
+  color: var(--text2);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+.platformRolePopup{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;transition:opacity 200ms ease}
+.platformRolePopup.visible{opacity:1}
+.platformRolePopupBackdrop{position:absolute;inset:0}
+.platformRolePopupPanel{position:relative;display:flex;flex-direction:column;width:min(820px,94vw);max-height:min(860px,calc(100vh - 48px));overflow:hidden;padding:1.75rem;border:1px solid var(--border1);border-radius:28px;background:var(--background1);box-shadow:0 24px 80px var(--seethroughtBlack);transform:translateY(24px);transition:opacity 200ms ease,transform 200ms ease}
+.platformRolePopup.visible .platformRolePopupPanel{transform:translateY(0)}
+.platformRolePopupHeader h3{margin:0;color:var(--text1);font-size:1.5rem;font-weight:500}
+.platformRolePopupHeader p{margin:.35rem 0 0;color:var(--text2);font-size:.95rem;opacity:.72}
+.platformRolePopupBody{display:flex;flex-direction:column;gap:1.25rem;min-height:0;margin-top:1.35rem;overflow-y:auto;overscroll-behavior:contain;padding-right:14px;scrollbar-width:thin;scrollbar-color:var(--accentBlue2) transparent}
+.platformRolePopupBody::-webkit-scrollbar{width:5px}
+.platformRolePopupBody::-webkit-scrollbar-track{margin-block:8px;background:transparent}
+.platformRolePopupBody::-webkit-scrollbar-thumb{min-height:32px;border-radius:var(--bR);background:var(--accentBlue2)}
+.platformRolePopupBody::-webkit-scrollbar-thumb:hover{background:var(--accentBlue3)}
+.platformRolePopupBody::-webkit-scrollbar-button{display:none}
+.platformRoleNameField{display:flex;flex-direction:column;gap:.55rem;color:var(--text1);font-size:.95rem;font-weight:600}
+.platformRoleNameControl{display:flex;align-items:center;gap:.75rem;min-height:56px;padding:.55rem 1rem;border:1px solid transparent;border-radius:14px;background:var(--background2);transition:border-color 180ms ease}
+.platformRoleNameControl:focus-within{border-color:var(--accentBlue2)}
+.platformRoleNameControl input{flex:1;min-width:0;background:transparent;color:var(--text1);font:inherit;font-weight:500}
+.platformPermissionsHeader{display:flex;flex-direction:column;gap:.7rem}
+.platformPermissionsHeader>strong{color:var(--text1);font-size:.95rem}
+.platformPermissionsHeader>div{display:flex;flex-wrap:wrap;gap:.65rem}
+.platformPermissionsHeader button{display:inline-flex;align-items:center;gap:.45rem;min-height:38px;padding:.5rem .9rem;border:1px solid var(--border1);border-radius:var(--bR);background:var(--background1);color:var(--text2);font-size:.84rem;cursor:pointer;transition:background-color 180ms ease,border-color 180ms ease}
+.platformPermissionsHeader button:hover{border-color:var(--accentBlue2);background:var(--background2)}
+.platformPermissionsHeader button svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.platformPermissionList{display:flex;flex-direction:column;gap:.7rem}
+.platformPermissionItem{display:grid;grid-template-columns:54px minmax(0,1fr) auto;align-items:center;gap:.85rem;min-height:78px;padding:.7rem 1rem;border-radius:14px;background:var(--background2);cursor:pointer;transition:background-color 180ms ease}
+.platformPermissionItem:hover{background:var(--background3)}
+.platformPermissionIcon{display:grid;width:54px;height:54px;place-items:center;border-radius:12px;background:var(--background1);color:var(--text1)}
+.platformPermissionIcon svg{width:32px;height:32px;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.platformPermissionText{display:flex;flex-direction:column;gap:.2rem;min-width:0}
+.platformPermissionText strong{color:var(--text1);font-size:.95rem}
+.platformPermissionText small{color:var(--text2);font-size:.8rem;opacity:.72}
+.platformRolePopupActions{display:flex;justify-content:flex-end;gap:.75rem;padding-top:1.15rem}
+.platformRolePopupActions .cancelBtn,.platformRolePopupActions .saveCaptionsBtn{width:auto;min-width:120px;margin:0}
+.platformRolePopupPanel{width:min(560px,92vw);max-height:min(720px,calc(100vh - 32px));padding:1.5rem;border:1px solid var(--border1);border-radius:24px}
+.platformRolePopupHeader h3{font-size:1.25rem;font-weight:600}
+.platformRolePopupHeader p{margin-top:.25rem;font-size:.85rem}
+.platformRolePopupBody{gap:1rem;margin-top:1rem;overflow-x:hidden;padding-right:10px}
+.platformRoleNameField{gap:.4rem;font-size:.9rem}
+.platformRoleNameField>span:first-child,.platformPermissionsHeader>strong{color:var(--accentBlue2)}
+.platformRoleNameControl{min-height:50px;padding:.45rem .85rem;border-radius:12px}
+.platformPermissionsHeader{gap:.55rem}
+.platformPermissionsHeader button{min-height:34px;padding:.4rem .75rem;font-size:.8rem}
+.platformPermissionsHeader button svg{width:16px;height:16px;stroke-width:1}
+.platformPermissionsHeader button:disabled{opacity:.55;cursor:not-allowed}
+.platformDefaultRoleSection{display:flex;flex-direction:column;gap:.55rem;min-width:0}
+.platformDefaultRoleSection>strong{color:var(--text1);font-size:.9rem}
+.platformDefaultRoleControl{display:flex;align-items:center;justify-content:space-between;gap:1rem;min-width:0;min-height:64px;padding:.65rem .8rem;border-radius:12px;background:var(--background2);cursor:pointer}
+.platformDefaultRoleControl>span{display:flex;flex-direction:column;gap:.15rem}
+.platformDefaultRoleControl strong{color:var(--text1);font-size:.9rem}
+.platformDefaultRoleControl small{color:var(--text2);font-size:.75rem}
+.platformDefaultRoleControl .quizPopupCheckbox{width:18px;height:18px;min-width:18px;margin:0;border-color:var(--border3);background:var(--background2)}
+.platformPermissionList{gap:.5rem}
+.platformPermissionGroup{display:flex;flex-direction:column;gap:.45rem}
+.platformPermissionGroup+.platformPermissionGroup{margin-top:.25rem}
+.platformPermissionGroup>h4{margin:0;color:var(--accentBlue2);font-size:.78rem;font-weight:600;letter-spacing:.02em}
+.platformPermissionGroup>div{display:flex;flex-direction:column;gap:.5rem}
+.platformPermissionState{display:flex;align-items:center;justify-content:center;gap:.65rem;min-height:96px;color:var(--text2);font-size:.84rem}
+.platformPermissionState.errorBanner{flex-direction:column;align-items:flex-start}
+.platformPermissionState.errorBanner p{margin:0}
+.platformPermissionState.errorBanner button{width:auto;min-height:34px;margin:0;padding:.4rem .8rem;border-radius:var(--bR);background:var(--accentBlue);color:var(--seeThroughtWhite);cursor:pointer}
+.platformPermissionItem{grid-template-columns:44px minmax(0,1fr) 24px;gap:.75rem;min-height:64px;padding:.55rem .75rem;border-radius:12px}
+.platformPermissionIcon{width:44px;height:44px;border-radius:10px}
+.platformPermissionIcon svg{width:29px;height:29px}
+.platformPermissionIcon svg path{stroke:currentColor}
+.platformPermissionText strong{font-size:.9rem}
+.platformPermissionText small{font-size:.75rem}
+.platformPermissionItem .quizPopupCheckbox{width:18px;height:18px;min-width:18px;min-height:18px;justify-self:center;border-color:var(--border3);background-color:var(--background2);flex-shrink:0}
+.platformPermissionItem .quizPopupCheckbox:hover,.platformPermissionItem .quizPopupCheckbox:focus-visible{border-color:var(--accentOrange)}
+.platformRolePopupActions{gap:.65rem;padding-top:1rem}
+.platformRolePopupActions button{display:inline-flex;align-items:center;justify-content:center;width:auto;min-width:116px;height:46px;margin:0;padding:0 1.25rem;border:0;border-radius:var(--bR);font:inherit;font-size:.86rem;font-weight:500;cursor:pointer}
+.platformRolePopupActions button:disabled{opacity:.6;cursor:not-allowed}
+.platformRoleCancelButton{background:var(--background2);color:var(--text1)}
+.platformRoleSaveButton{background:var(--accentBlue);color:var(--seeThroughtWhite)}
+.platformRoleCancelButton:hover{background:var(--background3)}
+.platformRoleSaveButton:hover{background:var(--accentBlue2)}
+
+.platformSettingsPlaceholder{
+  min-height: 220px;
+}
+
+.platformSettingsPlaceholder p{
+  margin: 0;
+  color: var(--text2);
+  font-size: 0.9rem;
+  opacity: 0.72;
+}
+
+@media (max-width: 1200px){
+  .platformSettingsTabs a{
+    gap: 0.45rem;
+    padding-inline: 0.55rem;
+    font-size: 0.76rem;
+  }
+}
+
+@media (max-width: 1050px){
+  .platformSettingsGrid{
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px){
+  main.platformSettingsPage .platformSettingsShell{
+    max-width: none;
+  }
+}
+
+@media (max-width: 600px){
+  main.platformSettingsPage .libraryContent{
+    padding-inline: 0.85rem;
+  }
+
+  .platformSettingsTabs{
+    grid-template-columns: 1fr;
+  }
+
+  .platformSettingsTabs a{
+    font-size: 0.82rem;
+  }
+
+  .platformGuideUpload,
+  .platformSettingsCard{
+    padding: 1rem;
+  }
+  .platformRolePopup{padding:12px}
+  .platformRolePopupPanel{max-height:calc(100vh - 24px);padding:1.15rem;border-radius:22px}
+  .platformPermissionItem{grid-template-columns:44px minmax(0,1fr) auto;gap:.65rem;padding:.65rem .75rem}
+  .platformPermissionIcon{width:44px;height:44px}
+  .platformPermissionIcon svg{width:27px;height:27px}
+  .platformRolePopupActions .cancelBtn,.platformRolePopupActions .saveCaptionsBtn{min-width:0;flex:1}
+  .platformRolePopupActions button{min-width:0;flex:1}
+}
+main.platformUsersPage .libraryHeader { display: flex; }
+main.platformUsersPage .filter { display: flex; flex: 1 1 280px; width: auto; min-width: 0; max-width: 460px; border-color: var(--border1); background: var(--background2); box-shadow: none; }
+main.platformUsersPage .filter input { width: 100%; min-width: 0; }
+main.platformUsersPage .filter:focus-within { border-color: var(--accentBlue2); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accentBlue2) 16%, transparent); }
+main.platformUsersPage .filter input:focus-visible { outline: none; }
+main.platformUsersPage .platformUsersFilterControls:focus-within { border-color: var(--accentBlue2); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accentBlue2) 16%, transparent); }
+.platformUserRoles { display: flex; flex-wrap: wrap; gap: .4rem; }
+.platformUserRoles .roleTypeBadge { white-space: normal; overflow-wrap: anywhere; max-width: 100%; }
+.platformUserNoRoles { color: var(--text2); font-size: .8rem; }
+.platformUsersPage button:focus-visible, .platformUsersPage input:focus-visible, .platformUserPopup button:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: 3px; }
+.platformUserPopupHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.platformUserClose { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; background: var(--background2); color: var(--text1); cursor: pointer; }
+.platformUserClose:hover { background: var(--background3); }
+.platformUserClose svg { width: 16px; height: 16px; }
+.platformUserClose svg path { stroke: currentColor; }
+.platformUserSummary { color: var(--text1); overflow-wrap: anywhere; }
+.platformUserSummary .platformUserAvatar { width: 48px; height: 48px; }
+.platformUserDetails { display: flex; flex-direction: column; gap: 1rem; margin: 0; }
+.platformUserDetails > div { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: .75rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border1); }
+.platformUserDetails dt { color: var(--text2); font-size: .82rem; }
+.platformUserDetails dd { margin: 0; color: var(--text1); font-size: .88rem; overflow-wrap: anywhere; }
+.platformUserPopup .platformRolePopupPanel:focus { outline: none; }
+@media (max-width: 800px) {
+  main.platformUsersPage .filter { max-width: none; flex-basis: 100%; }
+}
+@media (max-width: 480px) {
+  .platformUserDetails > div { grid-template-columns: 1fr; gap: .35rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .platformUserPopup, .platformUserPopup .platformRolePopupPanel { transition: none; }
+}
+.platformUserRoleEditor { display: flex; flex-direction: column; gap: .7rem; }
+.platformUserRoleEditor h4 { color: var(--text1); font-size: .95rem; }
+.platformUserRoleEditor p { color: var(--text2); font-size: .82rem; }
+.platformUserRoleEditor .platformDefaultRoleControl { cursor: default; }
+.platformUserRemoveRole { padding: .4rem .6rem; border-radius: var(--bR); color: var(--accentRed3); background: var(--background2); cursor: pointer; font-size: .8rem; }
+.platformUserAssignRole { display: flex; gap: .65rem; align-items: center; }
+.platformUserAssignRole .customSelect { flex: 1; min-width: 0; }
+.platformUserRoleEditor button:disabled { cursor: not-allowed; opacity: .5; }
+@media (max-width: 480px) { .platformUserAssignRole { align-items: stretch; flex-direction: column; } }

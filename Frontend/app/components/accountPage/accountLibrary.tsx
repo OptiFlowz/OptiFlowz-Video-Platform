@@ -1,5 +1,5 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { getToken } from "~/functions";
 import { useI18n } from "~/i18n";
 import Item from "../itemSlider/item";
@@ -20,8 +20,8 @@ export default function AccountLibrary({ type }: { type: AccountLibraryType }) {
     const { t } = useI18n();
     const token = getToken();
     const { data, isPending, isFetching, isError, isFetchNextPageError, refetch, fetchNextPage, hasNextPage } = useInfiniteQuery(accountLibraryQuery(type, token));
-    const videos = uniqueResults(data?.pages.flatMap(page => page.videos ?? []) ?? []);
-    const playlists = uniqueResults(data?.pages.flatMap(page => page.playlists ?? []) ?? []);
+    const videos = useMemo(() => uniqueResults(data?.pages.flatMap(page => page.videos ?? []) ?? []), [data]);
+    const playlists = useMemo(() => uniqueResults(data?.pages.flatMap(page => page.playlists ?? []) ?? []), [data]);
     const count = type === 6 ? playlists.length : videos.length;
     const loadMore = useCallback(() => {
         if (isError && !isFetchNextPageError) void refetch();

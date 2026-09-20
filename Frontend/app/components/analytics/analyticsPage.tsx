@@ -1,3 +1,4 @@
+import "~/styles/analytics.css";
 import { createAnalyticsReportPreview } from "./analyticsReportPreview";
 import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import { useAuthorization } from "~/authorization/authorization";

@@ -1,7 +1,7 @@
 import { BRAND_NAME, PLATFORM_NAME, POWERED_BY_NAME } from "~/changeables";
 import { catalogues, type Locale, type TranslationEntry, type TranslationParams } from "./index";
 
-const messages = catalogues as Record<Locale, Record<string, TranslationEntry>>;
+const messages = catalogues as Partial<Record<Locale, Record<string, TranslationEntry>>> & { en: Record<string, TranslationEntry> };
 const brandValues: Record<string, string> = { BRAND_NAME, PLATFORM_NAME, POWERED_BY_NAME };
 const pluralRules = new Map<Locale, Intl.PluralRules>();
 
@@ -10,7 +10,7 @@ export function hasTranslation(key: string): boolean {
 }
 
 export function formatTranslation(locale: Locale, key: string, params?: TranslationParams): string {
-  const entry = messages[locale][key] ?? messages.en[key];
+  const entry = messages[locale]?.[key] ?? messages.en[key];
   if (entry === undefined) return key;
 
   let template: string;

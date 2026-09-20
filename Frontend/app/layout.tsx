@@ -1,4 +1,3 @@
-import "flag-icons/css/flag-icons.min.css";
 import "./app.css";
 import type { Metadata, Viewport } from "next";
 import Providers from "./providers";

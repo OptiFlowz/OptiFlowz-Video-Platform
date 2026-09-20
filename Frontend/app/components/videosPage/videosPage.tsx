@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { useParams } from "react-router";
 import { fetchFn } from "~/API";
 import { fetchRecommendedVideos, fetchVectorVideos, type RecommendationResult } from "~/videoDiscovery";
@@ -63,7 +63,7 @@ function VideoCollectionPage({ type }: { type: string }) {
   });
   const { isPending, isFetching, isError, refetch } = infinite ? infiniteQuery : paginatedQuery;
   const data = infinite ? infiniteQuery.data?.pages[0] : paginatedQuery.data;
-  const videos = infinite ? uniqueResults(infiniteQuery.data?.pages.flatMap(page => page.videos) ?? []) : data?.videos ?? [];
+  const videos = useMemo(() => infinite ? uniqueResults(infiniteQuery.data?.pages.flatMap(page => page.videos) ?? []) : data?.videos ?? [], [infinite, infiniteQuery.data, data]);
   const hasWatchHistory = infiniteQuery.data?.pages[0]?.hasWatchHistory;
   const { fetchNextPage, isFetchNextPageError } = infiniteQuery;
   const loadMore = useCallback(() => {

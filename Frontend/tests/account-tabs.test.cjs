@@ -29,10 +29,11 @@ function loadAccount(mocks) {
 
 test('account tabs default to history, preload permitted content, follow tab URLs, append infinite results, retry failed pages and honor permissions', async () => {
   const dom = new JSDOM('<div id="root"></div>', { url: 'https://example.test/account' });
-  const names = ['window', 'document', 'HTMLElement', 'IS_REACT_ACT_ENVIRONMENT', 'IntersectionObserver'];
+  const names = ['window', 'document', 'HTMLElement', 'IS_REACT_ACT_ENVIRONMENT', 'IntersectionObserver', 'ResizeObserver'];
   const previous = new Map(names.map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)]));
   Object.assign(globalThis, { window: dom.window, document: dom.window.document, HTMLElement: dom.window.HTMLElement, IS_REACT_ACT_ENVIRONMENT: true });
   dom.window.HTMLElement.prototype.scrollIntoView = () => {};
+  globalThis.ResizeObserver = class { observe() {} disconnect() {} };
   const { act } = React;
   const { createRoot } = require('react-dom/client');
   const { QueryClient, QueryClientProvider } = require('@tanstack/react-query');

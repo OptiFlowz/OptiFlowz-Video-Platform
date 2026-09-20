@@ -81,8 +81,7 @@ test('homepage previews open dialogs without channel links, vote controls or res
   assert.ok(!html.includes('The channel'));
   assert.ok(!html.includes('Internal title'));
   assert.equal(dom.window.document.querySelector('.latestPostAvatar').getAttribute('src'), '/channel.webp');
-  assert.ok(dom.window.document.querySelector('.latestPostAuthor .latestPostType'));
-  assert.equal(dom.window.document.querySelector('.latestPostBody .latestPostType'), null);
+  assert.equal(dom.window.document.querySelector('.latestPostAuthor time').getAttribute('dateTime'), post.createdAt);
   assert.ok(html.includes('Option A'));
   assert.ok(!html.includes('100%'));
   assert.ok(!html.includes('Correct answer'));
@@ -96,10 +95,10 @@ test('popup voting is immediate, survives reopening and supports single and mult
   const { createRoot } = require('react-dom/client');
   const { QueryClient, QueryClientProvider } = require('@tanstack/react-query');
   const dom = new JSDOM('<div id="root"></div>', { url: 'https://example.test/' });
-  const names = ['window', 'document', 'HTMLElement', 'requestAnimationFrame', 'cancelAnimationFrame', 'IS_REACT_ACT_ENVIRONMENT'];
+  const names = ['window', 'document', 'HTMLElement', 'requestAnimationFrame', 'cancelAnimationFrame', 'ResizeObserver', 'IS_REACT_ACT_ENVIRONMENT'];
   const previous = new Map(names.map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)]));
   Object.assign(globalThis, { window: dom.window, document: dom.window.document, HTMLElement: dom.window.HTMLElement,
-    requestAnimationFrame: callback => setTimeout(callback, 0), cancelAnimationFrame: clearTimeout, IS_REACT_ACT_ENVIRONMENT: true });
+    requestAnimationFrame: callback => setTimeout(callback, 0), cancelAnimationFrame: clearTimeout, ResizeObserver: class { observe() {} disconnect() {} }, IS_REACT_ACT_ENVIRONMENT: true });
   dom.window.HTMLDialogElement.prototype.showModal = function () { this.open = true; };
   dom.window.HTMLDialogElement.prototype.close = function () { this.open = false; };
   Object.defineProperty(dom.window.HTMLElement.prototype, 'offsetTop', { get() { return this.dataset.postId ? (Number(this.dataset.postId.slice(-12)) - 10) * 240 : 0; } });

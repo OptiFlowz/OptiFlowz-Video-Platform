@@ -1,0 +1,259 @@
+
+
+main.uploadMain {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  padding-top: 73px;
+  position: relative;
+}
+main.uploadMain .uploadSide{
+  flex: 1 1 0%;
+  min-width: 0;
+  width: 100%;
+  padding-inline: clamp(10px, 4vw, 66px);
+  padding-block: 30px 80px;
+}
+
+main.uploadMain h1 {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+main.uploadMain h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+main.uploadMain .links a {
+  color: var(--accentBlue);
+  font-weight: 600;
+  font-style: italic;
+}
+
+main.uploadMain .links a:hover {
+  color: var(--accentOrange);
+}
+
+.contributorSearchContainer {
+  position: relative;
+}
+
+.contributorChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--accentBlue);
+  color: var(--text1);
+  padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.contributorChipImage {
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.contributorInput {
+  flex: 1;
+  min-width: 120px;
+  border: none !important;
+  border-radius: 7px !important;
+  outline: none;
+}
+
+.contributorDropdown {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  background: var(--background1);
+  border: 2px solid var(--border1);
+  border-radius: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+  box-shadow: 0 4px 15px color-mix(in srgb, var(--background1) 20%, transparent);
+}
+
+.captionToolbar,
+.captionToolbarControls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.captionToolbar { flex-direction: column; align-items: stretch; margin-bottom: 0.5rem; }
+.captionToolbarTitle { font-size: 1.25rem; font-weight: 600; color: var(--text1); }
+.captionToolbarControls { width: 100%; justify-content: flex-start; min-width: 0; }
+.captionToolbar .captionsInputRow { flex: 1 1 175px; min-width: 0; }
+.captionToolbar .languageSelect { width: 100%; min-width: 0; }
+.captionToolbar .generateAIBtn {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.65rem 0.9rem;
+  border-radius: var(--bR);
+  background: var(--blueButtonGradient);
+  color: var(--text1);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+.captionToolbar .generateAIBtn svg path { stroke: currentColor; }
+.captionToolbar .generateAIBtn:hover:not(:disabled) { filter: brightness(1.1); }
+
+.captionsLoadingState,
+.captionsNotAvailable {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1rem;
+  background: var(--background3);
+  border: 1px solid var(--border1);
+  border-radius: 12px;
+  color: var(--text1);
+}
+
+.captionStatusIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 2.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 10px;
+  background: var(--background2);
+  color: var(--accentBlue2);
+}
+
+.captionStatusIcon svg { width: 24px; height: 24px; }
+.captionStatusIcon svg path { stroke: currentColor; }
+.captionsLoadingState .uploadSpinner { margin: 0; border-top-color: var(--accentBlue2); }
+.captionStatusCopy { min-width: 0; }
+.captionStatusCopy p { margin: 0; font-size: 0.95rem; font-weight: 500; }
+.captionStatusCopy > span { display: block; margin-top: 0.25rem; color: var(--text2); font-size: 0.8rem; line-height: 1.5; }
+.captionsActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.captionsButtonGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+@media screen and (max-width: 535px) {
+  main.uploadMain h1{
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+  main.uploadMain > p{
+    font-size: .9rem;
+  }
+  main.uploadMain .uploadZone{
+    margin-block: .5rem;
+  }
+  main.uploadMain .stepContent{
+    min-height: auto;
+  }
+  main.uploadMain .stepContent button{
+    padding: .5rem .75rem;
+    font-size: .85rem;
+  }
+  main.uploadMain .bottomBtns{
+    margin-top: 0;
+  }
+  main.uploadMain .bottomBtns button{
+    padding: .6rem .8rem;
+    font-size: .9rem;
+  }
+}
+
+@media screen and (max-width: 420px) {
+  main.uploadMain h1{
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+  main.uploadMain > p{
+    font-size: .75rem;
+  }
+  main.uploadMain .uploadZone{
+    margin-block: 0;
+    padding: 20px;
+  }
+  main.uploadMain .uploadPrompt{
+    gap: .3rem;
+  }
+  main.uploadMain .uploadZone svg{
+    width: 25px;
+    height: 25px;
+  }
+  main.uploadMain .uploadZone p{
+    font-size: .65rem;
+  }
+  main.uploadMain .uploadZone span{
+    font-size: .75rem;
+  }
+  main.uploadMain .stepContent{
+    min-height: auto;
+  }
+  main.uploadMain .stepContent button{
+    margin-top: 0;
+    padding: .4rem .7rem;
+    font-size: .7rem;
+  }
+  main.uploadMain .bottomBtns{
+    margin-top: 0;
+  }
+  main.uploadMain .bottomBtns button{
+    padding: .5rem .75rem;
+    font-size: .7rem;
+  }
+}
+
+@media screen and (max-width: 350px) {
+  main.uploadMain{
+    gap: 0;
+  }
+  main.uploadMain h1{
+    font-size: 1.1rem;
+  }
+  main.uploadMain > p{
+    font-size: .65rem;
+  }
+  main.uploadMain .uploadZone{
+    padding: 10px;
+  }
+  main.uploadMain .uploadZone svg{
+    width: 22px;
+    height: 22px;
+  }
+  main.uploadMain .uploadZone p{
+    font-size: .6rem;
+  }
+  main.uploadMain .uploadZone span{
+    font-size: .7rem;
+  }
+  main.uploadMain .stepContent button{
+    margin-top: 0;
+    padding: .3rem .65rem;
+    font-size: .55rem;
+  }
+  main.uploadMain .bottomBtns button{
+    padding: .4rem .75rem;
+    font-size: .6rem;
+  }
+}

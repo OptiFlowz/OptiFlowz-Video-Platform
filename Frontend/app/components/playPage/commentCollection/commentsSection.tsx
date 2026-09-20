@@ -1,8 +1,8 @@
 import { scrollWithinPlayerSheet } from "../playerCollection/sheetScroll";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useInfiniteQuery, useMutation, useQueries, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { fetchFn } from "~/API";
 import { CloseSVG, CommentSVG } from "~/constants";
 import { getStoredUser, getToken, getUserImageUrl } from "~/functions";
@@ -12,36 +12,32 @@ import type {
   FetchVideoCommentsT,
   PostCommentResponseT,
   VideoCommentT,
+  VideoT,
 } from "~/types";
 import DefaultProfile from "../../../../assets/DefaultProfile.webp";
 import { ConfirmDialog } from "../../confirmPopup/confirmDialog";
 import { useConfirm } from "../../confirmPopup/useConfirm";
 import { useI18n } from "~/i18n";
-import { fetchAllComments, fetchReplyThread } from "./api";
+import { fetchComments, fetchReplies } from "./api";
+import InfiniteScroll from "~/components/library/infiniteScroll";
+import { changeReplyCount, COMMENT_PAGE_SIZE, isThreadOpen, nextCommentPage, uniqueComments, updateRootPage, updateReplyPage, type ReplyPage } from "./cache";
 import CommentComposer from "./commentComposer";
 import PlayerSheet from "../playerCollection/playerSheet";
 import { CommentThread, MobileCommentThreadView } from "./commentThread";
 import type { CommentsSectionProps } from "./types";
-import {
-  appendReplyToCache,
-  buildRepliesTree,
-  countUniqueComments,
-  findCommentNode,
-  findRootParentId,
-  getAncestorChain,
-  getDeletedReplyIds,
-  isCommentOwnedByUser,
-  normalizeSubmittedComment,
-  removeCommentFromCommentsCache,
-  removeCommentFromRepliesCache,
-  updateCommentsAfterSubmit,
-  updateCommentsCache,
-  updateEditedCommentInCommentsCache,
-  updateEditedCommentInRepliesCache,
-  updateRepliesCache,
-} from "./utils";
+import { buildRepliesTree, getAncestorChain, isCommentOwnedByUser, normalizeSubmittedComment } from "./utils";
 
-function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSectionProps) {
+type RootComments = InfiniteData<FetchVideoCommentsT>;
+
+function ReplyLoadMore({ id, hasMore, fetching, error, onLoadMore }: {
+  id: string; hasMore: boolean; fetching: boolean; error: boolean; onLoadMore: (id: string) => void;
+}) {
+  const { t } = useI18n();
+  const loadMore = useCallback(() => onLoadMore(id), [id, onLoadMore]);
+  return <InfiniteScroll hasMore={hasMore} fetching={fetching} error={error} onLoadMore={loadMore} loadingLabel={t("loadingReplies")} />;
+}
+
+function VideoComments({ videoId, variant = "inline", onClose }: CommentsSectionProps) {
   const { t } = useI18n();
   const queryClient = useQueryClient();
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -54,6 +50,9 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
   const currentUserName = storedUser?.user?.full_name ?? "";
   const currentUserId = user?.id ?? storedUser?.user?.id ?? "";
 
+  const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-width: 500px)").matches);
+  const [postedReplies, setPostedReplies] = useState<Record<string, VideoCommentT[]>>({});
+  const [replyPages, setReplyPages] = useState<Record<string, ReplyPage>>({});
   const [value, setValue] = useState("");
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [replyingTo, setReplyingTo] = useState<VideoCommentT | null>(null);
@@ -64,6 +63,14 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
   const [mobileThreadPhase, setMobileThreadPhase] = useState<"idle" | "enter" | "exit">("idle");
   const [mobileThreadDirection, setMobileThreadDirection] = useState<"forward" | "back">("forward");
   const { confirm, dialogProps } = useConfirm();
+  const mobileThreadId = isMobile ? mobileThreadStack.at(-1) ?? null : null;
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 500px)");
+    const update = () => setIsMobile(media.matches);
+    media.addEventListener?.("change", update);
+    return () => media.removeEventListener?.("change", update);
+  }, []);
 
   const headers = useMemo(() => {
     const nextHeaders = new Headers();
@@ -74,27 +81,53 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
     return nextHeaders;
   }, [token]);
 
-  const { data, isLoading, isFetching } = useQuery<FetchVideoCommentsT>({
-    queryKey: ["video-comments", videoId],
-    queryFn: () => fetchAllComments(videoId, headers),
-    enabled: !!videoId && !!token,
+  const commentsKey = ["video-comments", videoId, "infinite"] as const;
+  const repliesKey = ["comment-replies", videoId] as const;
+  const rootQuery = useInfiniteQuery({
+    queryKey: commentsKey,
+    initialPageParam: 1,
+    queryFn: ({ signal, pageParam }) => fetchComments(videoId, headers, pageParam, COMMENT_PAGE_SIZE, signal),
+    getNextPageParam: nextCommentPage,
+    enabled: !!videoId && !!token && !mobileThreadId,
     staleTime: 4 * 60 * 1000,
-    refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
-
-  const comments = data?.comments ?? [];
-  const parents = useMemo(() => comments.filter((comment) => !comment.parent_id), [comments]);
-
+  const { data, isLoading, isFetching, isError, refetch, fetchNextPage, isFetchNextPageError, hasNextPage } = rootQuery;
+  const loadMoreRoots = useCallback(() => {
+    if (isError && !isFetchNextPageError) void refetch();
+    else void fetchNextPage({ cancelRefetch: false });
+  }, [isError, isFetchNextPageError, refetch, fetchNextPage]);
+  // Subscribe to the already-loaded video. Counting never fetches entire threads.
+  const subscribeToVideo = useCallback((notify: () => void) => queryClient.getQueryCache().subscribe(event => {
+    if (event.query.queryKey[0] === "video" && event.query.queryKey[1] === videoId) notify();
+  }), [queryClient, videoId]);
+  const videoCommentCount = useSyncExternalStore(subscribeToVideo,
+    () => queryClient.getQueryData<VideoT>(["video", videoId])?.comment_count, () => undefined);
+  const parents = useMemo(() => uniqueComments(data?.pages.flatMap(page => page.comments) ?? []), [data]);
+  const replyEntries = Object.entries(replyPages);
+  const replyRequests = replyEntries.flatMap(([id, state]) => Array.from({ length: state.pages }, (_, index) => ({ id, page: index + 1, state })));
+  const visibleCommentIds = new Set(parents.map(comment => comment.id));
+  for (const { id, page } of replyRequests) {
+    queryClient.getQueryData<FetchCommentRepliesT>([...repliesKey, id, page, COMMENT_PAGE_SIZE])?.replies.forEach(comment => visibleCommentIds.add(comment.id));
+  }
+  Object.values(postedReplies).flat().forEach(comment => visibleCommentIds.add(comment.id));
+  const activeReplyIds = new Set(replyEntries.filter(([id, state]) => state.comment.reply_count > 0 &&
+    (isMobile ? id === mobileThreadId : isThreadOpen(id, parents, expanded, [], replyPages, visibleCommentIds))).map(([id]) => id));
   const repliesQueries = useQueries({
-    queries: parents.map((parent) => ({
-      queryKey: ["comment-replies", parent.id],
-      queryFn: () => fetchReplyThread(parent.id, headers),
-      enabled: !!token,
+    queries: replyRequests.map(({ id, page }) => ({
+      queryKey: [...repliesKey, id, page, COMMENT_PAGE_SIZE],
+      queryFn: ({ signal }: { signal: AbortSignal }) => fetchReplies(id, headers, page, COMMENT_PAGE_SIZE, signal),
+      enabled: !!token && activeReplyIds.has(id),
       staleTime: 4 * 60 * 1000,
       refetchOnWindowFocus: false,
     })),
   });
+  const activeReplySignature = [...activeReplyIds].join(",");
+  useEffect(() => {
+    if (mobileThreadId) void queryClient.cancelQueries({ queryKey: ["video-comments", videoId, "infinite"] });
+    const active = new Set(activeReplySignature.split(","));
+    void queryClient.cancelQueries({ queryKey: ["comment-replies", videoId], predicate: query => !active.has(String(query.queryKey[2])) });
+  }, [activeReplySignature, mobileThreadId, queryClient, videoId]);
 
   const autoResize = () => {
     const element = taRef.current;
@@ -103,52 +136,51 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
     element.style.height = `${element.scrollHeight}px`;
   };
 
-  const { repliesByParent, repliesLoadingByParent } = useMemo(() => {
-    const nextRepliesByParent: Record<string, VideoCommentT[]> = {};
-    const nextRepliesLoadingByParent: Record<string, boolean> = {};
+  const repliesByParent: Record<string, VideoCommentT[]> = {};
+  const replyQueriesById: Record<string, typeof repliesQueries> = {};
+  replyRequests.forEach(({ id }, index) => (replyQueriesById[id] ??= []).push(repliesQueries[index]));
+  for (const [id, queries] of Object.entries(replyQueriesById)) {
+    repliesByParent[id] = uniqueComments([...queries.flatMap(query => query.data?.replies ?? []), ...(postedReplies[id] ?? [])]);
+  }
+  const hydratedCommentsMap = new Map<string, VideoCommentT>();
+  for (const comment of [...parents, ...Object.values(repliesByParent).flat()]) hydratedCommentsMap.set(comment.id, comment);
+  const repliesTreeByParent = buildRepliesTree(parents, repliesByParent);
+  const replyResultsRef = useRef(replyQueriesById);
+  replyResultsRef.current = replyQueriesById;
+  const loadMoreReplies = useCallback((id: string) => {
+    const queries = replyResultsRef.current[id];
+    const last = queries?.at(-1);
+    if (!last || queries.some(query => query.isFetching)) return;
+    const failed = queries.filter(query => query.isError);
+    if (failed.length) { failed.forEach(query => void query.refetch()); return; }
+    if (last.data?.pagination.hasNextPage) setReplyPages(previous => ({ ...previous, [id]: { ...previous[id], pages: previous[id].pages + 1 } }));
+  }, []);
 
-    repliesQueries.forEach((query, index) => {
-      const parent = parents[index];
-      if (!parent) return;
-
-      nextRepliesByParent[parent.id] = [...(query.data?.replies ?? [])].sort(
-        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-      );
-      nextRepliesLoadingByParent[parent.id] = !query.data && (query.isLoading || query.isFetching);
-    });
-
-    return {
-      repliesByParent: nextRepliesByParent,
-      repliesLoadingByParent: nextRepliesLoadingByParent,
-    };
-  }, [parents, repliesQueries]);
-
-  const hydratedCommentsMap = useMemo(() => {
-    const map = new Map<string, VideoCommentT>();
-
-    for (const comment of comments) {
-      map.set(comment.id, comment);
-    }
-
-    for (const replies of Object.values(repliesByParent)) {
-      for (const reply of replies) {
-        map.set(reply.id, reply);
-      }
-    }
-
-    return map;
-  }, [comments, repliesByParent]);
-
-  const sortedParents = useMemo(() => {
-    const nextParents = [...parents];
-    nextParents.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    return nextParents;
-  }, [parents]);
-
-  const repliesTreeByParent = useMemo(
-    () => buildRepliesTree(sortedParents, repliesByParent),
-    [repliesByParent, sortedParents]
-  );
+  const ensureReplyPage = (comment: VideoCommentT) => {
+    setReplyPages(previous => ({ ...previous, [comment.id]: { comment, pages: previous[comment.id]?.pages ?? 1 } }));
+  };
+  const cancelCommentRequests = (parentId?: string | null) => Promise.all([
+    queryClient.cancelQueries({ queryKey: commentsKey }),
+    parentId ? queryClient.cancelQueries({ queryKey: [...repliesKey, parentId] }) : Promise.resolve(),
+  ]);
+  const cancelItemRequests = (id: string) => Promise.all([
+    queryClient.cancelQueries({ queryKey: commentsKey, predicate: query => (query.state.data as RootComments | undefined)?.pages.some(page => page.comments.some(comment => comment.id === id)) ?? false }),
+    queryClient.cancelQueries({ queryKey: repliesKey, predicate: query => (query.state.data as FetchCommentRepliesT | undefined)?.replies.some(comment => comment.id === id) ?? false }),
+  ]);
+  const updateCachedComments = (transform: (comment: VideoCommentT) => VideoCommentT, created?: VideoCommentT, deleted?: VideoCommentT) => {
+    queryClient.setQueryData<RootComments>(commentsKey, current => current && ({ ...current, pages: current.pages.map(page => updateRootPage(page, transform, created, deleted)!) }));
+    queryClient.setQueriesData<FetchCommentRepliesT>({ queryKey: repliesKey }, current => updateReplyPage(current, transform, created, deleted));
+    setReplyPages(previous => Object.fromEntries(Object.entries(previous).map(([id, state]) => [id, { ...state, comment: transform(state.comment) }])));
+    setPostedReplies(previous => Object.fromEntries(Object.entries(previous).map(([id, replies]) => [id, replies.map(transform).filter(reply => reply.id !== deleted?.id)])));
+    if (created?.parent_id) setPostedReplies(previous => ({ ...previous, [created.parent_id!]: uniqueComments([...(previous[created.parent_id!] ?? []), created]) }));
+  };
+  const changeTotalCount = (delta: number) => {
+    queryClient.setQueryData<VideoT>(["video", videoId], current => current && ({ ...current, comment_count: Math.max(0, (current.comment_count ?? data?.pages[0]?.total ?? 0) + delta) }));
+  };
+  const refreshPages = (parentId?: string | null) => {
+    void queryClient.invalidateQueries({ queryKey: commentsKey });
+    if (parentId) void queryClient.invalidateQueries({ queryKey: [...repliesKey, parentId] });
+  };
 
   const submitMutation = useMutation({
     mutationFn: (payload: { content: string; parent_id?: string }) =>
@@ -164,34 +196,25 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
           }),
         },
       }),
-    onSuccess: ({ comment }, variables) => {
-      const normalizedComment = normalizeSubmittedComment(
-        comment,
-        currentUserName,
-        userProfileImage === DefaultProfile ? "" : userProfileImage
-      );
-
+    onSuccess: async ({ comment }, variables) => {
+      await cancelCommentRequests(variables.parent_id);
+      const normalized = normalizeSubmittedComment(comment, currentUserName, userProfileImage === DefaultProfile ? "" : userProfileImage);
+      const parentId = variables.parent_id ?? null;
+      updateCachedComments(item => changeReplyCount(item, parentId, 1), normalized);
+      changeTotalCount(1);
       setValue("");
       setReplyingTo(null);
-
-      const parentChain = variables.parent_id ? getAncestorChain(variables.parent_id, hydratedCommentsMap) : [];
-      if (parentChain.length > 0) {
-        setExpanded((prev) => ({
-          ...prev,
-          ...Object.fromEntries(parentChain.map((id) => [id, true])),
-        }));
-      }
-
       autoResize();
-      queryClient.setQueryData<FetchVideoCommentsT>(["video-comments", videoId], (current) =>
-        updateCommentsAfterSubmit(current, normalizedComment, parentChain[0] ?? null)
-      );
-
-      if (normalizedComment.parent_id && parentChain[0]) {
-        queryClient.setQueryData<FetchCommentRepliesT>(["comment-replies", parentChain[0]], (current) =>
-          appendReplyToCache(current, normalizedComment)
-        );
+      if (parentId) {
+        const parent = hydratedCommentsMap.get(parentId);
+        if (parent) ensureReplyPage(changeReplyCount(parent, parentId, 1));
+        const chain = getAncestorChain(parentId, hydratedCommentsMap);
+        if (isMobile) setMobileThreadStack(chain);
+        else setExpanded(previous => ({ ...previous, ...Object.fromEntries(chain.map(id => [id, true])) }));
       }
+      // Keep loaded rows and show the posted reply immediately. Offset pages only
+      // need repairing after deletion; posting never downloads unseen history.
+      if (!data) void rootQuery.refetch();
     },
   });
 
@@ -204,14 +227,12 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
           headers,
         },
       }),
-    onSuccess: (response, variables) => {
-      queryClient.setQueryData<FetchVideoCommentsT>(["video-comments", videoId], (current) =>
-        updateCommentsCache(current, variables.commentId, variables.reaction, response)
-      );
-      queryClient.setQueriesData<FetchCommentRepliesT>(
-        { queryKey: ["comment-replies"] },
-        (current) => updateRepliesCache(current, variables.commentId, variables.reaction, response)
-      );
+    onSuccess: async (response, variables) => {
+      await cancelItemRequests(variables.commentId);
+      const reaction = variables.reaction === "like" ? 1 : -1;
+      updateCachedComments(comment => comment.id === variables.commentId
+        ? { ...comment, like_count: response.like_count, dislike_count: response.dislike_count, my_reaction: comment.my_reaction === reaction ? null : reaction }
+        : comment);
     },
   });
 
@@ -225,14 +246,9 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
           body: JSON.stringify({ content }),
         },
       }),
-    onSuccess: ({ comment }) => {
-      queryClient.setQueryData<FetchVideoCommentsT>(["video-comments", videoId], (current) =>
-        updateEditedCommentInCommentsCache(current, comment)
-      );
-      queryClient.setQueriesData<FetchCommentRepliesT>(
-        { queryKey: ["comment-replies"] },
-        (current) => updateEditedCommentInRepliesCache(current, comment)
-      );
+    onSuccess: async ({ comment }) => {
+      await cancelItemRequests(comment.id);
+      updateCachedComments(item => item.id === comment.id ? { ...item, ...comment } : item);
       setEditingCommentId(null);
       setEditingValue("");
     },
@@ -247,35 +263,30 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
           headers,
         },
       }),
-    onSuccess: (_, comment) => {
-      const rootParentId = findRootParentId(comment.parent_id, hydratedCommentsMap);
-      const rootReplies = rootParentId
-        ? queryClient.getQueryData<FetchCommentRepliesT>(["comment-replies", rootParentId])
-        : undefined;
-      const removedRepliesCount = comment.parent_id ? getDeletedReplyIds(rootReplies, comment.id).size : 1;
-
-      queryClient.setQueryData<FetchVideoCommentsT>(["video-comments", videoId], (current) =>
-        removeCommentFromCommentsCache(current, comment, rootParentId, removedRepliesCount)
-      );
-
-      if (rootParentId) {
-        queryClient.setQueryData<FetchCommentRepliesT>(["comment-replies", rootParentId], (current) =>
-          removeCommentFromRepliesCache(current, comment)
-        );
+    onSuccess: async (_, comment) => {
+      await cancelCommentRequests(comment.parent_id);
+      updateCachedComments(item => changeReplyCount(item, comment.parent_id, -1), undefined, comment);
+      // The existing API soft-deletes the target and excludes its direct children
+      // from the video's aggregate. No speculative recursive total is needed.
+      changeTotalCount(-1 - (replyQueriesById[comment.id]?.at(-1)?.data?.pagination.total ?? comment.reply_count ?? 0));
+      const removed = new Set([comment.id]);
+      for (const [id] of replyEntries) {
+        if (getAncestorChain(id, hydratedCommentsMap).includes(comment.id)) removed.add(id);
       }
-
-      if (editingCommentId === comment.id) {
-        setEditingCommentId(null);
-        setEditingValue("");
-      }
-
-      if (replyingTo?.id === comment.id) {
-        setReplyingTo(null);
-      }
+      setReplyPages(previous => Object.fromEntries(Object.entries(previous).filter(([id]) => !removed.has(id))));
+      setPostedReplies(previous => Object.fromEntries(Object.entries(previous).filter(([id]) => !removed.has(id))));
+      setExpanded(previous => Object.fromEntries(Object.entries(previous).filter(([id]) => !removed.has(id))));
+      setMobileThreadStack(previous => previous.filter(id => !removed.has(id)));
+      for (const id of removed) queryClient.removeQueries({ queryKey: [...repliesKey, id] });
+      if (editingCommentId === comment.id) { setEditingCommentId(null); setEditingValue(""); }
+      if (replyingTo?.id === comment.id) setReplyingTo(null);
+      refreshPages(comment.parent_id);
     },
   });
 
   const toggleReplies = (parentId: string) => {
+    const parent = hydratedCommentsMap.get(parentId);
+    if (parent) ensureReplyPage(parent);
     if (typeof window !== "undefined" && window.matchMedia("(max-width: 500px)").matches) {
       setMobileThreadDirection("forward");
       setMobileThreadPhase("enter");
@@ -283,6 +294,7 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
       return;
     }
 
+    if (expanded[parentId]) void queryClient.cancelQueries({ queryKey: [...repliesKey, parentId] });
     setExpanded((prev) => ({ ...prev, [parentId]: !prev[parentId] }));
   };
 
@@ -358,13 +370,6 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
       scrollBackTo.classList.add("replying");
     }
 
-    const chain = getAncestorChain(comment.id, hydratedCommentsMap);
-    if (chain.length > 0) {
-      setExpanded((prev) => ({
-        ...prev,
-        ...Object.fromEntries(chain.map((id) => [id, true])),
-      }));
-    }
 
     requestAnimationFrame(() => {
       const textarea = taRef.current;
@@ -457,35 +462,21 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
     });
   };
 
-  const totalCount = useMemo(
-    () => countUniqueComments(sortedParents, repliesByParent),
-    [repliesByParent, sortedParents]
-  );
-
-  const mobileThreadId = mobileThreadStack.length > 0 ? mobileThreadStack[mobileThreadStack.length - 1] : null;
+  const totalCount = videoCommentCount ?? data?.pages[0]?.total ?? 0;
   const mobileThreadComment = mobileThreadId ? hydratedCommentsMap.get(mobileThreadId) ?? null : null;
-  const mobileThreadRootId = mobileThreadId
-    ? findRootParentId(mobileThreadId, hydratedCommentsMap) ?? mobileThreadId
-    : null;
+  const mobileThreadReplies = mobileThreadComment ? buildRepliesTree([mobileThreadComment], repliesByParent)[mobileThreadComment.id] : [];
+  const mobileThreadLoading = !!mobileThreadId && !!replyQueriesById[mobileThreadId]?.[0]?.isLoading;
 
-  const mobileThreadReplies = useMemo(() => {
-    if (!mobileThreadId) return [];
-
-    if (repliesTreeByParent[mobileThreadId]) {
-      return repliesTreeByParent[mobileThreadId];
-    }
-
-    for (const nodes of Object.values(repliesTreeByParent)) {
-      const match = findCommentNode(nodes, mobileThreadId);
-      if (match) {
-        return match.children;
-      }
-    }
-
-    return [];
-  }, [mobileThreadId, repliesTreeByParent]);
-
-  const mobileThreadLoading = mobileThreadRootId ? repliesLoadingByParent[mobileThreadRootId] : false;
+  const renderRepliesFooter = (parentId: string) => {
+    if (!activeReplyIds.has(parentId)) return null;
+    const queries = replyQueriesById[parentId];
+    const last = queries?.at(-1);
+    if (!last) return null;
+    const hasMore = last.isLoading || (!!last.data?.pagination.hasNextPage && (repliesByParent[parentId]?.length ?? 0) < last.data.pagination.total);
+    return <div data-replies-more={parentId}>
+      <ReplyLoadMore key={queries.filter(query => query.data).length} id={parentId} hasMore={hasMore} fetching={queries.some(query => query.isFetching)} error={queries.some(query => query.isError)} onLoadMore={loadMoreReplies} />
+    </div>;
+  };
 
   useEffect(() => {
     if (!mobileThreadId || mobileThreadPhase !== "enter") return;
@@ -495,6 +486,7 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
   }, [mobileThreadId, mobileThreadPhase]);
 
   const closeMobileThreadLevel = () => {
+    if (mobileThreadId) void queryClient.cancelQueries({ queryKey: [...repliesKey, mobileThreadId] });
     setMobileThreadDirection("back");
     setMobileThreadPhase("exit");
 
@@ -505,6 +497,8 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
   };
 
   const openMobileReplyThread = (commentId: string) => {
+    const comment = hydratedCommentsMap.get(commentId);
+    if (comment) ensureReplyPage(comment);
     setMobileThreadDirection("forward");
     setMobileThreadPhase("enter");
     setMobileThreadStack((prev) => [...prev, commentId]);
@@ -537,15 +531,15 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
 
       <div className={`comments-main comments-main-shell pt-4 ${mobileThreadId ? "mobile-thread-open" : ""}`}>
         <div className="comments-list-view">
-          <CommentThread
-            parents={sortedParents}
+          {!mobileThreadId && <CommentThread
+            parents={parents}
             repliesTreeByParent={repliesTreeByParent}
             repliesByParent={repliesByParent}
-            repliesLoadingByParent={repliesLoadingByParent}
+            renderRepliesFooter={renderRepliesFooter}
             expanded={expanded}
             onToggleReplies={toggleReplies}
             isLoading={isLoading || isFetching}
-            hasData={!!data}
+            hasData={!!data || isError}
             editingCommentId={editingCommentId}
             editingValue={editingValue}
             isReactionPending={reactionMutation.isPending}
@@ -562,14 +556,18 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
             onEditConfirm={onEditConfirm}
             onDelete={onDelete}
             focusedCommentId={focusedCommentId}
-          />
+          />}
+          {!mobileThreadId && (parents.length > 0 || isError) && <div data-comments-more>
+            <InfiniteScroll key={data?.pages.length ?? 0} hasMore={hasNextPage} fetching={isFetching} error={isError} onLoadMore={loadMoreRoots} loadingLabel={t("loadingComments")} />
+          </div>}
         </div>
 
-        <MobileCommentThreadView
+        {mobileThreadId && <MobileCommentThreadView
           mobileThreadId={mobileThreadId}
           mobileThreadComment={mobileThreadComment}
           mobileThreadReplies={mobileThreadReplies}
           mobileThreadLoading={mobileThreadLoading}
+          renderRepliesFooter={renderRepliesFooter}
           mobileThreadPhase={mobileThreadPhase}
           mobileThreadDirection={mobileThreadDirection}
           onBack={closeMobileThreadLevel}
@@ -590,7 +588,7 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
           onEditConfirm={onEditConfirm}
           onDelete={onDelete}
           focusedCommentId={focusedCommentId}
-        />
+        />}
       </div>
 
       <ConfirmDialog {...dialogProps} />
@@ -616,4 +614,6 @@ function CommentsSection({ videoId, variant = "inline", onClose }: CommentsSecti
   return content;
 }
 
-export default CommentsSection;
+export default function CommentsSection(props: CommentsSectionProps) {
+  return <VideoComments key={props.videoId} {...props} />;
+}

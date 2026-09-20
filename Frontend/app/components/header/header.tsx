@@ -1,9 +1,11 @@
+import { useHydrated } from "~/hooks/useHydrated";
 import { PostSVG } from "~/constants";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
 import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Link, NavLink, useLocation, useNavigate, useParams } from "react-router";
+import { Link, NavLink, useNavigate, useParams } from "react-router";
+import { usePathname } from "next/navigation";
 import {
     AnalyticsSVG, ChannelMenuSVG, CloseSVG, EditModeSVG, ExternalSiteMenuSVG,
     HomeMenuSVG, LanguageMenuSVG, LogOutSVG, MenuSVG, PeopleSVG,
@@ -25,7 +27,7 @@ let previousNavigationPath: string | null = null;
 
 function Header(){
     const { locale, setLocale, t } = useI18n();
-    const { pathname } = useLocation();
+    const pathname = usePathname();
     const navigationRef = useRef<HTMLElement>(null);
     const navigationMeasuredRef = useRef(false);
     const navigationStartingPathRef = useRef<string | null | undefined>(undefined);
@@ -121,7 +123,8 @@ function Header(){
     const accountMenuRef = useRef<HTMLDivElement>(null);
     const accountDropdownRef = useRef<HTMLDivElement>(null);
 
-    const token = getToken();
+    const hydrated = useHydrated();
+    const token = hydrated ? getToken() : null;
     const headerUserData = authUser ? { user: authUser } : undefined;
 
     //LISTEN FOR PROFILE UPDATE

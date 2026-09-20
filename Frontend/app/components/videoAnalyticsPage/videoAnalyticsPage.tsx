@@ -1,3 +1,6 @@
+import "~/styles/analytics.css";
+import "flag-icons/css/flag-icons.min.css";
+import { WorldMapSVG, type WorldMapCountry } from "../analytics/lazyWorldMap";
 import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import {
   forwardRef,
@@ -28,7 +31,7 @@ import {
   type TooltipContentProps,
 } from "recharts";
 import { fetchFn } from "~/API";
-import { AnalyticsSVG, ArrowSVG, CloseSVG, FilterSVG, WorldMapSVG, type WorldMapCountry } from "~/constants";
+import { AnalyticsSVG, ArrowSVG, CloseSVG, FilterSVG } from "~/constants";
 import { formatDate, formatDescription, formatDuration, formatViews, getToken } from "~/functions";
 import { useI18n } from "~/i18n";
 import CustomSelect from "~/components/customSelect/customSelect";
@@ -981,6 +984,10 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
     );
   }, []);
 
+  const restoreMapView = useCallback(() => {
+    applyMapView(mapViewRef.current);
+  }, [applyMapView]);
+
   const scheduleMapView = useCallback((view: MapView) => {
     mapViewRef.current = view;
     pendingMapViewRef.current = view;
@@ -996,8 +1003,8 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
 
   useLayoutEffect(() => {
     if (isGeographicLoading || isGeographicError) return;
-    applyMapView(mapViewRef.current);
-  }, [applyMapView, isGeographicError, isGeographicLoading]);
+    restoreMapView();
+  }, [restoreMapView, isGeographicError, isGeographicLoading]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -1571,6 +1578,7 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
                   }}
                 >
                   <WorldMapSVG
+                    onReady={restoreMapView}
                     getFill={(country) => (
                       (geographicBreakdown[country.id.toUpperCase()]?.totalViews ?? 0) > 0
                         ? "var(--accentBlue2)"

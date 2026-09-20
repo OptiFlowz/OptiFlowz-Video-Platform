@@ -13,6 +13,7 @@ function  Item({props, playlistIndex, playlistId}: {props: PlaylistVideoT, playl
 
     const [isHovered, setIsHovered] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [previewRequested, setPreviewRequested] = useState(false);
     const [loadedPreview, setLoadedPreview] = useState<string>();
 
     const {setCurrentNav} = useContext(CurrentNavContext);
@@ -26,12 +27,14 @@ function  Item({props, playlistIndex, playlistId}: {props: PlaylistVideoT, playl
         <Link
             className={`item ${playlistIndex == 1 ? "playlistStartVideo" : ""}`}
             to={videoHref}
-            onMouseEnter={() => setIsHovered(true)}
+            onMouseEnter={() => { setIsHovered(true); setPreviewRequested(true); }}
+            onFocus={() => { setIsHovered(true); setPreviewRequested(true); }}
+            onBlur={() => setIsHovered(false)}
             onMouseLeave={() => setIsHovered(false)}
             onClick={() => setCurrentNav(-1)}
         >
             <span className={`${isLoading ? "opacity-0 absolute!" : "relative"}`}>
-                {!isLoading && animGifUrl &&
+                {!isLoading && previewRequested && animGifUrl &&
                     <img
                         className={isHovered ? "z-[-1] absolute top-0 left-0" : "z-[-1] absolute top-0 left-0 opacity-0"}
                         src={animGifUrl}
@@ -45,6 +48,7 @@ function  Item({props, playlistIndex, playlistId}: {props: PlaylistVideoT, playl
                     className={`thumbnail ${isLoading ? "z-0 absolute opacity-0" : `relative ${animGifUrl && loadedPreview === animGifUrl && isHovered ? "z-0 opacity-0 transition-opacity! duration-200! ease" : isHovered ? "z-1 opacity-100 darken" : "z-1 -100"}`}`}
                     src={newThumbnailUrl}
                     alt="Thumbnail"
+                    loading="lazy"
                     decoding="async"
                     onLoad={() => setIsLoading(false)}
                 />

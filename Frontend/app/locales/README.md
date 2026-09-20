@@ -2,9 +2,9 @@
 
 Each of the 40 supported languages has one JSON catalogue named after its locale code. These files are the source of truth for all interface text, including account, platform administration, analytics, quizzes, privacy, and the predefined content titles.
 
-- `index.ts` registers the catalogues and English language names in alphabetical order.
+- `index.ts` bundles English and registers lazy catalogue loaders and English language names. Other catalogues download only when selected and are cached after loading.
 - `formatTranslation.ts` resolves parameters, branding, and count variants.
-- `../i18n.tsx` provides the existing React hook, language persistence, and document language/direction.
+- `../i18n.tsx` provides the React hook, language persistence, and document language/direction. Server and first hydration render use English; the saved/browser language is loaded afterward. Failed downloads keep the current language; the latest selection wins if requests finish out of order.
 
 Add new message keys to English and provide translations in every supported language when localizing a feature. English is the fallback for messages not yet translated; omit those entries rather than duplicating English placeholders. TypeScript checks message shapes in every catalogue. Keep parameter names unchanged across languages.
 

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { IconChevron } from "~/constants";
 import { useI18n } from "~/i18n";
 import type { VideoCommentT } from "~/types";
@@ -7,6 +8,7 @@ import CommentRow from "./commentRow";
 const MAX_DESKTOP_THREAD_DEPTH = 3;
 
 type SharedThreadProps = {
+  renderRepliesFooter: (parentId: string) => ReactNode;
   editingCommentId: string | null;
   editingValue: string;
   isReactionPending: boolean;
@@ -27,6 +29,7 @@ type SharedThreadProps = {
 
 type NestedReplyTreeProps = Pick<
   CommentThreadProps,
+  | "renderRepliesFooter"
   | "expanded"
   | "onToggleReplies"
   | "editingCommentId"
@@ -53,7 +56,6 @@ type CommentThreadProps = SharedThreadProps & {
   parents: VideoCommentT[];
   repliesTreeByParent: Record<string, CommentTreeNode[]>;
   repliesByParent: Record<string, VideoCommentT[]>;
-  repliesLoadingByParent: Record<string, boolean>;
   expanded: Record<string, boolean>;
   onToggleReplies: (commentId: string) => void;
   isLoading: boolean;
@@ -80,13 +82,15 @@ function NestedReplyTree({
   onEditConfirm,
   onDelete,
   focusedCommentId,
+  renderRepliesFooter,
 }: NestedReplyTreeProps) {
   const { t } = useI18n();
 
   return (
     <>
       {nodes.map((reply) => {
-        const hasChildren = reply.children.length > 0;
+        const childCount = Math.max(reply.reply_count ?? 0, reply.children.length);
+        const hasChildren = childCount > 0;
         const isOpen = !!expanded[reply.id];
         const isFlattenedDepth = reply.depth > MAX_DESKTOP_THREAD_DEPTH;
         const childPanelFlattened = reply.depth >= MAX_DESKTOP_THREAD_DEPTH;
@@ -126,12 +130,12 @@ function NestedReplyTree({
               >
                 <IconChevron className={`w-4.5 h-4.5 transition duration-300 ease-out ${isOpen ? "rotate-180" : ""}`} />
                 <span className="font-medium">
-                  {isOpen ? t("hideReplies") : t("replyCountLabel", { count: reply.children.length })}
+                  {isOpen ? t("hideReplies") : t("replyCountLabel", { count: childCount })}
                 </span>
               </button>
             )}
 
-            {hasChildren && (
+            {hasChildren && isOpen && (
               <div className={`comment-replies-shell ${isOpen ? "open" : ""}`} aria-hidden={!isOpen}>
                 <div className="comment-replies-inner">
                   <div
@@ -158,7 +162,9 @@ function NestedReplyTree({
                         onEditConfirm={onEditConfirm}
                         onDelete={onDelete}
                         focusedCommentId={focusedCommentId}
+                        renderRepliesFooter={renderRepliesFooter}
                       />
+                      {renderRepliesFooter(reply.id)}
                     </div>
                   </div>
                 </div>
@@ -175,7 +181,6 @@ export function CommentThread({
   parents,
   repliesTreeByParent,
   repliesByParent,
-  repliesLoadingByParent,
   expanded,
   onToggleReplies,
   isLoading,
@@ -196,6 +201,7 @@ export function CommentThread({
   onEditConfirm,
   onDelete,
   focusedCommentId,
+  renderRepliesFooter,
 }: CommentThreadProps) {
   const { t } = useI18n();
 
@@ -251,14 +257,10 @@ export function CommentThread({
               </button>
             )}
 
-            {totalReplies > 0 && (
+            {totalReplies > 0 && isOpen && (
               <div className={`comment-replies-shell ${isOpen ? "open" : ""}`} aria-hidden={!isOpen}>
                 <div className="comment-replies-inner">
                   <div className="comment-replies-panel mt-3 ml-7 pl-6 border-l border-(--borderC1)">
-                    {repliesLoadingByParent[comment.id] ? (
-                      <p className="text-sm opacity-70">{t("loadingReplies")}</p>
-                    ) : replies.length > 0 ? (
-                      <div className="flex flex-col gap-5">
                         <NestedReplyTree
                           nodes={replies}
                           expanded={expanded}
@@ -279,11 +281,9 @@ export function CommentThread({
                           onEditConfirm={onEditConfirm}
                           onDelete={onDelete}
                           focusedCommentId={focusedCommentId}
+                          renderRepliesFooter={renderRepliesFooter}
                         />
-                      </div>
-                    ) : (
-                      <p className="text-sm opacity-70">{t("repliesLoadFailed")}</p>
-                    )}
+                    {renderRepliesFooter(comment.id)}
                   </div>
                 </div>
               </div>
@@ -331,6 +331,7 @@ export function MobileCommentThreadView({
   onEditConfirm,
   onDelete,
   focusedCommentId,
+  renderRepliesFooter,
 }: MobileCommentThreadViewProps) {
   const { t } = useI18n();
 
@@ -377,7 +378,8 @@ export function MobileCommentThreadView({
         ) : mobileThreadReplies.length > 0 ? (
           <div className="flex flex-col gap-5">
             {mobileThreadReplies.map((reply) => {
-              const hasChildren = reply.children.length > 0;
+              const childCount = Math.max(reply.reply_count ?? 0, reply.children.length);
+        const hasChildren = childCount > 0;
 
               return (
                 <div key={reply.id} className="relative mobile-thread-reply-row">
@@ -409,7 +411,7 @@ export function MobileCommentThreadView({
                     >
                       <IconChevron className="w-4.5 h-4.5" />
                       <span className="font-medium">
-                        {t("replyCountLabel", { count: reply.children.length })}
+                        {t("replyCountLabel", { count: childCount })}
                       </span>
                     </button>
                   )}
@@ -417,9 +419,10 @@ export function MobileCommentThreadView({
               );
             })}
           </div>
-        ) : (
+        ) : !mobileThreadComment?.reply_count ? (
           <p className="text-sm opacity-70">{t("noRepliesYet")}</p>
-        )}
+        ) : null}
+        {mobileThreadId && renderRepliesFooter(mobileThreadId)}
       </div>
     </div>
   );

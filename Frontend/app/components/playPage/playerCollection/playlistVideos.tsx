@@ -1,8 +1,8 @@
-import { memo, useMemo, useLayoutEffect, useRef } from "react";
+import { memo, useMemo, useLayoutEffect, useRef, type ReactNode } from "react";
 import PlayCard from "./playCard";
 import type { PlaylistVideoT } from "~/types";
 
-function PlaylistVideos({ playlistId, videos, playedVideoId }: { playlistId: string; videos: PlaylistVideoT[]; playedVideoId: string }) {
+function PlaylistVideos({ playlistId, videos, playedVideoId, children }: { playlistId: string; videos: PlaylistVideoT[]; playedVideoId: string; children?: ReactNode }) {
   const holderRef = useRef<HTMLDivElement>(null);
 
   const { currentIndex, nextVideo } = useMemo(() => {
@@ -11,13 +11,13 @@ function PlaylistVideos({ playlistId, videos, playedVideoId }: { playlistId: str
     return { currentIndex: idx, nextVideo: next };
   }, [videos, playedVideoId]);
 
-  const similarArray = videos.map((item, index) => (
+  const similarArray = videos.map((item) => (
     <PlayCard
-      key={`similar${index}`}
+      key={item.id}
       props={item}
       playedVideoId={playedVideoId}
       playlistId={playlistId}
-      nextVideo={nextVideo as PlaylistVideoT}
+      nextVideo={nextVideo ?? undefined}
     />
   ));
 
@@ -34,13 +34,14 @@ function PlaylistVideos({ playlistId, videos, playedVideoId }: { playlistId: str
       top: top - 35 - activeEl.offsetHeight,
       behavior: "smooth",
     });
-  }, [playedVideoId, currentIndex, videos.length]);
+  }, [playedVideoId, currentIndex]);
 
   return (
     <div className="similar" ref={holderRef}>
       <div className="holder">
         {similarArray}
       </div>
+      {children}
     </div>
   );
 }

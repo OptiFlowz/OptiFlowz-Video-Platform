@@ -1,5 +1,5 @@
 import { createContext, useState } from "react";
-import { useLocation } from "react-router";
+import { usePathname } from "next/navigation";
 
 type NavContextType = {
   currentNav: number;
@@ -16,9 +16,9 @@ const defaultValue: NavContextType = {
 export const CurrentNavContext = createContext<NavContextType>(defaultValue);
 
 export const CurrentNavProvider = ({children}: {children: React.ReactNode}) => {
-    const currentTab = useLocation();
+    const pathname = usePathname();
   
-    const [currentNav, setCurrentNav] = useState(currentTab.pathname === "/" ? 0 : currentTab.pathname === "/library" ? 1 : currentTab.pathname === "/events" ? 2 : -1);
+    const [currentNav, setCurrentNav] = useState(pathname === "/" ? 0 : pathname === "/library" ? 1 : pathname === "/events" ? 2 : -1);
 
     return (
         <CurrentNavContext.Provider value={{currentNav, setCurrentNav}}>

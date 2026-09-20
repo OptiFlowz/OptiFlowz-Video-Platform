@@ -1,5 +1,6 @@
 "use client";
 
+import { useHydrated } from "~/hooks/useHydrated";
 import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchFn } from '~/API';
@@ -33,7 +34,8 @@ const AuthorizationContext = createContext({
 });
 
 export function AuthorizationProvider({ children }: { children: ReactNode }) {
-  const token = getToken();
+  const hydrated = useHydrated();
+  const token = hydrated ? getToken() : null;
   const client = useQueryClient();
   const options = { enabled: !!token, staleTime: 30_000, refetchOnWindowFocus: true, retry: (count: number, error: Error) => count < 1 && !('status' in error && [401, 403].includes(Number(error.status))) };
   const query = useQuery({

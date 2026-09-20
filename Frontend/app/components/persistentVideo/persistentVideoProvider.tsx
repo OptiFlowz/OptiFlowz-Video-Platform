@@ -2,6 +2,8 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import {
+  lazy,
+  Suspense,
   createContext,
   useCallback,
   useContext,
@@ -14,7 +16,8 @@ import {
   type CSSProperties,
 } from "react";
 import type { VideoT } from "~/types";
-import VideoPlayer from "~/components/playPage/playerCollection/muxPlayer";
+import Loader from "~/components/loaders/loader";
+const VideoPlayer = lazy(() => import("~/components/playPage/playerCollection/muxPlayer"));
 import type MuxPlayerElement from "@mux/mux-player";
 import { MINI_RESIZE_CORNERS, useFloatingMiniPlayer } from "./useFloatingMiniPlayer";
 import {
@@ -386,7 +389,7 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
           ) : null}
 
           <div className="persistent-video-player__media">
-            <VideoPlayer
+            <Suspense fallback={<Loader />}><VideoPlayer
               key={session.video.view?.view_id ?? session.video.id}
               currentTimee={
                 session.startTimeOverride != null
@@ -404,7 +407,7 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
               onPlayingChange={handlePlayingChange}
               onPlayerElement={handlePlayerElement}
               compactControls={showMiniPlayer}
-            />
+            /></Suspense>
           </div>
 
           {showMiniPlayer ? (

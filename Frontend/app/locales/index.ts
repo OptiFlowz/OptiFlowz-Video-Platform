@@ -1,43 +1,4 @@
-import sq from "./sq.json";
-import ar from "./ar.json";
-import bg from "./bg.json";
-import zh from "./zh.json";
-import hr from "./hr.json";
-import cs from "./cs.json";
-import da from "./da.json";
-import nl from "./nl.json";
 import en from "./en.json";
-import et from "./et.json";
-import fi from "./fi.json";
-import fr from "./fr.json";
-import de from "./de.json";
-import el from "./el.json";
-import he from "./he.json";
-import hi from "./hi.json";
-import hu from "./hu.json";
-import is from "./is.json";
-import id from "./id.json";
-import it from "./it.json";
-import ja from "./ja.json";
-import ko from "./ko.json";
-import lv from "./lv.json";
-import lt from "./lt.json";
-import mk from "./mk.json";
-import nb from "./nb.json";
-import fa from "./fa.json";
-import pl from "./pl.json";
-import pt from "./pt.json";
-import ro from "./ro.json";
-import ru from "./ru.json";
-import sr from "./sr.json";
-import sk from "./sk.json";
-import sl from "./sl.json";
-import es from "./es.json";
-import sv from "./sv.json";
-import th from "./th.json";
-import tr from "./tr.json";
-import uk from "./uk.json";
-import vi from "./vi.json";
 
 export const SUPPORTED_LOCALES = ["sq", "ar", "bg", "zh", "hr", "cs", "da", "nl", "en", "et", "fi", "fr", "de", "el", "he", "hi", "hu", "is", "id", "it", "ja", "ko", "lv", "lt", "mk", "nb", "fa", "pl", "pt", "ro", "ru", "sr", "sk", "sl", "es", "sv", "th", "tr", "uk", "vi"] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
@@ -103,4 +64,61 @@ export type TranslationEntry = string | {
 type CatalogueEntry = string | (Omit<Exclude<TranslationEntry, string>, "rule"> & { rule: string });
 type Catalogue = Partial<Record<keyof typeof en, CatalogueEntry>>;
 
-export const catalogues = { sq, ar, bg, zh, hr, cs, da, nl, en, et, fi, fr, de, el, he, hi, hu, is, id, it, ja, ko, lv, lt, mk, nb, fa, pl, pt, ro, ru, sr, sk, sl, es, sv, th, tr, uk, vi } satisfies Record<Locale, Catalogue>;
+// Only English is part of the initial bundle. Each other language is a separate chunk.
+export const catalogues: Partial<Record<Locale, Catalogue>> & { en: Catalogue } = { en };
+const loaders = {
+  ar: () => import("./ar.json"),
+  bg: () => import("./bg.json"),
+  cs: () => import("./cs.json"),
+  da: () => import("./da.json"),
+  de: () => import("./de.json"),
+  el: () => import("./el.json"),
+  es: () => import("./es.json"),
+  et: () => import("./et.json"),
+  fa: () => import("./fa.json"),
+  fi: () => import("./fi.json"),
+  fr: () => import("./fr.json"),
+  he: () => import("./he.json"),
+  hi: () => import("./hi.json"),
+  hr: () => import("./hr.json"),
+  hu: () => import("./hu.json"),
+  id: () => import("./id.json"),
+  is: () => import("./is.json"),
+  it: () => import("./it.json"),
+  ja: () => import("./ja.json"),
+  ko: () => import("./ko.json"),
+  lt: () => import("./lt.json"),
+  lv: () => import("./lv.json"),
+  mk: () => import("./mk.json"),
+  nb: () => import("./nb.json"),
+  nl: () => import("./nl.json"),
+  pl: () => import("./pl.json"),
+  pt: () => import("./pt.json"),
+  ro: () => import("./ro.json"),
+  ru: () => import("./ru.json"),
+  sk: () => import("./sk.json"),
+  sl: () => import("./sl.json"),
+  sq: () => import("./sq.json"),
+  sr: () => import("./sr.json"),
+  sv: () => import("./sv.json"),
+  th: () => import("./th.json"),
+  tr: () => import("./tr.json"),
+  uk: () => import("./uk.json"),
+  vi: () => import("./vi.json"),
+  zh: () => import("./zh.json"),
+} satisfies Record<Exclude<Locale, "en">, () => Promise<{ default: Catalogue }>>;
+const pending = new Map<Locale, Promise<void>>();
+
+export function loadCatalogue(locale: Locale): Promise<void> {
+  if (catalogues[locale]) return Promise.resolve();
+  const existing = pending.get(locale);
+  if (existing) return existing;
+  const request = loaders[locale as Exclude<Locale, "en">]().then(module => {
+    catalogues[locale] = module.default;
+  }).finally(() => {
+    // Failed downloads can be retried, and successful catalogues remain cached.
+    pending.delete(locale);
+  });
+  pending.set(locale, request);
+  return request;
+}

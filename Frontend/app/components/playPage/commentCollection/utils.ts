@@ -1,9 +1,4 @@
-import type {
-  CommentReactionResponseT,
-  FetchCommentRepliesT,
-  FetchVideoCommentsT,
-  VideoCommentT,
-} from "~/types";
+import type { VideoCommentT } from "~/types";
 import { getCurrentLocale } from "~/i18n";
 import type { CommentTreeNode } from "./types";
 
@@ -24,79 +19,6 @@ export function timeAgo(iso: string) {
   if (abs < hour) return rtf.format(-Math.round(diffSec / minute), "minute");
   if (abs < day) return rtf.format(-Math.round(diffSec / hour), "hour");
   return rtf.format(-Math.round(diffSec / day), "day");
-}
-
-function updateCommentReaction(
-  comment: VideoCommentT,
-  reaction: "like" | "dislike",
-  response: CommentReactionResponseT
-): VideoCommentT {
-  const nextReaction =
-    reaction === "like"
-      ? comment.my_reaction === 1
-        ? null
-        : 1
-      : comment.my_reaction === -1
-        ? null
-        : -1;
-
-  return {
-    ...comment,
-    like_count: response.like_count,
-    dislike_count: response.dislike_count,
-    my_reaction: nextReaction,
-  };
-}
-
-export function updateCommentsCache(
-  current: FetchVideoCommentsT | undefined,
-  commentId: string,
-  reaction: "like" | "dislike",
-  response: CommentReactionResponseT
-) {
-  if (!current) return current;
-
-  return {
-    ...current,
-    comments: current.comments.map((comment) =>
-      comment.id === commentId ? updateCommentReaction(comment, reaction, response) : comment
-    ),
-  };
-}
-
-export function updateRepliesCache(
-  current: FetchCommentRepliesT | undefined,
-  commentId: string,
-  reaction: "like" | "dislike",
-  response: CommentReactionResponseT
-) {
-  if (!current) return current;
-
-  return {
-    ...current,
-    replies: current.replies.map((reply) =>
-      reply.id === commentId ? updateCommentReaction(reply, reaction, response) : reply
-    ),
-  };
-}
-
-export function findRootParentId(commentId: string | null | undefined, commentsMap: Map<string, VideoCommentT>) {
-  if (!commentId) return null;
-
-  let currentId: string | null = commentId;
-  let guard = 0;
-
-  while (currentId && guard < 200) {
-    const currentComment = commentsMap.get(currentId);
-    if (!currentComment?.parent_id) {
-      return currentId;
-    }
-
-    currentId = currentComment.parent_id;
-    guard += 1;
-  }
-
-  return currentId;
 }
 
 export function getAncestorChain(commentId: string | null | undefined, commentsMap: Map<string, VideoCommentT>) {
@@ -129,106 +51,6 @@ export function findCommentNode(nodes: CommentTreeNode[], commentId: string): Co
   return null;
 }
 
-export function appendReplyToCache(current: FetchCommentRepliesT | undefined, reply: VideoCommentT) {
-  if (!current) {
-    return {
-      success: true,
-      parent_id: reply.parent_id ?? "",
-      video_id: reply.video_id,
-      replies: [reply],
-      pagination: {
-        page: 1,
-        limit: 100,
-        total: 1,
-        totalPages: 1,
-        hasNextPage: false,
-        hasPreviousPage: false,
-      },
-      sorting: {
-        sortBy: "created_at",
-        sortOrder: "asc" as const,
-      },
-    };
-  }
-
-  const replies = current.replies.some((item) => item.id === reply.id)
-    ? current.replies
-    : [...current.replies, reply];
-
-  return {
-    ...current,
-    pagination: {
-      ...current.pagination,
-      total: Math.max(current.pagination.total, replies.length),
-      totalPages: Math.max(current.pagination.totalPages, 1),
-      hasNextPage: false,
-    },
-    replies,
-  };
-}
-
-export function getDeletedReplyIds(
-  current: FetchCommentRepliesT | undefined,
-  deletedCommentId: string
-) {
-  const deletedIds = new Set<string>([deletedCommentId]);
-
-  if (!current) {
-    return deletedIds;
-  }
-
-  let changed = true;
-  while (changed) {
-    changed = false;
-
-    for (const reply of current.replies) {
-      if (reply.parent_id && deletedIds.has(reply.parent_id) && !deletedIds.has(reply.id)) {
-        deletedIds.add(reply.id);
-        changed = true;
-      }
-    }
-  }
-
-  return deletedIds;
-}
-
-export function updateCommentsAfterSubmit(
-  current: FetchVideoCommentsT | undefined,
-  comment: VideoCommentT,
-  rootParentId?: string | null
-) {
-  if (!current) {
-    return {
-      comments: [comment],
-      page: 1,
-      limit: 100,
-      total: 1,
-      total_pages: 1,
-    };
-  }
-
-  if (!comment.parent_id) {
-    const comments = current.comments.some((item) => item.id === comment.id)
-      ? current.comments
-      : [comment, ...current.comments];
-
-    return {
-      ...current,
-      total: current.total + (comments.length === current.comments.length ? 0 : 1),
-      comments,
-    };
-  }
-
-  return {
-    ...current,
-    comments: current.comments.map((item) =>
-      item.id === rootParentId
-        ? { ...item, reply_count: Math.max((item.reply_count ?? 0) + 1, 1) }
-        : item
-    ),
-  };
-}
-
 export function normalizeSubmittedComment(
   comment: VideoCommentT,
   currentUserName: string,
@@ -249,156 +71,18 @@ export function normalizeSubmittedComment(
   };
 }
 
-function updateCommentContent(comment: VideoCommentT, nextComment: VideoCommentT): VideoCommentT {
-  if (comment.id !== nextComment.id) return comment;
-
-  return {
-    ...comment,
-    ...nextComment,
-    content: nextComment.content,
-    updated_at: nextComment.updated_at ?? new Date().toISOString(),
-  };
+export function buildRepliesTree(parents: VideoCommentT[], repliesByParent: Record<string, VideoCommentT[]>) {
+  const children = (parent: VideoCommentT, depth: number, ancestors: Set<string>): CommentTreeNode[] =>
+    (repliesByParent[parent.id] ?? []).filter(reply => !ancestors.has(reply.id)).map(reply => ({
+      ...reply,
+      depth,
+      replyTargetId: parent.id,
+      replyTargetAuthorName: parent.author_full_name,
+      children: children(reply, depth + 1, new Set([...ancestors, reply.id])),
+    }));
+  return Object.fromEntries(parents.map(parent => [parent.id, children(parent, 1, new Set([parent.id]))]));
 }
 
-export function updateEditedCommentInCommentsCache(
-  current: FetchVideoCommentsT | undefined,
-  nextComment: VideoCommentT
-) {
-  if (!current) return current;
-
-  return {
-    ...current,
-    comments: current.comments.map((comment) => updateCommentContent(comment, nextComment)),
-  };
-}
-
-export function updateEditedCommentInRepliesCache(
-  current: FetchCommentRepliesT | undefined,
-  nextComment: VideoCommentT
-) {
-  if (!current) return current;
-
-  return {
-    ...current,
-    replies: current.replies.map((reply) => updateCommentContent(reply, nextComment)),
-  };
-}
-
-export function removeCommentFromCommentsCache(
-  current: FetchVideoCommentsT | undefined,
-  deletedComment: VideoCommentT,
-  rootParentId?: string | null,
-  removedRepliesCount = 1
-) {
-  if (!current) return current;
-
-  if (!deletedComment.parent_id) {
-    const comments = current.comments.filter((comment) => comment.id !== deletedComment.id);
-
-    return {
-      ...current,
-      total: Math.max(current.total - (comments.length === current.comments.length ? 0 : 1), 0),
-      comments,
-    };
-  }
-
-  return {
-    ...current,
-    comments: current.comments.map((comment) =>
-      comment.id === rootParentId
-        ? { ...comment, reply_count: Math.max((comment.reply_count ?? removedRepliesCount) - removedRepliesCount, 0) }
-        : comment
-    ),
-  };
-}
-
-export function removeCommentFromRepliesCache(
-  current: FetchCommentRepliesT | undefined,
-  deletedComment: VideoCommentT
-) {
-  if (!current) return current;
-
-  const deletedIds = getDeletedReplyIds(current, deletedComment.id);
-
-  return {
-    ...current,
-    pagination: {
-      ...current.pagination,
-      total: Math.max(current.pagination.total - deletedIds.size, 0),
-    },
-    replies: current.replies.filter((reply) => !deletedIds.has(reply.id)),
-  };
-}
-
-export function buildRepliesTree(
-  sortedParents: VideoCommentT[],
-  repliesByParent: Record<string, VideoCommentT[]>
-) {
-  const treeMap: Record<string, CommentTreeNode[]> = {};
-
-  for (const parent of sortedParents) {
-    const replies = repliesByParent[parent.id] ?? [];
-    if (replies.length === 0) {
-      treeMap[parent.id] = [];
-      continue;
-    }
-
-    const nodes = new Map<string, CommentTreeNode>();
-    const roots: CommentTreeNode[] = [];
-
-    for (const reply of replies) {
-      nodes.set(reply.id, {
-        ...reply,
-        depth: 1,
-        replyTargetId: reply.parent_id === parent.id ? parent.id : reply.parent_id,
-        replyTargetAuthorName: reply.parent_id === parent.id ? parent.author_full_name : null,
-        children: [],
-      });
-    }
-
-    for (const reply of replies) {
-      const node = nodes.get(reply.id);
-      if (!node) continue;
-
-      if (reply.parent_id === parent.id) {
-        roots.push(node);
-        continue;
-      }
-
-      const parentNode = reply.parent_id ? nodes.get(reply.parent_id) : null;
-      if (parentNode) {
-        node.depth = parentNode.depth + 1;
-        node.replyTargetId = parentNode.id;
-        node.replyTargetAuthorName = parentNode.author_full_name;
-        parentNode.children.push(node);
-      } else {
-        roots.push(node);
-      }
-    }
-
-    treeMap[parent.id] = roots;
-  }
-
-  return treeMap;
-}
-
-export function countUniqueComments(sortedParents: VideoCommentT[], repliesByParent: Record<string, VideoCommentT[]>) {
-  const uniqueIds = new Set<string>();
-
-  for (const parent of sortedParents) {
-    uniqueIds.add(parent.id);
-  }
-
-  for (const replies of Object.values(repliesByParent)) {
-    for (const reply of replies) {
-      uniqueIds.add(reply.id);
-    }
-  }
-
-  return uniqueIds.size;
-}
-
-export function isCommentOwnedByUser(comment: VideoCommentT, currentUserId: string, currentUserName: string) {
+export function isCommentOwnedByUser(comment: VideoCommentT, currentUserId: string, _currentUserName: string) {
   return !!currentUserId && comment.user_id === currentUserId;
 }
-

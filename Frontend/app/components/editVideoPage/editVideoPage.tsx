@@ -1,3 +1,4 @@
+import "~/styles/editor.css";
 import type { PlaybackPolicy } from "../playback/useVideoPlayback";
 import { VideoEditorPreview, useVideoPreviewRefresh } from "../shared/videoEditorPreview";
 import { ThumbnailImage } from "../shared/thumbnailImage";

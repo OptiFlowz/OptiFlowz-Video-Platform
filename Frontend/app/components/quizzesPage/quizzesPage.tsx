@@ -1,3 +1,4 @@
+import "~/styles/quiz.css";
 import QuizStatusPicker from "./quizStatusPicker";
 import Pagination from "~/components/library/pagination";
 import { useAuthorization } from "~/authorization/authorization";

@@ -25,6 +25,7 @@ import {
 
 import { getPlaybackStoryboardUrl, useVideoPlayback, type VideoPlayback } from "~/components/playback/useVideoPlayback";
 import NoteMarkers from "../notes/noteMarkers";
+import { requestPlaylistAdvance } from "./playlistAutoplay";
 import { PlaybackFeedback } from "~/components/playback/playbackFeedback";
 
 interface VideoPlayerProps {
@@ -693,7 +694,7 @@ export default function VideoPlayer({
     const autoplayEnabled = autoLocal !== "false";
     if (!autoplayEnabled) return;
 
-    document.querySelector<HTMLAnchorElement>(".nextVideo")?.click();
+    requestPlaylistAdvance(videoId);
   }
 
   const handlePlay = useCallback(() => {
@@ -720,7 +721,7 @@ export default function VideoPlayer({
   const handleEnded = useCallback(() => {
     onPlayingChange?.(false);
     playNextVideoIfAutoPlayOn();
-  }, [onPlayingChange]);
+  }, [onPlayingChange, videoId]);
 
   // Pošalji progress pri unmount (ako ima novog)
   useEffect(() => {

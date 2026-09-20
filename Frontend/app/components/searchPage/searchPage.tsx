@@ -1,7 +1,7 @@
 import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import { useParams, useSearchParams, useNavigate, Link } from "react-router";
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { fetchFn } from "~/API";
 import { fetchVectorVideos } from "~/videoDiscovery";
 import type { SearchT, PlaylistSearchRes, PeopleSearchRes } from "~/types";
@@ -45,7 +45,8 @@ function SearchResults({ context }: { context: SearchContext }) {
     initialPageParam: 1,
     queryFn: ({ signal, pageParam }) => fetchVectorVideos<SearchT>({ route: `${videoRoute}&page=${pageParam}`, options: { headers, signal } }),
     getNextPageParam: (last, pages, page) => nextResultsPage(last, pages, page, limit, response => response.videos),
-    enabled: !!token && hasSearch,
+    enabled: !!token && hasSearch && selected === 0,
+    staleTime: 30_000,
     refetchOnWindowFocus: false,
   });
   const playlistQ = useInfiniteQuery({
@@ -53,7 +54,8 @@ function SearchResults({ context }: { context: SearchContext }) {
     initialPageParam: 1,
     queryFn: ({ signal, pageParam }) => fetchFn<PlaylistSearchRes>({ route: `${playlistRoute}&page=${pageParam}`, options: { headers, signal } }),
     getNextPageParam: (last, pages, page) => nextResultsPage(last, pages, page, limit, response => response.playlists),
-    enabled: !!token && !!context.label,
+    enabled: !!token && !!context.label && selected === 1,
+    staleTime: 30_000,
     refetchOnWindowFocus: false,
   });
   const peopleQ = useInfiniteQuery({
@@ -61,21 +63,54 @@ function SearchResults({ context }: { context: SearchContext }) {
     initialPageParam: 1,
     queryFn: ({ signal, pageParam }) => fetchFn<PeopleSearchRes>({ route: `${peopleRoute}&page=${pageParam}`, options: { headers, signal } }),
     getNextPageParam: (last, pages, page) => nextResultsPage(last, pages, page, limit, response => response.people),
-    enabled: !!token && !!context.label,
+    enabled: !!token && !!context.label && selected === 2,
+    staleTime: 30_000,
     refetchOnWindowFocus: false,
   });
-  const videos = uniqueResults(videoQ.data?.pages.flatMap(page => page.videos) ?? []);
-  const playlists = uniqueResults(playlistQ.data?.pages.flatMap(page => page.playlists) ?? []);
-  const people = uniqueResults(peopleQ.data?.pages.flatMap(page => page.people) ?? []);
+  const videos = useMemo(() => uniqueResults(videoQ.data?.pages.flatMap(page => page.videos) ?? []), [videoQ.data]);
+  const playlists = useMemo(() => uniqueResults(playlistQ.data?.pages.flatMap(page => page.playlists) ?? []), [playlistQ.data]);
+  const people = useMemo(() => uniqueResults(peopleQ.data?.pages.flatMap(page => page.people) ?? []), [peopleQ.data]);
   const queries = [videoQ, playlistQ, peopleQ];
-  const counts = [
-    videoQ.data?.pages[0]?.pagination?.total ?? (videoQ.data ? videos.length : undefined),
-    playlistQ.data?.pages[0]?.pagination?.total ?? (playlistQ.data ? playlists.length : undefined),
-    peopleQ.data?.pages[0]?.pagination?.total ?? (peopleQ.data ? people.length : undefined),
-  ];
   const activeQuery = queries[selected];
-  const fetching = hasSearch && (!token || activeQuery.isLoading);
-  const initialLoading = hasSearch && (!token || queries.some((query) => query.isLoading));
+  // Existing search responses include totals. Fetch just one result for inactive
+  // tabs, after the visible results settle, instead of downloading three full lists.
+  const canReadCounts = !!token && hasSearch && (activeQuery.isSuccess || activeQuery.isError);
+  const countRoute = (route: string) => {
+    const [path, query] = route.split("?");
+    const params = new URLSearchParams(query);
+    params.set("limit", "1");
+    params.set("page", "1");
+    params.delete("sort");
+    return `${path}?${params}`;
+  };
+  const videoCountRoute = countRoute(videoRoute);
+  const playlistCountRoute = countRoute(playlistRoute);
+  const peopleCountRoute = countRoute(peopleRoute);
+  const videoCount = useQuery({
+    queryKey: ["search-count", token, videoCountRoute],
+    queryFn: ({ signal }) => fetchVectorVideos<SearchT>({ route: videoCountRoute, options: { headers, signal } }),
+    enabled: canReadCounts && selected !== 0 && !videoQ.data,
+    staleTime: 30_000, refetchOnWindowFocus: false,
+  });
+  const playlistCount = useQuery({
+    queryKey: ["search-count", token, playlistCountRoute],
+    queryFn: ({ signal }) => fetchFn<PlaylistSearchRes>({ route: playlistCountRoute, options: { headers, signal } }),
+    enabled: canReadCounts && !!context.label && selected !== 1 && !playlistQ.data,
+    staleTime: 30_000, refetchOnWindowFocus: false,
+  });
+  const peopleCount = useQuery({
+    queryKey: ["search-count", token, peopleCountRoute],
+    queryFn: ({ signal }) => fetchFn<PeopleSearchRes>({ route: peopleCountRoute, options: { headers, signal } }),
+    enabled: canReadCounts && !!context.label && selected !== 2 && !peopleQ.data,
+    staleTime: 30_000, refetchOnWindowFocus: false,
+  });
+  const counts = [
+    videoQ.data?.pages[0]?.pagination?.total ?? videoCount.data?.pagination?.total ?? (videoQ.data ? videos.length : undefined),
+    playlistQ.data?.pages[0]?.pagination?.total ?? playlistCount.data?.pagination?.total ?? (playlistQ.data ? playlists.length : undefined),
+    peopleQ.data?.pages[0]?.pagination?.total ?? peopleCount.data?.pagination?.total ?? (peopleQ.data ? people.length : undefined),
+  ];
+  const countErrors = [videoQ.isError || videoCount.isError, playlistQ.isError || playlistCount.isError, peopleQ.isError || peopleCount.isError];
+  const fetching = hasSearch && (!token || activeQuery.isPending);
   const tabs = [
     { label: t("videosTab"), icon: "video" as const },
     { label: t("playlistsTab"), icon: "playlist" as const },
@@ -83,13 +118,18 @@ function SearchResults({ context }: { context: SearchContext }) {
   ];
 
   useEffect(() => {
-    if (initialLoading || choseCategory.current || !hasSearch) return;
-    const available = counts.findIndex((count) => (count ?? 0) > 0);
-    if (available >= 0) {
-      setSelected(available);
-      choseCategory.current = true;
+    if (choseCategory.current || !hasSearch) return;
+    for (let index = 0; index < counts.length; index++) {
+      // Wait for earlier categories so a faster count response cannot choose
+      // people before a nonempty playlist tab. Explicit choices always win.
+      if (counts[index] === undefined && !countErrors[index]) return;
+      if ((counts[index] ?? 0) > 0) {
+        choseCategory.current = true;
+        setSelected(index);
+        return;
+      }
     }
-  }, [initialLoading, hasSearch, counts[0], counts[1], counts[2]]);
+  }, [hasSearch, counts[0], counts[1], counts[2], ...countErrors]);
 
   const { fetchNextPage, refetch, isError, isFetchNextPageError } = activeQuery;
   const loadMore = useCallback(() => {
@@ -97,7 +137,7 @@ function SearchResults({ context }: { context: SearchContext }) {
     else void fetchNextPage({ cancelRefetch: false });
   }, [fetchNextPage, refetch, isError, isFetchNextPageError]);
 
-  const results: SearchResult[] = selected === 0
+  const results = useMemo<SearchResult[]>(() => selected === 0
     ? videos.map((video) => ({
         id: video.id, kind: "video", title: video.title, href: `/video/${video.id}`,
         thumbnail: getVideoThumbnail(video), preview_url: video.preview_url, author: video.people?.map((person) => person.name).join(", ") || video.uploader_name,
@@ -112,7 +152,7 @@ function SearchResults({ context }: { context: SearchContext }) {
         id: person.id, kind: "people", title: person.name,
         href: `/person/${encodeURIComponent(person.id)}`,
         thumbnail: person.image_url, description: person.description || t("noDescription"), videoCount: Number(person.total_video_count),
-      }));
+      })), [selected, videos, playlists, people, t]);
 
   const contextTitle = context.category ? "categoryResultsFor" : context.tag ? "tagResultsFor" : context.person ? "personResultsFor" : "searchResultsFor";
 
@@ -148,7 +188,7 @@ function SearchResults({ context }: { context: SearchContext }) {
               <button key={tab.icon} type="button" aria-pressed={selected === index} onClick={() => { choseCategory.current = true; setSelected(index); }}>
                 <span className={styles.categoryIcon}><SearchIcon name={tab.icon} /></span>
                 <span className={styles.categoryText}><strong>{tab.label}</strong></span>
-                <span className={styles.count}>{counts[index] ?? (!hasSearch || queries[index].isError ? "—" : "…")}</span>
+                <span className={styles.count}>{counts[index] ?? (!hasSearch || countErrors[index] ? "—" : "…")}</span>
               </button>
             ))}
           </nav>

@@ -1,0 +1,2207 @@
+
+
+.videoQuizSectionTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.videoQuizPage {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 20px;
+  padding-top: 100px;
+  position: relative;
+  z-index: 2;
+  background: transparent;
+}
+
+.videoQuizPage .closePopup {
+  z-index: 0;
+  background: transparent;
+}
+
+.videoQuizPage .videoQuizPageContent {
+  position: relative;
+  width: min(1020px, calc(100vw - 32px));
+  max-height: none;
+  overflow-y: visible;
+  overflow-x: hidden;
+  background: var(--background1);
+  border: 1px solid var(--border1);
+  border-radius: 28px;
+  box-shadow: none;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.videoQuizPage .videoQuizPageContent.introStage {
+  width: min(900px, calc(100vw - 56px));
+  max-height: none;
+  overflow-y: visible;
+}
+
+.videoQuizPage .videoQuizPageContent.introStage .videoQuizIntro {
+  overflow-y: visible;
+}
+
+.videoQuizPage .videoQuizPageContent.flowStage {
+  width: 100%;
+  max-width: var(--contentWidth);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.videoQuizPage .videoQuizStageTransition {
+  animation: videoQuizStageIn 220ms ease;
+}
+
+.videoQuizPage .videoQuizTop {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border1);
+}
+
+.videoQuizPage .videoQuizHeaderRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.videoQuizPage .videoQuizHeading {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.2rem;
+  min-width: 0;
+}
+
+.videoQuizPage .videoQuizBadge {
+  width: 66px;
+  height: 66px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  flex-shrink: 0;
+  background: var(--background2);
+  border: 1px solid var(--border1);
+}
+
+.videoQuizPage .videoQuizBadge svg {
+  width: 30px;
+  height: 30px;
+}
+
+.videoQuizPage .videoQuizBadge svg path {
+  stroke: var(--accentBlue2);
+}
+
+.videoQuizPage .videoQuizHeading h2,
+.videoQuizPage .videoQuizResultHeadline h3,
+.videoQuizPage .videoQuizSectionTitle h3,
+.videoQuizPage .videoQuizQuestionHeader h3,
+.videoQuizPage .videoQuizReviewPanel h3 {
+  margin: 0;
+  color: var(--text1);
+}
+
+.videoQuizPage .videoQuizHeading h2 {
+  font-size: clamp(1.45rem, 1.85vw, 2.05rem);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.videoQuizPage .videoQuizHeading p {
+  margin-top: 0.25rem;
+}
+
+.videoQuizPage .videoQuizDescription {
+  width: 100%;
+  margin: 0;
+}
+
+.videoQuizPage .videoQuizDescription h3 {
+  margin: 0;
+  color: var(--text1);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.videoQuizPage .videoQuizDescription p {
+  margin: 0.35rem 0 0;
+  color: var(--text3);
+  line-height: 1.55;
+  white-space: pre-line;
+}
+
+.videoQuizPage .videoQuizDescription a {
+  color: var(--accentBlue2);
+  text-decoration: underline;
+}
+
+.videoQuizPage .videoQuizHeading p,
+.videoQuizPage .videoQuizSectionTitle p,
+.videoQuizPage .videoQuizQuestionHeader p,
+.videoQuizPage .videoQuizEmptyState p,
+.videoQuizPage .videoQuizUnlockNotice p,
+.videoQuizPage .videoQuizResultHeadline p,
+.videoQuizPage .videoQuizResultCard p {
+  color: var(--text2);
+}
+
+.videoQuizPage .videoQuizTopActions {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-shrink: 0;
+}
+
+.videoQuizPage .videoQuizTimer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+  border-radius: 999px;
+  padding: 11px 16px;
+  background-color: var(--background2);
+  border: 1px solid var(--border1);
+  color: var(--text2);
+  font-size: 0.95rem;
+}
+
+.videoQuizPage .videoQuizTimer.urgent {
+  color: var(--accentRed3);
+  border-color: color-mix(in srgb, var(--accentRed) 45%, transparent);
+  background: color-mix(in srgb, var(--accentRed) 14%, transparent);
+}
+
+.videoQuizPage .videoQuizTimer strong {
+  color: var(--text1);
+}
+
+.videoQuizPage .videoQuizTimerValue {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.06rem;
+  min-width: max-content;
+  font-variant-numeric: tabular-nums;
+}
+
+.videoQuizPage .videoQuizTimerSlot {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.68em;
+  height: 1.15em;
+  overflow: hidden;
+}
+
+.videoQuizPage .videoQuizTimerSlot.separator {
+  width: 0.34em;
+}
+
+.videoQuizPage .videoQuizTimerDigit {
+  display: block;
+  animation: videoQuizTimerDigitIn 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.videoQuizPage .videoQuizCloseButton {
+  background-color: var(--accentRed);
+  color: var(--text1);
+  border-radius: 14px;
+  padding: 9px;
+  cursor: pointer;
+}
+
+.videoQuizPage .videoQuizCloseButton svg {
+  width: 24px;
+  height: 24px;
+}
+
+.videoQuizPage .videoQuizIntro,
+.videoQuizPage .videoQuizResults {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.videoQuizPage .videoQuizAttemptList,
+.videoQuizPage .videoQuizReviewList,
+.videoQuizPage .videoQuizResultList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.videoQuizPage .videoQuizAttemptCard,
+.videoQuizPage .videoQuizReviewCard,
+.videoQuizPage .videoQuizResultCard,
+.videoQuizPage .videoQuizEmptyState,
+.videoQuizPage .videoQuizUnlockNotice,
+.videoQuizPage .videoQuizFeedbackCard {
+  border-radius: 18px;
+  border: 1px solid var(--border1);
+  background: var(--background2);
+}
+
+.videoQuizPage .videoQuizAttemptCard {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 16px 18px;
+}
+
+.videoQuizPage .videoQuizAttemptText {
+  min-width: 0;
+  flex: 1;
+}
+
+.videoQuizPage .videoQuizAttemptViewButton {
+  min-height: 42px;
+  padding: 0 18px;
+}
+
+.videoQuizPage .videoQuizAttemptCard strong,
+.videoQuizPage .videoQuizReviewCard strong,
+.videoQuizPage .videoQuizResultCard strong,
+.videoQuizPage .videoQuizMatchRow strong,
+.videoQuizPage .videoQuizOptionText strong {
+  color: var(--text1);
+}
+
+.videoQuizPage .videoQuizAttemptCard p,
+.videoQuizPage .videoQuizEmptyState p {
+  margin-top: 0.15rem;
+}
+
+.videoQuizPage .videoQuizEmptyState,
+.videoQuizPage .videoQuizUnlockNotice {
+  padding: 20px 22px;
+}
+
+.videoQuizPage .videoQuizEmptyState strong,
+.videoQuizPage .videoQuizUnlockNotice strong,
+.videoQuizPage .videoQuizFeedbackCard strong {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--text1);
+}
+
+.videoQuizPage .videoQuizRequirementsCard {
+  border-radius: 18px;
+  border: 1px solid var(--border1);
+  background: var(--background4);
+  overflow: hidden;
+}
+
+.videoQuizPage .videoQuizRequirementsCard.blocked {
+  border-color: var(--accentBlue);
+}
+
+.videoQuizPage .videoQuizRequirementsCard.met {
+  border-color: var(--accentGreen2);
+}
+
+.videoQuizPage .videoQuizRequirementsSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 18px 20px;
+}
+
+.videoQuizPage .videoQuizRequirementsSummaryText {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.videoQuizPage .videoQuizRequirementsSummaryText > span:last-child {
+  min-width: 0;
+}
+
+.videoQuizPage .videoQuizRequirementsIcon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border: 1px solid var(--border1);
+  border-radius: 12px;
+  background: var(--background2);
+  color: var(--accentBlue2);
+}
+
+.videoQuizPage .videoQuizRequirementsIcon svg {
+  width: 21px;
+  height: 21px;
+}
+
+.videoQuizPage .videoQuizRequirementsSummary strong,
+.videoQuizPage .videoQuizRequirementVideo strong {
+  color: var(--text1);
+}
+
+.videoQuizPage .videoQuizRequirementsSummary p {
+  margin-top: 0.15rem;
+}
+
+.videoQuizPage .videoQuizRequirementsToggle {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  padding: 0 4px 0 12px;
+  border: 0;
+  background: transparent;
+  color: var(--text3);
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 180ms ease;
+}
+
+.videoQuizPage .videoQuizRequirementsToggle:hover {
+  color: var(--text1);
+}
+
+.videoQuizPage .videoQuizRequirementsToggle:disabled {
+  color: var(--text2);
+  cursor: not-allowed;
+}
+
+.videoQuizPage .videoQuizRequirementsToggle svg {
+  width: 22px;
+  height: 22px;
+  transition: transform 180ms ease;
+}
+
+.videoQuizPage .videoQuizRequirementsToggle svg.open {
+  transform: rotate(180deg);
+}
+
+.videoQuizPage .videoQuizRequirementsPanel {
+  border-top: 1px solid var(--border1);
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  padding: 0 5px 0 20px;
+  transform: translateY(-4px);
+  visibility: hidden;
+  transition:
+    max-height 280ms ease,
+    opacity 180ms ease,
+    padding 280ms ease,
+    transform 280ms ease,
+    visibility 0ms linear 280ms;
+}
+
+.videoQuizPage .videoQuizRequirementsPanel.open {
+  max-height: clamp(220px, 48vh, 560px);
+  opacity: 1;
+  padding: 0 5px 0 20px;
+  transform: translateY(0);
+  visibility: visible;
+  transition-delay: 0ms;
+}
+
+.videoQuizPage .videoQuizRequirementList {
+  display: flex;
+  flex-direction: column;
+  max-height: clamp(180px, 38vh, 440px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 14px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accentBlue2) transparent;
+  -webkit-overflow-scrolling: touch;
+}
+
+.videoQuizPage .videoQuizRequirementList::-webkit-scrollbar {
+  width: 5px;
+}
+
+.videoQuizPage .videoQuizRequirementList::-webkit-scrollbar-track {
+  margin-block: 8px;
+  background: transparent;
+}
+
+.videoQuizPage .videoQuizRequirementList::-webkit-scrollbar-thumb {
+  min-height: 32px;
+  border-radius: var(--bR);
+  background: var(--accentBlue2);
+}
+
+.videoQuizPage .videoQuizRequirementList::-webkit-scrollbar-thumb:hover {
+  background: var(--accentBlue3);
+}
+
+.videoQuizPage .videoQuizRequirementList::-webkit-scrollbar-button {
+  display: none;
+}
+
+.videoQuizPage .videoQuizRequirementVideo {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1.1rem;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border3);
+}
+
+.videoQuizPage .videoQuizRequirementVideo:last-child {
+  border-bottom: 0;
+}
+
+.videoQuizPage .videoQuizRequirementThumb {
+  position: relative;
+  width: 132px;
+  flex-shrink: 0;
+}
+
+.videoQuizPage .videoQuizRequirementVideo img,
+.videoQuizPage .videoQuizRequirementThumbFallback {
+  display: block;
+  width: 132px;
+  aspect-ratio: 16 / 9;
+  border-radius: 9px;
+  object-fit: cover;
+  background: var(--background3);
+}
+
+.videoQuizPage .videoQuizRequirementThumbFallback {
+  display: grid;
+  place-items: center;
+  color: var(--accentBlue2);
+}
+
+.videoQuizPage .videoQuizRequirementThumbFallback svg {
+  width: 30px;
+  height: 30px;
+}
+
+.videoQuizPage .videoQuizRequirementVideoText {
+  min-width: 0;
+}
+
+.videoQuizPage .videoQuizRequirementVideoText strong,
+.videoQuizPage .videoQuizRequirementVideoText p,
+.videoQuizPage .videoQuizRequirementVideoText span {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.videoQuizPage .videoQuizRequirementVideoText p {
+  margin-top: 0.25rem;
+}
+
+.videoQuizPage .videoQuizRequirementVideoText p {
+  color: var(--text2);
+  font-size: 0.85rem;
+}
+
+.videoQuizPage .videoQuizRequirementVideo.met .videoQuizRequirementVideoText strong {
+  color: var(--text3);
+}
+
+.videoQuizPage .videoQuizRequirementProgress {
+  width: min(100%, 360px);
+  height: 4px;
+  margin-top: 0.65rem;
+  overflow: hidden;
+  border-radius: var(--bR);
+  background: var(--border3);
+}
+
+.videoQuizPage .videoQuizRequirementProgress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--progressAccentOrange);
+}
+
+.videoQuizPage .videoQuizRequirementVideo.met .videoQuizRequirementProgress span {
+  background: var(--accentGreen2);
+}
+
+.videoQuizPage .videoQuizRequirementVideoActions {
+  display: flex;
+  align-items: center;
+}
+
+.videoQuizPage .videoQuizRequirementMetBadge {
+  min-width: 104px;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0 15px;
+  border: 1px solid var(--accentGreen2);
+  border-radius: var(--bR);
+  background: var(--background2);
+  color: var(--accentGreen2);
+  font-size: 0.9rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.videoQuizPage .videoQuizRequirementMetBadge svg {
+  width: 17px;
+  height: 17px;
+}
+
+.videoQuizPage .videoQuizRequirementDuration {
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  padding: 2px 5px;
+  border-radius: 5px;
+  background: var(--seethroughtBlack);
+  color: var(--text1);
+  font-size: 0.72rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.videoQuizPage .videoQuizRequirementWatchButton {
+  min-width: 104px;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0 14px 0 17px;
+  border: 1px solid var(--border1);
+  border-radius: var(--bR);
+  background: var(--background2);
+  color: var(--text1);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 180ms ease, border-color 180ms ease;
+}
+
+.videoQuizPage .videoQuizRequirementWatchButton:hover {
+  border-color: var(--accentBlue2);
+  background: var(--background3);
+}
+
+.videoQuizPage .videoQuizRequirementWatchButton svg {
+  width: 19px;
+  height: 19px;
+  transform: rotate(-90deg);
+}
+
+.videoQuizPage .videoQuizUnlockNotice.error,
+.videoQuizPage .videoQuizFeedbackCard.error {
+  border-color: color-mix(in srgb, var(--accentRed) 48%, transparent);
+  background: color-mix(in srgb, var(--accentRed) 10%, transparent);
+}
+
+.videoQuizPage .videoQuizStatusIcon {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.videoQuizPage .videoQuizStatusIcon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.videoQuizPage .videoQuizStatusIcon.passed {
+  color: var(--accentGreen1);
+  background: color-mix(in srgb, var(--accentGreen2) 16%, transparent);
+}
+
+.videoQuizPage .videoQuizStatusIcon.partial {
+  color: var(--analyticsViewsOverTime);
+  background: color-mix(in srgb, var(--analyticsViewsOverTime) 16%, transparent);
+}
+
+.videoQuizPage .videoQuizStatusIcon.in_progress {
+  color: var(--analyticsViewsOverTime);
+  background: color-mix(in srgb, var(--analyticsViewsOverTime) 16%, transparent);
+}
+
+.videoQuizPage .videoQuizStatusIcon.not_checked {
+  color: var(--text2);
+  background: color-mix(in srgb, var(--text3) 18%, transparent);
+}
+
+.videoQuizPage .videoQuizStatusIcon.incorrect,
+.videoQuizPage .videoQuizStatusIcon.failed {
+  color: var(--accentRed3);
+  background: color-mix(in srgb, var(--accentRed) 16%, transparent);
+}
+
+.videoQuizPage .videoQuizFooterActions,
+.videoQuizPage .videoQuizActionRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.videoQuizPage .videoQuizGhostButton,
+.videoQuizPage .videoQuizPrimaryButton,
+.videoQuizPage .videoQuizInlineButton,
+.videoQuizPage .videoQuizDangerButton,
+.videoQuizPage .videoQuizGridButton,
+.videoQuizPage .videoQuizReviewLink {
+  transition: all 0.18s ease;
+}
+
+.videoQuizPage .videoQuizGhostButton,
+.videoQuizPage .videoQuizPrimaryButton,
+.videoQuizPage .videoQuizInlineButton,
+.videoQuizPage .videoQuizDangerButton {
+  min-height: 50px;
+  border-radius: 999px;
+  padding: 0 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.videoQuizPage .introStage .videoQuizFooterActions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.videoQuizPage .introStage .videoQuizGhostButton,
+.videoQuizPage .introStage .videoQuizPrimaryButton {
+  width: 100%;
+}
+
+.videoQuizPage .videoQuizGhostButton {
+  background: var(--background2);
+  border: 1px solid var(--border1);
+  color: var(--text1);
+}
+
+.videoQuizPage .videoQuizGhostButton:hover,
+.videoQuizPage .videoQuizInlineButton:hover {
+  background: var(--background3);
+}
+
+.videoQuizPage .videoQuizPrimaryButton {
+  background: var(--accentBlue2);
+  color: var(--text1);
+}
+
+.videoQuizPage .videoQuizPrimaryButton:hover {
+  background: var(--accentBlue3);
+}
+
+.videoQuizPage .videoQuizDangerButton {
+  border: 1px solid color-mix(in srgb, var(--accentRed3) 50%, transparent);
+  background: color-mix(in srgb, var(--accentRed) 92%, transparent);
+  color: var(--text1);
+}
+
+.videoQuizPage .videoQuizDangerButton:hover {
+  background: color-mix(in srgb, var(--accentRed3) 98%, transparent);
+}
+
+.videoQuizPage .videoQuizPrimaryButton:disabled,
+.videoQuizPage .videoQuizGhostButton:disabled,
+.videoQuizPage .videoQuizDangerButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.videoQuizPage .videoQuizPrimaryButton svg path {
+  stroke: var(--text1);
+}
+
+.videoQuizPage .videoQuizConfirmOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--background1) 55%, transparent);
+}
+
+.videoQuizPage .videoQuizConfirmDialog {
+  width: min(100%, 520px);
+  display: grid;
+  gap: 1rem;
+  padding: 30px;
+  border-radius: 24px;
+  border: 1px solid var(--border2);
+  background: var(--background1);
+  box-shadow: 0 24px 70px color-mix(in srgb, var(--background1) 28%, transparent);
+}
+
+.videoQuizPage .videoQuizConfirmIcon {
+  display: none;
+}
+
+.videoQuizPage .videoQuizConfirmIcon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.videoQuizPage .videoQuizConfirmDialog h3 {
+  margin: 0;
+  color: var(--text1);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.videoQuizPage .videoQuizConfirmDialog p {
+  margin-top: 1rem;
+  padding: 10px;
+  border-radius: 24px;
+  border: 1px solid transparent;
+  background: var(--background2);
+  color: var(--text2);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.videoQuizPage .videoQuizConfirmActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+}
+
+.videoQuizPage .videoQuizConfirmActions .videoQuizGhostButton,
+.videoQuizPage .videoQuizConfirmActions .videoQuizDangerButton {
+  width: auto;
+  min-height: 44px;
+  margin-top: 0;
+  padding: 0.65rem 1rem;
+  font-size: 0.95rem;
+  justify-content: center;
+}
+
+@media screen and (max-width: 520px) {
+  .videoQuizPage .videoQuizConfirmActions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .videoQuizPage .videoQuizConfirmActions .videoQuizGhostButton,
+  .videoQuizPage .videoQuizConfirmActions .videoQuizDangerButton {
+    width: 100%;
+  }
+}
+
+.videoQuizPage .videoQuizShell {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 36px;
+  min-height: 0;
+  overflow: visible;
+  align-items: flex-start;
+}
+
+.videoQuizPage .videoQuizShell.summaryShell {
+  display: block;
+  min-height: 0;
+}
+
+.videoQuizPage .videoQuizSidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid var(--border1);
+  background: var(--background4);
+  min-height: 0;
+  max-height: min(760px, calc(100vh - var(--headerHeight, 90px) - 120px));
+  overflow: hidden;
+  position: sticky;
+  top: calc(var(--headerHeight, 90px) + 24px);
+  margin-top: 0;
+  transform: none;
+}
+
+.videoQuizPage .videoQuizSidebar h3 {
+  color: var(--text1);
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.videoQuizPage .videoQuizSidebar p {
+  color: var(--text2);
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.videoQuizPage .videoQuizSidebarProgress {
+  width: 100%;
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--bR);
+  background: var(--border3);
+}
+
+.videoQuizPage .videoQuizSidebarProgress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accentBlue2);
+  transition: width 180ms ease;
+}
+
+.videoQuizPage .videoQuizGrid {
+  --videoQuizGridCellInlineSize: 38px;
+
+  grid-template-columns: repeat(4, var(--videoQuizGridCellInlineSize));
+  grid-auto-rows: var(--videoQuizGridCellInlineSize);
+  min-height: var(--videoQuizGridCellInlineSize);
+
+  display: grid;
+  align-content: start;
+  justify-content: start;
+  gap: 0.5rem;
+  max-height: min(650px, calc(100vh - var(--headerHeight, 90px) - 260px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 8px;
+  scrollbar-color: var(--accentBlue2) transparent;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.videoQuizPage .videoQuizGrid::-webkit-scrollbar {
+  width: 5px;
+}
+
+.videoQuizPage .videoQuizGrid::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.videoQuizPage .videoQuizGrid::-webkit-scrollbar-thumb {
+  min-height: 32px;
+  border-radius: var(--bR);
+  background: var(--accentBlue2);
+}
+
+.videoQuizPage .videoQuizGrid::-webkit-scrollbar-thumb:hover {
+  background: var(--accentBlue3);
+}
+
+.videoQuizPage .videoQuizGrid::-webkit-scrollbar-button {
+  display: none;
+}
+
+.videoQuizPage .videoQuizGridButton {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border-radius: 10px;
+  border: 1px solid var(--border1);
+  background: transparent;
+  color: var(--text2);
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.videoQuizPage .videoQuizGridButton:hover {
+  border-color: var(--accentBlue2);
+  color: var(--text1);
+}
+
+.videoQuizPage .videoQuizGridButton.answered {
+  background: var(--background3);
+  color: var(--text1);
+  border-color: var(--accentBlue);
+}
+
+.videoQuizPage .videoQuizGridButton.current {
+  background: var(--accentBlue2);
+  border-color: var(--accentBlue2);
+  color: var(--text1);
+}
+
+.videoQuizPage .videoQuizGridButton.correct {
+  background: color-mix(in srgb, var(--accentGreen2) 14%, transparent);
+  border-color: color-mix(in srgb, var(--accentGreen2) 50%, transparent);
+  color: var(--accentGreen1);
+}
+
+.videoQuizPage .videoQuizGridButton.incorrect {
+  background: color-mix(in srgb, var(--accentRed) 14%, transparent);
+  border-color: var(--accentRedC1);
+  color: var(--accentRed3);
+}
+
+.videoQuizPage .videoQuizGridButton.partial {
+  background: color-mix(in srgb, var(--analyticsViewsOverTime) 16%, transparent);
+  border-color: color-mix(in srgb, var(--analyticsViewsOverTime) 54%, transparent);
+  color: var(--analyticsViewsOverTime);
+}
+
+.videoQuizPage .videoQuizGridButton.current.correct,
+.videoQuizPage .videoQuizGridButton.current.incorrect,
+.videoQuizPage .videoQuizGridButton.current.partial {
+  color: var(--text1);
+}
+
+.videoQuizPage .videoQuizGridButton.current.correct {
+  background: var(--accentGreen2);
+  border-color: var(--accentGreen2);
+  color: var(--background1);
+}
+
+.videoQuizPage .videoQuizGridButton.current.incorrect {
+  background: var(--accentRed);
+  border-color: var(--accentRed);
+}
+
+.videoQuizPage .videoQuizGridButton.current.partial {
+  background: var(--analyticsViewsOverTime);
+  border-color: var(--analyticsViewsOverTime);
+  color: var(--background1);
+}
+
+.videoQuizPage .videoQuizReviewLink {
+  width: 100%;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border: 1px solid var(--border1);
+  border-radius: var(--bR);
+  background: var(--background1);
+  color: var(--text1);
+  font-weight: 700;
+  margin-top: 0.15rem;
+  cursor: pointer;
+}
+
+.videoQuizPage .videoQuizReviewLink:hover {
+  border-color: var(--accentBlue2);
+  background: var(--background2);
+}
+
+.videoQuizPage .videoQuizQuestionPanel,
+.videoQuizPage .videoQuizReviewPanel {
+  min-height: 0;
+  overflow: visible;
+  padding: 0;
+}
+
+.videoQuizPage .videoQuizQuestionPanel {
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  padding-top: 4px;
+}
+
+.videoQuizPage .videoQuizReviewPanel {
+  display: flex;
+  flex-direction: column;
+  padding-top: 10px;
+}
+
+.videoQuizPage .videoQuizReviewPanel h3 {
+  margin-bottom: 0.9rem;
+}
+
+.videoQuizPage .videoQuizReviewPanel .videoQuizReviewList {
+  gap: 1.05rem;
+}
+
+.videoQuizPage .videoQuizReviewPanel .videoQuizActionRow {
+  margin-top: 1.25rem;
+}
+
+.videoQuizPage .videoQuizQuestionHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.videoQuizPage .videoQuizQuestionNumber {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  flex-shrink: 0;
+  background: var(--accentBlue2);
+  color: var(--text1);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.videoQuizPage .videoQuizQuestionHeader h3 {
+  font-size: clamp(1.3rem, 1.7vw, 1.8rem);
+  line-height: 1.25;
+}
+
+.videoQuizPage .videoQuizQuestionHeader p {
+  margin-top: 0.4rem;
+}
+
+.videoQuizPage .videoQuizQuestionTransition {
+  animation-duration: 240ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation-fill-mode: both;
+}
+
+.videoQuizPage .videoQuizQuestionTransition.forward {
+  animation-name: videoQuizQuestionForwardIn;
+}
+
+.videoQuizPage .videoQuizQuestionTransition.backward {
+  animation-name: videoQuizQuestionBackwardIn;
+}
+
+.videoQuizPage .videoQuizOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.videoQuizPage .videoQuizOption,
+.videoQuizPage .videoQuizMatchRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  min-height: 64px;
+  padding: 13px 16px;
+  text-align: left;
+  border-radius: 14px;
+  border: 1px solid var(--border1);
+  background: var(--background4);
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.videoQuizPage .videoQuizOption:hover,
+.videoQuizPage .videoQuizMatchRow:hover {
+  border-color: var(--accentBlue2);
+  background: var(--background2);
+}
+
+.videoQuizPage .videoQuizOption:disabled,
+.videoQuizPage .videoQuizSelect .customSelectTrigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.76;
+}
+
+.videoQuizPage .videoQuizOption.selected {
+  border-color: var(--accentBlue2);
+  background: var(--background3);
+}
+
+.videoQuizPage .videoQuizOptionMarker {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid var(--border1);
+  background: var(--background1);
+  display: grid;
+  place-items: center;
+  color: transparent;
+  flex-shrink: 0;
+}
+
+.videoQuizPage .videoQuizOptionMarker.multiple {
+  border-radius: 8px;
+}
+
+.videoQuizPage .videoQuizOption.selected .videoQuizOptionMarker {
+  background: var(--accentBlue2);
+  border-color: var(--accentBlue2);
+  color: var(--text1);
+}
+
+.videoQuizPage .videoQuizOptionMarker svg {
+  width: 16px;
+  height: 16px;
+}
+
+.videoQuizPage .videoQuizOptionText {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.videoQuizPage .videoQuizOptionText strong {
+  min-width: 22px;
+  color: var(--accentBlue2);
+}
+
+.videoQuizPage .videoQuizOptionText span {
+  color: var(--text1);
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.videoQuizPage .videoQuizOption:focus-visible,
+.videoQuizPage .videoQuizGridButton:focus-visible,
+.videoQuizPage .videoQuizReviewLink:focus-visible {
+  outline: 2px solid var(--accentBlue2);
+  outline-offset: 3px;
+}
+
+.videoQuizPage .videoQuizMatchRow {
+  justify-content: space-between;
+}
+
+.videoQuizPage .videoQuizSelect {
+  position: relative;
+  width: min(320px, 100%);
+  flex-shrink: 0;
+}
+
+.videoQuizPage .videoQuizSelect .customSelectTrigger {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 46px 0 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border1);
+  background: var(--background1);
+  color: var(--text1);
+  appearance: none;
+}
+
+.videoQuizPage .videoQuizSelectChevron {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  transform: translateY(-50%);
+  color: var(--text2);
+  pointer-events: none;
+}
+
+.videoQuizPage .videoQuizFeedbackCard {
+  margin-top: 1rem;
+  padding: 16px 18px;
+}
+
+.videoQuizPage .videoQuizFeedbackCard.correct {
+  border-color: color-mix(in srgb, var(--accentGreen2) 46%, transparent);
+  background: color-mix(in srgb, var(--accentGreen2) 8%, transparent);
+}
+
+.videoQuizPage .videoQuizFeedbackCard.incorrect {
+  border-color: color-mix(in srgb, var(--accentRed) 48%, transparent);
+  background: color-mix(in srgb, var(--accentRed) 10%, transparent);
+}
+
+.videoQuizPage .videoQuizFeedbackCard.partial {
+  border-color: color-mix(in srgb, var(--analyticsViewsOverTime) 50%, transparent);
+  background: color-mix(in srgb, var(--analyticsViewsOverTime) 12%, transparent);
+}
+
+.videoQuizPage .videoQuizFeedbackCard.correct strong {
+  color: var(--accentGreen1);
+}
+
+.videoQuizPage .videoQuizFeedbackCard.partial strong {
+  color: var(--analyticsViewsOverTime);
+}
+
+.videoQuizPage .videoQuizFeedbackCard.incorrect strong,
+.videoQuizPage .videoQuizFeedbackCard.error strong {
+  color: var(--accentRed3);
+}
+
+.videoQuizPage .videoQuizReviewCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 18px 20px;
+  color: var(--text1);
+}
+
+.videoQuizPage .videoQuizReviewCardText {
+  min-width: 0;
+  flex: 1;
+}
+
+.videoQuizPage .videoQuizReviewCardTopline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.45rem;
+}
+
+.videoQuizPage .videoQuizReviewCardText p {
+  color: var(--text2);
+}
+
+.videoQuizPage .videoQuizReviewMeta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+.videoQuizPage .videoQuizReviewCardText p + p {
+  margin-top: 0.25rem;
+}
+
+.videoQuizPage .videoQuizReviewStatus,
+.videoQuizPage .videoQuizScoreChip {
+  width: max-content;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  line-height: 1.35;
+  background: color-mix(in srgb, var(--borderWhite) 6%, transparent);
+}
+
+.videoQuizPage .videoQuizScoreChip {
+  color: var(--text2);
+}
+
+.videoQuizPage .videoQuizReviewStatus.correct {
+  color: var(--accentGreen1) !important;
+  background: color-mix(in srgb, var(--accentGreen2) 12%, transparent);
+}
+
+.videoQuizPage .videoQuizReviewStatus.partial {
+  color: var(--analyticsViewsOverTime) !important;
+  background: color-mix(in srgb, var(--analyticsViewsOverTime) 14%, transparent);
+}
+
+.videoQuizPage .videoQuizReviewStatus.incorrect {
+  color: var(--accentRed3) !important;
+  background: color-mix(in srgb, var(--accentRed) 14%, transparent);
+}
+
+.videoQuizPage .videoQuizCorrectAnswer {
+  margin-top: 0.55rem !important;
+  color: var(--text1) !important;
+}
+
+.videoQuizPage .videoQuizCorrectAnswerBlock {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.5rem;
+  width: 100%;
+  margin-top: 0.55rem;
+  color: var(--text1);
+  line-height: 1.45;
+}
+
+.videoQuizPage .videoQuizCorrectAnswerLabel {
+  color: var(--text1);
+  font-weight: 800;
+  flex-shrink: 0;
+  padding-top: 5px;
+}
+
+.videoQuizPage .videoQuizCorrectAnswerPair {
+  display: inline-flex;
+  align-items: baseline;
+  max-width: 100%;
+  min-width: 0;
+  padding: 5px 10px;
+  border: 1px solid color-mix(in srgb, var(--borderWhite) 8%, transparent);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--background1) 16%, transparent);
+}
+
+.videoQuizPage .videoQuizCorrectAnswerPair:not(:last-child)::after {
+  content: none;
+}
+
+.videoQuizPage .videoQuizCorrectAnswerPrompt,
+.videoQuizPage .videoQuizCorrectAnswerValue {
+  min-width: 0;
+  overflow-wrap: break-word;
+  line-height: 1.35;
+}
+
+.videoQuizPage .videoQuizCorrectAnswerPrompt {
+  color: var(--text1);
+  font-weight: 800;
+}
+
+.videoQuizPage .videoQuizCorrectAnswerValue {
+  color: var(--text2);
+  font-weight: 700;
+}
+
+.videoQuizPage .videoQuizCorrectAnswerConnector {
+  margin: 0 0.35rem;
+  color: var(--accentBlue2);
+  font-weight: 800;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.videoQuizPage .videoQuizExplanation {
+  margin-top: 0.65rem;
+}
+
+.videoQuizPage .videoQuizExplanation p {
+  color: var(--text2);
+  line-height: 1.45;
+}
+
+.videoQuizPage .videoQuizExplanation a {
+  color: var(--accentBlue2);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.videoQuizPage .videoQuizExplanation a:hover {
+  color: var(--accentBlue3);
+}
+
+.videoQuizPage .videoQuizExplanation + p {
+  margin-top: 0.75rem;
+}
+
+.videoQuizPage .videoQuizReviewCard.correct {
+  border-color: color-mix(in srgb, var(--accentGreen2) 34%, transparent);
+}
+
+.videoQuizPage .videoQuizReviewCard.partial {
+  border-color: color-mix(in srgb, var(--analyticsViewsOverTime) 42%, transparent);
+}
+
+.videoQuizPage .videoQuizReviewCard.incorrect {
+  border-color: color-mix(in srgb, var(--accentRed) 42%, transparent);
+}
+
+.videoQuizPage .videoQuizReviewCard.unanswered {
+  border-color: color-mix(in srgb, var(--accentBlue2) 55%, transparent);
+  background: color-mix(in srgb, var(--accentBlue2) 8%, transparent);
+}
+
+.videoQuizPage .videoQuizReviewCard.unanswered span,
+.videoQuizPage .videoQuizResultCard.incorrect strong,
+.videoQuizPage .videoQuizResultCard.incorrect p {
+  color: var(--accentRed3);
+}
+
+.videoQuizPage .videoQuizQuestionPanel .videoQuizActionRow {
+  margin-top: 1.25rem;
+}
+
+.videoQuizPage .videoQuizResults {
+  padding-right: 4px;
+}
+
+.videoQuizPage .videoQuizResultHeadline h3 {
+  font-size: clamp(1.85rem, 2.2vw, 2.5rem);
+  color: var(--accentBlue2);
+}
+
+.videoQuizPage .videoQuizResultHeadline p {
+  font-size: 1.05rem;
+  margin-top: 0.35rem;
+}
+
+.videoQuizPage .resultsStage .videoQuizFooterActions {
+  justify-content: flex-start;
+}
+
+.videoQuizPage .videoQuizResultCard {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 14px 16px;
+}
+
+.videoQuizPage .videoQuizResultCard.correct {
+  background: color-mix(in srgb, var(--accentGreen2) 8%, transparent);
+}
+
+.videoQuizPage .videoQuizResultCard.partial {
+  background: color-mix(in srgb, var(--analyticsViewsOverTime) 10%, transparent);
+  border-color: color-mix(in srgb, var(--analyticsViewsOverTime) 48%, transparent);
+}
+
+.videoQuizPage .videoQuizResultCard.incorrect {
+  background: color-mix(in srgb, var(--accentRed) 10%, transparent);
+  border-color: color-mix(in srgb, var(--accentRed) 48%, transparent);
+}
+
+.videoQuizPage .videoQuizResultCardText {
+  min-width: 0;
+  flex: 1;
+}
+
+.videoQuizPage .videoQuizResultCardText strong,
+.videoQuizPage .videoQuizResultCardText p {
+  display: block;
+}
+
+.videoQuizPage .videoQuizResultCardText p {
+  margin-top: 0.3rem;
+}
+
+.videoQuizPage .videoQuizInlineButton {
+  background: var(--background1);
+  border: 1px solid var(--border1);
+  color: var(--text1);
+  flex-shrink: 0;
+}
+
+@media screen and (max-width: 980px) {
+  .videoQuizPage {
+    padding: 16px;
+    padding-top: calc(var(--headerHeight, 90px) + 22px);
+  }
+
+  .videoQuizPage .videoQuizPageContent {
+    padding: 20px;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage {
+    width: 100%;
+    padding: 0;
+  }
+
+  .videoQuizPage .videoQuizPageContent.introStage {
+    width: min(680px, calc(100vw - 28px));
+  }
+
+  .videoQuizPage .videoQuizAttemptCard {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .videoQuizPage .videoQuizAttemptViewButton {
+    width: auto;
+    min-width: 112px;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage {
+    min-height: 0;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizTop {
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizHeading h2 {
+    font-size: clamp(1.3rem, 3vw, 1.75rem);
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizHeading p {
+    font-size: 0.95rem;
+    line-height: 1.25;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizBadge {
+    width: 54px;
+    height: 54px;
+    border-radius: 14px;
+  }
+
+  .videoQuizPage .videoQuizShell {
+    grid-template-columns: 1fr;
+    gap: 36px;
+    min-height: 0;
+  }
+
+  .videoQuizPage .videoQuizSidebar {
+    order: 2;
+    width: min(100%, 520px);
+    min-height: 0;
+    max-height: min(560px, 70vh);
+    position: static;
+    margin-top: 0.75rem;
+    transform: none;
+  }
+
+  .videoQuizPage .videoQuizGrid {
+    --videoQuizGridCellSize: 52px;
+    grid-template-columns: repeat(auto-fill, var(--videoQuizGridCellSize));
+    max-height: min(360px, 48vh);
+  }
+
+  .videoQuizPage .videoQuizQuestionPanel,
+  .videoQuizPage .videoQuizReviewPanel {
+    order: 1;
+  }
+}
+
+@media screen and (max-width: 720px) {
+  .videoQuizPage {
+    padding: 12px;
+    padding-top: calc(var(--headerHeight, 90px) + 18px);
+  }
+
+  .videoQuizPage .videoQuizPageContent {
+    width: calc(100vw - 16px);
+    max-height: calc(100vh - 16px);
+    padding: 16px;
+    border-radius: 24px;
+    gap: 16px;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage {
+    width: 100%;
+    max-height: none;
+    padding: 0;
+  }
+
+  .videoQuizPage .videoQuizPageContent.introStage {
+    width: 100%;
+  }
+
+  .videoQuizPage .videoQuizTop {
+    flex-direction: column;
+    align-items: stretch;
+    padding-bottom: 20px;
+    position: relative;
+    padding-right: 0;
+  }
+
+  .videoQuizPage .videoQuizHeading {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .videoQuizPage .videoQuizHeading > span:last-child {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .videoQuizPage .videoQuizHeading h2 {
+    font-size: clamp(1.35rem, 7vw, 1.8rem);
+  }
+
+  .videoQuizPage .videoQuizHeading p {
+    font-size: 0.95rem;
+    line-height: 1.35;
+  }
+
+  .videoQuizPage .videoQuizBadge {
+    width: 52px;
+    height: 52px;
+  }
+
+  .videoQuizPage .videoQuizAttemptCard {
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    gap: 0.8rem;
+    padding: 14px;
+  }
+
+  .videoQuizPage .videoQuizAttemptViewButton {
+    width: auto;
+    min-width: 100px;
+    padding: 0 18px;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizTop {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 0 0 14px;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizHeading {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+    min-width: 0;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizHeading > span:last-child {
+    min-width: 0;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizHeading h2 {
+    font-size: clamp(1.22rem, 6vw, 1.55rem);
+    line-height: 1.08;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizHeading p {
+    margin-top: 0.35rem;
+    font-size: 0.88rem;
+    line-height: 1.25;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizBadge {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizBadge svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizTopActions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizTimer {
+    align-self: flex-start;
+    min-height: 40px;
+    padding: 8px 13px;
+    font-size: 0.88rem;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizCloseButton {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+  }
+
+  .videoQuizPage .videoQuizTopActions,
+  .videoQuizPage .videoQuizFooterActions,
+  .videoQuizPage .videoQuizActionRow,
+  .videoQuizPage .videoQuizMatchRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .videoQuizPage .videoQuizCloseButton {
+    position: absolute;
+    top: 0;
+    right: 0;
+    align-self: auto;
+  }
+
+  .videoQuizPage .videoQuizTimer {
+    justify-content: center;
+  }
+
+  .videoQuizPage .videoQuizGrid {
+    --videoQuizGridCellSize: 48px;
+    grid-template-columns: repeat(auto-fill, var(--videoQuizGridCellSize));
+    max-height: min(420px, 55vh);
+  }
+
+  .videoQuizPage .videoQuizSidebar {
+    width: 100%;
+    margin-top: 1.5rem;
+  }
+
+  .videoQuizPage .videoQuizQuestionPanel .videoQuizActionRow {
+    margin-bottom: 1.25rem;
+  }
+
+  .videoQuizPage .videoQuizReviewPanel h3 {
+    order: 1;
+  }
+
+  .videoQuizPage .videoQuizReviewPanel .videoQuizActionRow {
+    order: 2;
+    margin-top: 0;
+    margin-bottom: 1rem;
+  }
+
+  .videoQuizPage .videoQuizReviewPanel .videoQuizReviewList {
+    order: 3;
+  }
+
+  .videoQuizPage .videoQuizReviewCard {
+    position: relative;
+    display: block;
+    padding-right: 56px;
+  }
+
+  .videoQuizPage .videoQuizReviewCard > .videoQuizStatusIcon {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+  }
+
+  .videoQuizPage .videoQuizReviewCard > .videoQuizStatusIcon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .videoQuizPage .videoQuizQuestionHeader {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .videoQuizPage .videoQuizQuestionNumber {
+    width: 36px;
+    height: 36px;
+    font-size: 0.95rem;
+  }
+
+  .videoQuizPage .videoQuizOption,
+  .videoQuizPage .videoQuizReviewCard,
+  .videoQuizPage .videoQuizResultCard {
+    padding: 16px;
+  }
+
+  .videoQuizPage .videoQuizReviewCardTopline {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .videoQuizPage .videoQuizReviewMeta {
+    justify-content: flex-start;
+  }
+
+  .videoQuizPage .videoQuizCorrectAnswerPairs {
+    grid-template-columns: 1fr;
+  }
+
+  .videoQuizPage .videoQuizCorrectAnswerPair {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+  }
+
+  .videoQuizPage .videoQuizCorrectAnswerConnector {
+    display: none;
+  }
+
+  .videoQuizPage .videoQuizSelect {
+    width: 100%;
+  }
+
+  .videoQuizPage .videoQuizGhostButton,
+  .videoQuizPage .videoQuizPrimaryButton,
+  .videoQuizPage .videoQuizInlineButton {
+    width: 100%;
+  }
+
+  .videoQuizPage .videoQuizRequirementsSummary {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .videoQuizPage .videoQuizRequirementsToggle {
+    align-self: flex-start;
+    padding-left: 0;
+  }
+
+  .videoQuizPage .videoQuizRequirementsPanel,
+  .videoQuizPage .videoQuizRequirementsPanel.open {
+    padding-right: 4px;
+    padding-left: 14px;
+  }
+
+  .videoQuizPage .videoQuizRequirementVideo {
+    grid-template-columns: 112px minmax(0, 1fr);
+    align-items: start;
+    gap: 0.9rem;
+  }
+
+  .videoQuizPage .videoQuizRequirementThumb,
+  .videoQuizPage .videoQuizRequirementVideo img,
+  .videoQuizPage .videoQuizRequirementThumbFallback {
+    width: 112px;
+  }
+
+  .videoQuizPage .videoQuizRequirementVideoActions {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
+
+  .videoQuizPage .videoQuizRequirementsPanel.open {
+    max-height: min(62vh, 560px);
+  }
+
+  .videoQuizPage .videoQuizRequirementList {
+    max-height: min(48vh, 420px);
+  }
+
+  .videoQuizPage .introStage .videoQuizFooterActions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media screen and (max-width: 450px) {
+  .videoQuizPage .videoQuizPageContent {
+    width: 100%;
+    padding: 14px;
+    border-radius: 22px;
+  }
+
+  .videoQuizPage .videoQuizAttemptCard {
+    grid-template-columns: 42px minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .videoQuizPage .videoQuizAttemptCard .videoQuizStatusIcon {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .videoQuizPage .videoQuizAttemptViewButton {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    min-width: 0;
+    margin-top: 0.25rem;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizTop {
+    gap: 12px;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizHeading h2 {
+    font-size: 1.18rem;
+  }
+
+  .videoQuizPage .videoQuizPageContent.flowStage .videoQuizHeading p {
+    font-size: 0.82rem;
+  }
+
+  .videoQuizPage .videoQuizQuestionHeader {
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+  }
+
+  .videoQuizPage .videoQuizQuestionHeader h3 {
+    font-size: 1.25rem;
+  }
+}
+
+@media screen and (max-width: 380px) {
+  .videoQuizPage .introStage .videoQuizFooterActions {
+    grid-template-columns: 1fr;
+  }
+
+  .videoQuizPage .videoQuizRequirementVideo {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+
+  .videoQuizPage .videoQuizRequirementThumb,
+  .videoQuizPage .videoQuizRequirementVideo img,
+  .videoQuizPage .videoQuizRequirementThumbFallback {
+    width: 96px;
+  }
+}
+
+.quizPopupHeader h2 {
+  margin-bottom: 0.5rem;
+}
+
+.quizPopupHeader p {
+  color: var(--text2);
+  line-height: 1.45;
+}
+
+.quizPopupForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 0;
+}
+
+.quizPopupBody {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 1rem;
+  overflow-y: auto;
+  padding-right: 14px;
+}
+
+.quizPopupBody,
+.quizPopupBody textarea,
+.quizPopupScroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accentBlue2) transparent;
+}
+
+.quizPopupBody::-webkit-scrollbar,
+.quizPopupBody textarea::-webkit-scrollbar,
+.quizPopupScroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.quizPopupBody::-webkit-scrollbar-track,
+.quizPopupBody textarea::-webkit-scrollbar-track,
+.quizPopupScroll::-webkit-scrollbar-track {
+  margin-block: 8px;
+  background: transparent;
+}
+
+.quizPopupBody::-webkit-scrollbar-thumb,
+.quizPopupBody textarea::-webkit-scrollbar-thumb,
+.quizPopupScroll::-webkit-scrollbar-thumb {
+  min-height: 32px;
+  border-radius: var(--bR);
+  background: var(--accentBlue2);
+}
+
+.quizPopupBody::-webkit-scrollbar-thumb:hover,
+.quizPopupBody textarea::-webkit-scrollbar-thumb:hover,
+.quizPopupScroll::-webkit-scrollbar-thumb:hover {
+  background: var(--accentBlue3);
+}
+
+.quizPopupBody::-webkit-scrollbar-button,
+.quizPopupBody textarea::-webkit-scrollbar-button,
+.quizPopupScroll::-webkit-scrollbar-button {
+  display: none;
+}
+
+.quizPopupForm .formGroup label {
+  font-size: 1rem;
+}
+
+.quizPopupHint {
+  margin-top: 0.4rem;
+  color: var(--text2);
+  font-size: 0.82rem;
+}
+
+.quizPopupGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.quizPopupToggleList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.quizPopupToggleRow {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 1rem !important;
+  padding: 1rem;
+  border-radius: 16px;
+  background: var(--background1);
+  border: 1px solid var(--border1);
+  color: var(--text1) !important;
+}
+
+.quizPopupToggleRow > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.quizPopupToggleRow strong {
+  font-size: 0.95rem;
+  color: var(--accentBlue2);
+}
+
+.quizPopupToggleRow span {
+  font-size: 0.85rem;
+  color: var(--text2);
+  line-height: 1.35;
+}
+
+.quizPopupToggleRow .quizPopupCheckbox {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
+  border-color: var(--border3);
+  background-color: var(--background2);
+  flex-shrink: 0;
+}
+
+.quizPopupToggleRow .quizPopupCheckbox:hover {
+  border-color: var(--accentOrange);
+}
+
+.quizPopupToggleRow .quizPopupCheckbox:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.quizPopupError {
+  color: var(--accentRed);
+  font-size: 0.9rem;
+}
+
+.quizPopupManageActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+}
+
+.quizPopupManageActions .saveCaptionsBtn,
+.quizPopupManageActions .deleteCaptionsBtn {
+  width: auto;
+  margin-top: 0;
+}
+
+.quizPopupActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.quizPopupActions .cancelBtn,
+.quizPopupActions .saveCaptionsBtn {
+  width: auto;
+  margin-top: 0;
+}
+
+@media screen and (max-width: 760px) {
+  .quizPopupGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .quizPopupActions {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+
+  .quizPopupManageActions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .quizPopupManageActions .saveCaptionsBtn,
+  .quizPopupManageActions .deleteCaptionsBtn {
+    width: 100%;
+    min-height: 42px;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.95rem;
+    justify-content: center;
+  }
+
+  .quizPopupActions .cancelBtn,
+  .quizPopupActions .saveCaptionsBtn {
+    width: auto;
+    min-width: 118px;
+    min-height: 44px;
+    padding: 0.65rem 1rem;
+    font-size: 0.95rem;
+    justify-content: center;
+  }
+}
+main.quizzesPage .quizRowInfo {
+  position: relative;
+}
+main.quizzesPage .quizRowText {
+  min-width: 0;
+  max-width: min(46ch, 100%);
+}
+main.quizzesPage .quizRowTitle {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.18;
+}
+main.quizzesPage .quizRowDescription {
+  display: -webkit-box;
+  max-width: 46ch;
+  overflow: hidden;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+main.quizzesPage .quizRowDescription a {
+  color: var(--accentBlue2);
+  text-decoration: underline;
+}
+main.quizzesPage .quizMobileOptionsButton {
+  display: none;
+  margin-left: auto;
+  padding: 5px;
+  background-color: var(--background2);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color .2s ease;
+}
+main.quizzesPage .quizMobileOptionsButton:hover {
+  background-color: var(--background3);
+}
+main.quizzesPage .quizMobileOptionsButton svg {
+  opacity: 0.5;
+  width: 22px;
+  height: 22px;
+}
+main.quizzesPage .quizMobileOptionsButton svg path {
+  stroke-width: 2;
+  stroke: var(--accentBlue2);
+}
+
+@media screen and (max-width: 1160px) {
+
+  main.quizzesPage table th:nth-child(4),
+  main.quizzesPage table td:nth-child(4) {
+    display: none;
+  }
+
+  main.quizzesPage .quizRowInfo {
+    min-width: 0;
+    width: 100%;
+    padding-right: 44px;
+  }
+
+  main.quizzesPage .quizRowInfo > div:last-of-type {
+    min-width: 0;
+  }
+
+  main.quizzesPage .quizMobileOptionsButton {
+    display: block;
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+  }
+}

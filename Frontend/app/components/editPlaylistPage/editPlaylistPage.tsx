@@ -1,3 +1,4 @@
+import "~/styles/editor.css";
 import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import {

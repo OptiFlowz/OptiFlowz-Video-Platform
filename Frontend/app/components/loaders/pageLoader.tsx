@@ -1,12 +1,13 @@
 import { useIsFetching } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useLocation, useNavigation } from "react-router";
+import { useNavigation } from "react-router";
+import { usePathname } from "next/navigation";
 import { changeElementClass } from "~/functions";
 
 function PageLoader({ active = false }: { active?: boolean }){
     const isFetching = useIsFetching({ predicate: query => !query.state.data });
     const navigation = useNavigation();
-    const location = useLocation();
+    const pathname = usePathname();
 
     const [progress, setProgress] = useState(0);
     const loaderRef = useRef<HTMLDivElement>(null);
@@ -76,7 +77,7 @@ function PageLoader({ active = false }: { active?: boolean }){
 
         changeProgress(0);
         changeElementClass({element: loaderRef.current, timeout: 0});
-    }, [location.pathname]);
+    }, [pathname]);
 
     useEffect(() => {
         loaderFn();

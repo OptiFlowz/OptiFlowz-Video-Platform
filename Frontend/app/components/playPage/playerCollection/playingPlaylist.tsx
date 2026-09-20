@@ -1,14 +1,17 @@
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { memo, useLayoutEffect, useState, useCallback, useMemo, useRef } from "react";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
+import { memo, useLayoutEffect, useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { AutoPlaySVG, BookmarkSVG, CloseSVG, ShareSVG } from "~/constants";
 import { env } from "~/env";
 import type { FetchPlaylistT, PlaylistVideosT } from "~/types";
 import { fetchFn, fetchApiResponse } from "~/API";
 import PlaylistVideos from "./playlistVideos";
+import InfiniteScroll from "~/components/library/infiniteScroll";
+import { nextResultsPage, uniqueResults } from "~/components/library/infiniteResults";
+import { PLAYLIST_ADVANCE_EVENT } from "./playlistAutoplay";
 import PlayerSheet from "./playerSheet";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { getToken } from "~/functions";
 import { useI18n } from "~/i18n";
 
@@ -20,10 +23,12 @@ function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, vi
     const [saveError, setSaveError] = useState(false);
     const { can } = useAuthorization();
     const location = useLocation();
+    const navigate = useNavigate();
+    const [advanceFrom, setAdvanceFrom] = useState<string | null>(null);
 
     const token = getToken() ?? "";
     const [isAutoPlayOn, setAutoPlay] = useState(() => {
-        const v = localStorage.getItem("autoplay");
+        const v = typeof window === "undefined" ? null : window.localStorage.getItem("autoplay");
         return v === null ? true : v === "true";
     });
     const [isSaved, setIsSaved] = useState(false);
@@ -47,38 +52,73 @@ function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, vi
 
     const playlistQuery = useQuery({
         queryKey: [`playlist${playlistId}`],
-        queryFn: () => fetchFn<FetchPlaylistT>({
+        queryFn: ({ signal }) => fetchFn<FetchPlaylistT>({
             route: `api/playlists/${playlistId}`,
             options: {
                 method: "GET",
-                headers: myHeaders
+                headers: myHeaders, signal
             }
         }),
-        enabled: !!playlistId
+        enabled: !!playlistId,
+        staleTime: 30_000,
     });
 
     const data = playlistQuery.data?.playlist;
 
-    const videosQuery = useQuery({
-        queryKey: [`playlist-videos${playlistId}`, "all"],
-        queryFn: async ({ signal }) => {
-            const videos: PlaylistVideosT["videos"] = [];
-            let page = 1;
-            while (true) {
-                const response = await fetchFn<PlaylistVideosT>({
-                    route: `api/playlists/${playlistId}/videos?limit=100&page=${page}`,
-                    options: { method: "GET", headers: myHeaders, signal },
-                });
-                videos.push(...response.videos);
-                if (!response.pagination.hasNextPage || page >= response.pagination.totalPages) break;
-                page++;
-            }
-            return Array.from(new Map(videos.map(video => [video.id, video])).values());
-        },
+    const videosQuery = useInfiniteQuery({
+        queryKey: [`playlist-videos${playlistId}`, "infinite", token],
+        initialPageParam: 1,
+        queryFn: ({ signal, pageParam }) => fetchFn<PlaylistVideosT>({
+            route: `api/playlists/${playlistId}/videos?limit=20&page=${pageParam}`,
+            options: { method: "GET", headers: myHeaders, signal },
+        }),
+        getNextPageParam: (last, pages, page) => nextResultsPage(last, pages, page, 20, response => response.videos),
         enabled: !!playlistId,
+        staleTime: 30_000,
     });
+    const videos = useMemo(() => uniqueResults(videosQuery.data?.pages.flatMap(page => page.videos) ?? []), [videosQuery.data]);
+    const currentIndex = videos.findIndex(video => video.id === videoId);
+    const nextVideo = currentIndex >= 0 ? videos[currentIndex + 1] : undefined;
+    const { fetchNextPage, hasNextPage, isFetching, isError, isFetchNextPageError, refetch } = videosQuery;
+    const loadMore = useCallback(() => {
+        if (isError && !isFetchNextPageError) void refetch();
+        else void fetchNextPage({ cancelRefetch: false });
+    }, [isError, isFetchNextPageError, refetch, fetchNextPage]);
+
+    // The API exposes page/limit, not a video-position lookup. Only read ahead
+    // until the active video and its successor are found; render each page as it arrives.
+    useEffect(() => {
+        if (!videoId || !videos.length || !hasNextPage || isFetching || isError) return;
+        if (currentIndex < 0 || !nextVideo) void fetchNextPage({ cancelRefetch: false });
+    }, [videoId, videos.length, currentIndex, nextVideo, hasNextPage, isFetching, isError, fetchNextPage]);
+
+    useEffect(() => {
+        const advance = (event: Event) => {
+            const request = event as CustomEvent<{ videoId: string }>;
+            if (request.defaultPrevented || request.detail?.videoId !== videoId) return;
+            request.preventDefault();
+            setAdvanceFrom(videoId);
+        };
+        window.addEventListener(PLAYLIST_ADVANCE_EVENT, advance);
+        return () => window.removeEventListener(PLAYLIST_ADVANCE_EVENT, advance);
+    }, [videoId]);
+
+    useEffect(() => {
+        if (!advanceFrom) return;
+        if (advanceFrom !== videoId || localStorage.getItem("autoplay") === "false") {
+            setAdvanceFrom(null);
+            return;
+        }
+        if (nextVideo) {
+            setAdvanceFrom(null);
+            navigate(`/video/${encodeURIComponent(nextVideo.id)}?p=${encodeURIComponent(playlistId)}`);
+        } else if (!hasNextPage && !isFetching && !isError) {
+            setAdvanceFrom(null);
+        }
+    }, [advanceFrom, videoId, nextVideo, playlistId, hasNextPage, isFetching, isError, navigate]);
+
     const loading = playlistQuery.isPending || videosQuery.isPending;
-    const loadError = playlistQuery.isError || videosQuery.isError;
+    const loadError = playlistQuery.isError || (videosQuery.isError && !videos.length);
 
     const sharePlaylistLink = useCallback((e: React.MouseEvent<HTMLElement, MouseEvent>) => {
         e.preventDefault();
@@ -173,8 +213,11 @@ function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, vi
                 <button type="button" className="button rounded-full px-4 py-2 bg-(--accentBlue) text-(--text1)" disabled={playlistQuery.isFetching || videosQuery.isFetching}
                     onClick={() => { void playlistQuery.refetch(); void videosQuery.refetch(); }}>{t("usersRetry")}</button>
             </div> : loading ? <div className="similar sheetState" role="status" aria-busy="true">{t("playlistLoading")}</div>
-            : !videosQuery.data?.length ? <div className="similar sheetState" role="status">{t("noVideosInPlaylist")}</div>
-            : <PlaylistVideos playlistId={playlistId} videos={videosQuery.data} playedVideoId={videoId} />}
+            : !videos.length ? <div className="similar sheetState" role="status">{t("noVideosInPlaylist")}</div>
+            : <PlaylistVideos playlistId={playlistId} videos={videos} playedVideoId={videoId}>
+                <InfiniteScroll hasMore={hasNextPage} fetching={isFetching} error={isError}
+                    onLoadMore={loadMore} loadingLabel={t("playlistLoading")} />
+            </PlaylistVideos>}
         </PlayerSheet>
     );
 }

@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { SUPPORTED_LOCALES, type Locale, type TranslationParams as Params } from "~/locales";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { loadCatalogue, SUPPORTED_LOCALES, type Locale, type TranslationParams as Params } from "~/locales";
+import { useHydrated } from "~/hooks/useHydrated";
 import { formatTranslation, hasTranslation } from "~/locales/formatTranslation";
 
 export { SUPPORTED_LOCALES, LANGUAGE_OPTIONS, type Locale } from "~/locales";
@@ -16,22 +17,27 @@ export function normalizeLocale(value?: string | null): Locale {
 }
 
 function readStoredLocale(): Locale {
-  if (typeof window === "undefined") return activeLocale;
-  return normalizeLocale(localStorage.getItem(STORAGE_KEY) || navigator.language);
+  if (typeof window === "undefined") return "en";
+  try {
+    return normalizeLocale(localStorage.getItem(STORAGE_KEY) || navigator.language);
+  } catch {
+    return normalizeLocale(navigator.language);
+  }
 }
 
 export function getCurrentLocale(): Locale {
-  if (typeof window !== "undefined") activeLocale = readStoredLocale();
-  return activeLocale;
+  // Formatting follows the loaded catalogue, including while another language downloads.
+  return typeof window === "undefined" ? "en" : activeLocale;
 }
 
-export function setCurrentLocaleValue(locale: Locale) {
-  activeLocale = locale;
+export function setCurrentLocaleValue(locale: Locale, persist = true) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, locale);
+  activeLocale = locale;
+  if (persist) {
+    try { localStorage.setItem(STORAGE_KEY, locale); } catch { /* Language still works without storage. */ }
+  }
   document.documentElement.lang = locale;
-  // Keep navigation, tables, charts and media controls in the platform's layout.
-  // RTL text uses paragraph-level bidi detection without mirroring containers.
+  // RTL text uses paragraph-level bidi detection without mirroring the interface.
   document.documentElement.dir = "ltr";
 }
 
@@ -64,35 +70,44 @@ const I18nContext = createContext<I18nContextType>({
 });
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(() => readStoredLocale());
+  const hydrated = useHydrated();
+  const [locale, setLocaleState] = useState<Locale>(() => hydrated ? activeLocale : "en");
+  const requestVersion = useRef(0);
+  const mounted = useRef(false);
 
-  useEffect(() => {
-    setCurrentLocaleValue(locale);
-  }, [locale]);
-
-  useEffect(() => {
-    const syncStoredLocale = (event: StorageEvent) => {
-      if (event.storageArea !== localStorage) return;
-      if (event.key !== STORAGE_KEY && event.key !== null) return;
-      setLocaleState(readStoredLocale());
-    };
-    window.addEventListener("storage", syncStoredLocale);
-    return () => window.removeEventListener("storage", syncStoredLocale);
+  const selectLocale = useCallback(async (nextLocale: Locale, persist = true) => {
+    const version = ++requestVersion.current;
+    try {
+      await loadCatalogue(nextLocale);
+      if (!mounted.current || version !== requestVersion.current) return;
+      setCurrentLocaleValue(nextLocale, persist);
+      setLocaleState(nextLocale);
+    } catch {
+      // Keep the current complete language on a failed download; selecting again retries.
+    }
   }, []);
 
-  const value = useMemo<I18nContextType>(
-    () => ({
-      locale,
-      setLocale: (nextLocale) => {
-        setCurrentLocaleValue(nextLocale);
-        setLocaleState(nextLocale);
-      },
-      t: (key, params) => {
-        return formatTranslation(locale, key, params);
-      },
-    }),
-    [locale]
-  );
+  useEffect(() => {
+    mounted.current = true;
+    void selectLocale(readStoredLocale(), false);
+    const syncStoredLocale = (event: StorageEvent) => {
+      if (event.key !== STORAGE_KEY && event.key !== null) return;
+      try { if (event.storageArea !== localStorage) return; } catch { return; }
+      void selectLocale(readStoredLocale(), false);
+    };
+    window.addEventListener("storage", syncStoredLocale);
+    return () => {
+      mounted.current = false;
+      requestVersion.current++;
+      window.removeEventListener("storage", syncStoredLocale);
+    };
+  }, [selectLocale]);
+
+  const value = useMemo<I18nContextType>(() => ({
+    locale,
+    setLocale: nextLocale => { void selectLocale(nextLocale); },
+    t: (key, params) => formatTranslation(locale, key, params),
+  }), [locale, selectLocale]);
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }

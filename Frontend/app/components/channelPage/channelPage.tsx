@@ -111,11 +111,11 @@ function ChannelPage() {
 
     const { data: channelData, isLoading: isLoadingChannel } = useQuery({
         queryKey: [`channel-${channelId}`],
-        queryFn: () => fetchFn<FetchChannelT>({
+        queryFn: ({ signal }) => fetchFn<FetchChannelT>({
             route: `api/channels/${channelId}`,
             options: {
                 method: "GET",
-                headers
+                headers, signal
             }
         }),
         enabled: !!channelId
@@ -123,37 +123,49 @@ function ChannelPage() {
 
     const { data: channelVideosData, isLoading: isLoadingVideos } = useQuery({
         queryKey: [`channel-videos-${channelId}`, !!token, videoSortBy, videoSortOrder],
-        queryFn: () => fetchFn<ChannelVideosT>({
+        queryFn: ({ signal }) => fetchFn<ChannelVideosT>({
             route: `api/channels/${channelId}/videos?sortBy=${videoSortBy}&sortOrder=${videoSortOrder}&page=1&limit=20`,
             options: {
                 method: "GET",
-                headers
+                headers, signal
             }
         }),
-        enabled: !!channelId,
-        placeholderData: (previousData) => previousData
+        enabled: !!channelId && activeTab === "videos",
+        staleTime: 30_000,
+        placeholderData: (previousData, previousQuery) => previousQuery?.queryKey[0] === `channel-videos-${channelId}` ? previousData : undefined
     });
 
     const { data: channelPlaylistsData, isLoading: isLoadingPlaylists } = useQuery({
         queryKey: [`channel-playlists-${channelId}`, !!token, playlistSortBy, playlistSortOrder],
-        queryFn: () => fetchFn<ChannelPlaylistsT>({
+        queryFn: ({ signal }) => fetchFn<ChannelPlaylistsT>({
             route: `api/channels/${channelId}/playlists?sortBy=${playlistSortBy}&sortOrder=${playlistSortOrder}`,
             options: {
                 method: "GET",
-                headers
+                headers, signal
             }
         }),
-        enabled: !!channelId,
-        placeholderData: (previousData) => previousData
+        enabled: !!channelId && activeTab === "playlists",
+        staleTime: 30_000,
+        placeholderData: (previousData, previousQuery) => previousQuery?.queryKey[0] === `channel-playlists-${channelId}` ? previousData : undefined
     });
 
+    const { data: channelVideoCount } = useQuery({
+        queryKey: ["channel-video-count", channelId, token],
+        queryFn: ({ signal }) => fetchFn<ChannelVideosT>({
+            route: `api/channels/${channelId}/videos?limit=1&page=1`,
+            options: { method: "GET", headers, signal },
+        }),
+        enabled: !!channelId && activeTab !== "videos" && !channelVideosData,
+        staleTime: 30_000,
+    });
     const channel = channelData?.channel as ChannelT | undefined;
-    const normalizedVideos = channelVideosData?.videos?.map((video) => ({
+    const normalizedVideos = useMemo(() => channelVideosData?.videos?.map((video) => ({
         ...video,
         progress_seconds: Number(video.progress_seconds ?? 0),
         percentage_watched: Number(video.percentage_watched ?? 0),
-    })) ?? [];
+    })) ?? [], [channelVideosData]);
     const normalizedPlaylists = channelPlaylistsData?.playlists ?? [];
+    const videoCount = channelVideosData?.pagination?.total ?? channelVideoCount?.pagination?.total;
 
     useEffect(() => {
         if (!descriptionElement) return;
@@ -234,7 +246,7 @@ function ChannelPage() {
                     <div className="channelIdentity">
                         <div className="channelIdentityHeading">
                             <h1>{channel?.full_name}</h1>
-                            <p className="channelVideoCount">{t("videosLabel", { count: channelVideosData?.pagination?.total ?? normalizedVideos.length })}</p>
+                            <p className="channelVideoCount">{videoCount === undefined ? t("videosTab") : t("videosLabel", { count: videoCount })}</p>
                         </div>
                         {channel?.description && <div className="channelAbout">
                             <p ref={setDescriptionElement} className={`channelDescription ${descOpen ? "isExpanded" : ""}`}>{formatDescription(channel.description)}</p>
@@ -288,13 +300,13 @@ function ChannelPage() {
             </div>
 
             <div className="channelPanel" role="tabpanel" id={`${tabsId}-videos-panel`} aria-labelledby={`${tabsId}-videos-tab`} hidden={activeTab !== "videos"} tabIndex={0}>
-                <div className="videoHolder">{isLoadingVideos ? skeletonVideoArray : videoArray}</div>
-                {!isLoadingVideos && normalizedVideos.length === 0 && <p className="channelEmpty">{t("channelAnalyticsBestVideosEmpty")}</p>}
+                {activeTab === "videos" && <><div className="videoHolder">{isLoadingVideos ? skeletonVideoArray : videoArray}</div>
+                {!isLoadingVideos && normalizedVideos.length === 0 && <p className="channelEmpty">{t("channelAnalyticsBestVideosEmpty")}</p>}</>}
             </div>
 
             <div className="channelPanel" role="tabpanel" id={`${tabsId}-playlists-panel`} aria-labelledby={`${tabsId}-playlists-tab`} hidden={activeTab !== "playlists"} tabIndex={0}>
-                <div className="collection notscrollable channelPlaylistGrid">{isLoadingPlaylists ? skeletonPlaylistArray : playlistArray}</div>
-                {!isLoadingPlaylists && normalizedPlaylists.length === 0 && <p className="channelEmpty">{t("quizNoPlaylistsFound")}</p>}
+                {activeTab === "playlists" && <><div className="collection notscrollable channelPlaylistGrid">{isLoadingPlaylists ? skeletonPlaylistArray : playlistArray}</div>
+                {!isLoadingPlaylists && normalizedPlaylists.length === 0 && <p className="channelEmpty">{t("quizNoPlaylistsFound")}</p>}</>}
             </div>
             <div className="channelPanel" role="tabpanel" id={`${tabsId}-posts-panel`} aria-labelledby={`${tabsId}-posts-tab`} hidden={activeTab !== 'posts'} tabIndex={0}>
                 {activeTab === 'posts' && channel && <ChannelPosts channelId={channelId || ''} author={channel} videos={normalizedVideos} ascending={postAscending} />}

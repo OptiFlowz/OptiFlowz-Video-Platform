@@ -1,3 +1,4 @@
+import "~/styles/quiz.css";
 import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";

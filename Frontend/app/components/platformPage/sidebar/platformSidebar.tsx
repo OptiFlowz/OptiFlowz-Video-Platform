@@ -1,3 +1,5 @@
+import "~/styles/admin.css";
+import "~/styles/analytics.css";
 import { useAuthorization } from "~/authorization/authorization";
 import { memo, useRef } from "react";
 import { NavLink, useLocation } from "react-router";
