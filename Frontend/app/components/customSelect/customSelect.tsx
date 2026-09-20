@@ -22,6 +22,7 @@ type CustomSelectProps = {
 };
 
 const MAX_MENU_HEIGHT = 280;
+const VIEWPORT_MARGIN = 12;
 
 function CustomSelect({
   value,
@@ -43,6 +44,7 @@ function CustomSelect({
   const [menuHeight, setMenuHeight] = useState(MAX_MENU_HEIGHT);
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const typeAheadRef = useRef({ text: "", lastTypedAt: 0 });
   const generatedId = useId();
@@ -63,6 +65,24 @@ function CustomSelect({
     const spaceAbove = rect.top - 12;
     const shouldOpenUpward = spaceBelow < MAX_MENU_HEIGHT && spaceAbove > spaceBelow;
     const availableSpace = shouldOpenUpward ? spaceAbove : spaceBelow;
+
+    const menu = menuRef.current;
+    if (menu) {
+      const viewport = window.visualViewport;
+      const viewportLeft = (viewport?.offsetLeft ?? 0) + VIEWPORT_MARGIN;
+      const viewportRight = (viewport?.offsetLeft ?? 0)
+        + (viewport?.width ?? document.documentElement.clientWidth) - VIEWPORT_MARGIN;
+      menu.style.maxWidth = `${Math.max(0, viewportRight - viewportLeft)}px`;
+
+      // Measure the layout width, unaffected by the opening scale animation.
+      const width = menu.offsetWidth;
+      let left = rect.right - width;
+      if (left < viewportLeft) left = rect.left;
+      left = Math.max(viewportLeft, Math.min(left, viewportRight - width));
+      menu.style.left = `${left - rect.left - (rootRef.current?.clientLeft ?? 0)}px`;
+      menu.style.right = "auto";
+      menu.style.transformOrigin = `${Math.max(0, Math.min(width, rect.right - left))}px ${shouldOpenUpward ? "bottom" : "top"}`;
+    }
 
     setOpenUpward(shouldOpenUpward);
     setMenuHeight(Math.max(120, Math.min(MAX_MENU_HEIGHT, availableSpace)));
@@ -93,9 +113,17 @@ function CustomSelect({
     document.addEventListener("pointerdown", handlePointerDown);
     window.addEventListener("resize", handleViewportChange);
     window.addEventListener("scroll", handleViewportChange, true);
+    window.visualViewport?.addEventListener("resize", handleViewportChange);
+    window.visualViewport?.addEventListener("scroll", handleViewportChange);
+    const observer = new ResizeObserver(handleViewportChange);
+    if (rootRef.current) observer.observe(rootRef.current);
+    if (menuRef.current) observer.observe(menuRef.current);
     window.requestAnimationFrame(() => optionRefs.current[activeIndex]?.focus());
 
     return () => {
+      observer.disconnect();
+      window.visualViewport?.removeEventListener("resize", handleViewportChange);
+      window.visualViewport?.removeEventListener("scroll", handleViewportChange);
       document.removeEventListener("pointerdown", handlePointerDown);
       window.removeEventListener("resize", handleViewportChange);
       window.removeEventListener("scroll", handleViewportChange, true);
@@ -180,6 +208,7 @@ function CustomSelect({
       </button>
 
       <div
+        ref={menuRef}
         className={`customSelectMenu ${openUpward ? "opensUpward" : ""}`}
         aria-hidden={!open}
       >

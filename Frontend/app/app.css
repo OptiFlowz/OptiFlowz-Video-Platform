@@ -1110,6 +1110,8 @@ header .primaryNavigation .primaryNavigationBrand::before {
 }
 
 .customSelectMenu {
+	box-sizing: border-box;
+	max-width: calc(100vw - 24px);
 	position: absolute;
 	top: calc(100% + 8px);
 	right: 0;
@@ -1237,6 +1239,11 @@ header .primaryNavigation .primaryNavigationBrand::before {
 .customSelectMenu .customSelectOption.isSelected:hover,
 .customSelectMenu .customSelectOption.isSelected:focus-visible {
 	background: color-mix(in srgb, var(--accentBlue2) 16%, var(--background1));
+}
+
+.customSelectOption > span {
+	min-width: 0;
+	overflow-wrap: anywhere;
 }
 
 .customSelectOption svg {
