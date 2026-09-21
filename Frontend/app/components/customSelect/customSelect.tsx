@@ -19,6 +19,7 @@ type CustomSelectProps = {
   leadingContent?: ReactNode;
   valueContent?: ReactNode;
   typeAhead?: boolean;
+  placement?: "auto" | "top";
 };
 
 const MAX_MENU_HEIGHT = 280;
@@ -37,10 +38,11 @@ function CustomSelect({
   leadingContent,
   valueContent,
   typeAhead = false,
+  placement = "auto",
 }: CustomSelectProps) {
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [openUpward, setOpenUpward] = useState(false);
+  const [openUpward, setOpenUpward] = useState(placement === "top");
   const [menuHeight, setMenuHeight] = useState(MAX_MENU_HEIGHT);
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -61,14 +63,23 @@ function CustomSelect({
     const rect = rootRef.current?.getBoundingClientRect();
     if (!rect) return;
 
-    const spaceBelow = window.innerHeight - rect.bottom - 12;
-    const spaceAbove = rect.top - 12;
-    const shouldOpenUpward = spaceBelow < MAX_MENU_HEIGHT && spaceAbove > spaceBelow;
+    const viewport = window.visualViewport;
+    let top = viewport?.offsetTop ?? 0;
+    let bottom = top + (viewport?.height ?? window.innerHeight);
+    // A popup's scrollable body can end well before the viewport does.
+    for (let parent = rootRef.current?.parentElement; parent; parent = parent.parentElement) {
+      if (!/(auto|scroll|hidden|clip)/.test(window.getComputedStyle(parent).overflowY)) continue;
+      const bounds = parent.getBoundingClientRect();
+      top = Math.max(top, bounds.top + parent.clientTop);
+      bottom = Math.min(bottom, bounds.top + parent.clientTop + parent.clientHeight);
+    }
+    const spaceBelow = Math.max(0, bottom - rect.bottom - VIEWPORT_MARGIN);
+    const spaceAbove = Math.max(0, rect.top - top - VIEWPORT_MARGIN);
+    const shouldOpenUpward = placement === "top" || (spaceBelow < MAX_MENU_HEIGHT && spaceAbove > spaceBelow);
     const availableSpace = shouldOpenUpward ? spaceAbove : spaceBelow;
 
     const menu = menuRef.current;
     if (menu) {
-      const viewport = window.visualViewport;
       const viewportLeft = (viewport?.offsetLeft ?? 0) + VIEWPORT_MARGIN;
       const viewportRight = (viewport?.offsetLeft ?? 0)
         + (viewport?.width ?? document.documentElement.clientWidth) - VIEWPORT_MARGIN;
@@ -85,7 +96,12 @@ function CustomSelect({
     }
 
     setOpenUpward(shouldOpenUpward);
-    setMenuHeight(Math.max(120, Math.min(MAX_MENU_HEIGHT, availableSpace)));
+    const menuStyle = menu ? window.getComputedStyle(menu) : null;
+    const menuFrameHeight = menuStyle
+      ? [menuStyle.paddingTop, menuStyle.paddingBottom, menuStyle.borderTopWidth, menuStyle.borderBottomWidth]
+        .reduce((sum, size) => sum + (parseFloat(size) || 0), 0)
+      : 0;
+    setMenuHeight(Math.max(0, Math.min(MAX_MENU_HEIGHT, availableSpace - menuFrameHeight)));
   };
 
   const openMenu = (index = selectedIndex) => {
