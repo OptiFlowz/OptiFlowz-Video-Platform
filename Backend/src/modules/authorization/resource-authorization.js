@@ -97,6 +97,15 @@ async function loadComment(commentId) {
   return rows[0] || null;
 }
 
+async function loadPostComment(commentId) {
+  const { rows } = await writePool.query(
+    `SELECT id, user_id AS owner_id, is_deleted
+     FROM public.post_comments WHERE id = $1 AND is_deleted = false LIMIT 1`,
+    [commentId],
+  );
+  return rows[0] || null;
+}
+
 const quizChildLoaders = {
   question: async (questionId) => {
     const { rows } = await writePool.query(
@@ -220,6 +229,16 @@ export function requireCommentAccess({ ownPermission, anyPermission = null }) {
     resourceName: 'Comment',
     idParameter: 'id',
     loadResource: loadComment,
+    ownPermission,
+    anyPermission,
+  });
+}
+
+export function requirePostCommentAccess({ ownPermission, anyPermission = null }) {
+  return ownedResourceMiddleware({
+    resourceName: 'Post comment',
+    idParameter: 'id',
+    loadResource: loadPostComment,
     ownPermission,
     anyPermission,
   });

@@ -3,7 +3,7 @@ import { HttpError } from '../../../common/httpError.js';
 
 export const MAX_POST_BLOCKS = 50;
 export const MAX_BLOCK_OPTIONS = 20;
-export const POST_COLUMNS = 'id, user_id, title, status, created_at';
+export const POST_COLUMNS = 'id, user_id, title, status, created_at, like_count, dislike_count';
 export const BLOCK_COLUMNS = 'id, post_id, type, position, content';
 export const OPTION_COLUMNS = 'id, block_id, text, image_url, position';
 

@@ -3,6 +3,7 @@ import { validateOrThrow } from '../../../common/input.validation.js';
 import { HttpError } from '../../../common/httpError.js';
 import { postIdSchema } from '../helpers/posts.shared.js';
 import { postBlocksSql } from '../helpers/postBlocksSql.js';
+import { postReactionsSql } from '../helpers/postReactionsSql.js';
 import { withPostVideoCards } from '../helpers/postVideoCards.js';
 import { hasPermission, loadAuthorization } from '../../authorization/authorization.service.js';
 import { Permissions } from '../../authorization/permission.constants.js';
@@ -17,6 +18,7 @@ export async function getPostInternal(params, userId = null, authorization = nul
   const { rows } = await writePool.query(
     `SELECT p.id, p.user_id, p.title, p.status, p.created_at,
        u.full_name AS author_full_name, u.image_url AS author_image_url,
+       ${postReactionsSql('$2::uuid')} AS reactions,
        ${postBlocksSql('$2::uuid')} AS blocks
      FROM public.posts p
      LEFT JOIN public.users u ON u.id = p.user_id
@@ -25,6 +27,7 @@ export async function getPostInternal(params, userId = null, authorization = nul
     [postId, userId, canUpdateAny],
   );
   if (!rows.length) throw new HttpError(404, { message: 'Post not found' });
-  const [post] = await withPostVideoCards(rows, userId);
+  const { reactions, ...details } = rows[0];
+  const [post] = await withPostVideoCards([{ ...details, ...reactions }], userId);
   return post;
 }

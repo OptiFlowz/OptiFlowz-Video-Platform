@@ -1,6 +1,6 @@
 # Posts
 
-Apply the posts, posts-permissions, posts-status, and post-option-positions migrations before using these endpoints.
+Apply the posts, posts-permissions, posts-status, post-option-positions, post-reactions, post-reaction-counts, and post-comments migrations before using these endpoints.
 The option-position migration backfills existing options in their previous UUID display order.
 All mutation endpoints require a Bearer access token. Reading a public post allows anonymous access.
 
@@ -255,6 +255,55 @@ The post, blocks, and participation use one primary-database query for a consist
 snapshot and current visibility. Video cards are then loaded in a batch with the
 viewer's video access checked on the primary database. Video blocks retain their
 stored `content.video_id`; this endpoint does not grant playback access.
+
+## Post comments
+
+`GET /api/posts/:postId/comments` lists top-level comments with the same
+pagination, `sort=new|top`, and response fields as video comments. Creation,
+replies, edits, soft deletion, and comment reactions use `/api/post-comments`.
+See [Post comments](POST_COMMENTS.md) for the routes, payloads, and permissions.
+
+## Like or dislike a post
+
+Post reactions use the same toggle behavior and response as video reactions:
+
+- `POST /api/posts/:postId/like`
+- `POST /api/posts/:postId/dislike`
+
+Both require a Bearer access token and `posts.react`; no body is needed. The new
+permission is granted to Viewer and Administrator roles by default, and the
+platform Owner retains its permission bypass. The user comes from the token.
+
+| Current reaction | Like endpoint | Dislike endpoint |
+| --- | --- | --- |
+| None (`0`) | Like (`1`) | Dislike (`-1`) |
+| Like (`1`) | None (`0`) | Dislike (`-1`) |
+| Dislike (`-1`) | Like (`1`) | None (`0`) |
+
+HTTP 200 returns `{ "success": true, "status": 1 }`, where `status` is the new
+numeric reaction (`1`, `-1`, or `0`). Like video reactions, repeating a request
+toggles again, so these endpoints are not idempotent.
+
+Post details, user/recommended feeds, and `/my` cards include top-level
+`like_count`, `dislike_count`, and `user_reaction`. `user_reaction` is `0` for
+anonymous viewers or users who have not reacted. New posts start with all three
+fields at zero. `posts.like_count` and `posts.dislike_count` are non-null integer
+columns with a zero default. Reaction writes update these counters in the same
+transaction as the reaction, matching videos; reads use the stored columns.
+There is at most one reaction per user per post, independent of poll votes and
+questioner answers. Reaction users and individual records are not exposed.
+
+Only posts visible to the caller can be reacted to: public posts, their own
+private posts, or private posts they can access with `posts.update_any`.
+Missing or inaccessible posts return 404, malformed post IDs return 400, missing
+authentication returns 401, and missing permission returns 403. Post-row locking
+serializes concurrent toggles with other post mutations. Reactions are removed
+automatically when the post or reacting user is deleted.
+
+Apply `1790121600000_add-post-reactions.sql` and then
+`1790121600001_add-post-reaction-counts.sql` before deploying the updated routes.
+The second migration backfills counters from any reactions already saved, so it
+also supports databases that have already applied the first migration.
 
 ## Delete a post
 
@@ -794,5 +843,5 @@ the existing mutation guards remain authoritative.
 The frontend creates metadata as private, appends sections/uploads, and publishes
 only after those requests succeed. Multi-request content saves are not atomic:
 completed mutations remain saved if a later request fails. The editor checkpoints
-returned IDs for retries and preserves pending input. Apply all four migrations
+returned IDs for retries and preserves pending input. Apply all seven migrations
 listed at the top of this document before deploying these routes.

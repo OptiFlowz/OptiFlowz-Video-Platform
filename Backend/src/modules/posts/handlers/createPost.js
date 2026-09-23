@@ -10,5 +10,5 @@ export async function createPostInternal(body, userId) {
      VALUES ($1, $2, $3) RETURNING ${POST_COLUMNS}`,
     [userId, data.title, data.status],
   );
-  return { ...rows[0], blocks: [] };
+  return { ...rows[0], user_reaction: 0, blocks: [] };
 }

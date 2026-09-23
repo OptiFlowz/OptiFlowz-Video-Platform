@@ -17,6 +17,7 @@ export const Permissions = Object.freeze({
   POSTS_UPDATE_ANY: 'posts.update_any',
   POSTS_DELETE_OWN: 'posts.delete_own',
   POSTS_DELETE_ANY: 'posts.delete_any',
+  POSTS_REACT: 'posts.react',
   POSTS_POLL_VOTE: 'posts.poll.vote',
   POSTS_QUESTIONER_ANSWER: 'posts.questioner.answer',
 

@@ -6,6 +6,7 @@ import reportRoutes from '../modules/reports/report.routes.js';
 import videoModerationRoutes from '../modules/videos/video-moderation/video-moderation.routes.js';
 import videoRoutes from '../modules/videos/video/video.routes.js';
 import commentRoutes from '../modules/comments/comments.routes.js';
+import postCommentRoutes from '../modules/post-comments/post-comments.routes.js';
 import channelRoutes from '../modules/channels/channel.routes.js';
 import quizzesRoutes from '../modules/quizzes/quiz.routes.js';
 import analyticsRoutes from '../modules/analytics/analytics.routes.js';
@@ -25,6 +26,7 @@ export function registerRoutes(app) {
   app.use('/api/auth', authRoutes);
   app.use('/api/reports', reportRoutes);
   app.use('/api/comments',commentRoutes);
+  app.use('/api/post-comments', postCommentRoutes);
   app.use('/api/channels',channelRoutes);
   app.use('/api/quizzes',quizzesRoutes);
   app.use('/api/analytics',analyticsRoutes);

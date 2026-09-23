@@ -6,6 +6,7 @@ import { createPostInternal } from './handlers/createPost.js';
 import { getPostInternal } from './handlers/getPost.js';
 import { getMyPostsInternal } from './handlers/getMyPosts.js';
 import { getUserPostsInternal } from './handlers/getUserPosts.js';
+import { setPostReactionInternal } from './handlers/setPostReaction.js';
 import { deletePostInternal } from './handlers/deletePost.js';
 import { appendPostBlockInternal } from './handlers/appendPostBlock.js';
 import { deletePostBlockInternal } from './handlers/deletePostBlock.js';
@@ -25,6 +26,24 @@ export async function createPost(req, res) {
     if (!error.status || error.status >= 500) console.error('createPost error:', error);
     return sendError(res, error.message, error.status || 500);
   }
+}
+
+async function reactToPost(req, res, reaction) {
+  try {
+    const result = await setPostReactionInternal(req.params, req.user?.sub, reaction, req.authorization);
+    return sendSuccess(res, result);
+  } catch (error) {
+    if (!error.status || error.status >= 500) console.error('Post reaction error:', error);
+    return sendError(res, error.message, error.status || 500);
+  }
+}
+
+export function likePost(req, res) {
+  return reactToPost(req, res, 'like');
+}
+
+export function dislikePost(req, res) {
+  return reactToPost(req, res, 'dislike');
 }
 
 export async function getPost(req, res) {

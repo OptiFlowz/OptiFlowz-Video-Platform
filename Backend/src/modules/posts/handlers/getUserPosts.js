@@ -2,6 +2,7 @@ import { writePool } from '../../../database/index.js';
 import { validateOrThrow } from '../../../common/input.validation.js';
 import { postUserIdsSchema, publicPostsQuerySchema, PUBLIC_POST_SORT_FIELDS } from '../helpers/posts.shared.js';
 import { postBlocksSql } from '../helpers/postBlocksSql.js';
+import { postReactionsSql } from '../helpers/postReactionsSql.js';
 import { withPostVideoCards } from '../helpers/postVideoCards.js';
 
 export async function getUserPostsInternal(userIdOrIds, query, viewerId = null) {
@@ -18,6 +19,7 @@ export async function getUserPostsInternal(userIdOrIds, query, viewerId = null) 
   const { rows } = await writePool.query(
     `WITH page_posts AS (
        SELECT p.id, p.user_id, p.title, p.status, p.created_at,
+         p.like_count, p.dislike_count,
          u.full_name AS author_full_name, u.image_url AS author_image_url
        FROM public.posts p
        LEFT JOIN public.users u ON u.id = p.user_id
@@ -28,7 +30,8 @@ export async function getUserPostsInternal(userIdOrIds, query, viewerId = null) 
        (SELECT COUNT(*)::int FROM public.posts WHERE user_id = ANY($1::uuid[]) AND status = 'public') AS total,
        COALESCE((
          SELECT jsonb_agg(
-           to_jsonb(p) || jsonb_build_object('blocks', ${postBlocksSql('$4::uuid')})
+           to_jsonb(p) || ${postReactionsSql('$4::uuid')}
+           || jsonb_build_object('blocks', ${postBlocksSql('$4::uuid')})
            ORDER BY ${orderBy}
          )
          FROM page_posts p

@@ -2,6 +2,7 @@ import { writePool } from '../../../database/index.js';
 import { validateOrThrow } from '../../../common/input.validation.js';
 import { myPostsQuerySchema, requirePostUser } from '../helpers/posts.shared.js';
 import { withPostVideoCards } from '../helpers/postVideoCards.js';
+import { postReactionsSql } from '../helpers/postReactionsSql.js';
 
 const SORT_FIELDS = {
   title: 'lower(title)',
@@ -21,6 +22,7 @@ export async function getMyPostsInternal(query, userId) {
   const { rows } = await writePool.query(
     `WITH post_cards AS (
        SELECT p.id, p.title, summary.text, p.status, p.created_at, summary.block_types,
+         p.like_count, p.dislike_count,
          u.full_name AS author_full_name, u.image_url AS author_image_url
        FROM public.posts p
        LEFT JOIN public.users u ON u.id = p.user_id
@@ -37,7 +39,8 @@ export async function getMyPostsInternal(query, userId) {
      SELECT
        (SELECT COUNT(*)::int FROM post_cards) AS total,
        COALESCE((
-         SELECT jsonb_agg(to_jsonb(post_page) || jsonb_build_object(
+         SELECT jsonb_agg(to_jsonb(post_page) || ${postReactionsSql('$1::uuid', 'post_page')}
+         || jsonb_build_object(
            'video_blocks', COALESCE((
              SELECT jsonb_agg(jsonb_build_object(
                'id', b.id, 'post_id', b.post_id, 'type', b.type,
@@ -49,6 +52,7 @@ export async function getMyPostsInternal(query, userId) {
          ) ORDER BY ${orderBy})
          FROM (
            SELECT id, title, text, status, created_at, block_types,
+             like_count, dislike_count,
              author_full_name, author_image_url FROM post_cards
            ORDER BY ${orderBy} LIMIT $2 OFFSET $3
          ) post_page
