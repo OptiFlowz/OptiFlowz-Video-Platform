@@ -147,6 +147,8 @@ function CommentRow({
         <div className="comment-actions mt-1 flex items-center gap-4 text-sm">
           <button
             type="button"
+            aria-label={t("likeComment")}
+            aria-pressed={isLiked}
             onClick={() => handleReact("like")}
             className={`flex items-center transition ${isLiked ? "bookmarked" : ""}`}
             disabled={isReactionPending || !can(P.commentsReact)}
@@ -159,6 +161,8 @@ function CommentRow({
 
           <button
             type="button"
+            aria-label={t("dislikeComment")}
+            aria-pressed={isDisliked}
             onClick={() => handleReact("dislike")}
             className={`flex items-center transition ${isDisliked ? "bookmarked" : ""}`}
             disabled={isReactionPending || !can(P.commentsReact)}
@@ -181,6 +185,7 @@ function CommentRow({
           {isCurrentUser && can(P.commentsEditOwn) && !isEditing && (
             <button
               type="button"
+              aria-label={t("adminEdit")}
               onClick={() => onEditStart(comment)}
               className="flex items-center transition"
               disabled={isDeletePending}
@@ -192,6 +197,7 @@ function CommentRow({
           {canDelete && !isEditing && (
             <button
               type="button"
+              aria-label={t("delete")}
               onClick={() => onDelete(comment)}
               className="flex items-center transition text-(--accentRed)"
               disabled={isDeletePending}

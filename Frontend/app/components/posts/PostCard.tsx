@@ -1,6 +1,7 @@
+import PostEngagement, { PostComments } from './PostEngagement';
 import { CheckSVG, CloseSVG } from "~/constants";
 import { getVideoThumbnail } from "~/components/shared/videoMedia";
-import { useRef, useState, type ReactNode } from 'react';
+import { useId, useRef, useState, type ReactNode } from 'react';
 import { useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { getToken } from '~/functions';
 import { redirectToLogin } from '~/auth/session';
@@ -141,8 +142,12 @@ export function PostVideoPreview({ video, linked = false }: { video?: ChannelVid
   return linked ? <Link className="postVideoMention" to={`/video/${video.id}`}>{content}</Link> : <div className="postVideoMention">{content}</div>;
 }
 
-export default function PostCard({ post, author, videos = [], interactive = false, readOnly = false, linkAuthor = false }: { post: Post; author: PostAuthor; videos?: ChannelVideoT[]; interactive?: boolean; readOnly?: boolean; linkAuthor?: boolean }) {
-  return <article className="postCard" aria-label={post.title}>
+export default function PostCard({ post, author, videos = [], interactive = false, readOnly = false, linkAuthor = false, sideComments = false }: { post: Post; author: PostAuthor; videos?: ChannelVideoT[]; interactive?: boolean; readOnly?: boolean; linkAuthor?: boolean; sideComments?: boolean }) {
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const commentsId = useId();
+  const engagement = interactive && !readOnly;
+  const comments = engagement && <PostComments key={`comments-${post.id}-${getToken()}`} postId={post.id} open={commentsOpen} id={commentsId} />;
+  const card = <article className={`postCard${engagement ? " postCardInteractive" : ""}`} aria-label={post.title}>
     <PostAuthorHeader author={author} createdAt={post.createdAt} channelId={linkAuthor ? post.userId : undefined} />
     <div className="postBlocks">{post.blocks.map(block => {
       if (block.type === 'text') return <div key={block.id} className="postInset postText">{block.text}</div>;
@@ -152,5 +157,8 @@ export default function PostCard({ post, author, videos = [], interactive = fals
       const video = block.video !== undefined ? block.video : videos.find(video => video.id === block.videoId);
       return <section key={block.id} className="postVideoBlock">{block.text && <p>{block.text}</p>}<PostVideoPreview video={video} linked /></section>;
     })}</div>
+    {engagement && <PostEngagement key={`${post.id}-${getToken()}`} post={post} commentsOpen={commentsOpen} commentsId={commentsId} onToggleComments={() => setCommentsOpen(open => !open)} />}
+    {!sideComments && comments}
   </article>;
+  return sideComments ? <div className="channelPostLayout">{card}{comments}</div> : card;
 }

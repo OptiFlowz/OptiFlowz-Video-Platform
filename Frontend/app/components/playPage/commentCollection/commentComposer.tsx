@@ -5,6 +5,7 @@ import type { VideoCommentT } from "~/types";
 import { useI18n } from "~/i18n";
 
 type CommentComposerProps = {
+  maxLength?: number;
   userProfileImage: string;
   replyingTo: VideoCommentT | null;
   value: string;
@@ -19,6 +20,7 @@ type CommentComposerProps = {
 };
 
 function CommentComposer({
+  maxLength,
   userProfileImage,
   replyingTo,
   value,
@@ -92,6 +94,7 @@ function CommentComposer({
               ref={textareaRef}
               placeholder={replyingTo ? t("replyToPlaceholder", { name: replyingTo.author_full_name }) : t("addCommentPlaceholder")}
               rows={1}
+              maxLength={maxLength}
               value={value}
               onChange={(e) => onChange(e.target.value)}
               onInput={onAutoResize}

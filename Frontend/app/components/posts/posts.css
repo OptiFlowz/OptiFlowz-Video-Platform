@@ -1,4 +1,4 @@
-.channelPostsFeed { width: min(100%, 680px); display: flex; flex-direction: column; gap: 20px; padding-block: 24px; }
+.channelPostsFeed { container: channel-posts / inline-size; width: 100%; display: flex; flex-direction: column; gap: 20px; padding-block: 24px; }
 .postCard { padding: 20px; border-radius: 18px; background: var(--background2); color: var(--text1); min-width: 0; overflow-wrap: anywhere; }
 .postCard > .postAuthor,
 main.channelPage .postCard > .postAuthor { display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center; justify-content: flex-start; gap: 10px; margin-bottom: 20px; text-align: left; }
@@ -284,4 +284,54 @@ main.myPostsPage #selectedButtons button:disabled { opacity: .5; cursor: default
   .latestPostsHeading { gap: 12px; }
   .latestPostsDialog > .postDialogHeading { padding: 16px; }
   .latestPostsDialogFeed { padding: 0 16px 16px; gap: 16px; }
+}
+
+/* Use each card's width so channel feeds and dialogs share the same layout. */
+.postCardInteractive { container: post-card / inline-size; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 1rem; }
+.postCard.postCardInteractive > .postAuthor,
+main.channelPage .postCard.postCardInteractive > .postAuthor { grid-column: 1 / -1; grid-row: 1; margin-bottom: 0; }
+.postCardInteractive > .postBlocks { grid-column: 1 / -1; grid-row: 2; margin-top: 20px; }
+.postEngagement { display: contents; }
+.postEngagement > .postActions { grid-column: 1 / -1; grid-row: 3; margin-top: 1rem; padding-top: .75rem; border-top: 1px solid var(--border1); }
+.postEngagement > .postError,
+.postCardInteractive > .postComments { grid-column: 1 / -1; }
+@container post-card (min-width: 560px) {
+  .postCard.postCardInteractive > .postAuthor,
+  main.channelPage .postCard.postCardInteractive > .postAuthor { grid-column: 1; }
+  .postEngagement > .postActions { grid-column: 2; grid-row: 1; align-self: center; justify-self: end; flex-wrap: nowrap; margin-top: 0; padding-top: 0; border-top: 0; }
+}
+.postActions { display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center; gap: .5rem; min-width: 0; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; }
+.postActions button { flex-shrink: 0; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: .45rem; min-height: 40px; padding: .5rem .8rem; border-radius: var(--bR); background: var(--background2); color: var(--text1); cursor: pointer; font: inherit; font-size: .85rem; }
+.postActions button:hover { background: var(--background3); }
+.postActions button[aria-pressed="true"], .postActions button[aria-expanded="true"] { color: var(--accentBlue2); }
+.postActions button:disabled { cursor: not-allowed; opacity: .55; }
+.postActions button:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: -2px; }
+.postActions svg { width: 20px; height: 20px; flex-shrink: 0; }
+.postReactions { display: flex; flex-direction: row; flex-wrap: nowrap; flex-shrink: 0; border-radius: var(--bR); background: var(--background2); }
+.postReactions button { background: transparent; border-radius: 0; }
+.postReactions button:first-child { border-start-start-radius: var(--bR); border-end-start-radius: var(--bR); border-inline-end: 1px solid var(--border1); }
+.postReactions button:last-child { border-start-end-radius: var(--bR); border-end-end-radius: var(--bR); }
+.postReactions button:hover { background: var(--background2); }
+.postComments { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border1); min-width: 0; }
+
+/* Only channel posts can use the spare space beside the 680px post column. */
+.channelPostLayout { isolation: isolate; display: grid; align-items: start; width: min(100%, 680px); border-radius: 18px; background: var(--background2); }
+.channelPostLayout > .postCard { position: relative; z-index: 1; background: transparent; }
+.channelPostLayout > .postComments { margin: 0 20px 20px; padding-top: 20px; overflow-wrap: anywhere; --comments-enter-x: 0px; --comments-enter-y: -16px; }
+.channelPostLayout > .postComments:not([hidden]) { animation: postCommentsEnter 300ms cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes postCommentsEnter {
+  from { opacity: 0; transform: translate(var(--comments-enter-x), var(--comments-enter-y)); }
+  to { opacity: 1; transform: none; }
+}
+@container channel-posts (min-width: 1060px) {
+  .channelPostLayout { width: 100%; grid-template-columns: 680px minmax(0, 1fr); gap: 24px; background: transparent; }
+  .channelPostLayout > .postCard { background: var(--background2); }
+  .channelPostLayout > .postComments { margin: 0; padding: 15px; border-top: 0; border-radius: 16px; background: var(--background2); --comments-enter-x: -64px; --comments-enter-y: 0px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .channelPostLayout > .postComments:not([hidden]) { animation: none; }
+}
+
+@media (max-width: 540px) {
+  .channelPostLayout > .postComments { margin-inline: 16px; margin-bottom: 16px; padding-top: 16px; }
 }

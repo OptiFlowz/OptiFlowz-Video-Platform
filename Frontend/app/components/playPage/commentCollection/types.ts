@@ -7,8 +7,7 @@ export type CommentTreeNode = VideoCommentT & {
   children: CommentTreeNode[];
 };
 
-export type CommentsSectionProps = {
-  videoId: VideoT["id"];
+export type CommentsSectionProps = ({ videoId: VideoT["id"]; postId?: never } | { postId: string; videoId?: never }) & {
   variant?: "inline" | "drawer";
   onClose?: () => void;
 };

@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useI18n } from "~/i18n";
 
 type Props = {
+  portalContainer?: Element;
   open: boolean;
   title?: string;
   message?: string;
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export function ConfirmDialog({
+  portalContainer,
   open,
   title,
   message,
@@ -95,6 +97,6 @@ export function ConfirmDialog({
       </div>
     </div>
     ),
-    document.body
+    portalContainer ?? document.body
   );
 }

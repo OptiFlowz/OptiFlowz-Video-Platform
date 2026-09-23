@@ -33,7 +33,7 @@ export default function ChannelPosts({ channelId, author, videos, ascending }: {
     {query.isPending && <p role="status">{t('postLoading')}</p>}
     {query.isError && <p role="alert" className="postError">{t('postLoadError')} <button type="button" className="postSecondary" onClick={() => void query.refetch()}>{t('postRetry')}</button></p>}
     {!query.isPending && !query.isError && !posts.length && <p>{t('postEmpty')}</p>}
-    {posts.map(post => <PostCard key={post.id} post={post} author={author} videos={embeddedVideos} interactive />)}
+    {posts.map(post => <PostCard key={post.id} post={post} author={author} videos={embeddedVideos} interactive sideComments />)}
     {query.hasNextPage && <button type="button" className="postSecondary" disabled={query.isFetchingNextPage} onClick={() => void query.fetchNextPage()}>{t('postLoadMore')}</button>}
   </div>;
 }

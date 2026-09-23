@@ -6,7 +6,8 @@ export type PostBlock = { hasResponses?: boolean } & (
   | { id: string; type: 'video'; videoId: string; text: string; video?: ChannelVideoT | null }
   | { id: string; type: 'poll' | 'questionnaire'; text: string; options: PostOption[]; correctIds?: string[]; selectedOptionId?: string | null; selectedOptionIds?: string[] }
 );
-export type Post = { id: string; title: string; createdAt: string; status: 'public' | 'private'; blocks: PostBlock[]; persisted?: boolean; userId?: string; author?: PostAuthor };
+export type PostReaction = { likeCount?: number; dislikeCount?: number; userReaction?: -1 | 0 | 1 };
+export type Post = PostReaction & { id: string; title: string; createdAt: string; status: 'public' | 'private'; blocks: PostBlock[]; persisted?: boolean; userId?: string; author?: PostAuthor };
 export type PostSummary = Omit<Post, 'blocks'> & { text: string; blockTypes: PostBlock['type'][] };
 export type PostAuthor = { full_name?: string; image_url?: string | null };
 export const blockTypes = ['text', 'image', 'poll', 'questionnaire', 'video'] as const;
@@ -45,4 +46,12 @@ export function withOptimisticVote(block: Extract<PostBlock, { options: unknown 
   }));
   return { ...block, selectedOptionIds, selectedOptionId: selectedOptionIds.length === 1 ? selectedOptionIds[0] : null,
     options, hasResponses: options.some(option => option.votes > 0) };
+}
+
+export function withPostReaction(previous: PostReaction, status: -1 | 0 | 1): PostReaction {
+  return {
+    likeCount: Math.max(0, (previous.likeCount ?? 0) - Number(previous.userReaction === 1) + Number(status === 1)),
+    dislikeCount: Math.max(0, (previous.dislikeCount ?? 0) - Number(previous.userReaction === -1) + Number(status === -1)),
+    userReaction: status,
+  };
 }

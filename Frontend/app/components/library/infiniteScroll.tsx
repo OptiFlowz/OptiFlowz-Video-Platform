@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { useI18n } from "~/i18n";
 import styles from "./infiniteScroll.module.css";
 
@@ -8,9 +8,10 @@ type Props = {
   error: boolean;
   onLoadMore: () => void;
   loadingLabel: string;
+  loadingContent?: ReactNode;
 };
 
-export default function InfiniteScroll({ hasMore, fetching, error, onLoadMore, loadingLabel }: Props) {
+export default function InfiniteScroll({ hasMore, fetching, error, onLoadMore, loadingLabel, loadingContent }: Props) {
   const { t } = useI18n();
   const sentinel = useRef<HTMLDivElement>(null);
 
@@ -29,7 +30,7 @@ export default function InfiniteScroll({ hasMore, fetching, error, onLoadMore, l
   if (!hasMore && !error) return null;
   return <div ref={sentinel} className={styles.container} aria-busy={fetching}>
     {error ? <p role="alert">{t("searchLoadFailed")}</p> : null}
-    {fetching ? <p role="status">{loadingLabel}</p> : (
+    {fetching ? loadingContent ?? <p role="status">{loadingLabel}</p> : (
       <button type="button" onClick={onLoadMore}>{t(error ? "usersRetry" : "more")}</button>
     )}
   </div>;

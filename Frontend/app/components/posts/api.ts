@@ -5,7 +5,7 @@ import type { Post, PostBlock, PostOption, PostSummary } from './model';
 
 export type ApiOption = { id: string; position?: number; text: string; image_url?: string | null; is_correct?: boolean; vote_count?: number; answer_count?: number };
 export type ApiBlock = { id: string; type: 'text' | 'image' | 'video' | 'poll' | 'questioner'; content: { text?: string; url?: string; video_id?: string }; video_card?: ChannelVideoT | null; options?: ApiOption[]; has_responses?: boolean; selected_option_id?: string | null; selected_option_ids?: string[]; correct_option_ids?: string[] };
-export type ApiPost = { id: string; user_id: string; author_full_name?: string | null; author_image_url?: string | null; title: string; status: Post['status']; created_at: string; blocks: ApiBlock[] };
+export type ApiPost = { like_count?: number; dislike_count?: number; user_reaction?: -1 | 0 | 1; id: string; user_id: string; author_full_name?: string | null; author_image_url?: string | null; title: string; status: Post['status']; created_at: string; blocks: ApiBlock[] };
 export type PaginationData = { page: number; limit: number; total: number; totalPages: number; hasNextPage: boolean };
 export type Participation = { has_responses?: boolean; selected_option_id: string | null; selected_option_ids?: string[]; options: ApiOption[]; correct_option_ids?: string[]; is_correct?: boolean; total_votes?: number; total_answers?: number };
 export function postRequest<T>(route: string, method = 'GET', body?: unknown, signal?: AbortSignal): Promise<T> {
@@ -28,7 +28,7 @@ export function fromBlock(block: ApiBlock): PostBlock {
   if (block.type === 'poll' || block.type === 'questioner') return { ...base, type: block.type === 'questioner' ? 'questionnaire' : 'poll', options: fromOptions(block.options || []), selectedOptionId: block.selected_option_id ?? null, selectedOptionIds: block.selected_option_ids ?? (block.selected_option_id ? [block.selected_option_id] : []), correctIds: block.correct_option_ids ?? block.options?.filter(option => option.is_correct).map(option => option.id) };
   return { ...base, type: 'text' };
 }
-export const fromPost = (post: ApiPost): Post => ({ id: post.id, userId: post.user_id, author: { full_name: post.author_full_name || undefined, image_url: post.author_image_url }, title: post.title, status: post.status, createdAt: post.created_at, blocks: post.blocks.map(fromBlock), persisted: true });
+export const fromPost = (post: ApiPost): Post => ({ likeCount: post.like_count ?? 0, dislikeCount: post.dislike_count ?? 0, userReaction: post.user_reaction ?? 0, id: post.id, userId: post.user_id, author: { full_name: post.author_full_name || undefined, image_url: post.author_image_url }, title: post.title, status: post.status, createdAt: post.created_at, blocks: post.blocks.map(fromBlock), persisted: true });
 export async function getPost(id: string, signal?: AbortSignal) { return fromPost((await postRequest<{ post: ApiPost }>(`/details/${id}`, 'GET', undefined, signal)).post); }
 export async function getMyPosts(page: number, limit: number, ascending: boolean, search: string, signal?: AbortSignal) {
   const params = new URLSearchParams({ page: String(page), limit: String(limit), sortBy: 'created_at', sortOrder: ascending ? 'asc' : 'desc', q: search });
@@ -185,4 +185,10 @@ export async function savePost(input: Post, session: SaveSession, checkpoint: (d
     current.blocks = order.map(id => current.blocks.find(block => block.id === id)!);
     return structuredClone(current);
   } finally { checkpoint(structuredClone(draft)); }
+}
+
+export async function reactToPost(id: string, reaction: 'like' | 'dislike') {
+  const result = await postRequest<{ success: boolean; status: -1 | 0 | 1 }>(`/${id}/${reaction}`, 'POST');
+  if (!result?.success || ![1, 0, -1].includes(result.status)) throw new Error('Invalid post reaction response');
+  return result.status;
 }

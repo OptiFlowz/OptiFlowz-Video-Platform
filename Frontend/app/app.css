@@ -9055,7 +9055,7 @@ main.playlist .videoHolder .playlistOrderNumber {
   .collection-header a p {
     font-size: 0.9rem;
   }
-  main.playlist div:nth-child(1) {
+  main.playlist > div:nth-child(1) {
     flex-direction: column;
   }
   main.playlist .channelVideosTitle {

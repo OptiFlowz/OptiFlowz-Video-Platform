@@ -21,6 +21,7 @@ import { useI18n } from "~/i18n";
 import { fetchComments, fetchReplies } from "./api";
 import InfiniteScroll from "~/components/library/infiniteScroll";
 import { changeReplyCount, COMMENT_PAGE_SIZE, isThreadOpen, nextCommentPage, uniqueComments, updateRootPage, updateReplyPage, type ReplyPage } from "./cache";
+import CommentsLoading from "./commentsLoading";
 import CommentComposer from "./commentComposer";
 import PlayerSheet from "../playerCollection/playerSheet";
 import { CommentThread, MobileCommentThreadView } from "./commentThread";
@@ -37,7 +38,10 @@ function ReplyLoadMore({ id, hasMore, fetching, error, onLoadMore }: {
   return <InfiniteScroll hasMore={hasMore} fetching={fetching} error={error} onLoadMore={loadMore} loadingLabel={t("loadingReplies")} />;
 }
 
-function VideoComments({ videoId, variant = "inline", onClose }: CommentsSectionProps) {
+function ContentComments({ videoId, postId, variant = "inline", onClose }: CommentsSectionProps) {
+  const contentId = postId ?? videoId!;
+  const kind = postId ? "post" : "video";
+  const commentRoute = postId ? "api/post-comments" : "api/comments";
   const { t } = useI18n();
   const queryClient = useQueryClient();
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -81,14 +85,14 @@ function VideoComments({ videoId, variant = "inline", onClose }: CommentsSection
     return nextHeaders;
   }, [token]);
 
-  const commentsKey = ["video-comments", videoId, "infinite"] as const;
-  const repliesKey = ["comment-replies", videoId] as const;
+  const commentsKey = postId ? ["post-comments", postId, token, "infinite"] as const : ["video-comments", videoId, "infinite"] as const;
+  const repliesKey = postId ? ["post-comment-replies", postId, token] as const : ["comment-replies", videoId] as const;
   const rootQuery = useInfiniteQuery({
     queryKey: commentsKey,
     initialPageParam: 1,
-    queryFn: ({ signal, pageParam }) => fetchComments(videoId, headers, pageParam, COMMENT_PAGE_SIZE, signal),
+    queryFn: ({ signal, pageParam }) => fetchComments(contentId, headers, pageParam, COMMENT_PAGE_SIZE, signal, kind),
     getNextPageParam: nextCommentPage,
-    enabled: !!videoId && !!token && !mobileThreadId,
+    enabled: !!contentId && (!!postId || !!token) && !mobileThreadId,
     staleTime: 4 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
@@ -116,18 +120,18 @@ function VideoComments({ videoId, variant = "inline", onClose }: CommentsSection
   const repliesQueries = useQueries({
     queries: replyRequests.map(({ id, page }) => ({
       queryKey: [...repliesKey, id, page, COMMENT_PAGE_SIZE],
-      queryFn: ({ signal }: { signal: AbortSignal }) => fetchReplies(id, headers, page, COMMENT_PAGE_SIZE, signal),
-      enabled: !!token && activeReplyIds.has(id),
+      queryFn: ({ signal }: { signal: AbortSignal }) => fetchReplies(id, headers, page, COMMENT_PAGE_SIZE, signal, kind),
+      enabled: (!!postId || !!token) && activeReplyIds.has(id),
       staleTime: 4 * 60 * 1000,
       refetchOnWindowFocus: false,
     })),
   });
   const activeReplySignature = [...activeReplyIds].join(",");
   useEffect(() => {
-    if (mobileThreadId) void queryClient.cancelQueries({ queryKey: ["video-comments", videoId, "infinite"] });
+    if (mobileThreadId) void queryClient.cancelQueries({ queryKey: commentsKey });
     const active = new Set(activeReplySignature.split(","));
-    void queryClient.cancelQueries({ queryKey: ["comment-replies", videoId], predicate: query => !active.has(String(query.queryKey[2])) });
-  }, [activeReplySignature, mobileThreadId, queryClient, videoId]);
+    void queryClient.cancelQueries({ queryKey: repliesKey, predicate: query => !active.has(String(query.queryKey[repliesKey.length])) });
+  }, [activeReplySignature, mobileThreadId, queryClient, videoId, postId, token]);
 
   const autoResize = () => {
     const element = taRef.current;
@@ -175,6 +179,7 @@ function VideoComments({ videoId, variant = "inline", onClose }: CommentsSection
     if (created?.parent_id) setPostedReplies(previous => ({ ...previous, [created.parent_id!]: uniqueComments([...(previous[created.parent_id!] ?? []), created]) }));
   };
   const changeTotalCount = (delta: number) => {
+    if (postId) return; // Post comment totals count root comments, already updated in the pages.
     queryClient.setQueryData<VideoT>(["video", videoId], current => current && ({ ...current, comment_count: Math.max(0, (current.comment_count ?? data?.pages[0]?.total ?? 0) + delta) }));
   };
   const refreshPages = (parentId?: string | null) => {
@@ -183,14 +188,15 @@ function VideoComments({ videoId, variant = "inline", onClose }: CommentsSection
   };
 
   const submitMutation = useMutation({
+    retry: false,
     mutationFn: (payload: { content: string; parent_id?: string }) =>
       fetchFn<PostCommentResponseT>({
-        route: "api/comments/post",
+        route: `${commentRoute}/post`,
         options: {
           method: "POST",
           headers,
           body: JSON.stringify({
-            video_id: videoId,
+            [postId ? "post_id" : "video_id"]: contentId,
             content: payload.content,
             ...(payload.parent_id ? { parent_id: payload.parent_id } : {}),
           }),
@@ -219,27 +225,33 @@ function VideoComments({ videoId, variant = "inline", onClose }: CommentsSection
   });
 
   const reactionMutation = useMutation({
+    retry: false, // Reactions toggle, so replaying an uncertain request can undo it.
     mutationFn: ({ commentId, reaction }: { commentId: string; reaction: "like" | "dislike" }) =>
       fetchFn<CommentReactionResponseT>({
-        route: `api/comments/${commentId}/${reaction}`,
+        route: `${commentRoute}/${commentId}/${reaction}`,
         options: {
           method: "POST",
           headers,
         },
       }),
+    onError: () => {
+      void queryClient.invalidateQueries({ queryKey: commentsKey });
+      void queryClient.invalidateQueries({ queryKey: repliesKey });
+    },
     onSuccess: async (response, variables) => {
       await cancelItemRequests(variables.commentId);
       const reaction = variables.reaction === "like" ? 1 : -1;
       updateCachedComments(comment => comment.id === variables.commentId
-        ? { ...comment, like_count: response.like_count, dislike_count: response.dislike_count, my_reaction: comment.my_reaction === reaction ? null : reaction }
+        ? { ...comment, like_count: response.like_count, dislike_count: response.dislike_count, my_reaction: postId ? response.status : comment.my_reaction === reaction ? null : reaction }
         : comment);
     },
   });
 
   const editMutation = useMutation({
+    retry: false,
     mutationFn: ({ commentId, content }: { commentId: string; content: string }) =>
       fetchFn<PostCommentResponseT>({
-        route: `api/comments/${commentId}/edit`,
+        route: `${commentRoute}/${commentId}/edit`,
         options: {
           method: "PATCH",
           headers,
@@ -255,9 +267,10 @@ function VideoComments({ videoId, variant = "inline", onClose }: CommentsSection
   });
 
   const deleteMutation = useMutation({
+    retry: false,
     mutationFn: (comment: VideoCommentT) =>
       fetchFn<{ success: boolean; deleted: boolean }>({
-        route: `api/comments/${comment.id}/delete`,
+        route: `${commentRoute}/${comment.id}/delete`,
         options: {
           method: "DELETE",
           headers,
@@ -462,7 +475,7 @@ function VideoComments({ videoId, variant = "inline", onClose }: CommentsSection
     });
   };
 
-  const totalCount = videoCommentCount ?? data?.pages[0]?.total ?? 0;
+  const totalCount = (postId ? undefined : videoCommentCount) ?? data?.pages[0]?.total ?? 0;
   const mobileThreadComment = mobileThreadId ? hydratedCommentsMap.get(mobileThreadId) ?? null : null;
   const mobileThreadReplies = mobileThreadComment ? buildRepliesTree([mobileThreadComment], repliesByParent)[mobileThreadComment.id] : [];
   const mobileThreadLoading = !!mobileThreadId && !!replyQueriesById[mobileThreadId]?.[0]?.isLoading;
@@ -510,12 +523,13 @@ function VideoComments({ videoId, variant = "inline", onClose }: CommentsSection
   const isDeletePending = (commentId: string) => deleteMutation.isPending && deleteMutation.variables?.id === commentId;
 
   const content = (
-    <div ref={sectionRef} className={`flex flex-col ${variant === "drawer" ? "" : "p-3.75 bg-(--background2)! rounded-2xl!"}`}>
+    <div ref={sectionRef} className={`flex flex-col ${variant === "drawer" || postId ? "" : "p-3.75 bg-(--background2)! rounded-2xl!"}`}>
       <div className="collection-header comments-header px-0! h-auto!">
         <h2 className="mb-2 text-lg font-semibold max-[500px]:text-md max-[500px]:ml-6">{t("commentCount", { count: totalCount })}</h2>
       </div>
 
       {can(P.commentsCreate) && <CommentComposer
+        maxLength={postId ? 500 : undefined}
         userProfileImage={userProfileImage}
         replyingTo={replyingTo}
         value={value}
@@ -558,7 +572,7 @@ function VideoComments({ videoId, variant = "inline", onClose }: CommentsSection
             focusedCommentId={focusedCommentId}
           />}
           {!mobileThreadId && (parents.length > 0 || isError) && <div data-comments-more>
-            <InfiniteScroll key={data?.pages.length ?? 0} hasMore={hasNextPage} fetching={isFetching} error={isError} onLoadMore={loadMoreRoots} loadingLabel={t("loadingComments")} />
+            <InfiniteScroll key={data?.pages.length ?? 0} hasMore={hasNextPage} fetching={isFetching} error={isError} onLoadMore={loadMoreRoots} loadingLabel={t("loadingComments")} loadingContent={<CommentsLoading />} />
           </div>}
         </div>
 
@@ -591,7 +605,8 @@ function VideoComments({ videoId, variant = "inline", onClose }: CommentsSection
         />}
       </div>
 
-      <ConfirmDialog {...dialogProps} />
+      {(reactionMutation.isError || editMutation.isError || deleteMutation.isError) && <p role="alert" className="text-(--accentRed)">{t("commentActionError")}</p>}
+      <ConfirmDialog {...dialogProps} portalContainer={sectionRef.current?.closest("dialog") ?? undefined} />
     </div>
   );
 
@@ -615,5 +630,5 @@ function VideoComments({ videoId, variant = "inline", onClose }: CommentsSection
 }
 
 export default function CommentsSection(props: CommentsSectionProps) {
-  return <VideoComments key={props.videoId} {...props} />;
+  return <ContentComments key={`${props.postId ? "post" : "video"}-${props.postId ?? props.videoId}-${getToken()}`} {...props} />;
 }

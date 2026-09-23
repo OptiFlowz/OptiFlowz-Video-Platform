@@ -1278,5 +1278,13 @@
   "postSignInVote": "Prijavi se da odgovoriš.",
   "postCannotVote": "Nemaš dozvolu da odgovoriš na ovo pitanje.",
   "latestPosts": "Najnoviji postovi",
-  "postOpen": "Otvori post"
+  "postOpen": "Otvori post",
+  "postLike": "Sviđa mi se post",
+  "postDislike": "Ne sviđa mi se post",
+  "postReactionError": "Reakcija nije ažurirana. Pokušajte ponovo.",
+  "permission.posts.react": "Lajkovanje i dislajkovanje postova",
+  "postSignInComment": "Prijavite se da komentarišete",
+  "commentActionError": "Komentar nije ažuriran. Pokušajte ponovo.",
+  "likeComment": "Sviđa mi se komentar",
+  "dislikeComment": "Ne sviđa mi se komentar"
 }

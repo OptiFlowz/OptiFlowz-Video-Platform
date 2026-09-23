@@ -20,6 +20,7 @@ function loadPosts(name, mocks = {}) {
     new Function('require', 'module', 'exports', code)(name => {
       if (Object.hasOwn(mocks, name)) return mocks[name];
       if (name.endsWith('.css')) return {};
+      if (name.startsWith('~/')) return load(path.resolve(__dirname, '../app', name.slice(2)));
       if (name.startsWith('.')) return load(path.resolve(path.dirname(file), name));
       return require(name);
     }, mod, mod.exports);
@@ -114,7 +115,7 @@ test('popup voting is immediate, survives reopening and supports single and mult
   let respond;
   const Preview = loadPosts('LatestPosts.tsx', {
     'react-router': { Link: ({ to, children, ...props }) => React.createElement('a', { href: to, ...props }, children) },
-    '~/constants': { ArrowSVG: null, CheckSVG: null, CloseSVG: null },
+    '~/constants': { ArrowSVG: null, CheckSVG: null, CloseSVG: null, ThumbIcon: () => null, CommentSVG: null },
     '../../../assets/DefaultProfile.webp': '/default-profile.webp',
     '../../../assets/DefaultThumbnail.webp': '/default-thumbnail.webp',
     '~/functions': { getToken: () => 'token', formatDate: value => value },
@@ -242,4 +243,79 @@ test('video mentions render embedded cards without video detail requests and res
   assert.ok(html.includes('Caption'));
   assert.ok(!html.includes(`/video/${video.id}`));
   assert.ok(!html.includes('Stale list title'));
+});
+
+test('post reaction UI optimistically adds, switches and removes reactions, rolls back failures, serializes rapid toggles, honors permissions, recovers uncertain responses without retrying and redirects guests', async t => {
+  const dom = new JSDOM('<div id="root"></div>', { url: 'https://example.test/channel/channel#posts' });
+  const names = ['window', 'document', 'HTMLElement', 'IS_REACT_ACT_ENVIRONMENT'];
+  const previous = new Map(names.map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)]));
+  Object.assign(globalThis, { window: dom.window, document: dom.window.document, HTMLElement: dom.window.HTMLElement, IS_REACT_ACT_ENVIRONMENT: true });
+  const { act } = React;
+  const { createRoot } = require('react-dom/client');
+  const { QueryClient, QueryClientProvider } = require('@tanstack/react-query');
+  const client = new QueryClient({ defaultOptions: { mutations: { retry: 3, retryDelay: 1 }, queries: { retry: false } } });
+  const calls = []; const redirects = []; let token = 'token'; let allowed = true; let respond;
+  const Component = loadPosts('PostEngagement.tsx', {
+    '~/constants': { ThumbIcon: () => null, CommentSVG: null },
+    '~/i18n': { useI18n: () => ({ t: key => key }) },
+    '~/functions': { getToken: () => token },
+    '~/authorization/authorization': { useAuthorization: () => ({ user: token ? { id: 'me' } : null, can: () => allowed, loading: false }) },
+    '~/auth/session': { redirectToLogin: to => redirects.push(to) },
+    '~/API': { fetchFn: request => { calls.push(request); return new Promise((resolve, reject) => { respond = { resolve, reject }; }); } },
+  }).default;
+  const post = { id: 'post', likeCount: 12, dislikeCount: 2, userReaction: 0 };
+  const feedKey = ['posts', 'recommended', 'token'];
+  client.setQueryData(feedKey, { posts: [post] });
+  const { useQuery } = require('@tanstack/react-query');
+  function Feed() {
+    const { data } = useQuery({ queryKey: feedKey, queryFn: () => ({ posts: [post] }), enabled: false });
+    return React.createElement(Component, { key: token, post: data.posts[0], commentsOpen: false, commentsId: 'comments', onToggleComments: () => {} });
+  }
+  const cached = () => client.getQueryData(feedKey).posts[0];
+  const root = createRoot(document.getElementById('root'));
+  const flush = () => act(() => new Promise(resolve => setTimeout(resolve, 25)));
+  const render = async () => { await act(async () => root.render(React.createElement(QueryClientProvider, { client }, React.createElement(Feed)))); await flush(); };
+  t.after(async () => { await act(async () => root.unmount()); client.clear(); dom.window.close(); for (const [name, value] of previous) { if (value) Object.defineProperty(globalThis, name, value); else delete globalThis[name]; } });
+  const button = kind => document.querySelector(`[aria-label="${kind}"]`);
+  await render(); assert.equal(calls.length, 0, 'Closed comments and reactions cause no network calls');
+  assert.equal(document.querySelectorAll('.postReactions button').length, 2);
+  assert.equal(button('postDislike').textContent, '', 'Dislike count stays hidden');
+  await act(async () => { button('postLike').click(); button('postDislike').click(); button('postLike').click(); }); await flush();
+  assert.equal(calls.length, 1); assert.equal(button('postLike').disabled, true);
+  assert.equal(button('postLike').textContent, '13', 'Like count changes before the server responds');
+  assert.equal(button('postLike').getAttribute('aria-pressed'), 'true');
+  assert.equal(cached().userReaction, 1, 'Other feeds receive the optimistic reaction');
+  await act(async () => respond.resolve({ success: true, status: 1 })); await flush();
+  assert.equal(button('postLike').textContent, '13'); assert.equal(button('postLike').getAttribute('aria-pressed'), 'true');
+  await act(async () => button('postDislike').click()); await flush();
+  assert.equal(button('postLike').textContent, '12', 'Switch removes the previous reaction immediately');
+  assert.equal(cached().dislikeCount, 3);
+  assert.equal(cached().userReaction, -1);
+  await act(async () => respond.resolve({ success: true, status: -1 })); await flush();
+  assert.equal(button('postLike').textContent, '12'); assert.equal(cached().dislikeCount, 3);
+  await act(async () => button('postDislike').click()); await flush();
+  assert.equal(cached().dislikeCount, 2, 'Clicking the selected reaction removes it immediately');
+  assert.equal(cached().userReaction, 0);
+  await act(async () => respond.resolve({ success: true, status: 0 })); await flush();
+  assert.equal(cached().dislikeCount, 2);
+  await act(async () => button('postLike').click()); await flush();
+  await act(async () => respond.reject(new Error('Lost response'))); await flush();
+  assert.equal(calls.at(-1).route, 'api/posts/details/post');
+  assert.equal(button('postLike').textContent, '12', 'Failed mutation rolls back before recovery completes');
+  assert.equal(cached().userReaction, 0);
+  await act(async () => respond.resolve({ post: { id:'post', blocks:[], like_count:13, dislike_count:2, user_reaction:1 } })); await flush();
+  assert.equal(calls.filter(call => call.options.method === 'POST').length, 4, 'No automatic mutation retries even when configured globally');
+  assert.equal(button('postLike').textContent, '13'); assert.ok(document.querySelector('[role="alert"]'));
+  await act(async () => button('postDislike').click()); await flush();
+  assert.equal(button('postLike').textContent, '12'); assert.equal(cached().dislikeCount, 3);
+  await act(async () => client.setQueryData(feedKey, data => ({ ...data, posts: data.posts.map(post => ({ ...post, title: 'Updated while reacting' })) })));
+  await act(async () => respond.reject(new Error('Offline'))); await flush();
+  assert.equal(cached().userReaction, 1);
+  assert.equal(cached().title, 'Updated while reacting', 'Rollback only restores reaction fields');
+  await act(async () => respond.reject(new Error('Recovery offline'))); await flush();
+  assert.equal(button('postLike').textContent, '13'); assert.equal(cached().dislikeCount, 2);
+  assert.equal(calls.filter(call => call.options.method === 'POST').length, 5);
+  allowed = false; await render(); assert.equal(button('postLike').disabled, true);
+  token = null; await render(); await act(async () => button('postLike').click());
+  assert.deepEqual(redirects, ['/channel/channel#posts']); assert.equal(calls.length, 7);
 });

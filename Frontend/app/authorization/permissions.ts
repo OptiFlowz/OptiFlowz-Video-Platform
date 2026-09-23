@@ -1,5 +1,6 @@
 // These keys match the backend authorization permissions, not role names.
 export const P = {
+  postsReact: 'posts.react',
   postsCreate: 'posts.create', postsUpdateOwn: 'posts.update_own', postsUpdateAny: 'posts.update_any',
   postsDeleteOwn: 'posts.delete_own', postsDeleteAny: 'posts.delete_any',
   postsPollVote: 'posts.poll.vote', postsQuestionerAnswer: 'posts.questioner.answer',

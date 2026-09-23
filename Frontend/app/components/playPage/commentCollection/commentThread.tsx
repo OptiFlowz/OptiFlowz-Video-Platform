@@ -3,6 +3,7 @@ import { IconChevron } from "~/constants";
 import { useI18n } from "~/i18n";
 import type { VideoCommentT } from "~/types";
 import type { CommentTreeNode } from "./types";
+import CommentsLoading from "./commentsLoading";
 import CommentRow from "./commentRow";
 
 const MAX_DESKTOP_THREAD_DEPTH = 3;
@@ -206,7 +207,7 @@ export function CommentThread({
   const { t } = useI18n();
 
   if (!hasData && isLoading) {
-    return <h3 className="text-(--text1) w-full text-center pb-1 font-medium">{t("loadingComments")}</h3>;
+    return <CommentsLoading />;
   }
 
   if (parents.length === 0) {

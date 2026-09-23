@@ -341,7 +341,8 @@ export type PeopleSearchRes = {
 
 export type VideoCommentT = {
     id: string,
-    video_id: string,
+    video_id?: string,
+    post_id?: string,
     user_id: string,
     parent_id: string | null,
     content: string,
@@ -366,7 +367,8 @@ export type FetchVideoCommentsT = {
 export type FetchCommentRepliesT = {
     success: boolean,
     parent_id: string,
-    video_id: string,
+    video_id?: string,
+    post_id?: string,
     replies: VideoCommentT[],
     pagination: {
         page: number,

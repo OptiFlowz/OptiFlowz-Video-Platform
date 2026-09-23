@@ -96,3 +96,40 @@ test('option image uploads use the multipart block contract and browser boundary
   assert.equal(upload.options.headers['Content-Type'], undefined);
   assert.deepEqual(JSON.parse(upload.options.body.get('block')).options, [{ position: 0, text: 'A' }, { position: 1, text: 'B' }]);
 });
+
+test('post reactions normalize server counts and handle add, switch, remove without negative counts', () => {
+  const { fromPost } = api(() => {});
+  const { withPostReaction } = loader()('model.ts');
+  let post = fromPost({ ...metadata, like_count: 12, dislike_count: 2, user_reaction: 0 });
+  assert.equal(post.likeCount, 12);
+  post = withPostReaction(post, 1); assert.deepEqual(post, { likeCount: 13, dislikeCount: 2, userReaction: 1 });
+  post = withPostReaction(post, -1); assert.deepEqual(post, { likeCount: 12, dislikeCount: 3, userReaction: -1 });
+  post = withPostReaction(post, 0); assert.deepEqual(post, { likeCount: 12, dislikeCount: 2, userReaction: 0 });
+  assert.equal(withPostReaction({ userReaction: 1 }, 0).likeCount, 0);
+});
+
+test('post reactions send bearer auth with no body and reject invalid responses', async () => {
+  const calls = [];
+  const { reactToPost } = api(async request => { calls.push(request); return { success: true, status: -1 }; });
+  assert.equal(await reactToPost('post-1', 'dislike'), -1);
+  assert.equal(calls[0].route, 'api/posts/post-1/dislike');
+  assert.equal(calls[0].options.method, 'POST');
+  assert.equal(new Headers(calls[0].options.headers).get('Authorization'), 'Bearer token');
+  assert.equal(calls[0].options.body, undefined);
+  await assert.rejects(api(async () => ({ success: false, status: 1 })).reactToPost('post-1', 'like'));
+});
+
+test('reaction cache sync updates every loaded page and sort for this viewer only', () => {
+  const { QueryClient } = require('@tanstack/react-query');
+  const client = new QueryClient();
+  const post = { id: 'post', likeCount: 1, dislikeCount: 0, userReaction: 0 };
+  const keys = [['posts','recommended','me'], ['posts','channel','channel','me',false], ['posts','channel','channel','me',true]];
+  client.setQueryData(keys[0], { posts: [post] });
+  for (const key of keys.slice(1)) client.setQueryData(key, { pages: [{ posts: [] }, { posts: [post] }], pageParams: [1,2] });
+  client.setQueryData(['posts','recommended','other'], { posts: [post] });
+  loader()('reactionCache.ts').updatePostReaction(client, 'post', 'me', { likeCount: 2, dislikeCount: 0, userReaction: 1 });
+  assert.equal(client.getQueryData(keys[0]).posts[0].userReaction, 1);
+  for (const key of keys.slice(1)) assert.equal(client.getQueryData(key).pages[1].posts[0].likeCount, 2);
+  assert.equal(client.getQueryData(['posts','recommended','other']).posts[0].userReaction, 0);
+  client.clear();
+});

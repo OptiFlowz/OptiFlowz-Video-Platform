@@ -1292,5 +1292,13 @@
   "postSignInVote": "Sign in to submit your answer.",
   "postCannotVote": "You do not have permission to answer this question.",
   "latestPosts": "Latest Posts",
-  "postOpen": "Open post"
+  "postOpen": "Open post",
+  "postLike": "Like post",
+  "postDislike": "Dislike post",
+  "postReactionError": "Unable to update your reaction. Please try again.",
+  "permission.posts.react": "Like or dislike posts",
+  "postSignInComment": "Sign in to comment",
+  "commentActionError": "Unable to update the comment. Please try again.",
+  "likeComment": "Like comment",
+  "dislikeComment": "Dislike comment"
 }

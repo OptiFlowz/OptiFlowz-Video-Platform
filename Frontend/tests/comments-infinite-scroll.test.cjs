@@ -34,7 +34,7 @@ function comment(id, parent_id = null, reply_count = 0) {
   return { id, video_id: 'video', parent_id, reply_count, user_id: 'me', content: id, author_full_name: 'Me', author_image_url: null,
     created_at: '2026-01-01T12:00:00Z', updated_at: '2026-01-01T12:00:00Z', like_count: 0, dislike_count: 0, my_reaction: null };
 }
-async function fixture(t, { mobile = false, count = 91, fetchFn } = {}) {
+async function fixture(t, { mobile = false, count = 91, fetchFn, post = false, token = "token" } = {}) {
   const dom = new JSDOM('<header></header><div id="root"></div>', { url: 'https://example.test/video/video', pretendToBeVisual: true });
   const names = ['window', 'document', 'HTMLElement', 'Element', 'navigator', 'requestAnimationFrame', 'cancelAnimationFrame', 'IS_REACT_ACT_ENVIRONMENT', 'IntersectionObserver'];
   const previous = new Map(names.map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)]));
@@ -60,8 +60,8 @@ async function fixture(t, { mobile = false, count = 91, fetchFn } = {}) {
   let composer;
   const load = modules({
     '~/i18n': { useI18n: () => ({ t: tText }), getCurrentLocale: () => 'en' },
-    '~/authorization/authorization': { useAuthorization: () => ({ can: () => true, user: { id: 'me' } }) },
-    '~/functions': { getToken: () => 'token', getUserImageUrl: () => '', getStoredUser: () => ({ user: { id: 'me', full_name: 'Me' } }) },
+    '~/authorization/authorization': { useAuthorization: () => ({ can: () => !!token, user: token ? { id: 'me' } : null }) },
+    '~/functions': { getToken: () => token, getUserImageUrl: () => '', getStoredUser: () => ({ user: { id: 'me', full_name: 'Me' } }) },
     '~/constants': { IconChevron: () => null, CloseSVG: null, CommentSVG: null },
     '~/API': { fetchFn: request => { requests.push(request); return fetchFn(request); } },
     '../../confirmPopup/useConfirm': { useConfirm: () => ({ confirm: async () => true, dialogProps: {} }) },
@@ -81,7 +81,7 @@ async function fixture(t, { mobile = false, count = 91, fetchFn } = {}) {
   const Component = load('app/components/playPage/commentCollection/commentsSection.tsx').default;
   const root = createRoot(document.getElementById('root'));
   const flush = () => act(async () => { await new Promise(resolve => setTimeout(resolve, 25)); });
-  await act(async () => root.render(React.createElement(QueryClientProvider, { client }, React.createElement(Component, { videoId: 'video', variant: mobile ? 'drawer' : 'inline' }))));
+  await act(async () => root.render(React.createElement(QueryClientProvider, { client }, React.createElement(Component, { ...(post ? { postId: 'post' } : { videoId: 'video' }), variant: mobile ? 'drawer' : 'inline' }))));
   await flush();
   t.after(async () => { await act(async () => root.unmount()); client.clear(); dom.window.close(); for (const [name, value] of previous) { if (value) Object.defineProperty(globalThis, name, value); else delete globalThis[name]; } });
   const click = async element => { assert.ok(element, 'Expected clickable element'); await act(async () => element.click()); await flush(); };
@@ -363,4 +363,45 @@ test('VideoInfo renders the server aggregate without fetching comments, includin
   await render(false);
   assert.equal(document.querySelector('.viewVideoComments'), null);
   assert.equal(requests, 0);
+});
+
+for (const mobile of [false, true]) test(`post comments reuse threads and infinite scroll with isolated routes/cache (mobile=${mobile})`, async t => {
+  const server = backend();
+  const f = await fixture(t, { mobile, post: true, fetchFn: async request => {
+    if (request.route.endsWith('/like')) return { success: true, status: -1, like_count: 3, dislike_count: 7 };
+    return server.fetchFn(request);
+  } });
+  assert.equal(f.requests.length, 1); assert.equal(f.requests[0].route, 'api/posts/post/comments?limit=20&page=1');
+  await f.intersect('[data-comments-more]');
+  assert.equal(document.querySelectorAll('.comments-list-view article').length, 40);
+  await f.open('r1');
+  assert.ok(f.requests.some(request => request.route === 'api/post-comments/r1/replies?limit=20&page=1'));
+  await f.intersect('[data-replies-more="r1"]');
+  const row = document.querySelector('[data-comment-id="c1"]');
+  await f.click(row.querySelector('[data-action="reply"]')); await f.submit('A post reply');
+  const submitted = f.requests.find(request => request.route === 'api/post-comments/post');
+  assert.deepEqual(JSON.parse(submitted.options.body), { post_id: 'post', content: 'A post reply', parent_id: 'c1' });
+  const target = document.querySelector('[data-comment-id="created1"]'); assert.ok(target);
+  await f.click(target.querySelector('[data-action="like"]'));
+  // Newly posted replies may still live in local state until the first reply read.
+  assert.ok(f.requests.some(request => request.route === 'api/post-comments/created1/like'));
+  await f.click(target.querySelector('[data-action="edit"]'));
+  await f.click(target.querySelector('[data-action="change-edit"]'));
+  await f.click(target.querySelector('[data-action="save-edit"]'));
+  assert.ok(f.requests.some(request => request.route === 'api/post-comments/created1/edit'));
+  await f.click(target.querySelector('[data-action="delete"]'));
+  assert.equal(document.querySelector('[data-comment-id="created1"]'), null);
+  assert.equal(f.client.getQueryData(['video', 'video']).comment_count, 91);
+  assert.equal(f.client.getQueryData(['video-comments','video','infinite']), undefined);
+  assert.ok(f.client.getQueryData(['post-comments','post','token','infinite']));
+  assert.ok(f.requests.every(request => !request.route.startsWith('api/comments/') && !request.route.startsWith('api/videos/')));
+  assert.ok(f.requests.every(request => request.options.headers.get('Authorization') === 'Bearer token'));
+});
+
+test('anonymous readers can load post comments and replies without write controls or auth headers', async t => {
+  const server = backend(); const f = await fixture(t, { post: true, token: null, fetchFn: server.fetchFn });
+  assert.equal(document.querySelector('[data-submit]'), null);
+  assert.equal(document.querySelectorAll('.comments-list-view article').length, 20);
+  await f.open('r1'); assert.ok(document.querySelector('[data-comment-id="c1"]'));
+  assert.ok(f.requests.every(request => !request.options.headers.has('Authorization')));
 });

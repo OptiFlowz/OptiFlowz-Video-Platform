@@ -1,7 +1,8 @@
 // Keep programmatic navigation inside the drawer instead of scrolling its page.
 export function scrollWithinPlayerSheet(target: HTMLElement, block: "start" | "nearest" = "nearest") {
-  const sheet = target.closest<HTMLElement>(".playerSheet");
-  if (!sheet || !window.matchMedia("(max-width: 500px)").matches) return false;
+  const dialog = target.closest<HTMLElement>("dialog");
+  const sheet = dialog ?? target.closest<HTMLElement>(".playerSheet");
+  if (!sheet || (!dialog && !window.matchMedia("(max-width: 500px)").matches)) return false;
   for (let parent = target.parentElement; parent && parent !== sheet; parent = parent.parentElement) {
     if (!/auto|scroll/.test(getComputedStyle(parent).overflowY)) continue;
     const bounds = parent.getBoundingClientRect();
