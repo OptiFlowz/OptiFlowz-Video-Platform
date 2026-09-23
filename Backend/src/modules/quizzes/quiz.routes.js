@@ -10,6 +10,8 @@ import * as quizController from './quiz.controller.js';
 
 const router = express.Router();
 
+// Management handlers rely on these resource guards for own/any permissions.
+// Controllers must preserve the authorized URL IDs when merging request input.
 const requireQuizManagement = requireQuizAccess({
   ownPermission: Permissions.QUIZZES_MANAGE_OWN,
   anyPermission: Permissions.QUIZZES_MANAGE_ANY,

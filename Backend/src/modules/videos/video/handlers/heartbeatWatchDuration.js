@@ -1,5 +1,5 @@
 import { writePool } from '../../../../database/index.js';
-import { hashIp, normalizeIp } from '../../helpers/video.shared.js';
+import { hashIp, normalizeIp } from '../../../../common/ip.js';
 
 export async function heartbeatWatchDurationInternal(
   viewId,

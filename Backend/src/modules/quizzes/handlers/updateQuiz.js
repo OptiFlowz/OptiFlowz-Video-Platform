@@ -1,7 +1,6 @@
 import { writePool } from '../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
-import { assertQuizOwner } from '../../../common/quizOwnership.js';
 
 function prerequisites(object, userId) {
   const schema = z.object({
@@ -39,8 +38,6 @@ function hasField(object, field) {
 
 export async function updateQuizInternal(object, userId = null) {
   const data = prerequisites(object, userId);
-
-  await assertQuizOwner(data.quizId, userId);
 
   const { rows } = await writePool.query(
     `

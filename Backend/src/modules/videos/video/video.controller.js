@@ -8,7 +8,7 @@ import { getUserHistoryInternal } from './handlers/getUserHistory.js';
 import { getContinueWatchingInternal } from './handlers/getContinueWatching.js';
 import { getLikedVideosInternal } from './handlers/getLikedVideos.js';
 import { getCommentsInternal } from './handlers/getComments.js';
-import { getClientIp } from '../helpers/videoRoutes.shared.js';
+import { getClientIp } from '../../../common/ip.js';
 import { logEvent } from '../../../common/logger.js';
 import { heartbeatWatchDurationInternal } from './handlers/heartbeatWatchDuration.js';
 import { searchVideosInternal } from './handlers/searchVideos.js';

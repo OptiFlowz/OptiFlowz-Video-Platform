@@ -1,7 +1,6 @@
 import { readPool } from '../../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../../common/input.validation.js';
-import { assertVideoOwner } from '../../../../common/videoOwnership.js';
 import { buildDateFilter } from '../../helpers/dateFilter.js';
 
 function prerequisites(object, userId) {
@@ -122,9 +121,7 @@ export async function getAvgWatchTimePerViewer(videoId, fromDate, toDate) {
 }
 
 export async function getOverviewVideoAnalyticsInternal(object, userId = null) {
-  const { videoId, userId: validatedUserId, fromDate, toDate } = prerequisites(object, userId);
-
-  await assertVideoOwner(videoId, validatedUserId);
+  const { videoId, fromDate, toDate } = prerequisites(object, userId);
 
   const [
     totalViews,

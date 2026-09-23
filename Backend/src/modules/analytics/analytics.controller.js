@@ -30,7 +30,7 @@ import { getPlatformActiveUsersOverTimeInternal } from './handlers/platform/getP
 
 export async function getOverviewVideoAnalytics(req, res) {
   try {
-    const overview = await getOverviewVideoAnalyticsInternal({ ...req.params, ...req.body, ...req.query}, req.user?.sub || null);
+    const overview = await getOverviewVideoAnalyticsInternal({ ...req.body, ...req.query, ...req.params}, req.user?.sub || null);
     return sendSuccess(res, { overview }, 200);
   } catch (error) {
     console.error('Error creating video overview:', error);
@@ -41,7 +41,7 @@ export async function getOverviewVideoAnalytics(req, res) {
 export async function getDeviceSplit(req, res) {
   try {
     const deviceSplit = await getDeviceSplitInternal(
-      { ...req.params, ...req.body, ...req.query },
+      { ...req.body, ...req.query, ...req.params },
       req.user?.sub || null,
     );
     return sendSuccess(res, { deviceSplit }, 200);
@@ -54,7 +54,7 @@ export async function getDeviceSplit(req, res) {
 export async function getOperatingSystemSplit(req, res) {
   try {
     const operatingSystemSplit = await getOperatingSystemSplitInternal(
-      { ...req.params, ...req.body, ...req.query },
+      { ...req.body, ...req.query, ...req.params },
       req.user?.sub || null,
     );
     return sendSuccess(res, { operatingSystemSplit }, 200);
@@ -67,7 +67,7 @@ export async function getOperatingSystemSplit(req, res) {
 export async function getGeographicBreakdown(req, res) {
   try {
     const geographicBreakdown = await getGeographicBreakdownInternal(
-      { ...req.params, ...req.body, ...req.query },
+      { ...req.body, ...req.query, ...req.params },
       req.user?.sub || null,
     );
     return sendSuccess(res, { geographicBreakdown }, 200);
@@ -80,7 +80,7 @@ export async function getGeographicBreakdown(req, res) {
 export async function getViewsOverTime(req, res) {
   try {
     const viewsOverTime = await getViewsOverTimeInternal(
-      { ...req.params, ...req.body, ...req.query },
+      { ...req.body, ...req.query, ...req.params },
       req.user?.sub || null,
     );
     return sendSuccess(res, { viewsOverTime }, 200);
@@ -93,7 +93,7 @@ export async function getViewsOverTime(req, res) {
 export async function getWatchTimeOverTime(req, res) {
   try {
     const watchTimeOverTime = await getWatchTimeOverTimeInternal(
-      { ...req.params, ...req.body, ...req.query },
+      { ...req.body, ...req.query, ...req.params },
       req.user?.sub || null,
     );
     return sendSuccess(res, { watchTimeOverTime }, 200);
@@ -106,7 +106,7 @@ export async function getWatchTimeOverTime(req, res) {
 export async function getCompletionBuckets(req, res) {
   try {
     const completionBuckets = await getCompletionBucketsInternal(
-      { ...req.params, ...req.body, ...req.query },
+      { ...req.body, ...req.query, ...req.params },
       req.user?.sub || null,
     );
     return sendSuccess(res, { completionBuckets }, 200);
@@ -119,7 +119,7 @@ export async function getCompletionBuckets(req, res) {
 export async function getEngagement(req, res) {
   try {
     const engagement = await getEngagementInternal(
-      { ...req.params, ...req.body, ...req.query },
+      { ...req.body, ...req.query, ...req.params },
       req.user?.sub || null,
     );
     return sendSuccess(res, { engagement }, 200);
@@ -132,7 +132,7 @@ export async function getEngagement(req, res) {
 export async function getChannelOverviewAnalytics(req, res) {
   try {
     const channelOverview = await getChannelOverviewAnalyticsInternal(
-      { ...req.params, ...req.body, ...req.query },
+      { ...req.body, ...req.query, ...req.params },
       req.user?.sub || null,
     );
     return sendSuccess(res, { channelOverview }, 200);
@@ -145,7 +145,7 @@ export async function getChannelOverviewAnalytics(req, res) {
 export async function getChannelDeviceSplit(req, res) {
   try {
     const channelDeviceSplit = await getChannelDeviceSplitInternal(
-      { ...req.params, ...req.body, ...req.query },
+      { ...req.body, ...req.query, ...req.params },
       req.user?.sub || null,
     );
     return sendSuccess(res, { channelDeviceSplit }, 200);
@@ -158,7 +158,7 @@ export async function getChannelDeviceSplit(req, res) {
 export async function getChannelOperatingSystemSplit(req, res) {
   try {
     const channelOperatingSystemSplit = await getChannelOperatingSystemSplitInternal(
-      { ...req.params, ...req.body, ...req.query },
+      { ...req.body, ...req.query, ...req.params },
       req.user?.sub || null,
     );
     return sendSuccess(res, { channelOperatingSystemSplit }, 200);
@@ -171,7 +171,7 @@ export async function getChannelOperatingSystemSplit(req, res) {
 export async function getChannelGeographicBreakdown(req, res) {
   try {
     const channelGeographicBreakdown = await getChannelGeographicBreakdownInternal(
-      { ...req.params, ...req.body, ...req.query },
+      { ...req.body, ...req.query, ...req.params },
       req.user?.sub || null,
     );
     return sendSuccess(res, { channelGeographicBreakdown }, 200);
@@ -184,7 +184,7 @@ export async function getChannelGeographicBreakdown(req, res) {
 export async function getChannelViewsOverTime(req, res) {
   try {
     const channelViewsOverTime = await getChannelViewsOverTimeInternal(
-      { ...req.params, ...req.body, ...req.query },
+      { ...req.body, ...req.query, ...req.params },
       req.user?.sub || null,
     );
     return sendSuccess(res, { channelViewsOverTime }, 200);
@@ -197,7 +197,7 @@ export async function getChannelViewsOverTime(req, res) {
 export async function getChannelWatchTimeOverTime(req, res) {
   try {
     const channelWatchTimeOverTime = await getChannelWatchTimeOverTimeInternal(
-      { ...req.params, ...req.body, ...req.query },
+      { ...req.body, ...req.query, ...req.params },
       req.user?.sub || null,
     );
     return sendSuccess(res, { channelWatchTimeOverTime }, 200);
@@ -210,7 +210,7 @@ export async function getChannelWatchTimeOverTime(req, res) {
 export async function getChannelAverageEngagementPerVideo(req, res) {
   try {
     const averageEngagementPerVideo = await getChannelAverageEngagementPerVideoInternal(
-      { ...req.params, ...req.body, ...req.query },
+      { ...req.body, ...req.query, ...req.params },
       req.user?.sub || null,
     );
     return sendSuccess(res, { averageEngagementPerVideo }, 200);
@@ -223,7 +223,7 @@ export async function getChannelAverageEngagementPerVideo(req, res) {
 export async function getPlatformOverviewAnalytics(req, res) {
   try {
     const platformOverview = await getPlatformOverviewAnalyticsInternal(
-      { ...req.params, ...req.body, ...req.query },
+      { ...req.body, ...req.query, ...req.params },
       req.user?.sub || null,
     );
     return sendSuccess(res, { platformOverview }, 200);
@@ -236,7 +236,7 @@ export async function getPlatformOverviewAnalytics(req, res) {
 export async function getPlatformAverageEngagementPerVideo(req, res) {
   try {
     const averageEngagementPerVideo = await getPlatformAverageEngagementPerVideoInternal(
-      { ...req.params, ...req.body, ...req.query },
+      { ...req.body, ...req.query, ...req.params },
       req.user?.sub || null,
     );
     return sendSuccess(res, { averageEngagementPerVideo }, 200);
@@ -250,7 +250,7 @@ export async function getPlatformTopViewedVideos(req, res) {
   res.set('Cache-Control', 'private, no-store');
   try {
     const topViewedVideos = await getPlatformTopViewedVideosInternal(
-      { ...req.params, ...req.body, ...req.query },
+      { ...req.body, ...req.query, ...req.params },
       req.user?.sub || null,
     );
     return sendSuccess(res, { topViewedVideos }, 200);
@@ -263,7 +263,7 @@ export async function getPlatformTopViewedVideos(req, res) {
 export async function getPlatformTopViewedPlaylists(req, res) {
   try {
     const topViewedPlaylists = await getPlatformTopViewedPlaylistsInternal(
-      { ...req.params, ...req.body, ...req.query },
+      { ...req.body, ...req.query, ...req.params },
       req.user?.sub || null,
     );
     return sendSuccess(res, { topViewedPlaylists }, 200);
@@ -276,7 +276,7 @@ export async function getPlatformTopViewedPlaylists(req, res) {
 export async function getPlatformDeviceSplit(req, res) {
   try {
     const platformDeviceSplit = await getPlatformDeviceSplitInternal(
-      { ...req.params, ...req.body, ...req.query },
+      { ...req.body, ...req.query, ...req.params },
       req.user?.sub || null,
     );
     return sendSuccess(res, { platformDeviceSplit }, 200);
@@ -289,7 +289,7 @@ export async function getPlatformDeviceSplit(req, res) {
 export async function getPlatformOperatingSystemSplit(req, res) {
   try {
     const platformOperatingSystemSplit = await getPlatformOperatingSystemSplitInternal(
-      { ...req.params, ...req.body, ...req.query },
+      { ...req.body, ...req.query, ...req.params },
       req.user?.sub || null,
     );
     return sendSuccess(res, { platformOperatingSystemSplit }, 200);
@@ -302,7 +302,7 @@ export async function getPlatformOperatingSystemSplit(req, res) {
 export async function getPlatformGeographicBreakdown(req, res) {
   try {
     const platformGeographicBreakdown = await getPlatformGeographicBreakdownInternal(
-      { ...req.params, ...req.body, ...req.query },
+      { ...req.body, ...req.query, ...req.params },
       req.user?.sub || null,
     );
     return sendSuccess(res, { platformGeographicBreakdown }, 200);
@@ -315,7 +315,7 @@ export async function getPlatformGeographicBreakdown(req, res) {
 export async function getPlatformViewsOverTime(req, res) {
   try {
     const platformViewsOverTime = await getPlatformViewsOverTimeInternal(
-      { ...req.params, ...req.body, ...req.query },
+      { ...req.body, ...req.query, ...req.params },
       req.user?.sub || null,
     );
     return sendSuccess(res, { platformViewsOverTime }, 200);
@@ -328,7 +328,7 @@ export async function getPlatformViewsOverTime(req, res) {
 export async function getPlatformWatchTimeOverTime(req, res) {
   try {
     const platformWatchTimeOverTime = await getPlatformWatchTimeOverTimeInternal(
-      { ...req.params, ...req.body, ...req.query },
+      { ...req.body, ...req.query, ...req.params },
       req.user?.sub || null,
     );
     return sendSuccess(res, { platformWatchTimeOverTime }, 200);
@@ -341,7 +341,7 @@ export async function getPlatformWatchTimeOverTime(req, res) {
 export async function getPlatformSignupsOverTime(req, res) {
   try {
     const platformSignupsOverTime = await getPlatformSignupsOverTimeInternal(
-      { ...req.params, ...req.body, ...req.query },
+      { ...req.body, ...req.query, ...req.params },
       req.user?.sub || null,
     );
     return sendSuccess(res, { platformSignupsOverTime }, 200);
@@ -354,7 +354,7 @@ export async function getPlatformSignupsOverTime(req, res) {
 export async function getPlatformActiveUsersOverTime(req, res) {
   try {
     const platformActiveUsersOverTime = await getPlatformActiveUsersOverTimeInternal(
-      { ...req.params, ...req.body, ...req.query },
+      { ...req.body, ...req.query, ...req.params },
       req.user?.sub || null,
     );
     return sendSuccess(res, { platformActiveUsersOverTime }, 200);

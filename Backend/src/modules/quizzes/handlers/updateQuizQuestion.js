@@ -1,7 +1,6 @@
 import { writePool } from '../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
-import { assertQuizOwner } from '../../../common/quizOwnership.js';
 
 const optionSchema = z.object({
   id: z.string().uuid().optional(),
@@ -101,8 +100,6 @@ export async function updateQuizQuestionInternal(object, userId = null) {
   }
   const { quiz_id } = result.rows[0];
   data.quizId=quiz_id;
-
-  await assertQuizOwner(data.quizId, userId);
 
   const client = await writePool.connect();
 

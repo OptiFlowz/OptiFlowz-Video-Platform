@@ -1,7 +1,6 @@
 import { writePool } from '../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
-import { assertQuizOwner } from '../../../common/quizOwnership.js';
 
 const optionSchema = z.object({
   option_text: z.string().trim().min(1),
@@ -117,8 +116,6 @@ async function getFullQuestion(client, questionId) {
 
 export async function createQuizQuestionInternal(object, userId = null) {
   const data = prerequisites(object, userId);
-
-  await assertQuizOwner(data.quizId, userId);
 
   const client = await writePool.connect();
 

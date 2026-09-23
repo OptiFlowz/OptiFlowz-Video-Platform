@@ -1,10 +1,5 @@
-import crypto from 'crypto';
+import { hashIp } from '../../../../common/ip.js';
 import { writePool } from '../../../../database/index.js';
-
-function hashIp(ip) {
-  const salt = process.env.IP_HASH_SALT; // stavi neki random string u env
-  return crypto.createHmac('sha256', salt).update(ip).digest('hex');
-}
 
 export async function incrementViewCountInternal(
   playlistId,

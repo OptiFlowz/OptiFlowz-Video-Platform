@@ -9,6 +9,7 @@ const router = express.Router();
 
 const requirePlatformAnalytics = requirePermission(Permissions.ANALYTICS_PLATFORM_READ);
 const requireOwnChannelAnalytics = requirePermission(Permissions.ANALYTICS_CHANNEL_OWN_READ);
+// Video analytics handlers rely on this guard; URL IDs remain authoritative.
 const requireVideoAnalytics = requireVideoAccess({
   ownPermission: Permissions.ANALYTICS_VIDEO_OWN_READ,
   anyPermission: Permissions.ANALYTICS_VIDEO_ANY_READ,

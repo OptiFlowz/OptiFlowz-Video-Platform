@@ -1,7 +1,6 @@
 import { writePool } from '../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
-import { assertVideoOwner } from '../../../common/videoOwnership.js';
 
 function prerequisites(object, userId) {
   const schema = z.object({

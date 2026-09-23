@@ -1,7 +1,6 @@
 import { readPool } from '../../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../../common/input.validation.js';
-import { assertVideoOwner } from '../../../../common/videoOwnership.js';
 
 function prerequisites(object, userId) {
   if (!userId) {
@@ -29,13 +28,10 @@ function prerequisites(object, userId) {
 export async function getWatchTimeOverTimeInternal(object, userId = null) {
   const {
     videoId,
-    userId: validatedUserId,
     groupBy,
     fromDate,
     toDate,
   } = prerequisites(object, userId);
-
-  await assertVideoOwner(videoId, validatedUserId);
 
   const { rows } = await readPool.query(
     `

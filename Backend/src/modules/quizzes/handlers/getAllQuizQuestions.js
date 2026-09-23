@@ -1,7 +1,6 @@
 import { writePool } from '../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
-import { assertQuizOwner } from '../../../common/quizOwnership.js';
 
 function prerequisites(object, userId) {
   const schema = z.object({
@@ -42,8 +41,6 @@ function getSortColumn(sortBy) {
 
 export async function getAllQuizQuestionsInternal(object, userId = null) {
   const data = prerequisites(object, userId);
-
-  await assertQuizOwner(data.quizId, userId);
 
   const page = data.page;
   const limit = data.limit;

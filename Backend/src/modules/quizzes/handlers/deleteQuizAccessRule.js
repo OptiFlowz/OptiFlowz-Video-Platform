@@ -1,8 +1,7 @@
 import { writePool } from '../../../database/index.js';
-import { assertQuizOwner } from '../../../common/quizOwnership.js';
 
 export async function deleteQuizAccessRuleInternal(ruleId, userId) {
-  // Prvo proveravamo da li korisnik ima pravo da obriše ovo pravilo
+  // The route authorizes the rule; retain the existence check before deletion.
   const { rows } = await writePool.query(
     'SELECT quiz_id FROM quiz_access_rules WHERE id = $1 LIMIT 1;',
     [ruleId]
@@ -11,11 +10,6 @@ export async function deleteQuizAccessRuleInternal(ruleId, userId) {
   if (rows.length === 0) {
     throw new Error('Quiz access rule not found');
   }
-
-  const quizId = rows[0].quiz_id;
-
-  // Verifikacija da li je korisnik vlasnik kviza
-  await assertQuizOwner(quizId, userId);
 
   // Brisanje pravila iz baze
   await writePool.query(

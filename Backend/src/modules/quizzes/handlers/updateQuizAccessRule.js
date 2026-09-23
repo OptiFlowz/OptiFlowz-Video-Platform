@@ -1,7 +1,6 @@
 import { writePool } from '../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
-import { assertQuizOwner } from '../../../common/quizOwnership.js';
 
 function prerequisites(object) {
   const schema = z.object({
@@ -44,10 +43,7 @@ export async function updateQuizAccessRuleInternal(object, userId) {
     throw new Error('Rule not found.');
   }
 
-  const quizId = ruleRows[0].quiz_id;
-  await assertQuizOwner(quizId, userId); 
-  
-   const queryParams = [];
+  const queryParams = [];
   let queryText = `
     UPDATE quiz_access_rules
     SET

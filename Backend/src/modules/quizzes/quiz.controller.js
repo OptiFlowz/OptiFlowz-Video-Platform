@@ -35,7 +35,7 @@ import { submitQuizAttemptInternal } from './handlers/submitQuizAttempt.js';
 
 export async function createQuiz(req, res) {
   try {
-    const quiz = await createQuizInternal({ ...req.params, ...req.body }, req.user?.sub || null);
+    const quiz = await createQuizInternal({ ...req.body, ...req.params }, req.user?.sub || null);
     return sendSuccess(res, { quiz }, 201);
   } catch (error) {
     console.error('Error creating video quiz:', error);
@@ -45,7 +45,7 @@ export async function createQuiz(req, res) {
 
 export async function updateQuiz(req, res) {
   try {
-    const quiz = await updateQuizInternal({ ...req.params, ...req.body }, req.user?.sub || null);
+    const quiz = await updateQuizInternal({ ...req.body, ...req.params }, req.user?.sub || null);
 
     if (!quiz) {
       return sendError(res, 'Quiz not found', 404);
@@ -75,7 +75,7 @@ export async function deleteQuiz(req, res) {
 
 export async function getUserQuizzes(req, res) {
   try {
-    const quizzes = await getUserQuizzesInternal({ ...req.params, ...req.query },req.user?.sub || null);
+    const quizzes = await getUserQuizzesInternal({ ...req.query, ...req.params },req.user?.sub || null);
 
     if (!quizzes) {
       return sendError(res, 'Quiz not found', 404);
@@ -108,7 +108,7 @@ export async function getVideoQuiz(req, res) {
 
 export async function createQuizQuestion(req, res) {
   try {
-    const question = await createQuizQuestionInternal({ ...req.params, ...req.body }, req.user?.sub || null);
+    const question = await createQuizQuestionInternal({ ...req.body, ...req.params }, req.user?.sub || null);
     return sendSuccess(res, { question }, 201);
   } catch (error) {
     console.error('Error creating quiz question:', error);
@@ -133,7 +133,7 @@ export async function deleteQuizQuestion(req, res) {
 
 export async function updateQuizQuestion(req, res) {
   try {
-    const question = await updateQuizQuestionInternal({ ...req.params, ...req.body }, req.user?.sub || null);
+    const question = await updateQuizQuestionInternal({ ...req.body, ...req.params }, req.user?.sub || null);
 
     if (!question) {
       return sendError(res, 'Question not found', 404);
@@ -148,7 +148,7 @@ export async function updateQuizQuestion(req, res) {
 
 export async function getAllQuizQuestions(req, res) {
   try {
-    const result = await getAllQuizQuestionsInternal({ ...req.params, ...req.query },req.user?.sub || null);
+    const result = await getAllQuizQuestionsInternal({ ...req.query, ...req.params },req.user?.sub || null);
 
     return sendSuccess(res, result);
   } catch (error) {
@@ -162,7 +162,7 @@ export async function getAllQuizQuestions(req, res) {
 
 export async function createQuizAccessRule(req, res) {
   try {
-    const rule = await createQuizAccessRuleInternal({ ...req.params, ...req.body }, req.user?.sub || null);
+    const rule = await createQuizAccessRuleInternal({ ...req.body, ...req.params }, req.user?.sub || null);
     return sendSuccess(res, { rule }, 201);
   } catch (error) {
     console.error('Error creating quiz access rule:', error);
@@ -172,7 +172,7 @@ export async function createQuizAccessRule(req, res) {
 
 export async function updateQuizAccessRule(req, res) {
   try {
-    const rule = await updateQuizAccessRuleInternal({ ...req.params, ...req.body }, req.user?.sub || null);
+    const rule = await updateQuizAccessRuleInternal({ ...req.body, ...req.params }, req.user?.sub || null);
     return sendSuccess(res, { rule }, 200);
   } catch (error) {
     console.error('Error updating quiz access rule:', error);
@@ -227,7 +227,7 @@ export async function getQuizRequirementVideos(req, res) {
 export async function createQuizQuestionSource(req, res) {
   try {
     const source = await createQuizQuestionSourceInternal(
-      { ...req.params, ...req.body },
+      { ...req.body, ...req.params },
       req.user?.sub || null
     );
 
@@ -241,7 +241,7 @@ export async function createQuizQuestionSource(req, res) {
 export async function updateQuizQuestionSource(req, res) {
   try {
     const source = await updateQuizQuestionSourceInternal(
-      { ...req.params, ...req.body },
+      { ...req.body, ...req.params },
       req.user?.sub || null
     );
 

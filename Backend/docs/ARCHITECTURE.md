@@ -58,6 +58,24 @@ to playlist moderation; existing API paths remain unchanged.
 4. Dodavanje novog modula sada traži samo novi folder i registraciju u `src/routes/index.js`.
 5. Lakše je postepeno dalje razbijati velike fajlove bez diranja ostatka sistema.
 
+## Resource authorization and shared IP helpers
+
+Quiz management and video analytics routes authorize resources through
+`src/modules/authorization/resource-authorization.js`. Its `ownPermission`
+checks still require matching ownership; `anyPermission` and the platform Owner
+role allow access to other users' resources. Handlers rely on these route guards
+instead of repeating authorization through the former `assertQuizOwner` and
+`assertVideoOwner` helpers. New callers must use the same authorization boundary.
+Controllers merge URL parameters last so body/query fields cannot substitute a
+resource ID after middleware has authorized it. Quiz attempt ownership and video
+visibility checks remain separate and are still required.
+
+`src/common/ip.js` provides `getClientIp`, `normalizeIp`, `hashIp`, `isPrivateIp`,
+and `getCountryAndCityFromIp` for videos and playlists. Client IP extraction uses
+Express `req.ip` and its configured trust-proxy policy. GeoIP opens the bundled
+`data/GeoLite2-City.mmdb` lazily, shares one reader, and returns null location
+fields when an address is private, missing, or the lookup fails.
+
 ## Sledeći preporučeni koraci
 
 - Razbiti `video.routes.js`, `video-moderation.routes.js` i `report.routes.js` na manje controllere.

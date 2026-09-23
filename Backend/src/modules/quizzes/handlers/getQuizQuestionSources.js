@@ -2,7 +2,6 @@ import { withPlaylistCardMedia } from '../../playlists/helpers/playlistCardMedia
 import { readPool } from '../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
-import { assertQuizOwner } from '../../../common/quizOwnership.js';
 
 function prerequisites(object) {
   const schema = z.object({
@@ -14,8 +13,6 @@ function prerequisites(object) {
 
 export async function getQuizQuestionSourcesInternal(object, userId) {
   const { quizId } = prerequisites(object);
-
-  await assertQuizOwner(quizId, userId);
 
   const { rows } = await readPool.query(
     `

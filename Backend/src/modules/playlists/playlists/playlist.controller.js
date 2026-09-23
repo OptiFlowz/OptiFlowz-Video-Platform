@@ -6,7 +6,7 @@ import { getSavedPlaylistsInternal } from './handlers/getSavedPlaylists.js';
 import { getPlaylistByIdInternal } from './handlers/getPlaylistById.js';
 import { getPlaylistVideosInternal } from './handlers/getPlaylistVideos.js';
 import { playlistIncrementViewCountInternal } from './handlers/playlistIncrementViewCount.js';
-import { getClientIp } from '../../../common/ipUitl.js';
+import { getClientIp } from '../../../common/ip.js';
 import { sendSuccess, sendError } from '../../../common/response.js';
 
 export async function getPlaylistById(req, res) {

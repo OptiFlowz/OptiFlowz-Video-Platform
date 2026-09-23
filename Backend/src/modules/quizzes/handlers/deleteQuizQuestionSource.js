@@ -1,7 +1,6 @@
 import { writePool } from '../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
-import { assertQuizOwner } from '../../../common/quizOwnership.js';
 
 function prerequisites(object) {
   const schema = z.object({
@@ -29,8 +28,6 @@ export async function deleteQuizQuestionSourceInternal(object, userId) {
     error.status = 404;
     throw error;
   }
-
-  await assertQuizOwner(existingRows[0].quiz_id, userId);
 
   const { rowCount } = await writePool.query(
     `

@@ -1,7 +1,6 @@
 import { writePool } from '../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
-import { assertQuizOwner } from '../../../common/quizOwnership.js';
 
 function prerequisites(object) {
   const schema = z.object({
@@ -35,8 +34,6 @@ export async function createQuizAccessRuleInternal(object, userId) {
     required_seconds,
     is_active
   } = prerequisites(object);
-  await assertQuizOwner(quizId,userId);
-  
 
   // Build SQL query based on the rule type
   const queryParams = [quizId, rule_type, is_active];

@@ -1,7 +1,6 @@
 import { readPool } from '../../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../../common/input.validation.js';
-import { assertVideoOwner } from '../../../../common/videoOwnership.js';
 import { buildDateFilter } from '../../helpers/dateFilter.js';
 
 function prerequisites(object, userId) {
@@ -29,12 +28,9 @@ function prerequisites(object, userId) {
 export async function getDeviceSplitInternal(object, userId = null) {
   const {
     videoId,
-    userId: validatedUserId,
     fromDate,
     toDate,
   } = prerequisites(object, userId);
-
-  await assertVideoOwner(videoId, validatedUserId);
 
   const filter = buildDateFilter('vv', fromDate, toDate);
   const { rows } = await readPool.query(
