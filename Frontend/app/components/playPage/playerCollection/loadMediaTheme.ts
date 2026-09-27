@@ -396,7 +396,10 @@ export function loadMediaTheme() {
 
   if (!mediaThemePromise) {
     // @ts-ignore local vendored JS module has no type declarations
-    mediaThemePromise = import("./optiflowzTheme/dist/media-theme.js");
+    mediaThemePromise = import("./optiflowzTheme/dist/media-theme.js").catch((error: unknown) => {
+      mediaThemePromise = null;
+      throw error;
+    });
   }
 
   return mediaThemePromise;

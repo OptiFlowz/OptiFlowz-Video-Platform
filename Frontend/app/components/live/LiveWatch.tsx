@@ -1,4 +1,4 @@
-import MuxPlayer from '@mux/mux-player-react';
+import LivePlayer from './LivePlayer';
 import type MuxPlayerElement from '@mux/mux-player';
 import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -17,7 +17,7 @@ import CommentsSection from '../playPage/commentsSection';
 import LiveStatus from './LiveStatus';
 import './live.css';
 
-export default function LiveWatch({ video, similar, loadingSimilar }: { video: VideoT; similar?: SimilarT; loadingSimilar: boolean }) {
+export default function LiveWatch({ video, similar, loadingSimilar, isTheater = false }: { video: VideoT; similar?: SimilarT; loadingSimilar: boolean; isTheater?: boolean }) {
   const { t } = useI18n();
   const { stop } = usePersistentVideo();
   const client = useQueryClient();
@@ -64,10 +64,11 @@ export default function LiveWatch({ video, similar, loadingSimilar }: { video: V
     return () => { clearInterval(timer); window.removeEventListener('pagehide', onLeave); heartbeat(false); };
   }, [video.id]);
   useEffect(() => { if (!available) { playing.current = false; heartbeat(false); } }, [available]);
-  return <main className="play liveWatch px-0 py-7.5">
+  return <main className={`play liveWatch ${isTheater ? 'liveWatchTheater' : ''} px-0 py-7.5`}>
     <div className="flex flex-col gap-5 overflow-x-hidden">
-      <div className="livePlayer">
-        {available && playback.data && source && !failed ? <MuxPlayer
+      <div className="player livePlayer">
+        {available && playback.data && source && !failed ? <LivePlayer
+          title={video.title} dvr={source.stream_type === 'live:dvr'}
           ref={player} key={source.mux_playback_id} src={source.stream_url}
           streamType="live" targetLiveWindow={source.stream_type === 'live:dvr' ? Infinity : 0}
           autoPlay="muted" playsInline accentColor="var(--accentBlue3)" poster={getVideoThumbnail(video) || undefined}

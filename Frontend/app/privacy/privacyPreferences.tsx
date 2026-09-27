@@ -1,6 +1,7 @@
 "use client";
 
 import Script from "next/script";
+import { usePopupPresence } from "~/hooks/usePopupPresence";
 import {
   createContext,
   useCallback,
@@ -73,6 +74,7 @@ export function PrivacyPreferencesProvider({ children }: { children: React.React
   const [hasDecision, setHasDecision] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
+  const preferencesPopup = usePopupPresence(isPreferencesOpen);
   const [draft, setDraft] = useState<PrivacyPreferences>(defaultPreferences);
 
   useEffect(() => {
@@ -170,9 +172,10 @@ export function PrivacyPreferencesProvider({ children }: { children: React.React
         </section>
       )}
 
-      {isPreferencesOpen && (
+      {preferencesPopup.mounted && (
         <div
-          className="privacyPreferencesBackdrop"
+          className={`privacyPreferencesBackdrop popupMotionLayer ${preferencesPopup.visible ? "isOpen" : ""}`}
+          inert={!isPreferencesOpen}
           role="presentation"
           onClick={(event) => {
             if (event.target === event.currentTarget) {
@@ -181,7 +184,7 @@ export function PrivacyPreferencesProvider({ children }: { children: React.React
           }}
         >
           <section
-            className="privacyPreferencesDialog"
+            className={`privacyPreferencesDialog popupMotionPanel ${preferencesPopup.visible ? "isOpen" : ""}`}
             role="dialog"
             aria-modal="true"
             aria-labelledby="privacy-preferences-title"

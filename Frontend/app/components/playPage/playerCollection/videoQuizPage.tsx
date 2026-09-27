@@ -1,3 +1,4 @@
+import { usePopupPresence } from "~/hooks/usePopupPresence";
 import "~/styles/quiz.css";
 import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import { useAuthorization } from "~/authorization/authorization";
@@ -784,6 +785,7 @@ function VideoQuizPage() {
   const [isStartingAttempt, setIsStartingAttempt] = useState(false);
   const [isSubmittingAttempt, setIsSubmittingAttempt] = useState(false);
   const [showAssignmentSubmitConfirm, setShowAssignmentSubmitConfirm] = useState(false);
+  const assignmentPopup = usePopupPresence(showAssignmentSubmitConfirm);
   const [quizFlowError, setQuizFlowError] = useState("");
   const [areRequirementsOpen, setAreRequirementsOpen] = useState(false);
   const [questionMotionDirection, setQuestionMotionDirection] = useState<"forward" | "backward">("forward");
@@ -2289,10 +2291,10 @@ function VideoQuizPage() {
           ) : null}
 	        </div>
 	      </div>
-	      {showAssignmentSubmitConfirm ? (
-	        <div className="videoQuizConfirmOverlay" role="presentation">
+	      {assignmentPopup.mounted ? (
+	        <div className={`videoQuizConfirmOverlay popupMotionLayer ${assignmentPopup.visible ? "isOpen" : ""}`} inert={!showAssignmentSubmitConfirm} role="presentation">
 	          <div
-	            className="videoQuizConfirmDialog"
+	            className={`videoQuizConfirmDialog popupMotionPanel ${assignmentPopup.visible ? "isOpen" : ""}`}
 	            role="dialog"
 	            aria-modal="true"
 	            aria-labelledby="videoQuizAssignmentSubmitTitle"

@@ -3761,7 +3761,6 @@ mux-player::part(menu-item) {
   background-color: var(--seethroughtBlack);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s ease-in-out;
   z-index: 99;
 }
 .popup.active {
@@ -3786,8 +3785,7 @@ mux-player::part(menu-item) {
   border-radius: 24px;
   display: flex;
   flex-direction: column;
-  animation: popupExit 0.2s ease-in-out forwards;
-  will-change: transform;
+
   gap: 1rem;
 }
 .popup-content > p{
@@ -3871,31 +3869,6 @@ mux-player::part(menu-item) {
   font-weight: 600;
   padding: 10px;
   border-radius: 999px;
-}
-.active .popup-content {
-  animation: popupEnter 0.2s ease-in-out forwards;
-}
-@keyframes popupEnter {
-  0% {
-    transform: translateY(0);
-  }
-  60% {
-    transform: translateY(28px);
-  }
-  100% {
-      transform: translateY(20px);
-  }
-}
-@keyframes popupExit {
-  0% {
-    transform: translateY(20px);
-  }
-  40% {
-    transform: translateY(30px);
-  }
-  100% {
-      transform: translateY(0);
-  }
 }
 
 .popup-content h2 {
@@ -5606,7 +5579,6 @@ main.textFilledMain section {
   background: var(--privacyBackdropSurface);
   -webkit-backdrop-filter: blur(14px) saturate(120%);
   backdrop-filter: blur(14px) saturate(120%);
-  animation: privacyBackdropEnter 220ms ease-out both;
 }
 
 .privacyPreferencesDialog {
@@ -5627,34 +5599,6 @@ main.textFilledMain section {
   -webkit-backdrop-filter: blur(26px) saturate(140%);
   backdrop-filter: blur(26px) saturate(140%);
   transform-origin: center;
-  animation: privacyDialogEnter 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-
-@keyframes privacyBackdropEnter {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes privacyDialogEnter {
-  from {
-    opacity: 0;
-    transform: translateY(12px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .privacyPreferencesBackdrop,
-  .privacyPreferencesDialog {
-    animation-duration: 1ms;
-  }
 }
 
 .privacyPreferenceRow {
@@ -11300,4 +11244,52 @@ progress::-moz-progress-bar {
 /* Use the same card rhythm on every video grid, including phone layouts. */
 @media (max-width: 650px) {
   :root { --video-grid-row-gap: 2rem; }
+}
+
+/* Shared popup motion: ease into place, then dismiss without an overshoot. */
+:root {
+  --popup-enter-duration: 320ms;
+  --popup-exit-duration: 200ms;
+  --popup-enter-ease: cubic-bezier(.16, 1, .3, 1);
+  --popup-exit-ease: cubic-bezier(.4, 0, 1, 1);
+}
+:root :is(.popup, .popupMotionLayer, .platformRolePopup, .videoAnalyticsCityBackdrop) {
+  transition: opacity var(--popup-exit-duration) var(--popup-exit-ease);
+}
+:root :is(.popup.active, .popupMotionLayer.isOpen, .popupMotionLayer.opacity-100, .platformRolePopup.visible, .videoAnalyticsCityBackdrop.visible) {
+  transition-duration: var(--popup-enter-duration);
+  transition-timing-function: var(--popup-enter-ease);
+}
+:root .popupMotionLayer { opacity: 0; animation: none; }
+:root .popupMotionLayer:is(.isOpen, .opacity-100) { opacity: 1; }
+:root :is(.popup-content, .popupMotionPanel, .platformRolePopupPanel, .videoAnalyticsCityPopup, .postDialog) {
+  opacity: 0;
+  transform: translateY(12px) scale(.98);
+  transform-origin: center;
+  animation: none;
+  transition: transform var(--popup-exit-duration) var(--popup-exit-ease), opacity var(--popup-exit-duration) var(--popup-exit-ease);
+}
+:root :is(.popup.active .popup-content, .popupMotionPanel.isOpen, .platformRolePopup.visible .platformRolePopupPanel, .videoAnalyticsCityBackdrop.visible .videoAnalyticsCityPopup, .postDialog[data-visible="true"]) {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition-duration: var(--popup-enter-duration);
+  transition-timing-function: var(--popup-enter-ease);
+}
+:root :is(.postDialog, .statusPickerPopup)::backdrop {
+  opacity: 0;
+  transition: opacity var(--popup-exit-duration) var(--popup-exit-ease);
+}
+:root :is(.postDialog[data-visible="true"], .statusPickerPopup.isOpen)::backdrop {
+  opacity: 1;
+  transition-duration: var(--popup-enter-duration);
+  transition-timing-function: var(--popup-enter-ease);
+}
+/* A popup mounted already open still gets an entrance transition. */
+@starting-style {
+  :root .popup.active { opacity: 0; }
+  :root .popup.active .popup-content { opacity: 0; transform: translateY(12px) scale(.98); }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root { --popup-enter-duration: 0ms; --popup-exit-duration: 0ms; }
+  :root :is(.popup-content, .popupMotionPanel, .platformRolePopupPanel, .videoAnalyticsCityPopup, .postDialog) { transform: none !important; }
 }

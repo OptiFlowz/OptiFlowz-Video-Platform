@@ -1,3 +1,18 @@
+main .profileTabsViewport { position: relative; min-width: 0; }
+main .profileTabsViewport::before,
+main .profileTabsViewport::after { content: ''; position: absolute; top: 0; bottom: 0; width: 32px; z-index: 1; pointer-events: none; opacity: 0; transition: opacity .15s ease; }
+main .profileTabsViewport::before { left: 0; background: linear-gradient(to right, var(--background1), transparent); }
+main .profileTabsViewport::after { right: 0; background: linear-gradient(to left, var(--background1), transparent); }
+main .profileTabsViewport[data-overflow-left="true"]::before,
+main .profileTabsViewport[data-overflow-right="true"]::after { opacity: 1; }
+@media (max-width: 760px) {
+    main.accountPage .profileTabsViewport { margin-inline: -20px; }
+    main.accountPage .profileTabs { padding-inline: 20px; scroll-padding-inline: 20px; }
+}
+@media (max-width: 540px) {
+    main.channelPage .profileTabsViewport { margin-inline: -20px; }
+    main.channelPage .profileTabs { padding-inline: 20px; scroll-padding-inline: 20px; }
+}
 main .profileTabs button {
     display: inline-flex;
     align-items: center;

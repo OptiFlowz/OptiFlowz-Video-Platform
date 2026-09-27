@@ -1,4 +1,4 @@
-import MuxPlayer from '@mux/mux-player-react';
+import LivePlayer from './LivePlayer';
 import { useI18n } from '~/i18n';
 import { LiveSVG } from '~/constants';
 import { useVideoPlayback } from '../playback/useVideoPlayback';
@@ -16,7 +16,8 @@ export default function LiveStudioPreview({ video, title }: { video?: LiveVideo;
 
   return <div className="videoPreviewContainer">
     <div className="videoPreviewWrapper liveStudioPreview">
-      {video?.playback_available ? playback.data ? <MuxPlayer
+      {video?.playback_available ? playback.data ? <LivePlayer
+        title={title} dvr={playback.data.stream_type === 'live:dvr'} compact
         src={playback.data.stream_url}
         streamType="live"
         targetLiveWindow={playback.data.stream_type === 'live:dvr' ? Infinity : 0}

@@ -9,7 +9,7 @@ import { ContinueWatchingSVG, CupOutlineSVG, EditSVG, HistorySVG, LikeSVG, LogOu
 import AccountInfo from "./accountInfo";
 import AccountLibrary from "./accountLibrary";
 import "./accountTabs.css";
-import "../library/profileTabs.css";
+import ProfileTabs from "../library/ProfileTabs";
 import { useEffect, useId, useRef, useState } from "react";
 import { redirectToLogin } from "~/auth/session";
 import EditAccountPopup from "./editAccountPopup";
@@ -56,33 +56,6 @@ function AccountPage(){
     const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
     const tabs = accountTabs.filter(tab => can(tab.permission) || (tab.permission === P.videosLibrary && can(P.liveLibrary)));
     const activeTab = tabs.find(tab => tab.id === selectedTab) ?? tabs[0];
-    const tabsScrollerRef = useRef<HTMLDivElement>(null);
-    const [tabOverflow, setTabOverflow] = useState({ left: false, right: false });
-    const visibleTabIds = tabs.map(tab => tab.id).join(',');
-
-    useEffect(() => {
-        const scroller = tabsScrollerRef.current;
-        if (!scroller) return;
-        const updateOverflow = () => {
-            const bounds = scroller.getBoundingClientRect();
-            const buttons = Array.from(scroller.children, child => child.getBoundingClientRect());
-            const left = buttons.some(button => button.left < bounds.left - 1);
-            const right = buttons.some(button => button.right > bounds.right + 1);
-            setTabOverflow(previous => previous.left === left && previous.right === right
-                ? previous : { left, right });
-        };
-        const observer = new ResizeObserver(updateOverflow);
-        observer.observe(scroller);
-        Array.from(scroller.children).forEach(button => observer.observe(button));
-        scroller.addEventListener('scroll', updateOverflow, { passive: true });
-        updateOverflow();
-        return () => {
-            observer.disconnect();
-            scroller.removeEventListener('scroll', updateOverflow);
-        };
-    }, [visibleTabIds]);
-
-
     const logoutHandle = () => {
         redirectToLogin();
     }
@@ -119,8 +92,7 @@ function AccountPage(){
 
                 {activeTab && <>
                     <div className="accountTabNavigation">
-                        <div className="accountTabsViewport" data-overflow-left={tabOverflow.left} data-overflow-right={tabOverflow.right}>
-                        <div ref={tabsScrollerRef} className="accountTabs profileTabs" role="tablist" aria-label={t('footerAccount')}>
+                        <ProfileTabs className="accountTabs" label={t('footerAccount')}>
                             {tabs.map((tab, index) => <button
                                 key={tab.id}
                                 ref={element => { tabRefs.current[index] = element; }}
@@ -141,8 +113,7 @@ function AccountPage(){
                                     tabRefs.current[next]?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
                                 }}
                             ><span className="profileTabIcon" aria-hidden="true">{tab.icon}</span><span>{t(tab.label)}</span></button>)}
-                        </div>
-                        </div>
+                        </ProfileTabs>
                     </div>
                     {tabs.map(tab => <div
                         key={tab.id}

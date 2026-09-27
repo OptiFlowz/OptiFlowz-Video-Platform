@@ -1,3 +1,4 @@
+import { usePopupPresence } from "~/hooks/usePopupPresence";
 import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
@@ -76,6 +77,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
   const myHeaders = useRef(new Headers());
 
   const [visOpen, setVisOpen] = useState(false);
+  const visibilityPresence = usePopupPresence(visOpen);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [draftVisibility, setDraftVisibility] = useState<"public" | "private">(
@@ -152,7 +154,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
   }, [visOpen, props?.visibility]);
 
   useLayoutEffect(() => {
-    if (!visOpen) return;
+    if (!visibilityPresence.mounted) return;
 
     positionVisibilityPopup();
 
@@ -164,7 +166,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
       window.removeEventListener("resize", onReposition);
       window.removeEventListener("scroll", onReposition, true);
     };
-  }, [visOpen]);
+  }, [visibilityPresence.mounted]);
 
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
@@ -341,7 +343,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
           typeof document !== "undefined" &&
           createPortal(
             <div
-              className="fixed inset-0 z-100 flex items-end justify-center"
+              className={`fixed inset-0 z-100 flex items-end justify-center popupMotionLayer ${visibilityPresence.visible ? "isOpen" : ""}`} inert={!visOpen}
               onClick={() => setMobileMenuOpen(false)}
             >
               <div className="absolute inset-0 bg-(--seethroughtBlack)" />
@@ -436,17 +438,17 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
             &nbsp;{props?.visibility === "public" ? t("adminPublic") : t("adminPrivate")}
           </button>
 
-          {visOpen &&
+          {visibilityPresence.mounted &&
             typeof document !== "undefined" &&
             createPortal(
               isMobileViewport ? (
                 <div
-                  className="fixed inset-0 z-100 flex items-end justify-center"
+                  className={`fixed inset-0 z-100 flex items-end justify-center popupMotionLayer ${visibilityPresence.visible ? "isOpen" : ""}`} inert={!visOpen}
                   onClick={() => setVisOpen(false)}
                 >
                   <div className="absolute inset-0 bg-(--seethroughtBlack)" />
                   <div
-                    className="rowVisibilitySheet relative w-full max-w-lg animate-slide-up rounded-t-3xl bg-(--background1) pb-safe"
+                    className={`rowVisibilitySheet relative w-full max-w-lg rounded-t-3xl bg-(--background1) pb-safe popupMotionPanel ${visibilityPresence.visible ? "isOpen" : ""}`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="flex justify-center py-3">
@@ -508,7 +510,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                   role="dialog"
               aria-label={t("adminChangeVisibility")}
                   style={visPopupStyle}
-                  className="rowVisibilityPopup z-50 border! border-(--border1)! rounded-2xl bg-(--background1) p-3 shadow-2xl shadow-(color:--seethroughtBlack)"
+                  className={`rowVisibilityPopup z-50 border! border-(--border1)! rounded-2xl bg-(--background1) p-3 shadow-2xl shadow-(color:--seethroughtBlack) popupMotionPanel ${visibilityPresence.visible ? "isOpen" : ""}`} inert={!visOpen}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex flex-col gap-2">

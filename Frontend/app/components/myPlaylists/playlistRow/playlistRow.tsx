@@ -1,3 +1,4 @@
+import { usePopupPresence } from "~/hooks/usePopupPresence";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
 import {
@@ -47,6 +48,7 @@ function PlaylistRow({
   const canDelete = canAny([P.playlistsDeleteOwn, P.playlistsDeleteAny]);
   const [isHidden, setIsHidden] = useState(false);
   const [visOpen, setVisOpen] = useState(false);
+  const visibilityPresence = usePopupPresence(visOpen);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [draftVisibility, setDraftVisibility] = useState<"public" | "private">(
@@ -124,7 +126,7 @@ function PlaylistRow({
   }, [visOpen, props?.status]);
 
   useLayoutEffect(() => {
-    if (!visOpen) return;
+    if (!visibilityPresence.mounted) return;
 
     positionVisibilityPopup();
 
@@ -136,7 +138,7 @@ function PlaylistRow({
       window.removeEventListener("resize", onReposition);
       window.removeEventListener("scroll", onReposition, true);
     };
-  }, [visOpen]);
+  }, [visibilityPresence.mounted]);
 
   useEffect(() => {
     if (mobileMenuOpen) {
@@ -317,7 +319,7 @@ function PlaylistRow({
           typeof document !== "undefined" &&
           createPortal(
             <div
-              className="fixed inset-0 z-100 flex items-end justify-center"
+              className={`fixed inset-0 z-100 flex items-end justify-center popupMotionLayer ${visibilityPresence.visible ? "isOpen" : ""}`} inert={!visOpen}
               onClick={() => setMobileMenuOpen(false)}
             >
               <div className="absolute inset-0 bg-(--seethroughtBlack)" />
@@ -402,17 +404,17 @@ function PlaylistRow({
             &nbsp;{props?.status === "public" ? t("adminPublic") : t("adminPrivate")}
           </button>
 
-          {visOpen &&
+          {visibilityPresence.mounted &&
             typeof document !== "undefined" &&
             createPortal(
               isMobileViewport ? (
                 <div
-                  className="fixed inset-0 z-100 flex items-end justify-center"
+                  className={`fixed inset-0 z-100 flex items-end justify-center popupMotionLayer ${visibilityPresence.visible ? "isOpen" : ""}`} inert={!visOpen}
                   onClick={() => setVisOpen(false)}
                 >
                   <div className="absolute inset-0 bg-(--seethroughtBlack)" />
                   <div
-                    className="rowVisibilitySheet relative w-full max-w-lg animate-slide-up rounded-t-3xl bg-(--background1) pb-safe"
+                    className={`rowVisibilitySheet relative w-full max-w-lg rounded-t-3xl bg-(--background1) pb-safe popupMotionPanel ${visibilityPresence.visible ? "isOpen" : ""}`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="flex justify-center py-3">
@@ -475,7 +477,7 @@ function PlaylistRow({
                   role="dialog"
                   aria-label={t("adminChangeVisibility")}
                   style={visPopupStyle}
-                  className="rowVisibilityPopup z-50 rounded-2xl border! border-(--border1)! bg-(--background1) p-3 shadow-2xl shadow-(color:--seethroughtBlack)"
+                  className={`rowVisibilityPopup z-50 rounded-2xl border! border-(--border1)! bg-(--background1) p-3 shadow-2xl shadow-(color:--seethroughtBlack) popupMotionPanel ${visibilityPresence.visible ? "isOpen" : ""}`} inert={!visOpen}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex flex-col gap-2">

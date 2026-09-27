@@ -36,7 +36,8 @@ main.channelPage button:focus-visible, main.channelPage a:focus-visible { outlin
   main.channelPage .channelVideoCount { margin-top: 6px; font-size: .85rem; }
   main.channelPage .channelAbout { grid-column: 1 / -1; margin-top: 0; padding-top: 14px; }
   main.channelPage .channelNavigation { grid-template-columns: minmax(0, 1fr); gap: 0; padding-top: 10px; border-bottom: 0; }
-  main.channelPage .channelNavigation .channelTabs { width: 100%; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--border1); }
+  main.channelPage .channelNavigation .profileTabsViewport { padding-bottom: 10px; border-bottom: 1px solid var(--border1); }
+  main.channelPage .channelNavigation .channelTabs { width: 100%; gap: 8px; }
   main.channelPage .channelSortControl { padding-block: 16px 0; }
   main.channelPage .channelSortControl .channelSortSelect { width: 100%; }
   main.channelPage .channelPanel .videoHolder, main.channelPage .channelPlaylistGrid { margin-top: 16px; }

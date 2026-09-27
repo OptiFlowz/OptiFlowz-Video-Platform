@@ -28,6 +28,13 @@ function CreatePlaylistPopup({ open, onClose, onCreate }: Props) {
   }, []);
 
   useEffect(() => {
+    let firstFrame = 0;
+    let secondFrame = 0;
+    const cleanup = () => {
+      cancelAnimationFrame(firstFrame);
+      cancelAnimationFrame(secondFrame);
+      if (closeTimeoutRef.current) window.clearTimeout(closeTimeoutRef.current);
+    };
     if (open) {
       setMounted(true);
       setVisible(false);
@@ -35,17 +42,18 @@ function CreatePlaylistPopup({ open, onClose, onCreate }: Props) {
       setError(null);
       setIsSubmitting(false);
 
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
+      firstFrame = requestAnimationFrame(() => {
+        secondFrame = requestAnimationFrame(() => {
           setVisible(true);
           inputRef.current?.focus();
         });
       });
-      return;
+      return cleanup;
     }
 
     setVisible(false);
     closeTimeoutRef.current = window.setTimeout(() => setMounted(false), DURATION);
+    return cleanup;
   }, [open]);
 
   useEffect(() => {
@@ -87,7 +95,7 @@ function CreatePlaylistPopup({ open, onClose, onCreate }: Props) {
 
   return createPortal(
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-200 ${
+      className={`fixed inset-0 z-50 flex items-center justify-center popupMotionLayer ${
         visible ? "opacity-100" : "opacity-0"
       }`}
       role="dialog"
@@ -98,14 +106,12 @@ function CreatePlaylistPopup({ open, onClose, onCreate }: Props) {
       }}
     >
       <div
-        className={`absolute inset-0 bg-(--backgroundC2) transition-opacity duration-200 ${
-          visible ? "opacity-100" : "opacity-0"
-        }`}
+        className="absolute inset-0 bg-(--backgroundC2)"
       />
 
       <div
-        className={`relative w-[min(480px,92vw)] rounded-3xl border border-(--border1) bg-(--background1) p-6 shadow-2xl shadow-(color:--seethroughtBlack) transition-all duration-200 ease-out ${
-          visible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
+        className={`relative w-[min(480px,92vw)] rounded-3xl border border-(--border1) bg-(--background1) p-6 shadow-2xl shadow-(color:--seethroughtBlack) popupMotionPanel ${
+          visible ? "isOpen" : ""
         }`}
         onMouseDown={(event) => event.stopPropagation()}
       >

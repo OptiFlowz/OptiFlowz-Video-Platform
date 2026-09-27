@@ -1,4 +1,3 @@
-import { LiveList } from '../live/LiveList';
 import ExpandableDescription from "../shared/ExpandableDescription";
 import ChannelPosts from '../posts/ChannelPosts';
 import { useQuery } from "@tanstack/react-query";
@@ -16,7 +15,7 @@ import PlaylistItem from "../itemSlider/playlistItem";
 import DefaultProfile from "../../../assets/DefaultProfile.webp";
 import backgroundImage from "../../../assets/LoginBackground.webp";
 import "./channelPage.css";
-import "../library/profileTabs.css";
+import ProfileTabs from "../library/ProfileTabs";
 
 type ChannelSortBy = "view_count" | "created_at";
 type ChannelSortOrder = "asc" | "desc";
@@ -230,7 +229,7 @@ function ChannelPage() {
             </div>
 
             <div className="channelNavigation">
-                <div className="channelTabs profileTabs" role="tablist" aria-label={t("channelLabel")}>
+                <ProfileTabs className="channelTabs" label={t("channelLabel")}>
                     {(["videos", "live", "playlists", "posts"] as const).map((tab, index) => (
                         <button
                             key={tab}
@@ -248,10 +247,11 @@ function ChannelPage() {
                                 const next = event.key === "Home" ? 0 : event.key === "End" ? 3 : (index + (event.key === "ArrowRight" ? 1 : -1) + 4) % 4;
                                 selectTab((["videos", "live", "playlists", "posts"] as const)[next]);
                                 tabRefs.current[next]?.focus();
+                                tabRefs.current[next]?.scrollIntoView({ block: "nearest", inline: "nearest" });
                             }}
                         ><span className="profileTabIcon" aria-hidden="true">{tab === "live" ? LiveSVG : tab === "videos" ? ChannelMenuSVG : tab === "playlists" ? PlaylistSVG : PostSVG}</span><span>{t(tab === "live" ? "liveTitle" : `${tab}Tab`)}</span></button>
                     ))}
-                </div>
+                </ProfileTabs>
                 <div className="channelSortControl" hidden={activeTab === "live"}>
                     {activeTab === 'posts' ? <CustomSelect value={postAscending ? 'asc' : 'desc'} options={[{value:'desc', label:t('channelSortNewest')}, {value:'asc', label:t('channelSortOldest')}]} onChange={value => setPostAscending(value === 'asc')} ariaLabel={t('searchSortBy')} rootClassName="channelSortSelect" /> : <CustomSelect
                         value={activeTab === "videos" ? `${videoSortBy}:${videoSortOrder}` : `${playlistSortBy}:${playlistSortOrder}`}
@@ -278,7 +278,7 @@ function ChannelPage() {
                 {!isLoadingPlaylists && normalizedPlaylists.length === 0 && <p className="channelEmpty">{t("quizNoPlaylistsFound")}</p>}</>}
             </div>
             <div className="channelPanel" role="tabpanel" id={`${tabsId}-live-panel`} aria-labelledby={`${tabsId}-live-tab`} hidden={activeTab !== 'live'} tabIndex={0}>
-                {activeTab === 'live' && <LiveList key={channelId} channelId={channelId}/>}
+                <p className="channelEmpty">{t('liveEmpty')}</p>
             </div>
             <div className="channelPanel" role="tabpanel" id={`${tabsId}-posts-panel`} aria-labelledby={`${tabsId}-posts-tab`} hidden={activeTab !== 'posts'} tabIndex={0}>
                 {activeTab === 'posts' && channel && <ChannelPosts channelId={channelId || ''} author={channel} videos={normalizedVideos} ascending={postAscending} />}

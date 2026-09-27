@@ -1,3 +1,4 @@
+import { usePopupPresence } from "~/hooks/usePopupPresence";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { CheckSVG } from "~/constants";
 import { createPortal } from "react-dom";
@@ -21,12 +22,13 @@ export default function StatusPicker<Value extends string>({ value, title, optio
   const dialog = useRef<HTMLDialogElement>(null);
   const savingRef = useRef(false);
   const [open, setOpen] = useState(false);
+  const presence = usePopupPresence(open);
   const [draft, setDraft] = useState(value);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (!open) return;
+    if (!presence.mounted) return;
     const popup = dialog.current;
     if (!popup) return;
     const position = () => {
@@ -51,7 +53,7 @@ export default function StatusPicker<Value extends string>({ value, title, optio
       popup.close();
       trigger.current?.focus({ preventScroll: true });
     };
-  }, [open]);
+  }, [presence.mounted]);
 
   async function save() {
     if (savingRef.current) return;
@@ -79,7 +81,7 @@ export default function StatusPicker<Value extends string>({ value, title, optio
       {selected?.icon}
       {selected?.label ?? value}
     </button>
-    {open && createPortal(<dialog ref={dialog} className="statusPickerPopup"
+    {presence.mounted && createPortal(<dialog ref={dialog} className={`statusPickerPopup popupMotionPanel ${presence.visible ? "isOpen" : ""}`} inert={!open}
       aria-label={`${t("adminTableStatus")}: ${title}`} aria-busy={saving}
       onCancel={event => { event.preventDefault(); if (!savingRef.current) setOpen(false); }}
       onClick={event => {

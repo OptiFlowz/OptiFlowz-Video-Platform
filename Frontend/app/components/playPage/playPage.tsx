@@ -308,7 +308,7 @@ function PlayPage(){
     }
 
     if (isVideoLoading) return <PlayPageSkeleton />;
-    if (videoData?.kind === 'live' && !recordingReady(videoData)) return <LiveWatch key={videoData.id} video={videoData} similar={resolvedSimilarData} loadingSimilar={isLoadingSimilar} />;
+    if (videoData?.kind === 'live' && !recordingReady(videoData)) return <LiveWatch key={videoData.id} video={videoData} similar={resolvedSimilarData} loadingSimilar={isLoadingSimilar} isTheater={isTheater} />;
 
     return <>
         <main className={`play ${isTheater ? "theater pt-23!" : ""} px-0 py-7.5`}>

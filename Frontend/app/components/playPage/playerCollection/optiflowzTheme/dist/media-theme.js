@@ -246,7 +246,7 @@ if (template) {
       gesturesdisabled="{{disabled}}"
       hotkeys="{{hotkeys}}"
       nohotkeys="{{nohotkeys}}"
-      defaultstreamtype="on-demand"
+      defaultstreamtype="{{streamtype ?? 'on-demand'}}"
     >
       <slot name="media" slot="media"></slot>
       <slot name="poster" slot="poster"></slot>
@@ -902,6 +902,37 @@ if (template) {
             </style>
             <media-time-display></media-time-display>
             <media-time-display showduration></media-time-display>
+          </div>
+
+          <style>
+            .player-button-group.liveIndicator { display: none; flex-shrink: 0; }
+            :host([livestream]) .liveIndicator { display: inline-flex; }
+            :host([livestream]) .currentChapter { display: none !important; }
+            :host([livestream]:not([dvr])) media-time-range,
+            :host([livestream]:not([dvr])) media-seek-backward-button,
+            :host([livestream]:not([dvr])) media-seek-forward-button { display: none; }
+            .liveIndicator media-live-button {
+              --media-live-button-icon-color: var(--text2);
+              --media-live-button-indicator-color: var(--accentRed3);
+              color: var(--text2);
+              border-radius: inherit;
+              box-sizing: border-box;
+              height: calc(1.65 * var(--base));
+              padding: 0 calc(0.6 * var(--base));
+              line-height: 1;
+              font-size: calc(0.7 * var(--base));
+              font-weight: 600;
+              white-space: nowrap;
+            }
+            .liveIndicator media-live-button[mediatimeislive]:not([mediapaused]) { color: var(--accentRed3); }
+            #live-indicator-icon { display: inline-flex; align-items: center; }
+            #live-indicator-icon svg { width: var(--base); height: var(--base); }
+          </style>
+          <div class="player-button-group liveIndicator">
+            <media-live-button>
+              <span slot="indicator" id="live-indicator-icon"></span>
+              <span slot="text">LIVE</span>
+            </media-live-button>
           </div>
 
           <div class="player-button-group currentChapter">

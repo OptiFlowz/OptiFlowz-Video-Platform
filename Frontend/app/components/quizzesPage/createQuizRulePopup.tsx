@@ -261,7 +261,7 @@ function CreateQuizRulePopup({
 
   return createPortal(
     <div
-      className={`fixed inset-0 z-[80] flex items-center justify-center transition-opacity duration-200 ${
+      className={`fixed inset-0 z-[80] flex items-center justify-center popupMotionLayer ${
         visible ? "opacity-100" : "opacity-0"
       }`}
       role="dialog"
@@ -272,13 +272,11 @@ function CreateQuizRulePopup({
       }}
     >
       <div
-        className={`absolute inset-0 bg-(--backgroundC2) transition-opacity duration-200 ${
-          visible ? "opacity-100" : "opacity-0"
-        }`}
+        className="absolute inset-0 bg-(--backgroundC2)"
       />
       <div
-        className={`relative flex max-h-[min(760px,calc(100vh-48px))] w-[min(720px,94vw)] flex-col overflow-hidden rounded-3xl border border-(--border1) bg-(--background1) p-6 shadow-2xl shadow-(color:--seethroughtBlack) transition-all duration-200 ease-out ${
-          visible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
+        className={`relative flex max-h-[min(760px,calc(100vh-48px))] w-[min(720px,94vw)] flex-col overflow-hidden rounded-3xl border border-(--border1) bg-(--background1) p-6 shadow-2xl shadow-(color:--seethroughtBlack) popupMotionPanel ${
+          visible ? "isOpen" : ""
         }`}
         onMouseDown={(event) => event.stopPropagation()}
       >

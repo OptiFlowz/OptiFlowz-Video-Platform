@@ -5,6 +5,7 @@ import { CloseSVG } from "~/constants";
 import { getStoredUser, getToken } from "~/functions";
 import { useI18n } from "~/i18n";
 import LanguageSelect from "~/components/languageSelect/languageSelect";
+import { usePopupPresence } from "~/hooks/usePopupPresence";
 import PopupPortal from "~/components/popupPortal/popupPortal";
 import { OFFICE_EMAIL } from "~/changeables";
 import { usePrivacyPreferences } from "~/privacy/privacyPreferences";
@@ -14,6 +15,7 @@ import TwoFactorSettings from "./twoFactorSettings";
 
 function SettingsPopup({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { locale, setLocale, t } = useI18n();
+  const { mounted } = usePopupPresence(open);
   const titleId = useId();
   const descriptionId = useId();
   const { openPreferences } = usePrivacyPreferences();
@@ -130,7 +132,7 @@ function SettingsPopup({ open, onClose }: { open: boolean; onClose: () => void }
                 <div className="settingsRowText"><h3>{t("accountResetPassword")}</h3><p>{t("accountResetPasswordHelp")}</p></div>
                 <Link className="accountSettingsAction" to={resetPasswordUrl}>{t("resetPassword")}</Link>
               </div>
-              {open && <TwoFactorSettings resetPasswordUrl={resetPasswordUrl} />}
+              {mounted && <TwoFactorSettings resetPasswordUrl={resetPasswordUrl} />}
               <div className="settingsRow">
                 <div className="settingsRowText"><h3>{t("accountPrivacyChoices")}</h3><p>{t("accountPrivacyChoicesHelp")}</p></div>
                 <button type="button" className="accountSettingsAction" onClick={() => { requestClose(); openPreferences(); }}>{t("accountManagePrivacy")}</button>

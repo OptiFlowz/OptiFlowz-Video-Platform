@@ -36,19 +36,27 @@ export function ConfirmDialog({
   }, []);
 
   useEffect(() => {
+    let firstFrame = 0;
+    let secondFrame = 0;
+    const cleanup = () => {
+      cancelAnimationFrame(firstFrame);
+      cancelAnimationFrame(secondFrame);
+      if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
+    };
     if (open) {
       setMounted(true);
       setVisible(false);
 
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => setVisible(true));
+      firstFrame = requestAnimationFrame(() => {
+        secondFrame = requestAnimationFrame(() => setVisible(true));
       });
-      return;
+      return cleanup;
     }
 
     setVisible(false);
 
     closeTimerRef.current = window.setTimeout(() => setMounted(false), DURATION);
+    return cleanup;
   }, [open]);
 
   if (!mounted) return null;
@@ -56,7 +64,7 @@ export function ConfirmDialog({
   return createPortal(
     (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-200 ${
+      className={`fixed inset-0 z-50 flex items-center justify-center popupMotionLayer ${
         visible ? "opacity-100" : "opacity-0"
       }`}
       role="dialog"
@@ -64,15 +72,13 @@ export function ConfirmDialog({
       onMouseDown={onNo}
     >
       <div
-        className={`absolute inset-0 bg-(--seethroughtBlack) transition-opacity duration-200 ${
-          visible ? "opacity-100" : "opacity-0"
-        }`}
+        className="absolute inset-0 bg-(--seethroughtBlack)"
       />
 
       <div
         className={`relative w-[min(520px,90vw)] rounded-3xl bg-(--background1) border border-(--border1) p-6 shadow-lg shadow-(color:--seethroughtBlack)
-        transition-all duration-200 ease-out will-change-transform
-        ${visible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"}`}
+        popupMotionPanel
+        ${visible ? "isOpen" : ""}`}
         onMouseDown={(e) => e.stopPropagation()}
       >
         <h3 className="text-lg font-semibold">{title ?? t("adminConfirmTitle")}</h3>
