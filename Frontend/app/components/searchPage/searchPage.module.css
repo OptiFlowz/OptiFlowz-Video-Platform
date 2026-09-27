@@ -125,3 +125,21 @@
 .icon { width: 20px; height: 20px; flex-shrink: 0; }
 .icon [stroke]:not([stroke="none"]) { stroke: currentColor; }
 .icon [fill]:not([fill="none"]) { fill: currentColor; }
+
+@media (max-width: 650px) {
+  .page { padding-top: 73px; }
+  .introContent { min-height: 0; padding: 20px; }
+  .searchForm { margin-top: 16px; padding: 3px 3px 3px 14px; gap: 8px; }
+  .searchForm input { padding-block: 0; font-size: 16px; }
+  .searchForm button { width: 44px; height: 44px; padding: 0; gap: 0; }
+  .searchForm button > span { display: none; }
+  .page .intro { width: calc(100% + 40px); margin-inline: -20px; border-radius: 0; }
+  .page .categories { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; overflow: visible; }
+  .page .categories button { display: flex; flex-direction: column; gap: 3px; min-width: 0; min-height: 56px; padding: 8px 4px; border-radius: 8px; white-space: normal; font-size: .8rem; }
+  .page .categories button > span:first-child { display: none; }
+  .page .categories button > span:nth-child(2) { overflow-wrap: anywhere; }
+  .page .categories .count { min-width: 0; padding: 0; background: none; font-size: .7rem; line-height: 1.2; opacity: .75; }
+  .sort { width: 100%; margin-inline-start: 0; }
+  .sort > span { display: none; }
+  .sortControl, .sort .sortSelect { width: 100%; min-width: 0; }
+}

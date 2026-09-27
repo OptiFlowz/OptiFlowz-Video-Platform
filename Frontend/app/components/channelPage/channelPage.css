@@ -52,3 +52,8 @@ main.channelPage button:focus-visible, main.channelPage a:focus-visible { outlin
 
 main.channelPage.playlist > div.channelHero:first-child { padding: 0; border-radius: 24px; }
 main.channelPage .channelHeroBackground { border-radius: inherit; }
+
+@media (max-width: 650px) {
+  main.channelPage { padding-top: 73px; }
+  main.channelPage.playlist > div.channelHero:first-child { width: calc(100% + 40px); margin-inline: -20px; border-radius: 0; }
+}

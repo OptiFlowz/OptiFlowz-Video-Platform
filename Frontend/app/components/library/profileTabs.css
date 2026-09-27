@@ -47,8 +47,9 @@ main .profileTabs button:focus-visible {
     outline-offset: -3px;
 }
 .profileTabIcon { display: inline-flex; flex: 0 0 20px; width: 20px; height: 20px; }
-.profileTabIcon svg { width: 20px; height: 20px; }
+.profileTabIcon svg { width: 20px; height: 20px; backface-visibility: visible; }
 .profileTabIcon svg, .profileTabIcon svg * { stroke-width: 1; }
+.profileTabIcon--posts svg, .profileTabIcon--posts svg * { stroke-width: 1.5; }
 .profileTabIcon svg [stroke]:not([stroke="none"]) { stroke: currentColor; }
 .profileTabIcon svg [fill]:not([fill="none"]) { fill: currentColor; }
 @media (max-width: 650px) {

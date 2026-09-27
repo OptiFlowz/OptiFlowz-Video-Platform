@@ -5,7 +5,7 @@ import { useI18n } from "~/i18n";
 import { BRAND_NAME, MARKETING_WEBSITE_URL } from "~/changeables";
 import {
     LiveSVG, AnalyticsSVG, ChannelMenuSVG, ContinueWatchingSVG, CupOutlineSVG, ExternalSiteMenuSVG, HistorySVG,
-    HomeMenuSVG, LanguageMenuSVG, LikeSVG, PeopleSVG, PlatformMenuSVG,
+    ArrowSVG, HomeMenuSVG, LanguageMenuSVG, LikeSVG, PeopleSVG, PlatformMenuSVG,
     PlaylistSVG, PostSVG, QuizSVG, RecommendedMenuSVG, TrendingMenuSVG, UserSVG,
 } from "~/constants";
 import LanguageSelect from "~/components/languageSelect/languageSelect";
@@ -37,10 +37,12 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             {item('/videos/2', t('navTrending'), TrendingMenuSVG)}
             {can(P.liveLibrary) && item('/live', t('liveTitle'), LiveSVG)}
         </div>
-        <div className="appSidebarGroup">
-            <Link to={user ? '/account' : '/login'} className="appSidebarHeading" onClick={onNavigate}>
-                <span className="appSidebarIcon" aria-hidden="true">{UserSVG}</span>{t('footerAccount')}
-            </Link>
+        <section className="appSidebarGroup" aria-label={t('footerAccount')}>
+            <h2 className="appSidebarSectionTitle">
+                <Link to={user ? '/account' : '/login'} className="appSidebarHeading" onClick={onNavigate}>
+                    {t('footerAccount')}<span className="appSidebarHeadingArrow" aria-hidden="true">{ArrowSVG}</span>
+                </Link>
+            </h2>
             {user ? <>
                 {(can(P.videosLibrary) || can(P.liveLibrary)) && <>
                     {item('/account', t('watchHistory'), HistorySVG)}
@@ -50,14 +52,18 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                 {can(P.playlistsLibrary) && item('/account/playlists', t('savedPlaylists'), PlaylistSVG)}
                 {can(P.quizzesCertificates) && item('/account/certificates', t('accountCertificatesTitle'), CupOutlineSVG)}
             </> : item('/login', t('login'), UserSVG)}
-        </div>
-        {management.length > 0 && <div className="appSidebarGroup">{management}</div>}
-        <div className="appSidebarGroup">
+        </section>
+        {management.length > 0 && <section className="appSidebarGroup" aria-label={t('navSectionManage')}>
+            <h2 className="appSidebarHeading appSidebarSectionTitle">{t('navSectionManage')}</h2>
+            {management}
+        </section>}
+        <section className="appSidebarGroup" aria-label={t('more')}>
+            <h2 className="appSidebarHeading appSidebarSectionTitle">{t('more')}</h2>
             <Link to={MARKETING_WEBSITE_URL} className="appSidebarItem" onClick={onNavigate}>
                 <span className="appSidebarIcon" aria-hidden="true">{ExternalSiteMenuSVG}</span>{BRAND_NAME}
             </Link>
             <LanguageSelect value={locale} onChange={setLocale} ariaLabel={t('accountLanguage')}
                 label={t('accountLanguage')} variant="mobile" placement="top" leadingContent={LanguageMenuSVG} />
-        </div>
+        </section>
     </nav>;
 }

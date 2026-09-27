@@ -249,7 +249,7 @@ function ChannelPage() {
                                 tabRefs.current[next]?.focus();
                                 tabRefs.current[next]?.scrollIntoView({ block: "nearest", inline: "nearest" });
                             }}
-                        ><span className="profileTabIcon" aria-hidden="true">{tab === "live" ? LiveSVG : tab === "videos" ? ChannelMenuSVG : tab === "playlists" ? PlaylistSVG : PostSVG}</span><span>{t(tab === "live" ? "liveTitle" : `${tab}Tab`)}</span></button>
+                        ><span className={`profileTabIcon${tab === "posts" ? " profileTabIcon--posts" : ""}`} aria-hidden="true">{tab === "live" ? LiveSVG : tab === "videos" ? ChannelMenuSVG : tab === "playlists" ? PlaylistSVG : PostSVG}</span><span>{t(tab === "live" ? "liveTitle" : `${tab}Tab`)}</span></button>
                     ))}
                 </ProfileTabs>
                 <div className="channelSortControl" hidden={activeTab === "live"}>

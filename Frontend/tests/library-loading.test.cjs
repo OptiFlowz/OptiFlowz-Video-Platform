@@ -37,7 +37,7 @@ const deferred = () => { let resolve; const promise = new Promise(done => { reso
 
 function setup(t) {
   const dom = new JSDOM('<div id="root"></div>', { url: 'https://example.test', pretendToBeVisual: true });
-  const globals = ['window', 'document', 'HTMLElement', 'CustomEvent', 'localStorage', 'IS_REACT_ACT_ENVIRONMENT', 'IntersectionObserver'];
+  const globals = ['window', 'document', 'HTMLElement', 'CustomEvent', 'localStorage', 'IS_REACT_ACT_ENVIRONMENT', 'IntersectionObserver', 'ResizeObserver'];
   const previous = new Map(globals.map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
   for (const key of globals) Object.defineProperty(globalThis, key, { value: key === 'IS_REACT_ACT_ENVIRONMENT' ? true : dom.window[key], writable: true, configurable: true });
   dom.window.HTMLElement.prototype.scrollTo = () => {};
@@ -46,6 +46,10 @@ function setup(t) {
     constructor(callback) { this.callback = callback; }
     observe() { observers.add(this); }
     disconnect() { observers.delete(this); }
+  };
+  globalThis.ResizeObserver = class {
+    observe() {}
+    disconnect() {}
   };
   const { createRoot } = require('react-dom/client');
   const root = createRoot(document.getElementById('root'));

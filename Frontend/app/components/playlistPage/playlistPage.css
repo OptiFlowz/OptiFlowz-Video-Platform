@@ -78,3 +78,8 @@ main.playlistDetailsPage .playlistHeaderLoader .playlistHeroCover { min-height: 
 @media (prefers-reduced-motion: reduce) {
     main.playlistDetailsPage .playlistHero .buttonHolder button { transition: none; }
 }
+
+@media (max-width: 650px) {
+    main.playlistDetailsPage { padding-top: 73px; }
+    main.playlistDetailsPage .playlistHero { width: calc(100% + 40px); margin-inline: -20px; border-radius: 0; }
+}

@@ -177,7 +177,7 @@ function SearchResults({ context }: { context: SearchContext }) {
           <SearchIcon name="search" />
           <label className={styles.srOnly} htmlFor="library-search">{t("searchAria")}</label>
           <input id="library-search" type="search" value={input} onChange={(event) => setInput(event.target.value)} placeholder={t("searchLibraryPlaceholder")} autoComplete="off" />
-          <button type="submit" disabled={!input.trim()}>{t("search")}<SearchIcon name="search" /></button>
+          <button type="submit" disabled={!input.trim()} aria-label={t("search")}><SearchIcon name="search" /><span>{t("search")}</span></button>
         </form>
         </div>
       </section>
@@ -198,6 +198,7 @@ function SearchResults({ context }: { context: SearchContext }) {
               onChange={(value) => { setSort(value); }}
               options={[{ value: "relevance", label: t("searchSortRelevance") }, { value: "date", label: t("searchSortNewest") }, { value: "views", label: t("searchSortViews") }]}
               ariaLabel={t("searchSortBy")}
+              rootClassName={styles.sortControl}
               triggerClassName={styles.sortSelect}
             /></div> : null}
         </div>
