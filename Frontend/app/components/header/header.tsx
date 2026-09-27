@@ -3,7 +3,8 @@ import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
 import { memo, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Link, useLocation, useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
+import { usePathname } from "next/navigation";
 import {
     ChannelMenuSVG, CloseSVG, EditModeSVG, LanguageMenuSVG, LogOutSVG, MenuSVG,
     PlatformMenuSVG, SearchSVGWhite, UserSVG, MicrophoneSVG,
@@ -25,7 +26,7 @@ function Header({ onMenuToggle, menuExpanded = false }: HeaderProps){
     const [accountMenuOpen, setAccountMenuOpen] = useState(false);
     const [accountMenuPosition, setAccountMenuPosition] = useState({ top: 0, right: 0 });
     const navigate = useNavigate();
-    const { pathname } = useLocation();
+    const pathname = usePathname();
     const {searchValue} = useParams();
     const { videoId } = useParams();
     const idToEdit = videoId || "";
