@@ -1,3 +1,5 @@
+import LiveWatch from '../live/LiveWatch';
+import { recordingReady } from '../live/api';
 import { useParams, useLocation, useNavigate } from "react-router";
 import PlayPageSkeleton from "./PlayPageSkeleton";
 import PlayerCollection from "./playerCollection/playerCollection";
@@ -152,9 +154,10 @@ function PlayPage(){
     }, [token]);
 
     const validVideoId = VIDEO_ID_PATTERN.test(videoId ?? "");
-    const { data, isFetchedAfterMount, isLoading, isError, error, refetch } = useQuery({
+    const { data, isFetchedAfterMount, isLoading, isError, error, refetch } = useQuery<VideoT | null>({
         queryKey: ["video", videoId],
         enabled: validVideoId,
+        refetchInterval: query => query.state.data?.kind === 'live' && !recordingReady(query.state.data) ? 10000 : false,
         staleTime: 4 * 60 * 1000,
         refetchOnMount: "always",
         refetchOnWindowFocus: false,
@@ -169,6 +172,9 @@ function PlayPage(){
                 options: { method: "GET", headers: myHeaders, signal },
             }),
     });
+    useEffect(() => {
+        if (data?.kind === 'live') void queryClient.invalidateQueries({ queryKey: ['video-playback', videoId] });
+    }, [queryClient, videoId, data?.kind, data?.stream_type, data?.playback_available]);
     const videoData = isFetchedAfterMount && !isError ? data ?? undefined : undefined;
     const isVideoLoading = validVideoId && !isError && (isLoading || !isFetchedAfterMount);
     const videoStatus = (error as { status?: number } | null)?.status;
@@ -302,6 +308,7 @@ function PlayPage(){
     }
 
     if (isVideoLoading) return <PlayPageSkeleton />;
+    if (videoData?.kind === 'live' && !recordingReady(videoData)) return <LiveWatch key={videoData.id} video={videoData} similar={resolvedSimilarData} loadingSimilar={isLoadingSimilar} />;
 
     return <>
         <main className={`play ${isTheater ? "theater pt-23!" : ""} px-0 py-7.5`}>

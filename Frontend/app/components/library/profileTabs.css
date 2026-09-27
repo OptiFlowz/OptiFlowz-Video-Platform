@@ -22,7 +22,8 @@ main .profileTabs button:hover {
     background: var(--background3);
     color: var(--text1);
 }
-main .profileTabs button[aria-selected="true"] {
+main .profileTabs button[aria-selected="true"],
+main .profileTabs button[aria-pressed="true"] {
     background: var(--accentBlue3);
     color: var(--borderWhite);
 }

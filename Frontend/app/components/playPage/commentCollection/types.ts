@@ -8,6 +8,7 @@ export type CommentTreeNode = VideoCommentT & {
 };
 
 export type CommentsSectionProps = ({ videoId: VideoT["id"]; postId?: never } | { postId: string; videoId?: never }) & {
+  refreshInterval?: number;
   variant?: "inline" | "drawer";
   onClose?: () => void;
 };

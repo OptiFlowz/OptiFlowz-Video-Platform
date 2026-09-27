@@ -16,6 +16,8 @@
 }
 .appFrameCompact .appFrameContent { margin-inline-start: 0; }
 .appFrameContent > main { width: calc(100% - 40px); flex: 1; }
+.appFrameContent > footer { width: calc(100% - 40px); max-width: var(--contentWidth); }
+.appFrameContent > footer > div { width: 100%; max-width: 100%; box-sizing: border-box; }
 
 header[data-app-header].appHeader {
     position: fixed;

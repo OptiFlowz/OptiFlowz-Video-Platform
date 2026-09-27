@@ -497,3 +497,5 @@ export const CupOutlineSVG = (
         <path d="M7 3h10v6a5 5 0 0 1-10 0V3ZM7 5H4v3a4 4 0 0 0 4 4M17 5h3v3a4 4 0 0 1-4 4M12 14v4M9 18h6l1 3H8l1-3Z" />
     </svg>
 );
+
+export const LiveSVG = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="2" stroke="currentColor" strokeWidth="1"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4m8.4-8.4a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/></svg>;

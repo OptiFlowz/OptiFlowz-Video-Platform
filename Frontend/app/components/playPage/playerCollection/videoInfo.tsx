@@ -1,3 +1,4 @@
+import { recordingReady } from '../../live/api';
 import { useTranscriptAvailable } from "./transcript";
 import DefaultThumbnail from "../../../../assets/DefaultThumbnail.webp";
 import { useAuthorization } from "~/authorization/authorization";
@@ -74,6 +75,8 @@ function VideoInfo({
 }) {
     const { t } = useI18n();
     const { can } = useAuthorization();
+    const canReact = can(props?.kind === 'live' ? P.liveReact : P.videosReact);
+    const ready = !!props && recordingReady(props);
     const location = useLocation();
     const hasTranscript = useTranscriptAvailable(props?.id);
 
@@ -155,7 +158,7 @@ function VideoInfo({
     };
 
     const toggleLike = async () => {
-        if (!can(P.videosReact) || isReacting || !props) return;
+        if (!canReact || isReacting || !props) return;
         setIsReacting(true);
         setLikeAnimation(true);
         setTimeout(() => setLikeAnimation(false), 300);
@@ -188,7 +191,7 @@ function VideoInfo({
     };
 
     const toggleDislike = async () => {
-        if (!can(P.videosReact) || isReacting || !props) return;
+        if (!canReact || isReacting || !props) return;
         setIsReacting(true);
         setDislikeAnimation(true);
         setTimeout(() => setDislikeAnimation(false), 300);
@@ -287,14 +290,14 @@ function VideoInfo({
             <span className="videoTitleHolder flex items-start justify-between">
                 <span>
                     <h2 className="text-xl font-medium max-[500px]:text-lg">{props?.title}</h2>
-                    <p className="weakText text-sm max-[500px]:text-xs">{t("publishedOn")} {formatDate(props?.created_at)} • {formatViews(props?.view.counted ? props?.view_count + 1 : props?.view_count)}</p>
+                    <p className="weakText text-sm max-[500px]:text-xs">{t("publishedOn")} {formatDate(props.created_at)} • {formatViews(props.view?.counted ? props.view_count + 1 : props.view_count)}</p>
                 </span>
 
                 <span className="functional max-[800px]:overflow-y-scroll max-[800px]:w-full no-scrollbar shrink-0 gap-2 flex items-center ml-3 max-[800px]:ml-0">
                     <div className="flex bg-(--background2) rounded-full">
                         <button 
                             className={`${userReaction == 1 ? "bookmarked" : ""} ${likeAnimation ? "like-animate" : ""} bg-transparent! rounded-r-none! border-r! border-r-(--border1)! hover:bg-(--background2)! pl-3.5!`} 
-                            onClick={toggleLike} disabled={!can(P.videosReact) || isReacting}
+                            onClick={toggleLike} disabled={!canReact || isReacting}
                             title={t("likeVideo")}
                         >
                             {LikeSVG}
@@ -302,7 +305,7 @@ function VideoInfo({
                         </button>
                         <button 
                             className={`${userReaction == -1 ? "bookmarked" : ""} ${dislikeAnimation ? "dislike-animate" : ""} bg-transparent! rounded-l-none! hover:bg-(--background2)! pr-3.5!`} 
-                            onClick={toggleDislike} disabled={!can(P.videosReact) || isReacting}
+                            onClick={toggleDislike} disabled={!canReact || isReacting}
                             title={t("dislikeVideo")}
                         >
                             {DislikeSVG}
@@ -314,10 +317,10 @@ function VideoInfo({
                         <p>{t("share")}</p>
                     </button>
 
-                    <button className={`aiButton ${aiButtonAnimation ? "ai-bubbly-animate" : ""}`} onClick={askAIAQuestion} title={t("askAI")}>
+                    {ready && <button className={`aiButton ${aiButtonAnimation ? "ai-bubbly-animate" : ""}`} onClick={askAIAQuestion} title={t("askAI")}>
                         <span className="aiIconWrap">{AIButtonSVG}</span>
                         <p>{t("askAI")}</p>
-                    </button>
+                    </button>}
 
                     <button className="p-1.75!" onClick={viewVideoCopyrights} title={t("viewCopyrightInfo")}>
                         {InfoSVG}
@@ -400,7 +403,7 @@ function VideoInfo({
                     ) : null}
                 </div>
 
-                {props && (
+                {props && ready && (
                     <div className="videoPanelActions">
                         {props.chapters?.length > 0 && (
                         <button className="viewVideoChapters noHover"

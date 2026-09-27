@@ -81,7 +81,7 @@ export type VideoT = VideoMedia & {
     view_count: number,
     people: PersonT[],
     playlists: VideoPlaylistT[],
-    view: ViewT,
+    view: ViewT | null,
     user_reaction: number,
     visibility: "public" | "private"
 }

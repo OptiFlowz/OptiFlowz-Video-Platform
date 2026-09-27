@@ -281,6 +281,12 @@ function EditVideoPage() {
     refetchOnMount: "always",
   });
 
+  useEffect(() => {
+    if (videoData?.kind === 'live' && !(videoData.livestream?.status === 'ended' && videoData.livestream.recording_finalized_at)) {
+      navigate(`/live/${videoId}/studio`, { replace: true });
+    }
+  }, [videoData?.kind, videoData?.livestream?.status, videoData?.livestream?.recording_finalized_at, videoId]);
+
   // Populate form with video data
   useEffect(() => {
     if (videoData) {
