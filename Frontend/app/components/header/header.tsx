@@ -3,10 +3,10 @@ import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
 import { memo, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useLocation, useNavigate, useParams } from "react-router";
 import {
     ChannelMenuSVG, CloseSVG, EditModeSVG, LanguageMenuSVG, LogOutSVG, MenuSVG,
-    PlatformMenuSVG, SearchSVGWhite, UserSVG,
+    PlatformMenuSVG, SearchSVGWhite, UserSVG, MicrophoneSVG,
 } from "~/constants";
 import DefaultProfile from "../../../assets/DefaultProfile.webp";
 import { getToken, getStoredUser } from "~/functions";
@@ -16,6 +16,7 @@ import { useI18n } from "~/i18n";
 import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LOGO, BRAND_NAME } from "~/changeables";
 import LanguageSelect from "~/components/languageSelect/languageSelect";
+import { useVoiceSearch } from "~/hooks/useVoiceSearch";
 
 type HeaderProps = { onMenuToggle?: () => void; menuExpanded?: boolean };
 
@@ -24,6 +25,7 @@ function Header({ onMenuToggle, menuExpanded = false }: HeaderProps){
     const [accountMenuOpen, setAccountMenuOpen] = useState(false);
     const [accountMenuPosition, setAccountMenuPosition] = useState({ top: 0, right: 0 });
     const navigate = useNavigate();
+    const { pathname } = useLocation();
     const {searchValue} = useParams();
     const { videoId } = useParams();
     const idToEdit = videoId || "";
@@ -68,6 +70,11 @@ function Header({ onMenuToggle, menuExpanded = false }: HeaderProps){
         };
     }, [mobileSearchOpen]);
     const [searchTerm, setSearchTerm] = useState(searchValue ?? "");
+    const voice = useVoiceSearch(locale, setSearchTerm);
+    useEffect(() => { voice.cancel(); }, [pathname, voice.cancel]);
+    useEffect(() => {
+        if (!mobileSearchOpen && window.matchMedia("(max-width: 650px)").matches) voice.cancel();
+    }, [mobileSearchOpen, voice.cancel]);
     useEffect(() => setSearchTerm(searchValue ?? ""), [searchValue]);
     const accountMenuRef = useRef<HTMLDivElement>(null);
     const accountDropdownRef = useRef<HTMLDivElement>(null);
@@ -184,6 +191,7 @@ function Header({ onMenuToggle, menuExpanded = false }: HeaderProps){
 
     const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        voice.cancel();
         const term = searchTerm.trim();
         if (term) setMobileSearchOpen(false);
         if (term && term !== searchValue) navigate(`/search/${encodeURIComponent(term)}`);
@@ -217,10 +225,20 @@ function Header({ onMenuToggle, menuExpanded = false }: HeaderProps){
                 </Link>
 
                 </div>
-                <form id="header-search" ref={searchFormRef} className={`appHeaderSearch${mobileSearchOpen ? " isMobileOpen" : ""}`} role="search" onSubmit={handleSearch}>
-                    <input ref={searchInputRef} type="search" value={searchTerm} onChange={event => setSearchTerm(event.target.value)}
+                <form id="header-search" ref={searchFormRef} className={`appHeaderSearch${mobileSearchOpen ? " isMobileOpen" : ""}`} role="search" onSubmit={handleSearch}
+                    onKeyDown={event => { if (event.key === "Escape") voice.cancel(); }}>
+                    <div className="appHeaderSearchField">
+                    <input ref={searchInputRef} type="search" value={searchTerm} onChange={event => { voice.cancel(); setSearchTerm(event.target.value); }}
                         placeholder={t("searchPlaceholder")} aria-label={t("searchAria")} spellCheck={false} />
                     <button type="submit" aria-label={t("searchAria")}>{SearchSVGWhite}</button>
+                    </div>
+                    <button type="button" className={`appVoiceSearch${voice.active ? " isListening" : ""}`}
+                        aria-label={t(voice.active ? "voiceSearchStop" : "voiceSearch")} title={t(voice.active ? "voiceSearchStop" : "voiceSearch")}
+                        aria-pressed={voice.active} onClick={voice.toggle}>{MicrophoneSVG}</button>
+                    {voice.message && <div className="appVoiceSearchStatus">
+                        <span role="status">{t(voice.message)}</span>
+                        <button type="button" aria-label={t("close")} onClick={voice.cancel}>{CloseSVG}</button>
+                    </div>}
                 </form>
 
                 <div className={`appHeaderActions flex ${hasManagementAccess ? "gap-3" : "gap-1"} max-[650px]:gap-2 max-[500px]:gap-0.5 items-center`}>

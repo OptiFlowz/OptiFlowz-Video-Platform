@@ -201,9 +201,9 @@ function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, vi
                 </span>
                 <span className="tagsHolder">
                     <span className="tags">
-                        <button className="whiteTag" onClick={changeAutoPlay} title={t("toggleAutoplay")}>{AutoPlaySVG}&nbsp;{isAutoPlayOn ? t("on") : t("off")}</button>
-                        <button className={`${isSaved ? "saved" : ""} clickable`} onClick={toggleSave} disabled={!can(P.playlistsSave) || !data || saving} aria-busy={saving}>{BookmarkSVG}&nbsp;{isSaved ? t("saved") : t("save")}</button>
-                        <button onClick={e => sharePlaylistLink(e)} title={t("sharePlaylist")}>{ShareSVG}&nbsp;{t("share")}</button>
+                        <button className={isAutoPlayOn ? "whiteTag" : ""} aria-pressed={isAutoPlayOn} onClick={changeAutoPlay} title={t("toggleAutoplay")}>{AutoPlaySVG}{isAutoPlayOn ? t("on") : t("off")}</button>
+                        <button className={`${isSaved ? "saved" : ""} clickable`} onClick={toggleSave} disabled={!can(P.playlistsSave) || !data || saving} aria-pressed={isSaved} aria-busy={saving}>{BookmarkSVG}{isSaved ? t("saved") : t("save")}</button>
+                        <button onClick={e => sharePlaylistLink(e)} title={t("sharePlaylist")}>{ShareSVG}{t("share")}</button>
                     </span>
                 </span>
                 {saveError && <p role="alert">{t("somethingWentWrong")}</p>}

@@ -238,6 +238,11 @@ export const LockSVG = <svg width="16" height="16" viewBox="0 0 16 16" fill="non
 <path d="M5.33333 7V5.66667C5.33333 4.19391 6.52724 3 8 3C9.47276 3 10.6667 4.19391 10.6667 5.66667V7M4.66667 13H11.3333C12.0697 13 12.6667 12.403 12.6667 11.6667V8.33333C12.6667 7.59695 12.0697 7 11.3333 7H4.66667C3.93029 7 3.33333 7.59695 3.33333 8.33333V11.6667C3.33333 12.403 3.93029 13 4.66667 13Z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
 </svg>;
 
+export const MicrophoneSVG = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <rect x="9" y="2" width="6" height="12" rx="3" stroke="currentColor" strokeWidth="1.8" />
+  <path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M9 22h6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+</svg>;
+
 export const PlaySVG = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M7.54553 13.4287V10.5713C7.54553 8.74427 7.54553 7.83075 7.92908 7.30433C8.2636 6.84521 8.77757 6.54999 9.34271 6.49239C9.99067 6.42633 10.7798 6.88663 12.3579 7.80722L14.8071 9.23591C16.3642 10.1442 17.1428 10.5984 17.4048 11.1898C17.6334 11.7057 17.6334 12.2943 17.4048 12.8102C17.1428 13.4016 16.3642 13.8558 14.8071 14.7641L12.3579 16.1928L12.3579 16.1928C10.7798 17.1134 9.99067 17.5737 9.34271 17.5076C8.77757 17.45 8.2636 17.1548 7.92908 16.6957C7.54553 16.1693 7.54553 15.2557 7.54553 13.4287Z" fill="var(--accentBlue)"/>
 </svg>;

@@ -1369,5 +1369,16 @@
   "liveReplay": "Snimak",
   "liveEditRecording": "Uredi snimak",
   "liveEdit": "Izmeni prenos uživo",
-  "liveDeleteBlocked": "Završi prenos i sačekaj završetak obrade ili sinhronizacije pristupa pre brisanja."
+  "liveDeleteBlocked": "Završi prenos i sačekaj završetak obrade ili sinhronizacije pristupa pre brisanja.",
+  "voiceSearch": "Glasovna pretraga",
+  "voiceSearchStop": "Zaustavi diktiranje",
+  "voiceSearchStarting": "Pokretanje mikrofona…",
+  "voiceSearchListening": "Slušam… Izgovorite šta tražite.",
+  "voiceSearchReady": "Spremno. Proverite tekst i pokrenite pretragu.",
+  "voiceSearchUnavailable": "Glasovna pretraga nije dostupna u ovom pregledaču. Možete uneti tekst ručno.",
+  "voiceSearchPermission": "Pristup mikrofonu je odbijen. Dozvolite ga u podešavanjima pregledača i pokušajte ponovo.",
+  "voiceSearchNoSpeech": "Govor nije prepoznat. Pritisnite mikrofon da pokušate ponovo.",
+  "voiceSearchNoMicrophone": "Mikrofon nije dostupan. Proverite mikrofon i pokušajte ponovo.",
+  "voiceSearchLanguage": "Glasovna pretraga ne podržava izabrani jezik u ovom pregledaču.",
+  "voiceSearchError": "Diktiranje nije uspelo. Proverite vezu i pokušajte ponovo."
 }

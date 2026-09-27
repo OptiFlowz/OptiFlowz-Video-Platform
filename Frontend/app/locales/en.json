@@ -1383,5 +1383,16 @@
   "liveReplay": "Replay",
   "liveEditRecording": "Edit recording",
   "liveEdit": "Edit livestream",
-  "liveDeleteBlocked": "End the broadcast and wait for finalization or playback synchronization before deleting."
+  "liveDeleteBlocked": "End the broadcast and wait for finalization or playback synchronization before deleting.",
+  "voiceSearch": "Search by voice",
+  "voiceSearchStop": "Stop dictation",
+  "voiceSearchStarting": "Starting microphone…",
+  "voiceSearchListening": "Listening… Speak your search.",
+  "voiceSearchReady": "Ready. Review your text and press Search.",
+  "voiceSearchUnavailable": "Voice search is not available in this browser. You can still type your search.",
+  "voiceSearchPermission": "Microphone access was denied. Allow it in your browser settings and try again.",
+  "voiceSearchNoSpeech": "No speech detected. Tap the microphone to try again.",
+  "voiceSearchNoMicrophone": "No microphone is available. Check your microphone and try again.",
+  "voiceSearchLanguage": "Voice search does not support the selected language in this browser.",
+  "voiceSearchError": "Dictation could not connect. Check your connection and try again."
 }

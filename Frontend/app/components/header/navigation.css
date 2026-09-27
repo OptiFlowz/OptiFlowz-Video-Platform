@@ -59,15 +59,23 @@ header[data-app-header].appHeader > .appHeaderInner {
 .appMenuToggle.appMobileSearchToggle svg { width: 20px; height: 20px; }
 .appMenuToggle svg path { stroke: currentColor; }
 .appHeaderSearch {
+    position: relative;
     display: flex;
+    gap: 12px;
     height: 42px;
     width: 100%;
+    min-width: 0;
+}
+.appHeaderSearchField {
+    display: flex;
+    flex: 1;
+    min-width: 0;
     overflow: hidden;
     border: 1px solid var(--border1);
     border-radius: 999px;
     background: var(--background1);
 }
-.appHeaderSearch:focus-within { border-color: var(--accentBlue2); box-shadow: 0 0 0 1px var(--accentBlue2); }
+.appHeaderSearchField:focus-within { border-color: var(--accentBlue2); box-shadow: 0 0 0 1px var(--accentBlue2); }
 .appHeaderSearch input {
     flex: 1;
     min-width: 0;
@@ -78,7 +86,7 @@ header[data-app-header].appHeader > .appHeaderInner {
     font-size: 1rem;
 }
 .appHeaderSearch input::placeholder { color: var(--text2); }
-.appHeaderSearch button {
+.appHeaderSearchField button {
     display: grid;
     place-items: center;
     width: 56px;
@@ -88,9 +96,45 @@ header[data-app-header].appHeader > .appHeaderInner {
     color: var(--text1);
     cursor: pointer;
 }
-.appHeaderSearch button:hover { background: var(--background3); }
-.appHeaderSearch button svg { width: 18px; height: 18px; }
-.appHeaderSearch button svg path { stroke: currentColor; }
+.appHeaderSearchField button:hover { background: var(--background3); }
+.appHeaderSearchField button svg { width: 18px; height: 18px; }
+.appHeaderSearchField button svg path { stroke: currentColor; }
+.appHeaderSearch .appVoiceSearch {
+    display: grid;
+    place-items: center;
+    flex: 0 0 42px;
+    width: 42px;
+    height: 42px;
+    align-self: center;
+    border: 1px solid var(--border1);
+    border-radius: 50%;
+    background: var(--background2);
+    color: var(--text1);
+    cursor: pointer;
+    transition: background-color 180ms ease, color 180ms ease;
+}
+.appHeaderSearch .appVoiceSearch:hover { background: var(--background3); }
+.appHeaderSearch .appVoiceSearch.isListening { background: var(--accentRed3); color: var(--borderWhite); }
+.appVoiceSearch svg { width: 21px; height: 21px; }
+.appVoiceSearchStatus {
+    position: absolute;
+    inset: calc(100% + 10px) 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: var(--background2);
+    color: var(--text1);
+    box-shadow: 0 8px 24px var(--headerShadowColor);
+    font-size: .85rem;
+    line-height: 1.5;
+}
+.appVoiceSearchStatus span { flex: 1; }
+.appVoiceSearchStatus button { display: grid; place-items: center; flex: 0 0 30px; width: 30px; height: 30px; border: 0; border-radius: 50%; background: var(--background2); color: var(--text2); cursor: pointer; }
+.appVoiceSearchStatus button:hover { background: var(--background3); color: var(--text1); }
+.appVoiceSearchStatus svg { width: 18px; height: 18px; }
+.appVoiceSearchStatus svg [stroke] { stroke: currentColor; }
 .appHeaderActions { justify-self: end; }
 .appHeaderActions .adminAvatarTrigger > p { display: none; }
 
@@ -232,7 +276,7 @@ header[data-app-header].appHeader > .appHeaderInner {
             visibility 0s;
     }
     .appHeaderSearch input { padding-inline: 16px; font-size: 16px; }
-    .appHeaderSearch button { width: 48px; }
+    .appHeaderSearchField button { width: 48px; }
 }
 @media (max-width: 360px) {
     .appHeaderBrand { gap: 4px; }
