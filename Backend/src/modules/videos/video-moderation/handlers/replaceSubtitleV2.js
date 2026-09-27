@@ -1,4 +1,3 @@
-import { recordingReadySql } from '../../../../common/videoEligibility.js';
 import { reconcileTracks } from '../../../video-indexing/mux-source.service.js';
 import { deleteIndexedTrack } from '../../../video-indexing/indexing.service.js';
 import { readPool } from '../../../../database/index.js';
@@ -60,7 +59,7 @@ export async function replaceSubtitleV2Internal({
 
   try {
     const { rows } = await readPool.query(
-      `SELECT mux_asset_id FROM public.videos WHERE id = $1 AND ${recordingReadySql("videos")} LIMIT 1`,
+      `SELECT mux_asset_id FROM public.videos WHERE id = $1 LIMIT 1`,
       [videoId],
     );
     const assetId = rows[0]?.mux_asset_id;

@@ -12,38 +12,35 @@ import { useI18n } from "~/i18n";
 import styles from "./editorHeader.module.css";
 
 type Props = {
-  kind: "video" | "playlist" | "live";
+  kind: "video" | "playlist";
   id: string;
   resourceTitle: string;
   heading: string;
   children: ReactNode;
   disabled?: boolean;
-  ownerId?: string;
-  disabledReason?: string;
 };
 
-export function EditorHeader({ kind, id, resourceTitle, heading, children, disabled, ownerId, disabledReason }: Props) {
+export function EditorHeader({ kind, id, resourceTitle, heading, children, disabled }: Props) {
   const { t } = useI18n();
-  const { canAny, canOwn } = useAuthorization();
+  const { canAny } = useAuthorization();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { confirm, dialogProps } = useConfirm();
   const pending = useRef(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState(false);
-  const isLive = kind === "live";
-  const isVideo = kind !== "playlist";
-  const canDelete = isLive ? !!id && canOwn(P.liveDeleteOwn, P.liveDeleteAny, ownerId) : canAny(isVideo
+  const isVideo = kind === "video";
+  const canDelete = canAny(isVideo
     ? [P.videosDeleteOwn, P.videosDeleteAny]
     : [P.playlistsDeleteOwn, P.playlistsDeleteAny]);
-  const listKey = isLive ? "livestreams" : isVideo ? "my-videos" : "my-playlists";
+  const listKey = isVideo ? "my-videos" : "my-playlists";
 
   const handleDelete = async () => {
     if (!canDelete || disabled || pending.current) return;
     pending.current = true;
     try {
       const confirmed = await confirm({
-        title: isLive ? `${t('liveDelete')}: ${resourceTitle}` : t(isVideo ? "adminDeleteVideoTitle" : "adminDeletePlaylistTitle", { title: resourceTitle }),
+        title: t(isVideo ? "adminDeleteVideoTitle" : "adminDeletePlaylistTitle", { title: resourceTitle }),
         message: t("adminActionCannotBeUndone"),
         yesText: t("adminDelete"),
         noText: t("adminCancel"),
@@ -69,7 +66,7 @@ export function EditorHeader({ kind, id, resourceTitle, heading, children, disab
       if (!response?.success) throw new Error("Deletion failed");
 
       void queryClient.invalidateQueries({ queryKey: [listKey] });
-      navigate(isLive ? '/my-livestreams' : `/${listKey}`, { replace: true });
+      navigate(`/${listKey}`, { replace: true });
     } catch {
       setError(true);
     } finally {
@@ -88,11 +85,10 @@ export function EditorHeader({ kind, id, resourceTitle, heading, children, disab
             className={styles.deleteButton}
             onClick={handleDelete}
             disabled={disabled || isDeleting || dialogProps.open}
-            title={disabled ? disabledReason : undefined}
             aria-busy={isDeleting}
           >
             {DeleteSVG}
-            {t(isDeleting ? "deleting" : isLive ? "liveDelete" : isVideo ? "adminDeleteVideo" : "adminDeletePlaylist")}
+            {t(isDeleting ? "deleting" : isVideo ? "adminDeleteVideo" : "adminDeletePlaylist")}
           </button>
         )}
       </div>

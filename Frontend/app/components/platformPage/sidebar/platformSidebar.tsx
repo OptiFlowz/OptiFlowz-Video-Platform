@@ -1,11 +1,11 @@
 import "~/styles/admin.css";
 import "~/styles/analytics.css";
 import { useAuthorization } from "~/authorization/authorization";
-import { memo } from "react";
+import { memo, useRef } from "react";
 import { NavLink, useLocation } from "react-router";
 import { AnalyticsSVG, PeopleSVG, SettingsSVG } from "~/constants";
 import { BRAND_NAME, LOGO } from "~/changeables";
-import "~/components/myVideosPage/sidebar/sidebar.css";
+import { useConstrainedSticky } from "~/components/shared/useConstrainedSticky";
 import { useI18n } from "~/i18n";
 import backgroundImage from "../../../../assets/LoginBackground.webp";
 
@@ -13,10 +13,20 @@ function PlatformSidebar() {
   const { t } = useI18n();
     const { canAccess } = useAuthorization();
   const { pathname } = useLocation();
+  const asideRef = useRef<HTMLElement | null>(null);
+  const stickyRef = useRef<HTMLDivElement | null>(null);
+  const stickyStyle = useConstrainedSticky({
+    containerRef: asideRef,
+    stickyRef,
+    lockHeightToContainer: true,
+    disabledBelow: 800,
+    topOffset: 89,
+    bottomGap: 16,
+  });
 
   return (
-    <aside className="videoAside platformAside adminSidebarDock">
-      <div className="videoAsideSticky">
+    <aside ref={asideRef} className="videoAside platformAside">
+      <div ref={stickyRef} className="videoAsideSticky" style={stickyStyle}>
         <div className="background">
           <img className="w-full h-full" src={backgroundImage} alt="" />
         </div>

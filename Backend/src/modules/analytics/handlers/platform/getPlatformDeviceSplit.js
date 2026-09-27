@@ -1,4 +1,3 @@
-import { analyticsSource } from '../../helpers/contentFilter.js';
 import { readPool } from '../../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../../common/input.validation.js';
@@ -43,7 +42,7 @@ export async function getPlatformDeviceSplitInternal(object, userId = null) {
               THEN 'desktop'
             ELSE 'other'
           END AS device_type
-        FROM ${analyticsSource('video_views', object.kind)} vv
+        FROM video_views vv
         WHERE true${filter.sql}
       )
       SELECT

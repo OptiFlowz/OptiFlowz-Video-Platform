@@ -37,7 +37,7 @@ export async function getPersonalizedRecommendationsVectorInternal(userId, limit
       FROM video_reactions vr
       JOIN videos v ON v.id = vr.video_id
       WHERE vr.user_id = $1 AND vr.reaction = 1
-        AND v.kind = 'upload' AND v.mux_status = 'ready'
+        AND v.mux_status = 'ready'
         AND ((v.visibility = 'public' AND v.published_at <= NOW()) OR (v.visibility IN ('public', 'private') AND v.uploaded_by = $1))
       ORDER BY vr.created_at DESC NULLS LAST, vr.video_id
       LIMIT $4
@@ -47,7 +47,7 @@ export async function getPersonalizedRecommendationsVectorInternal(userId, limit
       JOIN videos v ON v.id = wp.video_id
       WHERE wp.user_id = $1
         AND (wp.progress_seconds > 0 OR wp.percentage_watched > 0)
-        AND v.kind = 'upload' AND v.mux_status = 'ready'
+        AND v.mux_status = 'ready'
         AND ((v.visibility = 'public' AND v.published_at <= NOW()) OR (v.visibility IN ('public', 'private') AND v.uploaded_by = $1))
         AND NOT EXISTS (
           SELECT 1 FROM video_reactions vr

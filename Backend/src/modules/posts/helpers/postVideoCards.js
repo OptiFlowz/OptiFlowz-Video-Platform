@@ -1,4 +1,3 @@
-import { pageReadySql } from '../../../common/videoEligibility.js';
 import { z } from 'zod';
 import { writePool } from '../../../database/index.js';
 import { buildVideoCardSelect, buildVideoCardJoins } from '../../../database/sql/videoCardFragments.js';
@@ -20,14 +19,14 @@ export async function withPostVideoCards(posts, viewerId = null) {
   if (videoIds.length) {
     const includeWatchProgress = viewerId !== null;
     const { rows } = await writePool.query(
-      `${buildVideoCardSelect({ includeWatchProgress, includeKind: true })}
+      `${buildVideoCardSelect({ includeWatchProgress })}
        ${buildVideoCardJoins({ includeWatchProgress, watchProgressUserParam: '$2' })}
-       WHERE v.id = ANY($1::uuid[]) AND ${pageReadySql()}
+       WHERE v.id = ANY($1::uuid[]) AND v.mux_status = 'ready'
          AND ((v.visibility = 'public' AND v.published_at <= NOW())
            OR (v.visibility IN ('public', 'private') AND v.uploaded_by = $2::uuid))`,
       [videoIds, viewerId],
     );
-    cards = await withVideoCardMedia(rows, viewerId, { includeLivestreams: true });
+    cards = await withVideoCardMedia(rows, viewerId);
   }
   const cardsById = new Map(cards.map(card => [card.id, card]));
   return posts.map(post => {

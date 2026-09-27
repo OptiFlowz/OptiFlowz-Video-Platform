@@ -1,4 +1,3 @@
-import { requireRecording } from '../../../common/videoAccess.js';
 import { writePool } from '../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
@@ -35,7 +34,6 @@ export async function createQuizAccessRuleInternal(object, userId) {
     required_seconds,
     is_active
   } = prerequisites(object);
-  if (video_id) await requireRecording(writePool, video_id);
 
   // Build SQL query based on the rule type
   const queryParams = [quizId, rule_type, is_active];

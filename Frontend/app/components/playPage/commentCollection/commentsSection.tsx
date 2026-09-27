@@ -38,7 +38,7 @@ function ReplyLoadMore({ id, hasMore, fetching, error, onLoadMore }: {
   return <InfiniteScroll hasMore={hasMore} fetching={fetching} error={error} onLoadMore={loadMore} loadingLabel={t("loadingReplies")} />;
 }
 
-function ContentComments({ videoId, postId, variant = "inline", onClose, refreshInterval }: CommentsSectionProps) {
+function ContentComments({ videoId, postId, variant = "inline", onClose }: CommentsSectionProps) {
   const contentId = postId ?? videoId!;
   const kind = postId ? "post" : "video";
   const commentRoute = postId ? "api/post-comments" : "api/comments";
@@ -89,7 +89,6 @@ function ContentComments({ videoId, postId, variant = "inline", onClose, refresh
   const repliesKey = postId ? ["post-comment-replies", postId, token] as const : ["comment-replies", videoId] as const;
   const rootQuery = useInfiniteQuery({
     queryKey: commentsKey,
-    refetchInterval: refreshInterval ?? false,
     initialPageParam: 1,
     queryFn: ({ signal, pageParam }) => fetchComments(contentId, headers, pageParam, COMMENT_PAGE_SIZE, signal, kind),
     getNextPageParam: nextCommentPage,

@@ -36,7 +36,7 @@ export async function getPlaylistWithVideosInternal(playlistId, userId = null) {
       FROM public.playlist_items pi
       JOIN public.videos v ON v.id = pi.video_id
       WHERE pi.playlist_id = p.id
-        AND (v.kind = 'live' OR v.mux_status = 'ready')
+        AND v.mux_status = 'ready'
         AND v.visibility = 'public' AND v.published_at <= NOW()
     ) ic ON TRUE
 
@@ -44,7 +44,6 @@ export async function getPlaylistWithVideosInternal(playlistId, userId = null) {
       SELECT json_agg(
         json_build_object(
           'id', v.id,
-          'kind', v.kind,
           'title', v.title,
           'thumbnail_url', v.thumbnail_url,
           'duration_seconds', v.duration_seconds,
@@ -78,7 +77,7 @@ export async function getPlaylistWithVideosInternal(playlistId, userId = null) {
         ) p2
       ) ppl ON TRUE
       WHERE pi.playlist_id = p.id
-        AND (v.kind = 'live' OR v.mux_status = 'ready')
+        AND v.mux_status = 'ready'
         AND v.visibility = 'public' AND v.published_at <= NOW()
     ) vs ON TRUE
 
@@ -90,6 +89,6 @@ export async function getPlaylistWithVideosInternal(playlistId, userId = null) {
   const { rows } = await readPool.query(sql, params);
 
   if (!rows[0]) return null;
-  rows[0].videos = await withVideoCardMedia(rows[0].videos, userId, { includeLivestreams: true });
+  rows[0].videos = await withVideoCardMedia(rows[0].videos, userId);
   return (await withPlaylistCardMedia(rows, userId))[0];
 }

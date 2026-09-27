@@ -5,7 +5,6 @@ import playlistModerationRoutes from '../modules/playlists/playlist-moderation/p
 import reportRoutes from '../modules/reports/report.routes.js';
 import videoModerationRoutes from '../modules/videos/video-moderation/video-moderation.routes.js';
 import videoRoutes from '../modules/videos/video/video.routes.js';
-import livestreamRoutes from '../modules/livestreams/livestream.routes.js';
 import commentRoutes from '../modules/comments/comments.routes.js';
 import postCommentRoutes from '../modules/post-comments/post-comments.routes.js';
 import channelRoutes from '../modules/channels/channel.routes.js';
@@ -20,7 +19,6 @@ export function registerRoutes(app) {
   app.get('/health', (_req, res) => res.json({ ok: true }));
 
   app.use('/api/videos', videoRoutes);
-  app.use('/api/livestreams', livestreamRoutes);
   app.use('/api/video-moderation', videoModerationRoutes);
   app.use('/api/people', peopleRoutes);
   app.use('/api/playlists', playlistRoutes);

@@ -1,7 +1,5 @@
 import { normalizeIp, hashIp, getCountryAndCityFromIp } from '../../../../common/ip.js';
 import { writePool } from '../../../../database/index.js';
-import { requireVisibleVideo } from '../../../../common/videoAccess.js';
-import { HttpError } from '../../../../common/httpError.js';
 
 export async function incrementViewCountInternal(
   videoId,
@@ -9,13 +7,13 @@ export async function incrementViewCountInternal(
 ) {
   const rawIp = normalizeIp(ip);
 
+  // Lookup radi nad sirovim IP-jem, pre hashovanja
+  const { country, city, country_iso } = await getCountryAndCityFromIp(rawIp);
+
   const client = await writePool.connect();
 
   try {
     await client.query('BEGIN');
-    await requireVisibleVideo(client, videoId, userId, { playable: true });
-
-    const { country, city, country_iso } = await getCountryAndCityFromIp(rawIp);
 
     const hashedIp = hashIp(rawIp);
 
@@ -102,9 +100,6 @@ export async function incrementViewCountInternal(
     return { view_id, last_seq, counted: true };
   } catch (err) {
     await client.query('ROLLBACK');
-    // Playback/visibility can change between loading details and this primary
-    // check. That is an expected no-view result, not a tracking failure.
-    if (err instanceof HttpError && err.status === 404) return null;
     console.error('View count increment failed:', err);
     throw err; // da caller može da hendluje
   } finally {

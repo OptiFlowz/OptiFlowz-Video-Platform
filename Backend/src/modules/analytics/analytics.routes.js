@@ -36,7 +36,6 @@ router.get('/channel/watch-time-over-time', requireAuth, requireOwnChannelAnalyt
 router.get('/channel/average-engagement-per-video', requireAuth, requireOwnChannelAnalytics, analyticsController.getChannelAverageEngagementPerVideo);
 
 router.get('/:videoId/overview', requireAuth, requireVideoAnalytics, analyticsController.getOverviewVideoAnalytics);
-router.get('/:videoId/concurrent-viewers', requireAuth, requireVideoAnalytics, analyticsController.getConcurrentViewers);
 router.get('/:videoId/device-split', requireAuth, requireVideoAnalytics, analyticsController.getDeviceSplit);
 router.get('/:videoId/operating-system-split', requireAuth, requireVideoAnalytics, analyticsController.getOperatingSystemSplit);
 router.get('/:videoId/geographic-breakdown', requireAuth, requireVideoAnalytics, analyticsController.getGeographicBreakdown);

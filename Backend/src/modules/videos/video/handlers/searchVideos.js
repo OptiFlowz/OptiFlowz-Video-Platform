@@ -78,7 +78,7 @@ export async function searchVideosInternal(searchParams, userId = null) {
         WHERE vc.video_id = v.id
       ) p
     ) ppl ON TRUE
-    WHERE v.kind = 'upload' AND v.mux_status = 'ready' AND v.visibility = 'public'
+    WHERE v.mux_status = 'ready' AND v.visibility = 'public'
       AND v.published_at <= NOW()
   `;
 
@@ -162,7 +162,7 @@ export async function searchVideosInternal(searchParams, userId = null) {
   let countQuery = `
     SELECT COUNT(*) AS total
     FROM videos v
-    WHERE v.kind = 'upload' AND v.mux_status = 'ready' AND v.visibility = 'public'
+    WHERE v.mux_status = 'ready' AND v.visibility = 'public'
       AND v.published_at <= NOW()
   `;
 

@@ -1,4 +1,3 @@
-import { requireRecording } from '../../../common/videoAccess.js';
 import { writePool } from '../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
@@ -34,7 +33,6 @@ export async function updateQuizAccessRuleInternal(object, userId) {
     required_seconds,
     is_active
   } = prerequisites(object);
-  if (video_id) await requireRecording(writePool, video_id);
 
   const { rows: ruleRows } = await writePool.query(
     `SELECT quiz_id FROM quiz_access_rules WHERE id = $1 LIMIT 1;`,

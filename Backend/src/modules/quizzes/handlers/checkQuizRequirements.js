@@ -1,4 +1,3 @@
-import { recordingReadySql } from '../../../common/videoEligibility.js';
 import { readPool } from '../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
@@ -34,7 +33,6 @@ export async function checkQuizRequirementsInternal(object, userId = null) {
         SELECT
           BOOL_AND(
             CASE
-              WHEN NOT COALESCE(${recordingReadySql()}, false) THEN false
               WHEN qar.rule_type = 'video_watch_percentage' THEN
                 CASE
                   WHEN COALESCE(v.duration_seconds, 0) <= 0 THEN false
@@ -48,7 +46,7 @@ export async function checkQuizRequirementsInternal(object, userId = null) {
             END
           ) AS has_met_requirements
         FROM quiz_access_rules qar
-        LEFT JOIN videos v
+        JOIN videos v
           ON v.id = qar.video_id
         LEFT JOIN watch_progress wp
           ON wp.user_id = $2

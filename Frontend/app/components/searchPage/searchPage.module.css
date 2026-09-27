@@ -1,23 +1,23 @@
 .page {
-  padding-top: 97px;
+  padding-top: 73px;
   padding-bottom: 3rem;
   color: var(--text1);
 }
 .intro {
   position: relative;
   isolation: isolate;
-  width: 100%;
-  border-radius: 24px;
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
   overflow: hidden;
   background: var(--background2);
 }
 .introBackground { position: absolute; inset: 0; z-index: -1; }
 .introBackground img { width: 100%; height: 100%; object-fit: cover; }
 .introContent {
-  width: 100%;
-  min-width: 0;
-  min-height: 280px;
-  padding: clamp(20px, 3vw, 32px);
+  width: min(var(--contentWidth), calc(100vw - 40px));
+  min-height: 320px;
+  margin-inline: auto;
+  padding-block: 40px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -33,15 +33,31 @@
 .searchForm button { display: inline-flex; align-items: center; justify-content: center; gap: 1rem; flex-shrink: 0; padding: 0.85rem 1.6rem; border: 1px solid var(--accentBlue2); border-radius: var(--bR); background: var(--accentBlue); color: var(--text1); font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: background-color 160ms ease; }
 .searchForm button:hover:not(:disabled) { background: var(--accentBlue2); }
 .searchForm button:disabled { opacity: 0.45; cursor: not-allowed; }
-.layout { display: flex; flex-direction: column; gap: 24px; min-width: 0; margin-top: 14px; }
-.filters { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; width: 100%; min-width: 0; padding-bottom: 10px; border-bottom: 1px solid var(--border1); }
-.categories { display: flex; gap: 8px; min-width: 0; max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; scrollbar-width: none; }
-.categories::-webkit-scrollbar { display: none; }
-.count { display: inline-flex; align-items: center; justify-content: center; min-width: 1.5rem; padding: 0.15rem 0.35rem; border-radius: 6px; background: color-mix(in srgb, currentColor 12%, transparent); font-size: 0.75rem; font-variant-numeric: tabular-nums; }
-.results { min-width: 0; width: 100%; }
+.layout { display: grid; grid-template-columns: 242px minmax(0, 1fr); gap: 2.25rem; align-items: start; margin-top: 2.25rem; }
+.sidebar { position: sticky; top: 112px; }
+.categories { display: flex; flex-direction: column; gap: 0.4rem; }
+.categories button { display: flex; align-items: center; gap: 0.8rem; padding: 1rem 0.85rem; border: none; border-radius: 1rem; background: var(--background2); color: var(--text2); text-align: start; cursor: pointer; transition: color 160ms ease; }
+.categories button:hover { background: var(--background2); color: var(--text1); }
+.categories button[aria-pressed="true"] { color: var(--accentBlue3); background: var(--background2); }
+.categoryIcon { display: inline-flex; flex-shrink: 0; }
+.categoryIcon svg { width: 26px; height: 26px; }
+.categories button[aria-pressed="true"] .categoryIcon { color: var(--accentBlue2); }
+.categoryText { display: flex; flex-direction: column; gap: 0.2rem; flex: 1; min-width: 0; }
+.categoryText strong { font-size: 1.05rem; font-weight: 600; }
+.count { display: inline-flex; align-items: center; justify-content: center; min-width: 1.7rem; padding: 0.2rem 0.4rem; border-radius: 0.5rem; background: var(--background2); font-size: 0.75rem; font-variant-numeric: tabular-nums; }
+.categories button[aria-pressed="true"] .count { color: var(--accentBlue3); }
+.browseCard { margin-top: 1.65rem; padding: 1.25rem; border: none; border-radius: 1.2rem; background: var(--background2); }
+.browseCard h2 { font-weight: 600; font-size: 1rem; }
+.browseCard p { margin-top: 0.55rem; color: var(--text2); font-size: 0.8rem; line-height: 1.7; }
+.browseCard a { display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-size: 0.8rem; color: var(--accentBlue3); margin-top: 1.3rem; }
+.browseCard a:hover { color: var(--text1); }
+.results { min-width: 0; }
+.resultsToolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 54px; margin-bottom: 1.1rem; }
+.resultsToolbar h2 { display: flex; gap: 0.65rem; align-items: center; font-size: 1.1rem; font-weight: 600; }
+.resultsToolbar h2 > span { font-size: 0.75rem; color: var(--text2); background: var(--background2); padding: 0.15rem 0.5rem; border-radius: 0.4rem; font-variant-numeric: tabular-nums; }
 .sort { display: flex; align-items: center; gap: 0.65rem; font-size: 0.8rem; color: var(--text2); }
 .sort > span { white-space: nowrap; }
-.sort .sortSelect { min-width: 142px; padding: 0.6rem 0.75rem; font-size: 0.8rem; background: var(--background2); color: var(--text1); border: 0; border-radius: 10px; }
+.sort .sortSelect { min-width: 142px; padding: 0.6rem 0.75rem; font-size: 0.8rem; background: var(--background2); color: var(--text1); border: 1px solid var(--border1); border-radius: 0.7rem; }
 .resultList { display: grid; gap: 0.9rem; margin-bottom: 1.5rem; }
 .card { display: flex; align-items: center; gap: 1.25rem; min-width: 0; padding: 0.85rem; background: var(--background2); border: none; border-radius: 1.3rem; transition: color 160ms ease; }
 .card:hover .cardBody h3 { color: var(--accentBlue3); }
@@ -84,25 +100,42 @@
 .page a:focus-visible, .page button:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: 4px; }
 .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 @media (max-width: 1100px) {
+  .layout { grid-template-columns: 210px minmax(0, 1fr); gap: 1.4rem; }
   .thumbnail, .skeleton > div { width: 190px; }
   .portrait { width: 96px; }
   .card { gap: 1rem; }
   .cardAction { display: none; }
 }
 @media (max-width: 800px) {
-  .introContent { min-height: 260px; }
-  .layout { gap: 20px; }
+  .introContent { min-height: 280px; padding-block: 32px; }
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; margin-top: 1.5rem; }
+  .sidebar { position: static; }
+  .browseCard { display: none; }
+  .categories { flex-direction: row; gap: 0.5rem; }
+  .categories button { flex: 1; justify-content: center; gap: 0.5rem; padding: 0.8rem 0.6rem; border-radius: 0.8rem; }
+  .categoryText { flex: initial; }
+  .categoryText strong { font-size: 1rem; }
+  .categoryIcon svg { width: 24px; height: 24px; }
   .thumbnail, .skeleton > div { width: 200px; }
   .portrait { width: 80px; }
 }
 @media (max-width: 540px) {
-  .introContent { min-height: 240px; padding: 20px; }
+  .page { width: calc(100% - 28px); }
+  .introContent { width: calc(100vw - 28px); min-height: 260px; padding-block: 28px; }
   .headingRow h1 { font-size: 1.7rem; }
   .subtitle { font-size: 0.8rem; }
   .searchForm { gap: 0.6rem; margin-top: 1.3rem; padding: 0.4rem 0.4rem 0.4rem 0.75rem; }
   .searchForm input { font-size: 0.9rem; }
   .searchForm button { padding: 0.75rem; font-size: 0.8rem; }
   .searchForm button { gap: 0.5rem; }
+  .categoryIcon { grid-area: icon; }
+  .categoryText { grid-area: label; overflow-wrap: anywhere; }
+  .count { grid-area: count; justify-self: end; }
+  .categories { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .categories button { display: grid; grid-template-areas: "icon count" "label label"; grid-template-columns: 1fr auto; align-content: start; gap: 0.55rem 0.3rem; padding: 0.85rem 0.65rem; }
+  .categoryText strong { font-size: 0.85rem; }
+  .count { min-width: 1.3rem; font-size: 0.65rem; }
+  .resultsToolbar { flex-wrap: wrap; }
   .sort { margin-inline-start: auto; }
   .sort > span { display: none; }
   .sort .sortSelect { min-width: 120px; }

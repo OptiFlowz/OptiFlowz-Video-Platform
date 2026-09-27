@@ -1,4 +1,3 @@
-import { requireRecording } from '../../../../common/videoAccess.js';
 import { scheduleOverview } from '../../../video-indexing/indexing.service.js';
 import { writePool } from '../../../../database/index.js';
 import { HttpError } from '../../../../common/httpError.js';
@@ -132,15 +131,6 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
   const client = await writePool.connect();
   try {
     await client.query('BEGIN');
-    if (isDefined(chapters) || isDefined(time)) await requireRecording(client, videoId);
-    if (visibilityNorm === 'private') {
-      const { rows } = await client.query(`SELECT kind, playback_policy,
-        (SELECT policy_sync_pending FROM video_livestreams WHERE video_id = videos.id) AS policy_sync_pending
-        FROM videos WHERE id = $1 FOR UPDATE`, [videoId]);
-      if (rows[0]?.kind === 'live' && (rows[0].playback_policy !== 'signed' || rows[0].policy_sync_pending)) {
-        throw new HttpError(409, { message: 'Switch the livestream to signed playback before making it private' });
-      }
-    }
 
     // Lock new associations before the video, matching person rename/delete
     // operations so they cannot miss a concurrently attached video.

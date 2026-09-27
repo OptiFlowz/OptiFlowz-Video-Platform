@@ -1,4 +1,3 @@
-import { recordingReadySql } from '../../../common/videoEligibility.js';
 import { withVideoCardMedia } from '../../videos/helpers/videoCardMedia.js';
 import { readPool } from '../../../database/index.js';
 import {
@@ -28,7 +27,7 @@ export async function getQuizRequirementVideosInternal(object, userId = null) {
   const { quizId, userId: validatedUserId } = prerequisites(object, userId);
 
   const query = `
-    ${buildVideoCardSelect({ includeWatchProgress: true, includeKind: true })},
+    ${buildVideoCardSelect({ includeWatchProgress: true })},
       qar.id AS rule_id,
       qar.rule_type,
       qar.required_percentage::float AS required_percentage,
@@ -86,8 +85,7 @@ export async function getQuizRequirementVideosInternal(object, userId = null) {
     JOIN quiz_access_rules qar
       ON qar.video_id = v.id
     WHERE
-      ${buildVideoCardVisibilityWhere({ includeLivestreams: true })}
-      AND ${recordingReadySql()}
+      ${buildVideoCardVisibilityWhere()}
       AND qar.quiz_id = $1
       AND qar.is_active = true
       AND qar.rule_type IN ('video_watch_percentage', 'video_watch_seconds')
@@ -96,5 +94,5 @@ export async function getQuizRequirementVideosInternal(object, userId = null) {
 
   const { rows } = await readPool.query(query, [quizId, validatedUserId]);
 
-  return withVideoCardMedia(rows, validatedUserId, { includeLivestreams: true });
+  return withVideoCardMedia(rows, validatedUserId);
 }

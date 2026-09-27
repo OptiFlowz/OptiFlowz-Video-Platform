@@ -1,4 +1,3 @@
-import { analyticsSource } from '../../helpers/contentFilter.js';
 import { withVideoCardMedia } from '../../../videos/helpers/videoCardMedia.js';
 import { readPool } from '../../../../database/index.js';
 import { z } from 'zod';
@@ -39,7 +38,7 @@ export async function getPlatformTopViewedVideosInternal(object, userId = null) 
     `
       WITH period_view_counts AS (
         SELECT vv.video_id, COUNT(*)::int AS period_views
-        FROM ${analyticsSource('video_views', 'upload')} vv
+        FROM video_views vv
         WHERE true${filter.sql}
         GROUP BY vv.video_id
       ),

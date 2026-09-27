@@ -1,16 +1,26 @@
 import { useAuthorization } from "~/authorization/authorization";
 import { Link, NavLink } from "react-router";
 import DefaultProfile from "../../../../assets/DefaultProfile.webp";
-import { AnalyticsSVG, LiveSVG, PeopleSVG, PostSVG, PlaylistSVG, PlaySVG, QuizSVG } from "~/constants";
+import { AnalyticsSVG, PeopleSVG, PostSVG, PlaylistSVG, PlaySVG, QuizSVG } from "~/constants";
 import backgroundImage from "../../../../assets/LoginBackground.webp";
-import { memo } from "react";
+import { memo, useRef } from "react";
+import { useConstrainedSticky } from "~/components/shared/useConstrainedSticky";
 import { useI18n } from "~/i18n";
-import "./sidebar.css";
 
 function Sidebar() {
     const { t } = useI18n();
     const { canAccess, user } = useAuthorization();
     const channelName = user?.full_name?.trim() || t("yourChannel");
+    const asideRef = useRef<HTMLElement | null>(null);
+    const stickyRef = useRef<HTMLDivElement | null>(null);
+    const stickyStyle = useConstrainedSticky({
+        containerRef: asideRef,
+        stickyRef,
+        lockHeightToContainer: true,
+        disabledBelow: 800,
+        topOffset: 89,
+        bottomGap: 16,
+    });
 
     const channelPath = user?.id ? `/channel/${user.id}` : undefined;
     const photo = <img src={user?.image_url || DefaultProfile} alt={channelName} />;
@@ -21,8 +31,8 @@ function Sidebar() {
     </>;
 
     return (
-        <aside className="videoAside adminSidebarDock">
-            <div className="videoAsideSticky">
+        <aside ref={asideRef} className="videoAside">
+            <div ref={stickyRef} className="videoAsideSticky" style={stickyStyle}>
                 <div className="background">
                     <img className="w-full h-full" src={backgroundImage} alt="Background" />
                 </div>
@@ -41,9 +51,6 @@ function Sidebar() {
                     </NavLink>}
                     {canAccess('posts') && <NavLink to="/my-posts" end className={({ isActive }) => (isActive ? "active" : "")}>
                         {PostSVG}&nbsp;{t("navMyPosts")}
-                    </NavLink>}
-                    {canAccess('myLivestreams') && <NavLink to="/my-livestreams" end className={({ isActive }) => (isActive ? "active" : "")}>
-                        {LiveSVG}&nbsp;{t("liveMyStreams")}
                     </NavLink>}
                     {canAccess('people') && <NavLink to="/speakers-chairs" end className={({ isActive }) => (isActive ? "active" : "")}>
                         {PeopleSVG}&nbsp;{t("navSpeakersChairs")}

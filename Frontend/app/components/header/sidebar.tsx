@@ -4,7 +4,7 @@ import { P } from "~/authorization/permissions";
 import { useI18n } from "~/i18n";
 import { BRAND_NAME, MARKETING_WEBSITE_URL } from "~/changeables";
 import {
-    LiveSVG, AnalyticsSVG, ChannelMenuSVG, ContinueWatchingSVG, CupOutlineSVG, ExternalSiteMenuSVG, HistorySVG,
+    AnalyticsSVG, ChannelMenuSVG, ContinueWatchingSVG, CupOutlineSVG, ExternalSiteMenuSVG, HistorySVG,
     HomeMenuSVG, LanguageMenuSVG, LikeSVG, PeopleSVG, PlatformMenuSVG,
     PlaylistSVG, PostSVG, QuizSVG, RecommendedMenuSVG, TrendingMenuSVG, UserSVG,
 } from "~/constants";
@@ -23,7 +23,6 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         canAccess('videos') && item('/my-videos', t('navMyVideos'), ChannelMenuSVG),
         canAccess('playlists') && item('/my-playlists', t('navMyPlaylists'), PlaylistSVG),
         canAccess('posts') && item('/my-posts', t('navMyPosts'), PostSVG),
-        canAccess('myLivestreams') && item('/my-livestreams', t('liveMyStreams'), LiveSVG),
         canAccess('quizzes') && item('/quizzes', t('navQuizzes'), QuizSVG),
         canAccess('people') && item('/speakers-chairs', t('navSpeakersChairs'), PeopleSVG),
         canAccess('channelAnalytics') && item('/channel-analytics', t('navChannelAnalytics'), AnalyticsSVG),
@@ -35,14 +34,13 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             {item('/', t('navHome'), HomeMenuSVG)}
             {item('/videos/1', t('navRecommended'), RecommendedMenuSVG)}
             {item('/videos/2', t('navTrending'), TrendingMenuSVG)}
-            {can(P.liveLibrary) && item('/live', t('liveTitle'), LiveSVG)}
         </div>
         <div className="appSidebarGroup">
             <Link to={user ? '/account' : '/login'} className="appSidebarHeading" onClick={onNavigate}>
                 <span className="appSidebarIcon" aria-hidden="true">{UserSVG}</span>{t('footerAccount')}
             </Link>
             {user ? <>
-                {(can(P.videosLibrary) || can(P.liveLibrary)) && <>
+                {can(P.videosLibrary) && <>
                     {item('/account', t('watchHistory'), HistorySVG)}
                     {item('/account/liked', t('likedVideos'), LikeSVG)}
                     {item('/account/continue', t('continueWatching'), ContinueWatchingSVG)}

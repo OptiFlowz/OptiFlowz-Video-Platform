@@ -47,7 +47,7 @@ export async function getTrendingInternal({ query: queryParams }, actorUserId = 
                 WHERE vc.video_id = v.id
                 ) p
             ) ppl ON TRUE
-            WHERE v.kind = 'upload' AND v.mux_status = 'ready' AND v.visibility = 'public'
+            WHERE v.mux_status = 'ready' AND v.visibility = 'public'
                 AND v.published_at <= NOW()
             ORDER BY COALESCE(r.recent_views, 0) DESC, v.view_count DESC
             LIMIT $1 OFFSET $2

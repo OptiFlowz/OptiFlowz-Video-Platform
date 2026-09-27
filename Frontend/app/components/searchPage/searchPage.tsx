@@ -1,5 +1,5 @@
 import { getVideoThumbnail } from "~/components/shared/videoMedia";
-import { useParams, useSearchParams, useNavigate } from "react-router";
+import { useParams, useSearchParams, useNavigate, Link } from "react-router";
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { fetchFn } from "~/API";
@@ -13,7 +13,6 @@ import { nextResultsPage, uniqueResults } from "~/components/library/infiniteRes
 import SearchResultCard, { type SearchResult } from "./searchResultCard";
 import { SearchIcon } from "./searchIcons";
 import styles from "./searchPage.module.css";
-import "../library/profileTabs.css";
 import backgroundImage from "../../../assets/LoginBackground.webp";
 
 type SearchContext = { query: string; category: string | null; tag: string | null; person: string | null; label: string };
@@ -183,16 +182,26 @@ function SearchResults({ context }: { context: SearchContext }) {
       </section>
 
       <div className={styles.layout}>
-        <div className={styles.filters}>
-          <nav className={`${styles.categories} profileTabs`} aria-label={t("searchContentType")}>
+        <aside className={styles.sidebar}>
+          <nav className={styles.categories} aria-label={t("searchContentType")}>
             {tabs.map((tab, index) => (
               <button key={tab.icon} type="button" aria-pressed={selected === index} onClick={() => { choseCategory.current = true; setSelected(index); }}>
-                <span className="profileTabIcon"><SearchIcon name={tab.icon} /></span>
-                <span>{tab.label}</span>
+                <span className={styles.categoryIcon}><SearchIcon name={tab.icon} /></span>
+                <span className={styles.categoryText}><strong>{tab.label}</strong></span>
                 <span className={styles.count}>{counts[index] ?? (!hasSearch || countErrors[index] ? "—" : "…")}</span>
               </button>
             ))}
           </nav>
+          <div className={styles.browseCard}>
+            <h2>{t("searchExploreTitle")}</h2>
+            <p>{t("searchExploreText")}</p>
+            <Link to="/">{t("searchExploreAction")}</Link>
+          </div>
+        </aside>
+
+        <section className={styles.results} aria-labelledby="results-heading" aria-busy={fetching || activeQuery.isFetching}>
+          <div className={styles.resultsToolbar}>
+            <div><h2 id="results-heading">{tabs[selected].label}<span>{counts[selected] ?? "—"}</span></h2></div>
             {selected !== 2 && hasSearch ? <div className={styles.sort}><span>{t("searchSortBy")}</span><CustomSelect
               value={sort}
               onChange={(value) => { setSort(value); }}
@@ -200,10 +209,7 @@ function SearchResults({ context }: { context: SearchContext }) {
               ariaLabel={t("searchSortBy")}
               triggerClassName={styles.sortSelect}
             /></div> : null}
-        </div>
-
-        <section className={styles.results} aria-labelledby="results-heading" aria-busy={fetching || activeQuery.isFetching}>
-          <h2 id="results-heading" className={styles.srOnly}>{tabs[selected].label}</h2>
+          </div>
           {!hasSearch ? (
             <div className={styles.empty}><SearchIcon name="search" /><h3>{t("searchLibraryTitle")}</h3><p>{t("searchLibrarySubtitle")}</p></div>
           ) : fetching ? (

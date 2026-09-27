@@ -1,4 +1,3 @@
-import { recordingReadySql } from '../../../../common/videoEligibility.js';
 import { readPool } from '../../../../database/index.js';
 import { muxBasicAuthHeader, getMuxVttUrl } from '../../helpers/videoModeration.shared.js';
 import { HttpError } from '../../../../common/httpError.js';
@@ -19,7 +18,7 @@ export async function getSubtitleInternal({ params: routeParams, query: queryPar
       `
       SELECT mux_status, mux_asset_id, mux_playback_id, playback_policy
       FROM public.videos
-      WHERE id = $1 AND ${recordingReadySql("videos")}
+      WHERE id = $1
       LIMIT 1
       `,
       [videoId],

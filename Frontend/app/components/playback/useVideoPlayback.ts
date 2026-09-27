@@ -5,8 +5,6 @@ import { getToken } from "~/functions";
 export type PlaybackPolicy = "public" | "signed";
 export type VideoPlayback = {
   video_id: string;
-  kind?: 'upload' | 'live';
-  stream_type?: 'on-demand' | 'live' | 'live:dvr';
   mux_playback_id: string;
   playback_policy: PlaybackPolicy;
   stream_url: string;
@@ -15,7 +13,7 @@ export type VideoPlayback = {
 };
 
 export function getPlaybackStoryboardUrl(playback?: VideoPlayback): string | undefined {
-  if (!playback || playback.stream_type?.startsWith('live')) return undefined;
+  if (!playback) return undefined;
   const token = playback.tokens?.storyboard;
   if (playback.playback_policy === "signed" && !token) return undefined;
 
@@ -53,7 +51,7 @@ export function useVideoPlayback(videoId?: string, enabled = true) {
       ? Math.max(0, playbackExpiresAt(state.data.expires_at) - state.dataUpdatedAt - 60_000)
       : Infinity,
     gcTime: 0,
-    retry: (count, error) => count < 2 && ![401, 403, 404, 409].includes(Number((error as { status?: number }).status)),
+    retry: (count, error) => count < 2 && ![401, 403, 404].includes(Number((error as { status?: number }).status)),
     refetchOnWindowFocus: ({ state }) => state.data?.playback_policy === "signed" &&
       playbackExpiresAt(state.data.expires_at) <= Date.now() + 60_000,
     refetchInterval: ({ state }) => state.data?.playback_policy === "signed"
@@ -62,6 +60,6 @@ export function useVideoPlayback(videoId?: string, enabled = true) {
     refetchIntervalInBackground: true,
   });
   const expired = query.data ? playbackExpiresAt(query.data.expires_at) <= Date.now() : false;
-  const denied = [401, 403, 404, 409].includes(Number((query.error as { status?: number } | null)?.status));
+  const denied = [401, 403, 404].includes(Number((query.error as { status?: number } | null)?.status));
   return { ...query, data: expired || denied ? undefined : query.data, isError: query.isError || expired };
 }

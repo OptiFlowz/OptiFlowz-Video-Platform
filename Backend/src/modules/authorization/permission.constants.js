@@ -12,17 +12,6 @@ export const Permissions = Object.freeze({
   VIDEOS_PROGRESS_UPDATE: 'videos.progress.update',
   VIDEOS_REACT: 'videos.react',
 
-  LIVESTREAMS_CREATE: 'livestreams.create',
-  LIVESTREAMS_UPDATE_OWN: 'livestreams.update_own',
-  LIVESTREAMS_UPDATE_ANY: 'livestreams.update_any',
-  LIVESTREAMS_DELETE_OWN: 'livestreams.delete_own',
-  LIVESTREAMS_DELETE_ANY: 'livestreams.delete_any',
-  LIVESTREAMS_BROADCAST_OWN: 'livestreams.broadcast_own',
-  LIVESTREAMS_BROADCAST_ANY: 'livestreams.broadcast_any',
-  LIVESTREAMS_LIBRARY_READ: 'livestreams.library.read',
-  LIVESTREAMS_PROGRESS_UPDATE: 'livestreams.progress.update',
-  LIVESTREAMS_REACT: 'livestreams.react',
-
   POSTS_CREATE: 'posts.create',
   POSTS_UPDATE_OWN: 'posts.update_own',
   POSTS_UPDATE_ANY: 'posts.update_any',
@@ -59,8 +48,6 @@ export const Permissions = Object.freeze({
 
   PEOPLE_MANAGE: 'people.manage',
 
-  ANALYTICS_LIVESTREAM_OWN_READ: 'analytics.livestream_own.read',
-  ANALYTICS_LIVESTREAM_ANY_READ: 'analytics.livestream_any.read',
   ANALYTICS_VIDEO_OWN_READ: 'analytics.video_own.read',
   ANALYTICS_VIDEO_ANY_READ: 'analytics.video_any.read',
   ANALYTICS_CHANNEL_OWN_READ: 'analytics.channel_own.read',

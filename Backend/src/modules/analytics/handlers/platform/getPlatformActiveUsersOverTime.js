@@ -1,4 +1,3 @@
-import { analyticsSource } from '../../helpers/contentFilter.js';
 import { readPool } from '../../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../../common/input.validation.js';
@@ -39,7 +38,7 @@ export async function getPlatformActiveUsersOverTimeInternal(object, userId = nu
         UNION ALL
 
         SELECT vv.user_id, vv.created_at
-        FROM ${analyticsSource('video_views', object.kind)} vv
+        FROM video_views vv
         WHERE vv.user_id IS NOT NULL
           AND ($2::timestamptz IS NULL OR vv.created_at >= $2)
           AND ($3::timestamptz IS NULL OR vv.created_at <= $3)

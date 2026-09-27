@@ -1,4 +1,3 @@
-import { analyticsSource } from '../../helpers/contentFilter.js';
 import { readPool } from '../../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../../common/input.validation.js';
@@ -35,26 +34,26 @@ export async function getChannelOverviewAnalyticsInternal(object, userId = null)
     `
       WITH RECURSIVE channel_videos AS (
         SELECT id
-        FROM ${analyticsSource('videos', object.kind)} videos
+        FROM videos
         WHERE uploaded_by = $1
       ),
       filtered_views AS (
         SELECT vv.user_id, vv.watch_duration
-        FROM ${analyticsSource('video_views', object.kind)} vv
+        FROM video_views vv
         INNER JOIN channel_videos cv ON cv.id = vv.video_id
         WHERE ($2::timestamptz IS NULL OR vv.created_at >= $2)
           AND ($3::timestamptz IS NULL OR vv.created_at <= $3)
       ),
       filtered_reactions AS (
         SELECT vr.reaction
-        FROM ${analyticsSource('video_reactions', object.kind)} vr
+        FROM video_reactions vr
         INNER JOIN channel_videos cv ON cv.id = vr.video_id
         WHERE ($2::timestamptz IS NULL OR vr.created_at >= $2)
           AND ($3::timestamptz IS NULL OR vr.created_at <= $3)
       ),
       visible_comments AS (
         SELECT vc.id, vc.created_at
-        FROM ${analyticsSource('video_comments', object.kind)} vc
+        FROM video_comments vc
         INNER JOIN channel_videos cv ON cv.id = vc.video_id
         WHERE vc.parent_id IS NULL
           AND vc.is_deleted = false
@@ -62,7 +61,7 @@ export async function getChannelOverviewAnalyticsInternal(object, userId = null)
         UNION ALL
 
         SELECT child.id, child.created_at
-        FROM ${analyticsSource('video_comments', object.kind)} child
+        FROM video_comments child
         INNER JOIN visible_comments parent ON parent.id = child.parent_id
         INNER JOIN channel_videos cv ON cv.id = child.video_id
         WHERE child.is_deleted = false
