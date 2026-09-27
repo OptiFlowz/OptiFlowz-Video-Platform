@@ -47,7 +47,7 @@ export async function searchPlaylistsInternal(searchParams, userId = null) {
       FROM public.playlist_items pi3
       JOIN public.videos v3 ON v3.id = pi3.video_id
       WHERE pi3.playlist_id = p.id
-        AND v3.mux_status = 'ready'
+        AND (v3.kind = 'live' OR v3.mux_status = 'ready')
         AND v3.visibility = 'public' AND v3.published_at <= NOW()
     ) ic ON TRUE
     WHERE p.status = 'public'
@@ -56,7 +56,7 @@ export async function searchPlaylistsInternal(searchParams, userId = null) {
         FROM public.playlist_items pi_exist
         JOIN public.videos v_exist ON v_exist.id = pi_exist.video_id
         WHERE pi_exist.playlist_id = p.id
-          AND v_exist.mux_status = 'ready'
+          AND (v_exist.kind = 'live' OR v_exist.mux_status = 'ready')
           AND v_exist.visibility = 'public' AND v_exist.published_at <= NOW()
       )
   `;
@@ -119,7 +119,7 @@ export async function searchPlaylistsInternal(searchParams, userId = null) {
         FROM public.playlist_items pi_exist
         JOIN public.videos v_exist ON v_exist.id = pi_exist.video_id
         WHERE pi_exist.playlist_id = p.id
-          AND v_exist.mux_status = 'ready'
+          AND (v_exist.kind = 'live' OR v_exist.mux_status = 'ready')
           AND v_exist.visibility = 'public' AND v_exist.published_at <= NOW()
       )
   `;

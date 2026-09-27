@@ -1,3 +1,4 @@
+import { analyticsSource } from '../../helpers/contentFilter.js';
 import { readPool } from '../../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../../common/input.validation.js';
@@ -36,8 +37,8 @@ export async function getChannelWatchTimeOverTimeInternal(object, userId = null)
     `
       WITH filtered_views AS (
         SELECT vv.created_at, vv.watch_duration
-        FROM video_views vv
-        INNER JOIN videos v ON v.id = vv.video_id
+        FROM ${analyticsSource('video_views', object.kind)} vv
+        INNER JOIN ${analyticsSource('videos', object.kind)} v ON v.id = vv.video_id
         WHERE v.uploaded_by = $1
           AND ($3::timestamptz IS NULL OR vv.created_at >= $3)
           AND ($4::timestamptz IS NULL OR vv.created_at <= $4)

@@ -1,10 +1,12 @@
 import { writePool } from '../../../../database/index.js';
+import { requireVisibleVideo } from '../../../../common/videoAccess.js';
 
 export async function toggleVideoLikeInternal(videoId, userId) {
   const client = await writePool.connect();
 
   try {
     await client.query('BEGIN');
+    await requireVisibleVideo(client, videoId, userId);
 
     // Proveri da li like već postoji
     const checkQuery = 'SELECT user_id FROM video_likes WHERE video_id = $1 AND user_id = $2';

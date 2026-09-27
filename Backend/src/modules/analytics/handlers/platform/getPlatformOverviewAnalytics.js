@@ -1,3 +1,4 @@
+import { analyticsSource } from '../../helpers/contentFilter.js';
 import { readPool } from '../../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../../common/input.validation.js';
@@ -34,7 +35,7 @@ export async function getPlatformOverviewAnalyticsInternal(object, userId = null
           vv.ip_address,
           vv.user_agent,
           vv.watch_duration
-        FROM video_views vv
+        FROM ${analyticsSource('video_views', object.kind)} vv
         WHERE ($1::timestamptz IS NULL OR vv.created_at >= $1)
           AND ($2::timestamptz IS NULL OR vv.created_at <= $2)
       ),
@@ -48,14 +49,14 @@ export async function getPlatformOverviewAnalyticsInternal(object, userId = null
       ),
       visible_comments AS (
         SELECT vc.id, vc.created_at
-        FROM video_comments vc
+        FROM ${analyticsSource('video_comments', object.kind)} vc
         WHERE vc.parent_id IS NULL
           AND vc.is_deleted = false
 
         UNION ALL
 
         SELECT child.id, child.created_at
-        FROM video_comments child
+        FROM ${analyticsSource('video_comments', object.kind)} child
         INNER JOIN visible_comments parent ON parent.id = child.parent_id
         WHERE child.is_deleted = false
       )
@@ -69,7 +70,7 @@ export async function getPlatformOverviewAnalyticsInternal(object, userId = null
         ) AS new_users,
         (
           SELECT COUNT(*)
-          FROM videos v
+          FROM ${analyticsSource('videos', object.kind)} v
           WHERE ($1::timestamptz IS NULL OR v.created_at >= $1)
             AND ($2::timestamptz IS NULL OR v.created_at <= $2)
         ) AS video_count,
@@ -90,14 +91,14 @@ export async function getPlatformOverviewAnalyticsInternal(object, userId = null
         ) AS avg_watch_time_per_viewer,
         (
           SELECT COUNT(*)
-          FROM video_reactions vr
+          FROM ${analyticsSource('video_reactions', object.kind)} vr
           WHERE vr.reaction = 1
             AND ($1::timestamptz IS NULL OR vr.created_at >= $1)
             AND ($2::timestamptz IS NULL OR vr.created_at <= $2)
         ) AS video_likes,
         (
           SELECT COUNT(*)
-          FROM video_reactions vr
+          FROM ${analyticsSource('video_reactions', object.kind)} vr
           WHERE vr.reaction = -1
             AND ($1::timestamptz IS NULL OR vr.created_at >= $1)
             AND ($2::timestamptz IS NULL OR vr.created_at <= $2)

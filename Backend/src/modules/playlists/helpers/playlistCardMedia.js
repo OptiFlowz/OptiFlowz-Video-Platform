@@ -13,7 +13,7 @@ export async function withPlaylistCardMedia(cards, userId = null) {
        FROM public.playlist_items pi
        JOIN public.videos v ON v.id = pi.video_id
        WHERE pi.playlist_id = p.id
-         AND v.mux_status = 'ready'
+         AND (v.kind = 'live' OR v.mux_status = 'ready')
          AND ((v.visibility = 'public' AND v.published_at <= NOW())
            OR (v.visibility IN ('public', 'private') AND v.uploaded_by = $2))
        ORDER BY pi.position ASC, pi.video_id
@@ -27,7 +27,7 @@ export async function withPlaylistCardMedia(cards, userId = null) {
     .filter(row => !row.thumbnail_url?.trim() && row.video_id)
     .map(row => row.video_id))];
   const thumbnails = new Map((await withVideoThumbnailMedia(
-    videoIds.map(id => ({ id })), userId,
+    videoIds.map(id => ({ id })), userId, { includeLivestreams: true },
   )).map(video => [video.id, video]));
 
   return cards.map(card => {

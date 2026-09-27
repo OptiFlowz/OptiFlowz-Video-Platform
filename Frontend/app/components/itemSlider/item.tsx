@@ -1,3 +1,4 @@
+import LiveStatus from '../live/LiveStatus';
 import DefaultThumbnail from "../../../assets/DefaultThumbnail.webp";
 import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import { Link } from "react-router";
@@ -11,8 +12,10 @@ function  Item({props, playlistIndex, playlistId}: {props: PlaylistVideoT, playl
     const requestedThumbnail = getVideoThumbnail(props) || DefaultThumbnail;
     const [failedThumbnail, setFailedThumbnail] = useState<string>();
     const newThumbnailUrl = failedThumbnail === requestedThumbnail ? DefaultThumbnail : requestedThumbnail;
-    const animGifUrl = props.preview_url || undefined;
-    const isWatched = (props?.percentage_watched ?? 0) >= 5 && !!props?.progress_seconds;
+    const isLive = props.kind === 'live';
+    const isReplay = isLive && props.stream_type === 'on-demand';
+    const animGifUrl = !isLive || isReplay ? props.preview_url || undefined : undefined;
+    const isWatched = (!isLive || isReplay) && (props?.percentage_watched ?? 0) >= 5 && !!props?.progress_seconds;
 
     const [isHovered, setIsHovered] = useState(false);
     const [loadedThumbnail, setLoadedThumbnail] = useState<string>();
@@ -62,7 +65,8 @@ function  Item({props, playlistIndex, playlistId}: {props: PlaylistVideoT, playl
 
                 {playlistIndex && playlistIndex > -1 ? <span className="playlistOrderNumber">{playlistIndex}</span> : ""}
 
-                <span className={"duration z-1" + (isWatched ? " watched" : "")}>{formatDuration(props.duration_seconds)}</span>
+                <span className="liveCardBadge"><LiveStatus live={props.livestream} /></span>
+                {(!isLive || isReplay) && <span className={"duration z-1" + (isWatched ? " watched" : "")}>{formatDuration(props.duration_seconds)}</span>}
 
                 {isWatched ? <span className="bottomShadow z-1 relative"></span> : ""}
 

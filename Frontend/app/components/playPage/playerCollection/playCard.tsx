@@ -1,3 +1,5 @@
+import LiveStatus from '../../live/LiveStatus';
+import DefaultThumbnail from '../../../../assets/DefaultThumbnail.webp';
 import { useI18n } from "~/i18n";
 import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import { memo, useState } from "react";
@@ -13,9 +15,10 @@ function PlayCard({props, playedVideoId, playlistId, nextVideo} : {props: PlayCa
 
     const viewsLabel = formatViews(props?.view_count);
     const dateLabel = formatDate(props?.created_at);
-    const newThumbnailUrl = getVideoThumbnail(props);
+    const newThumbnailUrl = getVideoThumbnail(props) || DefaultThumbnail;
+    const activeLive = props.kind === 'live' && props.stream_type !== 'on-demand';
     const animGifUrl = props.preview_url || undefined;
-    const isWatched = props?.percentage_watched < 5 ? false : props?.progress_seconds;
+    const isWatched = !activeLive && (props?.percentage_watched ?? 0) >= 5 && props?.progress_seconds;
 
     const [isHovered, setIsHovered] = useState(false);
     const [loadedPreview, setLoadedPreview] = useState<string>();
@@ -34,7 +37,8 @@ function PlayCard({props, playedVideoId, playlistId, nextVideo} : {props: PlayCa
                 {isHovered && animGifUrl && <img className={isHovered ? "z-[-1] absolute top-0 left-0" : "z-0 absolute top-0 left-0"} src={animGifUrl} alt="Thumbnail preview" onLoad={() => setLoadedPreview(animGifUrl)} onError={() => setLoadedPreview(undefined)} />}
                 <img loading="lazy" decoding="async" className={showPreview ? "z-0 relative opacity-0" : "z-1 relative opacity-100"} src={newThumbnailUrl} alt="Thumbnail" />
 
-                <p className={"absolute bottom-1.75 right-1.75 z-2" + (isWatched ? " watched" : "")}>{formatDuration(props?.duration_seconds)}</p>
+                <span className="liveCardBadge"><LiveStatus live={props.livestream}/></span>
+                {!activeLive && <p className={"absolute bottom-1.75 right-1.75 z-2" + (isWatched ? " watched" : "")}>{formatDuration(props?.duration_seconds)}</p>}
 
                 {isWatched ? <span className="bottomShadow z-2"></span> : ""}
 

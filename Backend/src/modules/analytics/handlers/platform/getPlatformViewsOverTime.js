@@ -1,3 +1,4 @@
+import { analyticsSource } from '../../helpers/contentFilter.js';
 import { readPool } from '../../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../../common/input.validation.js';
@@ -31,7 +32,7 @@ export async function getPlatformViewsOverTimeInternal(object, userId = null) {
     `
       WITH filtered_views AS (
         SELECT vv.created_at
-        FROM video_views vv
+        FROM ${analyticsSource('video_views', object.kind)} vv
         WHERE ($2::timestamptz IS NULL OR vv.created_at >= $2)
           AND ($3::timestamptz IS NULL OR vv.created_at <= $3)
       ),

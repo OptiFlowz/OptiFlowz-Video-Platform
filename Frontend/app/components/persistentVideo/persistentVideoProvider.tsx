@@ -40,6 +40,7 @@ type PlayerRect = {
 };
 
 type PersistentVideoContextValue = {
+  stop: () => void;
   activate: (session: PlayerSession) => void;
   setAnchor: (element: HTMLDivElement | null) => void;
 };
@@ -290,9 +291,20 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
     playerMode !== "mini" || floatingPlayer.isPositionReady,
   );
 
+  const stop = useCallback(() => {
+    if (closeTimerRef.current !== null) { window.clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+    playerElementRef.current?.pause();
+    sessionRef.current = null;
+    isPlayingRef.current = false;
+    setSession(null);
+    setIsPlaying(false);
+    setIsMiniOpen(false);
+    setIsClosing(false);
+  }, []);
+
   const contextValue = useMemo(
-    () => ({ activate, setAnchor }),
-    [activate, setAnchor],
+    () => ({ activate, setAnchor, stop }),
+    [activate, setAnchor, stop],
   );
   const miniPlayerByline =
     session?.video.people

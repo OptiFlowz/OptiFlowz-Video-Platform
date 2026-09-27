@@ -1,3 +1,4 @@
+import { recordingReadySql } from '../../../../common/videoEligibility.js';
 import { deleteIndexedTrack } from '../../../video-indexing/indexing.service.js';
 import { readPool } from '../../../../database/index.js';
 import { muxGetAsset, muxDeleteTrack } from '../../helpers/videoModeration.shared.js';
@@ -16,7 +17,7 @@ export async function deleteSubtitleInternal({ params: routeParams, query: query
 
     // 1) Uzmi mux_asset_id iz baze
     const { rows } = await readPool.query(
-      `SELECT mux_asset_id FROM public.videos WHERE id = $1 LIMIT 1`,
+      `SELECT mux_asset_id FROM public.videos WHERE id = $1 AND ${recordingReadySql("videos")} LIMIT 1`,
       [videoId],
     );
 

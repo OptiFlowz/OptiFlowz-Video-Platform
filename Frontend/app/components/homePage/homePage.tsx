@@ -1,3 +1,4 @@
+import LiveNow from '../live/LiveNow';
 import ItemSlider from "../itemSlider/itemSlider";
 import HomeBanner from "./HomeBanner";
 import { useEffect, useRef, useState } from "react";
@@ -37,6 +38,7 @@ function HomePage(){
     return <>
         <main className="homePage pb-10">
             <HomeBanner />
+            <LiveNow />
 
             <ItemSlider props={{type: 5}} />
             <ItemSlider props={{type: 2, limit: 6}} />

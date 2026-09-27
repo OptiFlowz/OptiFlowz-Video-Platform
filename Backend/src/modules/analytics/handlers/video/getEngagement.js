@@ -1,3 +1,5 @@
+import { requireRecording } from '../../../../common/videoAccess.js';
+import { writePool } from '../../../../database/index.js';
 import { readPool } from '../../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../../common/input.validation.js';
@@ -32,6 +34,7 @@ export async function getEngagementInternal(object, userId = null) {
     toDate,
   } = prerequisites(object, userId);
 
+  await requireRecording(writePool, videoId);
   const filter = buildDateFilter('vv', fromDate, toDate);
   const { rows } = await readPool.query(
     `

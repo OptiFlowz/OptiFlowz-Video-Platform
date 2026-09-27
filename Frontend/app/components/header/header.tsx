@@ -11,9 +11,9 @@ import {
 import DefaultProfile from "../../../assets/DefaultProfile.webp";
 import { getToken, getStoredUser } from "~/functions";
 import { redirectToLogin } from "~/auth/session";
-import type { AuthFetchT } from "~/types";
+import type { AuthFetchT, VideoT } from "~/types";
 import { useI18n } from "~/i18n";
-import { useQueryClient } from "@tanstack/react-query";
+import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LOGO, BRAND_NAME } from "~/changeables";
 import LanguageSelect from "~/components/languageSelect/languageSelect";
 
@@ -27,9 +27,16 @@ function Header({ onMenuToggle, menuExpanded = false }: HeaderProps){
     const {searchValue} = useParams();
     const { videoId } = useParams();
     const idToEdit = videoId || "";
+    // Observe the watch page's cached video without issuing a second request.
+    const { data: currentVideo } = useQuery<VideoT>({
+        queryKey: ['video', videoId],
+        queryFn: skipToken,
+        enabled: false,
+    });
 
-    const { can, canAccess, user: authUser } = useAuthorization();
-    const channelHome = canAccess('videos') ? '/my-videos' : canAccess('playlists') ? '/my-playlists' : canAccess('quizzes') ? '/quizzes' : canAccess('people') ? '/speakers-chairs' : canAccess('channelAnalytics') ? '/channel-analytics' : canAccess('upload') ? '/upload' : null;
+
+    const { can, canOwn, canAccess, user: authUser } = useAuthorization();
+    const channelHome = canAccess('videos') ? '/my-videos' : canAccess('myLivestreams') ? '/my-livestreams' : canAccess('playlists') ? '/my-playlists' : canAccess('quizzes') ? '/quizzes' : canAccess('people') ? '/speakers-chairs' : canAccess('channelAnalytics') ? '/channel-analytics' : canAccess('upload') ? '/upload' : null;
     const platformHome = canAccess('platformAnalytics') ? '/platform-analytics' : canAccess('platformUsers') ? '/platform-users' : canAccess('platformSettings') ? '/platform-settings?page=access' : null;
     const hasManagementAccess = !!channelHome || !!platformHome;
 
@@ -218,8 +225,8 @@ function Header({ onMenuToggle, menuExpanded = false }: HeaderProps){
 
                 <div className={`appHeaderActions flex ${hasManagementAccess ? "gap-3" : "gap-1"} max-[650px]:gap-2 max-[500px]:gap-0.5 items-center`}>
                     {/* Admin Edit Mode Switch */}
-                    {can(P.videosUpdateAny) && idToEdit != "" && (
-                        <Link to={`/edit?video=${idToEdit}`} className="darkSVG max-[800px]:hidden flex items-center p-2.5 hover:bg-(--background2) rounded-full transition-all duration-200 cursor-pointer">
+                    {idToEdit !== '' && (currentVideo?.kind === 'live' ? canOwn(P.liveUpdateOwn, P.liveUpdateAny, currentVideo.uploader_id) : can(P.videosUpdateAny)) && (
+                        <Link to={currentVideo?.kind === 'live' ? `/live/${idToEdit}/studio` : `/edit?video=${idToEdit}`} className="darkSVG max-[800px]:hidden flex items-center p-2.5 hover:bg-(--background2) rounded-full transition-all duration-200 cursor-pointer">
                             <span className="w-6 h-6 flex items-center justify-center">{EditModeSVG}</span>
                         </Link>
                     )}

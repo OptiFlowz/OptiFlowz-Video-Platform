@@ -36,7 +36,7 @@ export async function getPlaylistVideosInternal(object, userId = null) {
   const values = [id, limit, offset, userId];
 
   const query = `
-    ${buildVideoCardSelect({ includeWatchProgress: userId != null })}
+    ${buildVideoCardSelect({ includeWatchProgress: userId != null, includeKind: true })}
     ${buildVideoCardJoins({
       includeWatchProgress: userId != null,
       watchProgressUserParam: '$4',
@@ -44,7 +44,7 @@ export async function getPlaylistVideosInternal(object, userId = null) {
     JOIN playlist_items pi ON pi.video_id = v.id
     JOIN playlists pl ON pi.playlist_id = pl.id
     WHERE
-      ${buildVideoCardVisibilityWhere()}
+      ${buildVideoCardVisibilityWhere({ includeLivestreams: true })}
       AND pi.playlist_id = $1
       AND (
         pl.status = 'public'
@@ -63,7 +63,7 @@ export async function getPlaylistVideosInternal(object, userId = null) {
     JOIN playlist_items pi ON pi.video_id = v.id
     JOIN playlists pl ON pi.playlist_id = pl.id
     WHERE
-      ${buildVideoCardVisibilityWhere()}
+      ${buildVideoCardVisibilityWhere({ includeLivestreams: true })}
       AND pi.playlist_id = $1
       AND (
         pl.status = 'public'
@@ -83,7 +83,7 @@ export async function getPlaylistVideosInternal(object, userId = null) {
   const totalPages = Math.ceil(total / limit);
 
   return {
-    videos: await withVideoCardMedia(videosResult.rows, userId),
+    videos: await withVideoCardMedia(videosResult.rows, userId, { includeLivestreams: true }),
     pagination: {
       page,
       limit,

@@ -1,4 +1,5 @@
 import { writePool } from '../../../../database/index.js';
+import { requireVisibleVideo } from '../../../../common/videoAccess.js';
 
 export async function setVideoReactionInternal(videoId, userId, reaction) {
   // reaction: "like" | "dislike"
@@ -7,6 +8,7 @@ export async function setVideoReactionInternal(videoId, userId, reaction) {
 
   try {
     await client.query('BEGIN');
+    await requireVisibleVideo(client, videoId, userId);
 
     // Zaključaj red u tabeli reakcija (ako postoji) radi sigurnosti u konkurenciji
     const { rows } = await client.query(

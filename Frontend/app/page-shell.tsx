@@ -32,7 +32,7 @@ export function FramedPage({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const drawerOnly = !!access || pathname.startsWith("/video/");
+  const drawerOnly = (!!access && access !== 'live') || pathname.startsWith("/video/");
   return (
     <ClientGuard mode={guard} access={access}>
       <NavigationFrame drawerOnly={drawerOnly}>

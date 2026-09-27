@@ -1,3 +1,4 @@
+import { recordingReady } from '../live/api';
 import "~/styles/analytics.css";
 import "flag-icons/css/flag-icons.min.css";
 import { WorldMapSVG, type WorldMapCountry } from "../analytics/lazyWorldMap";
@@ -626,6 +627,8 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
     refetchOnWindowFocus: false,
   });
 
+  const hasRecording = !!video && recordingReady(video);
+
   const dateRangeQuery = useMemo(
     () => getDateRange(range, customFromDate, customToDate),
     [customFromDate, customToDate, range],
@@ -783,7 +786,7 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
       route: `api/analytics/${videoId}/completion-buckets${dateRangeQuery}`,
       options: { method: "GET", headers: headers.current },
     }),
-    enabled: !!token && !!videoId && !isChannel,
+    enabled: !!token && !!videoId && !isChannel && hasRecording,
     refetchOnWindowFocus: false,
   });
   const completionBuckets = completionBucketsData?.completionBuckets;
@@ -1201,7 +1204,7 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
             )}
           </section>
 
-          <section className="videoAnalyticsEngagement">
+          <section className="videoAnalyticsEngagement" hidden={!isChannel && !hasRecording}>
             <h2>{t(isChannel ? "channelAnalyticsAverageEngagement" : "videoAnalyticsEngagement")}</h2>
             <p className="videoAnalyticsSectionDescription">{t(isChannel ? "channelAnalyticsAverageEngagementDescription" : "videoAnalyticsEngagementDescription")}</p>
 
@@ -1407,7 +1410,7 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
               </div>
             )}
 
-            {!isChannel && (
+            {!isChannel && hasRecording && (
               <>
                 <div
                   className="videoAnalyticsGraphTabs videoAnalyticsCompletionToggle"
