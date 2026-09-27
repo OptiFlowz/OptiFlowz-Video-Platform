@@ -1,7 +1,6 @@
 import Mux from '@mux/mux-node';
 import { writePool } from '../../../../database/index.js';
 import { HttpError } from '../../../../common/httpError.js';
-import { updateLivestreamPlaybackPolicyInternal } from '../../../livestreams/handlers/updateLivestreamPlaybackPolicy.js';
 
 const mux = new Mux();
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -26,14 +25,14 @@ async function finishCleanup(client, video) {
     });
   }
   await client.query(
-    "UPDATE videos SET mux_playback_id_pending_deletion = NULL WHERE id = $1 AND kind = 'upload'",
+    'UPDATE videos SET mux_playback_id_pending_deletion = NULL WHERE id = $1',
     [video.id],
   );
 }
 
 async function lockVideo(client, videoId) {
   const { rows } = await client.query(
-    `SELECT id, kind, mux_asset_id, mux_playback_id, playback_policy,
+    `SELECT id, mux_asset_id, mux_playback_id, playback_policy,
             mux_playback_id_pending_deletion
      FROM videos WHERE id = $1 FOR UPDATE`,
     [videoId],
@@ -59,10 +58,6 @@ export async function updateVideoPlaybackPolicyInternal({ params, body }) {
   try {
     await client.query('BEGIN');
     const video = await lockVideo(client, videoId);
-    if (video.kind === 'live') {
-      await client.query('ROLLBACK');
-      return await updateLivestreamPlaybackPolicyInternal(videoId, policy);
-    }
     await finishCleanup(client, video);
     if (video.playback_policy === policy) {
       await client.query('COMMIT');
@@ -82,7 +77,7 @@ export async function updateVideoPlaybackPolicyInternal({ params, body }) {
     await client.query(
       `UPDATE videos SET playback_policy = $2, mux_playback_id = $3,
          mux_playback_id_pending_deletion = $4, updated_at = NOW()
-       WHERE id = $1 AND kind = 'upload'`,
+       WHERE id = $1`,
       [videoId, policy, replacement.id, video.mux_playback_id || null],
     );
     // Commit the replacement and cleanup record before revoking the old ID.

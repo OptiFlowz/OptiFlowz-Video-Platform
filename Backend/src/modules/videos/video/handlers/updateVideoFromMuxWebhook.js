@@ -10,13 +10,13 @@ export async function updateVideoFromMuxWebhookInternal(uploadId, muxData) {
     let videoRow;
     if (uploadId) {
       const { rows } = await client.query(
-        `SELECT id FROM videos WHERE kind = 'upload' AND mux_upload_id = $1 LIMIT 1`,
+        `SELECT id FROM videos WHERE mux_upload_id = $1 LIMIT 1`,
         [uploadId],
       );
       videoRow = rows[0];
     }
     if (!videoRow && muxData?.assetId) {
-      const { rows } = await client.query(`SELECT id FROM videos WHERE kind = 'upload' AND mux_asset_id = $1 LIMIT 1`, [
+      const { rows } = await client.query(`SELECT id FROM videos WHERE mux_asset_id = $1 LIMIT 1`, [
         muxData.assetId,
       ]);
       videoRow = rows[0];

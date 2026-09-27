@@ -1,4 +1,3 @@
-import { playableSql } from '../../../../common/videoEligibility.js';
 import { writePool } from '../../../../database/index.js';
 import { hashIp, normalizeIp } from '../../../../common/ip.js';
 
@@ -27,12 +26,6 @@ export async function heartbeatWatchDurationInternal(
         SELECT id, user_id, video_id, last_heartbeat_at, last_seq, watch_duration
         FROM video_views
         WHERE id = $1
-          AND EXISTS (
-            SELECT 1 FROM videos
-            WHERE videos.id = video_views.video_id AND ${playableSql('videos')}
-              AND ((videos.visibility = 'public' AND videos.published_at <= NOW())
-                OR (videos.visibility IN ('public', 'private') AND videos.uploaded_by = $5))
-          )
           AND (
             ($5::uuid IS NOT NULL AND user_id = $5::uuid)
             OR (
@@ -66,7 +59,6 @@ export async function heartbeatWatchDurationInternal(
         SET
           watch_duration = COALESCE(v.watch_duration, 0) + c.delta,
           last_heartbeat_at = NOW(),
-          is_playing = $2::boolean,
           last_seq = $3::bigint
         FROM calc c
         WHERE v.id = c.id

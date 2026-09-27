@@ -1,4 +1,3 @@
-import { analyticsSource } from '../../helpers/contentFilter.js';
 import { readPool } from '../../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../../common/input.validation.js';
@@ -47,8 +46,8 @@ export async function getChannelDeviceSplitInternal(object, userId = null) {
               THEN 'desktop'
             ELSE 'other'
           END AS device_type
-        FROM ${analyticsSource('video_views', object.kind)} vv
-        INNER JOIN ${analyticsSource('videos', object.kind)} v ON v.id = vv.video_id
+        FROM video_views vv
+        INNER JOIN videos v ON v.id = vv.video_id
         WHERE v.uploaded_by = $1${filter.sql}
       )
       SELECT

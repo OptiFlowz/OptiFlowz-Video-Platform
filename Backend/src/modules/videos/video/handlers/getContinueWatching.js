@@ -1,15 +1,14 @@
-import { pageReadySql, recordingReadySql } from '../../../../common/videoEligibility.js';
 import { withVideoCardMedia } from '../../helpers/videoCardMedia.js';
 import { readPool } from '../../../../database/index.js';
 import { HttpError } from '../../../../common/httpError.js';
 
-export async function getContinueWatchingInternal({ query: queryParams, allowedKinds = ['upload', 'live'] }, actorUserId = null) {
+export async function getContinueWatchingInternal({ query: queryParams }, actorUserId = null) {
   try {
     const { limit = 20, page = 1 } = queryParams;
 
     const query = `
             SELECT 
-                v.id, v.kind,
+                v.id,
                 v.title,
                 v.thumbnail_url,
                 v.duration_seconds,
@@ -40,7 +39,7 @@ export async function getContinueWatchingInternal({ query: queryParams, allowedK
                 ) p
             ) ppl ON TRUE
             WHERE wp.user_id = $1
-                AND ${recordingReadySql()} AND v.kind = ANY($4::text[]) AND v.visibility = 'public' AND v.published_at <= NOW() AND (wp.percentage_watched BETWEEN 5 AND 90)
+                AND v.mux_status = 'ready' AND v.visibility = 'public' AND v.published_at <= NOW() AND (wp.percentage_watched BETWEEN 5 AND 90)
             ORDER BY wp.last_watched_at DESC
             LIMIT $2 OFFSET $3
         `;
@@ -50,11 +49,10 @@ export async function getContinueWatchingInternal({ query: queryParams, allowedK
       actorUserId,
       Math.min(parseInt(limit), 100),
       offset,
-      allowedKinds,
     ]);
 
     return {
-      videos: await withVideoCardMedia(rows, actorUserId, { includeLivestreams: true }),
+      videos: await withVideoCardMedia(rows, actorUserId),
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),

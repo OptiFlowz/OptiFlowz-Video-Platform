@@ -2,7 +2,6 @@ import { invalidateVideo } from '../../../video-indexing/indexing.service.js';
 import { writePool } from '../../../../database/index.js';
 import { muxBasicAuthHeader } from '../../helpers/videoModeration.shared.js';
 import { HttpError } from '../../../../common/httpError.js';
-import { deleteLivestreamInternal } from '../../../livestreams/handlers/manageLivestream.js';
 
 export async function deleteVideoInternal({ params: routeParams }) {
   try {
@@ -10,7 +9,7 @@ export async function deleteVideoInternal({ params: routeParams }) {
 
     // 1) uzmi mux_asset_id iz baze
     const { rows } = await writePool.query(
-      `SELECT mux_asset_id, kind
+      `SELECT mux_asset_id
        FROM public.videos
        WHERE id = $1
        LIMIT 1`,
@@ -22,7 +21,6 @@ export async function deleteVideoInternal({ params: routeParams }) {
     }
 
     const muxAssetId = rows[0]?.mux_asset_id;
-    if (rows[0].kind === 'live') return deleteLivestreamInternal(videoId);
     if (!muxAssetId) {
       throw new HttpError(400, { message: 'Video has no mux_asset_id' });
     }

@@ -1,15 +1,14 @@
-import { pageReadySql, recordingReadySql } from '../../../../common/videoEligibility.js';
 import { withVideoCardMedia } from '../../helpers/videoCardMedia.js';
 import { readPool } from '../../../../database/index.js';
 import { HttpError } from '../../../../common/httpError.js';
 
-export async function getLikedVideosInternal({ query: queryParams, allowedKinds = ['upload', 'live'] }, actorUserId = null) {
+export async function getLikedVideosInternal({ query: queryParams }, actorUserId = null) {
   try {
     const { limit = 20, page = 1 } = queryParams;
 
     const query = `
             SELECT 
-                v.id, v.kind,
+                v.id,
                 v.title,
                 v.thumbnail_url,
                 v.duration_seconds,
@@ -43,7 +42,7 @@ export async function getLikedVideosInternal({ query: queryParams, allowedKinds 
             ) ppl ON TRUE
             WHERE vr.user_id = $1
             AND vr.reaction = 1
-            AND ${pageReadySql()} AND v.kind = ANY($4::text[]) AND v.visibility = 'public' AND v.published_at <= NOW()
+            AND v.mux_status = 'ready' AND v.visibility = 'public' AND v.published_at <= NOW()
             ORDER BY vr.created_at DESC
             LIMIT $2 OFFSET $3
         `;
@@ -53,11 +52,10 @@ export async function getLikedVideosInternal({ query: queryParams, allowedKinds 
       actorUserId,
       Math.min(parseInt(limit), 100),
       offset,
-      allowedKinds,
     ]);
 
     return {
-      videos: await withVideoCardMedia(rows, actorUserId, { includeLivestreams: true }),
+      videos: await withVideoCardMedia(rows, actorUserId),
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),

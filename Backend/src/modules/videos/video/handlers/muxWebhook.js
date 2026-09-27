@@ -2,7 +2,6 @@ import { reconcileTracks } from '../../../video-indexing/mux-source.service.js';
 import crypto from 'crypto';
 import { writePool } from '../../../../database/index.js';
 import { HttpError } from '../../../../common/httpError.js';
-import { handleLivestreamWebhook } from '../../../livestreams/lifecycle.service.js';
 
 function timingSafeEqualStr(a, b) {
   const aa = Buffer.from(String(a));
@@ -69,7 +68,6 @@ export async function muxWebhookInternal({ body: inputBody, headers: requestHead
     if (!type || !data) {
       throw new HttpError(400, { message: 'Invalid webhook payload' });
     }
-    if (await handleLivestreamWebhook(event)) return { received: true };
 
     // tvoj video id iz baze obično dolazi kroz passthrough ili meta.external_id
     const candidateVideoId = data.passthrough || data?.meta?.external_id || null;
@@ -90,11 +88,6 @@ export async function muxWebhookInternal({ body: inputBody, headers: requestHead
       case 'video.asset.track.errored': {
         const assetId = data.asset_id || (event.object?.type === 'asset' ? event.object.id : null);
         if (!assetId) throw new HttpError(400, { message: 'Missing track asset ID' });
-        const { rows } = await writePool.query(
-          `SELECT id FROM public.videos WHERE mux_asset_id = $1 AND kind = 'upload'`,
-          [assetId],
-        );
-        if (!rows.length) break;
         await reconcileTracks(assetId);
         break;
       }
@@ -103,7 +96,7 @@ export async function muxWebhookInternal({ body: inputBody, headers: requestHead
         const thumbnailUrl = muxPlaybackId ? getDefaultThumbnailUrl(muxPlaybackId) : null;
 
         // updejt u bazi
-        const { rows } = await writePool.query(
+        await writePool.query(
           `
           UPDATE public.videos
           SET
@@ -113,15 +106,13 @@ export async function muxWebhookInternal({ body: inputBody, headers: requestHead
             mux_playback_id = COALESCE(mux_playback_id, $4),
             thumbnail_url = COALESCE(thumbnail_url, $5)
           WHERE (id = $1::uuid OR mux_asset_id=$3)
-            AND kind = 'upload'
             AND (mux_asset_id IS NULL OR mux_asset_id=$3)
             AND mux_status IS DISTINCT FROM 'deleted'
-          RETURNING id
           `,
           [videoId, durationSeconds, muxAssetId, muxPlaybackId, thumbnailUrl],
         );
 
-        if (rows.length) await reconcileTracks(muxAssetId, rows[0].id);
+        await reconcileTracks(muxAssetId, videoId);
         break;
       }
 
@@ -134,7 +125,6 @@ export async function muxWebhookInternal({ body: inputBody, headers: requestHead
           SET mux_status = 'errored',
               mux_asset_id = COALESCE(mux_asset_id, $2)
           WHERE id = $1 AND mux_status IS DISTINCT FROM 'deleted'
-            AND kind = 'upload'
             AND (mux_asset_id IS NULL OR mux_asset_id=$2)
           `,
           [videoId, muxAssetId],
@@ -145,8 +135,8 @@ export async function muxWebhookInternal({ body: inputBody, headers: requestHead
       case 'video.asset.deleted': {
         // ako imaš FK veze (playlist_items, watch_progress, itd.) i nemaš ON DELETE CASCADE,
         // moraćeš prvo njih da obrišeš ili da koristiš CASCADE u šemi.
-        await writePool.query(`DELETE FROM public.videos WHERE kind = 'upload'
-          AND (mux_asset_id=$1 OR (id=$2::uuid AND mux_asset_id IS NULL))`, [muxAssetId, videoId]);
+        await writePool.query(`DELETE FROM public.videos WHERE mux_asset_id=$1
+          OR (id=$2::uuid AND mux_asset_id IS NULL)`, [muxAssetId, videoId]);
 
         break;
       }
@@ -158,7 +148,7 @@ export async function muxWebhookInternal({ body: inputBody, headers: requestHead
     return { received: true };
   } catch (error) {
     if (error instanceof HttpError) throw error;
-    console.error('Webhook processing error:', { name: error.name, status: error.status ?? null });
+    console.error('Webhook processing error:', error);
     throw new HttpError(500, { message: 'Webhook processing failed' });
   }
 }

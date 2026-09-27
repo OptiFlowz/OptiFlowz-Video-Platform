@@ -1,4 +1,3 @@
-import { pageReadySql } from '../../../../common/videoEligibility.js';
 import { HttpError } from '../../../../common/httpError.js';
 import { writePool } from '../../../../database/index.js';
 import {
@@ -51,7 +50,7 @@ export async function getSimilarVideosVectorInternal(videoId, userId = null, lim
          AND d.index_version = $4
          AND vector_norm(d.embedding) > 0
      ) reference ON TRUE
-     WHERE v.id = $1 AND ${pageReadySql()}
+     WHERE v.id = $1 AND v.mux_status = 'ready'
        AND ((v.visibility = 'public' AND v.published_at <= NOW()) OR (v.visibility IN ('public', 'private') AND v.uploaded_by = $2))`,
     [videoId, userId, MODEL, INDEX_VERSION],
   );

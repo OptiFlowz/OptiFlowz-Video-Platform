@@ -34,13 +34,6 @@ async function authorizeOwnedResource({
     const authorization = req.authorization
       || await loadAuthorization(req.user.sub);
     const ownsResource = resource.owner_id === req.user.sub;
-    if (resource.kind === 'live') {
-      const livePermission = key => key?.startsWith('videos.')
-        ? key.replace('videos.', 'livestreams.')
-        : key?.replace('analytics.video_', 'analytics.livestream_');
-      ownPermission = livePermission(ownPermission);
-      anyPermission = livePermission(anyPermission);
-    }
     const canAccessAny = anyPermission
       ? hasPermission(authorization, anyPermission)
       : false;
@@ -69,7 +62,7 @@ async function authorizeOwnedResource({
 
 async function loadVideo(videoId) {
   const { rows } = await writePool.query(
-    `SELECT id, kind, uploaded_by AS owner_id, visibility FROM videos WHERE id = $1 LIMIT 1`,
+    `SELECT id, uploaded_by AS owner_id, visibility FROM videos WHERE id = $1 LIMIT 1`,
     [videoId],
   );
   return rows[0] || null;

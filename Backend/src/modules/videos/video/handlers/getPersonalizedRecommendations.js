@@ -10,7 +10,7 @@ export async function getPersonalizedRecommendationsInternal(userId, limit = 20,
       FROM watch_progress wp
       JOIN videos v        ON v.id = wp.video_id
       JOIN video_categories vc ON vc.video_id = v.id
-      WHERE wp.user_id = $1 AND v.kind = 'upload'
+      WHERE wp.user_id = $1
         AND wp.percentage_watched >= 0
       GROUP BY vc.category_id
     ),
@@ -19,7 +19,7 @@ export async function getPersonalizedRecommendationsInternal(userId, limit = 20,
       FROM watch_progress wp
       JOIN videos v ON v.id = wp.video_id
       CROSS JOIN LATERAL unnest(COALESCE(v.tags, '{}')) AS t(tag)
-      WHERE wp.user_id = $1 AND v.kind = 'upload'
+      WHERE wp.user_id = $1
         AND wp.percentage_watched >= 0
       GROUP BY t.tag
     ),
@@ -64,7 +64,7 @@ export async function getPersonalizedRecommendationsInternal(userId, limit = 20,
           WHERE vc.video_id = v.id
         ) p
       ) ppl ON TRUE
-      WHERE v.kind = 'upload' AND v.mux_status = 'ready' AND v.visibility = 'public'
+      WHERE v.mux_status = 'ready' AND v.visibility = 'public'
         AND v.published_at <= NOW()
         AND NOT EXISTS (
           SELECT 1
