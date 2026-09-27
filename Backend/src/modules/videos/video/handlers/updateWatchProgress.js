@@ -1,6 +1,9 @@
+import { recordingReadySql } from '../../../../common/videoEligibility.js';
 import { writePool } from '../../../../database/index.js';
+import { requireVisibleVideo } from '../../../../common/videoAccess.js';
 
 export async function updateWatchProgressInternal(videoId, userId, progressSeconds) {
+  await requireVisibleVideo(writePool, videoId, userId, { recording: true });
   const query = `
     INSERT INTO watch_progress (
       user_id, video_id, progress_seconds, percentage_watched, last_watched_at
@@ -24,7 +27,7 @@ export async function updateWatchProgressInternal(videoId, userId, progressSecon
       END AS percentage_watched,
       NOW()
     FROM videos v
-    WHERE v.id = $2::uuid
+    WHERE v.id = $2::uuid AND ${recordingReadySql()}
     ON CONFLICT (user_id, video_id)
     DO UPDATE SET
       progress_seconds = CASE

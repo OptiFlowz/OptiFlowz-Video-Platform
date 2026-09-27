@@ -363,3 +363,10 @@ export async function getPlatformActiveUsersOverTime(req, res) {
     return sendError(res, error.message, error.status || 500);
   }
 }
+import { getConcurrentViewersInternal } from './handlers/video/getConcurrentViewers.js';
+
+export async function getConcurrentViewers(req, res) {
+  res.set('Cache-Control', 'private, no-store');
+  try { return res.json(await getConcurrentViewersInternal(req.params.videoId)); }
+  catch (error) { return res.status(error.status || 500).json({ message: error.status ? error.message : 'Failed to load concurrent viewers' }); }
+}

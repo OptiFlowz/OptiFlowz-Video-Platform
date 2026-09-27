@@ -1,3 +1,4 @@
+import { analyticsSource } from '../../helpers/contentFilter.js';
 import { readPool } from '../../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../../common/input.validation.js';
@@ -40,7 +41,7 @@ export async function getPlatformOperatingSystemSplitInternal(object, userId = n
             WHEN vv.user_agent ~* '(linux|x11)' THEN 'linux'
             ELSE 'other'
           END AS operating_system
-        FROM video_views vv
+        FROM ${analyticsSource('video_views', object.kind)} vv
         WHERE true${filter.sql}
       )
       SELECT

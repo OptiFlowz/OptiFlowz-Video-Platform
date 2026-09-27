@@ -40,8 +40,8 @@ export async function initiateUploadInternal({ body: inputBody }, actorUserId = 
     await client.query('BEGIN');
 
     const insertSql = `
-            INSERT INTO public.videos (title, uploaded_by, playback_policy)
-            VALUES ($1, $2, $3)
+            INSERT INTO public.videos (title, uploaded_by, playback_policy, kind)
+            VALUES ($1, $2, $3, 'upload')
             RETURNING id
             `;
     const { rows: createdRows } = await client.query(insertSql, [title, userId, playbackPolicy]);

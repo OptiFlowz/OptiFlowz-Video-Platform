@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { HttpError } from '../../../common/httpError.js';
-export { requireVisibleVideo } from '../../../common/videoAccess.js';
+import { requireVisibleVideo as requireVisibleContent } from '../../../common/videoAccess.js';
+export const requireVisibleVideo = (db, id, user) => requireVisibleContent(db, id, user, { recording: true });
 
 export const MAX_NOTES_PER_VIDEO = 100;
 export const NOTE_COLUMNS = 'id, user_id, video_id, title, text, timestamp, color';

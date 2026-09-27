@@ -1,3 +1,5 @@
+import { recordingReadySql } from '../../../../common/videoEligibility.js';
+import { analyticsSource } from '../../helpers/contentFilter.js';
 import { readPool } from '../../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../../common/input.validation.js';
@@ -45,11 +47,11 @@ export async function getChannelAverageEngagementPerVideoInternal(
               / NULLIF(COUNT(vv.id) * v.duration_seconds, 0),
             0
           ) AS engagement
-        FROM videos v
-        LEFT JOIN video_views vv
+        FROM ${analyticsSource('videos', object.kind)} v
+        LEFT JOIN ${analyticsSource('video_views', object.kind)} vv
           ON vv.video_id = v.id${filter.sql}
         WHERE v.uploaded_by = $1
-          AND v.duration_seconds > 0
+          AND v.duration_seconds > 0 AND ${recordingReadySql()}
         GROUP BY v.id, v.duration_seconds
       )
       SELECT COALESCE(AVG(engagement), 0) AS average_engagement_per_video

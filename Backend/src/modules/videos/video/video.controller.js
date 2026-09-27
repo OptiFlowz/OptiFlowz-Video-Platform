@@ -21,6 +21,7 @@ import { getSimilarVideosInternal } from './handlers/getSimilarVideos.js';
 import { getSimilarVideosVectorInternal } from './handlers/getSimilarVideosVector.js';
 import { getVideoByIdInternal } from './handlers/getVideoById.js';
 import { incrementViewCountInternal } from './handlers/incrementViewCount.js';
+import { playbackState } from '../../../common/videoEligibility.js';
 
 export async function handleHeartbeat(req, res) {
   try {
@@ -226,7 +227,7 @@ export async function handleGetPersonalizedRecommendationsVector(req, res) {
 export async function handleUpdateProgress(req, res) {
   try {
     const { progressSeconds } = req.body;
-    if (typeof progressSeconds !== 'number' || progressSeconds < 0) {
+    if (!Number.isFinite(progressSeconds) || !Number.isSafeInteger(progressSeconds) || progressSeconds < 0) {
       return res.status(400).json({
         message: 'Invalid progress value',
       });
@@ -240,6 +241,7 @@ export async function handleUpdateProgress(req, res) {
     });
   } catch (error) {
     console.error('Progress update error:', error);
+    if (error instanceof HttpError) return res.status(error.status).json(error.body);
     res.status(500).json({ message: 'Failed to update progress' });
   }
 }
@@ -249,6 +251,7 @@ export async function handleLikeVideo(req, res) {
     const result = await setVideoReactionInternal(req.params.id, req.user.sub, 'like');
     res.json({ success: true, status: result.status });
   } catch (e) {
+    if (e instanceof HttpError) return res.status(e.status).json(e.body);
     res.status(500).json({ message: 'Failed to set like' });
   }
 }
@@ -258,6 +261,7 @@ export async function handleDislikeVideo(req, res) {
     const result = await setVideoReactionInternal(req.params.id, req.user.sub, 'dislike');
     res.json({ success: true, status: result.status });
   } catch (e) {
+    if (e instanceof HttpError) return res.status(e.status).json(e.body);
     res.status(500).json({ message: 'Failed to set dislike' });
   }
 }
@@ -325,14 +329,18 @@ export async function handleGetVideoById(req, res) {
       return res.status(404).json({ message: 'Video not found' });
     }
     let view = null;
-    try {
-      view = await incrementViewCountInternal(req.params.id, {
-        userId,
-        ip: getClientIp(req),
-        userAgent: req.get('user-agent') || '',
-      });
-    } catch (e) {
-      console.warn('View tracking failed (ignored):', e);
+    // Event pages are visible before a stream can be watched. Only playable
+    // content should open a viewing session or increment the view count.
+    if (playbackState(video) !== 'unavailable') {
+      try {
+        view = await incrementViewCountInternal(req.params.id, {
+          userId,
+          ip: getClientIp(req),
+          userAgent: req.get('user-agent') || '',
+        });
+      } catch (e) {
+        console.warn('View tracking failed (ignored):', e);
+      }
     }
     video.view = view;
     logEvent('videos.get_success', {
@@ -413,7 +421,7 @@ export async function handleGetCategories(req, res) {
 export async function handleGetUserHistory(req, res) {
   res.set('Cache-Control', 'private, no-store');
   try {
-    const result = await getUserHistoryInternal({ query: req.query }, req.user?.sub || null);
+    const result = await getUserHistoryInternal({ query: req.query, allowedKinds: req.allowedVideoKinds }, req.user?.sub || null);
     return res.status(200).json(result);
   } catch (error) {
     return res
@@ -425,7 +433,7 @@ export async function handleGetUserHistory(req, res) {
 export async function handleGetContinueWatching(req, res) {
   res.set('Cache-Control', 'private, no-store');
   try {
-    const result = await getContinueWatchingInternal({ query: req.query }, req.user?.sub || null);
+    const result = await getContinueWatchingInternal({ query: req.query, allowedKinds: req.allowedVideoKinds }, req.user?.sub || null);
     return res.status(200).json(result);
   } catch (error) {
     return res
@@ -437,7 +445,7 @@ export async function handleGetContinueWatching(req, res) {
 export async function handleGetLikedVideos(req, res) {
   res.set('Cache-Control', 'private, no-store');
   try {
-    const result = await getLikedVideosInternal({ query: req.query }, req.user?.sub || null);
+    const result = await getLikedVideosInternal({ query: req.query, allowedKinds: req.allowedVideoKinds }, req.user?.sub || null);
     return res.status(200).json(result);
   } catch (error) {
     return res

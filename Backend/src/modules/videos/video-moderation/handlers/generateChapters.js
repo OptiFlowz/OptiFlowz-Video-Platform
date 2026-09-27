@@ -1,3 +1,4 @@
+import { recordingReadySql } from '../../../../common/videoEligibility.js';
 import { readPool } from '../../../../database/index.js';
 import { generateChapters } from '@mux/ai/workflows';
 import { HttpError } from '../../../../common/httpError.js';
@@ -21,7 +22,7 @@ export async function generateChaptersInternal({ body: inputBody }) {
     const videoRes = await readPool.query(
       `SELECT mux_asset_id
        FROM videos
-       WHERE id = $1
+       WHERE id = $1 AND ${recordingReadySql("videos")}
        LIMIT 1`,
       [videoId],
     );

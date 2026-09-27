@@ -48,7 +48,7 @@ export async function getChannelVideosInternal(object, userId = null) {
     SELECT COUNT(*)::int AS total
     FROM videos v
     WHERE v.uploaded_by = $1
-      AND v.mux_status = 'ready'
+      AND v.kind = 'upload' AND v.mux_status = 'ready'
       AND v.visibility = 'public'
       AND v.published_at <= NOW()
   `;

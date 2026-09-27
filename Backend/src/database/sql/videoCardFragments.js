@@ -1,7 +1,9 @@
-export function buildVideoCardSelect({ includeWatchProgress = false } = {}) {
+import { pageReadySql } from '../../common/videoEligibility.js';
+export function buildVideoCardSelect({ includeWatchProgress = false, includeKind = false } = {}) {
   return `
     SELECT
       v.id,
+      ${includeKind ? 'v.kind,' : ''}
       v.title,
       v.thumbnail_url,
       v.duration_seconds,
@@ -44,9 +46,9 @@ export function buildVideoCardJoins({ includeWatchProgress = false, watchProgres
   `;
 }
 
-export function buildVideoCardVisibilityWhere() {
+export function buildVideoCardVisibilityWhere({ includeLivestreams = false } = {}) {
   return `
-    v.mux_status = 'ready'
+    ${includeLivestreams ? pageReadySql() : "v.kind = 'upload' AND v.mux_status = 'ready'"}
     AND v.visibility = 'public'
     AND v.published_at <= NOW()
   `;

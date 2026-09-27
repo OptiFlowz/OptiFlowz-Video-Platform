@@ -1,6 +1,7 @@
 import Mux from '@mux/mux-node';
 import { writePool } from '../../../database/index.js';
 import { HttpError } from '../../../common/httpError.js';
+import { playbackState, livestreamJsonSql } from '../../../common/videoEligibility.js';
 
 const mux = new Mux();
 const IMAGE_LIFETIME_SECONDS = 3600;
@@ -34,6 +35,12 @@ async function imageUrl(playbackId, policy, path, type, params) {
 }
 
 async function cardMedia(card, video) {
+  if (video?.kind === 'live') {
+    const state = playbackState(video);
+    card = { ...card, kind: 'live', livestream: video.livestream, playback_available: state !== 'unavailable', stream_type: state };
+    // Active broadcasts have no stable duration or animated preview timeline.
+    if (state !== 'on-demand') return { ...card, thumbnail_url: video.thumbnail_url || null, mux_thumbnail_url: null, preview_url: null, media_expires_at: null };
+  }
   const media = {
     thumbnail_url: video?.thumbnail_url ?? null,
     mux_thumbnail_url: null,
@@ -87,14 +94,15 @@ export async function withVideoDetailsMedia(video) {
   return result;
 }
 
-async function loadCardVideos(cards, userId) {
+async function loadCardVideos(cards, userId, { includeLivestreams = false } = {}) {
   // One primary read per list prevents signing stale private/deleted video data
   // returned by a replica, and also supplies fields absent from older card SQL.
   const { rows } = await writePool.query(
-    `SELECT id, uploaded_by AS uploader_id, thumbnail_url, mux_thumbnail_time, mux_playback_id,
+    `SELECT id, kind, ${livestreamJsonSql()} AS livestream,
+            uploaded_by AS uploader_id, thumbnail_url, mux_thumbnail_time, mux_playback_id,
             playback_policy, mux_status, duration_seconds
-     FROM public.videos
-     WHERE id = ANY($1::uuid[])
+     FROM public.videos v
+     WHERE id = ANY($1::uuid[]) ${includeLivestreams ? '' : "AND kind = 'upload'"}
        AND ((visibility = 'public' AND published_at <= NOW()) OR (visibility IN ('public', 'private') AND uploaded_by = $2))`,
     [[...new Set(cards.map(card => card.id))], userId],
   );
@@ -102,9 +110,9 @@ async function loadCardVideos(cards, userId) {
 }
 
 // Resolve a display thumbnail without generating unused animated previews.
-export async function withVideoThumbnailMedia(cards, userId = null) {
+export async function withVideoThumbnailMedia(cards, userId = null, options = {}) {
   if (!cards.length) return [];
-  const videos = await loadCardVideos(cards, userId);
+  const videos = await loadCardVideos(cards, userId, options);
   return Promise.all(cards.map(async card => {
     const video = videos.get(card.id);
     const stored = video?.thumbnail_url?.trim() || null;
@@ -113,7 +121,7 @@ export async function withVideoThumbnailMedia(cards, userId = null) {
     if (stored && !isMuxImage) {
       return { ...card, thumbnail_url: stored, media_expires_at: null };
     }
-    if (!video || video.mux_status !== 'ready' || !video.mux_playback_id) {
+    if (!video || (video.kind === 'live' && playbackState(video) !== 'on-demand') || video.mux_status !== 'ready' || !video.mux_playback_id) {
       return { ...card, thumbnail_url: null, media_expires_at: null };
     }
     const expiresAt = Math.floor(Date.now() / 1000) + IMAGE_LIFETIME_SECONDS;
@@ -129,9 +137,9 @@ export async function withVideoThumbnailMedia(cards, userId = null) {
   }));
 }
 
-export async function withVideoCardMedia(cards, userId = null) {
+export async function withVideoCardMedia(cards, userId = null, options = {}) {
   if (!cards.length) return [];
-  const videos = await loadCardVideos(cards, userId);
+  const videos = await loadCardVideos(cards, userId, options);
   return Promise.all(cards.map(card => {
     const video = videos.get(card.id);
     return cardMedia({ ...card, uploader_id: video?.uploader_id ?? null }, video);

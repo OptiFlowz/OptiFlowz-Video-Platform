@@ -1,3 +1,4 @@
+import { pageReadySql } from '../../../../common/videoEligibility.js';
 import { withVideoCardMedia } from '../../helpers/videoCardMedia.js';
 import { readPool } from '../../../../database/index.js';
 
@@ -11,7 +12,7 @@ export async function getSimilarVideosInternal(videoId, userId, limit = 10, page
         COALESCE(array_agg(vc.category_id), '{}')::uuid[] AS category_ids
       FROM videos v
       LEFT JOIN video_categories vc ON vc.video_id = v.id
-      WHERE v.id = $1 AND v.mux_status = 'ready'
+      WHERE v.id = $1 AND ${pageReadySql()}
         AND ((v.visibility = 'public' AND v.published_at <= NOW())
           ${userId ? "OR (v.visibility IN ('public', 'private') AND v.uploaded_by = $4)" : ''})
       GROUP BY v.id
@@ -22,6 +23,7 @@ export async function getSimilarVideosInternal(videoId, userId, limit = 10, page
              COALESCE(array_agg(vc.category_id), '{}')::uuid[] AS cats
       FROM videos v
       LEFT JOIN video_categories vc ON vc.video_id = v.id
+      WHERE v.kind = 'upload'
       GROUP BY v.id
     )
     SELECT
@@ -75,7 +77,7 @@ export async function getSimilarVideosInternal(videoId, userId, limit = 10, page
                 ) p
             ) ppl ON TRUE
     WHERE v.id <> $1
-      AND v.mux_status = 'ready' AND v.visibility = 'public'
+      AND v.kind = 'upload' AND v.mux_status = 'ready' AND v.visibility = 'public'
       AND v.published_at <= NOW()
       AND (
         (COALESCE(v.tags, '{}')::text[] && cv.tags)

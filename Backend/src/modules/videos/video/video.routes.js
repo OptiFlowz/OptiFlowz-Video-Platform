@@ -1,3 +1,4 @@
+import { requireContentPermission, requireMixedLibrary } from '../../authorization/video-permissions.middleware.js';
 import express from 'express';
 import { requireAuth, optionalAuth } from '../../../middleware/auth.js';
 import { requirePermission } from '../../authorization/authorization.middleware.js';
@@ -47,19 +48,19 @@ router.get(
 router.get(
   '/user/history',
   requireAuth,
-  requirePermission(Permissions.VIDEOS_LIBRARY_READ),
+  requireMixedLibrary,
   handleGetUserHistory,
 );
 router.get(
   '/user/continue',
   requireAuth,
-  requirePermission(Permissions.VIDEOS_LIBRARY_READ),
+  requireMixedLibrary,
   handleGetContinueWatching,
 );
 router.get(
   '/user/liked',
   requireAuth,
-  requirePermission(Permissions.VIDEOS_LIBRARY_READ),
+  requireMixedLibrary,
   handleGetLikedVideos,
 );
 router.get(
@@ -77,14 +78,14 @@ router.get(
 router.post(
   '/:id/progress',
   requireAuth,
-  requirePermission(Permissions.VIDEOS_PROGRESS_UPDATE),
+  requireContentPermission('progress.update'),
   handleUpdateProgress,
 );
-router.post('/:id/like', requireAuth, requirePermission(Permissions.VIDEOS_REACT), handleLikeVideo);
+router.post('/:id/like', requireAuth, requireContentPermission('react'), handleLikeVideo);
 router.post(
   '/:id/dislike',
   requireAuth,
-  requirePermission(Permissions.VIDEOS_REACT),
+  requireContentPermission('react'),
   handleDislikeVideo,
 );
 
@@ -97,8 +98,8 @@ router.post(
 
 router.get('/:id/similar', requireAuth, handleGetSimilarVideos);
 router.get('/:id/similar/vector', requireAuth, handleGetSimilarVideosVector);
-router.post('/:id/playback', requireAuth, handleGetVideoPlayback);
+router.post('/:id/playback', requireAuth, requireContentPermission('library.read'), handleGetVideoPlayback);
 router.get('/:id/comments', requireAuth, handleGetComments);
-router.get('/:id', requireAuth, handleGetVideoById);
+router.get('/:id', requireAuth, requireContentPermission('library.read'), handleGetVideoById);
 
 export default router;
