@@ -17,7 +17,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     const platformHome = canAccess('platformAnalytics') ? '/platform-analytics' : canAccess('platformUsers') ? '/platform-users' : canAccess('platformSettings') ? '/platform-settings?page=access' : null;
     const item = (to: string, label: string, icon: ReactNode) => <NavLink key={to} to={to} end
         className={({ isActive }) => `appSidebarItem${isActive ? ' isActive' : ''}`} onClick={onNavigate}>
-        <span className="appSidebarIcon" aria-hidden="true">{icon}</span><span>{label}</span>
+        <span className="appSidebarIcon" data-line-icon={icon === AnalyticsSVG || icon === LiveSVG ? "true" : undefined} aria-hidden="true">{icon}</span><span>{label}</span>
     </NavLink>;
     const management = [
         canAccess('videos') && item('/my-videos', t('navMyVideos'), ChannelMenuSVG),
