@@ -50,7 +50,7 @@ main.personPage {
 .personPage .personVideosToolbar h2 span { flex-shrink: 0; padding: 4px 10px; border-radius: 8px; background: var(--background2); color: var(--text2); font-size: .85rem; font-weight: 600; }
 .personPage .personSortSelect { width: 200px; max-width: 100%; }
 .personPage .personSortSelect .customSelectTrigger { background: var(--background2); color: var(--text1); border-color: var(--border1); }
-.personPage .personVideoGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--personSpacing); }
+.personPage .personVideoGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--video-grid-row-gap) var(--video-grid-gap); }
 .personPage .personVideoGrid > .item { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .personPage .personVideoGrid .info > span { flex-wrap: wrap; }
 .personPage .personEmpty { padding-block: 32px; color: var(--text2); }

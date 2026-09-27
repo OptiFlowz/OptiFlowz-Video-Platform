@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { memo, useEffect, useId, useMemo, useState } from "react";
+import { memo, useMemo } from "react";
 import { fetchFn } from "~/API";
 import type { AuthFetchT } from "~/types";
 import DefaultProfile from "../../../assets/DefaultProfile.webp";
-import { formatDescription, getToken } from "~/functions";
+import { getToken } from "~/functions";
 import { useI18n } from "~/i18n";
+import ExpandableDescription from "../shared/ExpandableDescription";
 
 const SkeletonAccountInfo = () => (
     <div className="accountIdentity">
@@ -30,10 +31,6 @@ const SkeletonAccountInfo = () => (
 function AccountInfo(){
     const { t } = useI18n();
     const token = getToken();
-    const descriptionId = useId();
-    const [descriptionOpen, setDescriptionOpen] = useState(false);
-    const [descriptionElement, setDescriptionElement] = useState<HTMLDivElement | null>(null);
-    const [hasDescriptionOverflow, setHasDescriptionOverflow] = useState(false);
     const headers = useMemo(() => {
         const nextHeaders = new Headers();
         if (token) {
@@ -57,25 +54,6 @@ function AccountInfo(){
         refetchOnWindowFocus: false,
     });
 
-    useEffect(() => {
-        setDescriptionOpen(false);
-    }, [userData?.user?.description, token]);
-
-    useEffect(() => {
-        if (!descriptionElement) return;
-        const measureOverflow = () => {
-            setHasDescriptionOverflow(descriptionElement.scrollHeight > descriptionElement.clientHeight + 1);
-        };
-        measureOverflow();
-        const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measureOverflow) : null;
-        observer?.observe(descriptionElement);
-        window.addEventListener("resize", measureOverflow);
-        return () => {
-            observer?.disconnect();
-            window.removeEventListener("resize", measureOverflow);
-        };
-    }, [descriptionElement, userData?.user?.description, descriptionOpen]);
-
     if (isLoading) {
         return <SkeletonAccountInfo />;
     }
@@ -96,14 +74,7 @@ function AccountInfo(){
                 <h1 className="accountName">{userData?.user?.full_name}</h1>
                 <div className="accountEmail">{userData?.user?.email}</div>
                 <div className="accountAbout">
-                    <div id={descriptionId} ref={setDescriptionElement} className={`accountDescription${descriptionOpen ? " isExpanded" : ""}`}>
-                        {formatDescription(userData?.user?.description) || t("noBiography")}
-                    </div>
-                    {(hasDescriptionOverflow || descriptionOpen) && (
-                        <button type="button" className="accountReadMore" aria-expanded={descriptionOpen} aria-controls={descriptionId} onClick={() => setDescriptionOpen(open => !open)}>
-                            {t(descriptionOpen ? "readLess" : "readMore")}
-                        </button>
-                    )}
+                    <ExpandableDescription key={token} text={userData?.user?.description} fallback={t("noBiography")} />
                 </div>
             </div>
         </div>

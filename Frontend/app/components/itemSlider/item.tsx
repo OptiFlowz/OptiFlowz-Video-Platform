@@ -1,3 +1,4 @@
+import DefaultThumbnail from "../../../assets/DefaultThumbnail.webp";
 import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import { Link } from "react-router";
 import { useContext, useState } from "react";
@@ -7,12 +8,15 @@ import type { PlaylistVideoT } from "~/types";
 import { CurrentNavContext } from "~/context";
 
 function  Item({props, playlistIndex, playlistId}: {props: PlaylistVideoT, playlistIndex?: number, playlistId?: string}){
-    const newThumbnailUrl = getVideoThumbnail(props);
+    const requestedThumbnail = getVideoThumbnail(props) || DefaultThumbnail;
+    const [failedThumbnail, setFailedThumbnail] = useState<string>();
+    const newThumbnailUrl = failedThumbnail === requestedThumbnail ? DefaultThumbnail : requestedThumbnail;
     const animGifUrl = props.preview_url || undefined;
     const isWatched = (props?.percentage_watched ?? 0) >= 5 && !!props?.progress_seconds;
 
     const [isHovered, setIsHovered] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
+    const [loadedThumbnail, setLoadedThumbnail] = useState<string>();
+    const isLoading = loadedThumbnail !== newThumbnailUrl;
     const [previewRequested, setPreviewRequested] = useState(false);
     const [loadedPreview, setLoadedPreview] = useState<string>();
 
@@ -33,7 +37,8 @@ function  Item({props, playlistIndex, playlistId}: {props: PlaylistVideoT, playl
             onMouseLeave={() => setIsHovered(false)}
             onClick={() => setCurrentNav(-1)}
         >
-            <span className={`${isLoading ? "opacity-0 absolute!" : "relative"}`}>
+            <span className="itemThumbnail">
+                {isLoading && <span className="itemThumbnailSkeleton skeleton-thumbnail" aria-hidden="true" />}
                 {!isLoading && previewRequested && animGifUrl &&
                     <img
                         className={isHovered ? "z-[-1] absolute top-0 left-0" : "z-[-1] absolute top-0 left-0 opacity-0"}
@@ -45,12 +50,14 @@ function  Item({props, playlistIndex, playlistId}: {props: PlaylistVideoT, playl
                     />
                 }
                 <img
-                    className={`thumbnail ${isLoading ? "z-0 absolute opacity-0" : `relative ${animGifUrl && loadedPreview === animGifUrl && isHovered ? "z-0 opacity-0 transition-opacity! duration-200! ease" : isHovered ? "z-1 opacity-100 darken" : "z-1 -100"}`}`}
+                    className={`thumbnail ${isLoading ? "z-0 relative opacity-0" : `relative ${animGifUrl && loadedPreview === animGifUrl && isHovered ? "z-0 opacity-0 transition-opacity! duration-200! ease" : isHovered ? "z-1 opacity-100 darken" : "z-1 -100"}`}`}
                     src={newThumbnailUrl}
                     alt="Thumbnail"
                     loading="lazy"
                     decoding="async"
-                    onLoad={() => setIsLoading(false)}
+                    ref={image => { if (image?.complete && image.naturalWidth > 0) setLoadedThumbnail(newThumbnailUrl); }}
+                    onLoad={() => setLoadedThumbnail(newThumbnailUrl)}
+                    onError={() => { setFailedThumbnail(requestedThumbnail); setLoadedThumbnail(newThumbnailUrl); }}
                 />
 
                 {playlistIndex && playlistIndex > -1 ? <span className="playlistOrderNumber">{playlistIndex}</span> : ""}
@@ -63,17 +70,6 @@ function  Item({props, playlistIndex, playlistId}: {props: PlaylistVideoT, playl
                     <span style={{ width: `${(props?.progress_seconds / props?.duration_seconds) * 100}%` }}></span>
                 </span> : ""}
             </span>
-
-            {isLoading &&
-                <div className="skeleton-item">
-                    <div className="skeleton-thumbnail"></div>
-                    <div className="skeleton-content">
-                        <div className="skeleton-title"></div>
-                        <div className="skeleton-text"></div>
-                        <div className="skeleton-text short"></div>
-                    </div>
-                </div>
-            }
 
             <ContentInfo props={{
                 title: props?.title,

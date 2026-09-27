@@ -68,7 +68,7 @@ export function useNavigate() {
           search?: string;
           hash?: string;
         },
-    options?: { replace?: boolean; preventScrollReset?: boolean },
+    options?: { replace?: boolean; preventScrollReset?: boolean; shallow?: boolean },
   ) => {
     if (typeof to === "number") {
       if (to < 0) {
@@ -81,6 +81,15 @@ export function useNavigate() {
       typeof to === "string"
         ? to
         : `${to.pathname ?? ""}${to.search ?? ""}${to.hash ?? ""}`;
+
+    // Only opt in for URL-driven views within the same mounted page. Next's
+    // native History integration updates usePathname and preserves Back/Forward
+    // without fetching a new server component tree or remounting the page.
+    if (options?.shallow) {
+      if (options.replace) window.history.replaceState(null, "", href);
+      else window.history.pushState(null, "", href);
+      return;
+    }
 
     if (options?.replace) {
       router.replace(href, { scroll: !options?.preventScrollReset });

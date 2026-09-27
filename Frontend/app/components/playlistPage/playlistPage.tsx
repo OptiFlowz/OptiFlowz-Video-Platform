@@ -1,9 +1,9 @@
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
 import { useQuery } from "@tanstack/react-query";
-import { useLayoutEffect, useState, useCallback, useEffect, useMemo } from "react";
+import { useLayoutEffect, useState, useCallback, useMemo } from "react";
 import { env } from "~/env";
-import { formatDescription, getToken } from "~/functions";
+import { getToken } from "~/functions";
 import { useParams } from "react-router";
 import { fetchFn, fetchApiResponse } from "~/API";
 import { BookmarkSVG, PlaySVG, ShareSVG } from "~/constants";
@@ -11,6 +11,9 @@ import DefaultThumbnail from "../../../assets/DefaultThumbnail.webp";
 import type { FetchPlaylistT, PlaylistT, PlaylistVideosT, VideoT } from "~/types";
 import Item from "../itemSlider/item";
 import { useI18n } from "~/i18n";
+import ExpandableDescription from "../shared/ExpandableDescription";
+import { useImagePalette } from "~/hooks/useImagePalette";
+import "./playlistPage.css";
 
 const SkeletonVideoItem = () => (
     <div className="skeleton-item">
@@ -24,10 +27,10 @@ const SkeletonVideoItem = () => (
 );
 
 const SkeletonHeader = () => (
-    <div className="playlistHeaderLoader relative flex items-start gap-5 overflow-hidden">
-        <div className="skeleton-playlist-banner w-full rounded-[15px] z-1"></div>
+    <div className="playlistHero playlistHeaderLoader">
+        <div className="playlistHeroCover skeleton-playlist-banner"></div>
 
-        <span className="flex flex-col gap-3 z-1 w-full">
+        <span className="playlistHeroInfo">
             <div className="skeleton-title-large"></div>
             <div className="skeleton-text-small"></div>
             <span className="buttonHolder gap-3 flex">
@@ -46,9 +49,6 @@ function PlaylistPage(){
     const { can } = useAuthorization();
     const {id: playlistId} = useParams();
     const token = getToken() ?? "";
-    const [descOpen, setDescOpen] = useState(false);
-    const [hasDescriptionOverflow, setHasDescriptionOverflow] = useState(false);
-    const [descriptionElement, setDescriptionElement] = useState<HTMLParagraphElement | null>(null);
     const [isSaved, setIsSaved] = useState(false);
     const [saveCount, setSaveCount] = useState(0);
 
@@ -71,8 +71,6 @@ function PlaylistPage(){
         document.querySelector<HTMLAnchorElement>(".playlistStartVideo")?.click();
     }
 
-    const toggleDescOpen = () => setDescOpen((current) => !current);
-    useEffect(() => { setDescOpen(false); }, [playlistId]);
 
     const myHeaders = useMemo(() => {
         const headers = new Headers();
@@ -95,6 +93,8 @@ function PlaylistPage(){
     });
 
     const data = playlistResponse?.playlist;
+    const thumbnail = data?.thumbnail_url || DefaultThumbnail;
+    const paletteStyle = useImagePalette(thumbnail);
 
     const {data: playlistVideosResponse, isLoading: isLoadingVideos} = useQuery({
         queryKey: [`playlist-videos${playlistId}`],
@@ -147,41 +147,6 @@ function PlaylistPage(){
         }
     }, [data?.is_saved, data?.save_count]);
 
-    // Measure the actual mounted node: playlist details can resolve before
-    // the videos request removes the loading header.
-    useLayoutEffect(() => {
-        if (!descriptionElement || descOpen) return;
-
-        let resizeObserver: ResizeObserver | null = null;
-        let disposed = false;
-
-        const measureOverflow = () => {
-            if (disposed) return;
-            const hasOverflow = descriptionElement.scrollHeight > descriptionElement.clientHeight + 1;
-            setHasDescriptionOverflow(hasOverflow);
-        };
-
-        measureOverflow();
-
-        if (typeof ResizeObserver !== "undefined") {
-            resizeObserver = new ResizeObserver(() => measureOverflow());
-            resizeObserver.observe(descriptionElement);
-        }
-
-        window.addEventListener("resize", measureOverflow);
-        // A font can change overflow without resizing the clamped two-line box.
-        const fonts = document.fonts;
-        void fonts?.ready.then(measureOverflow);
-        fonts?.addEventListener("loadingdone", measureOverflow);
-
-        return () => {
-            disposed = true;
-            resizeObserver?.disconnect();
-            window.removeEventListener("resize", measureOverflow);
-            fonts?.removeEventListener("loadingdone", measureOverflow);
-        };
-    }, [descriptionElement, data?.description, descOpen]);
-
     const skeletonVideoArray = Array.from({ length: 8 }).map((_, index) => (
         <SkeletonVideoItem key={`skeleton-video-${index}`} />
     ));
@@ -203,27 +168,26 @@ function PlaylistPage(){
 
     return (
         <main className="playlist playlistDetailsPage">
-            <div className="relative flex items-start gap-5">
-                <img className="plBanner w-100 rounded-[15px] z-1" src={data?.thumbnail_url || DefaultThumbnail} alt="" />
+            <div className="playlistHero" style={paletteStyle}>
+                <img className="plBanner playlistHeroCover" src={thumbnail} alt="" onError={event => { if (event.currentTarget.getAttribute("src") !== DefaultThumbnail) event.currentTarget.src = DefaultThumbnail; }} />
 
-                <span className="flex flex-col gap-3 z-1 w-full">
-                    <h2 className="subTitle pb-0!">{data?.title}</h2>
+                <span className="playlistHeroInfo">
+                    <h2 className="playlistHeroTitle">{data?.title}</h2>
 
-                    <p className="mobileViewAndLikeCount -mb-1.25">
+                    <p className="playlistHeroStats">
                         {t("videosLabel", { count: data?.video_count || 0 })} · {t("saveCountLabel", { count: saveCount })} · {t("viewsLabel", { count: data?.view_count || 0 })}
                     </p>
 
                     <span className="buttonHolder">
-                        <button className="play rounded-full! flex! bg-(--accentBlue)! text-(--text1)! font-semibold!" onClick={playPlaylist}>{PlaySVG}&nbsp;{t("playAll")}</button>
+                        <button className="play" onClick={playPlaylist}>{PlaySVG}&nbsp;{t("playAll")}</button>
 
-                        <button className={`${isSaved ? "saved" : ""} clickable bg-(--background2) hover:bg-(--background3) rounded-full flex`} onClick={toggleSave} disabled={!can(P.playlistsSave)}>{BookmarkSVG}&nbsp;{isSaved ? t("saved") : t("save")}</button>
-                        <button onClick={e => sharePlaylistLink(e)} className="clickable bg-(--background2) hover:bg-(--background3) rounded-full flex">{ShareSVG}&nbsp;{t("share")}</button>
+                        <button className={`${isSaved ? "saved" : ""} clickable`} onClick={toggleSave} disabled={!can(P.playlistsSave)}>{BookmarkSVG}&nbsp;{isSaved ? t("saved") : t("save")}</button>
+                        <button onClick={e => sharePlaylistLink(e)} className="clickable">{ShareSVG}&nbsp;{t("share")}</button>
                     </span>
 
-                    <p id="playlist-description" ref={setDescriptionElement} className={`description ${descOpen ? "open" : ""}`}>{formatDescription(data?.description)}</p>
-                    {data?.description && (descOpen || hasDescriptionOverflow) && (
-                        <button type="button" aria-expanded={descOpen} aria-controls="playlist-description" className="w-fit hover:underline cursor-pointer" onClick={toggleDescOpen}>{descOpen ? t("readLess") : t("readMore")}</button>
-                    )}
+                    {data?.description && <div className="playlistHeroAbout">
+                        <ExpandableDescription key={playlistId} text={data.description} />
+                    </div>}
                 </span>
             </div>
 

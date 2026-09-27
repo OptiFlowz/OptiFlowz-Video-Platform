@@ -1,16 +1,12 @@
 import { useHydrated } from "~/hooks/useHydrated";
-import { PostSVG } from "~/constants";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
-import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Link, NavLink, useNavigate, useParams } from "react-router";
-import { usePathname } from "next/navigation";
+import { Link, useNavigate, useParams } from "react-router";
 import {
-    AnalyticsSVG, ChannelMenuSVG, CloseSVG, EditModeSVG, ExternalSiteMenuSVG,
-    HomeMenuSVG, LanguageMenuSVG, LogOutSVG, MenuSVG, PeopleSVG,
-    PlatformMenuSVG, PlaylistSVG, QuizSVG, RecommendedMenuSVG, SearchSVG,
-    SearchSVGWhite, TrendingMenuSVG, UserSVG,
+    ChannelMenuSVG, CloseSVG, EditModeSVG, LanguageMenuSVG, LogOutSVG, MenuSVG,
+    PlatformMenuSVG, SearchSVGWhite, UserSVG,
 } from "~/constants";
 import DefaultProfile from "../../../assets/DefaultProfile.webp";
 import { getToken, getStoredUser } from "~/functions";
@@ -18,94 +14,13 @@ import { redirectToLogin } from "~/auth/session";
 import type { AuthFetchT } from "~/types";
 import { useI18n } from "~/i18n";
 import { useQueryClient } from "@tanstack/react-query";
-import { LOGO, BRAND_NAME, MARKETING_WEBSITE_URL } from "~/changeables";
+import { LOGO, BRAND_NAME } from "~/changeables";
 import LanguageSelect from "~/components/languageSelect/languageSelect";
 
-// Next remounts this page-level header during navigation. Retain only the route,
-// then measure its link again so the underline can continue across that remount.
-let previousNavigationPath: string | null = null;
+type HeaderProps = { onMenuToggle?: () => void; menuExpanded?: boolean };
 
-function Header(){
+function Header({ onMenuToggle, menuExpanded = false }: HeaderProps){
     const { locale, setLocale, t } = useI18n();
-    const pathname = usePathname();
-    const navigationRef = useRef<HTMLElement>(null);
-    const navigationMeasuredRef = useRef(false);
-    const navigationStartingPathRef = useRef<string | null | undefined>(undefined);
-    const [navigationIndicator, setNavigationIndicator] = useState<{ left: number; width: number; visible: boolean } | null>(null);
-
-    useLayoutEffect(() => {
-        const navigation = navigationRef.current;
-        if (!navigation) return;
-        if (navigationStartingPathRef.current === undefined) {
-            navigationStartingPathRef.current = previousNavigationPath;
-        }
-        let firstFrame = 0;
-        let secondFrame = 0;
-        let entering = false;
-
-        const measureLink = (link: HTMLAnchorElement) => {
-            const navigationBounds = navigation.getBoundingClientRect();
-            const linkBounds = link.getBoundingClientRect();
-            const style = getComputedStyle(link);
-            const paddingLeft = parseFloat(style.paddingLeft) || 0;
-            const paddingRight = parseFloat(style.paddingRight) || 0;
-            return {
-                left: linkBounds.left - navigationBounds.left + paddingLeft,
-                width: linkBounds.width - paddingLeft - paddingRight,
-                visible: true,
-            };
-        };
-
-        const updateIndicator = () => {
-            if (entering) return;
-            const activeLink = navigation.querySelector<HTMLAnchorElement>("a.active");
-            if (!activeLink || !activeLink.getClientRects().length) {
-                setNavigationIndicator(previous => previous?.visible ? { ...previous, visible: false } : previous);
-                return;
-            }
-
-            const { left, width } = measureLink(activeLink);
-            setNavigationIndicator(previous =>
-                previous?.visible && previous.left === left && previous.width === width
-                    ? previous
-                    : { left, width, visible: true },
-            );
-        };
-
-        const previousLink = Array.from(navigation.querySelectorAll<HTMLAnchorElement>("a"))
-            .find(link => link.getAttribute("href") === navigationStartingPathRef.current);
-        if (!navigationMeasuredRef.current && navigationStartingPathRef.current !== pathname &&
-            previousLink?.getClientRects().length && navigation.querySelector("a.active") &&
-            !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-            setNavigationIndicator(measureLink(previousLink));
-            entering = true;
-            // Paint the starting position before transitioning to the new link.
-            firstFrame = requestAnimationFrame(() => {
-                secondFrame = requestAnimationFrame(() => {
-                    entering = false;
-                    navigationMeasuredRef.current = true;
-                    updateIndicator();
-                });
-            });
-        } else {
-            navigationMeasuredRef.current = true;
-            updateIndicator();
-        }
-        previousNavigationPath = pathname;
-        const observer = new ResizeObserver(updateIndicator);
-        observer.observe(navigation);
-        navigation.querySelectorAll("a").forEach(link => observer.observe(link));
-        window.addEventListener("resize", updateIndicator);
-        return () => {
-            cancelAnimationFrame(firstFrame);
-            cancelAnimationFrame(secondFrame);
-            observer.disconnect();
-            window.removeEventListener("resize", updateIndicator);
-        };
-    }, [pathname, locale]);
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [searchOpen, setSearchOpen] = useState(false);
-    const [searchFocusArmed, setSearchFocusArmed] = useState(false);
     const [accountMenuOpen, setAccountMenuOpen] = useState(false);
     const [accountMenuPosition, setAccountMenuPosition] = useState({ top: 0, right: 0 });
     const navigate = useNavigate();
@@ -118,8 +33,35 @@ function Header(){
     const platformHome = canAccess('platformAnalytics') ? '/platform-analytics' : canAccess('platformUsers') ? '/platform-users' : canAccess('platformSettings') ? '/platform-settings?page=access' : null;
     const hasManagementAccess = !!channelHome || !!platformHome;
 
-    const searchRef1 = useRef<HTMLInputElement>(null);
-    const searchRef2 = useRef<HTMLInputElement>(null);
+    const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+    const searchInputRef = useRef<HTMLInputElement>(null);
+    const searchFormRef = useRef<HTMLFormElement>(null);
+    const searchToggleRef = useRef<HTMLButtonElement>(null);
+    useEffect(() => {
+        if (menuExpanded) setMobileSearchOpen(false);
+    }, [menuExpanded]);
+    useEffect(() => {
+        if (!mobileSearchOpen) return;
+        searchInputRef.current?.focus();
+        const closeOutside = (event: PointerEvent) => {
+            const target = event.target as Node;
+            if (!searchFormRef.current?.contains(target) && !searchToggleRef.current?.contains(target)) setMobileSearchOpen(false);
+        };
+        const closeOnEscape = (event: KeyboardEvent) => {
+            if (event.key !== "Escape") return;
+            event.preventDefault();
+            setMobileSearchOpen(false);
+            searchToggleRef.current?.focus();
+        };
+        document.addEventListener("pointerdown", closeOutside);
+        document.addEventListener("keydown", closeOnEscape);
+        return () => {
+            document.removeEventListener("pointerdown", closeOutside);
+            document.removeEventListener("keydown", closeOnEscape);
+        };
+    }, [mobileSearchOpen]);
+    const [searchTerm, setSearchTerm] = useState(searchValue ?? "");
+    useEffect(() => setSearchTerm(searchValue ?? ""), [searchValue]);
     const accountMenuRef = useRef<HTMLDivElement>(null);
     const accountDropdownRef = useRef<HTMLDivElement>(null);
     const accountCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -179,20 +121,6 @@ function Header(){
     //
 
     useEffect(() => {
-        if (searchOpen) {
-            setSearchFocusArmed(false);
-            const timeout = window.setTimeout(() => {
-                setSearchFocusArmed(true);
-            }, 180);
-
-            return () => window.clearTimeout(timeout);
-        }
-
-        setSearchFocusArmed(false);
-        searchRef2.current?.blur();
-    }, [searchOpen]);
-
-    useEffect(() => {
         if (!accountMenuOpen) return;
 
         const handleClickOutside = (event: Event) => {
@@ -247,29 +175,12 @@ function Header(){
         };
     }, [accountMenuOpen]);
 
-    const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if(e.key !== "Enter") return;
-
-        const searchVal = searchRef1?.current?.value || searchRef2?.current?.value;
-
-        if(searchVal && searchVal !== searchValue){
-            navigate(`/search/${encodeURIComponent(searchVal.trim())}`);
-            setSearchOpen(false);
-        }
-    }
-
-    const handleSearchButton = () => {
-        const searchVal = searchRef1?.current?.value || searchRef2?.current?.value;
-
-        if(searchVal && searchVal !== searchValue){
-            navigate(`/search/${encodeURIComponent(searchVal.trim())}`);
-            setSearchOpen(false);
-        }
-    }
-
-    const closeMobileMenu = () => {
-        setMobileMenuOpen(false);
-    }
+    const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        const term = searchTerm.trim();
+        if (term) setMobileSearchOpen(false);
+        if (term && term !== searchValue) navigate(`/search/${encodeURIComponent(term)}`);
+    };
 
     const hasAuthenticatedUser = !!headerUserData?.user && !!token;
 
@@ -278,8 +189,13 @@ function Header(){
     }
 
     return <>
-        <header data-app-header className={`fixed w-full px-4 max-[800px]:pr-1.5 z-10 duration-300 ${searchOpen ? "search-open-mobile" : ""}`}>
-            <div className="max-w-(--contentWidth) py-3 flex justify-between items-center mx-auto relative">
+        <header data-app-header className="appHeader">
+            <div className="appHeaderInner">
+                <div className="appHeaderBrand">
+                    <button type="button" className="appMenuToggle" onClick={onMenuToggle}
+                        aria-label={t("menuAria")} aria-expanded={menuExpanded} aria-controls="app-sidebar">
+                        {MenuSVG}
+                    </button>
                 {/* Logo - Klikabilan */}
                 <Link to="/" className="logo flex gap-3 items-center cursor-pointer hover:opacity-80 transition-opacity">
                     <img
@@ -293,46 +209,25 @@ function Header(){
                     </span>
                 </Link>
 
-                {/* Desktop Navigation */}
-                <nav ref={navigationRef} className="primaryNavigation flex max-[800px]:hidden">
-                    <Link className="primaryNavigationBrand" to={MARKETING_WEBSITE_URL}>{BRAND_NAME}</Link>
-                    <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : "")}>{t("navHome")}</NavLink>
-                    <NavLink to="/videos/1" end className={({ isActive }) => (isActive ? "active" : "")}>{t("navRecommended")}</NavLink>
-                    <NavLink to="/videos/2" end className={({ isActive }) => (isActive ? "active" : "")}>{t("navTrending")}</NavLink>
-                    {navigationIndicator && <span
-                        className="primaryNavigationIndicator"
-                        aria-hidden="true"
-                        style={{
-                            transform: `translateX(${navigationIndicator.left}px)`,
-                            width: navigationIndicator.width,
-                            opacity: navigationIndicator.visible ? 1 : 0,
-                        }}
-                    />}
-                </nav>
+                </div>
+                <form id="header-search" ref={searchFormRef} className={`appHeaderSearch${mobileSearchOpen ? " isMobileOpen" : ""}`} role="search" onSubmit={handleSearch}>
+                    <input ref={searchInputRef} type="search" value={searchTerm} onChange={event => setSearchTerm(event.target.value)}
+                        placeholder={t("searchPlaceholder")} aria-label={t("searchAria")} spellCheck={false} />
+                    <button type="submit" aria-label={t("searchAria")}>{SearchSVGWhite}</button>
+                </form>
 
-                <div className={`flex ${hasManagementAccess ? "gap-3" : "gap-1"} max-[650px]:gap-2 max-[500px]:gap-0.5 items-center`}>
+                <div className={`appHeaderActions flex ${hasManagementAccess ? "gap-3" : "gap-1"} max-[650px]:gap-2 max-[500px]:gap-0.5 items-center`}>
                     {/* Admin Edit Mode Switch */}
                     {can(P.videosUpdateAny) && idToEdit != "" && (
                         <Link to={`/edit?video=${idToEdit}`} className="darkSVG max-[800px]:hidden flex items-center p-2.5 hover:bg-(--background2) rounded-full transition-all duration-200 cursor-pointer">
                             <span className="w-6 h-6 flex items-center justify-center">{EditModeSVG}</span>
                         </Link>
                     )}
-                    {/* Search Icon */}
-                    <button 
-                        className={`darkSVG flex p-2.5 hover:bg-(--background2) rounded-full transition-all duration-200 cursor-pointer ${searchOpen ? "searchOpen" : ""}`}
-                        onClick={() => {
-                            const nextOpen = !searchOpen;
-                            setSearchOpen(nextOpen);
-                            if (mobileMenuOpen) setMobileMenuOpen(false);
-                            if (nextOpen) {
-                                searchRef2.current?.focus();
-                            }
-                        }}
-                        aria-label={t("searchAria")}
-                    >
-                        <span className="w-6 h-6 flex items-center justify-center transition-all duration-200">{!searchOpen ? SearchSVGWhite : CloseSVG}</span>
+                    <button ref={searchToggleRef} type="button" className="appMenuToggle appMobileSearchToggle"
+                        aria-label={t(mobileSearchOpen ? "close" : "searchAria")} aria-expanded={mobileSearchOpen}
+                        aria-controls="header-search" onClick={() => setMobileSearchOpen(open => !open)}>
+                        {mobileSearchOpen ? CloseSVG : SearchSVGWhite}
                     </button>
-
                     {/* Account Icon */}
                     <Link 
                         className={`darkSVG hidden max-[500px]:flex items-center p-1 rounded-full transition-all duration-200 cursor-pointer`} 
@@ -477,222 +372,10 @@ function Header(){
                         </Link>
                     )}
 
-                    {/* Mobile Menu Button */}
-                    <button 
-                        className="darkSVG hidden max-[800px]:flex p-2.5 hover:bg-(--background2) rounded-full transition-all duration-200 cursor-pointer"
-                        onClick={() => {
-                            setMobileMenuOpen(!mobileMenuOpen);
-                            if (searchOpen) setSearchOpen(false);
-                        }}
-                        aria-label={t("menuAria")}
-                    >
-                        <span className="w-6 h-6 flex items-center justify-center transition-all duration-200">
-                            {!mobileMenuOpen ? (
-                                MenuSVG
-                            ) : (
-                                CloseSVG
-                            )}
-                        </span>
-                    </button>
-                </div>
-
-                {/* Search Bar Mobile */}
-                <div className={`searchPanel ${searchOpen ? 'open' : ''} ${searchFocusArmed ? 'focus-armed' : ''}`}>
-                    <div className="searchPanelInner p-2">
-                        <span className="search w-full cursor-text flex items-center gap-2">
-                            <span className="w-6 h-6 flex items-center justify-center shrink-0">{SearchSVG}</span>
-                            <input 
-                                ref={searchRef2}
-                                type="text" 
-                                placeholder={t("searchPlaceholder")} 
-                                className="flex-1 w-full cursor-text"
-                                onKeyDown={e => handleSearch(e)} 
-                                spellCheck="false"
-                            />
-                            <button onClick={handleSearchButton}>{SearchSVG}</button>
-                        </span>
-                    </div>
                 </div>
             </div>
         </header>
-
-        {/* Mobile Sidebar Menu */}
-        <aside
-            className={`mobileSideMenu max-[800px]:flex hidden ${mobileMenuOpen ? "open" : ""}`}
-            aria-hidden={!mobileMenuOpen}
-        >
-            <div className="mobileSideMenuHeader">
-                <Link to="/" className="mobileSideMenuBrand" onClick={closeMobileMenu}>
-                    <img src={LOGO} alt={`${BRAND_NAME} Logo`} />
-                    <span>
-                        <h3>{BRAND_NAME}</h3>
-                        <p>{t("appName")}</p>
-                    </span>
-                </Link>
-
-                <button
-                    type="button"
-                    className="mobileSideMenuClose"
-                    onClick={closeMobileMenu}
-                    aria-label={t("close")}
-                >
-                    {CloseSVG}
-                </button>
-            </div>
-
-            <nav className="flex flex-col gap-2 font-regular">
-                    <NavLink 
-                        to="/" 
-                        end 
-                        className={({ isActive }) => `mobileSideMenuItem p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
-                        onClick={() => {
-                            closeMobileMenu();
-                        }}
-                    >
-                        <span className="mobileSideMenuIcon" aria-hidden="true">{HomeMenuSVG}</span>
-                        <span>{t("navHome")}</span>
-                    </NavLink>
-                    {canAccess('videos') ?
-                    <NavLink 
-                        to="/my-videos" 
-                        end 
-                        className={({ isActive }) => `mobileSideMenuItem p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
-                        onClick={() => {
-                            closeMobileMenu();
-                        }}
-                    >
-                        <span className="mobileSideMenuIcon" aria-hidden="true">{ChannelMenuSVG}</span>
-                        <span>{t("navMyVideos")}</span>
-                    </NavLink>
-                    : ""}
-                    {canAccess('playlists') ?
-                    <NavLink 
-                        to="/my-playlists" 
-                        end 
-                        className={({ isActive }) => `mobileSideMenuItem p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
-                        onClick={() => {
-                            closeMobileMenu();
-                        }}
-                    >
-                        <span className="mobileSideMenuIcon" aria-hidden="true">{PlaylistSVG}</span>
-                        <span>{t("navMyPlaylists")}</span>
-                    </NavLink>
-                    : ""}
-                    {canAccess('posts') && <NavLink to="/my-posts" end
-                        className={({ isActive }) => `mobileSideMenuItem p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
-                        onClick={closeMobileMenu}>
-                        <span className="mobileSideMenuIcon" aria-hidden="true">{PostSVG}</span>
-                        <span>{t("navMyPosts")}</span>
-                    </NavLink>}
-                    {canAccess('quizzes') ?
-                    <NavLink 
-                        to="/quizzes" 
-                        end 
-                        className={({ isActive }) => `mobileSideMenuItem p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
-                        onClick={() => {
-                            closeMobileMenu();
-                        }}
-                    >
-                        <span className="mobileSideMenuIcon" aria-hidden="true">{QuizSVG}</span>
-                        <span>{t("navQuizzes")}</span>
-                    </NavLink>
-                    : ""}
-                    {canAccess('people') ?
-                    <NavLink 
-                        to="/speakers-chairs" 
-                        end 
-                        className={({ isActive }) => `mobileSideMenuItem p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
-                        onClick={() => {
-                            closeMobileMenu();
-                        }}
-                    >
-                        <span className="mobileSideMenuIcon" aria-hidden="true">{PeopleSVG}</span>
-                        <span>{t("navSpeakersChairs")}</span>
-                    </NavLink>
-                    : ""}
-                    {canAccess('channelAnalytics') ?
-                    <NavLink
-                        to="/channel-analytics"
-                        end
-                        className={({ isActive }) => `mobileSideMenuItem p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
-                        onClick={() => {
-                            closeMobileMenu();
-                        }}
-                    >
-                        <span className="mobileSideMenuIcon" aria-hidden="true">{AnalyticsSVG}</span>
-                        <span>{t("navChannelAnalytics")}</span>
-                    </NavLink>
-                    : ""}
-                    {platformHome ?
-                    <NavLink
-                        to={platformHome}
-                        end
-                        className={({ isActive }) => `mobileSideMenuItem p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
-                        onClick={() => {
-                            closeMobileMenu();
-                        }}
-                    >
-                        <span className="mobileSideMenuIcon" aria-hidden="true">{PlatformMenuSVG}</span>
-                        <span>{t("navPlatform")}</span>
-                    </NavLink>
-                    : ""}
-                    <NavLink 
-                        to="/videos/1" 
-                        end 
-                        className={({ isActive }) => `mobileSideMenuItem p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
-                        onClick={() => {
-                            closeMobileMenu();
-                        }}
-                    >
-                        <span className="mobileSideMenuIcon" aria-hidden="true">{RecommendedMenuSVG}</span>
-                        <span>{t("navRecommended")}</span>
-                    </NavLink>
-                    <NavLink 
-                        to="/videos/2" 
-                        end 
-                        className={({ isActive }) => `mobileSideMenuItem p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
-                        onClick={() => {
-                            closeMobileMenu();
-                        }}
-                    >
-                        <span className="mobileSideMenuIcon" aria-hidden="true">{TrendingMenuSVG}</span>
-                        <span>{t("navTrending")}</span>
-                    </NavLink>
-                    <Link 
-                        to={MARKETING_WEBSITE_URL}
-                        className="mobileSideMenuItem p-3 rounded-lg transition-colors hover:bg-(--background2)"
-                        onClick={closeMobileMenu}
-                    >
-                        <span className="mobileSideMenuIcon" aria-hidden="true">{ExternalSiteMenuSVG}</span>
-                        <span>{BRAND_NAME}</span>
-                    </Link>
-                    <LanguageSelect
-                        value={locale}
-                        onChange={setLocale}
-                        ariaLabel={t("accountLanguage")}
-                        label={t("accountLanguage")}
-                        variant="mobile"
-                        leadingContent={LanguageMenuSVG}
-                    />
-                    <NavLink
-                        to="/account"
-                        end
-                        className={({ isActive }) => `mobileSideMenuItem p-3 rounded-lg transition-colors ${isActive ? "bg-(--background2) font-semibold" : "hover:bg-(--background2)"}`}
-                        onClick={() => {
-                            closeMobileMenu();
-                        }}
-                    >
-                        <img className="accountImg rounded-full w-8 h-8 aspect-square object-cover shrink-0 border-2!" src={headerUserData?.user?.image_url || DefaultProfile} alt={t("profilePhotoAlt")} />
-                        <span>{t("footerAccount")}</span>
-                    </NavLink>
-            </nav>
-        </aside>
-
-        <div 
-            className={`mobileMenuBg max-[800px]:block hidden ${mobileMenuOpen ? "open" : ""}`}
-            onClick={closeMobileMenu}
-        ></div>
-    </>;  
+    </>;
 }
 
 export default memo(Header);

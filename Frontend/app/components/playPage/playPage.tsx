@@ -1,4 +1,5 @@
 import { useParams, useLocation, useNavigate } from "react-router";
+import PlayPageSkeleton from "./PlayPageSkeleton";
 import PlayerCollection from "./playerCollection/playerCollection";
 import Similar from "./playerCollection/similar";
 import VideoInfo from "./playerCollection/videoInfo";
@@ -300,17 +301,7 @@ function PlayPage(){
         </div></main>;
     }
 
-    if (isVideoLoading) {
-        return <main className="play px-0 py-7.5" aria-busy="true" aria-label={t("videoLoadingData")}>
-            <div className="player aspect-video"><div className="player-skeleton" aria-hidden="true">
-                <div className="player-skeleton__controls">
-                    <span className="player-skeleton__chip player-skeleton__chip--wide" />
-                    <span className="player-skeleton__chip" />
-                    <span className="player-skeleton__chip player-skeleton__chip--short" />
-                </div>
-            </div></div>
-        </main>;
-    }
+    if (isVideoLoading) return <PlayPageSkeleton />;
 
     return <>
         <main className={`play ${isTheater ? "theater pt-23!" : ""} px-0 py-7.5`}>
@@ -354,7 +345,7 @@ function PlayPage(){
                             forceAutoplay={isFromQuiz}
                         />
                         
-                        <div className="flex gap-5 overflow-x-hidden">
+                        <div className="flex gap-4 overflow-x-hidden">
                             <div className="flex flex-col gap-5 overflow-x-hidden">
                                 <VideoInfo props={videoData} isLoading={isVideoLoading} onOpenChapter={openChapters} onOpenTranscript={openTranscript} onOpenNotes={() => openNotes()} topAction={backToQuizButton} />
 

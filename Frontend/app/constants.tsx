@@ -481,3 +481,19 @@ export const PostImageSVG = (
     <path d="m21 15-5-5L5 21" />
   </svg>
 );
+
+export const HistorySVG = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 11a9 9 0 1 1 2.6 7.4M3 4v7h7M12 7v5l3 2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+
+export const ContinueWatchingSVG = (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="14" rx="3" />
+        <path d="m10 8 4 3-4 3M3 21h18" />
+        <path d="M11 19.5v3" />
+    </svg>
+);
+
+export const CupOutlineSVG = (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M7 3h10v6a5 5 0 0 1-10 0V3ZM7 5H4v3a4 4 0 0 0 4 4M17 5h3v3a4 4 0 0 1-4 4M12 14v4M9 18h6l1 3H8l1-3Z" />
+    </svg>
+);

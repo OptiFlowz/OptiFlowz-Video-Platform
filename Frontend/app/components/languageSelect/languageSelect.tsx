@@ -9,6 +9,7 @@ type LanguageSelectProps = {
   label?: string;
   variant?: "menu" | "mobile" | "settings";
   leadingContent?: ReactNode;
+  placement?: "auto" | "top";
 };
 
 function LanguageSelect({
@@ -18,6 +19,7 @@ function LanguageSelect({
   label,
   variant = "settings",
   leadingContent,
+  placement = "auto",
 }: LanguageSelectProps) {
   const selectedLabel = LANGUAGE_OPTIONS.find((option) => option.value === value)?.label ?? value;
 
@@ -26,6 +28,7 @@ function LanguageSelect({
       value={value}
       options={LANGUAGE_OPTIONS}
       typeAhead
+      placement={placement}
       onChange={(nextValue) => onChange(nextValue as Locale)}
       ariaLabel={ariaLabel}
       rootClassName={`customLanguageSelect customLanguageSelect--${variant}`}

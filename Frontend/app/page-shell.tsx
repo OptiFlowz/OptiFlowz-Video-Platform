@@ -3,7 +3,8 @@
 import { Suspense } from "react";
 import Loader from "~/components/loaders/loader";
 import Footer from "~/components/footer/footer";
-import Header from "~/components/header/header";
+import NavigationFrame from "~/components/header/navigationFrame";
+import { usePathname } from "next/navigation";
 import ClientGuard, { type GuardMode } from "./client-guard";
 import type { AccessSection } from "~/authorization/permissions";
 
@@ -30,11 +31,14 @@ export function FramedPage({
   access?: AccessSection;
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const drawerOnly = !!access || pathname.startsWith("/video/");
   return (
     <ClientGuard mode={guard} access={access}>
-      <Header />
-      <Suspense fallback={<Loader />}>{children}</Suspense>
-      <Footer />
+      <NavigationFrame drawerOnly={drawerOnly}>
+        <Suspense fallback={<Loader />}>{children}</Suspense>
+        <Footer />
+      </NavigationFrame>
     </ClientGuard>
   );
 }

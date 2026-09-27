@@ -1,3 +1,4 @@
+import DefaultThumbnail from "../../../assets/DefaultThumbnail.webp";
 import { useContext, useState } from "react";
 import { Link } from "react-router";
 import { CurrentNavContext } from "~/context";
@@ -8,8 +9,11 @@ import { useI18n } from "~/i18n";
 
 function PlaylistItem({props, featured}: {props: VideoPlaylistT, featured?:boolean}){
     const { t } = useI18n();
-    const newThumbnailUrl = props?.thumbnail_url;
-    const [isLoading, setIsLoading] = useState(true);
+    const requestedThumbnail = props?.thumbnail_url || DefaultThumbnail;
+    const [failedThumbnail, setFailedThumbnail] = useState<string>();
+    const newThumbnailUrl = failedThumbnail === requestedThumbnail ? DefaultThumbnail : requestedThumbnail;
+    const [loadedThumbnail, setLoadedThumbnail] = useState<string>();
+    const isLoading = loadedThumbnail !== newThumbnailUrl;
 
     const {setCurrentNav} = useContext(CurrentNavContext);
 
@@ -22,24 +26,17 @@ function PlaylistItem({props, featured}: {props: VideoPlaylistT, featured?:boole
             preventScrollReset={!featured}
             onClick={() => setCurrentNav(-1)}
         >
-            {isLoading && 
-                <div className="skeleton-item">
-                    <div className="skeleton-thumbnail"></div>
-                        <div className="skeleton-content">
-                        <div className="skeleton-title"></div>
-                        <div className="skeleton-text short"></div>
-                    </div>
-                </div>
-            }
-
-            <span className={`${isLoading ? "absolute opacity-0" : "relative"}`}>
+            <span className="itemThumbnail">
+                {isLoading && <span className="itemThumbnailSkeleton skeleton-thumbnail" aria-hidden="true" />}
                 <img
-                    className={"z-0 relative opacity-100"}
+                    className={`z-0 relative ${isLoading ? "opacity-0" : "opacity-100"}`}
                     src={newThumbnailUrl}
                     alt="Thumbnail"
                     loading="lazy"
                     decoding="async"
-                    onLoad={() => setIsLoading(false)}
+                    ref={image => { if (image?.complete && image.naturalWidth > 0) setLoadedThumbnail(newThumbnailUrl); }}
+                    onLoad={() => setLoadedThumbnail(newThumbnailUrl)}
+                    onError={() => { setFailedThumbnail(requestedThumbnail); setLoadedThumbnail(newThumbnailUrl); }}
                 />
 
                 <span className={`pins absolute ${featured ? "bottom-3 right-3 gap-1.75" : "bottom-1.75 right-1.75 gap-1.5"} flex items-center`}>
@@ -55,11 +52,11 @@ function PlaylistItem({props, featured}: {props: VideoPlaylistT, featured?:boole
                 </span>
             </span>
 
-            {(!isLoading) && <PlaylistInfo props={{
+            <PlaylistInfo props={{
                 title: props.title,
                 views: props.view_count,
                 date: props.created_at
-            }} />}
+            }} />
         </Link>
     );
 }

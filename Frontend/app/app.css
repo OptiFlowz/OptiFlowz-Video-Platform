@@ -15,6 +15,8 @@ html:is([lang="ar"], [lang="he"], [lang="fa"]) :where(
 }
 
 :root {
+  /* Expanded desktop sidebar: fit up to three columns with a 340px card minimum. */
+  --video-grid-columns: repeat(auto-fill, minmax(min(100%, max(340px, calc((100% - 2 * var(--video-grid-gap)) / 3))), 1fr));
   --background: #090a0b;
   --foreground: #ededed;
 
@@ -22,6 +24,8 @@ html:is([lang="ar"], [lang="he"], [lang="fa"]) :where(
   --solitreo: var(--font-solitreo), ui-rounded, "Segoe Print", cursive;
 
   --contentWidth: 1480px;
+  --video-grid-gap: 1rem;
+  --video-grid-row-gap: 1rem;
 
   --bR: calc(infinity * 1px);
 
@@ -412,7 +416,7 @@ main.playlist .buttonHolder button {
 }
 
 main.playlist .videoHolder {
-  gap: 24px;
+  gap: var(--video-grid-row-gap) var(--video-grid-gap);
 }
 
 main.play{
@@ -1852,7 +1856,7 @@ main .collection::-webkit-scrollbar {
 main .collection.notscrollable {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 1rem;
+  gap: var(--video-grid-row-gap) var(--video-grid-gap);
 }
 
 .collection-header {
@@ -2197,6 +2201,15 @@ main.play {
 }
 
 @media screen and (min-width: 1076px) {
+  main.play { column-gap: 20px; }
+  main.play .relevant > .similar .playCard .banner,
+  main.play .relevant > .similar .skeleton-playcard-thumbnail {
+    width: min(210px, 48%);
+    min-width: 0;
+    flex-shrink: 0;
+    aspect-ratio: 16 / 9;
+  }
+  main.play .relevant > .similar .skeleton-playcard-thumbnail { height: auto; align-self: start; }
   main.play:not(.theater) {
     /* Desktop header (73px) plus the same 20px gutter used at the sides. */
     padding-top: 93px;
@@ -2205,6 +2218,7 @@ main.play {
 
 main.play > div:nth-child(1) {
   flex-grow: 1;
+  min-width: 0;
 }
 main.play > div:nth-child(2) {
   min-width: 400px;
@@ -4096,15 +4110,16 @@ main.account .info .userInfo p svg {
 
 /* ACCOUNT HERO */
 main.account.accountPage {
-  padding-top: 73px;
+  padding-top: 97px;
 }
 
 .accountHero {
   position: relative;
   isolation: isolate;
-  width: 100vw;
-  min-height: 320px;
-  margin-inline: calc(50% - 50vw);
+  width: 100%;
+  min-height: 280px;
+  margin-inline: 0;
+  border-radius: 24px;
   overflow: hidden;
   background: var(--background2);
 }
@@ -4123,10 +4138,10 @@ main.account.accountPage {
 }
 
 .accountHeroContent {
-  width: min(var(--contentWidth), calc(100vw - 40px));
+  width: 100%;
   min-height: inherit;
   margin-inline: auto;
-  padding-block: 36px;
+  padding: 28px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 180px;
   align-items: center;
@@ -4152,7 +4167,7 @@ main.account.accountPage {
 }
 
 /* Shared account/channel profile card surface. */
-.accountHero, main.channelPage {
+.accountHero, main.channelPage, main.playlistDetailsPage {
   --profile-info-background: linear-gradient(180deg, color-mix(in srgb, var(--borderWhite) 8%, transparent), color-mix(in srgb, var(--borderWhite) 4%, transparent));
   --profile-info-border: color-mix(in srgb, var(--borderWhite) 8%, transparent);
   --profile-info-radius: 26px;
@@ -4209,14 +4224,6 @@ main.account.accountPage {
 .accountHero .accountName { color: var(--text1); font-size: clamp(1.7rem, 3vw, 2.5rem); font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; }
 .accountHero .accountEmail { margin-top: 8px; color: var(--text2); overflow-wrap: anywhere; }
 .accountHero .accountAbout { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border1); }
-.accountHero .accountDescription { color: var(--text1); line-height: 1.6; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
-.accountHero .accountDescription.isExpanded { display: block; }
-.accountHero .accountDescription a { color: var(--accentBlue2); text-decoration: underline; }
-.accountHero .accountReadMore { margin-top: 8px; color: var(--accentBlue); font-weight: 600; cursor: pointer; }
-.accountHero .accountReadMore:focus-visible { outline: 2px solid var(--accentBlue); outline-offset: 4px; }
-@media (max-width: 760px) {
-  .accountHero .accountDescription { font-size: .9rem; }
-}
 @media (max-width: 540px) {
   .accountHero .accountName { font-size: 1.5rem; }
   .accountHero .accountEmail { font-size: .85rem; }
@@ -4237,7 +4244,7 @@ main.account.accountPage {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border-radius: var(--bR);
+  border-radius: 10px;
   font-weight: 500;
 }
 
@@ -4251,11 +4258,11 @@ main.account.accountPage {
   border: 1px solid color-mix(in srgb, var(--borderWhite) 8%, transparent);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
-  color: var(--accentBlue2);
+  color: var(--borderWhite);
 }
 
 .accountHero .accountActions .edit svg path {
-  stroke: var(--accentBlue2);
+  stroke: currentColor;
 }
 
 .accountHero .accountActions .settings {
@@ -4283,8 +4290,8 @@ main.account.accountPage {
   }
 
   .accountHeroContent {
-    width: calc(100vw - 40px);
-    padding: 24px 0;
+    width: 100%;
+    padding: 24px 20px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -5373,7 +5380,7 @@ main.videos .holder {
   width: 100%;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 20px;
+  gap: var(--video-grid-row-gap) var(--video-grid-gap);
   padding: 0px;
   margin-inline: 0px;
 }
@@ -8028,6 +8035,44 @@ main.myVideos td > p{
     gap: 8px;
 }
 
+/* Image loading occupies only the thumbnail, never another carousel-sized card. */
+main .item > .itemThumbnail {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 443 / 246;
+    overflow: hidden;
+}
+main .item .itemThumbnail > .itemThumbnailSkeleton {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    aspect-ratio: auto;
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+/* Carousel breakpoints must not shrink or impose a minimum on grid placeholders. */
+main :is(.collection.notscrollable, .videoHolder, .accountLibraryGrid, .personVideoGrid) > :is(.skeleton-item, .item),
+main.videos .holder > :is(.skeleton-item, .item) {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+}
+
+@media (max-width: 1075px) {
+    main.play .relevant > .similar .skeleton-playcard { flex-direction: column; }
+    main.play .relevant > .similar .skeleton-playcard-thumbnail {
+        width: 100%;
+        min-width: 0;
+        height: auto;
+        aspect-ratio: 16 / 9;
+    }
+}
+
 .skeleton-title {
     height: 20px;
     width: 80%;
@@ -8707,7 +8752,7 @@ main.playlist .videoHolder {
   width: 100%;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 20px;
+  gap: var(--video-grid-row-gap) var(--video-grid-gap);
   margin-top: 2rem;
   border-radius: 0 0 20px 20px;
 }
@@ -8798,7 +8843,7 @@ main.playlist .videoHolder .playlistOrderNumber {
     display: none;
   }
   main.playlist .videoHolder {
-    gap: 20px;
+    gap: var(--video-grid-row-gap) var(--video-grid-gap);
   }
   .videoAside{
     width: 250px;
@@ -8929,7 +8974,7 @@ main.playlist .videoHolder .playlistOrderNumber {
   }
   main.playlist .videoHolder {
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    gap: var(--video-grid-row-gap) var(--video-grid-gap);
   }
 }
 
@@ -9234,7 +9279,7 @@ footer > span.footerCopyright {
     }
   main .collection.notscrollable {
     grid-template-columns: 1fr;
-    gap: 2rem;
+    gap: var(--video-grid-row-gap) var(--video-grid-gap);
   }
   .collection .item.playlistItem {
     width: calc(100% / 1.65 - 0.75rem - 20px);
@@ -9374,7 +9419,7 @@ footer > span.footerCopyright {
   }
   main.playlist .videoHolder {
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: var(--video-grid-row-gap) var(--video-grid-gap);
   }
   main.playlist .plBanner {
     width: 100%;
@@ -10386,7 +10431,7 @@ footer > div {
     height: 60px;
   }
   main.playlist .videoHolder {
-    gap: 15px;
+    gap: var(--video-grid-row-gap) var(--video-grid-gap);
   }
   .editAccountPopup .editButtons {
     flex-direction: column-reverse;
@@ -11138,7 +11183,7 @@ main.managementPage td .visibility svg path { stroke: currentColor; }
 /* Channel sorting uses the shared keyboard-accessible dropdown. */
 main.playlist .channelVideosHeader { align-items: center; width: 100%; }
 main.playlist .channelSortSelect { width: 220px; max-width: 100%; min-width: 0; }
-main.playlist .channelSortSelect .customSelectTrigger { width: 100%; background: var(--background2); border-color: var(--border1); color: var(--text1); }
+main.playlist .channelSortSelect .customSelectTrigger { width: 100%; background: var(--background2); border: 0; color: var(--text1); }
 main.playlist .channelPlaylistsSection .channelVideosHeader { flex-direction: row; }
 
 /* Desktop-only corner resizing keeps the video at its existing 16:9 ratio. */
@@ -11251,3 +11296,8 @@ progress::-moz-progress-bar {
 .videoAsidePhotoLink { display: block; flex-shrink: 0; border-radius: 50%; }
 .videoAsideChannelLink { color: inherit; text-decoration: none; }
 .videoAsidePhotoLink:focus-visible, .videoAsideChannelLink:focus-visible { outline: 2px solid var(--accentBlue3); outline-offset: 3px; }
+
+/* Use the same card rhythm on every video grid, including phone layouts. */
+@media (max-width: 650px) {
+  :root { --video-grid-row-gap: 2rem; }
+}

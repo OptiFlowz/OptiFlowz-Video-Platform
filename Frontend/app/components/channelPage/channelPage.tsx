@@ -1,11 +1,12 @@
+import ExpandableDescription from "../shared/ExpandableDescription";
 import ChannelPosts from '../posts/ChannelPosts';
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useMemo, useRef, useState, useEffect, useId } from "react";
+import { useCallback, useMemo, useRef, useState, useId } from "react";
 import { useLocation, useNavigate, useParams } from "react-router";
 import { fetchFn } from "~/API";
-import { ShareSVG } from "~/constants";
+import { ChannelMenuSVG, PlaylistSVG, PostSVG, ShareSVG } from "~/constants";
 import { env } from "~/env";
-import { formatDescription, getToken } from "~/functions";
+import { getToken } from "~/functions";
 import { useI18n } from "~/i18n";
 import type { ChannelPlaylistsT, ChannelT, ChannelVideosT, FetchChannelT, VideoT, VideoPlaylistT } from "~/types";
 import CustomSelect from "../customSelect/customSelect";
@@ -14,6 +15,7 @@ import PlaylistItem from "../itemSlider/playlistItem";
 import DefaultProfile from "../../../assets/DefaultProfile.webp";
 import backgroundImage from "../../../assets/LoginBackground.webp";
 import "./channelPage.css";
+import "../library/profileTabs.css";
 
 type ChannelSortBy = "view_count" | "created_at";
 type ChannelSortOrder = "asc" | "desc";
@@ -68,18 +70,15 @@ function ChannelPage() {
     const activeTab = tabSegment === 'playlists' || tabSegment === 'posts' ? tabSegment : 'videos';
     const selectTab = (tab: 'videos' | 'playlists' | 'posts') => {
         if (tab === activeTab) return;
-        navigate(tab === 'videos' ? channelPath : `${channelPath}/${tab}`, { preventScrollReset: true });
+        navigate(tab === 'videos' ? channelPath : `${channelPath}/${tab}`, { preventScrollReset: true, shallow: true });
     };
     const [postAscending, setPostAscending] = useState(false);
     const tabsId = useId();
     const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
-    const [descOpen, setDescOpen] = useState(false);
-    const [hasDescriptionOverflow, setHasDescriptionOverflow] = useState(false);
     const [videoSortBy, setVideoSortBy] = useState<ChannelSortBy>("created_at");
     const [videoSortOrder, setVideoSortOrder] = useState<ChannelSortOrder>("desc");
     const [playlistSortBy, setPlaylistSortBy] = useState<ChannelSortBy>("created_at");
     const [playlistSortOrder, setPlaylistSortOrder] = useState<ChannelSortOrder>("desc");
-    const [descriptionElement, setDescriptionElement] = useState<HTMLParagraphElement | null>(null);
     const token = getToken();
 
     const headers = useMemo(() => {
@@ -107,7 +106,6 @@ function ChannelPage() {
         }
     }, []);
 
-    const toggleDescOpen = () => setDescOpen((current) => !current);
 
     const { data: channelData, isLoading: isLoadingChannel } = useQuery({
         queryKey: [`channel-${channelId}`],
@@ -167,31 +165,6 @@ function ChannelPage() {
     const normalizedPlaylists = channelPlaylistsData?.playlists ?? [];
     const videoCount = channelVideosData?.pagination?.total ?? channelVideoCount?.pagination?.total;
 
-    useEffect(() => {
-        if (!descriptionElement) return;
-
-        let resizeObserver: ResizeObserver | null = null;
-
-        const measureOverflow = () => {
-            const hasOverflow = descriptionElement.scrollHeight > descriptionElement.clientHeight + 1;
-            setHasDescriptionOverflow(hasOverflow);
-        };
-
-        measureOverflow();
-
-        if (typeof ResizeObserver !== "undefined") {
-            resizeObserver = new ResizeObserver(() => measureOverflow());
-            resizeObserver.observe(descriptionElement);
-        }
-
-        window.addEventListener("resize", measureOverflow);
-
-        return () => {
-            resizeObserver?.disconnect();
-            window.removeEventListener("resize", measureOverflow);
-        };
-    }, [descriptionElement, channel?.description, descOpen]);
-
     const videoArray = normalizedVideos.map((video) => (
         <Item key={video.id} props={video as VideoT} />
     ));
@@ -249,19 +222,14 @@ function ChannelPage() {
                             <p className="channelVideoCount">{videoCount === undefined ? t("videosTab") : t("videosLabel", { count: videoCount })}</p>
                         </div>
                         {channel?.description && <div className="channelAbout">
-                            <p ref={setDescriptionElement} className={`channelDescription ${descOpen ? "isExpanded" : ""}`}>{formatDescription(channel.description)}</p>
-                            {(hasDescriptionOverflow || descOpen) && (
-                                <button className="channelReadMore" onClick={toggleDescOpen} aria-expanded={descOpen}>
-                                    {descOpen ? t("readLess") : t("readMore")}
-                                </button>
-                            )}
+                            <ExpandableDescription key={channelId} text={channel.description} />
                         </div>}
                     </div>
                 </div>
             </div>
 
             <div className="channelNavigation">
-                <div className="channelTabs" role="tablist" aria-label={t("channelLabel")}>
+                <div className="channelTabs profileTabs" role="tablist" aria-label={t("channelLabel")}>
                     {(["videos", "playlists", "posts"] as const).map((tab, index) => (
                         <button
                             key={tab}
@@ -280,7 +248,7 @@ function ChannelPage() {
                                 selectTab((["videos", "playlists", "posts"] as const)[next]);
                                 tabRefs.current[next]?.focus();
                             }}
-                        >{t(`${tab}Tab`)}</button>
+                        ><span className="profileTabIcon" aria-hidden="true">{tab === "videos" ? ChannelMenuSVG : tab === "playlists" ? PlaylistSVG : PostSVG}</span><span>{t(`${tab}Tab`)}</span></button>
                     ))}
                 </div>
                 <div className="channelSortControl">

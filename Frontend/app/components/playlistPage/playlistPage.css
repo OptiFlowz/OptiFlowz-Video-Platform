@@ -1,0 +1,80 @@
+main.playlistDetailsPage { padding-top: 97px; }
+main.playlistDetailsPage .playlistHero {
+    --playlist-accent-1: var(--background2);
+    --playlist-accent-2: var(--background2);
+    --playlist-accent-3: var(--background3);
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(220px, .85fr) minmax(0, 1.65fr);
+    align-items: center;
+    gap: 28px;
+    width: 100%;
+    min-height: 280px;
+    padding: 28px;
+    border-radius: 24px;
+    overflow: hidden;
+    isolation: isolate;
+    background:
+        radial-gradient(ellipse at 5% 5%, color-mix(in srgb, var(--playlist-accent-1) 85%, transparent), transparent 70%),
+        radial-gradient(ellipse at 100% 95%, color-mix(in srgb, var(--playlist-accent-2) 55%, transparent), transparent 65%),
+        linear-gradient(125deg, var(--background1), color-mix(in srgb, var(--playlist-accent-3) 40%, var(--background1)));
+}
+main.playlistDetailsPage .playlistHero .playlistHeroCover {
+    align-self: start;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: 16px;
+    box-shadow: 0 12px 32px var(--headerShadowColor);
+}
+main.playlistDetailsPage .playlistHeroInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+    padding: var(--profile-info-padding);
+    border-radius: var(--profile-info-radius);
+    border: 1px solid var(--profile-info-border);
+    background: var(--profile-info-background);
+    color: var(--text1);
+}
+main.playlistDetailsPage .playlistHeroTitle { font-size: clamp(1.5rem, 2.4vw, 2.25rem); font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
+main.playlistDetailsPage .playlistHeroStats { color: var(--text2); font-size: .94rem; }
+main.playlistDetailsPage .playlistHeroAbout { margin-top: 2px; padding-top: 14px; border-top: 1px solid var(--profile-info-border); min-width: 0; }
+main.playlistDetailsPage .playlistHero .buttonHolder button {
+    min-height: 42px;
+    padding: 9px 15px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--background2);
+    color: var(--text1);
+    box-shadow: none !important;
+    transition: background 160ms ease, opacity 160ms ease;
+}
+main.playlistDetailsPage .playlistHero .buttonHolder button.play,
+main.playlistDetailsPage .playlistHero .buttonHolder button.saved { background: var(--accentBlue3) !important; color: var(--borderWhite); }
+main.playlistDetailsPage .playlistHero .buttonHolder button svg { width: 18px; height: 18px; }
+main.playlistDetailsPage .playlistHero .buttonHolder button svg path { stroke: currentColor; }
+main.playlistDetailsPage .playlistHero .buttonHolder button.play svg,
+main.playlistDetailsPage .playlistHero .buttonHolder button.play svg * { fill: none; }
+main.playlistDetailsPage .playlistHero .buttonHolder button.saved svg { fill: currentColor; }
+main.playlistDetailsPage .playlistHero .buttonHolder button:hover { filter: none; background: var(--background3); }
+main.playlistDetailsPage .playlistHero .buttonHolder button:is(.play, .saved):hover { opacity: .85; }
+main.playlistDetailsPage .playlistHero .buttonHolder button:disabled { opacity: .5; cursor: not-allowed; }
+main.playlistDetailsPage .playlistHero button:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: 3px; }
+main.playlistDetailsPage .playlistHeaderLoader .playlistHeroCover { min-height: 0; }
+@media (max-width: 850px) {
+    main.playlistDetailsPage .playlistHero { grid-template-columns: minmax(0, 1fr); gap: 20px; padding: 20px; }
+    main.playlistDetailsPage .playlistHero .playlistHeroCover { max-width: 480px; justify-self: center; }
+    main.playlistDetailsPage .playlistHeroInfo { padding: 20px; border-radius: 18px; }
+}
+@media (max-width: 480px) {
+    main.playlistDetailsPage .playlistHero { padding: 16px; gap: 16px; }
+    main.playlistDetailsPage .playlistHeroInfo { padding: 16px; }
+    main.playlistDetailsPage .playlistHero .buttonHolder { gap: 8px; }
+    main.playlistDetailsPage .playlistHero .buttonHolder button { padding-inline: 12px; font-size: .875rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+    main.playlistDetailsPage .playlistHero .buttonHolder button { transition: none; }
+}

@@ -5,10 +5,11 @@ import { accountLibraryQuery, accountCertificatesQuery } from "./accountQueries"
 import { useLocalizedPageTitle } from "~/hooks/useLocalizedPageTitle";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
-import { EditSVG, LogOutSVG, SettingsSVG } from "~/constants";
+import { ContinueWatchingSVG, CupOutlineSVG, EditSVG, HistorySVG, LikeSVG, LogOutSVG, PlaylistSVG, SettingsSVG } from "~/constants";
 import AccountInfo from "./accountInfo";
 import AccountLibrary from "./accountLibrary";
 import "./accountTabs.css";
+import "../library/profileTabs.css";
 import { useEffect, useId, useRef, useState } from "react";
 import { redirectToLogin } from "~/auth/session";
 import EditAccountPopup from "./editAccountPopup";
@@ -18,11 +19,11 @@ import { useI18n } from "~/i18n";
 import backgroundImage from "../../../assets/LoginBackground.webp";
 
 const accountTabs = [
-    { id: 'history', label: 'watchHistory', type: 4, permission: P.videosLibrary },
-    { id: 'liked', label: 'likedVideos', type: 3, permission: P.videosLibrary },
-    { id: 'continue', label: 'continueWatching', type: 0, permission: P.videosLibrary },
-    { id: 'playlists', label: 'savedPlaylists', type: 6, permission: P.playlistsLibrary },
-    { id: 'certificates', label: 'accountCertificatesTitle', type: null, permission: P.quizzesCertificates },
+    { id: 'history', icon: HistorySVG, label: 'watchHistory', type: 4, permission: P.videosLibrary },
+    { id: 'liked', icon: LikeSVG, label: 'likedVideos', type: 3, permission: P.videosLibrary },
+    { id: 'continue', icon: ContinueWatchingSVG, label: 'continueWatching', type: 0, permission: P.videosLibrary },
+    { id: 'playlists', icon: PlaylistSVG, label: 'savedPlaylists', type: 6, permission: P.playlistsLibrary },
+    { id: 'certificates', icon: CupOutlineSVG, label: 'accountCertificatesTitle', type: null, permission: P.quizzesCertificates },
 ] as const;
 
 function AccountPage(){
@@ -35,7 +36,8 @@ function AccountPage(){
     const navigate = useNavigate();
     const selectedTab = pathname.replace(/\/$/, '').split('/')[2] || 'history';
     const selectTab = (id: string) => {
-        navigate(id === 'history' ? '/account' : `/account/${id}`, { preventScrollReset: true });
+        if (id === selectedTab) return;
+        navigate(id === 'history' ? '/account' : `/account/${id}`, { preventScrollReset: true, shallow: true });
     };
     const queryClient = useQueryClient();
     const token = getToken();
@@ -118,7 +120,7 @@ function AccountPage(){
                 {activeTab && <>
                     <div className="accountTabNavigation">
                         <div className="accountTabsViewport" data-overflow-left={tabOverflow.left} data-overflow-right={tabOverflow.right}>
-                        <div ref={tabsScrollerRef} className="accountTabs" role="tablist" aria-label={t('footerAccount')}>
+                        <div ref={tabsScrollerRef} className="accountTabs profileTabs" role="tablist" aria-label={t('footerAccount')}>
                             {tabs.map((tab, index) => <button
                                 key={tab.id}
                                 ref={element => { tabRefs.current[index] = element; }}
@@ -138,7 +140,7 @@ function AccountPage(){
                                     tabRefs.current[next]?.focus();
                                     tabRefs.current[next]?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
                                 }}
-                            >{t(tab.label)}</button>)}
+                            ><span className="profileTabIcon" aria-hidden="true">{tab.icon}</span><span>{t(tab.label)}</span></button>)}
                         </div>
                         </div>
                     </div>

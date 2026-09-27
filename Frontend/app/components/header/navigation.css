@@ -1,0 +1,246 @@
+.appFrame {
+    --sidebar-width: 248px;
+    --sidebar-duration: 280ms;
+    --sidebar-easing: cubic-bezier(0.22, 1, 0.36, 1);
+    width: 100%;
+    min-height: 100dvh;
+}
+.appFrameContent {
+    min-width: 0;
+    min-height: 100dvh;
+    margin-inline-start: var(--sidebar-width);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: margin-inline-start var(--sidebar-duration) var(--sidebar-easing);
+}
+.appFrameCompact .appFrameContent { margin-inline-start: 0; }
+.appFrameContent > main { width: calc(100% - 40px); flex: 1; }
+
+header[data-app-header].appHeader {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 12;
+    padding: 0 24px !important;
+    background: var(--headerSurface) !important;
+    border-bottom: 1px solid var(--headerBorderColor);
+}
+header[data-app-header].appHeader > .appHeaderInner {
+    display: grid;
+    grid-template-columns: minmax(224px, 1fr) minmax(200px, 620px) minmax(80px, 1fr);
+    align-items: center;
+    gap: 24px;
+    min-height: 73px;
+    max-width: none;
+    margin: 0;
+    padding: 10px 0 !important;
+    border: 0;
+    border-radius: 0;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+.appHeaderBrand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.appHeaderBrand .logo { flex-shrink: 0; }
+.appMenuToggle.appMobileSearchToggle { display: none; }
+.appMenuToggle {
+    display: grid;
+    place-items: center;
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: var(--text1);
+    cursor: pointer;
+}
+.appMenuToggle:hover { background: var(--background2); }
+.appMenuToggle svg { width: 24px; height: 24px; }
+.appMenuToggle.appMobileSearchToggle svg { width: 20px; height: 20px; }
+.appMenuToggle svg path { stroke: currentColor; }
+.appHeaderSearch {
+    display: flex;
+    height: 42px;
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid var(--border1);
+    border-radius: 999px;
+    background: var(--background1);
+}
+.appHeaderSearch:focus-within { border-color: var(--accentBlue2); box-shadow: 0 0 0 1px var(--accentBlue2); }
+.appHeaderSearch input {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    padding: 0 20px;
+    background: var(--background1);
+    color: var(--text1);
+    font-size: 1rem;
+}
+.appHeaderSearch input::placeholder { color: var(--text2); }
+.appHeaderSearch button {
+    display: grid;
+    place-items: center;
+    width: 56px;
+    flex-shrink: 0;
+    border-inline-start: 1px solid var(--border1);
+    background: var(--background2);
+    color: var(--text1);
+    cursor: pointer;
+}
+.appHeaderSearch button:hover { background: var(--background3); }
+.appHeaderSearch button svg { width: 18px; height: 18px; }
+.appHeaderSearch button svg path { stroke: currentColor; }
+.appHeaderActions { justify-self: end; }
+.appHeaderActions .adminAvatarTrigger > p { display: none; }
+
+.appSidebar {
+    position: fixed;
+    inset: 73px auto 0 0;
+    width: var(--sidebar-width);
+    z-index: 8;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--background1);
+    scrollbar-width: thin;
+    scrollbar-color: var(--border1) var(--background1);
+    transform: translateX(0);
+    visibility: visible;
+    transition: transform var(--sidebar-duration) var(--sidebar-easing), visibility 0s;
+}
+.appFrameCompact .appSidebar {
+    transform: translateX(-100%);
+    visibility: hidden;
+    pointer-events: none;
+    transition: transform var(--sidebar-duration) var(--sidebar-easing), visibility 0s var(--sidebar-duration);
+}
+.appSidebarNav { padding: 12px; }
+.appSidebarGroup { display: flex; flex-direction: column; gap: 2px; padding-block: 12px; border-bottom: 1px solid var(--border3); }
+.appSidebarGroup:first-child { padding-top: 0; }
+.appSidebarGroup:last-child { border-bottom: 0; }
+.appSidebarItem, .appSidebarHeading {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 44px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    color: var(--text1);
+    font-size: .94rem;
+    line-height: 1.3;
+}
+.appSidebarHeading { font-weight: 600; margin-bottom: 4px; }
+.appSidebarItem:hover, .appSidebarHeading:hover { background: var(--background2); }
+.appSidebarItem.isActive { background: var(--background2); font-weight: 600; }
+.appSidebarItem.isActive .appSidebarIcon { color: var(--accentBlue2); }
+.appSidebarIcon { display: grid; place-items: center; flex: 0 0 22px; width: 22px; height: 22px; }
+.appSidebarIcon svg { width: 22px; height: 22px; }
+.appSidebarNav svg, .appSidebarNav svg * { stroke-width: 1; }
+.appSidebarIcon svg [stroke] { stroke: currentColor; }
+.appSidebarIcon svg [fill]:not([fill="none"]) { fill: currentColor; }
+.appSidebarNav .customLanguageSelect--mobile .customLanguageTrigger { padding: 10px 14px; font-size: .94rem; gap: 16px; }
+.appSidebarDialog {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(288px, calc(100vw - 40px));
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    background: var(--background1);
+    color: var(--text1);
+    box-shadow: 12px 0 40px var(--headerShadowColor);
+    transform: translateX(-100%);
+    opacity: 0;
+    transition:
+        transform var(--sidebar-duration) var(--sidebar-easing),
+        opacity var(--sidebar-duration) var(--sidebar-easing),
+        display var(--sidebar-duration) allow-discrete,
+        overlay var(--sidebar-duration) allow-discrete;
+}
+.appSidebarDialog[open] { transform: translateX(0); opacity: 1; }
+.appSidebarDialog::backdrop {
+    background: var(--seethroughtBlack);
+    opacity: 0;
+    transition:
+        opacity var(--sidebar-duration) var(--sidebar-easing),
+        display var(--sidebar-duration) allow-discrete,
+        overlay var(--sidebar-duration) allow-discrete;
+}
+.appSidebarDialog[open]::backdrop { opacity: 1; }
+@starting-style {
+    .appSidebarDialog[open] { transform: translateX(-100%); opacity: 0; }
+    .appSidebarDialog[open]::backdrop { opacity: 0; }
+}
+.appSidebarDrawer { display: flex; flex-direction: column; height: 100%; }
+.appSidebarDrawerHeader { display: flex; justify-content: space-between; align-items: center; min-height: 73px; padding: 12px 20px; border-bottom: 1px solid var(--border3); }
+.appSidebarDrawer .appSidebarNav { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
+.appMenuToggle:focus-visible, .appSidebarNav a:focus-visible, .appHeaderSearch button:focus-visible {
+    outline: 2px solid var(--accentBlue2);
+    outline-offset: -3px;
+}
+
+/* Only the expanded desktop sidebar reduces the space available to video grids. */
+@media (min-width: 1101px) {
+    .appFrame:not(.appFrameCompact) main .collection.notscrollable,
+    .appFrame:not(.appFrameCompact) main.playlist .videoHolder,
+    .appFrame:not(.appFrameCompact) main.videos .holder,
+    .appFrame:not(.appFrameCompact) main.accountPage .accountLibraryGrid {
+        grid-template-columns: var(--video-grid-columns);
+    }
+}
+
+@media (max-width: 1100px) {
+    .appFrameContent { margin-inline-start: 0; }
+    .appSidebar { display: none; }
+    header[data-app-header].appHeader > .appHeaderInner { grid-template-columns: auto minmax(120px, 1fr) auto; gap: 20px; }
+}
+@media (max-width: 650px) {
+    header[data-app-header].appHeader { padding-inline: 16px !important; }
+    header[data-app-header].appHeader > .appHeaderInner { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+    .appHeaderBrand { gap: 8px; }
+    .appHeaderBrand .logo { gap: 8px; }
+    .appHeaderBrand .logo img { width: 32px; height: 32px; }
+    .appHeaderBrand .logo h3 { font-size: 18px; }
+    .appHeaderBrand .logo p { font-size: 11px; }
+    .appHeaderBrand .appMenuToggle, .appMobileSearchToggle { width: 36px; height: 36px; flex-basis: 36px; }
+    .appMenuToggle.appMobileSearchToggle { display: grid; }
+    .appHeaderSearch {
+        position: absolute;
+        inset: calc(100% + 8px) 16px auto;
+        width: auto;
+        height: 46px;
+        box-shadow: 0 10px 30px var(--headerShadowColor);
+        opacity: 0;
+        transform: translateY(-10px);
+        visibility: hidden;
+        pointer-events: none;
+        transition:
+            opacity var(--sidebar-duration) var(--sidebar-easing),
+            transform var(--sidebar-duration) var(--sidebar-easing),
+            visibility 0s var(--sidebar-duration);
+    }
+    .appHeaderSearch.isMobileOpen {
+        opacity: 1;
+        transform: translateY(0);
+        visibility: visible;
+        pointer-events: auto;
+        transition:
+            opacity var(--sidebar-duration) var(--sidebar-easing),
+            transform var(--sidebar-duration) var(--sidebar-easing),
+            visibility 0s;
+    }
+    .appHeaderSearch input { padding-inline: 16px; font-size: 16px; }
+    .appHeaderSearch button { width: 48px; }
+}
+@media (max-width: 360px) {
+    .appHeaderBrand { gap: 4px; }
+    .appHeaderBrand .logo { gap: 6px; }
+    .appHeaderBrand .logo h3 { font-size: 16px; }
+    .appHeaderBrand .logo p { font-size: 10px; }
+    .appHeaderBrand .appMenuToggle, .appMobileSearchToggle { width: 32px; height: 36px; flex-basis: 32px; }
+    .appHeaderActions .accountImg { width: 32px; height: 32px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .appFrame { --sidebar-duration: 0s; }
+}

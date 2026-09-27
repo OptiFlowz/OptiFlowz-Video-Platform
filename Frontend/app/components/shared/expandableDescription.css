@@ -1,0 +1,24 @@
+main .expandableDescription { width: 100%; max-width: 65ch; min-width: 0; color: var(--text1); }
+main .expandableDescriptionViewport {
+    height: 3.2em;
+    overflow: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border1) transparent;
+    transition: height 280ms cubic-bezier(.22, 1, .36, 1);
+}
+main .expandableDescription[data-open="true"] .expandableDescriptionViewport { overflow-y: auto; overscroll-behavior-y: contain; }
+main .expandableDescriptionContent { display: flow-root; line-height: 1.6; overflow-wrap: anywhere; }
+main .expandableDescription[data-open="false"][data-overflow="true"] .expandableDescriptionViewport {
+    mask-image: linear-gradient(to bottom, var(--text1) 65%, transparent);
+}
+main .expandableDescriptionContent a { color: var(--accentBlue2); text-decoration: underline; }
+main .expandableDescriptionToggle { display: block; margin-top: 10px; color: var(--text1); font-size: .9rem; font-weight: 500; cursor: pointer; }
+main .expandableDescriptionToggle:hover { color: var(--accentBlue2); }
+main .expandableDescriptionToggle:focus-visible,
+main .expandableDescriptionViewport:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: 3px; }
+@media (max-width: 760px) {
+    main .expandableDescription { font-size: .9rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+    main .expandableDescriptionViewport { transition: none; }
+}
