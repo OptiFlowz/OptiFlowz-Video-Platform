@@ -1,6 +1,7 @@
 import Mux from '@mux/mux-node';
 import { writePool } from '../../../database/index.js';
 import { HttpError } from '../../../common/httpError.js';
+import { scheduleOverview } from '../../video-indexing/indexing.service.js';
 
 const LIVE_EVENTS = new Set(['created', 'connected', 'recording', 'active', 'disconnected', 'idle', 'updated', 'enabled', 'disabled', 'deleted'].map(t => `video.live_stream.${t}`));
 const ASSET_EVENTS = new Set(['created', 'ready', 'updated', 'errored', 'deleted', 'live_stream_completed'].map(t => `video.asset.${t}`));
@@ -117,7 +118,6 @@ function applyAssetEvent(video, type, data, at) {
     if (type === 'created' && video.mux_asset_event_at) return;
     const playback = data.playback_ids?.find(p => p.policy === video.playback_policy)?.id;
     if (playback) video.mux_playback_id = playback;
-    if (video.mux_playback_id && !video.thumbnail_url) video.thumbnail_url = `https://image.mux.com/${video.mux_playback_id}/thumbnail.jpg?time=0`;
     if (!oldSnapshot && typeof data.duration === 'number' && Number.isFinite(data.duration) && data.duration >= 0) video.duration_seconds = Math.round(data.duration);
     if (data.status === 'errored') video.mux_status = 'errored';
     else if ((type === 'ready' || data.status === 'ready') && video.mux_playback_id) video.mux_status = video.mux_recording_completed_at ? 'ready' : 'preparing';
@@ -162,6 +162,9 @@ export async function handleLiveStreamMuxEvent(event, candidateVideoId = null) {
             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'preparing',NULL) RETURNING *`,
           [stream.id,stream.user_id,stream.title,stream.description,stream.thumbnail_url,stream.visibility,stream.playback_policy,assetId]);
           video = inserted.rows[0];
+          // Commit the recording and its indexing job together. A webhook retry
+          // reuses the existing video and does not schedule another overview.
+          await scheduleOverview(client, video.id);
         }
       }
       if (video) {

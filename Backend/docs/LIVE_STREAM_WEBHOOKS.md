@@ -24,6 +24,10 @@ reconnect window retain the same asset/video. Later recording sessions create
 new video IDs, with their own playback IDs, duration, status and interactions.
 The existing video reaction, comment and playback handlers are reused.
 Creation is serialized by a parent row lock and a unique recording asset index.
+The recording copies `thumbnail_url` exactly, including null; later Mux events
+do not generate a fallback thumbnail. A new video calls `scheduleOverview` in
+the same transaction as its insertion. Scheduling failure rolls back creation,
+and duplicate webhooks reuse the video without scheduling another overview.
 
 ## Webhook lifecycle
 

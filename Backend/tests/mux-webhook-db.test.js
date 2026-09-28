@@ -15,14 +15,19 @@ test('Mux live lifecycle against PostgreSQL temporary tables', { skip: !process.
     else process.env.MUX_WEBHOOK_SECRET = previousSecret;
   });
   await prepareLiveSchema(client);
+  // Exercise the real scheduleOverview SQL using only connection-local tables.
+  await client.query('CREATE TEMP TABLE video_indexing_sources (LIKE public.video_indexing_sources INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES)');
+  await client.query('CREATE TEMP TABLE video_indexing_jobs (LIKE public.video_indexing_jobs INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES)');
   const ownerId = crypto.randomUUID();
   await client.query('INSERT INTO pg_temp.users VALUES ($1)', [ownerId]);
   await client.query('CREATE TEMP TABLE video_reactions (video_id uuid REFERENCES pg_temp.videos(id) ON DELETE CASCADE, reaction integer)');
   let reconciliations = [], failReconcile = false, failUpdate = false;
   let disableCalls = [], disableFailure = null, released = false, failDisableSave = false;
+  let failOverview = false;
   const database = {
     async query(sql, params) {
       if (failUpdate && sql.includes('UPDATE public.videos')) throw new Error('Injected database failure');
+      if (failOverview && sql.includes('INSERT INTO video_indexing_sources')) throw new Error('Injected overview failure');
       if (failDisableSave && sql.includes("SET mux_status = 'disabled'")) throw new Error('Injected disable persistence failure');
       return client.query(sql.replaceAll('public.', 'pg_temp.'), params);
     },
@@ -53,8 +58,9 @@ test('Mux live lifecycle against PostgreSQL temporary tables', { skip: !process.
   const stamp = second => new Date(Date.UTC(2026, 8, 28, 10, 0, second)).toISOString();
   async function reset(overrides = {}) {
     failReconcile = false; failUpdate = false; reconciliations = [];
+    failOverview = false;
     disableCalls = []; disableFailure = null; failDisableSave = false;
-    await client.query('TRUNCATE pg_temp.video_reactions, pg_temp.live_streams, pg_temp.videos');
+    await client.query('TRUNCATE pg_temp.video_indexing_jobs, pg_temp.video_indexing_sources, pg_temp.video_reactions, pg_temp.live_streams, pg_temp.videos');
     await client.query(`INSERT INTO pg_temp.videos (id,title,visibility,playback_policy,mux_status,like_count)
       VALUES ($1,'Original title','public','signed','preparing',1)`, [videoId]);
     await client.query(`INSERT INTO pg_temp.live_streams (user_id,title,visibility,playback_policy,mux_live_stream_id,mux_live_playback_id,status,scheduled_at)
@@ -78,6 +84,54 @@ test('Mux live lifecycle against PostgreSQL temporary tables', { skip: !process.
   const asset = (type, second, extra = {}) => deliver(`video.asset.${type}`, second, {
     id: 'asset-1', live_stream_id: 'live-1', status: 'ready', duration: 120.4,
     playback_ids: [{ policy: 'public', id: 'wrong-policy' }, { policy: 'signed', id: 'recording-playback' }], ...extra,
+  });
+
+  for (const thumbnail of [null, 'https://example.com/live-thumbnail.jpg']) {
+    await t.test(`new recording copies thumbnail ${thumbnail} and schedules overview once`, async () => {
+      await reset();
+      // Remove the migrated placeholder so this exercises a new recording INSERT.
+      await client.query('DELETE FROM pg_temp.videos');
+      await client.query('UPDATE pg_temp.live_streams SET thumbnail_url=$1', [thumbnail]);
+      await live('recording', 1);
+      const created = (await state()).video;
+      assert.equal(created.thumbnail_url, thumbnail);
+      const overview = (await client.query('SELECT * FROM pg_temp.video_indexing_sources')).rows;
+      assert.equal(overview.length, 1);
+      assert.equal(overview[0].video_id, created.id);
+      assert.equal(overview[0].document_type, 'overview');
+      await live('recording', 1);
+      await asset('ready', 2);
+      await asset('live_stream_completed', 3);
+      await asset('updated', 4);
+      assert.equal((await state()).video.thumbnail_url, thumbnail);
+      assert.equal((await state()).video.id, created.id);
+      assert.deepEqual((await client.query('SELECT * FROM pg_temp.video_indexing_sources')).rows, overview);
+      const jobs = (await client.query('SELECT * FROM pg_temp.video_indexing_jobs')).rows;
+      assert.equal(jobs.length, 1);
+      assert.equal(jobs[0].source_id, overview[0].id);
+      assert.equal(jobs[0].status, 'pending');
+    });
+  }
+
+  await t.test('an asset event can create and schedule the recording before any live event', async () => {
+    await reset();
+    await client.query('DELETE FROM pg_temp.videos');
+    await asset('ready', 2);
+    assert.equal((await state()).video.thumbnail_url, null);
+    assert.equal((await client.query('SELECT count(*)::int AS n FROM pg_temp.video_indexing_jobs')).rows[0].n, 1);
+  });
+
+  await t.test('overview scheduling failure rolls back the new video and webhook retry schedules it', async () => {
+    await reset();
+    await client.query('DELETE FROM pg_temp.videos');
+    failOverview = true;
+    await assert.rejects(live('recording', 1), { status: 500 });
+    assert.equal((await client.query('SELECT count(*)::int AS n FROM pg_temp.videos')).rows[0].n, 0);
+    assert.equal((await client.query('SELECT count(*)::int AS n FROM pg_temp.video_indexing_jobs')).rows[0].n, 0);
+    failOverview = false;
+    await live('recording', 1);
+    assert.equal((await client.query('SELECT count(*)::int AS n FROM pg_temp.videos')).rows[0].n, 1);
+    assert.equal((await client.query('SELECT count(*)::int AS n FROM pg_temp.video_indexing_jobs')).rows[0].n, 1);
   });
 
   await t.test('complete lifecycle, reconnect, final recording and duplicate completion', async () => {
