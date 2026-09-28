@@ -14,6 +14,7 @@ import roleRoutes from '../modules/roles/role.routes.js';
 import usersRoutes from '../modules/users/users.routes.js';
 import notesRoutes from '../modules/notes/notes.routes.js';
 import postsRoutes from '../modules/posts/posts.routes.js';
+import liveStreamRoutes from '../modules/live-streams/live-streams.routes.js';
 
 export function registerRoutes(app) {
   app.get('/health', (_req, res) => res.json({ ok: true }));
@@ -34,4 +35,5 @@ export function registerRoutes(app) {
   app.use('/api/users', usersRoutes);
   app.use('/api/notes', notesRoutes);
   app.use('/api/posts', postsRoutes);
+  app.use('/api/live-streams', liveStreamRoutes);
 }

@@ -2,6 +2,7 @@ import { reconcileTracks } from '../../../video-indexing/mux-source.service.js';
 import crypto from 'crypto';
 import { writePool } from '../../../../database/index.js';
 import { HttpError } from '../../../../common/httpError.js';
+import { handleLiveStreamMuxEvent } from '../../../live-streams/handlers/handleMuxEvent.js';
 
 function timingSafeEqualStr(a, b) {
   const aa = Buffer.from(String(a));
@@ -45,6 +46,30 @@ function getDefaultThumbnailUrl(playbackId) {
   return `https://image.mux.com/${playbackId}/thumbnail.jpg?time=0`;
 }
 
+function logMuxWebhook(event) {
+  const sensitiveField = /stream.?key|passphrase|password|secret|token|authorization/i;
+  const payload = JSON.stringify(event, (key, value) => {
+    if (sensitiveField.test(key)) return '[REDACTED]';
+    if (typeof value === 'string' && /^(?:https?|rtmps?|srt):\/\//i.test(value)) {
+      // Encoder destination URLs may embed a stream key in their path.
+      if (/^(?:rtmps?|srt):/i.test(value)) return '[REDACTED ENCODER URL]';
+      try {
+        const url = new URL(value);
+        if (url.username) url.username = 'REDACTED';
+        if (url.password) url.password = 'REDACTED';
+        for (const name of [...url.searchParams.keys()]) {
+          if (sensitiveField.test(name) || /signature|credential/i.test(name)) {
+            url.searchParams.set(name, 'REDACTED');
+          }
+        }
+        return url.toString();
+      } catch { return '[INVALID URL]'; }
+    }
+    return value;
+  });
+  console.log('[Mux webhook]', payload);
+}
+
 export async function muxWebhookInternal({ body: inputBody, headers: requestHeaders }) {
   try {
     // Kada koristiš express.raw(), req.body je Buffer
@@ -52,7 +77,7 @@ export async function muxWebhookInternal({ body: inputBody, headers: requestHead
       ? inputBody
       : Buffer.from(JSON.stringify(inputBody ?? {}), 'utf8');
 
-    const sigHeader = requestHeaders['mux-signature'];
+    const sigHeader = requestHeaders?.['mux-signature'];
     const ok = verifyMuxSignature(rawBody, sigHeader, process.env.MUX_WEBHOOK_SECRET);
 
     if (!ok) {
@@ -60,14 +85,21 @@ export async function muxWebhookInternal({ body: inputBody, headers: requestHead
     }
 
     // Tek posle verifikacije parsiraj JSON
-    const event = Buffer.isBuffer(inputBody) ? JSON.parse(inputBody.toString('utf8')) : inputBody;
+    let event;
+    try {
+      event = Buffer.isBuffer(inputBody) ? JSON.parse(inputBody.toString('utf8')) : inputBody;
+    } catch {
+      throw new HttpError(400, { message: 'Invalid webhook payload' });
+    }
 
     const type = event?.type;
     const data = event?.data;
 
-    if (!type || !data) {
+    if (typeof type !== 'string' || !data || typeof data !== 'object' || Array.isArray(data)) {
       throw new HttpError(400, { message: 'Invalid webhook payload' });
     }
+
+    logMuxWebhook(event);
 
     // tvoj video id iz baze obično dolazi kroz passthrough ili meta.external_id
     const candidateVideoId = data.passthrough || data?.meta?.external_id || null;
@@ -81,6 +113,14 @@ export async function muxWebhookInternal({ body: inputBody, headers: requestHead
     // playback id: obično data.playback_ids[0].id
     const muxPlaybackId =
       Array.isArray(data.playback_ids) && data.playback_ids.length ? data.playback_ids[0].id : null;
+
+    const liveResult = await handleLiveStreamMuxEvent(event, videoId);
+    if (liveResult.handled) {
+      if (liveResult.reconcile) {
+        await reconcileTracks(liveResult.reconcile.assetId, liveResult.reconcile.videoId);
+      }
+      return { received: true };
+    }
 
     switch (type) {
       case 'video.asset.track.ready':
