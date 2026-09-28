@@ -16,8 +16,7 @@ export async function getStreamingDetailsInternal(liveStreamId, userId) {
   const { rows } = await writePool.query(
     `SELECT ls.mux_live_stream_id, ls.status
      FROM public.live_streams ls
-     JOIN public.videos v ON v.id = ls.video_id
-     WHERE ls.id = $1 AND v.uploaded_by = $2
+     WHERE ls.id = $1 AND ls.user_id = $2
      LIMIT 1`,
     [id, userId],
   );

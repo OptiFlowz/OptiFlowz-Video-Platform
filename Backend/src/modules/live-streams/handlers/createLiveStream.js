@@ -45,28 +45,20 @@ export async function createLiveStreamInternal(body, userId) {
 
     client = await writePool.connect();
     await client.query('BEGIN');
-    // The content exists before a recording does. Publication is handled later,
-    // independently from the planned live broadcast time.
-    const { rows: videos } = await client.query(
-      `INSERT INTO public.videos (
-         uploaded_by, title, description, visibility, playback_policy, mux_status, published_at
-       ) VALUES ($1, $2, $3, $4, $5, 'preparing', NULL)
-       RETURNING *`,
-      [userId, data.title, data.description, data.visibility, data.playback_policy],
-    );
-    const video = videos[0];
+    // Recordings are created by asset webhooks, one video per Mux asset.
     const { rows } = await client.query(
       `INSERT INTO public.live_streams (
-         video_id, dvr_enabled, scheduled_at, mux_live_stream_id, mux_live_playback_id
-       ) VALUES ($1, $2, $3, $4, $5)
+         user_id, title, description, visibility, playback_policy,
+         dvr_enabled, scheduled_at, mux_live_stream_id, mux_live_playback_id
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
-      [video.id, data.dvr_enabled, data.scheduled_at, stream.id, playbackId],
+      [userId, data.title, data.description, data.visibility, data.playback_policy,
+        data.dvr_enabled, data.scheduled_at, stream.id, playbackId],
     );
     commitAttempted = true;
     await client.query('COMMIT');
 
     return {
-      video,
       live_stream: rows[0],
       stream_key: stream.stream_key,
       max_continuous_duration: maxDuration,

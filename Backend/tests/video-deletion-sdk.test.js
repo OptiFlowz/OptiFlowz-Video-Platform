@@ -42,7 +42,7 @@ mock.module(new URL('../src/database/index.js', import.meta.url).href, {
       databaseDeleted = true;
       return { rows: [] };
     }
-    return { rows: [{ video_id: 'video-id', live_stream_id: 'local-live-id', mux_live_stream_id: 'live-id', mux_asset_id: 'recording' }] };
+    return { rows: [{ video_id: 'video-id', live_stream_id: 'local-live-id', mux_live_stream_id: 'live-id', mux_asset_id: 'recording', mux_asset_ids: ['recording'] }] };
   } } },
 });
 const { deleteVideoResources } = await import('../src/modules/videos/helpers/deleteVideoResources.js');
@@ -52,7 +52,7 @@ beforeEach(() => {
 });
 
 test('a nonempty final page stops pagination and empty 204 responses finish deletion without webhooks', async () => {
-  await deleteVideoResources({ videoId: 'video-id' });
+  await deleteVideoResources({ liveStreamId: 'local-live-id', ownerId: 'owner' });
   const listRequests = requests.filter(r => r.path.endsWith('/assets'));
   assert.equal(listRequests.length, 1);
   assert.deepEqual(listRequests[0].query, { live_stream_id: 'live-id', limit: '100' });
@@ -63,7 +63,7 @@ test('a nonempty final page stops pagination and empty 204 responses finish dele
 test('cursor pagination collects all recordings before deletion without numeric page requests', async () => {
   pages.first.next_cursor = 'next-recordings';
   pages['next-recordings'] = { data: [{ id: 'other-recording' }], next_cursor: null };
-  await deleteVideoResources({ videoId: 'video-id' });
+  await deleteVideoResources({ liveStreamId: 'local-live-id', ownerId: 'owner' });
   const listRequests = requests.filter(r => r.path.endsWith('/assets'));
   assert.equal(listRequests.length, 2);
   assert.deepEqual(listRequests[1].query, { live_stream_id: 'live-id', limit: '100', cursor: 'next-recordings' });
@@ -79,7 +79,7 @@ test('repeated cursors fail promptly and preserve database records', async t => 
   t.mock.method(console, 'error', () => {});
   pages.first.next_cursor = 'repeated';
   pages.repeated = { data: [{ id: 'recording' }], next_cursor: 'repeated' };
-  await assert.rejects(deleteVideoResources({ videoId: 'video-id' }), { status: 502 });
+  await assert.rejects(deleteVideoResources({ liveStreamId: 'local-live-id', ownerId: 'owner' }), { status: 502 });
   assert.equal(requests.filter(r => r.path.endsWith('/assets')).length, 2);
   assert.ok(!requests.some(r => r.method === 'DELETE'));
   assert.equal(databaseDeleted, false);
@@ -88,6 +88,6 @@ test('repeated cursors fail promptly and preserve database records', async t => 
 test('an actual SDK 404 error for an already deleted asset still permits local cleanup', async () => {
   pages.first = { data: [], next_cursor: null };
   assetDeleteStatus = 404;
-  await deleteVideoResources({ videoId: 'video-id' });
+  await deleteVideoResources({ liveStreamId: 'local-live-id', ownerId: 'owner' });
   assert.equal(databaseDeleted, true);
 });

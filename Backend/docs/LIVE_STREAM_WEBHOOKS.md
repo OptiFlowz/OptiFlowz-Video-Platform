@@ -1,103 +1,81 @@
-# Live stream webhooks
+# Live streams and recordings
 
-Mux sends live stream and recording events to the existing
-`POST /api/videos/webhook/mux` endpoint. Signature verification uses
-`MUX_WEBHOOK_SECRET` and the raw request body, before any database work.
+Apply the existing live-stream migrations followed by
+`1790553600002_live-stream-recordings.sql` before deploying this code.
+The new migration copies ownership and metadata to `live_streams`, moves the
+relationship to nullable `videos.live_stream_id`, and preserves existing video
+IDs, metadata, publication and interactions. Existing empty placeholder videos
+are retained and reused for the first recording. New streams have no placeholder.
+The migration refuses automatic downgrade because multiple recordings cannot
+be represented by the previous one-to-one model.
 
-Apply `1790553600000_add-live-streams.sql` and
-`1790553600001_add-live-stream-webhook-state.sql` before deploying this handler.
-The second migration adds independent event timestamps for the live resource
-and its recording, plus a unique index on `mux_live_stream_id`.
+## API and ownership
 
-## Lifecycle
+`POST /api/live-streams` accepts `title`, `description`, `visibility`,
+`playback_policy`, `dvr_enabled` and `scheduled_at`. It returns `live_stream`,
+`stream_key` and `max_continuous_duration`; it no longer returns `video`.
+The stream owns its metadata and `user_id`, independently of its recordings.
+`GET /api/live-streams/:liveStreamId/streaming-details` checks that owner and
+returns non-cacheable credentials even when no recordings exist.
 
-| Event | Effect |
+Each new Mux asset creates a video with `live_stream_id` and copies the stream's
+owner, metadata, visibility and playback policy. Reconnects within the Mux
+reconnect window retain the same asset/video. Later recording sessions create
+new video IDs, with their own playback IDs, duration, status and interactions.
+The existing video reaction, comment and playback handlers are reused.
+Creation is serialized by a parent row lock and a unique recording asset index.
+
+## Webhook lifecycle
+
+Mux sends events to `POST /api/videos/webhook/mux`. Signature validation and
+credential-redacted logging run before processing.
+
+| Event | Application behavior |
 | --- | --- |
-| `video.live_stream.created` / `updated` | Refresh the live playback ID matching the video's playback policy. |
-| `video.live_stream.connected` | Record the latest encoder connection and associate `active_asset_id` with the video. |
-| `video.live_stream.recording` | Associate the recording asset; recording can begin while Mux status is still `idle`. |
-| `video.live_stream.active` | Set application status to `live`, Mux status to `active`, and record the first start time. |
-| `video.live_stream.disconnected` | Record the disconnect while leaving the reconnect window open. |
-| `video.live_stream.idle` | End an event that has started; initial idle notifications do not end scheduled events. |
-| `video.live_stream.disabled` / `enabled` | Update Mux availability without undoing an ended/cancelled application event. |
-| `video.live_stream.deleted` | Disable the local Mux resource and end/cancel the event. Preserve the video and recording. |
-| `video.asset.created` / `ready` / `updated` | Associate the recording and save its playback ID, duration and default thumbnail. |
-| `video.asset.live_stream_completed` | Finalize the recording on the existing video and end the event if idle has not arrived yet. |
-| `video.asset.errored` | Mark the recording as errored. |
-| `video.asset.deleted` | Mark the recording as deleted and clear its playback ID. Preserve the video, reactions and comments. |
+| `video.live_stream.active` | Set status `live`. |
+| `video.live_stream.disconnected` | Set status `disconnected`; Mux may remain `active` during its reconnect window. |
+| `video.live_stream.connected` / `recording` | Track the connection and current asset; return to `live` when the connection is active. |
+| `video.live_stream.idle` | After reconnect expiry, return to `scheduled` if the event happened before `scheduled_at`; otherwise end a started stream. |
+| `video.asset.live_stream_completed` | Finalize that recording; apply the same schedule rule to its session without closing a newer session. |
+| `video.asset.ready` | Save playback details for that recording. DVR readiness alone does not mark it as a completed VOD. |
+| `video.asset.deleted` | Mark only that recording deleted and clear its playback ID. Preserve the stream and other recordings. |
+| `video.live_stream.deleted` | End/cancel the application stream and preserve its recordings. |
 
-Warnings and unsupported events are acknowledged without changing lifecycle.
-Uploaded videos and subtitle track events retain their existing handlers.
+Schedule comparisons use the Mux event time, not delivery time. Expiry exactly
+at or after `scheduled_at`, or with no schedule, ends the event. Early completed
+recordings remain available as separate videos. Their completion and delayed
+webhooks cannot overwrite another recording or end its newer session.
+Returning to `scheduled` clears the application session timestamps; Mux remains
+idle and enabled. There is no disable or enable API call for this transition.
 
-## Recording and publication
+Ended streams are disabled through Mux after the database transaction commits.
+Failures remain retryable through webhook redelivery. Ended/cancelled events
+are not reopened by delayed events. Playback policy selection, independent
+recording event timestamps and final duration handling are preserved.
 
-Asset events are matched through `data.live_stream_id`, with the saved asset ID
-as a fallback when Mux omits the live ID. Recording fields belong to `videos`;
-live playback fields belong to `live_streams`. Playback IDs must match the
-video's `playback_policy`; there is no fallback to a public playback ID.
+Recording readiness does not automatically publish it: `published_at` remains
+unchanged. Transcript reconciliation uses the individual recording's video ID.
 
-A recording can be ready for DVR during the broadcast. Its playback ID is saved,
-but `videos.mux_status` remains `preparing` until recording completion and asset
-readiness are both known. Transcript reconciliation runs after finalization.
-The webhook preserves `published_at`, visibility, ownership and user metadata.
-Publishing the replay remains a separate operation, as for uploaded videos.
+## Deletion
 
-Each application live event owns one recording. Once bound, a different asset
-from a subsequent broadcast using the same Mux stream key is ignored. Create a
-new application livestream for a new broadcast. Reconnects within the same
-recording continue to use the original video and preserve its interactions.
+`DELETE /api/live-streams/:liveStreamId` requires ownership. It disables Mux,
+collects all recording assets using `next_cursor`, deletes the assets and Mux
+stream, then deletes the local stream. Its videos and dependent records cascade.
+It returns `success`, `live_stream_id` and `message`.
 
-Both rows are locked and updated in one transaction. Event timestamps and
-terminal-state checks prevent older snapshots from undoing finalization.
-Retries after a post-commit transcript failure repeat reconciliation safely.
+Deleting a single video removes only that recording. It never deletes or
+disables the parent or sibling recordings. A parent-side asset tombstone prevents
+late webhooks from recreating the explicitly deleted video.
 
-When the application event becomes `ended`, the webhook calls Mux's disable API
-after committing and releasing database locks. Only a successful disable (or a
-404 confirming the resource is gone) saves `mux_status = 'disabled'`. Mux API
-failures return a retryable error so webhook redelivery can finish disabling.
-Duplicate completion notifications do not repeat a successful disable. A newer
-enable or encoder connection event on an ended stream triggers disable again.
-Initial idle notifications and temporary disconnects do not disable a stream.
-
-## Explicit deletion
-
-`DELETE /api/live-streams/:liveStreamId` requires an access token and ownership
-of the associated video. It returns 200 with `success`, `live_stream_id`,
-`video_id`, `mux_asset_id` and `message`; a missing stream or another owner's
-stream returns 404.
-
-Deletion disables the Mux stream, gathers all its recording assets (including
-assets not yet saved by a webhook), deletes those assets and the Mux stream,
-then deletes the video row. Database foreign keys cascade to the live stream,
-reactions, comments and other dependent records. The existing video deletion
-route uses the same cleanup, including the Mux live stream for recordings.
-
-Mux 404 responses on retrieve, disable or delete mean the resource is already
-gone and do not block local deletion. Other upstream failures return 502 and
-leave local records available for retry. Local deletion does not depend on
-receiving `video.asset.deleted`; this also fixes deletion of ordinary videos
-whose Mux asset was previously removed. Standalone Mux deletion webhooks retain
-the preservation behavior described above for live recordings.
-
-Asset listing explicitly follows `next_cursor` and stops when it is null.
-The installed Mux SDK's auto-pagination increments `page`, which the API can
-ignore and repeatedly return the same nonempty page. Do not replace cursor
-pagination with the SDK's async iterator. Repeated cursors fail promptly.
-A successful DELETE response (204) is accepted without waiting for the
-asynchronous deletion webhook or polling until the resource disappears.
-Upstream failures log the operation, HTTP status and elapsed time without
-logging credentials or raw Mux responses.
-
-Run `npm run test:video-deletion` for deletion, retry and ownership tests.
-Set `TEST_DATABASE_URL` to also verify deletion and foreign-key cascades against
-connection-local PostgreSQL temporary tables; Mux calls remain mocked.
+Mux 404 means already absent and permits local cleanup. Other Mux failures
+preserve local records for retry. An accepted DELETE (204) does not wait for a
+webhook or poll for removal. Cursor listing avoids the installed SDK's numeric
+page iterator, which can repeatedly return the same page. Error logs include
+the failing operation, status and elapsed time without credentials.
 
 ## Verification
 
-Run `npm run test:mux-webhooks`. Setting `TEST_DATABASE_URL` also enables the
-PostgreSQL tests, which copy the video's column definitions into temporary
-tables and apply the live migrations only to those connection-local tables.
-They never write application tables or create real Mux resources.
-
-References: [Mux lifecycle and recordings](https://www.mux.com/docs/guides/stream-recordings-of-live-streams)
-and [Mux webhook reference](https://www.mux.com/docs/webhook-reference).
+Run `npm run test:live-streams`, `npm run test:live-streams:db`,
+`npm run test:mux-webhooks` and `npm run test:video-deletion`.
+Set `TEST_DATABASE_URL` for PostgreSQL checks. They create connection-local
+temporary tables, apply migrations there, and mock all Mux mutations.

@@ -13,8 +13,7 @@ mock.module(new URL('../src/database/index.js', import.meta.url).href, {
       return { rows: [{ id: values[0], status: 'active', authz_version: 1 }] };
     }
     calls.push(['query', sql, values]);
-    assert.match(sql, /JOIN public.videos v ON v.id = ls.video_id/);
-    assert.match(sql, /WHERE ls.id = \$1 AND v.uploaded_by = \$2/);
+    assert.match(sql, /WHERE ls.id = \$1 AND ls.user_id = \$2/);
     return { rows: row && values[0] === liveStreamId && values[1] === ownerId ? [row] : [] };
   } } },
 });
@@ -66,6 +65,14 @@ test('ended and cancelled application events cannot reuse encoder credentials', 
     await assert.rejects(details(liveStreamId, ownerId), { status: 409 });
   }
   assert.ok(calls.every(([name]) => name === 'query'));
+});
+
+test('disconnected and scheduled streams can retrieve credentials without any recordings', async () => {
+  for (const status of ['disconnected', 'scheduled']) {
+    row.status = status;
+    stream.status = status === 'disconnected' ? 'active' : 'idle';
+    assert.equal((await details(liveStreamId, ownerId)).stream_key, 'encoder-key');
+  }
 });
 
 test('disabled streams and incomplete Mux responses produce useful errors', async () => {

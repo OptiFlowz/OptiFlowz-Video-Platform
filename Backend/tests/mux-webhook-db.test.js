@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
-import { readFile } from 'node:fs/promises';
+import { prepareLiveSchema } from './helpers/live-stream-schema.js';
 import { mock, test } from 'node:test';
 import pg from 'pg';
 
@@ -14,16 +14,9 @@ test('Mux live lifecycle against PostgreSQL temporary tables', { skip: !process.
     if (previousSecret === undefined) delete process.env.MUX_WEBHOOK_SECRET;
     else process.env.MUX_WEBHOOK_SECRET = previousSecret;
   });
-  // Only connection-local tables are written; production rows are never copied.
-  await client.query('CREATE TEMP TABLE videos (LIKE public.videos INCLUDING DEFAULTS INCLUDING CONSTRAINTS)');
-  await client.query('ALTER TABLE pg_temp.videos ADD PRIMARY KEY (id)');
-  const migrations = [];
-  for (const file of ['1790553600000_add-live-streams.sql', '1790553600001_add-live-stream-webhook-state.sql']) {
-    const sql = await readFile(new URL(`../src/database/migrations/${file}`, import.meta.url), 'utf8');
-    const [up, down] = sql.replaceAll('public.', 'pg_temp.').split('-- Down Migration');
-    await client.query(up);
-    migrations.push(down);
-  }
+  await prepareLiveSchema(client);
+  const ownerId = crypto.randomUUID();
+  await client.query('INSERT INTO pg_temp.users VALUES ($1)', [ownerId]);
   await client.query('CREATE TEMP TABLE video_reactions (video_id uuid REFERENCES pg_temp.videos(id) ON DELETE CASCADE, reaction integer)');
   let reconciliations = [], failReconcile = false, failUpdate = false;
   let disableCalls = [], disableFailure = null, released = false, failDisableSave = false;
@@ -64,13 +57,14 @@ test('Mux live lifecycle against PostgreSQL temporary tables', { skip: !process.
     await client.query('TRUNCATE pg_temp.video_reactions, pg_temp.live_streams, pg_temp.videos');
     await client.query(`INSERT INTO pg_temp.videos (id,title,visibility,playback_policy,mux_status,like_count)
       VALUES ($1,'Original title','public','signed','preparing',1)`, [videoId]);
-    await client.query(`INSERT INTO pg_temp.live_streams (video_id,mux_live_stream_id,mux_live_playback_id,status)
-      VALUES ($1,'live-1','live-playback',$2)`, [videoId, overrides.status || 'scheduled']);
+    await client.query(`INSERT INTO pg_temp.live_streams (user_id,title,visibility,playback_policy,mux_live_stream_id,mux_live_playback_id,status,scheduled_at)
+      VALUES ($1,'Original title','public','signed','live-1','live-playback',$2,$3)`, [ownerId, overrides.status || 'scheduled', overrides.scheduled_at ?? null]);
+    await client.query('UPDATE pg_temp.videos SET live_stream_id=(SELECT id FROM pg_temp.live_streams), uploaded_by=$1', [ownerId]);
     await client.query('INSERT INTO pg_temp.video_reactions VALUES ($1,1)', [videoId]);
   }
   async function state() {
     return (await client.query(`SELECT row_to_json(ls) AS live, row_to_json(v) AS video
-      FROM pg_temp.live_streams ls JOIN pg_temp.videos v ON v.id=ls.video_id`)).rows[0];
+      FROM pg_temp.live_streams ls JOIN pg_temp.videos v ON v.live_stream_id=ls.id ORDER BY v.created_at,v.id`)).rows[0];
   }
   async function deliver(type, second, data, createdAt = stamp(second)) {
     const body = Buffer.from(JSON.stringify({ id: crypto.randomUUID(), type, created_at: createdAt, data }));
@@ -105,7 +99,7 @@ test('Mux live lifecycle against PostgreSQL temporary tables', { skip: !process.
     assert.equal(reconciliations.length, 0);
     assert.deepEqual(disableCalls, []);
     await live('disconnected', 6);
-    assert.equal((await state()).live.status, 'live');
+    assert.equal((await state()).live.status, 'disconnected');
     assert.equal((await state()).live.ended_at, null);
     assert.deepEqual(disableCalls, []);
     await live('connected', 7, { status: 'active' });
@@ -204,6 +198,84 @@ test('Mux live lifecycle against PostgreSQL temporary tables', { skip: !process.
     assert.equal((await state()).live.status, 'cancelled');
   });
 
+  await t.test('early sessions retain separate recordings and late completion cannot end a newer session', async () => {
+    await reset({scheduled_at:stamp(30)});
+    await live('connected',1);
+    await live('active',2);
+    await live('disconnected',4);
+    assert.equal((await state()).live.status,'disconnected');
+    await live('idle',10);
+    assert.equal((await state()).live.status,'scheduled');
+    assert.equal((await state()).live.mux_status,'idle');
+    assert.equal((await state()).live.ended_at,null);
+    await live('connected',15,{active_asset_id:'asset-2'});
+    await live('active',16,{active_asset_id:'asset-2'});
+    await asset('live_stream_completed',11);
+    await asset('live_stream_completed',11);
+    assert.equal((await state()).live.status,'live');
+    await live('disconnected',17,{active_asset_id:'asset-2'});
+    await asset('live_stream_completed',20,{id:'asset-2'});
+    await live('idle',21,{active_asset_id:'asset-2'});
+    assert.equal((await state()).live.status,'scheduled');
+    assert.deepEqual(disableCalls,[]);
+    await live('connected',30,{active_asset_id:'asset-3'});
+    await live('active',31,{active_asset_id:'asset-3'});
+    await asset('live_stream_completed',32,{id:'asset-2'});
+    await asset('deleted',33,{id:'asset-2',live_stream_id:undefined});
+    assert.equal((await state()).live.status,'live');
+    await live('disconnected',40,{active_asset_id:'asset-3'});
+    await live('idle',50,{active_asset_id:'asset-3'});
+    await asset('live_stream_completed',51,{id:'asset-3'});
+    const recordings=(await client.query('SELECT * FROM pg_temp.videos ORDER BY created_at,id')).rows;
+    assert.equal(recordings.length,3);
+    assert.deepEqual(recordings.map(v=>v.mux_asset_id),['asset-1','asset-2','asset-3']);
+    assert.deepEqual(recordings.map(v=>v.mux_status),['ready','deleted','ready']);
+    assert.equal(recordings[0].id,videoId);
+    assert.equal(recordings[0].like_count,1);
+    assert.equal(recordings[1].uploaded_by,ownerId);
+    assert.equal(recordings[1].published_at,null);
+    assert.equal((await state()).live.status,'ended');
+    assert.deepEqual(disableCalls,['live-1']);
+  });
+
+  await t.test('early completion delivered first creates a recording but leaves the stream enabled', async () => {
+    await reset({scheduled_at:stamp(30)});
+    await asset('live_stream_completed',10);
+    await live('active',2);
+    await live('idle',11);
+    assert.equal((await state()).live.status,'scheduled');
+    assert.equal((await state()).live.started_at,null);
+    assert.equal((await state()).live.mux_status,'idle');
+    assert.equal((await state()).video.mux_status,'ready');
+    assert.deepEqual(disableCalls,[]);
+  });
+
+  await t.test('late completion after an early idle cannot end the scheduled event', async () => {
+    await reset({scheduled_at:stamp(30)});
+    await live('active',2);
+    await live('disconnected',4);
+    await live('idle',10);
+    await asset('live_stream_completed',31);
+    assert.equal((await state()).live.status,'scheduled');
+    assert.equal((await state()).video.mux_status,'ready');
+    assert.deepEqual(disableCalls,[]);
+  });
+
+  await t.test('expiry at or after scheduled time ends the event; reconnect within the window keeps one recording', async () => {
+    for(const finish of [30,31]) {
+      await reset({scheduled_at:stamp(30)});
+      await live('active',2);
+      await live('disconnected',4);
+      await live('connected',5,{status:'active'});
+      assert.equal((await state()).live.status,'live');
+      await live('disconnected',20);
+      await live('idle',finish);
+      assert.equal((await state()).live.status,'ended');
+      assert.deepEqual(disableCalls,['live-1']);
+      assert.equal((await client.query('SELECT count(*)::int AS n FROM pg_temp.videos')).rows[0].n,1);
+    }
+  });
+
   await t.test('a metadata update arriving first does not suppress the active notification', async () => {
     await reset();
     await live('updated', 10);
@@ -268,7 +340,7 @@ test('Mux live lifecycle against PostgreSQL temporary tables', { skip: !process.
     assert.equal((await state()).live.status, 'ended');
   });
 
-  await t.test('a new broadcast on the same Mux key cannot replace the original recording', async () => {
+  await t.test('a new asset has its own recording and cannot replace the original or reopen an ended stream', async () => {
     await reset();
     await asset('live_stream_completed', 20);
     await live('active', 25, { active_asset_id: 'asset-2' });
@@ -278,6 +350,22 @@ test('Mux live lifecycle against PostgreSQL temporary tables', { skip: !process.
     assert.equal(current.video.mux_asset_id, 'asset-1');
     assert.equal(new Date(current.live.completed_at).toISOString(), stamp(20));
     assert.equal(current.live.status, 'ended');
+    assert.equal((await client.query('SELECT count(*)::int AS n FROM pg_temp.videos')).rows[0].n, 2);
+  });
+
+  await t.test('completion of a new recording can arrive before its connection events', async () => {
+    await reset({scheduled_at:stamp(30)});
+    await asset('live_stream_completed',10,{created_at:String(Date.parse(stamp(1))/1000)});
+    await asset('live_stream_completed',50,{id:'asset-2',created_at:String(Date.parse(stamp(35))/1000)});
+    assert.equal((await state()).live.status,'ended');
+    assert.deepEqual(disableCalls,['live-1']);
+    await live('connected',35,{active_asset_id:'asset-2'});
+    await live('active',36,{active_asset_id:'asset-2'});
+    await asset('ready',12); // old recording's delayed readiness
+    assert.equal((await state()).live.status,'ended');
+    const second=(await client.query("SELECT * FROM pg_temp.videos WHERE mux_asset_id='asset-2'")).rows[0];
+    assert.equal(second.mux_status,'ready');
+    assert.equal(new Date(second.mux_recording_started_at).toISOString(),stamp(35));
   });
 
   await t.test('a wrong playback policy is never used as a fallback', async () => {
@@ -354,5 +442,5 @@ test('Mux live lifecycle against PostgreSQL temporary tables', { skip: !process.
     assert.deepEqual(disableCalls, ['live-1', 'live-1', 'live-1']);
   });
 
-  for (const down of migrations.reverse()) await client.query(down);
+
 });

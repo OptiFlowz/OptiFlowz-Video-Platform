@@ -14,19 +14,19 @@ mock.module(new URL('../src/database/index.js', import.meta.url).href, {
     if (sql.includes('FROM users')) {
       return { rows: [{ id: values[0], status: 'active', authz_version: 1 }] };
     }
-    if (sql.startsWith('DELETE')) {
+    if ((sql.startsWith('DELETE') || sql.startsWith('WITH tombstone'))) {
       calls.push(['databaseDelete', ...values]);
       if (failDatabaseDelete) throw new Error('Database unavailable');
       row = null;
       return { rows: [] };
     }
     calls.push(['select', ...values]);
-    if (sql.includes('ls.id = $1')) {
-      assert.match(sql, /AND v.uploaded_by = \$2/);
+    if (sql.includes('ls.id=$1')) {
+      assert.match(sql, /AND ls.user_id=\$2/);
       return { rows: row && values[0] === liveStreamId && values[1] === ownerId ? [row] : [] };
     }
     assert.match(sql, /WHERE v.id = \$1/);
-    return { rows: row && values[0] === videoId ? [row] : [] };
+    return { rows: row && values[0] === videoId ? [{video_id:row.video_id,mux_asset_id:row.mux_asset_id,live_stream_id:row.live_stream_id}] : [] };
   } } },
 });
 
@@ -63,7 +63,7 @@ const { default: router } = await import('../src/modules/live-streams/live-strea
 
 beforeEach(() => {
   calls = []; failures = {}; failDatabaseDelete = false;
-  row = { video_id: videoId, live_stream_id: liveStreamId, mux_asset_id: 'recording', mux_live_stream_id: 'mux-live' };
+  row = { video_id: videoId, live_stream_id: liveStreamId, mux_asset_id: 'recording', mux_live_stream_id: 'mux-live', mux_asset_ids: ['recording'] };
   stream = { active_asset_id: 'active-recording', recent_asset_ids: ['recording', 'older-recording'] };
   assets = ['recording', 'active-recording', 'older-recording', 'webhook-pending-recording'];
 });
@@ -71,20 +71,20 @@ beforeEach(() => {
 test('deletion stops ingest, collects every recording, deletes each once, then deletes the database video', async () => {
   const result = await deleteLive(liveStreamId, ownerId);
   assert.deepEqual(result, {
-    success: true, video_id: videoId, live_stream_id: liveStreamId,
-    mux_asset_id: 'recording', message: 'Live stream and recordings deleted.',
+    success: true, live_stream_id: liveStreamId,
+    message: 'Live stream and recordings deleted.',
   });
   assert.deepEqual(calls, [
     ['select', liveStreamId, ownerId], ['retrieve', 'mux-live'], ['disable', 'mux-live'],
     ['list', 'mux-live'], ['listComplete'],
     ['deleteAsset', 'recording'], ['deleteAsset', 'active-recording'],
     ['deleteAsset', 'older-recording'], ['deleteAsset', 'webhook-pending-recording'],
-    ['deleteStream', 'mux-live'], ['databaseDelete', videoId],
+    ['deleteStream', 'mux-live'], ['databaseDelete', liveStreamId],
   ]);
 });
 
 test('a scheduled stream without a recording can be deleted', async () => {
-  row.mux_asset_id = null; stream = {}; assets = [];
+  row.mux_asset_id = null; row.mux_asset_ids = []; stream = {}; assets = [];
   await deleteLive(liveStreamId, ownerId);
   assert.equal(row, null);
   assert.ok(!calls.some(([name]) => name === 'deleteAsset'));
@@ -106,9 +106,10 @@ test('ordinary video deletion immediately removes the local row even when Mux re
   assert.deepEqual(calls, [['select', videoId], ['deleteAsset', 'recording'], ['databaseDelete', videoId]]);
 });
 
-test('the existing video deletion handler also cleans up the associated Mux live stream', async () => {
+test('deleting one recording keeps the parent and does not delete sibling recordings', async () => {
   await deleteVideo();
-  assert.ok(calls.some(([name]) => name === 'deleteStream'));
+  assert.ok(!calls.some(([name]) => ['deleteStream','disable','list'].includes(name)));
+  assert.deepEqual(calls.filter(([name]) => name === 'deleteAsset'), [['deleteAsset','recording']]);
   assert.equal(row, null);
 });
 

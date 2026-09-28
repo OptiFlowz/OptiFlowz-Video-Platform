@@ -12,21 +12,12 @@ const client = {
     if (sql === 'BEGIN') snapshot = structuredClone(records);
     if (sql === 'ROLLBACK') records = snapshot;
     if (failure === 'commit' && sql === 'COMMIT') throw new Error('Commit response lost');
-    if (sql.includes('INSERT INTO public.videos')) {
-      if (failure === 'video-insert') throw new Error('Database video insert failed');
-      const video = {
-        id: videoId, uploaded_by: values[0], title: values[1], description: values[2],
-        visibility: values[3], playback_policy: values[4], mux_status: 'preparing',
-        mux_asset_id: null, mux_playback_id: null, published_at: null,
-      };
-      records.videos.push(video);
-      return { rows: [video] };
-    }
     if (sql.includes('INSERT INTO public.live_streams')) {
       if (failure === 'live-insert') throw new Error('Database live stream insert failed');
       const liveStream = {
-        id: 'live-stream-id', video_id: values[0], dvr_enabled: values[1],
-        scheduled_at: values[2], mux_live_stream_id: values[3], mux_live_playback_id: values[4],
+        id: 'live-stream-id', user_id: values[0], title: values[1], description: values[2],
+        visibility: values[3], playback_policy: values[4], dvr_enabled: values[5],
+        scheduled_at: values[6], mux_live_stream_id: values[7], mux_live_playback_id: values[8],
         status: 'scheduled', mux_status: 'idle',
       };
       records.liveStreams.push(liveStream);
@@ -85,31 +76,26 @@ for (const [dvr, duration] of [[true, 14399], [false, 43200]]) {
       max_continuous_duration: duration, meta: { title: "Creator's stream" },
     }, { maxRetries: 0 }]);
     assert.deepEqual(result.live_stream, {
-      id: 'live-stream-id', video_id: videoId,
+      id: 'live-stream-id', user_id: userId, title: "Creator's stream", description: 'Description',
+      visibility: 'public', playback_policy: 'signed',
       dvr_enabled: dvr, scheduled_at: '2026-10-01T18:00:00+02:00',
       mux_live_stream_id: 'mux-live-id', mux_live_playback_id: 'signed-id',
       status: 'scheduled', mux_status: 'idle',
     });
-    assert.deepEqual(result.video, {
-      id: videoId, uploaded_by: userId, title: "Creator's stream", description: 'Description',
-      visibility: 'public', playback_policy: 'signed', mux_status: 'preparing',
-      mux_asset_id: null, mux_playback_id: null, published_at: null,
-    });
-    assert.equal(records.videos.length, 1);
+    assert.equal(result.video, undefined);
+    assert.equal(records.videos.length, 0);
     assert.equal(records.liveStreams.length, 1);
-    assert.equal(result.live_stream.video_id, result.video.id);
+
     assert.equal(result.stream_key, 'encoder-secret');
     assert.equal(result.max_continuous_duration, duration);
     const insert = calls.find(([sql]) => sql.includes('INSERT'));
     assert.ok(!insert[0].includes("Creator's stream"));
     assert.ok(!insert[1].includes('encoder-secret'));
-    assert.match(insert[0], /'preparing', NULL/);
     const transaction = calls.filter(([sql]) => sql === 'BEGIN' || sql.includes('INSERT') || sql === 'COMMIT');
-    assert.equal(transaction.length, 4);
+    assert.equal(transaction.length, 3);
     assert.equal(transaction[0][0], 'BEGIN');
-    assert.match(transaction[1][0], /INSERT INTO public.videos/);
-    assert.match(transaction[2][0], /INSERT INTO public.live_streams/);
-    assert.equal(transaction[3][0], 'COMMIT');
+    assert.match(transaction[1][0], /INSERT INTO public.live_streams/);
+    assert.equal(transaction[2][0], 'COMMIT');
     assert.deepEqual(calls.slice(-2).map(([name]) => name), ['COMMIT', 'release']);
     assert.ok(!calls.some(([name]) => name === 'delete'));
   });
@@ -118,10 +104,10 @@ for (const [dvr, duration] of [[true, 14399], [false, 43200]]) {
 test('optional values default to no DVR and no scheduled date or description', async () => {
   const result = await create({ title: 'Stream' }, userId);
   assert.equal(result.live_stream.dvr_enabled, false);
-  assert.equal(result.video.description, null);
+  assert.equal(result.live_stream.description, null);
   assert.equal(result.live_stream.scheduled_at, null);
-  assert.equal(result.video.visibility, 'public');
-  assert.equal(result.video.playback_policy, 'signed');
+  assert.equal(result.live_stream.visibility, 'public');
+  assert.equal(result.live_stream.playback_policy, 'signed');
   assert.equal(result.max_continuous_duration, 43200);
 });
 
@@ -132,8 +118,8 @@ for (const visibility of ['public', 'unlisted', 'private']) {
       const params = calls.find(([name]) => name === 'create')[1];
       assert.deepEqual(params.playback_policies, [policy]);
       assert.deepEqual(params.new_asset_settings.playback_policies, [policy]);
-      assert.equal(result.video.visibility, visibility);
-      assert.equal(result.video.playback_policy, policy);
+      assert.equal(result.live_stream.visibility, visibility);
+      assert.equal(result.live_stream.playback_policy, policy);
       assert.equal(result.live_stream.mux_live_playback_id, `${policy}-id`);
     });
   }
@@ -141,7 +127,7 @@ for (const visibility of ['public', 'unlisted', 'private']) {
 
 test('explicit null optional values are accepted', async () => {
   const result = await create({ title: 'Stream', description: null, scheduled_at: null }, userId);
-  assert.equal(result.video.description, null);
+  assert.equal(result.live_stream.description, null);
   assert.equal(result.live_stream.scheduled_at, null);
 });
 
@@ -182,7 +168,7 @@ test('missing signed playback or encoder key removes the unusable stream', async
   }
 });
 
-for (const stage of ['connect', 'video-insert', 'live-insert']) {
+for (const stage of ['connect', 'live-insert']) {
   test(`database ${stage} failure deletes the newly created Mux stream`, async () => {
     failure = stage;
     await assert.rejects(create({ title: 'Stream' }, userId), /Database/);
@@ -192,9 +178,7 @@ for (const stage of ['connect', 'video-insert', 'live-insert']) {
       assert.ok(calls.some(([name]) => name === 'ROLLBACK'));
       assert.equal(calls.at(-1)[0], 'release');
     }
-    if (stage === 'live-insert') {
-      assert.ok(calls.some(([sql]) => sql.includes('INSERT INTO public.videos')));
-    }
+
   });
 }
 
@@ -240,10 +224,10 @@ test('authenticated HTTP endpoint returns 201 and prevents caching the stream ke
   assert.equal(response.headers.get('cache-control'), 'no-store');
   const body = await response.json();
   assert.equal(body.success, true);
-  assert.equal(body.video.uploaded_by, userId);
-  assert.equal(body.video.visibility, 'unlisted');
-  assert.equal(body.video.playback_policy, 'public');
-  assert.equal(body.live_stream.video_id, body.video.id);
+  assert.equal(body.live_stream.user_id, userId);
+  assert.equal(body.live_stream.visibility, 'unlisted');
+  assert.equal(body.live_stream.playback_policy, 'public');
+  assert.equal(body.video, undefined);
   assert.equal(body.live_stream.mux_live_playback_id, 'public-id');
   assert.equal(body.stream_key, 'encoder-secret');
   assert.equal(body.max_continuous_duration, 14399);

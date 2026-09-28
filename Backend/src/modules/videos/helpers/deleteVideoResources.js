@@ -18,12 +18,13 @@ async function allowMissing(operation) {
 export async function deleteVideoResources({ videoId, liveStreamId, ownerId }) {
   const deletingLiveStream = liveStreamId !== undefined;
   const { rows } = await writePool.query(
-    `SELECT v.id AS video_id, v.mux_asset_id,
-            ls.id AS live_stream_id, ls.mux_live_stream_id
-     FROM public.videos v
-     LEFT JOIN public.live_streams ls ON ls.video_id = v.id
-     WHERE ${deletingLiveStream ? 'ls.id = $1 AND v.uploaded_by = $2' : 'v.id = $1'}
-     LIMIT 1`,
+    deletingLiveStream
+      ? `SELECT ls.id AS live_stream_id, ls.mux_live_stream_id,
+           ARRAY(SELECT v.mux_asset_id FROM public.videos v
+             WHERE v.live_stream_id=ls.id AND v.mux_asset_id IS NOT NULL) AS mux_asset_ids
+         FROM public.live_streams ls WHERE ls.id=$1 AND ls.user_id=$2 LIMIT 1`
+      : `SELECT v.id AS video_id, v.mux_asset_id, v.live_stream_id
+         FROM public.videos v WHERE v.id = $1 LIMIT 1`,
     deletingLiveStream ? [liveStreamId, ownerId] : [videoId],
   );
   const video = rows[0];
@@ -34,7 +35,7 @@ export async function deleteVideoResources({ videoId, liveStreamId, ownerId }) {
     throw new HttpError(400, { message: 'Video has no mux_asset_id' });
   }
 
-  const assetIds = new Set(video.mux_asset_id ? [video.mux_asset_id] : []);
+  const assetIds = new Set(deletingLiveStream ? video.mux_asset_ids : (video.mux_asset_id ? [video.mux_asset_id] : []));
   let operation = 'retrieve live stream';
   const startedAt = Date.now();
   try {
@@ -82,21 +83,33 @@ export async function deleteVideoResources({ videoId, liveStreamId, ownerId }) {
     // Preserve local IDs on upstream failure so another DELETE can retry cleanup.
     // Mux response bodies can contain encoder credentials; do not expose them.
     console.error('[Mux deletion failed]', {
-      operation, video_id: video.video_id,
+      operation, video_id: video.video_id, live_stream_id: video.live_stream_id,
       status: Number.isInteger(error.status) ? error.status : null,
       elapsed_ms: Date.now() - startedAt,
     });
     throw new HttpError(502, { message: 'Unable to delete video resources from Mux' });
   }
 
-  // Cascades to the live stream, reactions, comments and indexing records.
+  // Parent deletion cascades to every recording and its dependent records.
   // Do not wait for a webhook: an already missing Mux asset will not emit a new one.
-  await writePool.query('DELETE FROM public.videos WHERE id = $1', [video.video_id]);
+  if (deletingLiveStream) {
+    await writePool.query('DELETE FROM public.live_streams WHERE id = $1', [video.live_stream_id]);
+  } else if (video.live_stream_id) {
+    // Keep a tombstone on the parent to stop delayed asset webhooks recreating
+    // an explicitly deleted recording. Lock the parent before deleting the child.
+    await writePool.query(`WITH tombstone AS (
+      UPDATE public.live_streams SET mux_deleted_asset_ids =
+        ARRAY(SELECT DISTINCT unnest(array_append(mux_deleted_asset_ids, $3::text)))
+      WHERE id=$2 RETURNING id
+    ) DELETE FROM public.videos WHERE id=$1 AND live_stream_id IN (SELECT id FROM tombstone)`,
+    [video.video_id, video.live_stream_id, video.mux_asset_id]);
+  } else {
+    await writePool.query('DELETE FROM public.videos WHERE id = $1', [video.video_id]);
+  }
   return {
     success: true,
-    video_id: video.video_id,
-    mux_asset_id: video.mux_asset_id,
+    ...(deletingLiveStream ? {} : { video_id: video.video_id, mux_asset_id: video.mux_asset_id }),
     ...(video.live_stream_id ? { live_stream_id: video.live_stream_id } : {}),
-    message: video.live_stream_id ? 'Live stream and recordings deleted.' : 'Video deleted.',
+    message: deletingLiveStream ? 'Live stream and recordings deleted.' : 'Video deleted.',
   };
 }
