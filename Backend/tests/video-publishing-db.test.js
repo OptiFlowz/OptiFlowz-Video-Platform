@@ -17,7 +17,7 @@ test('publication rules against PostgreSQL temporary fixtures', {
   await client.query('SET search_path = pg_temp, pg_catalog');
   await client.query(`
     CREATE TEMP TABLE videos (
-      id uuid PRIMARY KEY, uploaded_by uuid, title text, description text,
+      id uuid PRIMARY KEY, uploaded_by uuid, live_stream_id uuid, title text, description text,
       thumbnail_url text, duration_seconds integer DEFAULT 60,
       view_count integer DEFAULT 0, like_count integer DEFAULT 0, dislike_count integer DEFAULT 0,
       created_at timestamptz DEFAULT now(), updated_at timestamptz DEFAULT now(),

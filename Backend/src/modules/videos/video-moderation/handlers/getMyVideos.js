@@ -13,7 +13,7 @@ export async function getMyVideosInternal({ query: queryParams }, actorUserId = 
     }
     const trimmedQuery = searchQuery.trim();
     const filterParams = [userId];
-    let whereClause = 'uploaded_by = $1';
+    let whereClause = "uploaded_by = $1 AND (live_stream_id IS NULL OR mux_status = 'ready')";
     if (trimmedQuery) {
       // Only letters/numbers become query terms; user punctuation cannot inject
       // tsquery operators. Prefix every term to support search-as-you-type.
