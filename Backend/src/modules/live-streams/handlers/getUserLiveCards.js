@@ -17,19 +17,36 @@ export async function getUserLiveCardsInternal({ params, query = {} }, viewerId 
   const offset = (page - 1) * limit;
   if (!Number.isSafeInteger(offset)) throw new HttpError(400, { message: 'Page is too large' });
 
-  // Joining all recordings is intentional: hidden or preparing recordings must
-  // not make their parent appear to be a stream with no recording.
+  // A live broadcast gets one independent card: Mux creates a preparing video
+  // as soon as recording starts. Eligible past recordings can coexist with it.
   const source = `FROM public.live_streams ls
-    LEFT JOIN public.videos v ON v.live_stream_id=ls.id
-    WHERE ls.user_id=$1 AND ls.visibility='public'
-      AND ((v.id IS NOT NULL AND v.visibility='public' AND v.mux_status='ready' AND v.published_at <= NOW())
-        OR (v.id IS NULL AND ls.status IN ('scheduled','live')))`;
+    JOIN LATERAL (
+      SELECT recording.id AS video_id FROM public.videos recording
+      WHERE recording.live_stream_id=ls.id AND recording.visibility='public'
+        AND recording.mux_status='ready' AND recording.published_at <= NOW()
+      UNION ALL
+      SELECT NULL::uuid AS video_id
+      WHERE ls.status='live' OR (ls.status='scheduled' AND NOT EXISTS (
+        SELECT 1 FROM public.videos recording WHERE recording.live_stream_id=ls.id
+      ))
+    ) candidates ON TRUE
+    LEFT JOIN public.videos v ON v.id=candidates.video_id
+    WHERE ls.user_id=$1 AND ls.visibility='public'`;
   const direction = sort_dir.toUpperCase();
   const order = `${sort_by === 'streamed_at' ? '' : `view_count ${direction}, `}sort_at ${direction}, id ${direction}, card_type ASC`;
   const [count, result] = await Promise.all([
     writePool.query(`SELECT COUNT(*)::int AS total ${source}`, [userId]),
     writePool.query(`WITH eligible AS (
-      SELECT COALESCE(v.id,ls.id) AS id, v.id AS video_id, ls.id AS livestream_id,
+      SELECT COALESCE(v.id,ls.id) AS id,
+        CASE WHEN v.id IS NOT NULL THEN v.id WHEN ls.status='live' THEN (
+          SELECT current_recording.id FROM public.videos current_recording
+          WHERE current_recording.live_stream_id=ls.id
+            AND current_recording.mux_asset_id=ls.mux_active_asset_id
+            AND current_recording.mux_recording_completed_at IS NULL
+            AND current_recording.mux_status IS DISTINCT FROM 'deleted'
+          LIMIT 1
+        ) END AS video_id,
+        ls.id AS livestream_id,
         CASE WHEN v.id IS NOT NULL THEN 'recording' ELSE ls.status END AS card_type,
         CASE WHEN v.id IS NOT NULL THEN v.title ELSE ls.title END AS title,
         CASE WHEN v.id IS NOT NULL THEN v.description ELSE ls.description END AS description,
@@ -48,11 +65,11 @@ export async function getUserLiveCardsInternal({ params, query = {} }, viewerId 
       ${viewerId ? ', wp.progress_seconds, wp.percentage_watched::float AS percentage_watched' : ''}
     FROM paged c
     LEFT JOIN public.users u ON u.id=c.uploader_id
-    ${viewerId ? 'LEFT JOIN public.watch_progress wp ON wp.video_id=c.video_id AND wp.user_id=$4' : ''}
+    ${viewerId ? "LEFT JOIN public.watch_progress wp ON c.card_type='recording' AND wp.video_id=c.video_id AND wp.user_id=$4" : ''}
     LEFT JOIN LATERAL (
       SELECT json_agg(json_build_object('id',p.id,'name',p.name,'image_url',p.image_url) ORDER BY p.name) AS people
       FROM (SELECT DISTINCT p.id,p.name,p.image_url FROM public.video_chairs vc
-        JOIN public.people p ON p.id=vc.person_id WHERE vc.video_id=c.video_id) p
+        JOIN public.people p ON p.id=vc.person_id WHERE c.card_type='recording' AND vc.video_id=c.video_id) p
     ) ppl ON TRUE
     ORDER BY ${order}`, viewerId ? [userId, limit, offset, viewerId] : [userId, limit, offset]),
   ]);

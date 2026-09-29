@@ -39,12 +39,12 @@ test('public mixed livestream cards against PostgreSQL temporary tables', { skip
   for (const [n, settings] of [
     [7, { visibility: 'private' }], [8, { visibility: 'unlisted' }], [9, { status: 'preparing' }],
     [10, { status: 'deleted' }], [11, { published: '2999-01-01' }], [12, { published: null }],
-  ]) { await stream(n, { status: n % 2 ? 'live' : 'scheduled' }); await recording(1000 + n, n, settings); }
+  ]) { await stream(n); await recording(1000 + n, n, settings); }
   for (const [n, status] of [[13, 'ended'], [14, 'disconnected'], [15, 'cancelled']]) await stream(n, { status });
   await stream(16, { user: other });
   await stream(17, { status: 'ended' });
   await recording(1017, 17, { started: '2026-09-05', views: 5, policy: 'signed' });
-  await stream(18, { visibility: 'private' });
+  await stream(18, { status: 'live', visibility: 'private' });
   await stream(19, { status: 'live', visibility: 'unlisted' });
   await client.query("INSERT INTO pg_temp.people VALUES ($1,'Speaker','https://example.test/speaker.webp')", [uuid(200)]);
   await client.query('INSERT INTO pg_temp.video_chairs VALUES ($1,$2),($1,$2)', [uuid(1001), uuid(200)]);
@@ -124,12 +124,66 @@ test('public mixed livestream cards against PostgreSQL temporary tables', { skip
     assert.equal(empty.total_pages, 0); assert.deepEqual(empty.cards, []);
   });
 
-  await t.test('hidden recordings cannot be bypassed with a fallback livestream card', async () => {
+  await t.test('a public live card does not expose its private recordings', async () => {
     await client.query("UPDATE pg_temp.videos SET visibility='private' WHERE live_stream_id=$1", [uuid(1)]);
     await client.query("UPDATE pg_temp.live_streams SET status='live' WHERE id=$1", [uuid(1)]);
-    assert.ok((await list(input({}))).cards.every(card => card.livestream_id !== uuid(1)));
+    const cards = (await list(input({}))).cards.filter(card => card.livestream_id === uuid(1));
+    assert.equal(cards.length, 1);
+    assert.equal(cards[0].card_type, 'live');
+    assert.equal(cards[0].video_id, null);
+    assert.equal(cards[0].title, 'Live 1');
     await client.query("UPDATE pg_temp.videos SET visibility='public' WHERE live_stream_id=$1", [uuid(1)]);
     await client.query("UPDATE pg_temp.live_streams SET status='ended' WHERE id=$1", [uuid(1)]);
+  });
+
+  await t.test('an active stream with preparing recordings stays visible once, with correct pagination', async () => {
+    await stream(20, { status: 'live', started: '2026-09-20' });
+    await recording(1020, 20, { status: 'preparing', published: null });
+    await recording(1021, 20, { status: 'preparing', published: null });
+    await client.query('UPDATE pg_temp.videos SET mux_recording_completed_at=NULL WHERE live_stream_id=$1', [uuid(20)]);
+    await client.query("UPDATE pg_temp.videos SET mux_asset_id='active-asset' WHERE id=$1", [uuid(1020)]);
+    await client.query("UPDATE pg_temp.videos SET mux_asset_id='other-asset' WHERE id=$1", [uuid(1021)]);
+    await client.query("UPDATE pg_temp.live_streams SET mux_active_asset_id='active-asset' WHERE id=$1", [uuid(20)]);
+    await client.query('INSERT INTO pg_temp.video_chairs VALUES ($1,$2)', [uuid(1020), uuid(200)]);
+    await client.query('INSERT INTO pg_temp.watch_progress VALUES ($1,$2,30,25)', [uuid(1020), viewer]);
+    try {
+      const result = await list(input({ limit: '1' }), viewer);
+      assert.equal(result.total, 6);
+      assert.equal(result.total_pages, 6);
+      assert.equal(result.cards[0].id, uuid(20));
+      assert.equal(result.cards[0].card_type, 'live');
+      assert.equal(result.cards[0].video_id, uuid(1020));
+      assert.deepEqual(result.cards[0].people, []);
+      assert.equal(result.cards[0].progress_seconds, null);
+      assert.equal(result.cards[0].preview_url, null);
+      assert.equal(result.cards[0].thumbnail_url, 'https://example.test/live-20.webp');
+      assert.equal((await list(input({}))).cards.filter(card => card.livestream_id === uuid(20)).length, 1);
+      // Match Mux's current asset, never an arbitrary/latest video from this stream.
+      await client.query("UPDATE pg_temp.live_streams SET mux_active_asset_id='other-asset' WHERE id=$1", [uuid(20)]);
+      assert.equal((await list(input({ limit: '1' }))).cards[0].video_id, uuid(1021));
+      await client.query("UPDATE pg_temp.live_streams SET mux_active_asset_id='not-created-yet' WHERE id=$1", [uuid(20)]);
+      assert.equal((await list(input({ limit: '1' }))).cards[0].video_id, null);
+      await client.query("UPDATE pg_temp.live_streams SET mux_active_asset_id='active-asset' WHERE id=$1", [uuid(20)]);
+      await client.query('UPDATE pg_temp.videos SET mux_recording_completed_at=now() WHERE id=$1', [uuid(1020)]);
+      assert.equal((await list(input({ limit: '1' }))).cards[0].video_id, null);
+      await client.query("UPDATE pg_temp.videos SET mux_recording_completed_at=NULL,mux_status='deleted' WHERE id=$1", [uuid(1020)]);
+      assert.equal((await list(input({ limit: '1' }))).cards[0].video_id, null);
+      await client.query("UPDATE pg_temp.videos SET mux_status='preparing' WHERE id=$1", [uuid(1020)]);
+      // After a broadcast ends, preparing/unpublished recordings remain hidden.
+      await client.query("UPDATE pg_temp.live_streams SET status='ended' WHERE id=$1", [uuid(20)]);
+      assert.equal((await list(input({}))).total, 5);
+      await client.query("UPDATE pg_temp.videos SET mux_status='ready', published_at='2026-01-01' WHERE id=$1", [uuid(1020)]);
+      const ended = await list(input({}));
+      assert.equal(ended.total, 6);
+      assert.equal(ended.cards.find(card => card.livestream_id === uuid(20)).card_type, 'recording');
+      // An earlier published recording does not replace a new live broadcast card.
+      await client.query("UPDATE pg_temp.live_streams SET status='live' WHERE id=$1", [uuid(20)]);
+      const restarted = await list(input({}));
+      assert.equal(restarted.total, 7);
+      assert.deepEqual(restarted.cards.filter(card => card.livestream_id === uuid(20)).map(card => card.card_type).sort(), ['live', 'recording']);
+    } finally {
+      await client.query('DELETE FROM pg_temp.live_streams WHERE id=$1', [uuid(20)]);
+    }
   });
 
   await t.test('invalid IDs, sort fields and pagination fail before SQL', async () => {

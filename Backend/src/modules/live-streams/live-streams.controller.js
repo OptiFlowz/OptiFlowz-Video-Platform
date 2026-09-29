@@ -6,6 +6,28 @@ import { liveThumbnailUploadInternal } from './handlers/liveThumbnailUpload.js';
 import { getMyLiveStreamsInternal } from './handlers/getMyLiveStreams.js';
 import { updateLiveDetailsInternal } from './handlers/updateLiveDetails.js';
 import { getUserLiveCardsInternal } from './handlers/getUserLiveCards.js';
+import { getLivePlaybackInternal } from './handlers/getLivePlayback.js';
+import { getLiveDetailsInternal } from './handlers/getLiveDetails.js';
+
+export async function getLiveDetails(req, res) {
+  res.set('Cache-Control', 'private, no-store');
+  try {
+    return sendSuccess(res, await getLiveDetailsInternal(req.params.liveStreamId, req.user?.sub));
+  } catch (error) {
+    if (!error.status || error.status >= 500) console.error('getLiveDetails failed');
+    return sendError(res, error.status ? error.message : 'Server error', error.status || 500);
+  }
+}
+
+export async function getLivePlayback(req, res) {
+  res.set('Cache-Control', 'private, no-store');
+  try {
+    return sendSuccess(res, await getLivePlaybackInternal(req.params.liveStreamId, req.user?.sub));
+  } catch (error) {
+    if (!error.status || error.status >= 500) console.error('getLivePlayback failed');
+    return sendError(res, error.status ? error.message : 'Server error', error.status || 500);
+  }
+}
 
 export async function getUserLiveCards(req, res) {
   res.set('Cache-Control', 'private, no-store');

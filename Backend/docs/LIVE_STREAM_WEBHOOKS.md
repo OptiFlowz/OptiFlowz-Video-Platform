@@ -12,6 +12,32 @@ be represented by the previous one-to-one model.
 
 ## API and ownership
 
+`POST /api/live-streams/:liveStreamId/playback` requires authentication, matching
+the video playback route. Public and unlisted streams are viewable by signed-in
+users; private streams are owner-only (404 for everyone else). Playback requires
+application status `live` or `disconnected` and Mux status `active`. Scheduled,
+ended, cancelled, idle and disabled streams return 409. Finished replays use the
+existing video playback route instead.
+
+Following [Mux's DVR playback model](https://www.mux.com/docs/guides/stream-recordings-of-live-streams),
+non-DVR uses `mux_live_playback_id`; DVR uses the unfinished recording whose asset
+matches `mux_active_asset_id`. A recording can be `preparing` in the application
+while its Mux playback ID already works for DVR; it need not be published as a
+replay. Missing DVR IDs return 409 with no fallback to an older asset or to
+non-DVR. Access to this in-progress content is governed by livestream visibility.
+
+The response includes `livestream_id`, current `video_id` (or null), `status`,
+`dvr_enabled`, `playback_mode` (`live`/`dvr`), `playback_source`
+(`live_stream`/`asset`), `mux_playback_id`, `playback_policy`, `stream_url`,
+`tokens` and `expires_at`. The policy belongs to the selected playback resource:
+DVR uses the recording's own policy, which may differ if the livestream's policy
+was edited after that recording started. Public playback returns an unsigned HLS
+URL, empty tokens and null expiry. Signed playback returns separate playback,
+thumbnail and storyboard JWTs, and puts the playback token in the HLS URL.
+Tokens last one hour; refresh through this route before `expires_at` (Unix
+seconds). Responses use `Cache-Control: private, no-store`, and every request
+checks current access on the primary database. Missing signing keys return 503.
+
 `GET /api/live-streams/users/:userId/cards` is a public, optionally authenticated
 listing. It returns `{ success, cards, page, limit, total, total_pages, sort_by,
 sort_dir }`. Defaults are page 1, limit 20 (maximum 100), `sort_by=streamed_at`,
@@ -21,22 +47,29 @@ Pagination and ordering apply across both card sources, with deterministic ties.
 Only public parent livestreams are eligible. Each public, ready recording that
 is already published (`published_at <= now()`, matching other public video lists)
 gets a normal video card with its own title, thumbnail, duration, view count,
-people, Mux image/preview URLs and optional viewer watch progress. A stream with
-no video rows gets a card only when its status is `scheduled` or `live`.
-Private, unlisted, processing, deleted, draft or future-publication recordings
-do not produce a fallback stream card. Multiple eligible recordings produce
-multiple cards. Signed playback does not exclude publicly visible content.
+people, Mux image/preview URLs and optional viewer watch progress. A public live
+stream always gets exactly one independent `live` card, including while Mux is
+creating a preparing recording. Eligible recordings can coexist with that card.
+A scheduled stream gets a card only when it has no video rows. Private, unlisted,
+processing, deleted, draft or future-publication recordings never produce video
+cards. Multiple eligible recordings produce multiple cards. Signed playback does
+not exclude publicly visible content.
 
 Every card includes `card_type` (`recording`, `scheduled`, `live`), `livestream_id`,
-`video_id` (null without a recording), `livestream_status`, `streamed_at`,
+`video_id`, `livestream_status`, `streamed_at`,
 `scheduled_at`, `started_at`, `ended_at`, `dvr_enabled`, `recording_started_at`
 and `recording_completed_at`. `id` is the video ID for recordings or the stream
 ID otherwise. `streamed_at` is the recording start, falling back to the stream's
 start/connection time; upcoming streams have null until they start. Date sorting
 falls back to the scheduled time, then creation time when start time is absent.
-Streams without recordings currently have `view_count: 0`, no duration, and null
+Scheduled/live cards currently have `view_count: 0`, no duration, and null
 Mux image/preview URLs; their custom livestream thumbnail is retained.
 The owner's authentication never expands this public listing to private content.
+For `live` cards, `video_id` identifies the unfinished, non-deleted recording
+whose Mux asset matches `mux_active_asset_id`. It is null until that recording
+exists, or if the matching recording has completed or been deleted; no other
+recording is substituted. Scheduled cards have null `video_id`. Live cards still
+use livestream metadata, with no video preview, people, or watch progress.
 
 `PATCH /api/live-streams/:liveStreamId` requires the owner and accepts a partial
 JSON body containing `title`, `description`, `scheduled_at`, `playback_policy`
@@ -74,6 +107,25 @@ The response contains `live_streams`, `page`, `limit`, `total`, `total_pages`,
 thumbnail, application/Mux status, visibility, playback policy, DVR setting,
 schedule and lifecycle timestamps. Encoder credentials and internal webhook
 tracking fields are excluded. Responses use `Cache-Control: private, no-store`.
+
+`GET /api/live-streams/:liveStreamId` requires authentication, like video details.
+Public and unlisted streams are available to signed-in viewers; private streams
+are visible only to their owner (otherwise 404). It returns
+`{ success: true, live_stream: { ... } }` with title, description, thumbnail,
+application and Mux status, visibility, playback policy, DVR setting, schedule,
+lifecycle dates, creation/update dates and uploader ID/name/image.
+
+`live_stream.video_id` and `live_stream.current_recording` identify the current
+unfinished recording for a `live` or `disconnected` stream. Selection matches
+the active Mux asset, never the most recently created video. Preparing,
+unpublished recordings are included under the livestream's visibility rules.
+The nested recording includes its metadata, Mux status, policy, duration,
+recording dates, views/likes/dislikes, comment count and the requesting user's
+reaction and watch progress. Both fields are null when there is no matching
+unfinished recording, it was deleted, or the stream is scheduled/ended/cancelled.
+Completed recordings remain available through video details and public cards.
+This read does not increment views. Responses use `Cache-Control: private,
+no-store`; playback URLs/tokens come from the separate playback route.
 
 `POST /api/live-streams` accepts `title`, `description`, `visibility`,
 `playback_policy`, `dvr_enabled` and `scheduled_at`. It returns `live_stream`,
@@ -164,6 +216,7 @@ the failing operation, status and elapsed time without credentials.
 ## Verification
 
 Run `npm run test:live-streams`, `npm run test:live-thumbnails`, `npm run test:live-streams:db`,
-`npm run test:live-details`, `npm run test:user-live-cards`, `npm run test:mux-webhooks` and `npm run test:video-deletion`.
+`npm run test:live-details`, `npm run test:live-playback`, `npm run test:user-live-cards`,
+`npm run test:mux-webhooks` and `npm run test:video-deletion`.
 Set `TEST_DATABASE_URL` for PostgreSQL checks. They create connection-local
 temporary tables, apply migrations there, and mock all Mux and R2 mutations.
