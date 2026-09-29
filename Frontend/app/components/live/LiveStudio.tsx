@@ -1,3 +1,4 @@
+import { ThumbnailDropZone } from "../shared/thumbnailDropZone";
 import { useLocalizedPageTitle } from '~/hooks/useLocalizedPageTitle';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -87,6 +88,14 @@ function StudioForm({ live }: { live?: LiveDetails }) {
     try { await action(); } catch (e) { setError(e instanceof Error ? e.message : t('liveOperationFailed')); }
     finally { pending.current = false; setBusy(false); }
   };
+  const selectThumbnailFile = (file: File) => {
+    if (!live || !edit || busy) return;
+    void run(async () => {
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5242880) throw new Error(t('liveThumbnailRequirements'));
+      const form = new FormData(); form.append('file', file);
+      await liveRequest(`live-streams/${live.id}/thumbnail`, 'POST', form); await refresh(); setMessage(t('liveSaved'));
+    });
+  };
   const submit = (e: FormEvent) => { e.preventDefault(); if (!edit) return; void run(async () => {
     if (!title.trim()) throw new Error(t('liveTitleRequired'));
     const details = { title: title.trim(), description: description.trim() || null, visibility, playback_policy: policy,
@@ -138,22 +147,15 @@ function StudioForm({ live }: { live?: LiveDetails }) {
           </div>
         </aside>
         <div className="stepContentMain"><div className="videoDetailsForm">
-          {live && edit && <section className="editSection liveForm">
+          {live && edit && <ThumbnailDropZone className="editSection liveForm" onFileSelect={selectThumbnailFile} disabled={busy || !edit}>
             <h2 className="editSectionTitle">{t('thumbnail')}</h2>
             <div className="thumbnailSettingsPreview"><ThumbnailImage src={live.thumbnail_url || DefaultThumbnail} alt={t('thumbnail')} className="thumbnailPickerImage"/></div>
-            <input ref={thumbnailInput} hidden type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={e => {
-              const file = e.target.files?.[0]; e.target.value = ''; if (!file) return;
-              void run(async () => {
-                if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5242880) throw new Error(t('liveThumbnailRequirements'));
-                const form = new FormData(); form.append('file', file);
-                await liveRequest(`live-streams/${live.id}/thumbnail`, 'POST', form); await refresh(); setMessage(t('liveSaved'));
-              });
-            }}/>
+            <input ref={thumbnailInput} hidden type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={event => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ''; if (file) selectThumbnailFile(file); }}/>
             <div className="thumbnailSourceActions">
               <button type="button" className="saveCaptionsBtn thumbnailSourceButton" disabled={busy} onClick={() => thumbnailInput.current?.click()}>{UploadSVG}{t('uploadSelectFile')}</button>
               {live.thumbnail_url && <button type="button" className="liveButton" disabled={busy} onClick={() => void run(async () => { await liveRequest(`live-streams/${live.id}/thumbnail`, 'POST'); await refresh(); setMessage(t('liveSaved')); })}>{t('removeThumbnail')}</button>}
             </div><p className="formHint">{t('liveThumbnailRequirements')}</p>
-          </section>}
+          </ThumbnailDropZone>}
           <form className="editSection liveForm" onSubmit={submit}>
             <h2 className="editSectionTitle">{t('liveDetails')}</h2>
             <label>{t('liveEventTitle')}<input maxLength={512} required value={title} disabled={!edit || busy} onChange={e => setTitle(e.target.value)}/></label>

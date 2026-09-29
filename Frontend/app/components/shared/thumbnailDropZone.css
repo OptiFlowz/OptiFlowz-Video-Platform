@@ -1,0 +1,10 @@
+[data-thumbnail-drop="active"] {
+  outline: 2px solid var(--accentBlue2);
+  outline-offset: -2px;
+  cursor: copy;
+}
+
+[data-thumbnail-drop="active"] .thumbnailSettingsPreview,
+[data-thumbnail-drop="active"] .thumbnailPickerPreview {
+  border-color: var(--accentBlue2);
+}

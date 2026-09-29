@@ -1,3 +1,4 @@
+import { ThumbnailDropZone, isThumbnailImage } from "../shared/thumbnailDropZone";
 import "~/styles/editor.css";
 import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import { Link, useNavigate, useSearchParams } from "react-router";
@@ -366,9 +367,9 @@ function EditPlaylistPage() {
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const selectThumbnailFile = (file: File) => {
+    if (isUploadingThumbnail || isRemovingThumbnail) return;
+    if (!isThumbnailImage(file)) { setError(t("imageFormatsHint")); return; }
 
     setPendingThumbnailFile(file);
     setPendingThumbnailUrl((previousUrl) => {
@@ -606,10 +607,10 @@ function EditPlaylistPage() {
         ) : (
           <div className={styles.layout}>
             <div className="videoDetailsForm">
-                <section className="editSection">
+                <ThumbnailDropZone className="editSection" onFileSelect={selectThumbnailFile} disabled={isUploadingThumbnail || isRemovingThumbnail}>
                   <h2 className="editSectionTitle">{t("playlistThumbnail")}</h2>
 
-                  <input type="file" ref={fileInputRef} accept="image/*" onChange={handleFileSelect} hidden />
+                  <input type="file" ref={fileInputRef} accept="image/*" onChange={event => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ""; if (file) selectThumbnailFile(file); }} hidden />
                   <div className="thumbnailSettingsPreview">
                     {displayedThumbnailUrl ? <img src={displayedThumbnailUrl} alt={t("playlistThumbnail")} className="thumbnailPickerImage" />
                       : <div className="thumbnailSettingsEmpty">{UploadSVG}<span>{t("selectThumbnailImage")}</span></div>}
@@ -675,7 +676,7 @@ function EditPlaylistPage() {
                       )}
                     </p>
                   </div>
-                </section>
+                </ThumbnailDropZone>
                 <section className="editSection">
                   <h2 className="editSectionTitle">{t("playlistDetails")}</h2>
 

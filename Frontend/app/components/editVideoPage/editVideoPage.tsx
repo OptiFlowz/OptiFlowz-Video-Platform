@@ -1,3 +1,4 @@
+import { ThumbnailDropZone, isThumbnailImage } from "../shared/thumbnailDropZone";
 import "~/styles/editor.css";
 import type { PlaybackPolicy } from "../playback/useVideoPlayback";
 import { VideoEditorPreview, useVideoPreviewRefresh } from "../shared/videoEditorPreview";
@@ -462,11 +463,9 @@ function EditVideoPage() {
     }
   };
 
-  const handleThumbnailFileSelect = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const selectThumbnailFile = (file: File) => {
+    if (isUploadingThumbnail || isRemovingThumbnail) return;
+    if (!isThumbnailImage(file)) { setError(t("imageFormatsHint")); return; }
 
     setPendingThumbnailFile(file);
     setPendingThumbnailUrl((previousUrl) => {
@@ -1257,14 +1256,14 @@ function EditVideoPage() {
             <div className="stepContentMain">
               <div className="videoDetailsForm">
                 {/* Video Details Section */}
-                <section className="editSection">
+                <ThumbnailDropZone className="editSection" onFileSelect={selectThumbnailFile} disabled={isUploadingThumbnail || isRemovingThumbnail}>
                   <h2 className="editSectionTitle">{t("thumbnail")}</h2>
 
                   <input
                     type="file"
                     ref={thumbnailInputRef}
                     accept="image/*"
-                    onChange={handleThumbnailFileSelect}
+                    onChange={event => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ""; if (file) selectThumbnailFile(file); }}
                     hidden
                   />
                   {!isThumbnailPickerOpen && (
@@ -1425,7 +1424,7 @@ function EditVideoPage() {
                       )}
                     </p>
                   </div>
-                </section>
+                </ThumbnailDropZone>
 
                 <section className="editSection">
                   <h2 className="editSectionTitle">{t("videoDetails")}</h2>

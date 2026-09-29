@@ -1,3 +1,4 @@
+import { ThumbnailDropZone, isThumbnailImage } from "../shared/thumbnailDropZone";
 import "~/styles/editor.css";
 import type { PlaybackPolicy } from "../playback/useVideoPlayback";
 import { VideoEditorPreview, useVideoPreviewRefresh } from "../shared/videoEditorPreview";
@@ -428,11 +429,9 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
     }
   };
 
-  const handleThumbnailFileSelect = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const selectThumbnailFile = (file: File) => {
+    if (isUploadingThumbnail || isRemovingThumbnail) return;
+    if (!isThumbnailImage(file)) { setProcessingErrorKey("imageFormatsHint"); return; }
 
     setPendingThumbnailFile(file);
     setPendingThumbnailUrl((previousUrl) => {
@@ -1898,14 +1897,14 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
               </aside>
               <div className="stepContentMain">
                 <div className="videoDetailsForm">
-                  <div className="formGroup editSection thumbnailEditorSection">
+                  <ThumbnailDropZone as="div" className="formGroup editSection thumbnailEditorSection" onFileSelect={selectThumbnailFile} disabled={isUploadingThumbnail || isRemovingThumbnail}>
                     <h2 className="editSectionTitle">{t("thumbnail")}</h2>
 
                     <input
                       type="file"
                       ref={thumbnailInputRef}
                       accept="image/*"
-                      onChange={handleThumbnailFileSelect}
+                      onChange={event => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ""; if (file) selectThumbnailFile(file); }}
                       hidden
                     />
                     {!isThumbnailPickerOpen && (
@@ -2066,7 +2065,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                         )}
                       </p>
                     </div>
-                  </div>
+                  </ThumbnailDropZone>
 
                   <div className="formGroup editSection">
                     <label htmlFor="videoTitle">
