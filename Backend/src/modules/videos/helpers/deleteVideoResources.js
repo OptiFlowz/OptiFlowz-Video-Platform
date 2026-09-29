@@ -1,6 +1,8 @@
 import Mux from '@mux/mux-node';
 import { writePool } from '../../../database/index.js';
 import { HttpError } from '../../../common/httpError.js';
+import { DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { s3 } from '../../storage/r2.client.js';
 
 const mux = new Mux();
 const requestOptions = { maxRetries: 0, timeout: 10000 };
@@ -93,7 +95,44 @@ export async function deleteVideoResources({ videoId, liveStreamId, ownerId }) {
   // Parent deletion cascades to every recording and its dependent records.
   // Do not wait for a webhook: an already missing Mux asset will not emit a new one.
   if (deletingLiveStream) {
-    await writePool.query('DELETE FROM public.live_streams WHERE id = $1', [video.live_stream_id]);
+    const client = await writePool.connect();
+    try {
+      await client.query('BEGIN');
+      // Match the webhook/upload lock order and collect the latest thumbnails,
+      // including recordings created while Mux deletion was in progress.
+      const live = await client.query(`SELECT id, thumbnail_url FROM public.live_streams
+        WHERE id=$1 FOR UPDATE`, [video.live_stream_id]);
+      const recordings = await client.query(`SELECT id, thumbnail_url FROM public.videos
+        WHERE live_stream_id=$1 FOR UPDATE`, [video.live_stream_id]);
+      const baseUrl = (process.env.R2_PUBLIC_BASE_URL || '').replace(/\/+$/, '');
+      const bucket = process.env.R2_BUCKET;
+      const thumbnails = [...live.rows, ...recordings.rows].filter(row => row.thumbnail_url);
+      if (thumbnails.length && (!baseUrl || !bucket)) {
+        throw new HttpError(500, { message: 'R2 storage is not configured' });
+      }
+      const keys = new Set();
+      for (const row of thumbnails) {
+        if (row.thumbnail_url.startsWith(`${baseUrl}/live-stream-thumbnails/${video.live_stream_id}/`)
+            || row.thumbnail_url.startsWith(`${baseUrl}/video-thumbnails/${row.id}/`)) {
+          keys.add(row.thumbnail_url.slice(baseUrl.length + 1));
+        }
+      }
+      for (const key of keys) {
+        try {
+          await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }),
+            { abortSignal: AbortSignal.timeout(10000) });
+        } catch (error) {
+          if (error.$metadata?.httpStatusCode !== 404 && error.name !== 'NoSuchKey') {
+            throw new HttpError(502, { message: 'Unable to delete livestream thumbnails from R2' });
+          }
+        }
+      }
+      await client.query('DELETE FROM public.live_streams WHERE id = $1', [video.live_stream_id]);
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally { client.release(); }
   } else if (video.live_stream_id) {
     // Keep a tombstone on the parent to stop delayed asset webhooks recreating
     // an explicitly deleted recording. Lock the parent before deleting the child.

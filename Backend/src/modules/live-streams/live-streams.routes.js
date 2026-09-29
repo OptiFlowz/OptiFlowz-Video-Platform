@@ -1,10 +1,15 @@
 import express from 'express';
-import { requireAuth } from '../../middleware/auth.js';
-import { createLiveStream, getStreamingDetails, deleteLiveStream } from './live-streams.controller.js';
+import { requireAuth, optionalAuth } from '../../middleware/auth.js';
+import { createLiveStream, getStreamingDetails, deleteLiveStream, uploadLiveThumbnail, getMyLiveStreams, updateLiveDetails, getUserLiveCards } from './live-streams.controller.js';
+import { liveThumbnailUploadMiddleware } from './live-streams.middleware.js';
 
 const router = express.Router();
 
 router.post('/', requireAuth, createLiveStream);
+router.get('/my/lives', requireAuth, getMyLiveStreams);
+router.get('/users/:userId/cards', optionalAuth, getUserLiveCards);
+router.patch('/:liveStreamId', requireAuth, updateLiveDetails);
+router.post('/:liveStreamId/thumbnail', requireAuth, liveThumbnailUploadMiddleware, uploadLiveThumbnail);
 router.get('/:liveStreamId/streaming-details', requireAuth, getStreamingDetails);
 router.delete('/:liveStreamId', requireAuth, deleteLiveStream);
 

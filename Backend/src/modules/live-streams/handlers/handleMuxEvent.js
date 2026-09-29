@@ -2,6 +2,9 @@ import Mux from '@mux/mux-node';
 import { writePool } from '../../../database/index.js';
 import { HttpError } from '../../../common/httpError.js';
 import { scheduleOverview } from '../../video-indexing/indexing.service.js';
+import { randomUUID } from 'node:crypto';
+import { CopyObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { s3 } from '../../storage/r2.client.js';
 
 const LIVE_EVENTS = new Set(['created', 'connected', 'recording', 'active', 'disconnected', 'idle', 'updated', 'enabled', 'disabled', 'deleted'].map(t => `video.live_stream.${t}`));
 const ASSET_EVENTS = new Set(['created', 'ready', 'updated', 'errored', 'deleted', 'live_stream_completed'].map(t => `video.asset.${t}`));
@@ -93,7 +96,9 @@ function applyLiveEvent(stream, video, type, data, at) {
   }
   if (!wasTerminal) {
     const playback = data.playback_ids?.find(p => p.policy === stream.playback_policy)?.id;
-    if (playback) stream.mux_live_playback_id = playback;
+    // The create/update handlers own this ID. A delayed snapshot must not restore
+    // a revoked ID after changing policy away and back again.
+    if (playback && !stream.mux_live_playback_id) stream.mux_live_playback_id = playback;
   }
   if (!['created', 'updated'].includes(type)) stream.mux_event_at = latest(stream.mux_event_at, at);
 }
@@ -125,6 +130,26 @@ function applyAssetEvent(video, type, data, at) {
   video.mux_asset_event_at = latest(video.mux_asset_event_at, at);
 }
 
+async function ensureRecordingPlayback(video, data) {
+  // Mux cannot update playback_policies in a live stream's new_asset_settings.
+  // New recordings may therefore arrive with the stream's original policy.
+  // Read current Mux state so webhook retries reuse any replacement already made.
+  const assets = new Mux().video.assets;
+  const options = { maxRetries: 0, timeout: 10000 };
+  const asset = await assets.retrieve(video.mux_asset_id, options);
+  let playback = asset.playback_ids?.find(p => p.policy === video.playback_policy);
+  if (!playback) playback = await assets.createPlaybackId(video.mux_asset_id, { policy: video.playback_policy }, options);
+  if (!playback?.id || playback.policy !== video.playback_policy) {
+    throw new HttpError(502, { message: 'Mux returned an invalid recording playback ID' });
+  }
+  for (const old of asset.playback_ids ?? []) {
+    if (old.policy === video.playback_policy) continue;
+    try { await assets.deletePlaybackId(video.mux_asset_id, old.id, options); }
+    catch (error) { if (error.status !== 404) throw error; }
+  }
+  return { ...data, playback_ids: [playback] };
+}
+
 export async function handleLiveStreamMuxEvent(event, candidateVideoId = null) {
   const isLive = LIVE_EVENTS.has(event.type), isAsset = ASSET_EVENTS.has(event.type);
   if (!isLive && !isAsset) return { handled: event.type.startsWith('video.live_stream.') };
@@ -134,6 +159,8 @@ export async function handleLiveStreamMuxEvent(event, candidateVideoId = null) {
   if ((isLive && !liveId) || (isAsset && !assetId)) throw new HttpError(400, { message: 'Missing Mux resource ID' });
   const client = await writePool.connect();
   let result;
+  let copiedThumbnailKey;
+  let commitStarted = false;
   try {
     await client.query('BEGIN');
     // Always lock the parent first: different recording webhooks and deletion
@@ -157,10 +184,25 @@ export async function handleLiveStreamMuxEvent(event, candidateVideoId = null) {
         video = existing.rows[0];
         if (video) video.mux_asset_id = assetId;
         else {
+          const videoId = randomUUID();
+          let thumbnailUrl = null;
+          if (stream.thumbnail_url) {
+            const baseUrl = (process.env.R2_PUBLIC_BASE_URL || '').replace(/\/+$/, '');
+            const bucket = process.env.R2_BUCKET;
+            if (!baseUrl || !bucket || !stream.thumbnail_url.startsWith(`${baseUrl}/`)) {
+              throw new HttpError(500, { message: 'Livestream thumbnail is not in configured R2 storage' });
+            }
+            const sourceKey = stream.thumbnail_url.slice(baseUrl.length + 1);
+            copiedThumbnailKey = `video-thumbnails/${videoId}/${randomUUID()}.webp`;
+            await s3.send(new CopyObjectCommand({ Bucket: bucket, Key: copiedThumbnailKey,
+              CopySource: `${bucket}/${sourceKey}`.split('/').map(encodeURIComponent).join('/'),
+            }), { abortSignal: AbortSignal.timeout(10000) });
+            thumbnailUrl = `${baseUrl}/${copiedThumbnailKey}`;
+          }
           const inserted = await client.query(`INSERT INTO public.videos
-            (live_stream_id,uploaded_by,title,description,thumbnail_url,visibility,playback_policy,mux_asset_id,mux_status,published_at)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'preparing',NULL) RETURNING *`,
-          [stream.id,stream.user_id,stream.title,stream.description,stream.thumbnail_url,stream.visibility,stream.playback_policy,assetId]);
+            (live_stream_id,uploaded_by,title,description,thumbnail_url,visibility,playback_policy,mux_asset_id,mux_status,published_at,id)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'preparing',NULL,$9) RETURNING *`,
+          [stream.id,stream.user_id,stream.title,stream.description,thumbnailUrl,stream.visibility,stream.playback_policy,assetId,videoId]);
           video = inserted.rows[0];
           // Commit the recording and its indexing job together. A webhook retry
           // reuses the existing video and does not schedule another overview.
@@ -181,7 +223,14 @@ export async function handleLiveStreamMuxEvent(event, candidateVideoId = null) {
       if (isLive) applyLiveEvent(stream, video, type, data, at);
       else if (video) {
         const alreadyCompleted = Boolean(video.mux_recording_completed_at);
-        applyAssetEvent(video, type, data, at);
+        let assetData = data;
+        if (['ready', 'updated', 'live_stream_completed'].includes(type)
+            && (type === 'ready' || data.status === 'ready')
+            && !['deleted', 'errored'].includes(video.mux_status) && !video.mux_playback_id
+            && data.playback_ids?.length && !data.playback_ids.some(p => p.policy === video.playback_policy)) {
+          assetData = await ensureRecordingPlayback(video, data);
+        }
+        applyAssetEvent(video, type, assetData, at);
         if (type === 'live_stream_completed' && !alreadyCompleted
             && !(stream.status === 'scheduled' && stream.mux_session_ended_at && stream.mux_active_asset_id === assetId)
             && (stream.mux_active_asset_id === assetId || (!stream.mux_active_asset_id && time(at) >= time(stream.mux_event_at))
@@ -209,9 +258,14 @@ export async function handleLiveStreamMuxEvent(event, candidateVideoId = null) {
       }
       if (stream.status === 'ended' && stream.mux_status !== 'disabled') result.disable = { id: stream.id, muxLiveStreamId: stream.mux_live_stream_id };
     }
+    commitStarted = true;
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK').catch(() => {});
+    if (copiedThumbnailKey && !commitStarted) {
+      await s3.send(new DeleteObjectCommand({ Bucket: process.env.R2_BUCKET, Key: copiedThumbnailKey }),
+        { abortSignal: AbortSignal.timeout(10000) }).catch(() => console.warn('Unused recording thumbnail cleanup failed'));
+    }
     throw error;
   } finally { client.release(); }
   if (result.disable) await disableEndedStream(result.disable);

@@ -15,6 +15,20 @@ test('Mux live lifecycle against PostgreSQL temporary tables', { skip: !process.
     else process.env.MUX_WEBHOOK_SECRET = previousSecret;
   });
   await prepareLiveSchema(client);
+  const previousR2 = { R2_PUBLIC_BASE_URL: process.env.R2_PUBLIC_BASE_URL, R2_BUCKET: process.env.R2_BUCKET };
+  process.env.R2_PUBLIC_BASE_URL = 'https://r2.example.test';
+  process.env.R2_BUCKET = 'test-bucket';
+  t.after(() => { for (const [key, value] of Object.entries(previousR2)) {
+    if (value === undefined) delete process.env[key]; else process.env[key] = value;
+  } });
+  let storageCalls = [], failCopy = false;
+  mock.module(new URL('../src/modules/storage/r2.client.js', import.meta.url).href, {
+    namedExports: { s3: { async send(command) {
+      storageCalls.push(command);
+      if (failCopy && command.constructor.name === 'CopyObjectCommand') throw new Error('Injected copy failure');
+      return {};
+    } } },
+  });
   // Exercise the real scheduleOverview SQL using only connection-local tables.
   await client.query('CREATE TEMP TABLE video_indexing_sources (LIKE public.video_indexing_sources INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES)');
   await client.query('CREATE TEMP TABLE video_indexing_jobs (LIKE public.video_indexing_jobs INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES)');
@@ -24,6 +38,7 @@ test('Mux live lifecycle against PostgreSQL temporary tables', { skip: !process.
   let reconciliations = [], failReconcile = false, failUpdate = false;
   let disableCalls = [], disableFailure = null, released = false, failDisableSave = false;
   let failOverview = false;
+  let assetPlaybacks, playbackCalls, failPlaybackDelete;
   const database = {
     async query(sql, params) {
       if (failUpdate && sql.includes('UPDATE public.videos')) throw new Error('Injected database failure');
@@ -44,7 +59,20 @@ test('Mux live lifecycle against PostgreSQL temporary tables', { skip: !process.
         assert.equal(options.maxRetries, 0);
         assert.equal((await client.query('SELECT status FROM pg_temp.live_streams')).rows[0].status, 'ended');
         if (disableFailure) throw Object.assign(new Error('Mux disable failed'), { status: disableFailure });
-      } } };
+      } }, assets: {
+        async retrieve(id) { playbackCalls.push(['retrieve', id]); return { playback_ids: structuredClone(assetPlaybacks) }; },
+        async createPlaybackId(id, { policy }) {
+          playbackCalls.push(['create', id, policy]);
+          const playback = { id: 'replacement-recording-playback', policy };
+          assetPlaybacks.push(playback);
+          return playback;
+        },
+        async deletePlaybackId(id, playbackId) {
+          playbackCalls.push(['delete', id, playbackId]);
+          if (failPlaybackDelete) throw new Error('Injected playback cleanup failure');
+          assetPlaybacks = assetPlaybacks.filter(p => p.id !== playbackId);
+        },
+      } };
     },
   });
   mock.module(new URL('../src/modules/video-indexing/mux-source.service.js', import.meta.url).href, {
@@ -59,6 +87,8 @@ test('Mux live lifecycle against PostgreSQL temporary tables', { skip: !process.
   async function reset(overrides = {}) {
     failReconcile = false; failUpdate = false; reconciliations = [];
     failOverview = false;
+    assetPlaybacks = [{ id: 'public-id', policy: 'public' }]; playbackCalls = []; failPlaybackDelete = false;
+    storageCalls = []; failCopy = false;
     disableCalls = []; disableFailure = null; failDisableSave = false;
     await client.query('TRUNCATE pg_temp.video_indexing_jobs, pg_temp.video_indexing_sources, pg_temp.video_reactions, pg_temp.live_streams, pg_temp.videos');
     await client.query(`INSERT INTO pg_temp.videos (id,title,visibility,playback_policy,mux_status,like_count)
@@ -86,7 +116,7 @@ test('Mux live lifecycle against PostgreSQL temporary tables', { skip: !process.
     playback_ids: [{ policy: 'public', id: 'wrong-policy' }, { policy: 'signed', id: 'recording-playback' }], ...extra,
   });
 
-  for (const thumbnail of [null, 'https://example.com/live-thumbnail.jpg']) {
+  for (const thumbnail of [null, 'https://r2.example.test/live-stream-thumbnails/live/thumbnail.webp']) {
     await t.test(`new recording copies thumbnail ${thumbnail} and schedules overview once`, async () => {
       await reset();
       // Remove the migrated placeholder so this exercises a new recording INSERT.
@@ -94,7 +124,16 @@ test('Mux live lifecycle against PostgreSQL temporary tables', { skip: !process.
       await client.query('UPDATE pg_temp.live_streams SET thumbnail_url=$1', [thumbnail]);
       await live('recording', 1);
       const created = (await state()).video;
-      assert.equal(created.thumbnail_url, thumbnail);
+      if (thumbnail) {
+        assert.ok(created.thumbnail_url.startsWith(`https://r2.example.test/video-thumbnails/${created.id}/`));
+        assert.equal(storageCalls.length, 1);
+        assert.equal(storageCalls[0].constructor.name, 'CopyObjectCommand');
+        assert.equal(storageCalls[0].input.CopySource, 'test-bucket/live-stream-thumbnails/live/thumbnail.webp');
+        assert.equal(created.thumbnail_url, `https://r2.example.test/${storageCalls[0].input.Key}`);
+      } else {
+        assert.equal(created.thumbnail_url, null);
+        assert.equal(storageCalls.length, 0);
+      }
       const overview = (await client.query('SELECT * FROM pg_temp.video_indexing_sources')).rows;
       assert.equal(overview.length, 1);
       assert.equal(overview[0].video_id, created.id);
@@ -103,7 +142,8 @@ test('Mux live lifecycle against PostgreSQL temporary tables', { skip: !process.
       await asset('ready', 2);
       await asset('live_stream_completed', 3);
       await asset('updated', 4);
-      assert.equal((await state()).video.thumbnail_url, thumbnail);
+      assert.equal((await state()).video.thumbnail_url, created.thumbnail_url);
+      assert.equal(storageCalls.length, thumbnail ? 1 : 0, 'retries must not copy again');
       assert.equal((await state()).video.id, created.id);
       assert.deepEqual((await client.query('SELECT * FROM pg_temp.video_indexing_sources')).rows, overview);
       const jobs = (await client.query('SELECT * FROM pg_temp.video_indexing_jobs')).rows;
@@ -112,6 +152,29 @@ test('Mux live lifecycle against PostgreSQL temporary tables', { skip: !process.
       assert.equal(jobs[0].status, 'pending');
     });
   }
+
+  await t.test('copy failure rolls back recording creation and retry creates an independent thumbnail', async () => {
+    await reset();
+    await client.query('DELETE FROM pg_temp.videos');
+    await client.query("UPDATE pg_temp.live_streams SET thumbnail_url='https://r2.example.test/live-stream-thumbnails/live/source.webp'");
+    failCopy = true;
+    await assert.rejects(live('recording', 1), { status: 500 });
+    assert.equal((await client.query('SELECT count(*)::int AS n FROM pg_temp.videos')).rows[0].n, 0);
+    assert.equal((await client.query('SELECT count(*)::int AS n FROM pg_temp.video_indexing_jobs')).rows[0].n, 0);
+    failCopy = false;
+    failOverview = true;
+    await assert.rejects(live('recording', 1), { status: 500 });
+    assert.equal(storageCalls.at(-1).constructor.name, 'DeleteObjectCommand');
+    assert.equal(storageCalls.at(-1).input.Key, storageCalls.at(-2).input.Key);
+    failOverview = false;
+    await live('recording', 1);
+    const first = (await state()).video;
+    await live('recording', 2, { active_asset_id: 'asset-2' });
+    const all = (await client.query('SELECT thumbnail_url FROM pg_temp.videos')).rows;
+    assert.equal(all.length, 2);
+    assert.equal(new Set(all.map(v => v.thumbnail_url)).size, 2);
+    assert.ok(all.some(v => v.thumbnail_url === first.thumbnail_url));
+  });
 
   await t.test('an asset event can create and schedule the recording before any live event', async () => {
     await reset();
@@ -422,11 +485,34 @@ test('Mux live lifecycle against PostgreSQL temporary tables', { skip: !process.
     assert.equal(new Date(second.mux_recording_started_at).toISOString(),stamp(35));
   });
 
-  await t.test('a wrong playback policy is never used as a fallback', async () => {
+  await t.test('a recording from old Mux asset settings gets a playback ID matching its inherited policy', async () => {
     await reset();
     await asset('live_stream_completed', 20, { playback_ids: [{ id: 'public-id', policy: 'public' }] });
+    assert.equal((await state()).video.mux_playback_id, 'replacement-recording-playback');
+    assert.equal((await state()).video.mux_status, 'ready');
+    assert.deepEqual(playbackCalls, [['retrieve', 'asset-1'], ['create', 'asset-1', 'signed'], ['delete', 'asset-1', 'public-id']]);
+    await asset('ready', 21, { playback_ids: [{ id: 'public-id', policy: 'public' }] });
+    assert.equal((await state()).video.mux_playback_id, 'replacement-recording-playback');
+    assert.equal(playbackCalls.length, 3);
+  });
+
+  await t.test('recording policy retries reuse the replacement after remote cleanup failure', async () => {
+    await reset();
+    failPlaybackDelete = true;
+    const payload = { playback_ids: [{ id: 'public-id', policy: 'public' }] };
+    await assert.rejects(asset('live_stream_completed', 20, payload), { status: 500 });
     assert.equal((await state()).video.mux_playback_id, null);
-    assert.equal((await state()).video.mux_status, 'preparing');
+    failPlaybackDelete = false;
+    await asset('live_stream_completed', 20, payload);
+    assert.equal((await state()).video.mux_status, 'ready');
+    assert.equal(playbackCalls.filter(([name]) => name === 'create').length, 1);
+    assert.deepEqual(assetPlaybacks, [{ id: 'replacement-recording-playback', policy: 'signed' }]);
+  });
+
+  await t.test('a delayed live snapshot cannot restore a revoked ID with the same policy', async () => {
+    await reset();
+    await live('updated', 1, { playback_ids: [{ id: 'revoked-signed-id', policy: 'signed' }] });
+    assert.equal((await state()).live.mux_live_playback_id, 'live-playback');
   });
 
   await t.test('database failure rolls back both lifecycle and asset state', async () => {

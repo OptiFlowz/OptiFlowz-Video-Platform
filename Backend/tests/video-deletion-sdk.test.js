@@ -37,7 +37,13 @@ const mux = new Mux({
 });
 mock.module('@mux/mux-node', { defaultExport: class { constructor() { return mux; } } });
 mock.module(new URL('../src/database/index.js', import.meta.url).href, {
-  namedExports: { writePool: { async query(sql) {
+  namedExports: { writePool: { async connect() {
+    const pool = this;
+    return { release() {}, async query(sql) {
+      if (sql.startsWith('SELECT id, thumbnail_url') || ['BEGIN', 'COMMIT', 'ROLLBACK'].includes(sql)) return { rows: [] };
+      return pool.query(sql);
+    } };
+  }, async query(sql) {
     if (sql.startsWith('DELETE')) {
       databaseDeleted = true;
       return { rows: [] };
