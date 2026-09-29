@@ -1,5 +1,8 @@
 # Live streams and recordings
 
+For each route's inputs, response fields and permissions, see
+[Livestream API reference](LIVE_STREAM_ROUTES.md).
+
 Apply the existing live-stream migrations followed by
 `1790553600002_live-stream-recordings.sql` and
 `1790640000000_add-live-playback-cleanup.sql` and
@@ -40,17 +43,16 @@ existing authentication and visibility checks, without management permissions.
 Interactions on recordings continue using the existing video/comment permissions.
 
 The details and playback handlers accept a nullable viewer ID and work with
-either `requireAuth` or `optionalAuth`. Their routes currently use `requireAuth`.
-To allow guests, change the route middleware to `optionalAuth`: public/unlisted
-streams then allow guest access, while private streams remain owner-only (404
+either `requireAuth` or `optionalAuth`. Their routes currently use `optionalAuth`.
+Public/unlisted streams allow guest access, while private streams remain owner-only (404
 for guests and other viewers). Guest recording details return `user_reaction: 0`
 and null watch progress. Signed playback tokens are also generated for allowed
 guests, for both DVR and non-DVR playback. Invalid supplied authentication still
 returns 401 through `optionalAuth`.
 
-`POST /api/live-streams/:liveStreamId/playback` requires authentication, matching
-the video playback route. Public and unlisted streams are viewable by signed-in
-users; private streams are owner-only (404 for everyone else). Playback requires
+`POST /api/live-streams/:liveStreamId/playback` uses optional authentication.
+Public and unlisted streams are viewable by guests and signed-in users;
+private streams are owner-only (404 for everyone else). Playback requires
 application status `live` or `disconnected` and Mux status `active`. Scheduled,
 ended, cancelled, idle and disabled streams return 409. Finished replays use the
 existing video playback route instead.
@@ -144,8 +146,8 @@ thumbnail, application/Mux status, visibility, playback policy, DVR setting,
 schedule and lifecycle timestamps. Encoder credentials and internal webhook
 tracking fields are excluded. Responses use `Cache-Control: private, no-store`.
 
-`GET /api/live-streams/:liveStreamId` requires authentication, like video details.
-Public and unlisted streams are available to signed-in viewers; private streams
+`GET /api/live-streams/:liveStreamId` uses optional authentication.
+Public and unlisted streams are available to guests and signed-in viewers; private streams
 are visible only to their owner (otherwise 404). It returns
 `{ success: true, live_stream: { ... } }` with title, description, thumbnail,
 application and Mux status, visibility, playback policy, DVR setting, schedule,
