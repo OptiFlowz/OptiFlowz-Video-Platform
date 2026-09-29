@@ -124,7 +124,7 @@ header[data-app-header].appHeader > .appHeaderInner {
     gap: 12px;
     padding: 12px 14px;
     border-radius: 14px;
-    background: var(--background2);
+    background: var(--background4);
     color: var(--text1);
     box-shadow: 0 8px 24px var(--headerShadowColor);
     font-size: .85rem;
