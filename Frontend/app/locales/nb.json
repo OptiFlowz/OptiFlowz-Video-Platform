@@ -1293,5 +1293,11 @@
   "postSignInVote": "Logg inn for å sende inn svaret ditt.",
   "postCannotVote": "Du har ikke tillatelse til å svare på dette spørsmålet.",
   "latestPosts": "Siste innlegg",
-  "postOpen": "Åpne innlegg"
+  "postOpen": "Åpne innlegg",
+  "liveUnlisted": "Ikke oppført",
+  "liveDeleteWithRecordings": "Dette sletter direktesendingen og alle opptakene permanent.",
+  "liveStopEncoderHelp": "Stopp strømmingen i koderen (for eksempel OBS) for å avslutte sendingen.",
+  "liveDvrLockedHelp": "Velg DVR når du oppretter sendingen. Det kan ikke endres senere. Varighetsgrensen er fast.",
+  "liveRecordingSettingsHelp": "Endringene gjelder sendingen og fremtidige opptak. Eksisterende opptak beholder sine egne innstillinger.",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

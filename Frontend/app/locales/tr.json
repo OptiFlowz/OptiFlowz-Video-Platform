@@ -1268,5 +1268,11 @@
   "postSignInVote": "Cevapınızı göndermek için giriş yapın.",
   "postCannotVote": "Bu soruyu cevaplamaya izininiz yok.",
   "latestPosts": "Son gönderiler",
-  "postOpen": "Gönderiyi aç"
+  "postOpen": "Gönderiyi aç",
+  "liveUnlisted": "Liste dışı",
+  "liveDeleteWithRecordings": "Bu işlem canlı yayını ve tüm kayıtlarını kalıcı olarak siler.",
+  "liveStopEncoderHelp": "Yayını bitirmek için kodlayıcınızda (örneğin OBS) akışı durdurun.",
+  "liveDvrLockedHelp": "DVR seçimini yayını oluştururken yapın. Sonradan değiştirilemez. Süre sınırı sabittir.",
+  "liveRecordingSettingsHelp": "Değişiklikler yayına ve gelecekteki kayıtlara uygulanır. Mevcut kayıtlar kendi ayarlarını korur.",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

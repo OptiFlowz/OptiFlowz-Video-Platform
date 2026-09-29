@@ -1293,5 +1293,11 @@
   "postSignInVote": "Kirjaudu sisään lähettääksesi vastauksesi.",
   "postCannotVote": "Sinulla ei ole oikeutta vastata tähän kysymykseen.",
   "latestPosts": "Uusimmat julkaisut",
-  "postOpen": "Avaa julkaisu"
+  "postOpen": "Avaa julkaisu",
+  "liveUnlisted": "Piilotettu",
+  "liveDeleteWithRecordings": "Tämä poistaa lähetyksen ja kaikki sen tallenteet pysyvästi.",
+  "liveStopEncoderHelp": "Lopeta suoratoisto kooderissa (esimerkiksi OBS), jotta lähetys päättyy.",
+  "liveDvrLockedHelp": "Valitse DVR lähetystä luodessasi. Sitä ei voi muuttaa myöhemmin. Keston enimmäisraja on kiinteä.",
+  "liveRecordingSettingsHelp": "Muutokset koskevat lähetystä ja tulevia tallenteita. Nykyiset tallenteet säilyttävät omat asetuksensa.",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

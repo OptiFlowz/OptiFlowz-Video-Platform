@@ -1293,5 +1293,11 @@
   "postSignInVote": "Log masuk untuk mengirimkan jawaban Anda.",
   "postCannotVote": "Anda tidak memiliki izin untuk menjawab pertanyaan ini.",
   "latestPosts": "Postingan terbaru",
-  "postOpen": "Buka postingan"
+  "postOpen": "Buka postingan",
+  "liveUnlisted": "Tidak tercantum",
+  "liveDeleteWithRecordings": "Ini menghapus siaran langsung dan semua rekamannya secara permanen.",
+  "liveStopEncoderHelp": "Hentikan streaming di encoder Anda (misalnya OBS) untuk mengakhiri siaran.",
+  "liveDvrLockedHelp": "Pilih DVR saat membuat siaran. Pilihan ini tidak dapat diubah nanti. Batas durasinya tetap.",
+  "liveRecordingSettingsHelp": "Perubahan berlaku untuk siaran dan rekaman mendatang. Rekaman yang sudah ada mempertahankan pengaturannya.",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

@@ -1293,5 +1293,11 @@
   "postSignInVote": "Piesakieties, lai iesniegtu savu atbildi.",
   "postCannotVote": "Jums nav atļaujas atbildēt uz šo jautājumu.",
   "latestPosts": "Jaunākie ieraksti",
-  "postOpen": "Atvērt ierakstu"
+  "postOpen": "Atvērt ierakstu",
+  "liveUnlisted": "Nerindots",
+  "liveDeleteWithRecordings": "Tas neatgriezeniski dzēš tiešraidi un visus tās ierakstus.",
+  "liveStopEncoderHelp": "Lai beigtu tiešraidi, apturiet straumēšanu kodētājā (piemēram, OBS).",
+  "liveDvrLockedHelp": "Izvēlieties DVR, veidojot tiešraidi. Vēlāk to nevar mainīt. Ilguma ierobežojums ir fiksēts.",
+  "liveRecordingSettingsHelp": "Izmaiņas attiecas uz tiešraidi un turpmākajiem ierakstiem. Esošie ieraksti saglabā savus iestatījumus.",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

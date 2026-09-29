@@ -8,14 +8,13 @@ import { formatDuration } from "~/functions";
 import type { PlaylistVideoT } from "~/types";
 import { CurrentNavContext } from "~/context";
 
-function  Item({props, playlistIndex, playlistId}: {props: PlaylistVideoT, playlistIndex?: number, playlistId?: string}){
+function Item({props, playlistIndex, playlistId, href, live}: {props: Omit<PlaylistVideoT, "people"> & { people: { name: string }[] }, playlistIndex?: number, playlistId?: string, href?: string, live?: { status: import("../live/api").LiveStatus }}){
     const requestedThumbnail = getVideoThumbnail(props) || DefaultThumbnail;
     const [failedThumbnail, setFailedThumbnail] = useState<string>();
     const newThumbnailUrl = failedThumbnail === requestedThumbnail ? DefaultThumbnail : requestedThumbnail;
-    const isLive = props.kind === 'live';
-    const isReplay = isLive && props.stream_type === 'on-demand';
-    const animGifUrl = !isLive || isReplay ? props.preview_url || undefined : undefined;
-    const isWatched = (!isLive || isReplay) && (props?.percentage_watched ?? 0) >= 5 && !!props?.progress_seconds;
+    const isLive = !!live;
+    const animGifUrl = !isLive ? props.preview_url || undefined : undefined;
+    const isWatched = (!isLive) && (props?.percentage_watched ?? 0) >= 5 && !!props?.progress_seconds;
 
     const [isHovered, setIsHovered] = useState(false);
     const [loadedThumbnail, setLoadedThumbnail] = useState<string>();
@@ -33,7 +32,7 @@ function  Item({props, playlistIndex, playlistId}: {props: PlaylistVideoT, playl
     return (
         <Link
             className={`item ${playlistIndex == 1 ? "playlistStartVideo" : ""}`}
-            to={videoHref}
+            to={href || videoHref}
             onMouseEnter={() => { setIsHovered(true); setPreviewRequested(true); }}
             onFocus={() => { setIsHovered(true); setPreviewRequested(true); }}
             onBlur={() => setIsHovered(false)}
@@ -65,8 +64,8 @@ function  Item({props, playlistIndex, playlistId}: {props: PlaylistVideoT, playl
 
                 {playlistIndex && playlistIndex > -1 ? <span className="playlistOrderNumber">{playlistIndex}</span> : ""}
 
-                <span className="liveCardBadge"><LiveStatus live={props.livestream} /></span>
-                {(!isLive || isReplay) && <span className={"duration z-1" + (isWatched ? " watched" : "")}>{formatDuration(props.duration_seconds)}</span>}
+                <span className="liveCardBadge"><LiveStatus live={live} /></span>
+                {(!isLive) && <span className={"duration z-1" + (isWatched ? " watched" : "")}>{formatDuration(props.duration_seconds)}</span>}
 
                 {isWatched ? <span className="bottomShadow z-1 relative"></span> : ""}
 
@@ -78,7 +77,7 @@ function  Item({props, playlistIndex, playlistId}: {props: PlaylistVideoT, playl
             <ContentInfo props={{
                 title: props?.title,
                 author: props?.people?.map(person => person.name).join(", ") || props?.uploader_name,
-                views: props?.view_count,
+                views: live ? undefined : props?.view_count,
                 date: props?.created_at,
                 uploader_name: props?.uploader_name,
             }} />

@@ -4,7 +4,7 @@ import { useI18n } from '~/i18n';
 import { CloseSVG } from '~/constants';
 import './posts.css';
 
-export default function PostDialog({ title, onClose, children, busy = false, className = '' }: { className?: string; title: string; onClose: () => void; busy?: boolean; children: ReactNode | ((close: () => void) => ReactNode) }) {
+export default function PostDialog({ title, onClose, children, busy = false, className = '', headerActions }: { headerActions?: ReactNode; className?: string; title: string; onClose: () => void; busy?: boolean; children: ReactNode | ((close: () => void) => ReactNode) }) {
   const { t } = useI18n();
   const ref = useRef<HTMLDialogElement>(null);
   const busyRef = useRef(busy);
@@ -53,7 +53,7 @@ export default function PostDialog({ title, onClose, children, busy = false, cla
       pressedBackdrop.current = false;
       if (clickedBackdrop) close();
     }}>
-    <div className="postDialogHeading"><h2 id={titleId}>{title}</h2><button type="button" className="postIconButton" aria-label={t('close')} disabled={busy} onClick={close}>{CloseSVG}</button></div>
+    <div className="postDialogHeading"><h2 id={titleId}>{title}</h2>{headerActions ?? <button type="button" className="postIconButton" aria-label={t('close')} disabled={busy} onClick={close}>{CloseSVG}</button>}</div>
     {typeof children === 'function' ? children(close) : children}
   </dialog>, document.body);
 }

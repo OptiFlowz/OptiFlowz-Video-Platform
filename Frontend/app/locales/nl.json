@@ -1268,5 +1268,11 @@
   "postSignInVote": "Meld u aan om uw antwoord in te dienen.",
   "postCannotVote": "Je hebt geen toestemming om deze vraag te beantwoorden.",
   "latestPosts": "Nieuwste berichten",
-  "postOpen": "Bericht openen"
+  "postOpen": "Bericht openen",
+  "liveUnlisted": "Verborgen",
+  "liveDeleteWithRecordings": "Dit verwijdert de livestream en alle bijbehorende opnamen definitief.",
+  "liveStopEncoderHelp": "Stop het streamen in je encoder (bijvoorbeeld OBS) om de uitzending te beëindigen.",
+  "liveDvrLockedHelp": "Kies DVR bij het maken van de stream. Dit kan later niet worden gewijzigd. De maximale duur staat vast.",
+  "liveRecordingSettingsHelp": "Wijzigingen gelden voor de stream en toekomstige opnamen. Bestaande opnamen behouden hun eigen instellingen.",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

@@ -1293,5 +1293,11 @@
   "postSignInVote": "Skráðu þig inn til að senda svarið þitt.",
   "postCannotVote": "Þú hefur ekki heimild til að svara þessari spurningu.",
   "latestPosts": "Nýjustu færslur",
-  "postOpen": "Opna færslu"
+  "postOpen": "Opna færslu",
+  "liveUnlisted": "Óskráð",
+  "liveDeleteWithRecordings": "Þetta eyðir beinu útsendingunni og öllum upptökum hennar varanlega.",
+  "liveStopEncoderHelp": "Stöðvaðu streymið í kóðaranum (til dæmis OBS) til að ljúka útsendingunni.",
+  "liveDvrLockedHelp": "Veldu DVR þegar streymið er búið til. Ekki er hægt að breyta því síðar. Hámarkslengdin er föst.",
+  "liveRecordingSettingsHelp": "Breytingar gilda um streymið og framtíðarupptökur. Fyrri upptökur halda eigin stillingum.",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

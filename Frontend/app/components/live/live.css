@@ -15,7 +15,7 @@ main.livePage { max-width: var(--contentWidth); margin: 0 auto; padding: 100px 0
 .liveBadge { display: inline-flex; align-items: center; gap: 6px; border-radius: 6px; background: var(--background3); color: var(--text1); padding: 4px 9px; font-size: 12px; font-weight: 650; line-height: 1.4; }
 .liveBadge--live { background: var(--accentRed3); color: var(--borderWhite); }
 .liveBadge--scheduled { background: var(--accentBlue3); color: var(--borderWhite); }
-.liveBadge--reconnecting, .liveBadge--ending { background: var(--background4); color: var(--text1); }
+.liveBadge--disconnected { background: var(--background4); color: var(--text1); }
 :is(.livePage, .liveStudio) .liveButton, .liveWatch .liveButton, .liveLibrary .liveButton { display: inline-flex; justify-content: center; align-items: center; gap: 8px; border: 0; border-radius: 10px; background: var(--background2); color: var(--text1); padding: 10px 16px; min-height: 42px; font-size: 14px; font-weight: 550; cursor: pointer; text-decoration: none; transition: background 160ms; }
 :is(.livePage, .liveStudio) .liveButton:hover, .liveWatch .liveButton:hover, .liveLibrary .liveButton:hover { background: var(--background3); }
 :is(.livePage, .liveStudio) .livePrimary { background: var(--accentBlue3); color: var(--borderWhite); }
@@ -62,3 +62,11 @@ main .liveLibrary .liveCard > .item { width: 100%; min-width: 0; max-width: 100%
 .liveNow .collection-header h2 { font-size: 24px; font-weight: 650; }
 .channelPanel > .liveLibrary { padding-top: 24px; }
 .channelSortControl[hidden] { display: none; }
+
+.appFrameContent > main.liveWatchPage { width: min(var(--contentWidth), calc(100% - 40px)); margin: 0 auto; padding: 100px 0 32px; display: flex; flex-direction: column; gap: 24px; }
+.liveWatchDetails { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.liveWatchDetails h1 { font-size: clamp(22px, 3vw, 32px); font-weight: 650; overflow-wrap: anywhere; }
+.liveDescription { white-space: pre-wrap; overflow-wrap: anywhere; }
+.liveWatchPage .livePlayer { height: auto; max-height: 75dvh; }
+.liveWatchPage .livePlayer > mux-player { display: block; }
+@media (max-width: 800px) { .appFrameContent > main.liveWatchPage { width: 100%; padding-inline: 0; } .liveWatchDetails, .liveWatchPage > .commentsSection { padding-inline: 20px; } .liveWatchPage .livePlayer { border-radius: 0; min-height: 240px; aspect-ratio: auto; } .liveWatchPage .livePlayer > mux-player { aspect-ratio: 16 / 9; } }

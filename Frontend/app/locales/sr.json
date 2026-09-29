@@ -1381,5 +1381,11 @@
   "voiceSearchNoSpeech": "Govor nije prepoznat. Pritisnite mikrofon da pokušate ponovo.",
   "voiceSearchNoMicrophone": "Mikrofon nije dostupan. Proverite mikrofon i pokušajte ponovo.",
   "voiceSearchLanguage": "Glasovna pretraga ne podržava izabrani jezik u ovom pregledaču.",
-  "voiceSearchError": "Diktiranje nije uspelo. Proverite vezu i pokušajte ponovo."
+  "voiceSearchError": "Diktiranje nije uspelo. Proverite vezu i pokušajte ponovo.",
+  "liveUnlisted": "Nije na listi",
+  "liveDeleteWithRecordings": "Ovim se trajno brišu prenos uživo i svi njegovi snimci.",
+  "liveStopEncoderHelp": "Za završetak prenosa zaustavite emitovanje u enkoderu (na primer, OBS-u).",
+  "liveDvrLockedHelp": "DVR se bira pri kreiranju prenosa i kasnije se ne može menjati. Ograničenje trajanja je fiksno.",
+  "liveRecordingSettingsHelp": "Promene važe za prenos i buduće snimke. Postojeći snimci zadržavaju svoja podešavanja.",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

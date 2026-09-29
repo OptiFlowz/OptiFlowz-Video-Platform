@@ -44,7 +44,7 @@ export function EditorHeader({ kind, id, resourceTitle, heading, children, disab
     try {
       const confirmed = await confirm({
         title: isLive ? `${t('liveDelete')}: ${resourceTitle}` : t(isVideo ? "adminDeleteVideoTitle" : "adminDeletePlaylistTitle", { title: resourceTitle }),
-        message: t("adminActionCannotBeUndone"),
+        message: t(isLive ? "liveDeleteWithRecordings" : "adminActionCannotBeUndone"),
         yesText: t("adminDelete"),
         noText: t("adminCancel"),
       });
@@ -55,7 +55,7 @@ export function EditorHeader({ kind, id, resourceTitle, heading, children, disab
       const token = getToken();
       if (!token) throw new Error("Missing authentication");
       const response = await fetchFn<{ success: boolean }>({
-        route: isVideo
+        route: isLive ? `api/live-streams/${id}` : isVideo
           ? `api/video-moderation/video/${id}`
           : `api/playlists-moderation/playlist/${id}`,
         options: {
@@ -68,7 +68,7 @@ export function EditorHeader({ kind, id, resourceTitle, heading, children, disab
       });
       if (!response?.success) throw new Error("Deletion failed");
 
-      void queryClient.invalidateQueries({ queryKey: [listKey] });
+      void Promise.all((isLive ? ['livestreams', 'live-cards', 'live-details', 'live-playback', 'my-videos', 'video'] : [listKey]).map(key => queryClient.invalidateQueries({ queryKey: [key] })));
       navigate(isLive ? '/my-livestreams' : `/${listKey}`, { replace: true });
     } catch {
       setError(true);

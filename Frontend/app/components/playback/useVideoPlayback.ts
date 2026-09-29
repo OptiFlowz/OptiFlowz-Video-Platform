@@ -5,7 +5,6 @@ import { getToken } from "~/functions";
 export type PlaybackPolicy = "public" | "signed";
 export type VideoPlayback = {
   video_id: string;
-  kind?: 'upload' | 'live';
   stream_type?: 'on-demand' | 'live' | 'live:dvr';
   mux_playback_id: string;
   playback_policy: PlaybackPolicy;

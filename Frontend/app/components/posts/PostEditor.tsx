@@ -91,10 +91,9 @@ export default function PostEditor({ post, author, videos, moreVideos, onClose, 
   const addMenu = (index: number) => <div className="postComposerAddMenu" aria-label={t('postAddBlock')}>
     {blockTypes.map(type => <button key={type} type="button" disabled={draft.blocks.length >= 50} onClick={() => add(type, index)}>{blockIcons[type]}{t(`postType_${type}`)}</button>)}
   </div>;
-  return <PostDialog title={t('postEditor')} onClose={onClose} busy={saving}>{close => <>
-    <div className="postComposerToolbar">
-      <div className="postEditorTabs"><button type="button" aria-pressed={!preview} onClick={() => setPreview(false)}>{EditSVG}{t('adminEdit')}</button><button type="button" aria-pressed={preview} onClick={() => setPreview(true)}>{PermissionEyeSVG}{t('postPreview')}</button></div>
-    </div>
+  return <PostDialog title={t('postEditor')} onClose={onClose} busy={saving} className="postEditorDialog" headerActions={
+    <div className="postEditorTabs"><button type="button" aria-pressed={!preview} onClick={() => setPreview(false)}>{EditSVG}{t('adminEdit')}</button><button type="button" aria-pressed={preview} onClick={() => setPreview(true)}>{PermissionEyeSVG}{t('postPreview')}</button></div>
+  }>{close => <>
     <form className="postEditorForm postComposerForm" onSubmit={async event => {
       event.preventDefault(); if (savingRef.current) return; setError('');
       if (!validPost(draft)) { setPreview(false); setError(t('postValidation')); return; }

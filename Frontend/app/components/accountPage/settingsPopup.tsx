@@ -153,10 +153,10 @@ function SettingsPopup({ open, onClose }: { open: boolean; onClose: () => void }
           )}
         </div>
         <div className="accountSettingsFooter">
-          {confirmDelete ? <>
+          {confirmDelete && <>
             <button type="button" className="accountSettingsAction" onClick={() => showConfirmation(false)} disabled={deleting}>{t("cancel")}</button>
             <button type="button" className="accountSettingsAction accountDeleteConfirm" onClick={() => void handleDelete()} disabled={deleting}>{t(deleting ? "accountDeleting" : "accountDelete")}</button>
-          </> : <button type="button" className="accountSettingsAction" onClick={requestClose}>{t("close")}</button>}
+          </>}
         </div>
       </div>
       <button type="button" className="closePopup" onClick={requestClose} disabled={deleting} tabIndex={-1} aria-label={t("close")}></button>

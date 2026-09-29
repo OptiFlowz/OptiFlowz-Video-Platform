@@ -1293,5 +1293,11 @@
   "postSignInVote": "Log ind for at indsende dit svar.",
   "postCannotVote": "Du har ikke tilladelse til at besvare dette spørgsmål.",
   "latestPosts": "Seneste opslag",
-  "postOpen": "Åbn opslag"
+  "postOpen": "Åbn opslag",
+  "liveUnlisted": "Ikke listet",
+  "liveDeleteWithRecordings": "Dette sletter livestreamen og alle dens optagelser permanent.",
+  "liveStopEncoderHelp": "Stop streaming i din encoder (for eksempel OBS) for at afslutte udsendelsen.",
+  "liveDvrLockedHelp": "Vælg DVR, når du opretter streamen. Det kan ikke ændres senere. Varighedsgrænsen er fast.",
+  "liveRecordingSettingsHelp": "Ændringer gælder streamen og fremtidige optagelser. Eksisterende optagelser beholder deres egne indstillinger.",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

@@ -1268,5 +1268,11 @@
   "postSignInVote": "Prijavite se, da pošljete svoj odgovor.",
   "postCannotVote": "Nimate dovoljenja za odgovor na to vprašanje.",
   "latestPosts": "Najnovejše objave",
-  "postOpen": "Odpri objavo"
+  "postOpen": "Odpri objavo",
+  "liveUnlisted": "Nenavedeno",
+  "liveDeleteWithRecordings": "S tem trajno izbrišete prenos in vse njegove posnetke.",
+  "liveStopEncoderHelp": "Za konec prenosa ustavite oddajanje v kodirniku (na primer OBS).",
+  "liveDvrLockedHelp": "DVR izberite ob ustvarjanju prenosa. Pozneje ga ni mogoče spremeniti. Omejitev trajanja je fiksna.",
+  "liveRecordingSettingsHelp": "Spremembe veljajo za prenos in prihodnje posnetke. Obstoječi posnetki ohranijo svoje nastavitve.",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

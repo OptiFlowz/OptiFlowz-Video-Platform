@@ -1373,5 +1373,11 @@
   "postSignInVote": "Pro odeslání odpovědi se přihlaste.",
   "postCannotVote": "Nemáte oprávnění odpovědět na tuto otázku.",
   "latestPosts": "Nejnovější příspěvky",
-  "postOpen": "Otevřít příspěvek"
+  "postOpen": "Otevřít příspěvek",
+  "liveUnlisted": "Neveřejné",
+  "liveDeleteWithRecordings": "Tímto trvale smažete přenos i všechny jeho záznamy.",
+  "liveStopEncoderHelp": "Přenos ukončíte zastavením vysílání v kodéru (například OBS).",
+  "liveDvrLockedHelp": "DVR vyberte při vytváření přenosu. Později jej nelze změnit. Limit délky je pevný.",
+  "liveRecordingSettingsHelp": "Změny platí pro přenos a budoucí záznamy. Stávající záznamy si ponechají vlastní nastavení.",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

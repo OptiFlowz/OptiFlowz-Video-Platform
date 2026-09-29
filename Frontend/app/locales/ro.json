@@ -1268,5 +1268,11 @@
   "postSignInVote": "Autentifică-te pentru a trimite răspunsul.",
   "postCannotVote": "Nu ai permisiunea de a răspunde la această întrebare.",
   "latestPosts": "Cele mai recente postări",
-  "postOpen": "Deschide postarea"
+  "postOpen": "Deschide postarea",
+  "liveUnlisted": "Nelistat",
+  "liveDeleteWithRecordings": "Această acțiune șterge definitiv transmisiunea și toate înregistrările sale.",
+  "liveStopEncoderHelp": "Oprește transmiterea în codificator (de exemplu, OBS) pentru a încheia transmisiunea.",
+  "liveDvrLockedHelp": "Alege DVR la crearea transmisiunii. Nu poate fi modificat ulterior. Limita de durată este fixă.",
+  "liveRecordingSettingsHelp": "Modificările se aplică transmisiunii și înregistrărilor viitoare. Înregistrările existente își păstrează setările.",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

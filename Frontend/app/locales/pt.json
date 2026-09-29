@@ -1268,5 +1268,11 @@
   "postSignInVote": "Faça login para enviar sua resposta.",
   "postCannotVote": "Você não tem permissão para responder a esta pergunta.",
   "latestPosts": "Publicações recentes",
-  "postOpen": "Abrir publicação"
+  "postOpen": "Abrir publicação",
+  "liveUnlisted": "Não listado",
+  "liveDeleteWithRecordings": "Isto elimina permanentemente a transmissão e todas as suas gravações.",
+  "liveStopEncoderHelp": "Para terminar a transmissão, pare de transmitir no codificador (por exemplo, OBS).",
+  "liveDvrLockedHelp": "Escolha DVR ao criar a transmissão. Não pode ser alterado depois. O limite de duração é fixo.",
+  "liveRecordingSettingsHelp": "As alterações aplicam-se à transmissão e às gravações futuras. As gravações existentes mantêm as suas definições.",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

@@ -99,7 +99,7 @@ export default function VideoPlayer({
   const [playbackSource, setPlaybackSource] = useState<VideoPlayback>();
   const playbackId = playbackSource?.mux_playback_id;
   const { can } = useAuthorization();
-  const canSaveProgress = can(playback.data?.kind === 'live' ? P.liveProgress : P.videosProgress);
+  const canSaveProgress = can(P.videosProgress);
   const playerRef = useRef<MuxPlayerElement | null>(null);
 
   const setPlayerRef = useCallback((player: MuxPlayerElement | null) => {

@@ -5,7 +5,7 @@ import { translateContentTitle, useI18n } from "~/i18n";
 type Props = {
     title: string,
     author: string,
-    views: number,
+    views?: number,
     date: string,
     uploader_name: string
 }
@@ -20,7 +20,7 @@ function ContentInfo({props}: {props: Props}){
             <p className="author">{props?.author || props?.uploader_name || t("unknownSpeakers")}</p>
 
             <span className="flex gap-1.5">
-                <p className="views">{formatViews(props?.views)}</p>
+                {props.views !== undefined && <p className="views">{formatViews(props.views)}</p>}
                 <p className="date">{formatDate(props?.date)}</p>
             </span>
         </div>

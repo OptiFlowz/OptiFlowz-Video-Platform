@@ -1268,5 +1268,11 @@
   "postSignInVote": "Accedi per inviare la tua risposta.",
   "postCannotVote": "Non hai il permesso di rispondere a questa domanda.",
   "latestPosts": "Ultimi post",
-  "postOpen": "Apri post"
+  "postOpen": "Apri post",
+  "liveUnlisted": "Non in elenco",
+  "liveDeleteWithRecordings": "Questa azione elimina definitivamente la diretta e tutte le sue registrazioni.",
+  "liveStopEncoderHelp": "Interrompi la trasmissione nel codificatore (ad esempio OBS) per terminare la diretta.",
+  "liveDvrLockedHelp": "Scegli DVR quando crei la diretta. Non può essere modificato in seguito. Il limite di durata è fisso.",
+  "liveRecordingSettingsHelp": "Le modifiche si applicano alla diretta e alle registrazioni future. Le registrazioni esistenti mantengono le proprie impostazioni.",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

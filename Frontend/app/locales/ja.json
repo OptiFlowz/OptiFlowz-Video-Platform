@@ -1293,5 +1293,11 @@
   "postSignInVote": "答えを提出するにはログインしてください。",
   "postCannotVote": "あなたにはこの質問に答える権限がありません。",
   "latestPosts": "最新の投稿",
-  "postOpen": "投稿を開く"
+  "postOpen": "投稿を開く",
+  "liveUnlisted": "限定公開",
+  "liveDeleteWithRecordings": "ライブ配信とそのすべての録画を完全に削除します。",
+  "liveStopEncoderHelp": "配信を終了するには、エンコーダー（OBSなど）で送信を停止してください。",
+  "liveDvrLockedHelp": "DVRは配信作成時に選択します。後から変更できません。配信時間の上限は固定です。",
+  "liveRecordingSettingsHelp": "変更は配信と今後の録画に適用されます。既存の録画はそれぞれの設定を保持します。",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

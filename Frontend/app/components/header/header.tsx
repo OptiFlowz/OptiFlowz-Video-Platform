@@ -244,8 +244,8 @@ function Header({ onMenuToggle, menuExpanded = false }: HeaderProps){
 
                 <div className={`appHeaderActions flex ${hasManagementAccess ? "gap-3" : "gap-1"} max-[650px]:gap-2 max-[500px]:gap-0.5 items-center`}>
                     {/* Admin Edit Mode Switch */}
-                    {idToEdit !== '' && (currentVideo?.kind === 'live' ? canOwn(P.liveUpdateOwn, P.liveUpdateAny, currentVideo.uploader_id) : can(P.videosUpdateAny)) && (
-                        <Link to={currentVideo?.kind === 'live' ? `/live/${idToEdit}/studio` : `/edit?video=${idToEdit}`} className="darkSVG max-[800px]:hidden flex items-center p-2.5 hover:bg-(--background2) rounded-full transition-all duration-200 cursor-pointer">
+                    {idToEdit !== '' && canOwn(P.videosUpdateOwn, P.videosUpdateAny, currentVideo?.uploader_id) && (
+                        <Link to={`/edit?video=${idToEdit}`} className="darkSVG max-[800px]:hidden flex items-center p-2.5 hover:bg-(--background2) rounded-full transition-all duration-200 cursor-pointer">
                             <span className="w-6 h-6 flex items-center justify-center">{EditModeSVG}</span>
                         </Link>
                     )}

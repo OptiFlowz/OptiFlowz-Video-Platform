@@ -14,10 +14,10 @@
   min-height: 44px;
   margin-left: auto;
   padding: .65rem 1rem;
-  border: 1px solid var(--accentRed2);
+  border: 1px solid var(--accentRed);
   border-radius: 999px;
-  background: var(--background2);
-  color: var(--accentRed3);
+  background: var(--accentRed);
+  color: var(--borderWhite);
   font-weight: 600;
   cursor: pointer;
   transition: background-color .2s, border-color .2s;
@@ -29,13 +29,15 @@
   flex-shrink: 0;
 }
 
+.deleteButton svg path { stroke: currentColor; }
+
 .deleteButton:hover:not(:disabled) {
   background: var(--background3);
-  border-color: var(--accentRed3);
+  border-color: var(--borderWhite);
 }
 
 .deleteButton:active:not(:disabled) {
-  background: var(--accentRed2);
+  background: color-mix(in srgb, var(--accentRed) 78%, var(--playerBlack, var(--background1)));
 }
 
 .deleteButton:focus-visible {

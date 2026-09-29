@@ -1268,5 +1268,11 @@
   "postSignInVote": "Melden Sie sich an, um Ihre Antwort abzugeben.",
   "postCannotVote": "Sie haben nicht die Berechtigung, diese Frage zu beantworten.",
   "latestPosts": "Neueste Beiträge",
-  "postOpen": "Beitrag öffnen"
+  "postOpen": "Beitrag öffnen",
+  "liveUnlisted": "Nicht gelistet",
+  "liveDeleteWithRecordings": "Dadurch werden der Livestream und alle zugehörigen Aufzeichnungen dauerhaft gelöscht.",
+  "liveStopEncoderHelp": "Beende das Streaming in deinem Encoder (zum Beispiel OBS), um die Übertragung zu beenden.",
+  "liveDvrLockedHelp": "Wähle DVR beim Erstellen des Streams. Dies kann später nicht geändert werden. Die maximale Dauer ist festgelegt.",
+  "liveRecordingSettingsHelp": "Änderungen gelten für den Stream und zukünftige Aufzeichnungen. Vorhandene Aufzeichnungen behalten ihre eigenen Einstellungen.",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

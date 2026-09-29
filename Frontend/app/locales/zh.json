@@ -1293,5 +1293,11 @@
   "postSignInVote": "登录以提交您的回答。",
   "postCannotVote": "您没有权限回答此问题。",
   "latestPosts": "最新帖子",
-  "postOpen": "打开帖子"
+  "postOpen": "打开帖子",
+  "liveUnlisted": "不公开列出",
+  "liveDeleteWithRecordings": "此操作将永久删除直播及其所有录像。",
+  "liveStopEncoderHelp": "在编码器（例如 OBS）中停止推流以结束直播。",
+  "liveDvrLockedHelp": "创建直播时选择 DVR，之后无法更改。时长上限固定。",
+  "liveRecordingSettingsHelp": "更改适用于直播和今后的录像。现有录像保留各自的设置。",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

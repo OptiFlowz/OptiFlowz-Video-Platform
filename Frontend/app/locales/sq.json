@@ -1373,5 +1373,11 @@
   "postSignInVote": "Fillo seancën për të dërguar përgjigjen tënde.",
   "postCannotVote": "Nuk keni të drejtë të përgjigjeni kësaj pyetjeje.",
   "latestPosts": "Postimet më të fundit",
-  "postOpen": "Hap postimin"
+  "postOpen": "Hap postimin",
+  "liveUnlisted": "I palistuar",
+  "liveDeleteWithRecordings": "Kjo fshin përgjithmonë transmetimin dhe të gjitha regjistrimet e tij.",
+  "liveStopEncoderHelp": "Ndaloni transmetimin në koduesin tuaj (për shembull OBS) për ta përfunduar atë.",
+  "liveDvrLockedHelp": "Zgjidhni DVR kur krijoni transmetimin. Nuk mund të ndryshohet më vonë. Kufiri i kohëzgjatjes është i pandryshueshëm.",
+  "liveRecordingSettingsHelp": "Ndryshimet vlejnë për transmetimin dhe regjistrimet e ardhshme. Regjistrimet ekzistuese ruajnë cilësimet e tyre.",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

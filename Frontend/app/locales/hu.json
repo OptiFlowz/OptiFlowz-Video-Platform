@@ -1373,5 +1373,11 @@
   "postSignInVote": "Jelentkezzen be a válasz elküldéséhez.",
   "postCannotVote": "Nincs jogosultságod, hogy válaszolj erre a kérdésre.",
   "latestPosts": "Legújabb bejegyzések",
-  "postOpen": "Bejegyzés megnyitása"
+  "postOpen": "Bejegyzés megnyitása",
+  "liveUnlisted": "Nem listázott",
+  "liveDeleteWithRecordings": "Ez végleg törli a közvetítést és annak összes felvételét.",
+  "liveStopEncoderHelp": "A közvetítés befejezéséhez állítsd le az adást a kódolóban (például OBS).",
+  "liveDvrLockedHelp": "A DVR módot a közvetítés létrehozásakor válaszd ki. Később nem módosítható. Az időkorlát rögzített.",
+  "liveRecordingSettingsHelp": "A módosítások a közvetítésre és a jövőbeli felvételekre érvényesek. A meglévő felvételek megtartják saját beállításaikat.",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

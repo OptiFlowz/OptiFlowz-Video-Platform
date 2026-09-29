@@ -1293,5 +1293,11 @@
   "postSignInVote": "Nhập vào để gửi câu trả lời của bạn.",
   "postCannotVote": "Bạn không được phép trả lời câu hỏi này.",
   "latestPosts": "Bài đăng mới nhất",
-  "postOpen": "Mở bài đăng"
+  "postOpen": "Mở bài đăng",
+  "liveUnlisted": "Không công khai",
+  "liveDeleteWithRecordings": "Thao tác này xóa vĩnh viễn buổi phát trực tiếp và mọi bản ghi của nó.",
+  "liveStopEncoderHelp": "Dừng phát trong bộ mã hóa (ví dụ OBS) để kết thúc buổi phát.",
+  "liveDvrLockedHelp": "Chọn DVR khi tạo buổi phát. Không thể thay đổi sau đó. Giới hạn thời lượng là cố định.",
+  "liveRecordingSettingsHelp": "Thay đổi áp dụng cho buổi phát và các bản ghi sau này. Các bản ghi hiện có giữ nguyên cài đặt.",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

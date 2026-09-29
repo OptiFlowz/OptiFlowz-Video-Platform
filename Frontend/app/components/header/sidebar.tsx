@@ -35,7 +35,6 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             {item('/', t('navHome'), HomeMenuSVG)}
             {item('/videos/1', t('navRecommended'), RecommendedMenuSVG)}
             {item('/videos/2', t('navTrending'), TrendingMenuSVG)}
-            {can(P.liveLibrary) && item('/live', t('liveTitle'), LiveSVG)}
         </div>
         <section className="appSidebarGroup" aria-label={t('footerAccount')}>
             <h2 className="appSidebarSectionTitle">
@@ -44,7 +43,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                 </Link>
             </h2>
             {user ? <>
-                {(can(P.videosLibrary) || can(P.liveLibrary)) && <>
+                {can(P.videosLibrary) && <>
                     {item('/account', t('watchHistory'), HistorySVG)}
                     {item('/account/liked', t('likedVideos'), LikeSVG)}
                     {item('/account/continue', t('continueWatching'), ContinueWatchingSVG)}

@@ -1,4 +1,21 @@
-.livestreamToolbarActions { display: flex; align-items: center; gap: 1rem; }
+.livestreamToolbarActions { display: flex; align-items: center; gap: 1rem; margin-inline-start: auto; }
+main.myLivestreams .livestreamSortSelect {
+  border: 1px solid var(--border1);
+  border-radius: 999px;
+  background: var(--background3);
+  color: var(--text1);
+  font-weight: 500;
+}
+main.myLivestreams .livestreamSortSelect .customSelectTrigger {
+  padding: .6rem .7rem;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+main.myLivestreams .livestreamSortSelect svg { width: 19px; height: 19px; flex: 0 0 auto; }
+main.myLivestreams .livestreamSortSelect svg path { stroke: var(--text1); }
 .myLivestreams .videoActions button:disabled { opacity: .45; cursor: not-allowed; }
 .livestreamRowThumbnail { flex-shrink: 0; }
 .livestreamRowInfo { display: flex; flex-direction: column; gap: .25rem; min-width: 0; }
@@ -10,7 +27,6 @@ main.myLivestreams .livestreamTableMessage { padding: 2rem; text-align: center; 
 .livestreamTableMessage button { margin-left: 1rem; color: var(--accentBlue3); cursor: pointer; }
 @media (max-width: 800px) {
   main.myLivestreams .managementToolbar { flex-wrap: wrap; }
-  .livestreamToolbarActions { margin-left: auto; }
 }
 @media (max-width: 570px) {
   main.myLivestreams .livestreamMobileMeta { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; font-size: .75rem; }

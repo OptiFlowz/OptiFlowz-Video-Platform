@@ -1,4 +1,3 @@
-import { recordingReady } from '../live/api';
 import "~/styles/analytics.css";
 import "flag-icons/css/flag-icons.min.css";
 import { WorldMapSVG, type WorldMapCountry } from "../analytics/lazyWorldMap";
@@ -627,7 +626,7 @@ function VideoAnalyticsPage({ mode = "video" }: { mode?: "video" | "channel" }) 
     refetchOnWindowFocus: false,
   });
 
-  const hasRecording = !!video && recordingReady(video);
+  const hasRecording = !!video;
 
   const dateRangeQuery = useMemo(
     () => getDateRange(range, customFromDate, customToDate),

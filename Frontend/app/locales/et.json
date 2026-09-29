@@ -1293,5 +1293,11 @@
   "postSignInVote": "Logi sisse, et oma vastust esitada.",
   "postCannotVote": "Sul ei ole õigust sellele küsimusele vastata.",
   "latestPosts": "Uusimad postitused",
-  "postOpen": "Ava postitus"
+  "postOpen": "Ava postitus",
+  "liveUnlisted": "Loendist väljas",
+  "liveDeleteWithRecordings": "See kustutab otseülekande ja kõik selle salvestised jäädavalt.",
+  "liveStopEncoderHelp": "Ülekande lõpetamiseks peata voogedastus kodeerijas (näiteks OBS).",
+  "liveDvrLockedHelp": "Vali DVR ülekande loomisel. Seda ei saa hiljem muuta. Kestuse piirang on fikseeritud.",
+  "liveRecordingSettingsHelp": "Muudatused kehtivad ülekandele ja tulevastele salvestistele. Olemasolevad salvestised säilitavad oma seaded.",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

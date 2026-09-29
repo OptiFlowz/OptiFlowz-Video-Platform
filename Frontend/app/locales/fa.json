@@ -1293,5 +1293,11 @@
   "postSignInVote": "برای ارسال پاسخ وارد شوید.",
   "postCannotVote": "شما مجوز پاسخ دادن به این سوال را ندارید.",
   "latestPosts": "تازه‌ترین پست‌ها",
-  "postOpen": "باز کردن پست"
+  "postOpen": "باز کردن پست",
+  "liveUnlisted": "فهرست‌نشده",
+  "liveDeleteWithRecordings": "این کار پخش زنده و تمام ضبط‌های آن را برای همیشه حذف می‌کند.",
+  "liveStopEncoderHelp": "برای پایان پخش، ارسال را در رمزگذار خود (مثلاً OBS) متوقف کنید.",
+  "liveDvrLockedHelp": "DVR را هنگام ایجاد پخش انتخاب کنید. بعداً قابل تغییر نیست. محدودیت مدت ثابت است.",
+  "liveRecordingSettingsHelp": "تغییرات بر پخش و ضبط‌های آینده اعمال می‌شوند. ضبط‌های موجود تنظیمات خود را حفظ می‌کنند.",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

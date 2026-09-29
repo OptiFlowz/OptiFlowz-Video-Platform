@@ -1293,5 +1293,11 @@
   "postSignInVote": "답변을 제출하려면 로그인하십시오.",
   "postCannotVote": "이 질문에 답변할 권한이 없습니다.",
   "latestPosts": "최신 게시물",
-  "postOpen": "게시물 열기"
+  "postOpen": "게시물 열기",
+  "liveUnlisted": "일부 공개",
+  "liveDeleteWithRecordings": "라이브 스트림과 모든 녹화가 영구적으로 삭제됩니다.",
+  "liveStopEncoderHelp": "방송을 끝내려면 인코더(예: OBS)에서 스트리밍을 중지하세요.",
+  "liveDvrLockedHelp": "스트림을 만들 때 DVR을 선택하세요. 나중에는 변경할 수 없습니다. 최대 방송 시간은 고정되어 있습니다.",
+  "liveRecordingSettingsHelp": "변경 사항은 스트림과 향후 녹화에 적용됩니다. 기존 녹화는 자체 설정을 유지합니다.",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

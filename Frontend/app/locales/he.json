@@ -1293,5 +1293,11 @@
   "postSignInVote": "היכנס כדי לשלוח את התשובה שלך.",
   "postCannotVote": "אין לך רשות לענות על השאלה הזאת.",
   "latestPosts": "הפוסטים האחרונים",
-  "postOpen": "פתיחת הפוסט"
+  "postOpen": "פתיחת הפוסט",
+  "liveUnlisted": "לא רשום",
+  "liveDeleteWithRecordings": "פעולה זו מוחקת לצמיתות את השידור ואת כל ההקלטות שלו.",
+  "liveStopEncoderHelp": "כדי לסיים את השידור, יש לעצור את ההזרמה במקודד (למשל OBS).",
+  "liveDvrLockedHelp": "יש לבחור DVR בעת יצירת השידור. לא ניתן לשנות זאת בהמשך. מגבלת הזמן קבועה.",
+  "liveRecordingSettingsHelp": "השינויים חלים על השידור ועל הקלטות עתידיות. הקלטות קיימות שומרות על ההגדרות שלהן.",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

@@ -1,6 +1,4 @@
 export interface VideoMedia {
-  kind?: 'upload' | 'live';
-  livestream?: import('../live/api').Livestream | null;
   playback_available?: boolean;
   stream_type?: 'on-demand' | 'live' | 'live:dvr' | 'unavailable';
   thumbnail_url?: string | null;

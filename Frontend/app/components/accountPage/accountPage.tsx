@@ -41,7 +41,7 @@ function AccountPage(){
     };
     const queryClient = useQueryClient();
     const token = getToken();
-    const canViewVideos = can(P.videosLibrary) || can(P.liveLibrary);
+    const canViewVideos = can(P.videosLibrary);
     const canViewPlaylists = can(P.playlistsLibrary);
     const canViewCertificates = can(P.quizzesCertificates);
     useEffect(() => {
@@ -54,7 +54,7 @@ function AccountPage(){
     }, [queryClient, token, canViewVideos, canViewPlaylists, canViewCertificates]);
     const tabsId = useId();
     const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
-    const tabs = accountTabs.filter(tab => can(tab.permission) || (tab.permission === P.videosLibrary && can(P.liveLibrary)));
+    const tabs = accountTabs.filter(tab => can(tab.permission));
     const activeTab = tabs.find(tab => tab.id === selectedTab) ?? tabs[0];
     const logoutHandle = () => {
         redirectToLogin();

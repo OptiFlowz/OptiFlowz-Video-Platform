@@ -114,10 +114,9 @@ main.myPostsPage td button.postStatus.public { color: var(--accentBlue2); }
 main.myPostsPage td button.postStatus.draft { color: var(--analyticsViewsOverTime); }
 
 /* Compose directly in the same card and content surfaces as the channel feed. */
-.postComposerToolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
-.postComposerToolbar .postDemoNote { flex: 1 1 230px; font-size: .75rem; }
-.postComposerToolbar .postEditorTabs { margin: 0; }
-.postComposerToolbar .postEditorTabs button { padding: 8px 12px; font-size: .85rem; }
+.postEditorDialog .postDialogHeading { flex-wrap: wrap; }
+.postEditorDialog .postEditorTabs { margin: 0; margin-inline-start: auto; }
+.postEditorDialog .postEditorTabs button { padding: 8px 12px; font-size: .85rem; }
 .postComposerTitle { font-size: .8rem; color: var(--text2); }
 .postComposerForm .postComposerTitle input { padding: 8px 0; background: transparent; border: 0; border-bottom: 1px solid var(--border1); border-radius: 0; color: var(--text1); font-size: 1rem; font-weight: 500; }
 .postComposer { width: 100%; align-self: stretch; }
@@ -209,7 +208,6 @@ main.myPostsPage td button.postStatus.draft { color: var(--analyticsViewsOverTim
 .postSectionFields:not(.postInset) { padding: 0; }
 .postSectionFields:disabled .postInlineText { cursor: default; }
 main.myPostsPage td button.postStatus.private { color: var(--accentRed3); }
-.postComposerToolbar { justify-content: flex-end; }
 .postOption.isCorrect .postOptionFill,
 .postOption.isSelected .postOptionFill { min-width: min(100%, 10px); }
 

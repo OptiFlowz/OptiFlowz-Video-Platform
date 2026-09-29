@@ -1,11 +1,9 @@
 // These keys match the backend authorization permissions, not role names.
 export const P = {
-  liveCreate: 'livestreams.create', liveLibrary: 'livestreams.library.read',
-  liveUpdateOwn: 'livestreams.update_own', liveUpdateAny: 'livestreams.update_any',
-  liveDeleteOwn: 'livestreams.delete_own', liveDeleteAny: 'livestreams.delete_any',
-  liveBroadcastOwn: 'livestreams.broadcast_own', liveBroadcastAny: 'livestreams.broadcast_any',
-  liveProgress: 'livestreams.progress.update', liveReact: 'livestreams.react',
-  liveAnalyticsOwn: 'analytics.livestream_own.read', liveAnalyticsAny: 'analytics.livestream_any.read',
+  liveCreate: 'live_streams.create',
+  liveUpdateOwn: 'live_streams.update_own', liveUpdateAny: 'live_streams.update_any',
+  liveDeleteOwn: 'live_streams.delete_own', liveDeleteAny: 'live_streams.delete_any',
+  liveBroadcastOwn: 'live_streams.stream_own', liveBroadcastAny: 'live_streams.stream_any',
   postsReact: 'posts.react',
   postsCreate: 'posts.create', postsUpdateOwn: 'posts.update_own', postsUpdateAny: 'posts.update_any',
   postsDeleteOwn: 'posts.delete_own', postsDeleteAny: 'posts.delete_any',
@@ -24,13 +22,13 @@ export const P = {
 } as const;
 
 export const accessPermissions = {
-  live: [P.liveLibrary], myLivestreams: [P.liveUpdateOwn], createLive: [P.liveCreate],
-  liveStudio: [P.liveUpdateOwn, P.liveUpdateAny, P.liveBroadcastOwn, P.liveBroadcastAny],
+  myLivestreams: [P.liveUpdateOwn], createLive: [P.liveCreate],
+  liveStudio: [P.liveUpdateOwn, P.liveUpdateAny, P.liveBroadcastOwn, P.liveBroadcastAny, P.liveDeleteOwn, P.liveDeleteAny],
   posts: [P.postsCreate, P.postsUpdateOwn, P.postsUpdateAny, P.postsDeleteOwn, P.postsDeleteAny],
-  videos: [P.videosUpdateOwn], upload: [P.videosCreate], editVideo: [P.videosUpdateOwn, P.videosUpdateAny, P.liveUpdateOwn, P.liveUpdateAny],
+  videos: [P.videosUpdateOwn], upload: [P.videosCreate], editVideo: [P.videosUpdateOwn, P.videosUpdateAny],
   playlists: [P.playlistsUpdateOwn], editPlaylist: [P.playlistsUpdateOwn, P.playlistsUpdateAny],
   quizzes: [P.quizzesManageOwn], participate: [P.quizzesParticipate], people: [P.peopleManage],
-  videoAnalytics: [P.videoAnalyticsOwn, P.videoAnalyticsAny, P.liveAnalyticsOwn, P.liveAnalyticsAny], channelAnalytics: [P.channelAnalyticsOwn],
+  videoAnalytics: [P.videoAnalyticsOwn, P.videoAnalyticsAny], channelAnalytics: [P.channelAnalyticsOwn],
   platformUsers: [P.usersSearch], platformSettings: [P.rolesManage], platformAnalytics: [P.platformAnalytics],
 } as const;
 export type AccessSection = keyof typeof accessPermissions;

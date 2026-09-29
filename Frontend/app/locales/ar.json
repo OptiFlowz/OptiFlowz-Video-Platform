@@ -1268,5 +1268,11 @@
   "postSignInVote": "تسجيل الدخول لتقديم إجابتك.",
   "postCannotVote": "ليس لديك إذن بالإجابة على هذا السؤال.",
   "latestPosts": "أحدث المنشورات",
-  "postOpen": "فتح المنشور"
+  "postOpen": "فتح المنشور",
+  "liveUnlisted": "غير مدرج",
+  "liveDeleteWithRecordings": "سيؤدي هذا إلى حذف البث المباشر وجميع تسجيلاته نهائيًا.",
+  "liveStopEncoderHelp": "أوقف البث في برنامج الترميز (مثل OBS) لإنهاء البث المباشر.",
+  "liveDvrLockedHelp": "اختر DVR عند إنشاء البث. لا يمكن تغييره لاحقًا. الحد الأقصى للمدة ثابت.",
+  "liveRecordingSettingsHelp": "تسري التغييرات على البث والتسجيلات المستقبلية. تحتفظ التسجيلات الحالية بإعداداتها.",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

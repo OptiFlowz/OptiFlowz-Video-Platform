@@ -1293,5 +1293,11 @@
   "postSignInVote": "Prisijunkite, kad pateiktumėte savo atsakymą.",
   "postCannotVote": "Jūs neturite teisės atsakyti į šį klausimą.",
   "latestPosts": "Naujausi įrašai",
-  "postOpen": "Atidaryti įrašą"
+  "postOpen": "Atidaryti įrašą",
+  "liveUnlisted": "Neįtraukta į sąrašą",
+  "liveDeleteWithRecordings": "Tai visam laikui ištrina transliaciją ir visus jos įrašus.",
+  "liveStopEncoderHelp": "Norėdami baigti transliaciją, sustabdykite srautą kodavimo programoje (pavyzdžiui, OBS).",
+  "liveDvrLockedHelp": "DVR pasirinkite kurdami transliaciją. Vėliau jo pakeisti negalima. Trukmės riba yra fiksuota.",
+  "liveRecordingSettingsHelp": "Pakeitimai taikomi transliacijai ir būsimiems įrašams. Esami įrašai išlaiko savo nustatymus.",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

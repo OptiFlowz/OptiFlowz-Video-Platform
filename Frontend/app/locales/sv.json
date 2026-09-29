@@ -1293,5 +1293,11 @@
   "postSignInVote": "Logga in för att skicka in ditt svar.",
   "postCannotVote": "Du har inte behörighet att svara på denna fråga.",
   "latestPosts": "Senaste inläggen",
-  "postOpen": "Öppna inlägg"
+  "postOpen": "Öppna inlägg",
+  "liveUnlisted": "Olistad",
+  "liveDeleteWithRecordings": "Detta raderar livesändningen och alla dess inspelningar permanent.",
+  "liveStopEncoderHelp": "Stoppa strömningen i din kodare (till exempel OBS) för att avsluta sändningen.",
+  "liveDvrLockedHelp": "Välj DVR när du skapar sändningen. Det går inte att ändra senare. Tidsgränsen är fast.",
+  "liveRecordingSettingsHelp": "Ändringarna gäller sändningen och framtida inspelningar. Befintliga inspelningar behåller sina egna inställningar.",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }

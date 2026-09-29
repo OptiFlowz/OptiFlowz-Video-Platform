@@ -1,4 +1,3 @@
-import { recordingReady } from '../../live/api';
 import { useTranscriptAvailable } from "./transcript";
 import DefaultThumbnail from "../../../../assets/DefaultThumbnail.webp";
 import { useAuthorization } from "~/authorization/authorization";
@@ -64,6 +63,7 @@ function VideoInfo({
     onOpenNotes,
     onOpenComments,
     topAction,
+    live = false,
 }: {
     props?: VideoT,
     isLoading?: boolean,
@@ -72,13 +72,14 @@ function VideoInfo({
     onOpenNotes?: () => void,
     onOpenComments?: () => void,
     topAction?: ReactNode,
+    live?: boolean,
 }) {
     const { t } = useI18n();
     const { can } = useAuthorization();
-    const canReact = can(props?.kind === 'live' ? P.liveReact : P.videosReact);
-    const ready = !!props && recordingReady(props);
+    const canReact = can(P.videosReact);
+    const ready = !!props && !live;
     const location = useLocation();
-    const hasTranscript = useTranscriptAvailable(props?.id);
+    const hasTranscript = useTranscriptAvailable(live ? undefined : props?.id);
 
     const tagsArray = props?.tags?.map((item, index) => (
         <Link to={`/search?tag=${item}`} key={`tag${index}`} className="tag noHover">#{item}</Link>

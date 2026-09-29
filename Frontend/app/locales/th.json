@@ -1293,5 +1293,11 @@
   "postSignInVote": "ล็อกอินเพื่อส่งคำตอบของคุณ",
   "postCannotVote": "คุณไม่ได้รับอนุญาตให้ตอบคำถามนี้",
   "latestPosts": "โพสต์ล่าสุด",
-  "postOpen": "เปิดโพสต์"
+  "postOpen": "เปิดโพสต์",
+  "liveUnlisted": "ไม่เป็นสาธารณะ",
+  "liveDeleteWithRecordings": "การดำเนินการนี้จะลบไลฟ์สตรีมและบันทึกทั้งหมดอย่างถาวร",
+  "liveStopEncoderHelp": "หยุดสตรีมในโปรแกรมเข้ารหัส (เช่น OBS) เพื่อจบการถ่ายทอดสด",
+  "liveDvrLockedHelp": "เลือก DVR เมื่อสร้างสตรีม และไม่สามารถเปลี่ยนภายหลังได้ ขีดจำกัดระยะเวลาคงที่",
+  "liveRecordingSettingsHelp": "การเปลี่ยนแปลงมีผลกับสตรีมและบันทึกในอนาคต บันทึกที่มีอยู่จะคงการตั้งค่าเดิม",
+  "liveThumbnailRequirements": "JPEG / PNG / WebP · ≤ 5 MiB"
 }
