@@ -84,3 +84,18 @@ main .liveLibrary .liveCard > .item { width: 100%; min-width: 0; max-width: 100%
 .liveWatch .videoTitleWithPrefix { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .liveWatch .videoTitleWithPrefix > .liveBadge { flex-shrink: 0; }
 .liveWatch .videoTitleWithPrefix > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+
+/* Retain the player's space while the shared video player stays below the mobile header. */
+@media (max-width: 500px) {
+  .appFrameContent > main.liveWatch { padding-top: 73px; }
+  .liveWatchPlayerSlot { width: 100%; aspect-ratio: 427 / 240; max-height: calc(100dvh - 150px); }
+  main.liveWatch .player.livePlayer {
+    height: auto;
+    aspect-ratio: 427 / 240;
+    max-height: calc(100dvh - 150px);
+  }
+  .liveWatchPage .livePlayer > mux-player,
+  .liveWatchPage .liveWaiting,
+  .liveWatchPage .videoPreviewPlaceholder { height: 100%; min-height: 0; aspect-ratio: auto; }
+  .liveWatchPage .liveWaiting { overflow-y: auto; }
+}

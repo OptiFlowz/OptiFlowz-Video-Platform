@@ -1,6 +1,6 @@
 # Interface translations
 
-Each of the 40 supported languages has one JSON catalogue named after its locale code. These files are the source of truth for all interface text, including account, platform administration, analytics, quizzes, privacy, and the predefined content titles.
+Each of the 50 supported languages has one JSON catalogue named after its locale code. These files are the source of truth for all interface text, including account, platform administration, analytics, quizzes, privacy, and the predefined content titles.
 
 - `index.ts` bundles English and registers lazy catalogue loaders and English language names. Other catalogues download only when selected and are cached after loading.
 - `formatTranslation.ts` resolves parameters, branding, and count variants.
@@ -28,4 +28,6 @@ Brand placeholders support `BRAND_NAME`, `PLATFORM_NAME`, and `POWERED_BY_NAME`.
 
 Keys prefixed with `content.` translate predefined content titles. User-entered titles and custom role names are not translation keys.
 
-The page layout remains left-to-right for every locale. Arabic (`ar`), Hebrew (`he`), and Persian (`fa`) use paragraph-level bidirectional text detection in `app.css`, so text can read right-to-left without mirroring navigation, tables, or media controls. Norwegian uses Bokmål (`nb`); the browser locale `no` maps to `nb`. Chinese (`zh`) uses Simplified Chinese.
+The page layout remains left-to-right for every locale. Arabic (`ar`), Hebrew (`he`), Persian (`fa`), and Urdu (`ur`) use paragraph-level bidirectional text detection in `app.css`, so text can read right-to-left without mirroring navigation, tables, or media controls. Norwegian uses Bokmål (`nb`); the browser locale `no` maps to `nb`. Chinese (`zh`) uses Simplified Chinese.
+
+Bosnian (`bs`) uses Latin script. Tagalog browser locales (`tl`, including `tl-PH`) map to Filipino (`fil`). All additional languages use the same lazy-loading and locale-aware formatting as the existing catalogues.

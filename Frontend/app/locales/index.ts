@@ -1,12 +1,16 @@
 import en from "./en.json";
 
-export const SUPPORTED_LOCALES = ["sq", "ar", "bg", "zh", "hr", "cs", "da", "nl", "en", "et", "fi", "fr", "de", "el", "he", "hi", "hu", "is", "id", "it", "ja", "ko", "lv", "lt", "mk", "nb", "fa", "pl", "pt", "ro", "ru", "sr", "sk", "sl", "es", "sv", "th", "tr", "uk", "vi"] as const;
+export const SUPPORTED_LOCALES = ["sq", "ar", "hy", "bn", "bs", "bg", "ca", "zh", "hr", "cs", "da", "nl", "en", "et", "fil", "fi", "fr", "ka", "de", "el", "he", "hi", "hu", "is", "id", "it", "ja", "ko", "lv", "lt", "mk", "ms", "nb", "fa", "pl", "pt", "ro", "ru", "sr", "sk", "sl", "es", "sw", "sv", "ta", "th", "tr", "uk", "ur", "vi"] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
 
 export const LANGUAGE_OPTIONS: { value: Locale; label: string }[] = [
   { value: "sq", label: "Albanian" },
   { value: "ar", label: "Arabic" },
+  { value: "hy", label: "Armenian" },
+  { value: "bn", label: "Bengali" },
+  { value: "bs", label: "Bosnian" },
   { value: "bg", label: "Bulgarian" },
+  { value: "ca", label: "Catalan" },
   { value: "zh", label: "Chinese (Simplified)" },
   { value: "hr", label: "Croatian" },
   { value: "cs", label: "Czech" },
@@ -14,8 +18,10 @@ export const LANGUAGE_OPTIONS: { value: Locale; label: string }[] = [
   { value: "nl", label: "Dutch" },
   { value: "en", label: "English" },
   { value: "et", label: "Estonian" },
+  { value: "fil", label: "Filipino" },
   { value: "fi", label: "Finnish" },
   { value: "fr", label: "French" },
+  { value: "ka", label: "Georgian" },
   { value: "de", label: "German" },
   { value: "el", label: "Greek" },
   { value: "he", label: "Hebrew" },
@@ -29,6 +35,7 @@ export const LANGUAGE_OPTIONS: { value: Locale; label: string }[] = [
   { value: "lv", label: "Latvian" },
   { value: "lt", label: "Lithuanian" },
   { value: "mk", label: "Macedonian" },
+  { value: "ms", label: "Malay" },
   { value: "nb", label: "Norwegian" },
   { value: "fa", label: "Persian" },
   { value: "pl", label: "Polish" },
@@ -39,10 +46,13 @@ export const LANGUAGE_OPTIONS: { value: Locale; label: string }[] = [
   { value: "sk", label: "Slovak" },
   { value: "sl", label: "Slovenian" },
   { value: "es", label: "Spanish" },
+  { value: "sw", label: "Swahili" },
   { value: "sv", label: "Swedish" },
+  { value: "ta", label: "Tamil" },
   { value: "th", label: "Thai" },
   { value: "tr", label: "Turkish" },
   { value: "uk", label: "Ukrainian" },
+  { value: "ur", label: "Urdu" },
   { value: "vi", label: "Vietnamese" },
 ];
 
@@ -67,6 +77,16 @@ type Catalogue = Partial<Record<keyof typeof en, CatalogueEntry>>;
 // Only English is part of the initial bundle. Each other language is a separate chunk.
 export const catalogues: Partial<Record<Locale, Catalogue>> & { en: Catalogue } = { en };
 const loaders = {
+  bn: () => import("./bn.json"),
+  bs: () => import("./bs.json"),
+  ca: () => import("./ca.json"),
+  fil: () => import("./fil.json"),
+  hy: () => import("./hy.json"),
+  ka: () => import("./ka.json"),
+  ms: () => import("./ms.json"),
+  sw: () => import("./sw.json"),
+  ta: () => import("./ta.json"),
+  ur: () => import("./ur.json"),
   ar: () => import("./ar.json"),
   bg: () => import("./bg.json"),
   cs: () => import("./cs.json"),

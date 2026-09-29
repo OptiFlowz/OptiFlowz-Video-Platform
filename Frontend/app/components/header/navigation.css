@@ -313,3 +313,12 @@ header[data-app-header].appHeader > .appHeaderInner {
 @media (prefers-reduced-motion: reduce) {
     .appFrame { --sidebar-duration: 0s; }
 }
+
+/* Match the mobile video and live watch headers, including loading states. */
+@media (max-width: 500px) {
+    .appFrame:has(main:is(.play, .liveWatchPage)) > header[data-app-header].appHeader {
+        background: var(--background1) !important;
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+}

@@ -7,7 +7,7 @@
 }
 
 /* Determine text direction per paragraph without reversing the page layout. */
-html:is([lang="ar"], [lang="he"], [lang="fa"]) :where(
+html:is([lang="ar"], [lang="he"], [lang="fa"], [lang="ur"]) :where(
   h1, h2, h3, h4, h5, h6, p, span, a, label, button, input, textarea,
   th, td, dt, dd, li, strong, small, legend, figcaption
 ) {

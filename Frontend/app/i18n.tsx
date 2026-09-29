@@ -12,7 +12,7 @@ let activeLocale: Locale = "en";
 export function normalizeLocale(value?: string | null): Locale {
   if (!value) return "en";
   const language = value.toLowerCase().split("-")[0];
-  const short = (language === "no" ? "nb" : language) as Locale;
+  const short = (language === "no" ? "nb" : language === "tl" ? "fil" : language) as Locale;
   return SUPPORTED_LOCALES.includes(short) ? short : "en";
 }
 

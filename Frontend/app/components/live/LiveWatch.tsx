@@ -94,7 +94,9 @@ function LiveWatchContent({ live }: { live: LiveDetails }) {
     canOwn(P.liveDeleteOwn, P.liveDeleteAny, live.uploader_id);
   return <main className={`play liveWatchPage liveWatch ${hasRecording ? '' : 'liveWatch--detailsOnly'}`}>
     <div className="liveWatchPrimary">
-      <div className="livePlayer"><LivePlaybackView live={live}/></div>
+      <div className="liveWatchPlayerSlot">
+        <div className="player livePlayer"><LivePlaybackView live={live}/></div>
+      </div>
       <div className="liveWatchDetails">
         <VideoInfo key={video.id || live.id} props={video} live metadataOnly={!hasRecording}
           titlePrefix={<LiveStatus live={live} scheduledAt={live.scheduled_at}/>} metadata={false}
