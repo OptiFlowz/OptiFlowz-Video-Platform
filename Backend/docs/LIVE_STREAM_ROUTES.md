@@ -160,6 +160,9 @@ Only public parent livestreams qualify. The list includes:
 - `live`: one card for each currently live livestream, including when it has a
   preparing recording. It can coexist with eligible recording cards.
 
+Completed recordings are automatically published when they first become ready,
+unless a publication date is already set. Future publication dates are preserved.
+
 No independent card is created for disconnected, ended or cancelled streams,
 although their eligible recordings can still appear. Recording eligibility does
 not additionally require `recording_completed_at` to be set.

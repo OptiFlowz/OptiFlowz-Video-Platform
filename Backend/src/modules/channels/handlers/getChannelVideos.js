@@ -40,6 +40,7 @@ export async function getChannelVideosInternal(object, userId = null) {
       WHERE
         ${buildVideoCardVisibilityWhere()}
         AND v.uploaded_by = $1
+        AND v.live_stream_id IS NULL
       ORDER BY ${orderByField} ${orderByDirection}
       LIMIT $2 OFFSET $3
   `;
@@ -48,6 +49,7 @@ export async function getChannelVideosInternal(object, userId = null) {
     SELECT COUNT(*)::int AS total
     FROM videos v
     WHERE v.uploaded_by = $1
+      AND v.live_stream_id IS NULL
       AND v.mux_status = 'ready'
       AND v.visibility = 'public'
       AND v.published_at <= NOW()

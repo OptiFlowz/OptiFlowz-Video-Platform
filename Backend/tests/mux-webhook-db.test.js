@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
+import { readFile } from 'node:fs/promises';
 import { prepareLiveSchema } from './helpers/live-stream-schema.js';
 import { mock, test } from 'node:test';
 import pg from 'pg';
@@ -227,6 +228,8 @@ test('Mux live lifecycle against PostgreSQL temporary tables', { skip: !process.
     assert.equal((await state()).live.mux_status, 'disabled');
     assert.equal((await state()).video.mux_status, 'preparing');
     await asset('live_stream_completed', 11);
+    const publishedAt = (await state()).video.published_at;
+    assert.ok(publishedAt);
     await asset('live_stream_completed', 11);
     current = await state();
     assert.equal(current.live.status, 'ended');
@@ -242,7 +245,7 @@ test('Mux live lifecycle against PostgreSQL temporary tables', { skip: !process.
     assert.equal(current.video.title, 'Original title');
     assert.equal(current.video.like_count, 1);
     assert.equal(current.video.visibility, 'public');
-    assert.equal(current.video.published_at, null);
+    assert.equal(current.video.published_at, publishedAt);
     assert.deepEqual(reconciliations, [['asset-1', videoId], ['asset-1', videoId]]);
   });
 
@@ -260,6 +263,7 @@ test('Mux live lifecycle against PostgreSQL temporary tables', { skip: !process.
     assert.deepEqual(disableCalls, ['live-1']);
     assert.equal(current.video.duration_seconds, 500);
     assert.equal(current.video.mux_status, 'ready');
+    assert.ok(current.video.published_at);
     assert.equal(new Date(current.live.started_at).toISOString(), stamp(3));
   });
 
@@ -268,6 +272,7 @@ test('Mux live lifecycle against PostgreSQL temporary tables', { skip: !process.
     await asset('ready', 21);
     await asset('live_stream_completed', 20);
     assert.equal((await state()).video.mux_status, 'ready');
+    assert.ok((await state()).video.published_at);
     assert.equal((await state()).live.status, 'ended');
   });
 
@@ -275,8 +280,57 @@ test('Mux live lifecycle against PostgreSQL temporary tables', { skip: !process.
     await reset();
     await asset('live_stream_completed', 20, { status: 'preparing', playback_ids: [] });
     assert.equal((await state()).video.mux_status, 'preparing');
+    assert.equal((await state()).video.published_at, null);
     await asset('ready', 21);
     assert.equal((await state()).video.mux_status, 'ready');
+    assert.ok((await state()).video.published_at);
+  });
+
+  await t.test('publication preserves scheduled dates and does not undo manual unpublishing on retries', async () => {
+    await reset();
+    await client.query("UPDATE pg_temp.videos SET published_at='2999-01-01', visibility='private'");
+    await asset('live_stream_completed', 20);
+    assert.equal(new Date((await state()).video.published_at).toISOString(), '2999-01-01T00:00:00.000Z');
+    assert.equal((await state()).video.visibility, 'private');
+    await client.query('UPDATE pg_temp.videos SET published_at=NULL');
+    await asset('live_stream_completed', 20);
+    await asset('updated', 21);
+    assert.equal((await state()).video.published_at, null);
+  });
+
+  await t.test('publication backfill only changes completed ready recordings without a date and is idempotent', async () => {
+    await reset();
+    const parentId = (await state()).live.id;
+    const fixtures = [
+      [parentId, 'ready', stamp(20), null],
+      [parentId, 'preparing', stamp(20), null],
+      [parentId, 'ready', null, null],
+      [parentId, 'errored', stamp(20), null],
+      [parentId, 'deleted', stamp(20), null],
+      [null, 'ready', stamp(20), null],
+      [parentId, 'ready', stamp(20), '2999-01-01T00:00:00.000Z'],
+      [parentId, 'ready', stamp(20), stamp(25)],
+    ];
+    const ids = [];
+    for (const fixture of fixtures) {
+      const id = crypto.randomUUID(); ids.push(id);
+      await client.query(`INSERT INTO pg_temp.videos
+        (id,live_stream_id,mux_status,mux_recording_completed_at,published_at,visibility)
+        VALUES ($1,$2,$3,$4,$5,'public')`, [id, ...fixture]);
+    }
+    const sql = (await readFile(new URL('../src/database/migrations/1790683200000_publish-completed-live-recordings.sql', import.meta.url), 'utf8'))
+      .split('-- Down Migration')[0].replaceAll('public.', 'pg_temp.');
+    await client.query(sql);
+    const load = async () => (await client.query('SELECT id,published_at,visibility FROM pg_temp.videos WHERE id=ANY($1::uuid[]) ORDER BY id', [ids])).rows;
+    const rows = await load();
+    assert.ok(rows.find(row => row.id === ids[0]).published_at);
+    for (let i = 1; i < fixtures.length; i++) {
+      const row = rows.find(row => row.id === ids[i]);
+      assert.equal(row.published_at?.toISOString() ?? null, fixtures[i][3]);
+      assert.equal(row.visibility, 'public');
+    }
+    await client.query(sql);
+    assert.deepEqual(await load(), rows);
   });
 
   await t.test('ready at the completion timestamp supplies playback without replacing final duration', async () => {
@@ -350,7 +404,7 @@ test('Mux live lifecycle against PostgreSQL temporary tables', { skip: !process.
     assert.equal(recordings[0].id,videoId);
     assert.equal(recordings[0].like_count,1);
     assert.equal(recordings[1].uploaded_by,ownerId);
-    assert.equal(recordings[1].published_at,null);
+    assert.ok(recordings[1].published_at);
     assert.equal((await state()).live.status,'ended');
     assert.deepEqual(disableCalls,['live-1']);
   });
@@ -454,6 +508,7 @@ test('Mux live lifecycle against PostgreSQL temporary tables', { skip: !process.
     await asset('ready', 10);
     await asset('live_stream_completed', 20);
     assert.equal((await state()).video.mux_status, 'errored');
+    assert.equal((await state()).video.published_at, null);
     assert.equal((await state()).live.status, 'ended');
   });
 

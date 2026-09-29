@@ -249,8 +249,14 @@ export async function handleLiveStreamMuxEvent(event, candidateVideoId = null) {
         stream.disconnected_at,stream.completed_at,stream.mux_live_playback_id,stream.mux_event_at,
         stream.mux_active_asset_id,stream.mux_session_ended_at]);
       if (video) {
+        // Publish on the first completed/ready transition. Preserve explicit
+        // publication dates and do not republish manually unpublished replays
+        // when Mux retries an event for an already-ready recording.
         await client.query(`UPDATE public.videos SET mux_asset_id=$2,mux_playback_id=$3,mux_status=$4,
           duration_seconds=$5,thumbnail_url=$6,mux_asset_event_at=$7,mux_recording_completed_at=$8,mux_recording_started_at=$9,
+          published_at=CASE WHEN $4='ready' AND $8::timestamptz IS NOT NULL
+            AND (mux_status IS DISTINCT FROM 'ready' OR mux_recording_completed_at IS NULL)
+            THEN COALESCE(published_at,now()) ELSE published_at END,
           updated_at=now() WHERE id=$1`, [video.id,video.mux_asset_id,video.mux_playback_id,video.mux_status,
           video.duration_seconds,video.thumbnail_url,video.mux_asset_event_at,video.mux_recording_completed_at,video.mux_recording_started_at]);
         if (isAsset && ['ready', 'live_stream_completed', 'updated'].includes(type)

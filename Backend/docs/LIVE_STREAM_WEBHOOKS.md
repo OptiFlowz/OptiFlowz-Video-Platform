@@ -6,7 +6,8 @@ For each route's inputs, response fields and permissions, see
 Apply the existing live-stream migrations followed by
 `1790553600002_live-stream-recordings.sql` and
 `1790640000000_add-live-playback-cleanup.sql` and
-`1790640000001_add-live-stream-permissions.sql` before deploying this code.
+`1790640000001_add-live-stream-permissions.sql` and
+`1790683200000_publish-completed-live-recordings.sql` before deploying this code.
 The recordings migration copies ownership and metadata to `live_streams`, moves the
 relationship to nullable `videos.live_stream_id`, and preserves existing video
 IDs, metadata, publication and interactions. Existing empty placeholder videos
@@ -227,8 +228,12 @@ Failures remain retryable through webhook redelivery. Ended/cancelled events
 are not reopened by delayed events. Playback policy selection, independent
 recording event timestamps and final duration handling are preserved.
 
-Recording readiness does not automatically publish it: `published_at` remains
-unchanged. Transcript reconciliation uses the individual recording's video ID.
+When a recording first becomes both completed and ready, the webhook sets
+`published_at` to the current database time if no publication date is set.
+Existing dates (including future dates) and visibility remain unchanged.
+Retries do not republish recordings that were manually unpublished after becoming
+ready. The publication migration backfills missing dates for existing completed,
+ready recordings. Transcript reconciliation uses the individual recording's video ID.
 
 ## Deletion
 
