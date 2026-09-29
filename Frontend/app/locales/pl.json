@@ -696,7 +696,7 @@
   "continueWithGoogle": "Kontynuuj z Google",
   "logIn": "Zaloguj się",
   "loggingIn": "Logowanie...",
-  "helloUser": "Czesc, {{param.firstName}}!",
+  "helloUser": "Cześć, {{param.firstName}}!",
   "footerGdprTitle": "Informacja GDPR",
   "footerGdprText": "Dowiedz się z naszej Polityki prywatności, jak platforma chroni dane osobowe i jak możesz korzystać ze swoich praw.",
   "footerAccount": "Konto",

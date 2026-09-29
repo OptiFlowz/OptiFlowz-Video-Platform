@@ -29,7 +29,7 @@ header[data-app-header].appHeader {
 }
 header[data-app-header].appHeader > .appHeaderInner {
     display: grid;
-    grid-template-columns: minmax(224px, 1fr) minmax(200px, 620px) minmax(80px, 1fr);
+    grid-template-columns: minmax(224px, 1fr) minmax(200px, 620px) minmax(max-content, 1fr);
     align-items: center;
     gap: 24px;
     min-height: 73px;
@@ -136,7 +136,31 @@ header[data-app-header].appHeader > .appHeaderInner {
 .appVoiceSearchStatus svg { width: 18px; height: 18px; }
 .appVoiceSearchStatus svg [stroke] { stroke: currentColor; }
 .appHeaderActions { justify-self: end; }
-.appHeaderActions .adminAvatarTrigger > p { display: none; }
+.appHeaderActions .adminAvatarMenuWrap { border-radius: 999px; cursor: pointer; transition: background-color 200ms ease; }
+.appHeaderActions .adminAvatarMenuWrap:is(:hover, :focus-within) { background-color: var(--background2); }
+@media (min-width: 1076px) {
+    .appHeaderActions .adminAvatarMenuWrap { padding-inline-start: 12px; }
+}
+.appHeaderGreeting { pointer-events: none; user-select: none; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text1); }
+.appHeaderGreetingText { display: block; overflow: hidden; text-overflow: ellipsis; }
+.appHeaderGreetingRole { display: block; text-align: end; font-size: .75rem; line-height: 1.25; font-weight: 600; color: var(--accentBlue3); }
+
+/* Leave the portal mounted while fading out; usePopupPresence removes it afterwards. */
+.adminAvatarDropdown[data-visible] {
+    opacity: 0;
+    transform: translateY(-8px) scale(.98);
+    transform-origin: top right;
+    pointer-events: none;
+    transition: opacity 200ms ease, transform 200ms ease;
+}
+.adminAvatarDropdown[data-visible="true"] {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+@media (prefers-reduced-motion: reduce) {
+    .adminAvatarDropdown[data-visible] { transition: none; }
+}
 
 .appSidebar {
     position: fixed;
@@ -206,24 +230,16 @@ header[data-app-header].appHeader > .appHeaderInner {
     opacity: 0;
     transition:
         transform var(--sidebar-duration) var(--sidebar-easing),
-        opacity var(--sidebar-duration) var(--sidebar-easing),
-        display var(--sidebar-duration) allow-discrete,
-        overlay var(--sidebar-duration) allow-discrete;
+        opacity var(--sidebar-duration) var(--sidebar-easing);
 }
-.appSidebarDialog[open] { transform: translateX(0); opacity: 1; }
+.appSidebarDialog[open][data-visible="true"] { transform: translateX(0); opacity: 1; }
 .appSidebarDialog::backdrop {
     background: var(--seethroughtBlack);
     opacity: 0;
     transition:
-        opacity var(--sidebar-duration) var(--sidebar-easing),
-        display var(--sidebar-duration) allow-discrete,
-        overlay var(--sidebar-duration) allow-discrete;
+        opacity var(--sidebar-duration) var(--sidebar-easing);
 }
-.appSidebarDialog[open]::backdrop { opacity: 1; }
-@starting-style {
-    .appSidebarDialog[open] { transform: translateX(-100%); opacity: 0; }
-    .appSidebarDialog[open]::backdrop { opacity: 0; }
-}
+.appSidebarDialog[open][data-visible="true"]::backdrop { opacity: 1; }
 .appSidebarDrawer { display: flex; flex-direction: column; height: 100%; }
 .appSidebarDrawerHeader { display: flex; justify-content: space-between; align-items: center; min-height: 73px; padding: 12px 20px; border-bottom: 1px solid var(--border3); }
 .appSidebarDrawerHeader > strong:focus { outline: none; }

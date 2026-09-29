@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
-// Keep the panel mounted through the shared 200ms exit transition.
-export function usePopupPresence(open: boolean) {
+// Keep the panel mounted until its exit transition finishes (200ms by default).
+export function usePopupPresence(open: boolean, exitDuration = 200) {
     const [mounted, setMounted] = useState(open);
     const [visible, setVisible] = useState(false);
 
@@ -16,7 +16,7 @@ export function usePopupPresence(open: boolean) {
             });
         } else {
             setVisible(false);
-            const duration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 200;
+            const duration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : exitDuration;
             closeTimer = setTimeout(() => setMounted(false), duration);
         }
         return () => {
@@ -24,7 +24,7 @@ export function usePopupPresence(open: boolean) {
             cancelAnimationFrame(secondFrame);
             clearTimeout(closeTimer);
         };
-    }, [open]);
+    }, [open, exitDuration]);
 
     return { mounted, visible };
 }

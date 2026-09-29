@@ -1,3 +1,4 @@
+import { usePopupPresence } from "~/hooks/usePopupPresence";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
@@ -24,6 +25,7 @@ type HeaderProps = { onMenuToggle?: () => void; menuExpanded?: boolean };
 function Header({ onMenuToggle, menuExpanded = false }: HeaderProps){
     const { locale, setLocale, t } = useI18n();
     const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+    const accountMenuPresence = usePopupPresence(accountMenuOpen);
     const [accountMenuPosition, setAccountMenuPosition] = useState({ top: 0, right: 0 });
     const navigate = useNavigate();
     const pathname = usePathname();
@@ -42,6 +44,9 @@ function Header({ onMenuToggle, menuExpanded = false }: HeaderProps){
     const channelHome = canAccess('videos') ? '/my-videos' : canAccess('myLivestreams') ? '/my-livestreams' : canAccess('playlists') ? '/my-playlists' : canAccess('quizzes') ? '/quizzes' : canAccess('people') ? '/speakers-chairs' : canAccess('channelAnalytics') ? '/channel-analytics' : canAccess('upload') ? '/upload' : null;
     const platformHome = canAccess('platformAnalytics') ? '/platform-analytics' : canAccess('platformUsers') ? '/platform-users' : canAccess('platformSettings') ? '/platform-settings?page=access' : null;
     const hasManagementAccess = !!channelHome || !!platformHome;
+    const userRoleNames = authUser?.roles?.map(role => role.name.trim().toLowerCase()) ?? [];
+    const greetingRoleKey = userRoleNames.includes('owner') ? 'systemRoleOwner'
+        : userRoleNames.includes('administrator') ? 'systemRoleAdministrator' : null;
 
     const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
     const searchInputRef = useRef<HTMLInputElement>(null);
@@ -270,12 +275,16 @@ function Header({ onMenuToggle, menuExpanded = false }: HeaderProps){
                     </Link>
 
                     {hasAuthenticatedUser ? (
-                        <div ref={accountMenuRef} className="adminAvatarMenuWrap darkSVG max-[500px]:hidden">
+                        <div ref={accountMenuRef} className="adminAvatarMenuWrap darkSVG flex min-w-0 items-center gap-2.5 max-[500px]:hidden"
+                            onPointerEnter={event => { if (event.pointerType === "mouse") openAccountMenu(); }}
+                            onPointerLeave={event => { if (event.pointerType === "mouse") scheduleAccountClose(); }}>
+                            <p className="appHeaderGreeting font-medium max-[1075px]:hidden">
+                                <span className="appHeaderGreetingText"><span aria-hidden="true">👋</span>{" "}{t("helloUser", { firstName: headerUserData.user.full_name.trim().split(/\s+/)[0] })}</span>
+                                {greetingRoleKey && <span className="appHeaderGreetingRole">{t(greetingRoleKey)}</span>}
+                            </p>
                             <button
                                 type="button"
-                                className={`adminAvatarTrigger flex items-center ${hasManagementAccess ? "bg-(--accentOrange) p-1" : "p-1 pl-3 max-[1075px]:pl-1"} rounded-full transition-all duration-200 cursor-pointer`}
-                                onPointerEnter={event => { if (event.pointerType === "mouse") openAccountMenu(); }}
-                                onPointerLeave={event => { if (event.pointerType === "mouse") scheduleAccountClose(); }}
+                                className={`adminAvatarTrigger flex items-center ${hasManagementAccess ? "bg-(--accentOrange) p-1" : "p-1"} rounded-full transition-all duration-200 cursor-pointer`}
                                 onClick={event => {
                                     cancelAccountClose();
                                     if (event.detail === 0 && accountMenuOpen) setAccountMenuOpen(false);
@@ -286,11 +295,6 @@ function Header({ onMenuToggle, menuExpanded = false }: HeaderProps){
                                 aria-controls={accountMenuOpen ? "header-account-menu" : undefined}
                                 aria-label={t("accountMenuAria")}
                             >
-                                {!hasManagementAccess ? (
-                                    <p className="mr-2.5 font-medium max-[1075px]:hidden">
-                                        <span>👋&nbsp;{t("helloUser", {firstName: headerUserData.user.full_name.split(" ")[0]})}</span>
-                                    </p>
-                                ) : null}
                                 <img 
                                     className="accountImg rounded-full w-9 h-9 aspect-square object-cover"
                                     src={headerUserData?.user?.image_url || DefaultProfile}
@@ -301,11 +305,14 @@ function Header({ onMenuToggle, menuExpanded = false }: HeaderProps){
                                 />
                             </button>
 
-                            {accountMenuOpen && typeof document !== "undefined" ? createPortal(
+                            {accountMenuPresence.mounted && typeof document !== "undefined" ? createPortal(
                                 <div
                                     ref={accountDropdownRef}
                                     id="header-account-menu"
-                                    className="adminAvatarDropdown darkSVG animate-slideIn"
+                                    className="adminAvatarDropdown darkSVG"
+                                    data-visible={accountMenuPresence.visible}
+                                    inert={!accountMenuOpen}
+                                    aria-hidden={!accountMenuOpen}
                                     onPointerEnter={cancelAccountClose}
                                     onPointerLeave={event => { if (event.pointerType === "mouse") scheduleAccountClose(); }}
                                     role="menu"
