@@ -14,6 +14,7 @@ import type { ReactNode } from "react";
 export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     const { t, locale, setLocale } = useI18n();
     const { can, canAccess, user } = useAuthorization();
+    const hasChannelAccess = canAccess('videos') || canAccess('myLivestreams') || canAccess('playlists') || canAccess('posts') || canAccess('quizzes') || canAccess('people') || canAccess('channelAnalytics') || canAccess('upload') || canAccess('createLive');
     const platformHome = canAccess('platformAnalytics') ? '/platform-analytics' : canAccess('platformUsers') ? '/platform-users' : canAccess('platformSettings') ? '/platform-settings?page=access' : null;
     const item = (to: string, label: string, icon: ReactNode) => <NavLink key={to} to={to} end
         className={({ isActive }) => `appSidebarItem${isActive ? ' isActive' : ''}`} onClick={onNavigate}>
@@ -43,6 +44,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                 </Link>
             </h2>
             {user ? <>
+                {user.id && hasChannelAccess && item(`/channel/${user.id}`, t('channelLabel'), ChannelMenuSVG)}
                 {can(P.videosLibrary) && <>
                     {item('/account', t('watchHistory'), HistorySVG)}
                     {item('/account/liked', t('likedVideos'), LikeSVG)}

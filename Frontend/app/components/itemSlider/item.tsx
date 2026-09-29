@@ -8,7 +8,7 @@ import { formatDuration } from "~/functions";
 import type { PlaylistVideoT } from "~/types";
 import { CurrentNavContext } from "~/context";
 
-function Item({props, playlistIndex, playlistId, href, live}: {props: Omit<PlaylistVideoT, "people"> & { people: { name: string }[] }, playlistIndex?: number, playlistId?: string, href?: string, live?: { status: import("../live/api").LiveStatus }}){
+function Item({props, playlistIndex, playlistId, href, live}: {props: Omit<PlaylistVideoT, "people"> & { people: { name: string }[] }, playlistIndex?: number, playlistId?: string, href?: string, live?: { status: import("../live/api").LiveStatus; scheduled_at?: string | null }}){
     const requestedThumbnail = getVideoThumbnail(props) || DefaultThumbnail;
     const [failedThumbnail, setFailedThumbnail] = useState<string>();
     const newThumbnailUrl = failedThumbnail === requestedThumbnail ? DefaultThumbnail : requestedThumbnail;
@@ -64,7 +64,7 @@ function Item({props, playlistIndex, playlistId, href, live}: {props: Omit<Playl
 
                 {playlistIndex && playlistIndex > -1 ? <span className="playlistOrderNumber">{playlistIndex}</span> : ""}
 
-                <span className="liveCardBadge"><LiveStatus live={live} /></span>
+                <span className="liveCardBadge"><LiveStatus live={live} scheduledAt={live?.scheduled_at} /></span>
                 {(!isLive) && <span className={"duration z-1" + (isWatched ? " watched" : "")}>{formatDuration(props.duration_seconds)}</span>}
 
                 {isWatched ? <span className="bottomShadow z-1 relative"></span> : ""}

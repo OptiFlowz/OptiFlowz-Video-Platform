@@ -64,6 +64,9 @@ function VideoInfo({
     onOpenComments,
     topAction,
     live = false,
+    metadataOnly = false,
+    metadata,
+    titlePrefix,
 }: {
     props?: VideoT,
     isLoading?: boolean,
@@ -73,13 +76,16 @@ function VideoInfo({
     onOpenComments?: () => void,
     topAction?: ReactNode,
     live?: boolean,
+    metadataOnly?: boolean,
+    metadata?: ReactNode,
+    titlePrefix?: ReactNode,
 }) {
     const { t } = useI18n();
     const { can } = useAuthorization();
-    const canReact = can(P.videosReact);
-    const ready = !!props && !live;
+    const canReact = !metadataOnly && !!props?.id && can(P.videosReact);
+    const ready = !!props && !live && !metadataOnly;
     const location = useLocation();
-    const hasTranscript = useTranscriptAvailable(live ? undefined : props?.id);
+    const hasTranscript = useTranscriptAvailable(live || metadataOnly ? undefined : props?.id);
 
     const tagsArray = props?.tags?.map((item, index) => (
         <Link to={`/search?tag=${item}`} key={`tag${index}`} className="tag noHover">#{item}</Link>
@@ -181,6 +187,7 @@ function VideoInfo({
             { method: "POST", headers: myHeaders, redirect: "follow" }
             );
 
+            if (!response.ok) throw new Error(`Reaction failed: ${response.status}`);
             const result = await response.json();
             const serverNext = result?.status ?? 0;
             applyReactionChange(optimisticNext, serverNext);
@@ -214,6 +221,7 @@ function VideoInfo({
             { method: "POST", headers: myHeaders, redirect: "follow" }
             );
 
+            if (!response.ok) throw new Error(`Reaction failed: ${response.status}`);
             const result = await response.json();
             const serverNext = result?.status ?? 0;
 
@@ -290,12 +298,12 @@ function VideoInfo({
             {topAction}
             <span className="videoTitleHolder flex items-start justify-between">
                 <span>
-                    <h2 className="text-xl font-medium max-[500px]:text-lg">{props?.title}</h2>
-                    <p className="weakText text-sm max-[500px]:text-xs">{t("publishedOn")} {formatDate(props.created_at)} • {formatViews(props.view?.counted ? props.view_count + 1 : props.view_count)}</p>
+                    <h2 className={`text-xl font-medium max-[500px]:text-lg${titlePrefix ? " videoTitleWithPrefix" : ""}`}>{titlePrefix}<span>{props.title}</span></h2>
+                    {metadata !== false && <p className="weakText text-sm max-[500px]:text-xs">{metadata ?? <>{t("publishedOn")} {formatDate(props.created_at)}{!metadataOnly && <> • {formatViews(props.view?.counted ? props.view_count + 1 : props.view_count)}</>}</>}</p>}
                 </span>
 
                 <span className="functional max-[800px]:overflow-y-scroll max-[800px]:w-full no-scrollbar shrink-0 gap-2 flex items-center ml-3 max-[800px]:ml-0">
-                    <div className="flex bg-(--background2) rounded-full">
+                    {!metadataOnly && <div className="flex bg-(--background2) rounded-full">
                         <button 
                             className={`${userReaction == 1 ? "bookmarked" : ""} ${likeAnimation ? "like-animate" : ""} bg-transparent! rounded-r-none! border-r! border-r-(--border1)! hover:bg-(--background2)! pl-3.5!`} 
                             onClick={toggleLike} disabled={!canReact || isReacting}
@@ -311,21 +319,21 @@ function VideoInfo({
                         >
                             {DislikeSVG}
                         </button>
-                    </div>
+                    </div>}
 
                     <button onClick={shareVideoLink} title={t("shareVideo")}>
                         {ShareSVG}
                         <p>{t("share")}</p>
                     </button>
 
-                    {ready && <button className={`aiButton ${aiButtonAnimation ? "ai-bubbly-animate" : ""}`} onClick={askAIAQuestion} title={t("askAI")}>
+                    {!metadataOnly && <button className={`aiButton ${aiButtonAnimation ? "ai-bubbly-animate" : ""}`} onClick={askAIAQuestion} title={t("askAI")}>
                         <span className="aiIconWrap">{AIButtonSVG}</span>
                         <p>{t("askAI")}</p>
                     </button>}
 
-                    <button className="p-1.75!" onClick={viewVideoCopyrights} title={t("viewCopyrightInfo")}>
+                    {!metadataOnly && <button className="p-1.75!" onClick={viewVideoCopyrights} title={t("viewCopyrightInfo")}>
                         {InfoSVG}
-                    </button>
+                    </button>}
                 </span>
             </span>
 

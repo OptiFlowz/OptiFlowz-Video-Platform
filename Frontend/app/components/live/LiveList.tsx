@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 import { getToken } from '~/functions';
 import { useI18n } from '~/i18n';
 import { useAuthorization } from '~/authorization/authorization';
-import Pagination from '../library/pagination';
-import CustomSelect from '../customSelect/customSelect';
+import InfiniteScroll from '../library/infiniteScroll';
+import { nextResultsPage } from '../library/infiniteResults';
 import Item from '../itemSlider/item';
 import { liveRequest, type LiveCardsResponse, type LiveListResponse } from './api';
 import './live.css';
@@ -51,36 +51,37 @@ export function useLivestreams() {
   return { page, setPage, limit, setLimit, sort, setSort, search, setSearch, query: { ...query, data } };
 }
 
-export function LiveList({ channelId }: { channelId: string }) {
+export function LiveList({ channelId, sort, active }: { channelId: string; sort: string; active: boolean }) {
   const { t } = useI18n();
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(20);
-  const [sort, setSort] = useState('streamed_at:desc');
   const token = getToken();
-  const query = useQuery({
-    queryKey: ['live-cards', channelId, token, page, limit, sort], enabled: !!channelId,
-    queryFn: ({ signal }) => {
+  const limit = 20;
+  const query = useInfiniteQuery({
+    queryKey: ['live-cards', 'infinite', channelId, token, sort],
+    enabled: !!channelId && active,
+    initialPageParam: 1,
+    queryFn: ({ pageParam, signal }) => {
       const [sort_by, sort_dir] = sort.split(':');
-      const params = new URLSearchParams({ page: String(page), limit: String(limit), sort_by, sort_dir });
+      const params = new URLSearchParams({ page: String(pageParam), limit: String(limit), sort_by, sort_dir });
       return liveRequest<LiveCardsResponse>(`live-streams/users/${encodeURIComponent(channelId)}/cards?${params}`, 'GET', undefined, signal);
     },
-    staleTime: 0, gcTime: 0, refetchInterval: 15000, retry: 1,
+    getNextPageParam: (lastPage, pages, page) => nextResultsPage(lastPage, pages, page, limit, response => response.cards),
+    staleTime: 30_000, gcTime: 300_000, refetchInterval: active ? 15000 : false, retry: 1,
   });
-  return <section className="liveLibrary" aria-label={t('liveTitle')}>
-    <div className="liveToolbar"><CustomSelect value={sort} onChange={value => { setSort(value); setPage(1); }} ariaLabel={t('searchSortBy')} options={[
-      { value: 'streamed_at:desc', label: t('channelSortNewest') }, { value: 'streamed_at:asc', label: t('channelSortOldest') }, { value: 'views:desc', label: t('searchSortViews') },
-    ]}/></div>
+  const cards = useMemo(() => Array.from(new Map(
+    (query.data?.pages.flatMap(page => page.cards) ?? []).map(card => [`${card.card_type}:${card.id}`, card]),
+  ).values()), [query.data]);
+  return <section className="liveLibrary" aria-label={t('liveTitle')} aria-busy={query.isFetching}>
     {query.isPending ? <div className="collection notscrollable">{Array.from({ length: 6 }, (_, i) => <div className="skeleton-item" key={i}><div className="skeleton-thumbnail"/><div className="skeleton-title"/></div>)}</div>
-      : query.isError ? <div className="liveEmpty" role="alert"><p>{query.error.message}</p><button className="liveButton" onClick={() => void query.refetch()}>{t('usersRetry')}</button></div>
-      : !query.data?.cards.length ? <p className="liveEmpty">{t('liveEmpty')}</p>
-      : <div className="collection notscrollable">{query.data.cards.map(card => <article className="liveCard" key={`${card.card_type}:${card.id}`}>
+      : query.isError && !query.data ? <div className="liveEmpty" role="alert"><p>{query.error.message}</p><button className="liveButton" onClick={() => void query.refetch()}>{t('usersRetry')}</button></div>
+      : !cards.length ? <p className="liveEmpty">{t('liveEmpty')}</p>
+      : <div className="collection notscrollable">{cards.map(card => <article className="liveCard" key={`${card.card_type}:${card.id}`}>
         <Item href={card.card_type === 'recording' ? `/video/${card.video_id}` : `/live/${card.livestream_id}`}
-          live={card.card_type === 'recording' ? undefined : { status: card.livestream_status }}
+          live={card.card_type === 'recording' ? undefined : { status: card.livestream_status, scheduled_at: card.scheduled_at }}
           props={{ ...card, duration_seconds: card.duration_seconds ?? 0, progress_seconds: card.progress_seconds ?? 0, percentage_watched: card.percentage_watched ?? 0 }}/>
-        {card.card_type === 'scheduled' && card.scheduled_at && <p className="liveMeta">{new Date(card.scheduled_at).toLocaleString()}</p>}
       </article>)}</div>}
-    {!query.isError && <Pagination page={page} limit={limit} total={query.data?.total} loading={query.isFetching} label={t('liveTitle')}
-      onPageChange={setPage} onLimitChange={value => { setLimit(value); setPage(1); }} />}
+    {query.isRefetchError && query.data && <div className="liveEmpty" role="alert"><p>{query.error.message}</p><button className="liveButton" onClick={() => void query.refetch()}>{t('usersRetry')}</button></div>}
+    {active && query.data && <InfiniteScroll hasMore={!!query.hasNextPage} fetching={query.isFetching} error={query.isFetchNextPageError}
+      onLoadMore={() => { if (!query.isFetching) void query.fetchNextPage(); }} loadingLabel={t('videoLoadingData')} />}
   </section>;
 }
 // The new API exposes channel cards, not a global livestream directory.

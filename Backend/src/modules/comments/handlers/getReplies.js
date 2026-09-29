@@ -44,7 +44,7 @@ export async function getRepliesInternal(object, userId = null) {
   }
 
   const video_id = parentRes.rows[0].video_id;
-  await requireVisibleVideo(writePool, video_id, userId);
+  await requireVisibleVideo(writePool, video_id, userId, { allowLiveRecording: true });
 
   const countRes = await readPool.query(
     `

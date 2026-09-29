@@ -6,7 +6,7 @@ import { useI18n } from '~/i18n';
 import { getToken } from '~/functions';
 import { useAuthorization } from '~/authorization/authorization';
 import { P } from '~/authorization/permissions';
-import { ShareSVG, UploadSVG } from '~/constants';
+import { InfoSVG, ShareSVG, UploadSVG } from '~/constants';
 import CustomSelect from '../customSelect/customSelect';
 import { liveRequest, liveStatusKey, type LiveDetails, type LiveStream } from './api';
 import { useLiveDetails } from './useLiveStream';
@@ -48,7 +48,7 @@ function StudioForm({ live }: { live?: LiveDetails }) {
     topOffset: 89,
     bottomGap: 24,
   });
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { can, canOwn } = useAuthorization();
   const navigate = useNavigate();
   const client = useQueryClient();
@@ -57,6 +57,15 @@ function StudioForm({ live }: { live?: LiveDetails }) {
   const [visibility, setVisibility] = useState<LiveStream['visibility']>(live?.visibility ?? 'private');
   const [policy, setPolicy] = useState<LiveStream['playback_policy']>(live?.playback_policy ?? 'signed');
   const [dvr, setDvr] = useState(live?.dvr_enabled ?? false);
+  const durationLocale = locale === 'sr' ? 'sr-Latn' : locale;
+  const durationParts: [number, string][] = dvr
+    ? [[3, 'hour'], [59, 'minute'], [59, 'second']]
+    : [[12, 'hour']];
+  const maxDuration = new Intl.ListFormat(durationLocale, { style: 'long', type: 'unit' }).format(
+    durationParts.map(([value, unit]) => new Intl.NumberFormat(durationLocale, {
+      style: 'unit', unit, unitDisplay: 'long',
+    }).format(value)),
+  );
   const [schedule, setSchedule] = useState(localDate(live?.scheduled_at));
   const [credentials, setCredentials] = useState<Credentials>();
   const [reveal, setReveal] = useState(false);
@@ -155,8 +164,8 @@ function StudioForm({ live }: { live?: LiveDetails }) {
             <p className="liveHelp">{t('liveScheduleHelp')}</p>
             <div className="liveFormRow">
               <label>{t('liveMode')}<CustomSelect value={dvr ? 'dvr' : 'standard'} disabled={!create || !edit || busy} onChange={v => setDvr(v === 'dvr')} ariaLabel={t('liveMode')} options={[{ value: 'standard', label: t('liveStandard') }, { value: 'dvr', label: t('liveDvr') }]}/></label>
-              <label>{t('liveDuration')}<input readOnly value={dvr ? 14399 : 43200}/></label>
             </div>
+            <aside className="liveDurationNotice"><span aria-hidden="true">{InfoSVG}</span><p>{t('liveDuration')}: <strong>{maxDuration}</strong></p></aside>
             <p className="liveHelp">{t('liveDvrLockedHelp')}</p>
             {!create && <p className="liveHelp">{t('liveRecordingSettingsHelp')}</p>}
             {edit && <button className="saveCaptionsBtn" disabled={busy} type="submit">{t(busy ? 'liveSaving' : create ? 'liveCreate' : 'liveSaveDetails')}</button>}

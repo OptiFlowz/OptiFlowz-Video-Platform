@@ -1,3 +1,4 @@
+import { visibleVideoWhere } from '../../../../common/videoAccess.js';
 import { HttpError } from '../../../../common/httpError.js';
 import { writePool } from '../../../../database/index.js';
 import {
@@ -30,7 +31,7 @@ export async function getSimilarVideosVectorInternal(videoId, userId = null, lim
     throw new HttpError(400, { message: 'Requested page is too large' });
   }
 
-  // Apply the same source-video access rules as getVideoById on the primary.
+  // Authorize the source video, including the current recording of a visible live stream.
   // Prefer its overview; captions alone can still provide a representative vector.
   const { rows: sourceRows } = await writePool.query(
     `SELECT v.id,
@@ -50,8 +51,7 @@ export async function getSimilarVideosVectorInternal(videoId, userId = null, lim
          AND d.index_version = $4
          AND vector_norm(d.embedding) > 0
      ) reference ON TRUE
-     WHERE v.id = $1 AND v.mux_status = 'ready'
-       AND ((v.visibility = 'public' AND v.published_at <= NOW()) OR (v.visibility IN ('public', 'private') AND v.uploaded_by = $2))`,
+     WHERE v.id = $1 AND ${visibleVideoWhere({ allowLiveRecording: true })}`,
     [videoId, userId, MODEL, INDEX_VERSION],
   );
   if (!sourceRows.length) throw new HttpError(404, { message: 'Video not found' });

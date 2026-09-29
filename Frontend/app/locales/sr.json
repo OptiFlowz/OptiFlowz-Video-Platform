@@ -1308,7 +1308,7 @@
   "liveMode": "Režim reprodukcije",
   "liveStandard": "Standardni prenos",
   "liveDvr": "DVR — dostupno premotavanje",
-  "liveDuration": "Maksimalno trajanje (sekunde)",
+  "liveDuration": "Maksimalno trajanje",
   "liveDurationHelp": "60–43.200 sekundi. DVR: do 14.399 sekundi. Prenos se automatski završava po isteku limita.",
   "liveSchedule": "Planirani početak (tvoje lokalno vreme)",
   "liveScheduleHelp": "Opciono. Termin najavljuje događaj; prenos počinje kada se enkoder poveže. Javna stranica događaja dostupna je odmah.",

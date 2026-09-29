@@ -32,7 +32,7 @@ function prerequisites(object, userId) {
 export async function postCommentInternal(object, userId) { 
   const { video_id, parent_id = null, content } = prerequisites(object,userId);
 
-  await requireVisibleVideo(writePool, video_id, userId);
+  await requireVisibleVideo(writePool, video_id, userId, { allowLiveRecording: true });
 
   if (parent_id) {
     const parentCheck = await writePool.query(

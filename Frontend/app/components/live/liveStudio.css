@@ -18,3 +18,8 @@
 @media (max-width: 500px) {
   .liveStudioFooter > .liveActions { margin-inline-start: 0; }
 }
+
+.liveDurationNotice { display: flex; align-items: flex-start; gap: 10px; padding: 14px 16px; border-radius: 12px; background: var(--background1); color: var(--text2); font-size: .875rem; line-height: 1.6; }
+.liveDurationNotice > span { display: flex; flex: 0 0 auto; margin-top: 2px; }
+.liveDurationNotice svg { width: 18px; height: 18px; }
+.liveDurationNotice strong { color: var(--text1); font-weight: 600; }

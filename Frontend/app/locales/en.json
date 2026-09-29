@@ -1322,7 +1322,7 @@
   "liveMode": "Playback mode",
   "liveStandard": "Standard live",
   "liveDvr": "DVR — rewind available",
-  "liveDuration": "Maximum duration (seconds)",
+  "liveDuration": "Maximum duration",
   "liveDurationHelp": "60–43,200 seconds. DVR: up to 14,399 seconds. The broadcast ends automatically at its limit.",
   "liveSchedule": "Planned start (your local time)",
   "liveScheduleHelp": "Optional. The schedule announces the event; broadcasting begins when your encoder connects. A public event page is available immediately.",

@@ -44,9 +44,8 @@ export default function LivePlaybackView({ live, compact = false }: { live: Live
     onError={() => setFailed(true)}
   /> : <div className="liveWaiting" role="status">
     {live.thumbnail_url && !compact ? <img src={live.thumbnail_url} alt=""/> : LiveSVG}
-    <LiveStatus live={live}/>
+    <LiveStatus live={live} scheduledAt={live.scheduled_at}/>
     <h2>{t(failed || playback.isError && canPlayLive(live) ? 'livePlaybackInterrupted' : `liveMessage_${liveStatusKey(live.status)}`)}</h2>
-    {live.scheduled_at && live.status === 'scheduled' && <p>{new Date(live.scheduled_at).toLocaleString()}</p>}
     <p>{t('liveUpdatesAutomatically')}</p>
     {(failed || playback.isError) && <button className="liveButton" onClick={() => { setFailed(false); void playback.refetch(); }}>{t('usersRetry')}</button>}
   </div>;

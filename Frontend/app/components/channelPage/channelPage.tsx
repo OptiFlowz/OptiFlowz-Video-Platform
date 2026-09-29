@@ -1,5 +1,6 @@
 import ExpandableDescription from "../shared/ExpandableDescription";
 import ChannelPosts from '../posts/ChannelPosts';
+import { LiveList } from '../live/LiveList';
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo, useRef, useState, useId } from "react";
 import { useLocation, useNavigate, useParams } from "react-router";
@@ -73,6 +74,7 @@ function ChannelPage() {
         navigate(tab === 'videos' ? channelPath : `${channelPath}/${tab}`, { preventScrollReset: true, shallow: true });
     };
     const [postAscending, setPostAscending] = useState(false);
+    const [liveSort, setLiveSort] = useState('streamed_at:desc');
     const tabsId = useId();
     const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
     const [videoSortBy, setVideoSortBy] = useState<ChannelSortBy>("created_at");
@@ -252,8 +254,13 @@ function ChannelPage() {
                         ><span className={`profileTabIcon${tab === "posts" ? " profileTabIcon--posts" : ""}`} aria-hidden="true">{tab === "live" ? LiveSVG : tab === "videos" ? ChannelMenuSVG : tab === "playlists" ? PlaylistSVG : PostSVG}</span><span>{t(tab === "live" ? "liveTitle" : `${tab}Tab`)}</span></button>
                     ))}
                 </ProfileTabs>
-                <div className="channelSortControl" hidden={activeTab === "live"}>
-                    {activeTab === 'posts' ? <CustomSelect value={postAscending ? 'asc' : 'desc'} options={[{value:'desc', label:t('channelSortNewest')}, {value:'asc', label:t('channelSortOldest')}]} onChange={value => setPostAscending(value === 'asc')} ariaLabel={t('searchSortBy')} rootClassName="channelSortSelect" /> : <CustomSelect
+                <div className="channelSortControl">
+                    {activeTab === 'live' ? <CustomSelect value={liveSort} onChange={setLiveSort} ariaLabel={t('searchSortBy')} rootClassName="channelSortSelect" options={[
+                        { value: 'streamed_at:desc', label: t('channelSortNewest') },
+                        { value: 'streamed_at:asc', label: t('channelSortOldest') },
+                        { value: 'views:desc', label: t('channelSortMostPopular') },
+                        { value: 'views:asc', label: t('channelSortLeastPopular') },
+                    ]} /> : activeTab === 'posts' ? <CustomSelect value={postAscending ? 'asc' : 'desc'} options={[{value:'desc', label:t('channelSortNewest')}, {value:'asc', label:t('channelSortOldest')}]} onChange={value => setPostAscending(value === 'asc')} ariaLabel={t('searchSortBy')} rootClassName="channelSortSelect" /> : <CustomSelect
                         value={activeTab === "videos" ? `${videoSortBy}:${videoSortOrder}` : `${playlistSortBy}:${playlistSortOrder}`}
                         options={CHANNEL_SORT_OPTIONS.map(option => ({ ...option, label: t(option.label) }))}
                         onChange={(value) => activeTab === "videos"
@@ -278,7 +285,7 @@ function ChannelPage() {
                 {!isLoadingPlaylists && normalizedPlaylists.length === 0 && <p className="channelEmpty">{t("quizNoPlaylistsFound")}</p>}</>}
             </div>
             <div className="channelPanel" role="tabpanel" id={`${tabsId}-live-panel`} aria-labelledby={`${tabsId}-live-tab`} hidden={activeTab !== 'live'} tabIndex={0}>
-                <p className="channelEmpty">{t('liveEmpty')}</p>
+                {channelId && <LiveList key={channelId} channelId={channelId} sort={liveSort} active={activeTab === 'live'} />}
             </div>
             <div className="channelPanel" role="tabpanel" id={`${tabsId}-posts-panel`} aria-labelledby={`${tabsId}-posts-tab`} hidden={activeTab !== 'posts'} tabIndex={0}>
                 {activeTab === 'posts' && channel && <ChannelPosts channelId={channelId || ''} author={channel} videos={normalizedVideos} ascending={postAscending} />}

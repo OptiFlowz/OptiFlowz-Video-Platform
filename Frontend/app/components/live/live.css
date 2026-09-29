@@ -11,7 +11,8 @@ main.livePage { max-width: var(--contentWidth); margin: 0 auto; padding: 100px 0
 .liveCard { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
 .liveCard > .item { width: 100%; min-width: 0; }
 .liveCard > .liveButton { align-self: flex-start; }
-.liveCardBadge { position: absolute; inset: 10px auto auto 10px; z-index: 3; pointer-events: none; }
+.liveCardBadge { position: absolute; inset: 10px 10px auto 10px; z-index: 3; pointer-events: none; }
+.liveCardBadge .liveBadge { max-width: 100%; flex-wrap: wrap; }
 .liveBadge { display: inline-flex; align-items: center; gap: 6px; border-radius: 6px; background: var(--background3); color: var(--text1); padding: 4px 9px; font-size: 12px; font-weight: 650; line-height: 1.4; }
 .liveBadge--live { background: var(--accentRed3); color: var(--borderWhite); }
 .liveBadge--scheduled { background: var(--accentBlue3); color: var(--borderWhite); }
@@ -63,10 +64,23 @@ main .liveLibrary .liveCard > .item { width: 100%; min-width: 0; max-width: 100%
 .channelPanel > .liveLibrary { padding-top: 24px; }
 .channelSortControl[hidden] { display: none; }
 
-.appFrameContent > main.liveWatchPage { width: min(var(--contentWidth), calc(100% - 40px)); margin: 0 auto; padding: 100px 0 32px; display: flex; flex-direction: column; gap: 24px; }
-.liveWatchDetails { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-.liveWatchDetails h1 { font-size: clamp(22px, 3vw, 32px); font-weight: 650; overflow-wrap: anywhere; }
-.liveDescription { white-space: pre-wrap; overflow-wrap: anywhere; }
-.liveWatchPage .livePlayer { height: auto; max-height: 75dvh; }
-.liveWatchPage .livePlayer > mux-player { display: block; }
-@media (max-width: 800px) { .appFrameContent > main.liveWatchPage { width: 100%; padding-inline: 0; } .liveWatchDetails, .liveWatchPage > .commentsSection { padding-inline: 20px; } .liveWatchPage .livePlayer { border-radius: 0; min-height: 240px; aspect-ratio: auto; } .liveWatchPage .livePlayer > mux-player { aspect-ratio: 16 / 9; } }
+.appFrameContent > main.liveWatchPage { width: min(var(--contentWidth), calc(100% - 40px)); margin: 0 auto; padding: 100px 0 32px; }
+.appFrameContent > main.liveWatch { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 30%); align-items: start; gap: 32px; }
+.appFrameContent > main.liveWatch--detailsOnly { grid-template-columns: minmax(0, 1fr); max-width: 1100px; }
+.liveWatchPrimary, .liveWatchDetails { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.appFrameContent > main.liveWatch > .relevant { min-width: 0; max-width: none; }
+.liveWatchPage .livePlayer { height: auto; aspect-ratio: auto; }
+.liveWatchPage .livePlayer > mux-player { display: block; aspect-ratio: 16 / 9; }
+.liveWatchPage .liveWaiting, .liveWatchPage .videoPreviewPlaceholder { aspect-ratio: 16 / 9; }
+@media (max-width: 1100px) { .appFrameContent > main.liveWatch { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 800px) {
+  .appFrameContent > main.liveWatchPage { width: 100%; padding: 93px 0 32px; }
+  .liveWatchDetails, .liveWatchComments, main.liveWatch > .relevant { padding-inline: 20px; }
+  .liveWatchPage .livePlayer { border-radius: 0; }
+  .liveWatchPage .liveWaiting { min-height: 240px; }
+}
+
+
+.liveWatch .videoTitleWithPrefix { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.liveWatch .videoTitleWithPrefix > .liveBadge { flex-shrink: 0; }
+.liveWatch .videoTitleWithPrefix > span:last-child { min-width: 0; overflow-wrap: anywhere; }
