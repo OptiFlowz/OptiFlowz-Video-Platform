@@ -3,6 +3,7 @@ import type { VPreviewProps } from "~/types";
 import ContentInfo from "~/components/contentInfo";
 import { Link } from "react-router";
 import { formatDuration } from "~/functions";
+import { useDelayedHoverPreview } from "~/components/shared/useDelayedHoverPreview";
 
 function Item({props}: {props: VPreviewProps}){
     const {id, duration, ...info} = props;
@@ -11,15 +12,14 @@ function Item({props}: {props: VPreviewProps}){
     const animGifUrl = props.preview_url || undefined;
     const isWatched = (props?.percentage_watched < 5 || props?.percentage_watched > 95) ? false : props?.progress_seconds;
 
-    const [isHovered, setIsHovered] = useState(false);
-    const [previewRequested, setPreviewRequested] = useState(false);
+    const { isActive: previewActive, start: startPreview, cancel: cancelPreview } = useDelayedHoverPreview();
     const [loadedPreview, setLoadedPreview] = useState<string>();
-    const showPreview = isHovered && !!animGifUrl && loadedPreview === animGifUrl;
+    const showPreview = previewActive && !!animGifUrl && loadedPreview === animGifUrl;
 
     return (
-        <Link to={`/video/${id || 0}`} className="item" onMouseEnter={() => { setIsHovered(true); setPreviewRequested(true); }} onFocus={() => { setIsHovered(true); setPreviewRequested(true); }} onBlur={() => setIsHovered(false)} onMouseLeave={() => setIsHovered(false)}>
+        <Link to={`/video/${id || 0}`} className="item" onMouseEnter={startPreview} onFocus={startPreview} onBlur={cancelPreview} onMouseLeave={cancelPreview}>
             <div className="thumbnail">
-                {previewRequested && animGifUrl && <img className={isHovered ? "z-[-1] absolute top-0 left-0" : "z-0 absolute top-0 left-0"} src={animGifUrl} alt="Thumbnail preview" loading="lazy" decoding="async" onLoad={() => setLoadedPreview(animGifUrl)} onError={() => setLoadedPreview(undefined)} />}
+                {animGifUrl && <img className={previewActive ? "z-[-1] absolute top-0 left-0" : "z-0 absolute top-0 left-0 opacity-0"} src={animGifUrl} alt="Thumbnail preview" loading="eager" decoding="async" onLoad={() => setLoadedPreview(animGifUrl)} onError={() => setLoadedPreview(undefined)} />}
                 <img className={showPreview ? "z-0 relative opacity-0" : "z-1 relative opacity-100"} src={newThumbnailUrl} alt="Thumbnail" loading="lazy" decoding="async" />
                 <span className={"duration z-1" + (isWatched ? " watched" : "")}>{formatDuration(Number(duration))}</span>
                 

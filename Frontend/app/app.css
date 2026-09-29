@@ -4238,7 +4238,7 @@ main.account.accountPage {
 
 .accountHero .accountActions button {
   width: 100%;
-  min-height: 42px;
+  height: 42px;
   padding: 9px 18px;
   display: flex;
   align-items: center;
@@ -4266,7 +4266,7 @@ main.account.accountPage {
 }
 
 .accountHero .accountActions .settings {
-  background: var(--accentBlue);
+  background: var(--accentBlue3);
   color: var(--seeThroughtWhite);
 }
 
@@ -11136,9 +11136,9 @@ main.managementPage td .visibility svg path { stroke: currentColor; }
   padding: 0.8rem 1rem;
   border-radius: 1rem;
   background: var(--background2);
-  color: var(--text1);
+  color: white;
   border: 1px solid var(--border1);
-  box-shadow: 0 8px 24px var(--seethroughtBlack);
+  backdrop-filter: blur(12px);
 }
 .connectionStatus button {
   flex-shrink: 0;
@@ -11148,7 +11148,7 @@ main.managementPage td .visibility svg path { stroke: currentColor; }
   color: var(--text1);
   cursor: pointer;
 }
-.connectionStatus button:hover { background: var(--background4); }
+.connectionStatus button:hover { background: var(--background1); }
 .connectionStatus button:disabled { opacity: 0.6; cursor: wait; }
 
 /* Channel sorting uses the shared keyboard-accessible dropdown. */

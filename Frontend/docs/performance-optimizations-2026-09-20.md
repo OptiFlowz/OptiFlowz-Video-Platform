@@ -11,7 +11,7 @@ Datum: 20. septembar 2026. Izmene su lokalne; nije urađen deploy.
 | 3 | Player po potrebi | Mux player se učitava tek uz aktivnu video sesiju. Postojeći persistent provider ostaje vlasnik sesije i mini-playera. EAES konfiguracija više ne uvlači player preko zajedničkog React chunka. |
 | 4 | Infinite scroll komentara i odloženi odgovori | Uklonjeno duplo preuzimanje celog stabla radi brojanja. Početno stiže 20 glavnih komentara; naredne grupe dopunjavaju listu pri skrolovanju, bez brojeva stranica ili izbora veličine strane. Odgovori se učitavaju pri otvaranju niti i dopunjavaju na isti način. Broj komentara dolazi iz već učitanih video podataka. |
 | 5 | Podela CSS-a | Stilovi za analitiku, kvizove, administraciju i editore izdvojeni su uz odgovarajuće komponente. Zastavice više nisu globalni import. Provereno je da su sva pravila i deklaracije sačuvani. |
-| 6 | Preview na hover/focus | Animirani preview se traži tek nakon namere korisnika; potpisani URL ostaje neizmenjen. Obične sličice koriste lazy loading. |
+| 6 | Preview na hover/focus | Animirani preview GIF se učitava sa karticom; prikazuje se tek posle 300 ms neprekidnog hovera ili fokusa, a izlazak pre isteka tajmera ga otkazuje. Obične sličice koriste lazy loading. |
 | 7 | Sadržaj u početnom HTML-u | Uklonjeno globalno čekanje na mount. EAES prerenderuje početnu stranicu i zadržava SPA fallback; Next šalje javni header i hero u HTML-u. Autorizacija i izbor jezika čekaju hidrataciju gde je potrebno. |
 | 8 | Hero slike | Prva slika ima prioritet; ostale se odlažu. OptiFlowz koristi responsive Next Image. Oba slidera zadržavaju prethodnu sliku dok sledeća nije spremna. EAES čisti tajmere i animation frame pozive. |
 | 9 | Postepeno učitavanje playlisti | Po 20 videa, sa prikazom svake pristigle strane. Automatski se traže strane potrebne za aktivni video i naslednika; ostalo stiže na scroll. Autoplay više ne zavisi od postojanja DOM elementa sledećeg videa. |
@@ -51,4 +51,3 @@ Postojeći playlist API nema lookup pozicije videa. Direktan link na video dubok
 Countovi neaktivnih tabova i dalje koriste zasebne postojeće endpointove. Smanjen je njihov payload; nije obećano uklanjanje svih poziva. Semantika ukupnog broja komentara pri brisanju prati postojeći backend.
 
 EAES statički hosting mora da sačuva pravila iz public/_redirects: / služi index.html, a ostale aplikacione rute __spa-fallback.html. Postojeći public shell je prerenderovan; liste koje zahtevaju API i prijavljene korisnike i dalje se učitavaju u browseru.
-

@@ -5,6 +5,7 @@ import { memo, useState } from "react";
 import { Link } from "react-router";
 import { formatDate, formatDuration, formatViews } from "~/functions";
 import type { PlaylistVideoT, SimilarVideoT } from "~/types";
+import { useDelayedHoverPreview } from "~/components/shared/useDelayedHoverPreview";
 
 type PlayCardVideoT = SimilarVideoT | PlaylistVideoT;
 
@@ -18,9 +19,9 @@ function PlayCard({props, playedVideoId, playlistId, nextVideo} : {props: PlayCa
     const animGifUrl = props.preview_url || undefined;
     const isWatched = (props?.percentage_watched ?? 0) >= 5 && props?.progress_seconds;
 
-    const [isHovered, setIsHovered] = useState(false);
+    const { isActive: previewActive, start: startPreview, cancel: cancelPreview } = useDelayedHoverPreview();
     const [loadedPreview, setLoadedPreview] = useState<string>();
-    const showPreview = isHovered && !!animGifUrl && loadedPreview === animGifUrl;
+    const showPreview = previewActive && !!animGifUrl && loadedPreview === animGifUrl;
 
     const params = new URLSearchParams();
     if (playlistId) {
@@ -29,10 +30,10 @@ function PlayCard({props, playedVideoId, playlistId, nextVideo} : {props: PlayCa
     const videoLink = `${props?.id}${params.toString() ? `?${params.toString()}` : ""}`;
 
     return (
-        <Link data-playing-label={t("playing")} to={`/video/${videoLink}`} className={`${props?.id == playedVideoId ? "active" : props?.id == nextVideo?.id ? "nextVideo" : ""} playCard flex gap-4 items-center rounded-xl transition-all hover:cursor-pointer`} onMouseEnter={() => { if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) setIsHovered(true); }}
-            onMouseLeave={() => setIsHovered(false)}>
+        <Link data-playing-label={t("playing")} to={`/video/${videoLink}`} className={`${props?.id == playedVideoId ? "active" : props?.id == nextVideo?.id ? "nextVideo" : ""} playCard flex gap-4 items-center rounded-xl transition-all hover:cursor-pointer`} onMouseEnter={() => { if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) startPreview(); }}
+            onMouseLeave={cancelPreview}>
             <span className="banner relative w-[50%]">
-                {isHovered && animGifUrl && <img className={isHovered ? "z-[-1] absolute top-0 left-0" : "z-0 absolute top-0 left-0"} src={animGifUrl} alt="Thumbnail preview" onLoad={() => setLoadedPreview(animGifUrl)} onError={() => setLoadedPreview(undefined)} />}
+                {animGifUrl && <img className={previewActive ? "z-[-1] absolute top-0 left-0" : "z-0 absolute top-0 left-0 opacity-0"} src={animGifUrl} alt="Thumbnail preview" loading="eager" decoding="async" onLoad={() => setLoadedPreview(animGifUrl)} onError={() => setLoadedPreview(undefined)} />}
                 <img loading="lazy" decoding="async" className={showPreview ? "z-0 relative opacity-0" : "z-1 relative opacity-100"} src={newThumbnailUrl} alt="Thumbnail" />
 
                 <p className={"absolute bottom-1.75 right-1.75 z-2" + (isWatched ? " watched" : "")}>{formatDuration(props?.duration_seconds)}</p>

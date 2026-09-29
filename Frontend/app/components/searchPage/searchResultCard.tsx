@@ -4,6 +4,7 @@ import { formatDate, formatDuration, formatViews } from "~/functions";
 import { translateContentTitle, useI18n } from "~/i18n";
 import { SearchIcon } from "./searchIcons";
 import styles from "./searchPage.module.css";
+import { useDelayedHoverPreview } from "~/components/shared/useDelayedHoverPreview";
 
 export type SearchResult = {
   id: string;
@@ -23,9 +24,10 @@ export type SearchResult = {
 
 export default function SearchResultCard({ result }: { result: SearchResult }) {
   const { t } = useI18n();
-  const [hovered, setHovered] = useState(false);
+  const { isActive: previewActive, start: startPreview, cancel: cancelPreview } = useDelayedHoverPreview();
   const [imageFailed, setImageFailed] = useState(false);
   const [previewFailed, setPreviewFailed] = useState(false);
+  const [loadedPreview, setLoadedPreview] = useState<string>();
   const preview = result.kind === "video" && !previewFailed ? result.preview_url : undefined;
   const title = result.kind === "people" ? result.title : translateContentTitle(result.title);
   const label = t(result.kind === "video" ? "adminTableVideo" : result.kind === "playlist" ? "playlistLabel" : "contributorLabel");
@@ -36,19 +38,31 @@ export default function SearchResultCard({ result }: { result: SearchResult }) {
     <Link
       to={result.href}
       className={`${styles.card} ${result.kind === "people" ? styles.personCard : ""}`}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={startPreview}
+      onFocus={startPreview}
+      onBlur={cancelPreview}
+      onMouseLeave={cancelPreview}
     >
       <div className={`${styles.thumbnail} ${result.kind === "people" ? styles.portrait : ""}`}>
         {result.thumbnail && !imageFailed ? (
           <img
-            src={hovered && preview ? preview : result.thumbnail}
+            src={result.thumbnail}
             alt=""
             loading="lazy"
             decoding="async"
-            onError={() => { if (hovered && preview) setPreviewFailed(true); else setImageFailed(true); }}
+            onError={() => setImageFailed(true)}
           />
         ) : <span className={styles.thumbnailFallback}><SearchIcon name={result.kind} /></span>}
+        {preview && <img
+          className={`${styles.previewImage} ${previewActive && loadedPreview === preview ? styles.previewImageVisible : ""}`}
+          src={preview}
+          alt=""
+          aria-hidden="true"
+          loading="eager"
+          decoding="async"
+          onLoad={() => setLoadedPreview(preview)}
+          onError={() => setPreviewFailed(true)}
+        />}
         {result.kind === "video" && result.duration != null ? <span className={styles.mediaBadge}>{formatDuration(result.duration)}</span> : null}
         {result.kind === "playlist" ? <span className={styles.mediaBadge}><SearchIcon name="playlist" />{result.videoCount ?? 0}</span> : null}
         {result.kind === "video" && (result.progress ?? 0) > 0 ? (

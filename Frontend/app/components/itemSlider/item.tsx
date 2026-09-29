@@ -7,6 +7,7 @@ import ContentInfo from "~/components/contentInfo";
 import { formatDuration } from "~/functions";
 import type { PlaylistVideoT } from "~/types";
 import { CurrentNavContext } from "~/context";
+import { useDelayedHoverPreview } from "~/components/shared/useDelayedHoverPreview";
 
 function Item({props, playlistIndex, playlistId, href, live}: {props: Omit<PlaylistVideoT, "people"> & { people: { name: string }[] }, playlistIndex?: number, playlistId?: string, href?: string, live?: { status: import("../live/api").LiveStatus; scheduled_at?: string | null }}){
     const requestedThumbnail = getVideoThumbnail(props) || DefaultThumbnail;
@@ -17,9 +18,9 @@ function Item({props, playlistIndex, playlistId, href, live}: {props: Omit<Playl
     const isWatched = (!isLive) && (props?.percentage_watched ?? 0) >= 5 && !!props?.progress_seconds;
 
     const [isHovered, setIsHovered] = useState(false);
+    const { isActive: previewActive, start: startPreview, cancel: cancelPreview } = useDelayedHoverPreview();
     const [loadedThumbnail, setLoadedThumbnail] = useState<string>();
     const isLoading = loadedThumbnail !== newThumbnailUrl;
-    const [previewRequested, setPreviewRequested] = useState(false);
     const [loadedPreview, setLoadedPreview] = useState<string>();
 
     const {setCurrentNav} = useContext(CurrentNavContext);
@@ -33,26 +34,27 @@ function Item({props, playlistIndex, playlistId, href, live}: {props: Omit<Playl
         <Link
             className={`item ${playlistIndex == 1 ? "playlistStartVideo" : ""}`}
             to={href || videoHref}
-            onMouseEnter={() => { setIsHovered(true); setPreviewRequested(true); }}
-            onFocus={() => { setIsHovered(true); setPreviewRequested(true); }}
-            onBlur={() => setIsHovered(false)}
-            onMouseLeave={() => setIsHovered(false)}
+            onMouseEnter={() => { setIsHovered(true); startPreview(); }}
+            onFocus={() => { setIsHovered(true); startPreview(); }}
+            onBlur={() => { setIsHovered(false); cancelPreview(); }}
+            onMouseLeave={() => { setIsHovered(false); cancelPreview(); }}
             onClick={() => setCurrentNav(-1)}
         >
             <span className="itemThumbnail">
                 {isLoading && <span className="itemThumbnailSkeleton skeleton-thumbnail" aria-hidden="true" />}
-                {!isLoading && previewRequested && animGifUrl &&
+                {animGifUrl &&
                     <img
-                        className={isHovered ? "z-[-1] absolute top-0 left-0" : "z-[-1] absolute top-0 left-0 opacity-0"}
+                        className={previewActive ? "z-[-1] absolute top-0 left-0" : "z-[-1] absolute top-0 left-0 opacity-0"}
                         src={animGifUrl}
                         alt="Thumbnail preview"
+                        loading="eager"
                         decoding="async"
                         onLoad={() => setLoadedPreview(animGifUrl)}
                         onError={() => setLoadedPreview(undefined)}
                     />
                 }
                 <img
-                    className={`thumbnail ${isLoading ? "z-0 relative opacity-0" : `relative ${animGifUrl && loadedPreview === animGifUrl && isHovered ? "z-0 opacity-0 transition-opacity! duration-200! ease" : isHovered ? "z-1 opacity-100 darken" : "z-1 -100"}`}`}
+                    className={`thumbnail ${isLoading ? "z-0 relative opacity-0" : `relative ${animGifUrl && loadedPreview === animGifUrl && previewActive ? "z-0 opacity-0 transition-opacity! duration-200! ease" : isHovered ? "z-1 opacity-100 darken" : "z-1 -100"}`}`}
                     src={newThumbnailUrl}
                     alt="Thumbnail"
                     loading="lazy"
