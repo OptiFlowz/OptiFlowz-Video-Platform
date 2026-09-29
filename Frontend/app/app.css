@@ -2233,6 +2233,32 @@ main.play .relevant.relevant--compact {
   max-width: 18%;
 }
 
+/* Theater keeps the normal details/sidebar proportions below its wide player. */
+main.play .theaterDetailsLayout {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+main.play .theaterDetailsLayout > .theaterDetailsPrimary {
+  flex: 1 1 0;
+  min-width: 0;
+}
+main.play .theaterDetailsLayout > .relevant {
+  flex: 0 0 30%;
+  min-width: 400px;
+  max-width: 30%;
+}
+main.play .theaterDetailsLayout > .relevant.relevant--compact {
+  flex-basis: 18%;
+  min-width: 240px;
+  max-width: 18%;
+}
+@media (max-width: 1420px) {
+  main.play .theaterDetailsLayout > .relevant:not(.relevant--compact) {
+    min-width: 395px;
+  }
+}
+
 main.play .backToQuizButton {
   display: flex;
   align-items: center;

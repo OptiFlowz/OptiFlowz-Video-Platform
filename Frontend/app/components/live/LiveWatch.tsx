@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router';
 import { useI18n } from '~/i18n';
@@ -31,6 +31,24 @@ export default function LiveWatch() {
   return <LiveWatchContent key={`${videoId}:${getToken()}`} live={query.data}/>;
 }
 function LiveWatchContent({ live }: { live: LiveDetails }) {
+  const [isTheater, setIsTheater] = useState(false);
+  useEffect(() => {
+    const smallScreen = window.matchMedia('(max-width: 1075px)');
+    const syncTheater = () => {
+      if (smallScreen.matches) setIsTheater(false);
+      window.dispatchEvent(new CustomEvent(smallScreen.matches ? 'theater-disable' : 'theater-enable'));
+    };
+    const toggleTheater = () => {
+      if (!smallScreen.matches) setIsTheater(value => !value);
+    };
+    syncTheater();
+    smallScreen.addEventListener('change', syncTheater);
+    window.addEventListener('theater-mode', toggleTheater);
+    return () => {
+      smallScreen.removeEventListener('change', syncTheater);
+      window.removeEventListener('theater-mode', toggleTheater);
+    };
+  }, []);
   const { t } = useI18n();
   const { user, canOwn } = useAuthorization();
   const token = getToken();
@@ -92,23 +110,25 @@ function LiveWatchContent({ live }: { live: LiveDetails }) {
   const canManage = canOwn(P.liveUpdateOwn, P.liveUpdateAny, live.uploader_id) ||
     canOwn(P.liveBroadcastOwn, P.liveBroadcastAny, live.uploader_id) ||
     canOwn(P.liveDeleteOwn, P.liveDeleteAny, live.uploader_id);
-  return <main className={`play liveWatchPage liveWatch ${hasRecording ? '' : 'liveWatch--detailsOnly'}`}>
+  return <main className={`play liveWatchPage liveWatch ${hasRecording ? '' : 'liveWatch--detailsOnly'}${isTheater ? ' theater' : ''}`}>
     <div className="liveWatchPrimary">
       <div className="liveWatchPlayerSlot">
-        <div className="player livePlayer"><LivePlaybackView live={live}/></div>
+        <div className={`player livePlayer${isTheater ? ' theater' : ''}`}><LivePlaybackView live={live}/></div>
       </div>
-      <div className="liveWatchDetails">
-        <VideoInfo key={video.id || live.id} props={video} live metadataOnly={!hasRecording}
-          titlePrefix={<LiveStatus live={live} scheduledAt={live.scheduled_at}/>} metadata={false}
-          onOpenChapter={() => {}} onOpenTranscript={() => {}}/>
-        {canManage && <div className="liveActions">
-          <Link className="liveButton" to={`/live/${live.id}/studio`}>{t('liveManage')}</Link>
-        </div>}
+      <div className="liveWatchBody">
+        <div className="liveWatchDetails">
+          <VideoInfo key={video.id || live.id} props={video} live metadataOnly={!hasRecording}
+            titlePrefix={<LiveStatus live={live} scheduledAt={live.scheduled_at}/>} metadata={false}
+            onOpenChapter={() => {}} onOpenTranscript={() => {}}/>
+          {canManage && <div className="liveActions">
+            <Link className="liveButton" to={`/live/${live.id}/studio`}>{t('liveManage')}</Link>
+          </div>}
+        </div>
+        {hasRecording && <>
+          {!!video.playlists?.length && <InPlaylist props={video.playlists}/>}
+          <div className="liveWatchComments"><CommentsSection key={recordingId} videoId={recordingId!} refreshInterval={15000}/></div>
+        </>}
       </div>
-      {hasRecording && <>
-        {!!video.playlists?.length && <InPlaylist props={video.playlists}/>}
-        <div className="liveWatchComments"><CommentsSection key={recordingId} videoId={recordingId!} refreshInterval={15000}/></div>
-      </>}
     </div>
     {hasRecording && <div className="relevant flex flex-col gap-7">
       {similar.isError ? <div className="liveError" role="alert">

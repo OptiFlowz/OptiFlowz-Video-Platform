@@ -7,7 +7,7 @@ main.livePage { max-width: var(--contentWidth); margin: 0 auto; padding: 100px 0
 .liveHeading p, .liveMeta, .liveHelp { color: var(--text2); }
 .liveToolbar > input { flex: 1; min-width: 160px; }
 .liveToolbar > .customSelect { min-width: 180px; }
-.liveLibrary .collection.notscrollable { width: 100%; margin: 0; }
+.liveLibrary .collection.notscrollable { width: 100%; margin: 0; padding-inline: 0; }
 .liveCard { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
 .liveCard > .item { width: 100%; min-width: 0; }
 .liveCard > .liveButton { align-self: flex-start; }
@@ -45,9 +45,6 @@ main.livePage { max-width: var(--contentWidth); margin: 0 auto; padding: 100px 0
 .liveError { color: var(--accentRed3); }
 .liveNotice { color: var(--accentBlue3); }
 .liveWatch { min-width: 0; }
-main.liveWatchTheater { flex-direction: column; }
-main.liveWatchTheater > .relevant { min-width: 0; max-width: 100%; width: 100%; }
-main.liveWatchTheater .livePlayer { max-height: calc(100dvh - 110px); }
 .livePlayer { width: 100%; aspect-ratio: 16 / 9; border-radius: 16px; overflow: hidden; background: var(--background2); position: relative; }
 .livePlayer mux-player { width: 100%; height: 100%; --media-accent-color: var(--accentBlue3); --media-primary-color: var(--borderWhite); --media-secondary-color: var(--background1); }
 .liveWaiting { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 16px; padding: 24px; background: linear-gradient(135deg, var(--background3), var(--background1)); }
@@ -62,17 +59,28 @@ main .liveLibrary .liveCard > .item { width: 100%; min-width: 0; max-width: 100%
 .liveNow .collection-header { margin-bottom: 20px; }
 .liveNow .collection-header h2 { font-size: 24px; font-weight: 650; }
 .channelPanel > .liveLibrary { padding-top: 24px; }
+@media (max-width: 540px) { .channelPanel > .liveLibrary { padding-top: 16px; } }
 .channelSortControl[hidden] { display: none; }
 
 .appFrameContent > main.liveWatchPage { width: min(var(--contentWidth), calc(100% - 40px)); margin: 0 auto; padding: 100px 0 32px; }
 .appFrameContent > main.liveWatch { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 30%); align-items: start; gap: 32px; }
 .appFrameContent > main.liveWatch--detailsOnly { grid-template-columns: minmax(0, 1fr); max-width: 1100px; }
-.liveWatchPrimary, .liveWatchDetails { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.liveWatchPrimary, .liveWatchBody, .liveWatchDetails { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 .appFrameContent > main.liveWatch > .relevant { min-width: 0; max-width: none; }
 .liveWatchPage .livePlayer { height: auto; aspect-ratio: auto; }
 .liveWatchPage .livePlayer > mux-player { display: block; aspect-ratio: 16 / 9; }
 .liveWatchPage .liveWaiting, .liveWatchPage .videoPreviewPlaceholder { aspect-ratio: 16 / 9; }
 @media (max-width: 1100px) { .appFrameContent > main.liveWatch { grid-template-columns: minmax(0, 1fr); } }
+/* Reflow the existing player instead of remounting it and restarting the stream. */
+@media (min-width: 1076px) {
+  .appFrameContent > main.liveWatch.theater { grid-template-columns: minmax(0, 1fr) minmax(300px, 30%); row-gap: 20px; }
+  .appFrameContent > main.liveWatch.theater.liveWatch--detailsOnly { grid-template-columns: minmax(0, 1fr); max-width: none; }
+  .liveWatch.theater .liveWatchPrimary { display: contents; }
+  .liveWatch.theater .liveWatchPlayerSlot { grid-column: 1 / -1; grid-row: 1; min-width: 0; }
+  .liveWatch.theater .liveWatchBody { grid-column: 1; grid-row: 2; }
+  .appFrameContent > main.liveWatch.theater > .relevant { grid-column: 2; grid-row: 2; }
+  main.liveWatch.theater .livePlayer > mux-player { aspect-ratio: auto !important; }
+}
 @media (max-width: 800px) {
   .appFrameContent > main.liveWatchPage { width: 100%; padding: 93px 0 32px; }
   .liveWatchDetails, .liveWatchComments, main.liveWatch > .relevant { padding-inline: 20px; }

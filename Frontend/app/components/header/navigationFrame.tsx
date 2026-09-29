@@ -18,6 +18,7 @@ export default function NavigationFrame({ children, drawerOnly = false }: {
     const [mobile, setMobile] = useState(false);
     const [drawerOpen, setDrawerOpen] = useState(false);
     const dialogRef = useRef<HTMLDialogElement>(null);
+    const drawerTitleRef = useRef<HTMLElement>(null);
     const overlay = mobile || drawerOnly;
 
     useEffect(() => {
@@ -35,6 +36,7 @@ export default function NavigationFrame({ children, drawerOnly = false }: {
         const dialog = dialogRef.current;
         if (!drawerOpen || !dialog) return;
         dialog.showModal();
+        drawerTitleRef.current?.focus({ preventScroll: true });
         const previousOverflow = document.body.style.overflow;
         document.body.style.overflow = 'hidden';
         return () => {
@@ -57,7 +59,7 @@ export default function NavigationFrame({ children, drawerOnly = false }: {
             onClick={event => { if (event.target === event.currentTarget) setDrawerOpen(false); }}>
             <div className="appSidebarDrawer">
                 <div className="appSidebarDrawerHeader">
-                    <strong>{t('menuAria')}</strong>
+                    <strong ref={drawerTitleRef} tabIndex={-1}>{t('menuAria')}</strong>
                     <button type="button" className="appMenuToggle" aria-label={t('close')} onClick={() => setDrawerOpen(false)}>{CloseSVG}</button>
                 </div>
                 <Sidebar onNavigate={() => setDrawerOpen(false)} />

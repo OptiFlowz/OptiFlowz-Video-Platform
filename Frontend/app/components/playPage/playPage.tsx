@@ -345,8 +345,8 @@ function PlayPage(){
                             forceAutoplay={isFromQuiz}
                         />
                         
-                        <div className="flex gap-4 overflow-x-hidden">
-                            <div className="flex flex-col gap-5 overflow-x-hidden">
+                        <div className="theaterDetailsLayout overflow-x-hidden">
+                            <div className="theaterDetailsPrimary flex flex-col gap-5 overflow-x-hidden">
                                 <VideoInfo props={videoData} isLoading={isVideoLoading} onOpenChapter={openChapters} onOpenTranscript={openTranscript} onOpenNotes={() => openNotes()} topAction={backToQuizButton} />
 
                                 {videoData?.playlists && <InPlaylist props={videoData?.playlists} />}
@@ -354,7 +354,7 @@ function PlayPage(){
                                 {videoId && <CommentsSection videoId={videoId} />}
                             </div>
 
-                            <div className={`relevant flex flex-col gap-7 ${isCompactRelevant ? "relevant--compact" : "min-w-110"}`}>
+                            <div className={`relevant flex flex-col gap-7 ${isCompactRelevant ? "relevant--compact" : ""}`}>
                                 {showChapters && videoData ? <div ref={chaptersRef}><VideoChapters key={`${videoId}-${chapterPanelView}`} props={videoData} initialView={chapterPanelView} notesRequest={notesRequest} onClose={() => handleCloseChapters()} /></div> : ""}
                                 {playlistId ? <div ref={playlistRef}><PlayingPlaylist key={playlistId} playlistId={playlistId} videoId={videoId || ""} onClose={() => handleClose()} /></div> : ""}
                                 <Similar props={resolvedSimilarData} isLoading={isLoadingSimilar} />

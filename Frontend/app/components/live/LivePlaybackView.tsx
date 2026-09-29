@@ -28,6 +28,7 @@ export default function LivePlaybackView({ live, compact = false }: { live: Live
   const ready = canPlayLive(live) && playback.data && source && playback.data.mux_playback_id === source.mux_playback_id;
   return ready && source && !failed ? <LivePlayer
     ref={player} key={source.mux_playback_id} title={live.title} compact={compact}
+    startedAt={live.current_recording?.recording_started_at || live.started_at || live.connected_at}
     dvr={source.playback_mode === 'dvr'} src={source.stream_url} streamType="live"
     targetLiveWindow={source.playback_mode === 'dvr' ? Infinity : 0}
     autoPlay={compact ? false : 'muted'} muted={compact} playsInline

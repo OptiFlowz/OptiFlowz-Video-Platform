@@ -226,6 +226,7 @@ header[data-app-header].appHeader > .appHeaderInner {
 }
 .appSidebarDrawer { display: flex; flex-direction: column; height: 100%; }
 .appSidebarDrawerHeader { display: flex; justify-content: space-between; align-items: center; min-height: 73px; padding: 12px 20px; border-bottom: 1px solid var(--border3); }
+.appSidebarDrawerHeader > strong:focus { outline: none; }
 .appSidebarDrawer .appSidebarNav { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
 .appMenuToggle:focus-visible, .appSidebarNav a:focus-visible, .appHeaderSearch button:focus-visible {
     outline: 2px solid var(--accentBlue2);

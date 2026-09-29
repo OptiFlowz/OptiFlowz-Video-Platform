@@ -770,14 +770,15 @@ if (template) {
                 height: calc(1.2 * var(--base));
                 padding: 0;
                 border-radius: calc(0.25 * var(--base));
-                overflow: hidden;
+                overflow: visible;
+                flex-shrink: 0;
                 opacity: 0;
                 pointer-events: none;
 
                 --media-range-bar-color: var(--media-accent-color);
 
-                --media-range-padding-left: 0;
-                --media-range-padding-right: 0;
+                --media-range-padding-left: calc(0.25 * var(--base));
+                --media-range-padding-right: calc(0.25 * var(--base));
 
                 --media-volume-range-display: block;
 
@@ -819,11 +820,11 @@ if (template) {
                 transition-delay: 0s;
               }
 
-              media-mute-button:hover ~ media-time-display,
-              media-mute-button:focus ~ media-time-display,
-              media-mute-button:focus-within ~ media-time-display,
-              .media-volume-range-wrapper:hover ~ media-time-display,
-              .media-volume-range-wrapper:focus-within ~ media-time-display {
+              media-mute-button:hover ~ :is(media-time-display, #live-time-display),
+              media-mute-button:focus ~ :is(media-time-display, #live-time-display),
+              media-mute-button:focus-within ~ :is(media-time-display, #live-time-display),
+              .media-volume-range-wrapper:hover ~ :is(media-time-display, #live-time-display),
+              .media-volume-range-wrapper:focus-within ~ :is(media-time-display, #live-time-display) {
                 margin-left: 0;
                 transition-delay: 0s;
               }
@@ -864,7 +865,7 @@ if (template) {
 
             <!-- Time Display -->
             <style>
-              media-time-display {
+              media-time-display, #live-time-display {
                 transition: margin .2s ease-in-out .1s;
                 position: relative;
                 padding: calc(0.5 * var(--base));
@@ -902,11 +903,15 @@ if (template) {
             </style>
             <media-time-display></media-time-display>
             <media-time-display showduration></media-time-display>
+            <span id="live-time-display" dir="ltr"></span>
           </div>
 
           <style>
             .player-button-group.liveIndicator { display: none; flex-shrink: 0; }
             :host([livestream]) .liveIndicator { display: inline-flex; }
+            #live-time-display { display: none; box-sizing: border-box; flex-shrink: 0; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--playerText); align-items: center; }
+            :host([livestream]) #live-time-display { display: inline-flex; }
+            :host([livestream]) media-time-display { display: none !important; }
             :host([livestream]) .currentChapter { display: none !important; }
             :host([livestream]:not([dvr])) media-time-range,
             :host([livestream]:not([dvr])) media-seek-backward-button,
