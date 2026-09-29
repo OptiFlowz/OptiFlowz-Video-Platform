@@ -27,8 +27,8 @@ router.get('/users/:userId/cards', optionalAuth, getUserLiveCards);
 router.patch('/:liveStreamId', requireAuth, requireLiveUpdate, updateLiveDetails);
 router.post('/:liveStreamId/thumbnail', requireAuth, requireLiveUpdate, liveThumbnailUploadMiddleware, uploadLiveThumbnail);
 router.get('/:liveStreamId/streaming-details', requireAuth, requireLiveStreaming, getStreamingDetails);
-router.post('/:liveStreamId/playback', requireAuth, getLivePlayback);
-router.get('/:liveStreamId', requireAuth, getLiveDetails);
+router.post('/:liveStreamId/playback', optionalAuth, getLivePlayback);
+router.get('/:liveStreamId', optionalAuth, getLiveDetails);
 router.delete('/:liveStreamId', requireAuth, requireLiveDelete, deleteLiveStream);
 
 export default router;
