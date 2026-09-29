@@ -5,8 +5,8 @@ import { validateOrThrow } from '../../../common/input.validation.js';
 
 const idSchema = z.string().uuid('Invalid live stream ID');
 
-export async function getLiveDetailsInternal(liveStreamId, userId) {
-  if (!userId) throw new HttpError(401, { message: 'Unauthorized' });
+export async function getLiveDetailsInternal(liveStreamId, userId = null) {
+  // A guest has no personal reaction/progress; the route controls whether login is required.
   const id = validateOrThrow(idSchema.safeParse(liveStreamId));
   // Details are available before/after a broadcast; only the current unfinished
   // recording is attached. Livestream visibility governs in-progress content.

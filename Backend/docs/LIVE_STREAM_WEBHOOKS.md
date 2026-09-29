@@ -2,8 +2,9 @@
 
 Apply the existing live-stream migrations followed by
 `1790553600002_live-stream-recordings.sql` and
-`1790640000000_add-live-playback-cleanup.sql` before deploying this code.
-The new migration copies ownership and metadata to `live_streams`, moves the
+`1790640000000_add-live-playback-cleanup.sql` and
+`1790640000001_add-live-stream-permissions.sql` before deploying this code.
+The recordings migration copies ownership and metadata to `live_streams`, moves the
 relationship to nullable `videos.live_stream_id`, and preserves existing video
 IDs, metadata, publication and interactions. Existing empty placeholder videos
 are retained and reused for the first recording. New streams have no placeholder.
@@ -11,6 +12,41 @@ The migration refuses automatic downgrade because multiple recordings cannot
 be represented by the previous one-to-one model.
 
 ## API and ownership
+
+Management routes use the existing permission middleware and owned-resource
+authorization. All paths below are relative to `/api/live-streams`.
+
+| Route | Permission |
+| --- | --- |
+| `POST /` | `live_streams.create` |
+| `GET /my/lives` | `live_streams.update_own`, matching the video management library |
+| `PATCH /:liveStreamId` | `live_streams.update_own` or `live_streams.update_any` |
+| `POST /:liveStreamId/thumbnail` | `live_streams.update_own` or `live_streams.update_any` |
+| `DELETE /:liveStreamId` | `live_streams.delete_own` or `live_streams.delete_any` |
+| `GET /:liveStreamId/streaming-details` | `live_streams.stream_own` or `live_streams.stream_any` |
+
+`*_own` requires ownership; `*_any` permits the action on another user's stream.
+The platform Owner role retains its authorization bypass. Uploaders receive
+create/update-own/delete-own/stream-own; Administrators receive all seven keys.
+The migration preserves existing permission grants and denies. Viewer and
+Moderator roles receive no livestream management grants by default.
+Encoder credential access is separate from metadata editing. Creating a stream
+still returns its initial encoder credentials under `live_streams.create`.
+Authorization runs before thumbnail parsing or Mux/R2 operations. Authenticated
+callers lacking access receive 403; missing resources receive 404.
+
+Public cards retain optional authentication. Details and playback retain their
+existing authentication and visibility checks, without management permissions.
+Interactions on recordings continue using the existing video/comment permissions.
+
+The details and playback handlers accept a nullable viewer ID and work with
+either `requireAuth` or `optionalAuth`. Their routes currently use `requireAuth`.
+To allow guests, change the route middleware to `optionalAuth`: public/unlisted
+streams then allow guest access, while private streams remain owner-only (404
+for guests and other viewers). Guest recording details return `user_reaction: 0`
+and null watch progress. Signed playback tokens are also generated for allowed
+guests, for both DVR and non-DVR playback. Invalid supplied authentication still
+returns 401 through `optionalAuth`.
 
 `POST /api/live-streams/:liveStreamId/playback` requires authentication, matching
 the video playback route. Public and unlisted streams are viewable by signed-in
@@ -71,7 +107,7 @@ exists, or if the matching recording has completed or been deleted; no other
 recording is substituted. Scheduled cards have null `video_id`. Live cards still
 use livestream metadata, with no video preview, people, or watch progress.
 
-`PATCH /api/live-streams/:liveStreamId` requires the owner and accepts a partial
+`PATCH /api/live-streams/:liveStreamId` requires update access and accepts a partial
 JSON body containing `title`, `description`, `scheduled_at`, `playback_policy`
 and/or `visibility`. Title is trimmed, nonempty, and at most 512 characters.
 Description and scheduled date may be null; dates otherwise require an ISO
@@ -131,10 +167,10 @@ no-store`; playback URLs/tokens come from the separate playback route.
 `playback_policy`, `dvr_enabled` and `scheduled_at`. It returns `live_stream`,
 `stream_key` and `max_continuous_duration`; it no longer returns `video`.
 The stream owns its metadata and `user_id`, independently of its recordings.
-`GET /api/live-streams/:liveStreamId/streaming-details` checks that owner and
+`GET /api/live-streams/:liveStreamId/streaming-details` checks streaming access and
 returns non-cacheable credentials even when no recordings exist.
 
-`POST /api/live-streams/:liveStreamId/thumbnail` requires the stream owner.
+`POST /api/live-streams/:liveStreamId/thumbnail` requires update access.
 Send multipart form-data with a `file` field (JPEG, PNG or WebP, up to 5 MB).
 The dedicated livestream handler rotates/crops the image to 1280x720 WebP
 (quality 82), uploads it under `live-stream-thumbnails/<id>/`, and returns
@@ -194,7 +230,7 @@ unchanged. Transcript reconciliation uses the individual recording's video ID.
 
 ## Deletion
 
-`DELETE /api/live-streams/:liveStreamId` requires ownership. It disables Mux,
+`DELETE /api/live-streams/:liveStreamId` requires delete access. It disables Mux,
 collects all recording assets using `next_cursor`, deletes the assets and Mux
 stream, then deletes the local stream. Its videos and dependent records cascade.
 Before removing local records, it deletes the livestream thumbnail and all
@@ -216,7 +252,7 @@ the failing operation, status and elapsed time without credentials.
 ## Verification
 
 Run `npm run test:live-streams`, `npm run test:live-thumbnails`, `npm run test:live-streams:db`,
-`npm run test:live-details`, `npm run test:live-playback`, `npm run test:user-live-cards`,
+`npm run test:live-details`, `npm run test:live-permissions`, `npm run test:live-playback`, `npm run test:user-live-cards`,
 `npm run test:mux-webhooks` and `npm run test:video-deletion`.
 Set `TEST_DATABASE_URL` for PostgreSQL checks. They create connection-local
 temporary tables, apply migrations there, and mock all Mux and R2 mutations.

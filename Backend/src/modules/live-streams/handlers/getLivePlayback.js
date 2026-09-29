@@ -8,8 +8,8 @@ const mux = new Mux();
 const idSchema = z.string().uuid('Invalid live stream ID');
 const TOKEN_LIFETIME_SECONDS = 3600;
 
-export async function getLivePlaybackInternal(liveStreamId, userId) {
-  if (!userId) throw new HttpError(401, { message: 'Unauthorized' });
+export async function getLivePlaybackInternal(liveStreamId, userId = null) {
+  // Authentication is selected by the route; visibility is enforced for every viewer.
   const id = validateOrThrow(idSchema.safeParse(liveStreamId));
   // Read the primary on each request so visibility changes apply to new tokens.
   // DVR must use this session's asset, never a recording from an earlier session.

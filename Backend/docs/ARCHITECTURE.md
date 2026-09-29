@@ -70,6 +70,14 @@ Controllers merge URL parameters last so body/query fields cannot substitute a
 resource ID after middleware has authorized it. Quiz attempt ownership and video
 visibility checks remain separate and are still required.
 
+Livestream management uses the same boundary through `requireLiveStreamAccess`.
+Edit/thumbnail, deletion and encoder credentials have separate own/any permission
+pairs. Controllers pass the guard's resolved resource owner to existing scoped
+handlers, so authorized any-access works while SQL remains bound to the approved
+stream and owner. This scope is server-provided; the authenticated actor remains
+`req.user.sub`. Creation, personal lists, viewer details and playback keep using
+the actor's identity. Viewer visibility rules are independent of management access.
+
 `src/common/ip.js` provides `getClientIp`, `normalizeIp`, `hashIp`, `isPrivateIp`,
 and `getCountryAndCityFromIp` for videos and playlists. Client IP extraction uses
 Express `req.ip` and its configured trust-proxy policy. GeoIP opens the bundled

@@ -4,6 +4,7 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import pg from 'pg';
 import { prepareLiveSchema } from './helpers/live-stream-schema.js';
+import { prepareLivePermissions } from './helpers/live-permissions-schema.js';
 
 test('live detail edits and playback replacement against PostgreSQL temporary tables', { skip: !process.env.TEST_DATABASE_URL }, async t => {
   const client = new pg.Client({ connectionString: process.env.TEST_DATABASE_URL, connectionTimeoutMillis: 5000, statement_timeout: 10000 });
@@ -14,6 +15,7 @@ test('live detail edits and playback replacement against PostgreSQL temporary ta
   const owner = '12345678-1234-4234-8234-123456789abc';
   const other = '12345678-1234-4234-8234-123456789def';
   await client.query('INSERT INTO pg_temp.users(id) VALUES ($1),($2)', [owner, other]);
+  await prepareLivePermissions(client, [owner, other]);
   let calls, failure, sequence;
   const database = {
     release() {},
@@ -148,7 +150,7 @@ test('live detail edits and playback replacement against PostgreSQL temporary ta
     await reset();
     assert.equal((await fetch(url, { method: 'PATCH' })).status, 401);
     const body = JSON.stringify({ title: 'HTTP title', visibility: 'private' });
-    assert.equal((await fetch(url, { method: 'PATCH', headers: headers(other), body })).status, 404);
+    assert.equal((await fetch(url, { method: 'PATCH', headers: headers(other), body })).status, 403);
     const result = await fetch(url, { method: 'PATCH', headers: headers(owner), body });
     assert.equal(result.status, 200);
     assert.equal(result.headers.get('cache-control'), 'private, no-store');

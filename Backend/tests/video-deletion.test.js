@@ -21,6 +21,9 @@ mock.module(new URL('../src/database/index.js', import.meta.url).href, {
     if (sql.includes('FROM users')) {
       return { rows: [{ id: values[0], status: 'active', authz_version: 1 }] };
     }
+    if (sql.includes('bool_or')) return { rows: [{ id: '1', key: 'live_streams.delete_own', has_allow: true, has_deny: false }] };
+    if (sql.includes('FROM user_roles')) return { rows: [{ id: '1', name: 'Uploader', position: 3, is_owner: false }] };
+    if (sql.includes('user_id AS owner_id')) return { rows: row ? [{ id: liveStreamId, owner_id: ownerId }] : [] };
     if ((sql.startsWith('DELETE') || sql.startsWith('WITH tombstone'))) {
       calls.push(['databaseDelete', ...values]);
       if (failDatabaseDelete) throw new Error('Database unavailable');
@@ -185,7 +188,7 @@ const headers = userId => ({ Authorization: `Bearer ${jwt.sign({ sub: userId, pu
 
 test('DELETE HTTP route requires authentication and ownership, then returns success', async () => {
   assert.equal((await fetch(url, { method: 'DELETE' })).status, 401);
-  assert.equal((await fetch(url, { method: 'DELETE', headers: headers(otherUserId) })).status, 404);
+  assert.equal((await fetch(url, { method: 'DELETE', headers: headers(otherUserId) })).status, 403);
   assert.ok(calls.every(([name]) => name === 'select'));
   const response = await fetch(url, { method: 'DELETE', headers: headers(ownerId) });
   assert.equal(response.status, 200);

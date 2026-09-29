@@ -12,6 +12,9 @@ mock.module(new URL('../src/database/index.js', import.meta.url).href, {
     if (sql.includes('FROM users')) {
       return { rows: [{ id: values[0], status: 'active', authz_version: 1 }] };
     }
+    if (sql.includes('bool_or')) return { rows: [{ id: '1', key: 'live_streams.stream_own', has_allow: true, has_deny: false }] };
+    if (sql.includes('FROM user_roles')) return { rows: [{ id: '1', name: 'Uploader', position: 3, is_owner: false }] };
+    if (sql.includes('user_id AS owner_id')) return { rows: row ? [{ id: liveStreamId, owner_id: ownerId }] : [] };
     calls.push(['query', sql, values]);
     assert.match(sql, /WHERE ls.id = \$1 AND ls.user_id = \$2/);
     return { rows: row && values[0] === liveStreamId && values[1] === ownerId ? [row] : [] };
@@ -112,7 +115,7 @@ const headers = userId => ({ Authorization: `Bearer ${jwt.sign({ sub: userId, pu
 test('HTTP route requires authentication and restricts access to the owner', async () => {
   assert.equal((await fetch(url)).status, 401);
   const denied = await fetch(url, { headers: headers(otherUserId) });
-  assert.equal(denied.status, 404);
+  assert.equal(denied.status, 403);
   assert.equal((await denied.json()).stream_key, undefined);
   assert.ok(!calls.some(([name]) => name === 'retrieve'));
 });

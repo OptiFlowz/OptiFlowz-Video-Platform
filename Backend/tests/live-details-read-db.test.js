@@ -24,6 +24,8 @@ test('livestream details and current recording against PostgreSQL fixtures', { s
   } } });
   const { getLiveDetailsInternal: details } = await import('../src/modules/live-streams/handlers/getLiveDetails.js');
   const { default: router } = await import('../src/modules/live-streams/live-streams.routes.js');
+  const { optionalAuth } = await import('../src/middleware/auth.js');
+  const { getLiveDetails } = await import('../src/modules/live-streams/live-streams.controller.js');
   async function reset() {
     await client.query('TRUNCATE pg_temp.live_streams, pg_temp.videos, pg_temp.watch_progress, pg_temp.video_reactions, pg_temp.video_comments');
     await client.query(`INSERT INTO pg_temp.live_streams(id,user_id,title,description,status,mux_status,dvr_enabled,
@@ -70,17 +72,27 @@ test('livestream details and current recording against PostgreSQL fixtures', { s
     assert.equal(ownRecording.user_reaction, -1); assert.equal(ownRecording.progress_seconds, 99);
   });
 
-  await t.test('enforces authentication, ID validation and current visibility', async () => {
+  await t.test('enforces ID validation and current visibility for guests and signed-in viewers', async () => {
     await reset();
-    await assert.rejects(details(id), { status: 401 });
+    await assert.rejects(details('invalid'), { status: 400 });
     await assert.rejects(details('invalid', viewer), { status: 400 });
     assert.equal(queries, 0);
     await assert.rejects(details(viewer, viewer), { status: 404 });
+    await assert.rejects(details(viewer), { status: 404 });
+    for (const user of [undefined, null]) {
+      const recording = (await details(id, user)).live_stream.current_recording;
+      assert.equal(recording.id, videoId);
+      assert.equal(recording.user_reaction, 0);
+      assert.equal(recording.progress_seconds, null);
+      assert.equal(recording.percentage_watched, null);
+    }
     await client.query("UPDATE pg_temp.live_streams SET visibility='private' WHERE id=$1", [id]);
     await assert.rejects(details(id, viewer), { status: 404 });
+    await assert.rejects(details(id), { status: 404 });
     assert.equal((await details(id, owner)).live_stream.id, id);
     await client.query("UPDATE pg_temp.live_streams SET visibility='unlisted' WHERE id=$1", [id]);
     assert.equal((await details(id, viewer)).live_stream.id, id);
+    assert.equal((await details(id)).live_stream.id, id);
   });
 
   await t.test('returns details across lifecycle states, but a current recording only for live or disconnected streams', async () => {
@@ -112,15 +124,17 @@ test('livestream details and current recording against PostgreSQL fixtures', { s
     }
   });
 
-  await t.test('GET route returns authenticated non-cacheable details without Mux resource IDs or credentials', async () => {
+  await t.test('GET details works with requireAuth or optionalAuth and scopes private data correctly', async () => {
     await reset();
     const previous = process.env.JWT_SECRET;
     process.env.JWT_SECRET = 'live-details-test';
     t.after(() => { if (previous === undefined) delete process.env.JWT_SECRET; else process.env.JWT_SECRET = previous; });
     const app = express(); app.use('/api/live-streams', router);
+    app.get('/optional/:liveStreamId', optionalAuth, getLiveDetails);
     const server = app.listen(0, '127.0.0.1'); await new Promise(resolve => server.once('listening', resolve));
     t.after(() => new Promise(resolve => server.close(resolve)));
     const url = `http://127.0.0.1:${server.address().port}/api/live-streams/${id}`;
+    const optionalUrl = `http://127.0.0.1:${server.address().port}/optional/${id}`;
     const headers = user => ({ Authorization: `Bearer ${jwt.sign({ sub: user, purpose: 'access' }, process.env.JWT_SECRET)}` });
     assert.equal((await fetch(url)).status, 401);
     const response = await fetch(url, { headers: headers(viewer) });
@@ -133,7 +147,22 @@ test('livestream details and current recording against PostgreSQL fixtures', { s
         assert.equal(Object.hasOwn(object, key), false);
       }
     }
+    for (const visibility of ['public', 'unlisted']) {
+      await client.query('UPDATE pg_temp.live_streams SET visibility=$2 WHERE id=$1', [id, visibility]);
+      const guest = await fetch(optionalUrl);
+      assert.equal(guest.status, 200);
+      assert.equal(guest.headers.get('cache-control'), 'private, no-store');
+      const recording = (await guest.json()).live_stream.current_recording;
+      assert.equal(recording.id, videoId); assert.equal(recording.user_reaction, 0);
+      assert.equal(recording.progress_seconds, null); assert.equal(recording.percentage_watched, null);
+    }
+    const authenticated = await fetch(optionalUrl, { headers: headers(viewer) });
+    assert.equal((await authenticated.json()).live_stream.current_recording.user_reaction, 1);
+    assert.equal((await fetch(optionalUrl, { headers: { Authorization: 'Bearer invalid' } })).status, 401);
     await client.query("UPDATE pg_temp.live_streams SET visibility='private' WHERE id=$1", [id]);
+    assert.equal((await fetch(optionalUrl)).status, 404);
+    assert.equal((await fetch(optionalUrl, { headers: headers(viewer) })).status, 404);
+    assert.equal((await fetch(optionalUrl, { headers: headers(owner) })).status, 200);
     assert.equal((await fetch(url, { headers: headers(viewer) })).status, 404);
     assert.equal((await fetch(url, { headers: headers(owner) })).status, 200);
   });

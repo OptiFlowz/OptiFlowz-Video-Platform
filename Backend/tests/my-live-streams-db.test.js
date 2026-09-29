@@ -4,6 +4,7 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import pg from 'pg';
 import { prepareLiveSchema } from './helpers/live-stream-schema.js';
+import { prepareLivePermissions } from './helpers/live-permissions-schema.js';
 
 test('my livestream listing and HTTP route against PostgreSQL temporary tables', { skip: !process.env.TEST_DATABASE_URL }, async t => {
   const client = new pg.Client({ connectionString: process.env.TEST_DATABASE_URL, connectionTimeoutMillis: 5000, statement_timeout: 10000 });
@@ -14,6 +15,7 @@ test('my livestream listing and HTTP route against PostgreSQL temporary tables',
   const uuid = n => `12345678-1234-4234-8234-${String(n).padStart(12, '0')}`;
   const owner = uuid(100), other = uuid(101), emptyOwner = uuid(102);
   await client.query('INSERT INTO pg_temp.users(id) VALUES ($1),($2),($3)', [owner, other, emptyOwner]);
+  await prepareLivePermissions(client, [owner, other, emptyOwner]);
   for (const [index, status] of ['scheduled', 'live', 'disconnected', 'ended', 'cancelled', 'scheduled'].entries()) {
     const n = index + 1;
     await client.query(`INSERT INTO pg_temp.live_streams

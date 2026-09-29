@@ -12,6 +12,7 @@
     "test:notes": "node --experimental-test-module-mocks --test tests/notes.test.js",
     "test:posts": "node --experimental-test-module-mocks --test tests/posts.test.js",
     "test:live-streams": "node --experimental-test-module-mocks --test tests/live-streams.test.js tests/live-streaming-details.test.js",
+    "test:live-permissions": "node --experimental-test-module-mocks --test tests/live-permissions-db.test.js",
     "test:live-thumbnails": "node --experimental-test-module-mocks --test tests/live-thumbnails.test.js tests/live-thumbnails-db.test.js",
     "test:live-streams:db": "node --experimental-test-module-mocks --test tests/live-streams-db.test.js",
     "test:my-live-streams": "node --experimental-test-module-mocks --test tests/my-live-streams-db.test.js",

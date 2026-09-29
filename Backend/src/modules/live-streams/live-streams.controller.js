@@ -43,7 +43,9 @@ export async function getUserLiveCards(req, res) {
 export async function updateLiveDetails(req, res) {
   res.set('Cache-Control', 'private, no-store');
   try {
-    const result = await updateLiveDetailsInternal({ params: req.params, body: req.body }, req.user?.sub);
+    // The route guard resolves the permitted resource owner, including *_any access.
+    // Keep handler SQL scoped to that owner; never take this scope from client input.
+    const result = await updateLiveDetailsInternal({ params: req.params, body: req.body }, req.authorizedResource?.owner_id ?? req.user?.sub);
     return sendSuccess(res, result);
   } catch (error) {
     if (!error.status || error.status >= 500) console.error('updateLiveDetails failed');
@@ -64,7 +66,7 @@ export async function getMyLiveStreams(req, res) {
 
 export async function uploadLiveThumbnail(req, res) {
   try {
-    const result = await liveThumbnailUploadInternal({ params: req.params, file: req.file }, req.user?.sub);
+    const result = await liveThumbnailUploadInternal({ params: req.params, file: req.file }, req.authorizedResource?.owner_id ?? req.user?.sub);
     return sendSuccess(res, result);
   } catch (error) {
     if (!error.status || error.status >= 500) console.error('uploadLiveThumbnail failed');
@@ -74,7 +76,7 @@ export async function uploadLiveThumbnail(req, res) {
 
 export async function deleteLiveStream(req, res) {
   try {
-    const result = await deleteLiveStreamInternal(req.params.liveStreamId, req.user?.sub);
+    const result = await deleteLiveStreamInternal(req.params.liveStreamId, req.authorizedResource?.owner_id ?? req.user?.sub);
     return sendSuccess(res, result);
   } catch (error) {
     if (!error.status || error.status >= 500) console.error('deleteLiveStream failed');
@@ -85,7 +87,7 @@ export async function deleteLiveStream(req, res) {
 export async function getStreamingDetails(req, res) {
   res.set('Cache-Control', 'private, no-store');
   try {
-    const result = await getStreamingDetailsInternal(req.params.liveStreamId, req.user?.sub);
+    const result = await getStreamingDetailsInternal(req.params.liveStreamId, req.authorizedResource?.owner_id ?? req.user?.sub);
     return sendSuccess(res, result);
   } catch (error) {
     if (!error.status || error.status >= 500) console.error('getStreamingDetails failed');

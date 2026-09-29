@@ -34,7 +34,12 @@ const client = {
 };
 mock.module(new URL('../src/database/index.js', import.meta.url).href, { namedExports: { writePool: {
   async connect() { return client; },
-  async query() { return { rows: [{ id: owner, status: 'active', authz_version: 1 }] }; },
+  async query(sql) {
+    if (sql.includes('bool_or')) return { rows: [{ id: '1', key: 'live_streams.update_own', has_allow: true, has_deny: false }] };
+    if (sql.includes('FROM user_roles')) return { rows: [{ id: '1', name: 'Uploader', position: 3, is_owner: false }] };
+    if (sql.includes('user_id AS owner_id')) return { rows: row ? [{ id, owner_id: owner }] : [] };
+    return { rows: [{ id: owner, status: 'active', authz_version: 1 }] };
+  },
 } } });
 mock.module(new URL('../src/modules/storage/r2.client.js', import.meta.url).href, { namedExports: { s3: {
   async send(command) {
