@@ -27,7 +27,11 @@ export async function createLiveStreamInternal(body, userId) {
   try {
     stream = await mux.video.liveStreams.create({
       playback_policies: [data.playback_policy],
-      new_asset_settings: { playback_policies: [data.playback_policy] },
+      new_asset_settings: {
+        playback_policies: [data.playback_policy],
+        video_quality: 'plus',
+        max_resolution_tier: '1080p',
+      },
       max_continuous_duration: maxDuration,
       meta: { title: data.title },
     }, { maxRetries: 0 });

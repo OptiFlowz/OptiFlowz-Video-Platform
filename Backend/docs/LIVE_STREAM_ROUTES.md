@@ -44,6 +44,19 @@ still be watched by guests through the playback route.
 Creates the Mux live stream and the database livestream. No recording video is
 created yet; Mux asset webhooks create recordings when streaming starts.
 
+New livestreams explicitly set `new_asset_settings.video_quality: "plus"` and
+`new_asset_settings.max_resolution_tier: "1080p"`. Recordings inherit this quality
+configuration. These are server settings, not accepted request-body fields.
+This applies to newly created streams; existing Mux streams are not modified.
+The resolution is a ceiling, not a guarantee that lower-resolution input becomes
+1080p. See [Mux quality settings](https://www.mux.com/docs/guides/use-video-quality-levels)
+and the [creation API](https://www.mux.com/docs/api-reference/video/live-streams/create-live-stream).
+
+For the encoder, configure OBS separately for 1920×1080 output, 30 FPS,
+5,000 kbps video bitrate and a 2-second keyframe interval, following
+[Mux's encoder recommendations](https://www.mux.com/docs/guides/configure-broadcast-software).
+The backend does not control OBS resolution, bitrate or FPS.
+
 Accepts a JSON body:
 
 | Field | Type | Required/default | Validation |

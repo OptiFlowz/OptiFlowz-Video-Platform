@@ -74,7 +74,9 @@ for (const [dvr, duration] of [[true, 14399], [false, 43200]]) {
       dvr_enabled: dvr, scheduled_at: '2026-10-01T18:00:00+02:00',
     }, userId);
     assert.deepEqual(calls[0], ['create', {
-      playback_policies: ['signed'], new_asset_settings: { playback_policies: ['signed'] },
+      playback_policies: ['signed'], new_asset_settings: {
+        playback_policies: ['signed'], video_quality: 'plus', max_resolution_tier: '1080p',
+      },
       max_continuous_duration: duration, meta: { title: "Creator's stream" },
     }, { maxRetries: 0 }]);
     assert.deepEqual(result.live_stream, {
@@ -120,6 +122,8 @@ for (const visibility of ['public', 'unlisted', 'private']) {
       const params = calls.find(([name]) => name === 'create')[1];
       assert.deepEqual(params.playback_policies, [policy]);
       assert.deepEqual(params.new_asset_settings.playback_policies, [policy]);
+      assert.equal(params.new_asset_settings.video_quality, 'plus');
+      assert.equal(params.new_asset_settings.max_resolution_tier, '1080p');
       assert.equal(result.live_stream.visibility, visibility);
       assert.equal(result.live_stream.playback_policy, policy);
       assert.equal(result.live_stream.mux_live_playback_id, `${policy}-id`);
