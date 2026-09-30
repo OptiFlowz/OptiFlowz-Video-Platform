@@ -50,6 +50,7 @@ function PlaylistRow({
   const [visOpen, setVisOpen] = useState(false);
   const visibilityPresence = usePopupPresence(visOpen);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const mobileMenuPresence = usePopupPresence(mobileMenuOpen);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [draftVisibility, setDraftVisibility] = useState<"public" | "private">(
     props?.status === "public" ? "public" : "private"
@@ -141,14 +142,16 @@ function PlaylistRow({
   }, [visibilityPresence.mounted]);
 
   useEffect(() => {
-    if (mobileMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-
+    if (!mobileMenuOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileMenuOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKeyDown);
     };
   }, [mobileMenuOpen]);
 
@@ -306,7 +309,11 @@ function PlaylistRow({
               </div>
             </span>
             <button
+              type="button"
               className="mobileOptionsButton"
+              aria-label={`${t("adminTableActions")}: ${props.title}`}
+              aria-haspopup="dialog"
+              aria-expanded={mobileMenuOpen}
               onClick={() => setMobileMenuOpen(true)}
             >
               {ThreeDotMenuSVG}
@@ -315,17 +322,20 @@ function PlaylistRow({
         </span>
         <ConfirmDialog {...dialogProps} />
 
-        {mobileMenuOpen &&
+        {mobileMenuPresence.mounted &&
           typeof document !== "undefined" &&
           createPortal(
             <div
-              className={`fixed inset-0 z-100 flex items-end justify-center popupMotionLayer ${visibilityPresence.visible ? "isOpen" : ""}`} inert={!visOpen}
+              className={`fixed inset-0 z-100 flex items-end justify-center popupMotionLayer ${mobileMenuPresence.visible ? "isOpen" : ""}`} inert={!mobileMenuOpen}
               onClick={() => setMobileMenuOpen(false)}
             >
               <div className="absolute inset-0 bg-(--seethroughtBlack)" />
 
               <div
-                className="rowActionSheet relative w-full max-w-lg animate-slide-up rounded-t-3xl bg-(--background1) pb-safe"
+                role="dialog"
+                aria-modal="true"
+                aria-label={`${t("adminTableActions")}: ${props.title}`}
+                className={`rowActionSheet relative w-full max-w-lg rounded-t-3xl bg-(--background1) pb-safe popupMotionPanel ${mobileMenuPresence.visible ? "isOpen" : ""}`}
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex justify-center py-3">

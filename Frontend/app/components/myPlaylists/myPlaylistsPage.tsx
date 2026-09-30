@@ -1,3 +1,4 @@
+import "~/components/library/mediaManagement.css";
 import LibrarySortButton from "~/components/library/librarySortButton";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
@@ -319,7 +320,7 @@ function MyPlaylistsPage() {
   };
 
   return (
-    <main className="myVideos managementPage">
+    <main className="myVideos managementPage mediaManagementPage">
       <Sidebar />
       <ConfirmDialog {...dialogProps} />
       <CreatePlaylistPopup

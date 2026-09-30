@@ -1,3 +1,4 @@
+import "~/components/library/mediaManagement.css";
 import { useNavigate } from "react-router";
 import LibrarySortButton from "~/components/library/librarySortButton";
 import { useAuthorization } from "~/authorization/authorization";
@@ -260,7 +261,7 @@ function MyVideos() {
   }, [data]);
 
   return (
-    <main className="myVideos managementPage">
+    <main className="myVideos managementPage mediaManagementPage">
       <Sidebar />
       <ConfirmDialog {...dialogProps} />
 

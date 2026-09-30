@@ -1,10 +1,13 @@
+import "~/components/library/mediaManagement.css";
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { usePopupPresence } from '~/hooks/usePopupPresence';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useAuthorization } from '~/authorization/authorization';
 import { fetchFn } from '~/API';
 import { getToken, formatDate } from '~/functions';
 import { useI18n } from '~/i18n';
-import { AddSVG, DeleteSVG, EditSVG, PermissionEyeSVG, PostSVG, PublicSVG, PrivateSVG, SearchSVG } from '~/constants';
+import { ThreeDotMenuSVG, AddSVG, DeleteSVG, EditSVG, PermissionEyeSVG, PostSVG, PublicSVG, PrivateSVG, SearchSVG } from '~/constants';
 import type { ChannelVideosT } from '~/types';
 import Sidebar from '../myVideosPage/sidebar/sidebar';
 import Pagination from '../library/pagination';
@@ -32,6 +35,22 @@ export default function MyPostsPage() {
   const [ascending, setAscending] = useState(false);
   const [editing, setEditing] = useState<Post>();
   const [preview, setPreview] = useState<Post>();
+  const [menuPost, setMenuPost] = useState<{ id: string; title: string }>();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuPresence = usePopupPresence(menuOpen);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenuOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [menuOpen]);
   const [saveError, setSaveError] = useState('');
   const [busy, setBusy] = useState<string>();
   const [querySearch, setQuerySearch] = useState('');
@@ -96,8 +115,31 @@ export default function MyPostsPage() {
     getNextPageParam: data => data.pagination?.hasNextPage ? data.pagination.page + 1 : undefined,
   });
   const videos = videosQuery.data?.pages.flatMap(page => page.videos) ?? [];
-  return <main className="myVideos managementPage myPostsPage">
+  const deletePost = async (post: { id: string; title: string }) => {
+    setMenuOpen(false);
+    if (!await confirm({ title: t('postDeleteTitle'), message: post.title, yesText: t('adminDelete'), noText: t('adminCancel') })) return;
+    setBusy(post.id);
+    try { await postRequest(`/${post.id}`, 'DELETE'); await refresh(); setSaveError(''); }
+    catch (error) { setSaveError(error instanceof Error ? error.message : t('postSaveError')); }
+    finally { setBusy(undefined); }
+  };
+  const postActions = (post: { id: string; title: string }, mobile = false) => <>
+    <button type="button" title={t('postPreview')} aria-label={`${t('postPreview')}: ${post.title}`} disabled={!!busy} onClick={() => { setMenuOpen(false); void openPost(post.id, false); }}>{PermissionEyeSVG}{mobile && <span>{t('postPreview')}</span>}</button>
+    <button type="button" title={t('adminEdit')} aria-label={`${t('adminEdit')}: ${post.title}`} disabled={!!busy || !canEdit} onClick={() => { setMenuOpen(false); void openPost(post.id, true); }}>{EditSVG}{mobile && <span>{t('adminEdit')}</span>}</button>
+    <button type="button" disabled={!!busy || !canDelete} className="danger" title={t('adminDelete')} aria-label={`${t('adminDelete')}: ${post.title}`} onClick={() => void deletePost(post)}>{DeleteSVG}{mobile && <span>{t('adminDelete')}</span>}</button>
+  </>;
+  return <main className="myVideos managementPage mediaManagementPage myPostsPage">
     <Sidebar /><ConfirmDialog {...dialogProps} />
+    {menuPresence.mounted && menuPost && typeof document !== 'undefined' && createPortal(
+      <div className={`fixed inset-0 z-100 flex items-end justify-center popupMotionLayer ${menuPresence.visible ? 'isOpen' : ''}`} inert={!menuOpen} onClick={() => setMenuOpen(false)}>
+        <div className="absolute inset-0 bg-(--seethroughtBlack)" />
+        <div role="dialog" aria-modal="true" aria-label={`${t('adminTableActions')}: ${menuPost.title}`} className={`rowActionSheet postActionSheet relative w-full max-w-lg rounded-t-3xl bg-(--background1) pb-safe popupMotionPanel ${menuPresence.visible ? 'isOpen' : ''}`} onClick={event => event.stopPropagation()}>
+          <div className="flex justify-center py-3"><div className="h-1 w-10 rounded-full bg-(--border1)" /></div>
+          <div className="flex items-center gap-3 px-4 pb-3 border-b border-(--border1)"><div className="postManagementIcon">{PostSVG}</div><p className="text-sm font-medium line-clamp-2 flex-1">{menuPost.title}</p></div>
+          <div className="postMobileActions">{postActions(menuPost, true)}</div>
+          <div className="px-4 pb-4 pt-2"><button type="button" onClick={() => setMenuOpen(false)} className="w-full rounded-full border border-(--border1) bg-(--background2) py-3 font-medium hover:bg-(--background3) transition-colors cursor-pointer">{t('adminCancel')}</button></div>
+        </div>
+      </div>, document.body)}
     {editing && <PostEditor key={editing.id} post={editing} author={user || {}} videos={videos} onClose={() => { setEditing(undefined); void refresh(); }}
       moreVideos={videosQuery.hasNextPage ? <button type="button" className="postSecondary" disabled={videosQuery.isFetchingNextPage} onClick={() => void videosQuery.fetchNextPage()}>{t('postMoreVideos')}</button> : undefined}
       onSave={async () => { await refresh(); }} />}
@@ -116,9 +158,22 @@ export default function MyPostsPage() {
             {canEdit && selectedPosts.some(post => post.status !== 'private') && <button type="button" className="button bg-(--background2) text-(--text1)!" disabled={selectionDisabled} onClick={() => void runBulkAction('private')}>{t('postMakeDraft')}</button>}
             {canEdit && selectedPosts.some(post => post.status !== 'public') && <button type="button" className="button bg-(--background2) text-(--text1)!" disabled={selectionDisabled} onClick={() => void runBulkAction('public')}>{t('adminMakePublic')}</button>}
           </span>}
-        </span></th><th>{t('adminTableStatus')}</th><th aria-sort={ascending ? 'ascending' : 'descending'}><LibrarySortButton label={t('adminTableDate')} direction={ascending ? 'asc' : 'desc'} onClick={() => { if (!busy) { setAscending(!ascending); setPage(1); } }} /></th><th>{t('postParts')}</th><th>{t('adminTableActions')}</th>
+        </span></th><th>{t('adminTableStatus')}</th><th aria-sort={ascending ? 'ascending' : 'descending'}><LibrarySortButton label={t('adminTableDate')} direction={ascending ? 'asc' : 'desc'} onClick={() => { if (!busy) { setAscending(!ascending); setPage(1); } }} /></th><th>{t('postParts')}</th>
       </tr></thead><tbody>{posts.map(post => <tr key={post.id}>
-        <td><div className="postManagementSummary">{canSelect && <input type="checkbox" className={checkboxClass} aria-label={t('postSelectOne', { title: post.title })} checked={selectedPosts.some(selected => selected.id === post.id)} disabled={selectionDisabled} onChange={event => toggleSelection(post.id, event.target.checked)} />}<span className="postManagementIcon">{PostSVG}</span><div><strong>{post.title}</strong><p>{post.text}</p></div></div></td>
+        <td>
+          <span>
+            {canSelect && <input type="checkbox" className={checkboxClass} aria-label={t('postSelectOne', { title: post.title })} checked={selectedPosts.some(selected => selected.id === post.id)} disabled={selectionDisabled} onChange={event => toggleSelection(post.id, event.target.checked)} />}
+            <span className="videoInfo">
+              <div className="postManagementIcon">{PostSVG}</div>
+              <span className="flex flex-col gap-0.5 rounded-none!">
+                <h3>{post.title}</h3>
+                <h5 className="line-clamp-1 font-light!">{post.text}</h5>
+                <div className="videoActions">{postActions(post)}</div>
+              </span>
+              <button type="button" className="mobileOptionsButton" aria-label={`${t('adminTableActions')}: ${post.title}`} aria-haspopup="dialog" aria-expanded={menuOpen && menuPost?.id === post.id} disabled={!!busy} onClick={() => { setMenuPost(post); setMenuOpen(true); }}>{ThreeDotMenuSVG}</button>
+            </span>
+          </span>
+        </td>
         <td><StatusPicker<Post['status']>
           value={post.status}
           title={post.title}
@@ -130,16 +185,7 @@ export default function MyPostsPage() {
           ]}
           onSave={async status => { await postRequest(`/${post.id}`, 'PATCH', { status }); await refresh(); }}
         /></td><td>{formatDate(post.createdAt)}</td><td><div className="postTypeTags">{post.blockTypes.map(type => <span key={type}>{t(`postType_${type}`)}</span>)}</div></td>
-        <td><div className="managementRowActions">
-          <button type="button" title={t('postPreview')} aria-label={`${t('postPreview')}: ${post.title}`} disabled={!!busy} onClick={() => void openPost(post.id, false)}>{PermissionEyeSVG}</button>
-          <button type="button" title={t('adminEdit')} aria-label={`${t('adminEdit')}: ${post.title}`} disabled={!!busy || !canEdit} onClick={() => void openPost(post.id, true)}>{EditSVG}</button>
-          <button type="button" disabled={!!busy || !canDelete} className="danger" title={t('adminDelete')} aria-label={`${t('adminDelete')}: ${post.title}`} onClick={async () => {
-            if (!await confirm({ title: t('postDeleteTitle'), message: post.title, yesText: t('adminDelete'), noText: t('adminCancel') })) return;
-            setBusy(post.id);
-            try { await postRequest(`/${post.id}`, 'DELETE'); await refresh(); setSaveError(''); } catch (error) { setSaveError(error instanceof Error ? error.message : t('postSaveError')); } finally { setBusy(undefined); }
-          }}>{DeleteSVG}</button>
-        </div></td>
-      </tr>)}{!loading && !error && !posts.length && <tr><td colSpan={5}>{t('noResultsTitle')}</td></tr>}</tbody></table></div>
+      </tr>)}{!loading && !error && !posts.length && <tr><td colSpan={4}>{t('noResultsTitle')}</td></tr>}</tbody></table></div>
       <Pagination page={page} limit={limit} total={pagination?.total ?? 0} totalPages={pagination?.totalPages ?? 0} loading={loading} disabled={!!error || !!busy} label={t('navMyPosts')} onPageChange={setPage} onLimitChange={value => { setLimit(value); setPage(1); }} />
     </div></div>
   </main>;

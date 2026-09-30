@@ -1,0 +1,24 @@
+/* Match the action sheet viewport and keep media rows readable on small screens. */
+@media (max-width: 768px) {
+  main.myVideos.mediaManagementPage { padding-top: 83px; }
+  main.myVideos.mediaManagementPage .libraryContent { min-width: 0; padding: 0 0 1rem; }
+  main.myVideos.mediaManagementPage .libraryShell { min-width: 0; padding: 0; }
+  main.myVideos.mediaManagementPage .libraryHeader { display: flex; }
+  main.myVideos.mediaManagementPage .libraryHeading h1 { font-size: 1.4rem; }
+  main.myVideos.mediaManagementPage .libraryHeading p { font-size: .85rem; }
+  main.myVideos.mediaManagementPage .filter { display: flex; }
+  main.myVideos.mediaManagementPage table { width: 100%; table-layout: fixed; background: transparent !important; border: none !important; }
+  main.myVideos.mediaManagementPage table thead,
+  main.myVideos.mediaManagementPage table tbody tr > td:not(:first-child),
+  main.myVideos.mediaManagementPage table input,
+  main.myVideos.mediaManagementPage table td .videoInfo .videoActions { display: none; }
+  main.myVideos.mediaManagementPage table tr { border: none !important; }
+  main.myVideos.mediaManagementPage table td { padding: 1rem !important; border: none !important; border-radius: 0 !important; }
+  main.myVideos.mediaManagementPage table tbody tr + tr > td:first-child { border-top: 1px solid var(--border1) !important; }
+  main.myVideos.mediaManagementPage table td > span { min-width: 0; padding-right: 28px; }
+  main.myVideos.mediaManagementPage table td .videoInfo { flex: 1; min-width: 0; align-items: flex-start; }
+  main.myVideos.mediaManagementPage table td .videoInfo > span { flex: 1; min-width: 0; }
+  main.myVideos.mediaManagementPage table td .videoInfo h5 { width: 100%; max-width: 100%; }
+  main.myVideos.mediaManagementPage table td .videoInfo img { width: 100px; aspect-ratio: 16 / 9.5; }
+  main.myVideos.mediaManagementPage table td .videoInfo .mobileOptionsButton { display: block; right: 8px; }
+}

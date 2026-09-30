@@ -1379,3 +1379,65 @@ test('mobile player settings keeps native menus in a modal and restores desktop 
   assert.equal(menu.parentElement.tagName, 'MEDIA-CONTROLLER');
   assert.equal(mediaListeners.size, 0);
 });
+
+for (const kind of ['video', 'playlist', 'post']) {
+  test(`${kind} row options open independently of visibility and close by cancel, backdrop and Escape`, async t => {
+    const container = dom(t);
+    window.matchMedia = query => ({ matches: query === '(max-width: 768px)', addEventListener() {}, removeEventListener() {} });
+    document.body.style.overflow = 'scroll';
+    const load = modules({
+      '~/i18n': { useI18n: () => ({ t: key => key, locale: 'en' }) },
+      '~/authorization/authorization': { useAuthorization: () => ({ canAny: () => true, can: () => true, user: { id: 'author' } }) },
+      '~/constants': {},
+      '~/functions': { getToken: () => '', formatDate: () => 'Date', formatDescription: value => value, formatDuration: () => '1:00', formatViews: () => '0' },
+      '~/components/shared/videoMedia': { getVideoThumbnail: () => '/thumbnail.webp' },
+      '~/components/confirmPopup/confirmDialog': { ConfirmDialog: () => null },
+      '~/components/confirmPopup/useConfirm': { useConfirm: () => ({ confirm: async () => false, dialogProps: {} }) },
+      '@tanstack/react-query': { useQueryClient: () => ({}), useInfiniteQuery: () => ({}) },
+      './usePosts': { usePosts: () => ({ posts: [{ id: 'one', title: 'Item one', text: 'Long post content', status: 'private', createdAt: '2026-09-30', blockTypes: ['text'] }], pagination: { total: 1, totalPages: 1 }, refresh: async () => {}, loading: false }) },
+      '../myVideosPage/sidebar/sidebar': { default: () => null },
+      '../library/pagination': { default: () => null },
+      '../library/statusPicker': { default: () => null },
+      '../confirmPopup/confirmDialog': { ConfirmDialog: () => null },
+      '../confirmPopup/useConfirm': { useConfirm: () => ({ confirm: async () => false, dialogProps: {} }) },
+      './PostEditor': { default: () => null },
+      './PostDialog': { default: () => null },
+      './PostCard': { default: () => null },
+      'react-router': { Link: ({ to, children, ...rest }) => React.createElement('a', { href: to, ...rest }, children) },
+    });
+    const Row = load(kind === 'video' ? 'app/components/myVideosPage/videoRow/videoRow.tsx' : kind === 'playlist' ? 'app/components/myPlaylists/playlistRow/playlistRow.tsx' : 'app/components/posts/MyPostsPage.tsx').default;
+    const root = createRoot(container); container.mountedRoot = root;
+    const row = id => React.createElement(Row, {
+      key: id, props: { id, title: `Item ${id}`, visibility: 'private', status: 'private', setSelectedVideos() {} },
+      isSelected: false, setSelectedPlaylists() {},
+    });
+    await act(async () => root.render(kind === 'post' ? React.createElement(Row) : React.createElement('table', null, React.createElement('tbody', null, row('one'), row('two')))));
+    assert.equal(document.body.style.overflow, 'scroll');
+    const trigger = container.querySelector('.mobileOptionsButton');
+    const settleOpen = () => act(() => new Promise(resolve => setTimeout(resolve, 80)));
+    const settleClose = () => act(() => new Promise(resolve => setTimeout(resolve, 230)));
+    for (const close of ['cancel', 'backdrop', 'escape']) {
+      await act(async () => trigger.click());
+      await settleOpen();
+      const sheet = document.querySelector('.rowActionSheet');
+      assert.ok(sheet, 'action sheet is mounted');
+      assert.equal(sheet.getAttribute('role'), 'dialog');
+      const layer = sheet.parentElement;
+      assert.ok(layer.classList.contains('isOpen'), 'sheet becomes visible without opening the visibility picker');
+      assert.equal(layer.hasAttribute('inert'), false, 'menu accepts input');
+      assert.equal(trigger.getAttribute('aria-expanded'), 'true');
+      assert.equal(document.body.style.overflow, 'hidden');
+      assert.ok([...sheet.querySelectorAll('button')].some(button => button.textContent === (kind === 'video' ? 'adminEditVideo' : kind === 'playlist' ? 'adminEditPlaylist' : 'adminEdit')));
+      await act(async () => {
+        if (close === 'cancel') [...sheet.querySelectorAll('button')].find(button => button.textContent === 'adminCancel').click();
+        else if (close === 'backdrop') layer.click();
+        else document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      });
+      assert.equal(layer.hasAttribute('inert'), true, 'closing menu no longer accepts input');
+      assert.equal(trigger.getAttribute('aria-expanded'), 'false');
+      assert.equal(document.body.style.overflow, 'scroll');
+      await settleClose();
+      assert.equal(document.querySelector('.rowActionSheet'), null);
+    }
+  });
+}
