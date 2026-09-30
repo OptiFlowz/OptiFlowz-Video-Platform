@@ -1,0 +1,10 @@
+/* Let the drag follow the pointer and continue downward during dismissal. */
+:root .rowActionSheet.popupMotionPanel { transform: translateY(100%); }
+:root .rowActionSheet.popupMotionPanel.isOpen { transform: translateY(var(--sheet-drag-y, 0px)); }
+:root .rowActionSheet.popupMotionPanel[data-dragging] { transition: none; user-select: none; }
+.rowActionSheetHandle { display: flex; align-items: center; justify-content: center; padding-block: 12px; touch-action: none; user-select: none; cursor: grab; }
+.rowActionSheet[data-dragging] .rowActionSheetHandle { cursor: grabbing; }
+.rowActionSheetHandle span { width: 40px; height: 4px; border-radius: var(--bR); background: var(--border1); }
+@media (prefers-reduced-motion: reduce) {
+  :root .rowActionSheet.popupMotionPanel:not([data-dragging]) { transform: none; }
+}

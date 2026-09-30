@@ -1,5 +1,5 @@
 /** Allow downward dismissal without stealing native scrolling in long submenus. */
-export function setupSettingsSheetDrag(sheet: HTMLDialogElement, close: () => void) {
+export function setupSettingsSheetDrag(sheet: HTMLElement, close: () => void, isOpen = () => (sheet as HTMLDialogElement).open) {
   let suppressClick = false;
   let drag: {
     id: number; x: number; y: number; lastY: number; time: number; velocity: number;
@@ -7,7 +7,7 @@ export function setupSettingsSheetDrag(sheet: HTMLDialogElement, close: () => vo
   } | undefined;
   const start = (id: number, x: number, y: number, time: number, event: Event) => {
     suppressClick = false;
-    if (!sheet.open || sheet.hasAttribute("data-closing")) return;
+    if (!isOpen() || sheet.hasAttribute("data-closing")) return;
     const path = event.composedPath();
     const elements = path.slice(0, path.indexOf(sheet) + 1).filter((el): el is HTMLElement => el instanceof HTMLElement);
     if (elements.some(el => el.matches("input, textarea, select, [contenteditable='true']"))) return;

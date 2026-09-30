@@ -1381,7 +1381,7 @@ test('mobile player settings keeps native menus in a modal and restores desktop 
 });
 
 for (const kind of ['video', 'playlist', 'post']) {
-  test(`${kind} row options open independently of visibility and close by cancel, backdrop and Escape`, async t => {
+  test(`${kind} row options open independently of visibility and close by cancel, backdrop, Escape and drag`, async t => {
     const container = dom(t);
     window.matchMedia = query => ({ matches: query === '(max-width: 768px)', addEventListener() {}, removeEventListener() {} });
     document.body.style.overflow = 'scroll';
@@ -1416,7 +1416,7 @@ for (const kind of ['video', 'playlist', 'post']) {
     const trigger = container.querySelector('.mobileOptionsButton');
     const settleOpen = () => act(() => new Promise(resolve => setTimeout(resolve, 80)));
     const settleClose = () => act(() => new Promise(resolve => setTimeout(resolve, 230)));
-    for (const close of ['cancel', 'backdrop', 'escape']) {
+    for (const close of ['cancel', 'backdrop', 'escape', 'touch', 'pointer']) {
       await act(async () => trigger.click());
       await settleOpen();
       const sheet = document.querySelector('.rowActionSheet');
@@ -1428,8 +1428,52 @@ for (const kind of ['video', 'playlist', 'post']) {
       assert.equal(trigger.getAttribute('aria-expanded'), 'true');
       assert.equal(document.body.style.overflow, 'hidden');
       assert.ok([...sheet.querySelectorAll('button')].some(button => button.textContent === (kind === 'video' ? 'adminEditVideo' : kind === 'playlist' ? 'adminEditPlaylist' : 'adminEdit')));
+      sheet.getBoundingClientRect = () => ({ height: 400 });
+      const handle = sheet.querySelector('.rowActionSheetHandle');
+      assert.ok(handle, 'each action sheet exposes a drag handle');
+      const touch = (type, x, y, time) => {
+        const event = new Event(type, { bubbles: true, cancelable: true });
+        const point = { identifier: 1, clientX: x, clientY: y };
+        event.touches = ['touchend', 'touchcancel'].includes(type) ? [] : [point];
+        event.changedTouches = [point];
+        Object.defineProperty(event, 'timeStamp', { value: time });
+        handle.dispatchEvent(event);
+      };
+      if (close === 'touch') {
+        await act(async () => {
+          touch('touchstart', 40, 100, 0);
+          touch('touchmove', 40, 125, 200);
+          assert.equal(sheet.style.getPropertyValue('--sheet-drag-y'), '25px', 'sheet follows the drag');
+          touch('touchend', 40, 125, 210);
+          assert.equal(sheet.style.getPropertyValue('--sheet-drag-y'), '', 'short slow drag snaps back');
+          touch('touchstart', 40, 100, 300);
+          touch('touchmove', 200, 140, 500);
+          touch('touchend', 200, 140, 510);
+          assert.equal(sheet.style.getPropertyValue('--sheet-drag-y'), '', 'horizontal gesture does not move the sheet');
+          touch('touchstart', 40, 100, 600);
+          touch('touchmove', 40, 250, 800);
+          touch('touchcancel', 40, 250, 810);
+          assert.equal(sheet.style.getPropertyValue('--sheet-drag-y'), '', 'cancelled drag snaps back');
+        });
+        assert.equal(trigger.getAttribute('aria-expanded'), 'true');
+      }
       await act(async () => {
-        if (close === 'cancel') [...sheet.querySelectorAll('button')].find(button => button.textContent === 'adminCancel').click();
+        if (close === 'touch') {
+          touch('touchstart', 40, 100, 900);
+          touch('touchmove', 40, 250, 1100);
+          touch('touchend', 40, 250, 1110);
+        } else if (close === 'pointer') {
+          let captured = false;
+          sheet.hasPointerCapture = () => captured;
+          sheet.setPointerCapture = () => { captured = true; };
+          sheet.releasePointerCapture = () => { captured = false; };
+          for (const [type, y, time] of [['pointerdown', 100, 0], ['pointermove', 250, 200], ['pointerup', 250, 210]]) {
+            const event = new window.MouseEvent(type, { bubbles: true, cancelable: true, clientX: 40, clientY: y, button: 0 });
+            Object.defineProperties(event, { pointerId: { value: 1 }, pointerType: { value: 'mouse' }, isPrimary: { value: true }, timeStamp: { value: time } });
+            handle.dispatchEvent(event);
+          }
+          assert.equal(captured, false);
+        } else if (close === 'cancel') [...sheet.querySelectorAll('button')].find(button => button.textContent === 'adminCancel').click();
         else if (close === 'backdrop') layer.click();
         else document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
       });
@@ -1439,5 +1483,196 @@ for (const kind of ['video', 'playlist', 'post']) {
       await settleClose();
       assert.equal(document.querySelector('.rowActionSheet'), null);
     }
+  });
+}
+
+for (const mode of ['live', 'dvr']) {
+  test(`live watch preserves sound and playback through background and focus URL renewal (${mode})`, async t => {
+    const container = dom(t);
+    const live = { id: 'live-1', title: 'Live broadcast', status: 'live', mux_status: 'active' };
+    let playback = { mux_playback_id: 'stream-1', playback_mode: mode, stream_url: 'https://stream.example/live?token=1' };
+    let player;
+    let playerProps;
+    let mounts = 0;
+    const MockPlayer = React.forwardRef((props, ref) => {
+      const element = React.useRef(null);
+      if (!element.current) element.current = {
+        currentTime: 42, paused: true, muted: false, volume: 1,
+        seekable: { length: 1, start: () => 0, end: () => 100 },
+        play() { this.paused = false; return Promise.resolve(); },
+        pause() { this.paused = true; },
+      };
+      React.useImperativeHandle(ref, () => element.current, []);
+      React.useEffect(() => { mounts++; }, []);
+      React.useLayoutEffect(() => {
+        player = element.current;
+        player.paused = true;
+        player.currentTime = 100;
+        // Mux's 'muted' autoplay mutes on each media source initialization.
+        if (props.autoPlay === 'muted') { player.muted = true; void player.play(); }
+        props.onLoadedMetadata?.();
+        if (!player.paused) props.onPlaying?.();
+      }, [props.src]);
+      playerProps = props;
+      return React.createElement('div', { 'data-testid': 'live-player' });
+    });
+    const load = modules({
+      '~/i18n': i18n,
+      '~/constants': { LiveSVG: null },
+      './api': { canPlayLive: () => true, liveStatusKey: status => status },
+      './useLiveStream': { useLivePlayback: () => ({ data: playback, dataUpdatedAt: 1, refetch() {} }) },
+      './LivePlayer': { default: MockPlayer },
+      './LiveStatus': { default: () => null },
+      '@tanstack/react-query': { useQueryClient: () => ({ invalidateQueries() {} }) },
+    });
+    const LivePlaybackView = load('app/components/live/LivePlaybackView.tsx').default;
+    const root = createRoot(container); container.mountedRoot = root;
+    const render = () => root.render(React.createElement(LivePlaybackView, { live }));
+    await act(render);
+    const originalPlayer = player;
+    assert.equal(player.muted, true, 'initial autoplay still respects browser policy');
+    assert.equal(player.paused, false);
+    assert.equal(playerProps.autoPlay, false, 'autoplay stops controlling sound after first playback');
+    player.muted = false;
+    player.volume = 0.37;
+    player.currentTime = 42;
+
+    let renewal = 1;
+    const renew = () => { playback = { ...playback, stream_url: `https://stream.example/live?token=${++renewal}` }; render(); };
+    const testWindow = window, testDocument = document;
+    window.addEventListener('focus', renew);
+    document.addEventListener('visibilitychange', renew);
+    t.after(() => { testWindow.removeEventListener('focus', renew); testDocument.removeEventListener('visibilitychange', renew); });
+    for (const visibility of ['hidden', 'visible']) {
+      Object.defineProperty(document, 'visibilityState', { configurable: true, value: visibility });
+      await act(() => document.dispatchEvent(new Event('visibilitychange')));
+      assert.equal(player, originalPlayer, 'renewal keeps the same player mounted');
+      assert.equal(player.muted, false, `${visibility} renewal preserves unmuted sound`);
+      assert.equal(player.volume, 0.37);
+      assert.equal(player.paused, false);
+      if (mode === 'dvr') assert.equal(player.currentTime, 42);
+    }
+    await act(() => { window.dispatchEvent(new Event('blur')); window.dispatchEvent(new Event('focus')); });
+    assert.equal(player.muted, false, 'switching applications preserves sound');
+    assert.equal(player.volume, 0.37);
+    assert.equal(mounts, 1);
+
+    player.muted = true;
+    player.pause();
+    await act(renew);
+    assert.equal(player.muted, true, 'an intentional mute is preserved');
+    assert.equal(player.paused, true, 'an intentional pause is preserved');
+    assert.equal(player.volume, 0.37);
+
+    playback = { ...playback, mux_playback_id: 'stream-2', stream_url: 'https://stream.example/new' };
+    await act(render);
+    assert.equal(mounts, 2, 'a different recording starts a new player');
+    assert.equal(player.muted, true, 'new playback retains initial muted autoplay');
+  });
+}
+
+for (const policy of ['public', 'signed']) {
+  test(`live playback avoids reloads on focus and reconnect while its ${policy} URL is valid`, async t => {
+    const container = dom(t);
+    const { focusManager, onlineManager } = require('@tanstack/react-query');
+    const originalNow = Date.now;
+    let now = originalNow();
+    Date.now = () => now;
+    t.after(() => { Date.now = originalNow; focusManager.setFocused(undefined); onlineManager.setOnline(true); });
+    focusManager.setFocused(true);
+    let requests = 0;
+    let sourceLoads = 0;
+    let currentPlayback;
+    let result;
+    const live = { id: 'live-1', title: 'Live broadcast', video_id: 'recording-1',
+      status: 'live', mux_status: 'active', playback_policy: policy };
+    const MockPlayer = React.forwardRef((props, ref) => {
+      const element = React.useRef({ paused: false, muted: false, volume: 0.4, currentTime: 0 });
+      React.useImperativeHandle(ref, () => element.current, []);
+      React.useEffect(() => { sourceLoads++; }, [props.src]);
+      return React.createElement('div', { 'data-testid': 'live-player', 'data-src': props.src });
+    });
+    const load = modules({
+      '~/i18n': i18n,
+      '~/constants': { LiveSVG: null },
+      '~/functions': { getToken: () => 'watch-token' },
+      '~/API': { fetchFn: async () => {
+        requests++;
+        currentPlayback = { livestream_id: live.id, video_id: live.video_id,
+          mux_playback_id: 'stream-1', playback_policy: policy, playback_mode: 'live',
+          stream_url: `https://stream.example/live?token=${requests}`,
+          tokens: policy === 'signed' ? { playback: 'signed-token' } : {},
+          expires_at: policy === 'signed' ? (now + 3600000) / 1000 : null };
+        return currentPlayback;
+      } },
+      './LivePlayer': { default: MockPlayer },
+      './LiveStatus': { default: () => null },
+    });
+    const hooks = load('app/components/live/useLiveStream.ts');
+    const View = load('app/components/live/LivePlaybackView.tsx').default;
+    function Watch() {
+      result = hooks.useLivePlayback(live);
+      return React.createElement(View, { live });
+    }
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    t.after(() => client.clear());
+    const root = createRoot(container); container.mountedRoot = root;
+    const render = () => root.render(React.createElement(QueryClientProvider, { client }, React.createElement(Watch)));
+    await act(render);
+    await waitForUpdates();
+    assert.equal(requests, 1, 'initial playback is fetched once');
+    assert.equal(sourceLoads, 1);
+    const initialNode = container.querySelector('[data-testid="live-player"]');
+    const initialSrc = initialNode.getAttribute('data-src');
+    const returnToTab = async () => {
+      await act(() => focusManager.setFocused(false));
+      await act(() => focusManager.setFocused(true));
+      await waitForUpdates();
+    };
+    for (let attempt = 0; attempt < 3; attempt++) await returnToTab();
+    await act(() => onlineManager.setOnline(false));
+    await act(() => onlineManager.setOnline(true));
+    await waitForUpdates();
+    assert.equal(requests, 1, 'focus and reconnect do not request another healthy playback URL');
+    assert.equal(sourceLoads, 1, 'the video source has not reloaded');
+    assert.equal(container.querySelector('[data-testid="live-player"]'), initialNode);
+    assert.equal(initialNode.getAttribute('data-src'), initialSrc);
+
+    const playbackQuery = client.getQueryCache().getAll().find(query => query.queryKey[0] === 'live-playback');
+    assert.equal(playbackQuery.options.refetchInterval(playbackQuery), policy === 'signed' ? 3540000 : false,
+      'background renewal is scheduled just before token expiry');
+    if (policy === 'signed') {
+      now += 3570000; // 30 seconds before expiry; background timers may have been throttled.
+      await returnToTab();
+      assert.equal(requests, 2, 'returning with an expiring token renews it');
+      assert.equal(sourceLoads, 2, 'only the necessary renewal replaces the video source');
+      assert.equal(container.querySelector('[data-testid="live-player"]'), initialNode);
+      assert.notEqual(initialNode.getAttribute('data-src'), initialSrc);
+      await returnToTab();
+      assert.equal(requests, 2, 'the renewed URL remains reusable');
+      now += 3570000;
+      await act(() => onlineManager.setOnline(false));
+      await act(() => onlineManager.setOnline(true));
+      await waitForUpdates();
+      assert.equal(requests, 3, 'network recovery also renews an expiring token');
+    } else {
+      now += 86400000;
+      await returnToTab();
+      assert.equal(requests, 1, 'public playback does not expire');
+    }
+
+    // Stream/recording changes must still request their own playback source.
+    live.video_id = 'recording-2';
+    const beforeSwitch = requests;
+    await act(render);
+    await waitForUpdates();
+    assert.equal(requests, beforeSwitch + 1);
+    assert.equal(result.data.video_id, 'recording-2');
+    live.status = 'ended';
+    const beforeEnd = requests;
+    await act(render);
+    await waitForUpdates();
+    assert.equal(requests, beforeEnd, 'ended streams do not request playback');
+    assert.equal(container.querySelector('[data-testid="live-player"]'), null);
   });
 }

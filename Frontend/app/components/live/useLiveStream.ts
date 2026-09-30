@@ -30,14 +30,23 @@ export function useLivePlayback(live?: LiveDetails) {
       }
       return data;
     },
-    staleTime: 0, gcTime: 0,
+    // A focus refetch generates a new signed URL and reloads the media source.
+    // Keep using the current URL until it is close to expiry.
+    staleTime: ({ state }) => state.data?.playback_policy === 'signed'
+      ? Math.max(0, playbackExpiresAt(state.data.expires_at) - state.dataUpdatedAt - 60000)
+      : Infinity,
+    gcTime: 0,
+    refetchOnWindowFocus: ({ state }) => !state.data || (state.data.playback_policy === 'signed' &&
+      playbackExpiresAt(state.data.expires_at) <= Date.now() + 60000),
+    refetchOnReconnect: ({ state }) => !state.data || (state.data.playback_policy === 'signed' &&
+      playbackExpiresAt(state.data.expires_at) <= Date.now() + 60000),
     retry: (count, error) => count < 1 && ![401, 403, 404, 409].includes(Number((error as { status?: number }).status)),
     refetchInterval: query => {
       const status = Number((query.state.error as { status?: number } | null)?.status);
       if ([401, 403, 404].includes(status)) return false;
       if (query.state.error || !query.state.data) return 5000;
       return query.state.data.playback_policy === 'signed'
-        ? Math.max(1000, Math.min(20 * 60000, playbackExpiresAt(query.state.data.expires_at) - Date.now() - 60000)) : false;
+        ? Math.max(1000, playbackExpiresAt(query.state.data.expires_at) - Date.now() - 60000) : false;
     },
     refetchIntervalInBackground: true,
   });

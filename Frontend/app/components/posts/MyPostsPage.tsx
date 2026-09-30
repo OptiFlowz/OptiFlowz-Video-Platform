@@ -1,3 +1,4 @@
+import RowActionSheet from "~/components/library/rowActionSheet";
 import "~/components/library/mediaManagement.css";
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -133,12 +134,11 @@ export default function MyPostsPage() {
     {menuPresence.mounted && menuPost && typeof document !== 'undefined' && createPortal(
       <div className={`fixed inset-0 z-100 flex items-end justify-center popupMotionLayer ${menuPresence.visible ? 'isOpen' : ''}`} inert={!menuOpen} onClick={() => setMenuOpen(false)}>
         <div className="absolute inset-0 bg-(--seethroughtBlack)" />
-        <div role="dialog" aria-modal="true" aria-label={`${t('adminTableActions')}: ${menuPost.title}`} className={`rowActionSheet postActionSheet relative w-full max-w-lg rounded-t-3xl bg-(--background1) pb-safe popupMotionPanel ${menuPresence.visible ? 'isOpen' : ''}`} onClick={event => event.stopPropagation()}>
-          <div className="flex justify-center py-3"><div className="h-1 w-10 rounded-full bg-(--border1)" /></div>
+        <RowActionSheet label={`${t('adminTableActions')}: ${menuPost.title}`} open={menuOpen} visible={menuPresence.visible} onClose={() => setMenuOpen(false)} className="postActionSheet">
           <div className="flex items-center gap-3 px-4 pb-3 border-b border-(--border1)"><div className="postManagementIcon">{PostSVG}</div><p className="text-sm font-medium line-clamp-2 flex-1">{menuPost.title}</p></div>
           <div className="postMobileActions">{postActions(menuPost, true)}</div>
           <div className="px-4 pb-4 pt-2"><button type="button" onClick={() => setMenuOpen(false)} className="w-full rounded-full border border-(--border1) bg-(--background2) py-3 font-medium hover:bg-(--background3) transition-colors cursor-pointer">{t('adminCancel')}</button></div>
-        </div>
+        </RowActionSheet>
       </div>, document.body)}
     {editing && <PostEditor key={editing.id} post={editing} author={user || {}} videos={videos} onClose={() => { setEditing(undefined); void refresh(); }}
       moreVideos={videosQuery.hasNextPage ? <button type="button" className="postSecondary" disabled={videosQuery.isFetchingNextPage} onClick={() => void videosQuery.fetchNextPage()}>{t('postMoreVideos')}</button> : undefined}

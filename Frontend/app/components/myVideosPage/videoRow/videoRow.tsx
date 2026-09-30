@@ -1,3 +1,4 @@
+import RowActionSheet from "~/components/library/rowActionSheet";
 import { usePopupPresence } from "~/hooks/usePopupPresence";
 import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import { useAuthorization } from "~/authorization/authorization";
@@ -356,17 +357,12 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
             >
               <div className="absolute inset-0 bg-(--seethroughtBlack)" />
 
-              <div
-                role="dialog"
-                aria-modal="true"
-                aria-label={`${t("adminTableActions")}: ${props.title}`}
-                className={`rowActionSheet relative w-full max-w-lg rounded-t-3xl bg-(--background1) pb-safe popupMotionPanel ${mobileMenuPresence.visible ? "isOpen" : ""}`}
-                onClick={(e) => e.stopPropagation()}
+              <RowActionSheet
+                label={`${t("adminTableActions")}: ${props.title}`}
+                open={mobileMenuOpen}
+                visible={mobileMenuPresence.visible}
+                onClose={() => setMobileMenuOpen(false)}
               >
-                <div className="flex justify-center py-3">
-                  <div className="h-1 w-10 rounded-full bg-(--border1)" />
-                </div>
-
                 <div className="flex items-center gap-3 px-4 pb-3 border-b border-(--border1)">
                   <img
                     src={getVideoThumbnail(props)}
@@ -428,7 +424,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                   {t("adminCancel")}
                   </button>
                 </div>
-              </div>
+              </RowActionSheet>
             </div>,
             document.body
           )}
