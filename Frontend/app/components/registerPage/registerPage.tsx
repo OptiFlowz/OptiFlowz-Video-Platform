@@ -1,5 +1,5 @@
 import { passwordHideSVG, passwordShowSVG } from "~/constants";
-import { useLayoutEffect, useRef, useState, useEffect } from "react";
+import { useLayoutEffect, useRef, useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router";
 import type { AuthFetchT } from "~/types";
 import { fetchFn } from "~/API";
@@ -32,6 +32,9 @@ function SetupWizardPage() {
     const [step, setStep] = useState(1); // 1: Account, 2: Bio, 2: Should be Categories
     const [showPassword, setShowPassword] = useState(false);
     const [legalAccepted, setLegalAccepted] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isMessageActive, setIsMessageActive] = useState(false);
+    const submissionDisabled = isLoading || isMessageActive;
     const [popupState, setPopupState] = useState<{
         open: boolean;
         message: string;
@@ -49,7 +52,8 @@ function SetupWizardPage() {
     const lastName = useRef<HTMLInputElement>(null);
     const bio = useRef<HTMLTextAreaElement>(null);
     const pageLoaderRef = useRef<HTMLDivElement>(null);
-    const isRegisteringRef = useRef<number>(0);
+    const isRegisteringRef = useRef(false);
+    const isMessageActiveRef = useRef(false);
 
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
@@ -74,6 +78,8 @@ function SetupWizardPage() {
 
             e.preventDefault();
 
+            if (e.repeat) return;
+
             if (step === 1) {
                 handleNextStep();
             } else if (step === 2) {
@@ -83,9 +89,10 @@ function SetupWizardPage() {
 
         window.addEventListener("keydown", handleEnterPress);
         return () => window.removeEventListener("keydown", handleEnterPress);
-    }, [step]);
+    });
 
     const handleFinish = () => {
+        if (isRegisteringRef.current || isMessageActiveRef.current) return;
         const fullName = `${firstName.current?.value || ""} ${lastName.current?.value || ""}`.trim();
         if(!email.current?.value || !password.current?.value || !fullName) return;
         if (!legalAccepted) {
@@ -107,10 +114,8 @@ function SetupWizardPage() {
             body: raw,
         };
 
-        //DISABLE MULTIPLE BUTTON CLICKS
-        isRegisteringRef.current = isRegisteringRef.current + 1;
-
-        if(isRegisteringRef.current !== 1) return;
+        isRegisteringRef.current = true;
+        setIsLoading(true);
 
         changeElementClass({element: pageLoaderRef.current, show: true});
 
@@ -136,12 +141,15 @@ function SetupWizardPage() {
             }
         })
         .finally(() => {
-            isRegisteringRef.current = 0;
+            isRegisteringRef.current = false;
+            setIsLoading(false);
             changeElementClass({element: pageLoaderRef.current});
         })
     };
 
     const openMessagePopup = (text: string, isDone: boolean) => {
+        isMessageActiveRef.current = true;
+        setIsMessageActive(true);
         setPopupState({
             open: true,
             message: text,
@@ -151,9 +159,14 @@ function SetupWizardPage() {
         });
     };
 
-    const closeMessagePopup = () => {
+    const closeMessagePopup = useCallback(() => {
         setPopupState((prev) => ({ ...prev, open: false }));
-    };
+    }, []);
+
+    const handleMessageClosed = useCallback(() => {
+        isMessageActiveRef.current = false;
+        setIsMessageActive(false);
+    }, []);
 
     const validateStep1 = () => {
         const firstNameValue = firstName.current?.value.trim();
@@ -183,6 +196,7 @@ function SetupWizardPage() {
     };
 
     const handleNextStep = () => {
+        if (isRegisteringRef.current || isMessageActiveRef.current) return;
         if (validateStep1()) {
             setStep(2);
         }
@@ -235,7 +249,8 @@ function SetupWizardPage() {
 
                             <div className="flex gap-3 mt-8 max-[800px]:mt-12">
                                 <button 
-                                    className="button flex-1 bg-(--accentOrange) text-(--text1) rounded-xl py-3 font-semibold"
+                                    className="button flex-1 bg-(--accentOrange) text-(--text1) rounded-xl py-3 font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
+                                    disabled={submissionDisabled}
                                     onClick={handleNextStep}
                                 >
                                     {t("next")}
@@ -319,10 +334,10 @@ function SetupWizardPage() {
                                 </span>
 
                                 <div className="flex gap-3 mt-12 max-[800px]:mt-16 max-[420px]:mt-8">
-                                    <button className="button flex-1 bg-(--background2) hover:bg-(--background3) text-(--text1) rounded-xl py-3 font-semibold" onClick={() => setStep(1)}>
+                                    <button className="button flex-1 bg-(--background2) hover:bg-(--background3) text-(--text1) rounded-xl py-3 font-semibold disabled:opacity-60 disabled:cursor-not-allowed" disabled={submissionDisabled} onClick={() => setStep(1)}>
                                         {t("previous")}
                                     </button>
-                                    <button className="button flex-1 bg-(--accentOrange) text-(--text1) rounded-xl py-3 font-semibold" onClick={handleFinish}>
+                                    <button className="button flex-1 bg-(--accentOrange) text-(--text1) rounded-xl py-3 font-semibold disabled:opacity-60 disabled:cursor-not-allowed" disabled={submissionDisabled} onClick={handleFinish}>
                                         {t("finish")}
                                     </button>
                                 </div>
@@ -361,6 +376,7 @@ function SetupWizardPage() {
                 actionLabel={popupState.actionLabel}
                 autoCloseMs={popupState.autoCloseMs}
                 onClose={closeMessagePopup}
+                onAfterClose={handleMessageClosed}
             />
 
             <Loader

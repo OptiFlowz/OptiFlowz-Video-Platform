@@ -1,5 +1,5 @@
 import { fetchApiResponse } from "~/API";
-import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, useId } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useId } from "react";
 import { ChaptersSVG, CloseSVG, TranscriptSVG, NotesSVG } from "~/constants";
 import { env } from "~/env";
 import { formatDuration, getToken } from "~/functions";
@@ -48,7 +48,9 @@ function VideoChapters({
   const tabId = useId();
   const [following, setFollowing] = useState(true);
   const followingRef = useRef(true);
+  const manualScrollingRef = useRef(false);
   const resumeFollowing = () => {
+    manualScrollingRef.current = false;
     followingRef.current = true;
     lastActiveChapterRef.current = -1;
     lastActiveCueRef.current = -1;
@@ -60,20 +62,6 @@ function VideoChapters({
   const lastActiveCueRef = useRef<number>(-1);
   const transcriptLanguageRef = useRef("en");
   const fullTranscriptLanguageRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    const sheet = holderRef.current?.closest(".playerSheet");
-    const pause = (event: Event) => {
-      if (event.target instanceof Element && event.target.closest(".sheetFollowButton")) return;
-      if (event instanceof KeyboardEvent && !["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)) return;
-      followingRef.current = false;
-      setFollowing(false);
-      const holder = holderRef.current;
-      if (holder) holder.scrollTo({ top: holder.scrollTop, behavior: "instant" });
-    };
-    for (const type of ["pointerdown", "touchstart", "wheel", "keydown"]) sheet?.addEventListener(type, pause, { capture: true, passive: true });
-    return () => { for (const type of ["pointerdown", "touchstart", "wheel", "keydown"]) sheet?.removeEventListener(type, pause, true); };
-  }, []);
 
   useEffect(() => {
     const handlePlayerTime = (event: Event) => {
@@ -178,6 +166,51 @@ function VideoChapters({
     );
   }, [playerTime, transcriptCues]);
 
+  const updateFollowingFromScroll = useCallback(() => {
+    const holder = holderRef.current;
+    if (!manualScrollingRef.current || !holder || activeView === "notes") return;
+    const activeElement = holder.querySelector<HTMLElement>(
+      activeView === "chapters" ? ".chapterCard.active" : ".transcriptCue.active",
+    );
+    const holderBounds = holder.getBoundingClientRect();
+    const elementBounds = activeElement?.getBoundingClientRect();
+    const visibleHeight = elementBounds
+      ? Math.min(elementBounds.bottom, holderBounds.bottom) - Math.max(elementBounds.top, holderBounds.top)
+      : 0;
+    // A short row must fit in the viewport; a taller row may fill the viewport.
+    const isVisible = !!elementBounds && visibleHeight > 0 &&
+      visibleHeight >= Math.min(elementBounds.height, holderBounds.height) - 1;
+    followingRef.current = isVisible;
+    if (isVisible) {
+      // Keep the user's position instead of aligning this same row again.
+      lastActiveChapterRef.current = activeChapterIndex;
+      lastActiveCueRef.current = activeCueIndex;
+    }
+    setFollowing(isVisible);
+  }, [activeView, activeChapterIndex, activeCueIndex]);
+
+  useEffect(() => {
+    const sheet = holderRef.current?.closest(".playerSheet");
+    const pause = (event: Event) => {
+      if (event.target instanceof Element && event.target.closest(".sheetFollowButton")) return;
+      if (["pointerdown", "touchstart"].includes(event.type) && event.target instanceof Element &&
+        event.target.closest('[role="tab"][aria-selected="true"]')) return;
+      if (event instanceof KeyboardEvent && !["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)) return;
+      manualScrollingRef.current = true;
+      followingRef.current = false;
+      setFollowing(false);
+      const holder = holderRef.current;
+      if (holder) holder.scrollTo({ top: holder.scrollTop, behavior: "instant" });
+      updateFollowingFromScroll();
+    };
+    for (const type of ["pointerdown", "touchstart", "wheel", "keydown"]) sheet?.addEventListener(type, pause, { capture: true, passive: true });
+    return () => { for (const type of ["pointerdown", "touchstart", "wheel", "keydown"]) sheet?.removeEventListener(type, pause, true); };
+  }, [updateFollowingFromScroll]);
+
+  useLayoutEffect(() => {
+    if (!followingRef.current) updateFollowingFromScroll();
+  }, [updateFollowingFromScroll]);
+
   const chaptersArray = useMemo(() => {
     return chapters.map((chapter, index) => {
       const nextStartTime = Number(
@@ -204,6 +237,8 @@ function VideoChapters({
     const activeElement = holder.querySelector<HTMLElement>(".chapterCard.active");
     if (!activeElement) return;
 
+    manualScrollingRef.current = false;
+
     const holderBounds = holder.getBoundingClientRect();
     const elementBounds = activeElement.getBoundingClientRect();
     holder.scrollTo({
@@ -221,6 +256,8 @@ function VideoChapters({
     const activeElement = holder.querySelector<HTMLElement>(".transcriptCue.active");
     if (!activeElement) return;
 
+    manualScrollingRef.current = false;
+
     const holderBounds = holder.getBoundingClientRect();
     const elementBounds = activeElement.getBoundingClientRect();
     holder.scrollTo({
@@ -231,6 +268,7 @@ function VideoChapters({
 
 
   const selectView = (view: PanelView) => {
+    if (view === activeView) return;
     setActiveView(view);
     resumeFollowing();
     holderRef.current?.scrollTo({ top: 0 });
@@ -276,7 +314,7 @@ function VideoChapters({
         {activeView !== "notes" && !following && <button type="button" className="sheetFollowButton" onClick={resumeFollowing}>{t("resumePlaybackFollow")}</button>}
       </>)}>
 
-      <div className="similar" ref={holderRef} id={`${tabId}-panel`} role="tabpanel" tabIndex={0} aria-labelledby={`${tabId}-${activeView}`}>
+      <div className="similar" ref={holderRef} onScroll={updateFollowingFromScroll} id={`${tabId}-panel`} role="tabpanel" tabIndex={0} aria-labelledby={`${tabId}-${activeView}`}>
         {activeView === "notes" ? <NotesPanel key={props.id} videoId={props.id} duration={Number(props.duration_seconds) || 0} request={notesRequest} /> : activeView === "chapters" ? (
           <div className="holder">{chaptersArray}</div>
         ) : (

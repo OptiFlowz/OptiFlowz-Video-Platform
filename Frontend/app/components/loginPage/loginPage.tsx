@@ -5,6 +5,7 @@ import {
   useState,
   useLayoutEffect,
   useEffect,
+  useCallback,
 } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { fetchFn } from "~/API";
@@ -30,6 +31,7 @@ function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [isMessageActive, setIsMessageActive] = useState(false);
   const [popupState, setPopupState] = useState<{
     open: boolean;
     message: string;
@@ -45,7 +47,8 @@ function LoginPage() {
   const password = useRef<HTMLInputElement>(null);
   const rememberMeRef = useRef<HTMLInputElement>(null);
   const pageLoaderRef = useRef<HTMLDivElement>(null);
-  const isLoggingRef = useRef<number>(0);
+  const isLoggingRef = useRef(false);
+  const isMessageActiveRef = useRef(false);
 
   const { setCurrentNav } = useContext(CurrentNavContext);
   const navigate = useNavigate();
@@ -68,6 +71,8 @@ function LoginPage() {
   }, []);
 
   const openMessagePopup = (text: string, isDone: boolean) => {
+    isMessageActiveRef.current = true;
+    setIsMessageActive(true);
     setPopupState({
       open: true,
       message: text,
@@ -77,12 +82,19 @@ function LoginPage() {
     });
   };
 
-  const closeMessagePopup = () => {
+  const closeMessagePopup = useCallback(() => {
     setPopupState((prev) => ({ ...prev, open: false }));
-  };
+  }, []);
+
+  const handleMessageClosed = useCallback(() => {
+    isMessageActiveRef.current = false;
+    setIsMessageActive(false);
+  }, []);
 
   useEffect(() => {
     if (searchParams.get("password_reset") === "success") {
+      isMessageActiveRef.current = true;
+      setIsMessageActive(true);
       setPopupState({ open: true, message: t("passwordChanged"), autoCloseMs: 5000 });
       window.history.replaceState(null, "", "/login");
     }
@@ -102,7 +114,7 @@ function LoginPage() {
   }
 
   const handleSubmit = () => {
-    if (isLoading) return;
+    if (isLoggingRef.current || isMessageActiveRef.current) return;
     if (!email.current?.value || !password.current?.value) {
       openMessagePopup(t("pleaseEnterEmailPassword"), false);
       return;
@@ -113,6 +125,7 @@ function LoginPage() {
       return;
     }
 
+    isLoggingRef.current = true;
     setIsLoading(true);
     changeElementClass({ element: pageLoaderRef.current, show: true });
 
@@ -126,11 +139,6 @@ function LoginPage() {
       headers: myHeaders,
       body: raw,
     };
-
-    //DISABLE MULTIPLE BUTTON CLICKS
-    isLoggingRef.current = isLoggingRef.current + 1;
-
-    if(isLoggingRef.current !== 1) return;
 
     fetchFn<LoginResult>({
       route: "api/auth/login",
@@ -153,7 +161,7 @@ function LoginPage() {
       openMessagePopup(t(err.status === 401 ? "passwordIncorrect" : "twoFactorFailed"), false);
     })
     .finally(() => {
-      isLoggingRef.current = 0;
+      isLoggingRef.current = false;
     })
   };
 
@@ -169,6 +177,8 @@ function LoginPage() {
     if (e.key !== "Enter") return;
 
     e.preventDefault();
+
+    if (e.repeat) return;
 
     if (shouldGoToPassword){
       password.current?.focus();
@@ -271,10 +281,10 @@ function LoginPage() {
 
             <button
               type="button"
-              disabled={isLoading}
+              disabled={isLoading || isMessageActive}
               onClick={handleSubmit}
               className={`button w-full bg-(--accentOrange) text-(--text1) rounded-[12px] py-3 font-semibold mt-12 max-[500px]:mt-6 ${
-                isLoading
+                isLoading || isMessageActive
                   ? "opacity-60 cursor-not-allowed"
                   : ""
               }`}
@@ -288,7 +298,7 @@ function LoginPage() {
               }
             </button>
 
-            <GoogleLoginButton props={{isLoading: isLoading, rememberMe: rememberMe, redirect}} />
+            <GoogleLoginButton props={{disabled: isLoading || isMessageActive, rememberMe: rememberMe, redirect}} />
 
             <span className="flex items-center justify-center flex-wrap mt-1 gap-1 text-[.925rem]">
               <p className="font-medium text-(--text2) max-[420px]:text-[0.8rem]!">
@@ -337,6 +347,7 @@ function LoginPage() {
         actionLabel={popupState.actionLabel}
         autoCloseMs={popupState.autoCloseMs}
         onClose={closeMessagePopup}
+        onAfterClose={handleMessageClosed}
       />
 
       <Loader

@@ -2233,29 +2233,73 @@ main.play .relevant.relevant--compact {
   max-width: 18%;
 }
 
-/* Theater keeps the normal details/sidebar proportions below its wide player. */
-main.play .theaterDetailsLayout {
-  display: flex;
-  align-items: flex-start;
-  gap: 20px;
+/* Both player layouts share the same mounted details and recommendations. */
+main.play.playWatchLayout > .player:not(.theater) {
+  aspect-ratio: 427 / 240;
+  max-height: calc(100dvh - 150px);
 }
-main.play .theaterDetailsLayout > .theaterDetailsPrimary {
-  flex: 1 1 0;
+main.play.playWatchLayout > .watchDetails {
   min-width: 0;
+  max-width: none;
 }
-main.play .theaterDetailsLayout > .relevant {
-  flex: 0 0 30%;
-  min-width: 400px;
-  max-width: 30%;
+/* Once the full player is visible, its loading placeholder must stay hidden. */
+:root:has(.persistent-video-player--full.is-visible) main.play.playWatchLayout > .player {
+  background: transparent;
 }
-main.play .theaterDetailsLayout > .relevant.relevant--compact {
-  flex-basis: 18%;
-  min-width: 240px;
-  max-width: 18%;
+:root:has(.persistent-video-player--full.is-visible) main.play.playWatchLayout > .player .player-skeleton {
+  visibility: hidden;
+  animation: none;
 }
-@media (max-width: 1420px) {
-  main.play .theaterDetailsLayout > .relevant:not(.relevant--compact) {
-    min-width: 395px;
+@media (min-width: 1076px) {
+  main.play.playWatchLayout {
+    --watch-sidebar-width: max(400px, 30%);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--watch-sidebar-width);
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+    overflow-anchor: none;
+  }
+  main.play.playWatchLayout.has-compact-relevant {
+    --watch-sidebar-width: max(240px, 18%);
+  }
+  main.play.playWatchLayout > .player {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+  }
+  main.play.playWatchLayout > .watchDetails {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  main.play.playWatchLayout > .relevant {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    min-width: 0;
+    max-width: none;
+  }
+  main.play.playWatchLayout.theater > .player {
+    grid-column: 1 / -1;
+  }
+  main.play.playWatchLayout.theater > .relevant {
+    grid-row: 2;
+  }
+  :root:has(main.playWatchLayout.is-theater-transitioning) .persistent-video-player--full {
+    transition:
+      top 420ms cubic-bezier(0.22, 1, 0.36, 1),
+      left 420ms cubic-bezier(0.22, 1, 0.36, 1),
+      width 420ms cubic-bezier(0.22, 1, 0.36, 1),
+      height 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+@media (1076px <= width <= 1420px) {
+  main.play.playWatchLayout:not(.has-compact-relevant) {
+    --watch-sidebar-width: max(395px, 30%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:has(main.playWatchLayout.is-theater-transitioning) .persistent-video-player--full {
+    transition: none;
   }
 }
 

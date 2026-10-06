@@ -441,7 +441,13 @@ function VideoInfo({
                             <span className="descriptionActionIcon">{TranscriptSVG}</span>
                             <p>{t("transcript")} {ArrowSVG}</p>
                         </button>}
-                        {onOpenNotes && <button className="viewVideoChapters viewVideoTranscript noHover" onClick={onOpenNotes}>
+                        {onOpenNotes && <button className="viewVideoChapters viewVideoTranscript noHover"
+                            onMouseEnter={() => setIsHoveringTags(true)}
+                            onMouseLeave={() => setIsHoveringTags(false)}
+                            onPointerEnter={() => setIsHoveringTags(true)}
+                            onPointerLeave={() => setIsHoveringTags(false)}
+                            onClick={onOpenNotes}
+                        >
                             <span className="descriptionActionIcon">{NotesSVG}</span>
                             <p>{t("myNotes")} {ArrowSVG}</p>
                         </button>}

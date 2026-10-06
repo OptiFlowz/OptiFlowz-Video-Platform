@@ -62,6 +62,111 @@ const waitForUpdates = () => act(() => new Promise(resolve => setTimeout(resolve
 const identity = ({ children }) => children;
 const i18n = { useI18n: () => ({ t: (key, params) => `${key}${params ? JSON.stringify(params) : ''}` }), I18nProvider: identity };
 
+for (const view of ['chapters', 'transcript']) {
+  test(`${view} follow button disappears on manual return to playback without jumping, and resumes at the next row`, async t => {
+    const container = dom(t);
+    const previousKeyboardEvent = Object.getOwnPropertyDescriptor(globalThis, 'KeyboardEvent');
+    globalThis.KeyboardEvent = window.KeyboardEvent;
+    t.after(() => {
+      if (previousKeyboardEvent) Object.defineProperty(globalThis, 'KeyboardEvent', previousKeyboardEvent);
+      else delete globalThis.KeyboardEvent;
+    });
+    window.matchMedia = () => ({ matches: true });
+    const scrolls = [];
+    let rowHeight = 80;
+    window.HTMLElement.prototype.getBoundingClientRect = function () {
+      const holder = this.closest('.similar');
+      const rows = holder ? [...holder.querySelectorAll('.chapterCard')] : [];
+      const index = rows.indexOf(this);
+      const top = index < 0 ? 100 : 100 + index * 100 - holder.scrollTop;
+      const height = index < 0 ? 200 : rowHeight;
+      return { top, bottom: top + height, left: 0, right: 400, width: 400, height };
+    };
+    window.HTMLElement.prototype.scrollTo = function (options) {
+      this.scrollTop = Math.max(0, options.top ?? this.scrollTop);
+      scrolls.push(options);
+    };
+    const load = modules({
+      '~/i18n': i18n,
+      '~/constants': {},
+      '~/functions': { getToken: () => '', formatDuration: seconds => String(seconds) },
+      './playerSheet': { default: ({ children, header, onClose }) => React.createElement('div', { className: 'playerSheet' }, header(onClose), children) },
+      '../notes/notesPanel': { default: () => null },
+      './transcript': {
+        useTranscriptAvailable: () => true,
+        TRANSCRIPT_EVENT: 'test:transcript',
+        TRANSCRIPT_REQUEST_EVENT: 'test:request-transcript',
+      },
+    });
+    const VideoChapters = load('app/components/playPage/playerCollection/videoChapters.tsx').default;
+    const chapters = Array.from({ length: 6 }, (_, index) => ({ title: `Chapter ${index}`, startTime: index * 10 }));
+    const root = createRoot(container); container.mountedRoot = root;
+    await act(async () => root.render(React.createElement(VideoChapters, {
+      props: { id: 'video', chapters, duration_seconds: 60 }, initialView: view, onClose() {},
+    })));
+    if (view === 'transcript') await act(async () => window.dispatchEvent(new CustomEvent('test:transcript', {
+      detail: { videoId: 'video', cues: chapters.map((chapter, index) => ({ id: String(index), startTime: chapter.startTime, endTime: chapter.startTime + 10, text: chapter.title })) },
+    })));
+    const holder = container.querySelector('.similar');
+    const followButton = () => container.querySelector('.sheetFollowButton');
+    const time = seconds => act(async () => window.dispatchEvent(new CustomEvent('player:time', { detail: { seconds } })));
+    const scroll = top => act(async () => { holder.scrollTop = top; holder.dispatchEvent(new Event('scroll')); });
+    await time(25);
+    assert.equal(holder.scrollTop, 185);
+    const activeTab = () => container.querySelector('[role="tab"][aria-selected="true"]');
+    const clickActiveTab = () => act(async () => {
+      activeTab().dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true }));
+      activeTab().click();
+    });
+    const beforeActiveTab = scrolls.length;
+    await clickActiveTab();
+    assert.equal(holder.scrollTop, 185, 'Clicking the active tab keeps the scroll position');
+    assert.equal(scrolls.length, beforeActiveTab, 'An active tab does not stop or restart automatic scrolling');
+    assert.equal(followButton(), null);
+    await act(async () => holder.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true })));
+    assert.equal(followButton(), null, 'Interacting with a visible active row does not show the button');
+    await scroll(0);
+    assert.ok(followButton(), 'Scrolling away pauses following');
+    await time(35);
+    assert.equal(holder.scrollTop, 0, 'Playback must not pull the user away from browsing');
+    await scroll(120);
+    assert.ok(followButton(), 'A sliver of the active row is not enough to resume');
+    const beforePausedTab = scrolls.length;
+    await clickActiveTab();
+    assert.equal(holder.scrollTop, 120, 'Clicking the active tab also preserves a manual browsing position');
+    assert.equal(scrolls.length, beforePausedTab);
+    assert.ok(followButton(), 'An active tab does not restart following while paused');
+    const beforeReturn = scrolls.length;
+    await scroll(200);
+    assert.equal(followButton(), null, 'Manual return to the active row hides the button');
+    assert.equal(holder.scrollTop, 200, 'Keep the position the user chose');
+    assert.equal(scrolls.length, beforeReturn, 'Do not start another programmatic scroll on return');
+    await scroll(0);
+    assert.ok(followButton(), 'A continuing scrollbar drag can leave the active row again');
+    await scroll(200);
+    await time(45);
+    assert.equal(holder.scrollTop, 385, 'Automatic following resumes when playback reaches the next row');
+    assert.equal(followButton(), null, 'Programmatic following must not pause itself');
+    await act(async () => holder.dispatchEvent(new window.WheelEvent('wheel', { bubbles: true, deltaY: -200 })));
+    await scroll(0);
+    assert.ok(followButton());
+    rowHeight = 280;
+    await scroll(450);
+    assert.equal(followButton(), null, 'A row taller than the viewport resumes when it fills the viewport');
+    await scroll(0);
+    assert.ok(followButton());
+    await act(async () => followButton().click());
+    assert.equal(followButton(), null);
+    assert.equal(holder.scrollTop, 385, 'The explicit Follow playback action still aligns the active row');
+    await act(async () => [...container.querySelectorAll('[role="tab"]')].find(tab => tab.textContent === 'myNotes').click());
+    holder.scrollTop = 40;
+    const beforeNotesTab = scrolls.length;
+    await clickActiveTab();
+    assert.equal(holder.scrollTop, 40, 'Clicking the active notes tab also preserves its position');
+    assert.equal(scrolls.length, beforeNotesTab);
+  });
+}
+
 for (const kind of ['video', 'playlist']) {
   test(`editor ${kind} deletion respects permissions, confirmation, failures and pending requests`, async t => {
     const container = dom(t);
@@ -901,6 +1006,124 @@ for (const scenario of ['invalid-id', 'not-found', 'deleted-cached-video', 'empt
     }
   });
 }
+
+test('theater transitions slide existing panels, reverse from current positions, preserve drafts and respect reduced motion and resizing', async t => {
+  const container = dom(t);
+  const videoId = 'f50c7ede-99cf-451d-ada6-d3d0e30a8191';
+  let smallScreen = false;
+  let reducedMotion = false;
+  window.matchMedia = query => ({ matches: query.includes('1075px') ? smallScreen : query.includes('reduced-motion') ? reducedMotion : false });
+  window.scrollTo = () => {};
+  const animations = [];
+  const timers = new Map();
+  let timerId = 0;
+  window.setTimeout = (callback, delay) => {
+    assert.equal(delay, 500);
+    timers.set(++timerId, callback);
+    return timerId;
+  };
+  window.clearTimeout = id => timers.delete(id);
+  HTMLElement.prototype.animate = function (frames, options) {
+    const animation = { element: this, frames, options, progress: 0, cancelled: false, cancel() { this.cancelled = true; } };
+    animations.push(animation);
+    return animation;
+  };
+  HTMLElement.prototype.getBoundingClientRect = function () {
+    const theater = this.closest('main')?.classList.contains('theater');
+    let top = this.classList.contains('relevant') ? (theater ? 813 : 93) : (theater ? 813 : 563);
+    let left = this.classList.contains('relevant') ? 840 : 20;
+    const width = this.classList.contains('relevant') ? 400 : 800;
+    const running = animations.find(animation => animation.element === this && !animation.cancelled);
+    if (running) {
+      const [, x, y] = running.frames[0].transform.match(/translate\(([-\d.]+)px, ([-\d.]+)px\)/);
+      left += Number(x) * (1 - running.progress);
+      top += Number(y) * (1 - running.progress);
+    }
+    return { top, left, width, height: 800, bottom: top + 800, right: left + width };
+  };
+  const mounts = new Map();
+  const mounted = name => React.useEffect(() => { mounts.set(name, (mounts.get(name) ?? 0) + 1); }, []);
+  const load = modules({
+    '~/i18n': i18n,
+    '~/functions': { getToken: () => 'token' },
+    'react-router': { useParams: () => ({ videoId }), useLocation: () => ({ pathname: `/video/${videoId}`, search: '' }), useNavigate: () => () => {} },
+    './playerCollection/playerCollection': { default: ({ props }) => {
+      mounted('player'); return React.createElement('div', { className: `player ${props.class}` });
+    } },
+    './playerCollection/videoInfo': { default: ({ onOpenChapter }) => {
+      mounted('details'); return React.createElement('button', { onClick: onOpenChapter }, 'open-chapters');
+    } },
+    './playerCollection/similar': { default: () => { mounted('similar'); return React.createElement('p', null, 'Similar Videos'); } },
+    './playerCollection/videoChapters': { default: () => { mounted('chapters'); return React.createElement('input', { 'aria-label': 'note-draft', defaultValue: '' }); } },
+    './inPlaylist': { default: () => null },
+    './commentsSection': { default: () => { mounted('comments'); return React.createElement('textarea', { 'aria-label': 'comment-draft', defaultValue: '' }); } },
+    '~/API': { fetchFn: async ({ route }) => route.includes('/similar') ? { videos: [{ id: 'other' }] } : { id: videoId, title: 'Video' } },
+  });
+  const Page = load('app/components/playPage/playPage.tsx').default;
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  t.after(() => client.clear());
+  const root = createRoot(container); container.mountedRoot = root;
+  await act(async () => root.render(React.createElement(QueryClientProvider, { client }, React.createElement(Page))));
+  await waitForUpdates();
+  await act(async () => container.querySelector('button').click());
+  const page = container.querySelector('main');
+  const details = container.querySelector('.watchDetails');
+  const sidebar = container.querySelector('.relevant');
+  const player = container.querySelector('.player');
+  const comment = container.querySelector('textarea');
+  const note = container.querySelector('input');
+  comment.value = 'Unsubmitted comment';
+  note.value = 'Unsaved note';
+  const toggle = () => act(async () => window.dispatchEvent(new CustomEvent('theater-mode')));
+  await toggle();
+  assert.equal(page.classList.contains('theater'), true);
+  assert.equal(page.classList.contains('is-theater-transitioning'), true);
+  assert.equal(animations.length, 2);
+  const slide = animations.find(animation => animation.element === sidebar);
+  assert.equal(slide.frames[0].transform, 'translate(0px, -720px)');
+  assert.equal(slide.options.duration, 420);
+  animations.forEach(animation => { animation.progress = 0.5; });
+  await toggle();
+  assert.equal(page.classList.contains('theater'), false);
+  assert.ok(animations.slice(0, 2).every(animation => animation.cancelled));
+  assert.equal(animations[3].frames[0].transform, 'translate(0px, 360px)', 'Rapid reversal starts from the current visible position');
+  assert.equal(container.querySelector('.player'), player);
+  assert.equal(container.querySelector('.watchDetails'), details);
+  assert.equal(container.querySelector('.relevant'), sidebar);
+  assert.equal(container.querySelector('textarea'), comment);
+  assert.equal(container.querySelector('input'), note);
+  assert.equal(comment.value, 'Unsubmitted comment');
+  assert.equal(note.value, 'Unsaved note');
+  assert.ok([...mounts.values()].every(count => count === 1), 'Theater switching must not remount the video or panels');
+  await act(async () => [...timers.values()][0]());
+  assert.equal(page.classList.contains('is-theater-transitioning'), false);
+  assert.ok(animations.every(animation => animation.cancelled));
+  reducedMotion = true;
+  await toggle();
+  assert.equal(page.classList.contains('theater'), true);
+  assert.equal(page.classList.contains('is-theater-transitioning'), false);
+  assert.equal(animations.length, 4);
+  reducedMotion = false;
+  await toggle();
+  assert.equal(page.classList.contains('is-theater-transitioning'), true);
+  smallScreen = true;
+  await act(async () => window.dispatchEvent(new Event('resize')));
+  assert.equal(page.classList.contains('theater'), false);
+  assert.equal(page.classList.contains('is-theater-transitioning'), false);
+  assert.ok(animations.every(animation => animation.cancelled));
+  assert.equal(timers.size, 0);
+  await toggle();
+  assert.equal(page.classList.contains('theater'), false, 'Mobile theater remains disabled');
+  smallScreen = false;
+  await act(async () => window.dispatchEvent(new Event('resize')));
+  await act(async () => {
+    window.dispatchEvent(new CustomEvent('theater-mode'));
+    window.dispatchEvent(new CustomEvent('theater-mode'));
+  });
+  assert.equal(page.classList.contains('theater'), false);
+  await act(async () => [...timers.values()][0]());
+  assert.equal(page.classList.contains('is-theater-transitioning'), false, 'Two toggles in one render must not leave transition styles stuck');
+});
 
 test('a player mounted after video loading survives pending layout measurements and anchor replacement', async t => {
   const container = dom(t);

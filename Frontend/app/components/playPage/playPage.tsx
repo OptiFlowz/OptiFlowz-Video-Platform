@@ -15,6 +15,7 @@ import VideoChapters, { type PanelView } from "./playerCollection/videoChapters"
 import { OPEN_NOTES_EVENT, type OpenNotesDetail } from "./notes/videoNotes";
 import CommentsSection from "./commentsSection";
 import { useI18n } from "~/i18n";
+import { useTheaterTransition } from "./useTheaterTransition";
 
 const VIDEO_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -41,6 +42,7 @@ function PlayPage(){
     const [notesRequest, setNotesRequest] = useState<OpenNotesDetail>();
     const [showComments, setShowComments] = useState(false);
     const [isTheater, setIsTheater] = useState(false);
+    const { pageRef, prepareTransition, isTransitioning } = useTheaterTransition(isTheater);
     const [isMobileCommentsDrawer, setIsMobileCommentsDrawer] = useState(false);
     const theaterEnabled = useRef(true);
     const chaptersRef = useRef<HTMLDivElement | null>(null);
@@ -170,6 +172,10 @@ function PlayPage(){
             }),
     });
     const videoData = isFetchedAfterMount && !isError ? data ?? undefined : undefined;
+    const playerVideoData = useMemo(
+        () => videoData ? { ...videoData, class: isTheater ? "theater" : "" } : undefined,
+        [videoData, isTheater],
+    );
     const isVideoLoading = validVideoId && !isError && (isLoading || !isFetchedAfterMount);
     const videoStatus = (error as { status?: number } | null)?.status;
     const videoNotFound = !validVideoId || videoStatus === 404 || videoStatus === 410
@@ -216,6 +222,7 @@ function PlayPage(){
                 return;
             }
 
+            prepareTransition();
             setIsTheater(prev => !prev);
         };
 
@@ -226,7 +233,7 @@ function PlayPage(){
             window.removeEventListener("resize", enforceTheaterRule);
             window.removeEventListener("theater-mode", handleTheaterMode);
         };
-    }, []);
+    }, [prepareTransition]);
 
     useEffect(() => {
         const handler = () => openChapters();
@@ -304,66 +311,35 @@ function PlayPage(){
     if (isVideoLoading) return <PlayPageSkeleton />;
 
     return <>
-        <main className={`play ${isTheater ? "theater pt-23!" : ""} px-0 py-7.5`}>
-            {
-                !isTheater 
-                ? <>
-                    <div className="flex flex-col gap-5 overflow-x-hidden">
-                        <PlayerCollection
-                            props={videoData}
-                            startTimeOverride={startTimeOverride}
-                            forceAutoplay={isFromQuiz}
-                        />
+        <main ref={pageRef} className={`play playWatchLayout ${isTheater ? "theater pt-23!" : ""} ${isTransitioning ? "is-theater-transitioning" : ""} ${isCompactRelevant ? "has-compact-relevant" : ""} px-0 py-7.5`}>
+            <PlayerCollection
+                props={playerVideoData}
+                startTimeOverride={startTimeOverride}
+                forceAutoplay={isFromQuiz}
+            />
 
-                        <VideoInfo
-                            props={videoData}
-                            isLoading={isVideoLoading}
-                            onOpenChapter={openChapters}
-                            onOpenTranscript={openTranscript}
-                            onOpenNotes={() => openNotes()}
-                            onOpenComments={ isMobileCommentsDrawer ? openComments : undefined }
-                            topAction={backToQuizButton}
-                        />
+            <div className="watchDetails flex flex-col gap-5 overflow-x-hidden">
+                <VideoInfo
+                    props={videoData}
+                    isLoading={isVideoLoading}
+                    onOpenChapter={openChapters}
+                    onOpenTranscript={openTranscript}
+                    onOpenNotes={() => openNotes()}
+                    onOpenComments={ isMobileCommentsDrawer ? openComments : undefined }
+                    topAction={backToQuizButton}
+                />
 
-                        {videoData?.playlists && <InPlaylist props={videoData?.playlists} />}
+                {videoData?.playlists && <InPlaylist props={videoData?.playlists} />}
 
-                        {videoId && !isMobileCommentsDrawer && <CommentsSection videoId={videoId} />}
-                    </div>
+                {videoId && !isMobileCommentsDrawer && <CommentsSection videoId={videoId} />}
+            </div>
 
-                    <div className={`relevant flex flex-col gap-7 ${isCompactRelevant ? "relevant--compact" : ""}`}>
-                        {showChapters && videoData ? <div ref={chaptersRef}><VideoChapters key={`${videoId}-${chapterPanelView}`} props={videoData} initialView={chapterPanelView} notesRequest={notesRequest} onClose={() => handleCloseChapters()} /></div> : ""}
-                        {showComments && videoId ? <CommentsSection videoId={videoId} variant="drawer" onClose={() => handleCloseComments()} /> : ""}
-                        {playlistId ? <div ref={playlistRef}><PlayingPlaylist key={playlistId} playlistId={playlistId} videoId={videoId || ""} onClose={() => handleClose()} /></div> : ""}
-                        <Similar props={resolvedSimilarData} isLoading={isLoadingSimilar} />
-                    </div>
-                </>
-                : <>
-                    <div className="flex flex-col gap-5 overflow-x-hidden mx-auto">
-                        <PlayerCollection
-                            props={videoData ? {...videoData, class: "theater"} : undefined}
-                            startTimeOverride={startTimeOverride}
-                            forceAutoplay={isFromQuiz}
-                        />
-                        
-                        <div className="theaterDetailsLayout overflow-x-hidden">
-                            <div className="theaterDetailsPrimary flex flex-col gap-5 overflow-x-hidden">
-                                <VideoInfo props={videoData} isLoading={isVideoLoading} onOpenChapter={openChapters} onOpenTranscript={openTranscript} onOpenNotes={() => openNotes()} topAction={backToQuizButton} />
-
-                                {videoData?.playlists && <InPlaylist props={videoData?.playlists} />}
-
-                                {videoId && <CommentsSection videoId={videoId} />}
-                            </div>
-
-                            <div className={`relevant flex flex-col gap-7 ${isCompactRelevant ? "relevant--compact" : ""}`}>
-                                {showChapters && videoData ? <div ref={chaptersRef}><VideoChapters key={`${videoId}-${chapterPanelView}`} props={videoData} initialView={chapterPanelView} notesRequest={notesRequest} onClose={() => handleCloseChapters()} /></div> : ""}
-                                {playlistId ? <div ref={playlistRef}><PlayingPlaylist key={playlistId} playlistId={playlistId} videoId={videoId || ""} onClose={() => handleClose()} /></div> : ""}
-                                <Similar props={resolvedSimilarData} isLoading={isLoadingSimilar} />
-                            </div> 
-                        </div>
-                    </div>
-                </>
-            }
-            
+            <div className={`relevant flex flex-col gap-7 ${isCompactRelevant ? "relevant--compact" : ""}`}>
+                {showChapters && videoData ? <div ref={chaptersRef}><VideoChapters key={`${videoId}-${chapterPanelView}`} props={videoData} initialView={chapterPanelView} notesRequest={notesRequest} onClose={() => handleCloseChapters()} /></div> : ""}
+                {showComments && videoId ? <CommentsSection videoId={videoId} variant="drawer" onClose={() => handleCloseComments()} /> : ""}
+                {playlistId ? <div ref={playlistRef}><PlayingPlaylist key={playlistId} playlistId={playlistId} videoId={videoId || ""} onClose={() => handleClose()} /></div> : ""}
+                <Similar props={resolvedSimilarData} isLoading={isLoadingSimilar} />
+            </div>
         </main>
     </>;
 }
