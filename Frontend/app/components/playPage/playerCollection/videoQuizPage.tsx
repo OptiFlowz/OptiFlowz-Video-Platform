@@ -1,15 +1,17 @@
 import { usePopupPresence } from "~/hooks/usePopupPresence";
 import "~/styles/quiz.css";
+import "~/styles/quizExperience.css";
 import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams, Link } from "react-router";
 import { fetchFn } from "~/API";
-import { ArrowSVG, CloseSVG, IconChevron, QuizSVG } from "~/constants";
+import { ArrowSVG, CheckSVG, CloseSVG, HistorySVG, IconChevron, LockSVG, QuizSVG } from "~/constants";
 import { appendFromQuizParam, formatDescription, getToken, QUIZ_RETURN_PATH_STORAGE_KEY } from "~/functions";
 import { useI18n } from "~/i18n";
+import InfiniteScroll from "~/components/library/infiniteScroll";
 import CustomSelect from "~/components/customSelect/customSelect";
 
 type TranslateFn = ReturnType<typeof useI18n>["t"];
@@ -481,8 +483,8 @@ function getAnsweredSummaryText(answerSummary: string) {
 }
 
 function getAttemptScoreText(attempt: AttemptRecord) {
-  const score = attempt.score_points ?? "-";
-  const total = attempt.max_points ?? "-";
+  const score = attempt.score_points == null ? "—" : Number(attempt.score_points);
+  const total = attempt.max_points == null ? "—" : Number(attempt.max_points);
   return `${score}/${total}`;
 }
 
@@ -715,26 +717,28 @@ function QuizStatusIcon({ passed, status }: { passed?: boolean; status?: "correc
 
   return (
     <span className={`videoQuizStatusIcon ${iconStatus === "correct" ? "passed" : iconStatus}`}>
-      <svg viewBox="0 0 24 24" fill="none">
-        {iconStatus === "correct" ? (
-          <path d="M5 12.5L9.5 17L19 7.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-        ) : iconStatus === "partial" ? (
-          <path d="M7 12H17" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-        ) : iconStatus === "in_progress" ? (
-          <>
-            <path d="M12 7V12L15.5 14" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M20 12A8 8 0 1 1 4 12A8 8 0 0 1 20 12Z" stroke="currentColor" strokeWidth="2.2" />
-          </>
-        ) : iconStatus === "not_checked" ? (
-          <path d="M7 12H17" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-        ) : (
-          <>
-            <path d="M8 8L16 16" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-            <path d="M16 8L8 16" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-          </>
-        )}
-      </svg>
+      {iconStatus === "correct" ? CheckSVG : iconStatus === "incorrect" ? CloseSVG : iconStatus === "in_progress" ? HistorySVG : <span aria-hidden="true">—</span>}
     </span>
+  );
+}
+
+function QuizScoreSummary({ score, total, percentage, passed, title, passingScore, t }: Pick<AttemptResult, "score" | "total" | "percentage" | "passed"> & {
+  title: string;
+  passingScore?: number | string;
+  t: TranslateFn;
+}) {
+  return (
+    <div className={`videoQuizResultHeadline ${passed === true ? "passed" : ""}`}>
+      <div className="videoQuizResultScore">
+        <strong>{percentage != null ? `${Number(percentage)}%` : "—"}</strong>
+        <span>{t("quizScoreLabel")}</span>
+      </div>
+      <div>
+        <h3>{title}</h3>
+        <p>{t("quizCurrentScore", { score: score == null ? "—" : Number(score), total: total == null ? "—" : Number(total) })}</p>
+        {passingScore != null ? <p>{t("quizPassingScoreLabel")}: {Number(passingScore)}%</p> : null}
+      </div>
+    </div>
   );
 }
 
@@ -758,7 +762,8 @@ function AnimatedTimer({ secondsLeft }: { secondsLeft: number }) {
 
 function VideoQuizPage() {
   const { can } = useAuthorization();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const [visibleAttemptCount, setVisibleAttemptCount] = useState(5);
   const routeParams = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -933,6 +938,21 @@ function VideoQuizPage() {
         .map(mapAttemptQuestion),
     [attemptQuestions]
   );
+  const sortedAttempts = useMemo(
+    () => [...attempts].sort((a, b) => b.attempt_number - a.attempt_number),
+    [attempts]
+  );
+  const visibleAttempts = sortedAttempts.slice(0, visibleAttemptCount);
+  const showMoreAttempts = useCallback(() => {
+    setVisibleAttemptCount(count => Math.min(count + 5, attempts.length));
+  }, [attempts.length]);
+  useEffect(() => { setVisibleAttemptCount(5); }, [quizId]);
+  const formatAttemptDate = (value: string) => {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? "" : new Intl.DateTimeFormat(locale, {
+      month: "short", day: "numeric", year: "numeric",
+    }).format(date);
+  };
   const rawQuizTimeLimitSeconds = Number(quizSummary?.time_limit_seconds);
   const quizTimeLimitSeconds =
     quizSummary && Number.isFinite(rawQuizTimeLimitSeconds)
@@ -1689,8 +1709,6 @@ function VideoQuizPage() {
     const selectedValue = answers[currentQuestion.id];
     const selectedValues = Array.isArray(selectedValue) ? selectedValue : [];
 
-    console.log("Current Question:", currentQuestionReview);
-
     return (
       <div className="videoQuizOptions">
         {currentQuestion.options.map((option, optionIndex) => {
@@ -1705,6 +1723,7 @@ function VideoQuizPage() {
               type="button"
               key={option.id}
               className={`videoQuizOption ${isSelected ? "selected" : ""}`}
+              aria-pressed={isSelected}
               disabled={shouldLockCurrentAnswer || savingQuestionId === currentQuestion.id}
               onClick={() =>
                 currentQuestion.type === "single"
@@ -1713,11 +1732,7 @@ function VideoQuizPage() {
               }
             >
               <span className={`videoQuizOptionMarker ${currentQuestion.type}`}>
-                {isSelected ? (
-                  <svg viewBox="0 0 24 24" fill="none">
-                    <path d="M5 12.5L9.5 17L19 7.5" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                ) : null}
+                {isSelected ? CheckSVG : null}
               </span>
 
               <span className="videoQuizOptionText">
@@ -1732,7 +1747,7 @@ function VideoQuizPage() {
   };
 
   return (
-    <main className="videoQuizPage">
+    <main className="videoQuizPage quizExperience">
       <div
         ref={pageRef}
         className={`videoQuizPageContent ${stage === "intro" ? "introStage" : ""} ${stage === "results" ? "resultsStage" : ""} ${stage === "question" || stage === "review" ? "flowStage" : ""}`}
@@ -1744,10 +1759,8 @@ function VideoQuizPage() {
             <div className="videoQuizHeading">
               <span className="videoQuizBadge">{QuizSVG}</span>
               <span>
-                <h2>{quizDisplayTitle}</h2>
-                <p>
-                  {t(quizMetaKey, { count: displayedQuestionCount, time: formatQuizTimeLimitLabel(quizTimeLimitSeconds, t) })}
-                </p>
+                <h1>{quizDisplayTitle}</h1>
+                <p>{stage === "intro" ? t("quizIntroSubtitle") : t(quizMetaKey, { count: displayedQuestionCount, time: formatQuizTimeLimitLabel(quizTimeLimitSeconds, t) })}</p>
               </span>
             </div>
 
@@ -1763,233 +1776,249 @@ function VideoQuizPage() {
               </button>
             </div>
           </div>
-
-          {stage === "intro" && quizDescription ? (
-            <div className="videoQuizDescription">
-              <h3>{t("description")}</h3>
-              <p>{formatDescription(quizDescription)}</p>
-            </div>
-          ) : null}
         </div>
 
         <div key={stage} className="videoQuizStageTransition">
           {stage === "intro" ? (
             <div className="videoQuizIntro">
-              <div className="videoQuizSectionTitle">
-                <span>
-                  <h3>{t("quizYourLastAttempts")}</h3>
-                  {quizMaxAttempts > 0 ? <p>{t("quizAttemptsLeft", { count: attemptsLeft })}</p> : null}
-                </span>
-
-                {can(P.quizzesCertificates) && quizSummary?.has_certificate && attempts.some((attempt) => attempt.passed) &&
-                  <Link to="/account" className="viewQuizCertificate">{t("quizViewCertificates")}</Link>
-                }
-              </div>
-
-              {isQuizLoading ? (
-                <div className="videoQuizEmptyState">
-                  <strong>{t("quizLoadingQuiz")}</strong>
-                  <p>{t("quizQuestionsPreparing")}</p>
+              <aside className="videoQuizStartPanel" aria-labelledby="quiz-start-title">
+                <div className="videoQuizStartHeading">
+                  <h3 id="quiz-start-title">{selectedActiveAttempt ? t("quizContinueQuiz") : t("quizBeforeYouBegin")}</h3>
+                  <p>{selectedActiveAttempt ? t("quizResumeHint") : t("quizStartHint")}</p>
                 </div>
-              ) : attempts.length > 0 ? (
-                <div className="videoQuizAttemptList">
-                  {[...attempts].reverse().map((attempt) => (
-                    <div key={attempt.id} className="videoQuizAttemptCard">
-                      <QuizStatusIcon
-                        status={attempt.status === "in_progress" ? "in_progress" : undefined}
-                        passed={attempt.passed === true}
-                      />
+                <dl className="videoQuizFacts">
+                  <div><dt>{t("quizQuestions")}</dt><dd>{isQuizLoading ? "—" : summaryQuestionCount}</dd></div>
+                  <div><dt>{t("quizTimeLimitLabel")}</dt><dd>{formatQuizTimeLimitLabel(quizTimeLimitSeconds, t)}</dd></div>
+                  <div><dt>{t("quizPassingScoreLabel")}</dt><dd>{quizSummary ? `${Number(quizSummary.passing_score_percentage)}%` : "—"}</dd></div>
+                  <div><dt>{t("quizAttemptsLabel")}</dt><dd>{quizMaxAttempts > 0 ? t("quizAttemptsLeft", { count: attemptsLeft }) : t("quizUnlimitedLabel")}</dd></div>
+                </dl>
+                {quizSummary?.has_certificate ? <div className="videoQuizCertificateNote"><span aria-hidden="true">{CheckSVG}</span>{t("quizCertificateHint")}</div> : null}
+                <div className="videoQuizFooterActions videoQuizStartActions">
+                  <button
+                    type="button"
+                    className="videoQuizPrimaryButton"
+                    onClick={() => selectedActiveAttempt ? beginAttemptFlow(selectedActiveAttempt) : startAttempt()}
+                    disabled={isQuizLoading || isStartingAttempt || (!selectedActiveAttempt && (areRequirementsLoading || !quizSummary || !hasQuizQuestions || isRequirementsBlocking || (quizMaxAttempts > 0 && attemptsLeft <= 0)))}
+                  >
+                    {isStartingAttempt ? t("quizStarting") : selectedActiveAttempt ? t("quizContinueQuiz") : t("quizStartQuiz")} {ArrowSVG}
+                  </button>
+                </div>
+              </aside>
+              <div className="videoQuizIntroMain">
+                {quizDescription ? (
+                  <section className="videoQuizDescription">
+                    <h3>{t("description")}</h3>
+                    <p>{formatDescription(quizDescription)}</p>
+                  </section>
+                ) : null}
+                {!hasMetQuizRequirements ? (
+                  <div className={`videoQuizRequirementsCard ${isRequirementsBlocking ? "blocked" : ""}`}>
+                    <div className="videoQuizRequirementsSummary">
+                      <div className="videoQuizRequirementsSummaryText">
+                        <span className="videoQuizRequirementsIcon" aria-hidden="true">
+                          {LockSVG}
+                        </span>
 
-                      <div className="videoQuizAttemptText">
-                        <strong>{t("quizAttemptNumber", { count: attempt.attempt_number })}</strong>
-                        <p>
-                          {attempt.status === "in_progress"
-                            ? t("quizInProgress")
-                            : t("quizYouScored", { score: getAttemptScoreText(attempt) })}
-                        </p>
+                        <span>
+                          <strong>{t("quizRequirements")}</strong>
+                          <p>
+                            {areRequirementsLoading
+                              ? t("quizCheckingEligibility")
+                              : hasRequirementsStatusError
+                                ? t("quizCouldNotCheckRequirements")
+                                : isRequirementsBlocking
+                                  ? t("quizCompleteRequiredVideos")
+                                  : t("quizOpenRequirementsHint")}
+                          </p>
+                        </span>
                       </div>
 
                       <button
                         type="button"
-                        className="videoQuizInlineButton videoQuizAttemptViewButton"
-                        onClick={() => attempt.status === "in_progress" ? beginAttemptFlow(attempt) : viewAttempt(attempt)}
-                        disabled={isQuizLoading}
+                        className="videoQuizRequirementsToggle"
+                        onClick={() => setAreRequirementsOpen((current) => !current)}
+                        disabled={areRequirementsLoading && !areRequirementsOpen}
+                        aria-expanded={areRequirementsOpen}
+                        aria-controls="quiz-requirements-panel"
                       >
-                        {attempt.status === "in_progress" ? t("quizContinue") : t("quizView")}
+                        <span>{areRequirementsOpen ? t("quizHideRequirements") : t("quizViewRequirements")}</span>
+                        <IconChevron className={areRequirementsOpen ? "open" : ""} />
                       </button>
                     </div>
-                  ))}
-                </div>
-              ) : hasMetQuizRequirements ? (
-                <div className="videoQuizEmptyState">
-                  <strong>{t("quizAttemptsAppearHere")}</strong>
-                  <p>{t("quizStartFirstAttempt")}</p>
-                </div>
-              ) : null}
 
-              {!hasMetQuizRequirements ? (
-                <div className={`videoQuizRequirementsCard ${isRequirementsBlocking ? "blocked" : ""}`}>
-                  <div className="videoQuizRequirementsSummary">
-                    <div className="videoQuizRequirementsSummaryText">
-                      <span className="videoQuizRequirementsIcon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none">
-                          <path d="M7.5 10V7.5a4.5 4.5 0 0 1 9 0V10M6 10h12v10H6V10Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                          <path d="M12 14v2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                        </svg>
-                      </span>
-
-                      <span>
-                        <strong>{t("quizRequirements")}</strong>
-                        <p>
-                          {areRequirementsLoading
-                            ? t("quizCheckingEligibility")
-                            : hasRequirementsStatusError
-                              ? t("quizCouldNotCheckRequirements")
-                              : isRequirementsBlocking
-                                ? t("quizCompleteRequiredVideos")
-                                : t("quizOpenRequirementsHint")}
-                        </p>
-                      </span>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="videoQuizRequirementsToggle"
-                      onClick={() => setAreRequirementsOpen((current) => !current)}
-                      disabled={areRequirementsLoading && !areRequirementsOpen}
-                      aria-expanded={areRequirementsOpen}
-                      aria-controls="quiz-requirements-panel"
+                    <div
+                      id="quiz-requirements-panel"
+                      className={`videoQuizRequirementsPanel ${areRequirementsOpen ? "open" : ""}`}
+                      aria-hidden={!areRequirementsOpen}
                     >
-                      <span>{areRequirementsOpen ? t("quizHideRequirements") : t("quizViewRequirements")}</span>
-                      <IconChevron className={areRequirementsOpen ? "open" : ""} />
-                    </button>
-                  </div>
+                        {areRequirementVideosLoading ? (
+                          <div className="videoQuizEmptyState">
+                            <strong>{t("quizLoadingRequirements")}</strong>
+                            <p>{t("quizCheckingLinkedVideos")}</p>
+                          </div>
+                        ) : hasRequirementVideosError ? (
+                          <div className="videoQuizUnlockNotice error">
+                            <strong>{t("quizCouldNotLoadRequirements")}</strong>
+                            <p>{t("quizTryOpeningRequirementsAgain")}</p>
+                          </div>
+                        ) : requirementVideos.length > 0 ? (
+                          <div className="videoQuizRequirementList">
+                            {requirementVideos.map((video) => (
+                              <div key={video.id} className={`videoQuizRequirementVideo ${video.has_met_requirement ? "met" : ""}`}>
+                                <div className="videoQuizRequirementThumb">
+                                  {getVideoThumbnail(video) ? (
+                                    <img src={getVideoThumbnail(video)} alt="" loading="lazy" decoding="async" />
+                                  ) : (
+                                    <div className="videoQuizRequirementThumbFallback" aria-hidden="true">
+                                      {QuizSVG}
+                                    </div>
+                                  )}
 
-                  <div
-                    id="quiz-requirements-panel"
-                    className={`videoQuizRequirementsPanel ${areRequirementsOpen ? "open" : ""}`}
-                    aria-hidden={!areRequirementsOpen}
-                  >
-                      {areRequirementVideosLoading ? (
-                        <div className="videoQuizEmptyState">
-                          <strong>{t("quizLoadingRequirements")}</strong>
-                          <p>{t("quizCheckingLinkedVideos")}</p>
-                        </div>
-                      ) : hasRequirementVideosError ? (
-                        <div className="videoQuizUnlockNotice error">
-                          <strong>{t("quizCouldNotLoadRequirements")}</strong>
-                          <p>{t("quizTryOpeningRequirementsAgain")}</p>
-                        </div>
-                      ) : requirementVideos.length > 0 ? (
-                        <div className="videoQuizRequirementList">
-                          {requirementVideos.map((video) => (
-                            <div key={video.id} className={`videoQuizRequirementVideo ${video.has_met_requirement ? "met" : ""}`}>
-                              <div className="videoQuizRequirementThumb">
-                                {getVideoThumbnail(video) ? (
-                                  <img src={getVideoThumbnail(video)} alt="" loading="lazy" decoding="async" />
-                                ) : (
-                                  <div className="videoQuizRequirementThumbFallback" aria-hidden="true">
-                                    {QuizSVG}
+                                  {formatDurationLabel(video.duration_seconds) ? (
+                                    <span className="videoQuizRequirementDuration">
+                                      {formatDurationLabel(video.duration_seconds)}
+                                    </span>
+                                  ) : null}
+                                </div>
+
+                                <div className="videoQuizRequirementVideoText">
+                                  <strong>{video.title || t("quizRequiredVideo")}</strong>
+                                  <p>{getRequirementProgressText(video, t)}</p>
+                                  <div
+                                    className="videoQuizRequirementProgress"
+                                    role="progressbar"
+                                    aria-valuemin={0}
+                                    aria-valuemax={100}
+                                    aria-valuenow={Math.round(getRequirementProgressPercent(video))}
+                                  >
+                                    <span style={{ width: `${getRequirementProgressPercent(video)}%` }} />
                                   </div>
-                                )}
+                                </div>
 
-                                {formatDurationLabel(video.duration_seconds) ? (
-                                  <span className="videoQuizRequirementDuration">
-                                    {formatDurationLabel(video.duration_seconds)}
-                                  </span>
-                                ) : null}
-                              </div>
-
-                              <div className="videoQuizRequirementVideoText">
-                                <strong>{video.title || t("quizRequiredVideo")}</strong>
-                                <p>{getRequirementProgressText(video, t)}</p>
-                                <div
-                                  className="videoQuizRequirementProgress"
-                                  role="progressbar"
-                                  aria-valuemin={0}
-                                  aria-valuemax={100}
-                                  aria-valuenow={Math.round(getRequirementProgressPercent(video))}
-                                >
-                                  <span style={{ width: `${getRequirementProgressPercent(video)}%` }} />
+                                <div className="videoQuizRequirementVideoActions">
+                                  {video.has_met_requirement ? (
+                                    <span
+                                      className="videoQuizRequirementMetBadge"
+                                      aria-label={t("quizRequirementComplete")}
+                                      title={t("quizRequirementComplete")}
+                                    >
+                                      {CheckSVG}
+                                      <span>{t("quizRequirementComplete")}</span>
+                                    </span>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      className="videoQuizRequirementWatchButton"
+                                      onClick={() => navigate(`/video/${video.id}`)}
+                                    >
+                                      <span>{t("quizWatch")}</span>
+                                      <IconChevron />
+                                    </button>
+                                  )}
                                 </div>
                               </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="videoQuizEmptyState">
+                            <strong>{t("quizNoRequirementVideos")}</strong>
+                            <p>{t("quizNoRequiredVideosListed")}</p>
+                          </div>
+                        )}
+                      </div>
+                  </div>
+                ) : null}
 
-                              <div className="videoQuizRequirementVideoActions">
-                                {video.has_met_requirement ? (
-                                  <span
-                                    className="videoQuizRequirementMetBadge"
-                                    aria-label={t("quizRequirementComplete")}
-                                    title={t("quizRequirementComplete")}
-                                  >
-                                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                      <path d="M5 12.5L9.5 17L19 7.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                    <span>{t("quizRequirementComplete")}</span>
-                                  </span>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    className="videoQuizRequirementWatchButton"
-                                    onClick={() => navigate(`/video/${video.id}`)}
-                                  >
-                                    <span>{t("quizWatch")}</span>
-                                    <IconChevron />
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="videoQuizEmptyState">
-                          <strong>{t("quizNoRequirementVideos")}</strong>
-                          <p>{t("quizNoRequiredVideosListed")}</p>
-                        </div>
-                      )}
+                {!isQuizLoading && !quizSummary ? (
+                  <div className="videoQuizUnlockNotice">
+                    <strong>{t("quizNoQuizAvailable")}</strong>
+                    <p>{t("quizVideoNoQuizYet")}</p>
+                  </div>
+                ) : null}
+
+                {!isQuizLoading && quizSummary && !hasQuizQuestions ? (
+                  <div className="videoQuizUnlockNotice">
+                    <strong>{t("quizNoQuestionsYet")}</strong>
+                    <p>{t("quizQuestionsNotAddedYet")}</p>
+                  </div>
+                ) : null}
+
+                {quizMaxAttempts > 0 && attemptsLeft === 0 ? (
+                  <div className="videoQuizUnlockNotice">
+                    <strong>{t("quizNoAttemptsLeft")}</strong>
+                    <p>{t("quizUsedAllAttempts", { count: quizMaxAttempts })}</p>
+                  </div>
+                ) : null}
+
+                {quizFlowError ? (
+                  <div className="videoQuizUnlockNotice error">
+                    <strong>{t("quizError")}</strong>
+                    <p>{quizFlowError}</p>
+                  </div>
+                ) : null}
+
+                <section className="videoQuizHistory" aria-labelledby="quiz-history-title">
+                  <div className="videoQuizSectionTitle">
+                    <span>
+                      <h3 id="quiz-history-title">{t("quizYourLastAttempts")}</h3>
+                      <p>{t("quizHistoryHint")}</p>
+                    </span>
+
+                    {can(P.quizzesCertificates) && quizSummary?.has_certificate && attempts.some((attempt) => attempt.passed) &&
+                      <Link to="/account" className="viewQuizCertificate">{t("quizViewCertificates")}</Link>
+                    }
+                  </div>
+
+                  {isQuizLoading ? (
+                    <div className="videoQuizEmptyState">
+                      <strong>{t("quizLoadingQuiz")}</strong>
+                      <p>{t("quizQuestionsPreparing")}</p>
                     </div>
-                </div>
-              ) : null}
+                  ) : attempts.length > 0 ? (
+                    <div className="videoQuizAttemptList">
+                      {visibleAttempts.map((attempt) => (
+                        <div key={attempt.id} className="videoQuizAttemptCard">
+                          <QuizStatusIcon
+                            status={attempt.status === "in_progress" ? "in_progress" : undefined}
+                            passed={attempt.passed ?? undefined}
+                          />
 
-              {!isQuizLoading && !quizSummary ? (
-                <div className="videoQuizUnlockNotice">
-                  <strong>{t("quizNoQuizAvailable")}</strong>
-                  <p>{t("quizVideoNoQuizYet")}</p>
-                </div>
-              ) : null}
+                          <div className="videoQuizAttemptText">
+                            <strong>{t("quizAttemptNumber", { count: attempt.attempt_number })}</strong>
+                            <time dateTime={attempt.submitted_at || attempt.started_at}>{formatAttemptDate(attempt.submitted_at || attempt.started_at)}</time>
+                          </div>
+                          <div className="videoQuizAttemptScore">
+                            <strong>{attempt.status === "in_progress" ? "—" : getAttemptScoreText(attempt)}</strong>
+                            <span className={`videoQuizAttemptStatus ${attempt.status === "in_progress" ? "in_progress" : attempt.passed === true ? "passed" : attempt.passed === false ? "failed" : ""}`}>
+                              {attempt.status === "in_progress" ? t("quizInProgress") : attempt.passed === true ? t("quizPassedLabel") : attempt.passed === false ? t("quizNotPassedLabel") : t("quizNotChecked")}
+                            </span>
+                          </div>
 
-              {!isQuizLoading && quizSummary && !hasQuizQuestions ? (
-                <div className="videoQuizUnlockNotice">
-                  <strong>{t("quizNoQuestionsYet")}</strong>
-                  <p>{t("quizQuestionsNotAddedYet")}</p>
-                </div>
-              ) : null}
+                          <button
+                            type="button"
+                            className="videoQuizInlineButton videoQuizAttemptViewButton"
+                            onClick={() => attempt.status === "in_progress" ? beginAttemptFlow(attempt) : viewAttempt(attempt)}
+                            disabled={isQuizLoading}
+                          >
+                            {attempt.status === "in_progress" ? t("quizContinue") : t("quizView")} {ArrowSVG}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="videoQuizEmptyState">
+                      <strong>{t("quizAttemptsAppearHere")}</strong>
+                      <p>{t("quizStartFirstAttempt")}</p>
+                    </div>
+                  )}
 
-              {quizMaxAttempts > 0 && attemptsLeft === 0 ? (
-                <div className="videoQuizUnlockNotice">
-                  <strong>{t("quizNoAttemptsLeft")}</strong>
-                  <p>{t("quizUsedAllAttempts", { count: quizMaxAttempts })}</p>
-                </div>
-              ) : null}
-
-              {quizFlowError ? (
-                <div className="videoQuizUnlockNotice error">
-                  <strong>{t("quizError")}</strong>
-                  <p>{quizFlowError}</p>
-                </div>
-              ) : null}
-
-              <div className="videoQuizFooterActions">
-                <button type="button" className="videoQuizGhostButton" onClick={handleExit}>
-                  {t("cancel")}
-                </button>
-                <button
-                  type="button"
-                  className="videoQuizPrimaryButton"
-                  onClick={startAttempt}
-                  disabled={isQuizLoading || areRequirementsLoading || isStartingAttempt || !quizSummary || !hasQuizQuestions || isRequirementsBlocking || (quizMaxAttempts > 0 && attemptsLeft <= 0)}
-                >
-                  {isStartingAttempt ? t("quizStarting") : t("quizAttempt")} {ArrowSVG}
-                </button>
+                  {attempts.length > 0 ? (
+                    <InfiniteScroll key={visibleAttemptCount}
+                      hasMore={visibleAttemptCount < attempts.length}
+                      fetching={false} error={false}
+                      onLoadMore={showMoreAttempts} loadingLabel={t("quizLoadingQuiz")} />
+                  ) : null}
+                </section>
               </div>
             </div>
           ) : null}
@@ -2027,6 +2056,8 @@ function VideoQuizPage() {
                         key={question.id}
                         type="button"
                         className={`videoQuizGridButton ${answered ? "answered" : ""} ${isCurrent ? "current" : ""} ${reviewStatus ?? ""}`}
+                        aria-current={isCurrent ? "step" : undefined}
+                        aria-label={`${t("quizQuestionPosition", { current: index + 1, total: questions.length })}: ${reviewStatus ? getReviewStatusLabel(reviewStatus, t) : answered ? t("quizAnsweredLabel") : t("quizNotAnsweredYet")}`}
                         disabled={savingQuestionId === currentQuestion?.id}
                         onClick={() => handleQuestionNavigation(index)}
                       >
@@ -2042,7 +2073,8 @@ function VideoQuizPage() {
                   disabled={savingQuestionId === currentQuestion?.id}
                   onClick={handleOpenReview}
                 >
-                  {isReadOnlyAttempt ? t("quizAttemptSummary") : t("quizFinishAttemptEllipsis")}
+                  <span>{isReadOnlyAttempt ? t("quizAttemptSummary") : t("quizFinishAttemptEllipsis")}</span>
+                  <span className="videoQuizReviewLinkArrow" aria-hidden="true">{ArrowSVG}</span>
                 </button>
               </aside>
               ) : null}
@@ -2060,11 +2092,14 @@ function VideoQuizPage() {
                     key={currentQuestion.id}
                     className={`videoQuizQuestionTransition ${questionMotionDirection}`}
                   >
+                    <div className="videoQuizQuestionTopline">
+                      <span>{t("quizQuestionPosition", { current: currentQuestionIndex + 1, total: questions.length })}</span>
+                      <span className="videoQuizQuestionType">{currentQuestion.type === "single" ? t("quizSingleChoice") : currentQuestion.type === "multiple" ? t("quizMultipleChoice") : t("quizMatchConcepts")}</span>
+                    </div>
                     <div className="videoQuizQuestionHeader">
-                      <span className="videoQuizQuestionNumber">{currentQuestionIndex + 1}</span>
                       <div>
                         <h3>{currentQuestion.prompt}</h3>
-                        <p>{currentQuestion.type === "single" ? t("quizSingleChoice") : currentQuestion.type === "multiple" ? t("quizMultipleChoice") : t("quizMatchConcepts")}</p>
+                        <p>{currentQuestion.type === "single" ? t("quizSelectOneHint") : currentQuestion.type === "multiple" ? t("quizSelectMultipleHint") : t("quizMatchHint")}</p>
                       </div>
                     </div>
 
@@ -2148,7 +2183,12 @@ function VideoQuizPage() {
                 </section>
               ) : (
                 <section className="videoQuizReviewPanel">
-                  <h3>{isReadOnlyAttempt ? t("quizAttemptReviewTitle", { count: activeAttempt?.attempt_number ?? "" }) : t("quizAnsweredAllQuestions")}</h3>
+                  {isReadOnlyAttempt && activeAttempt ? (
+                    <QuizScoreSummary score={activeAttempt.score_points} total={activeAttempt.max_points}
+                      percentage={activeAttempt.score_percentage} passed={activeAttempt.passed}
+                      title={t("quizAttemptReviewTitle", { count: activeAttempt.attempt_number })}
+                      passingScore={quizSummary?.passing_score_percentage} t={t} />
+                  ) : <h3>{t("quizAnsweredAllQuestions")}</h3>}
 
                   <div className="videoQuizReviewList">
                     {summaryQuestionResults.map((result, index) => {
@@ -2224,13 +2264,9 @@ function VideoQuizPage() {
 
           {stage === "results" && latestResult ? (
             <div className="videoQuizResults">
-              <div className="videoQuizResultHeadline">
-                <h3>{latestResult.passed === true ? t("quizCongrats") : t("quizComplete")}</h3>
-                <p>
-                  {t("quizCurrentScore", { score: latestResult.score ?? "-", total: latestResult.total ?? "-" })}
-                  {latestResult.percentage ? ` (${latestResult.percentage}%)` : ""}
-                </p>
-              </div>
+              <QuizScoreSummary {...latestResult}
+                title={latestResult.passed === true ? t("quizCongrats") : t("quizComplete")}
+                passingScore={quizSummary?.passing_score_percentage} t={t} />
 
               <div className="videoQuizResultList">
                 {latestQuestionResults.map((result, index) => (
@@ -2271,7 +2307,7 @@ function VideoQuizPage() {
                 <button type="button" className="videoQuizGhostButton" onClick={handleExit}>
                   {t("quizCloseQuiz")}
                 </button>
-                {latestResult.passed === true ? (
+                {latestResult.passed === true && quizSummary?.has_certificate && can(P.quizzesCertificates) ? (
                   <Link to="/account" className="videoQuizPrimaryButton">
                     {t("quizViewCertificate")}
                   </Link>

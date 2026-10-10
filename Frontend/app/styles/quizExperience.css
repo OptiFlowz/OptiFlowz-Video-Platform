@@ -1,0 +1,319 @@
+/* Learner experience. All surfaces and states inherit each platform's theme. */
+.videoQuizPage.quizExperience {
+  min-height: calc(100vh - 180px);
+  padding: calc(var(--headerHeight, 90px) + 48px) 32px 72px;
+  color: var(--text1);
+}
+.videoQuizPage.quizExperience .videoQuizPageContent:is(.introStage, .flowStage, .resultsStage),
+.videoQuizPage.quizExperience .videoQuizPageContent {
+  width: 100%;
+  max-width: 1160px;
+  max-height: none;
+  overflow: visible;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  gap: 32px;
+}
+.videoQuizPage.quizExperience .videoQuizPageContent:focus { outline: none; }
+.videoQuizPage.quizExperience .videoQuizTop {
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--border1);
+  gap: 20px;
+}
+.videoQuizPage.quizExperience .videoQuizHeaderRow { align-items: center; }
+.videoQuizPage.quizExperience .videoQuizHeading { align-items: center; gap: 18px; }
+.videoQuizPage.quizExperience .videoQuizHeading > span:last-child { min-width: 0; }
+.videoQuizPage.quizExperience .videoQuizHeading h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.5vw, 2.15rem);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  color: var(--text1);
+}
+.videoQuizPage.quizExperience .videoQuizHeading p {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--text1) 68%, transparent);
+}
+.videoQuizPage.quizExperience .videoQuizBadge {
+  width: 58px;
+  height: 58px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.videoQuizPage.quizExperience .videoQuizBadge svg { width: 52px; height: 52px; }
+.videoQuizPage.quizExperience .videoQuizCloseButton {
+  position: static;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--background2);
+  color: var(--text1);
+  flex-shrink: 0;
+}
+.videoQuizPage.quizExperience .videoQuizCloseButton:hover { background: var(--background2); }
+.videoQuizPage.quizExperience .videoQuizCloseButton svg { width: 20px; height: 20px; }
+.videoQuizPage.quizExperience .videoQuizCloseButton svg path { stroke: currentColor; }
+.videoQuizPage.quizExperience .videoQuizIntro {
+  display: grid;
+  grid-template-columns: 330px minmax(0, 1fr);
+  gap: 36px;
+  align-items: start;
+  overflow: visible;
+}
+.videoQuizPage.quizExperience .videoQuizStartPanel {
+  position: sticky;
+  top: calc(var(--headerHeight, 90px) + 24px);
+  padding: 28px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--background2);
+}
+.videoQuizPage.quizExperience .videoQuizStartHeading h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--text1);
+  margin: 0 0 4px;
+}
+.videoQuizPage.quizExperience .videoQuizStartHeading p,
+.videoQuizPage.quizExperience .videoQuizSectionTitle p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--text1) 65%, transparent);
+}
+.videoQuizPage.quizExperience .videoQuizFacts { margin: 24px 0; }
+.videoQuizPage.quizExperience .videoQuizFacts > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding: 13px 0;
+  border: 0;
+  border-bottom: 1px solid var(--border1);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.videoQuizPage.quizExperience .videoQuizFacts > div:first-child { padding-top: 0; }
+.videoQuizPage.quizExperience .videoQuizFacts dt { color: color-mix(in srgb, var(--text1) 68%, transparent); }
+.videoQuizPage.quizExperience .videoQuizFacts dd { margin: 0; font-weight: 600; text-align: right; color: var(--text1); }
+.videoQuizPage.quizExperience .videoQuizCertificateNote {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accentGreen2);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  margin-bottom: 22px;
+}
+.videoQuizPage.quizExperience .videoQuizCertificateNote > span { display: flex; flex-shrink: 0; }
+.videoQuizPage.quizExperience .videoQuizIntroMain { display: grid; gap: 24px; min-width: 0; }
+.videoQuizPage.quizExperience .videoQuizDescription { padding: 0 0 24px; border-bottom: 1px solid var(--border1); }
+.videoQuizPage.quizExperience .videoQuizDescription p { max-width: 75ch; color: var(--text2); font-size: 0.9rem; }
+.videoQuizPage.quizExperience .videoQuizHistory { min-width: 0; }
+.videoQuizPage.quizExperience .videoQuizSectionTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.videoQuizPage.quizExperience .videoQuizSectionTitle h3 { font-size: 1.15rem; font-weight: 650; margin: 0 0 3px; line-height: 1.35; }
+.videoQuizPage.quizExperience .viewQuizCertificate {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accentBlue2);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.videoQuizPage.quizExperience .videoQuizAttemptList { gap: 0; border-top: 1px solid var(--border1); }
+.videoQuizPage.quizExperience .videoQuizAttemptCard {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) minmax(90px, auto) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 0;
+  border: 0;
+  border-bottom: 1px solid var(--border1);
+  border-radius: 0;
+  background: transparent;
+}
+.videoQuizPage.quizExperience .videoQuizAttemptText { display: grid; gap: 2px; line-height: 1.35; }
+.videoQuizPage.quizExperience .videoQuizAttemptText strong { font-size: 0.9rem; font-weight: 650; }
+.videoQuizPage.quizExperience .videoQuizAttemptText time {
+  display: block;
+  margin: 0;
+  color: color-mix(in srgb, var(--text1) 60%, transparent);
+  font-size: 0.75rem;
+}
+.videoQuizPage.quizExperience .videoQuizAttemptScore { display: grid; justify-items: end; gap: 2px; line-height: 1.35; font-variant-numeric: tabular-nums; }
+.videoQuizPage.quizExperience .videoQuizAttemptScore > strong { font-size: 0.9rem; font-weight: 650; }
+.videoQuizPage.quizExperience .videoQuizAttemptStatus { font-size: 0.72rem; color: var(--text2); }
+.videoQuizPage.quizExperience .videoQuizAttemptStatus.passed { color: var(--accentGreen2); }
+.videoQuizPage.quizExperience .videoQuizAttemptStatus.failed { color: var(--accentRed3); }
+.videoQuizPage.quizExperience .videoQuizAttemptStatus.in_progress { color: var(--accentBlue2); }
+.videoQuizPage.quizExperience .videoQuizStatusIcon { width: 36px; height: 36px; border: 0; }
+.videoQuizPage.quizExperience .videoQuizStatusIcon.passed { color: var(--accentGreen2); }
+.videoQuizPage.quizExperience .videoQuizAttemptViewButton {
+  min-width: 0;
+  width: auto;
+  min-height: 38px;
+  padding: 0 14px;
+  font-size: 0.78rem;
+  border: 0;
+  border-radius: var(--bR);
+  background: var(--background2);
+  color: var(--text1);
+  gap: 10px;
+}
+.videoQuizPage.quizExperience .videoQuizAttemptViewButton:hover:not(:disabled) { background: var(--background3); }
+.videoQuizPage.quizExperience .videoQuizAttemptViewButton svg { width: 6px; height: 12px; }
+.videoQuizPage.quizExperience .videoQuizAttemptViewButton svg path { stroke: currentColor; }
+.videoQuizPage.quizExperience .videoQuizEmptyState { padding: 36px 24px; background: var(--background2); border: 0; text-align: center; }
+.videoQuizPage.quizExperience .videoQuizEmptyState p { font-size: 0.85rem; line-height: 1.6; }
+.videoQuizPage.quizExperience .videoQuizRequirementsCard { border: 0; background: var(--background2); border-radius: 16px; }
+.videoQuizPage.quizExperience .videoQuizRequirementsSummary { padding: 18px; gap: 12px; }
+.videoQuizPage.quizExperience .videoQuizRequirementsSummary p { color: var(--text2); font-size: 0.8rem; line-height: 1.55; }
+.videoQuizPage.quizExperience .videoQuizRequirementsSummary strong { font-size: 0.9rem; }
+.videoQuizPage.quizExperience .videoQuizRequirementsToggle { font-size: 0.78rem; color: var(--accentBlue2); }
+.videoQuizPage.quizExperience .videoQuizRequirementsIcon svg path { stroke: currentColor; }
+.videoQuizPage.quizExperience .videoQuizUnlockNotice { font-size: 0.85rem; line-height: 1.6; }
+.videoQuizPage.quizExperience :is(.videoQuizPrimaryButton, .videoQuizGhostButton, .videoQuizDangerButton) { min-height: 46px; font-size: 0.85rem; border-radius: 12px; }
+.videoQuizPage.quizExperience .videoQuizPrimaryButton { background: var(--accentBlue); color: var(--borderWhite); }
+.videoQuizPage.quizExperience .videoQuizPrimaryButton:hover:not(:disabled) { background: color-mix(in srgb, var(--accentBlue) 82%, var(--accentBlue2)); }
+.videoQuizPage.quizExperience .videoQuizPrimaryButton svg path { stroke: currentColor; }
+.videoQuizPage.quizExperience .videoQuizStartActions { display: flex; margin: 0; }
+.videoQuizPage.quizExperience .videoQuizStartActions .videoQuizPrimaryButton { width: 100%; justify-content: space-between; }
+.videoQuizPage.quizExperience .videoQuizGhostButton { border: 0; background: var(--background2); }
+.videoQuizPage.quizExperience .videoQuizShell { grid-template-columns: 228px minmax(0, 1fr); gap: 32px; }
+.videoQuizPage.quizExperience .videoQuizSidebar { padding: 22px; border: 0; gap: 8px; border-radius: 18px; background: var(--background2); }
+.videoQuizPage.quizExperience .videoQuizSidebarProgress { height: 6px; margin: 6px 0 12px; background: var(--background2); }
+.videoQuizPage.quizExperience .videoQuizGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 38px; padding: 3px; }
+.videoQuizPage.quizExperience .videoQuizGridButton { border: 2px solid transparent; font-size: 0.85rem; font-weight: 600; border-radius: 9px; }
+.videoQuizPage.quizExperience .videoQuizGridButton:not(.answered):not(.current):not(.correct):not(.incorrect):not(.partial) { background: var(--background1); }
+.videoQuizPage.quizExperience .videoQuizGridButton.current { background: var(--accentBlue); color: var(--borderWhite); border-color: transparent; outline: none; box-shadow: none; }
+.videoQuizPage.quizExperience .videoQuizReviewLink { margin-top: 14px; min-height: 44px; padding: 0 16px; gap: 12px; justify-content: space-between; font-size: 0.78rem; border: 0; border-radius: var(--bR); background: var(--background1); color: var(--text1); }
+.videoQuizPage.quizExperience .videoQuizReviewLink:hover:not(:disabled) { background: var(--background3); }
+.videoQuizPage.quizExperience .videoQuizReviewLinkArrow { display: flex; flex-shrink: 0; }
+.videoQuizPage.quizExperience .videoQuizReviewLinkArrow svg { width: 6px; height: 12px; }
+.videoQuizPage.quizExperience .videoQuizReviewLinkArrow svg path { stroke: currentColor; }
+.videoQuizPage.quizExperience .videoQuizQuestionPanel { max-width: none; padding: 4px 0 0; border: 0; border-radius: 0; background: transparent; }
+.videoQuizPage.quizExperience .videoQuizQuestionTopline { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; font-size: 0.8rem; color: var(--text2); }
+.videoQuizPage.quizExperience .videoQuizQuestionType { padding: 6px 10px; border-radius: 7px; background: color-mix(in srgb, var(--accentBlue2) 6%, var(--background1)); color: var(--accentBlue2); font-size: 0.74rem; }
+.videoQuizPage.quizExperience .videoQuizQuestionHeader { margin-bottom: 18px; }
+.videoQuizPage.quizExperience .videoQuizQuestionHeader h3 { font-size: clamp(1.2rem, 2vw, 1.65rem); font-weight: 650; line-height: 1.25; letter-spacing: -0.02em; overflow-wrap: anywhere; }
+.videoQuizPage.quizExperience .videoQuizQuestionHeader p { margin: 2px 0 0; line-height: 1.45; font-size: 0.85rem; color: color-mix(in srgb, var(--text1) 65%, transparent); }
+.videoQuizPage.quizExperience .videoQuizOptions { gap: 12px; }
+.videoQuizPage.quizExperience .videoQuizOption { flex-direction: row-reverse; justify-content: space-between; padding: 18px; min-height: 70px; border: 2px solid transparent; background: var(--background2); border-radius: 12px; }
+.videoQuizPage.quizExperience .videoQuizOption:hover:not(:disabled) { background: var(--background3); }
+.videoQuizPage.quizExperience .videoQuizOption.selected { background: var(--background2); border-color: var(--accentBlue2); box-shadow: none; }
+.videoQuizPage.quizExperience .videoQuizOptionMarker { width: 23px; height: 23px; }
+.videoQuizPage.quizExperience .videoQuizOption.selected .videoQuizOptionMarker { color: var(--borderWhite); background: var(--accentBlue); border-color: var(--accentBlue); }
+.videoQuizPage.quizExperience .videoQuizOptionText { gap: 14px; }
+.videoQuizPage.quizExperience .videoQuizOptionText strong { display: grid; place-items: center; min-width: 32px; height: 32px; border: 0; background: var(--background1); border-radius: 8px; font-size: 0.8rem; color: var(--text2); }
+.videoQuizPage.quizExperience .videoQuizOption.selected .videoQuizOptionText strong { color: var(--accentBlue2); border-color: var(--accentBlue2); }
+.videoQuizPage.quizExperience .videoQuizOptionText span { font-size: 0.95rem; line-height: 1.6; overflow-wrap: anywhere; }
+.videoQuizPage.quizExperience .videoQuizOption:disabled { opacity: 1; cursor: default; }
+.videoQuizPage.quizExperience .videoQuizMatchRow { border: 0; background: var(--background2); border-radius: 12px; padding: 18px; cursor: default; }
+.videoQuizPage.quizExperience .videoQuizActionRow { flex-direction: row; justify-content: space-between; align-items: center; margin: 28px 0 0; padding-top: 22px; border-top: 1px solid var(--border1); }
+.videoQuizPage.quizExperience .videoQuizActionRow > .videoQuizPrimaryButton { margin-left: auto; }
+.videoQuizPage.quizExperience .videoQuizTimer { border: 0; background: var(--background2); border-radius: 12px; font-size: 0.8rem; gap: 10px; }
+.videoQuizPage.quizExperience .videoQuizTimer strong { font-size: 1.05rem; color: inherit; }
+.videoQuizPage.quizExperience .videoQuizTimerDigit { animation: none; }
+.videoQuizPage.quizExperience .videoQuizStageTransition { animation: none; }
+.videoQuizPage.quizExperience .videoQuizReviewPanel { max-width: 900px; margin: 0 auto; padding: 0; }
+.videoQuizPage.quizExperience .videoQuizReviewPanel h3 { font-size: 1.4rem; letter-spacing: -0.025em; margin-bottom: 24px; }
+.videoQuizPage.quizExperience :is(.videoQuizReviewCard, .videoQuizResultCard) { padding: 22px; border: 0; border-radius: 14px; background: var(--background2); }
+.videoQuizPage.quizExperience .videoQuizReviewCard strong { line-height: 1.6; }
+.videoQuizPage.quizExperience .videoQuizResults { gap: 28px; overflow: visible; max-width: 900px; margin: 0 auto; }
+.videoQuizPage.quizExperience .videoQuizResultHeadline { display: flex; align-items: center; gap: 32px; padding: 30px; border: 0; border-radius: 20px; background: var(--background2); text-align: left; }
+.videoQuizPage.quizExperience .videoQuizResultHeadline h3 { font-size: 1.65rem; font-weight: 700; margin: 0 0 4px; letter-spacing: -0.025em; }
+.videoQuizPage.quizExperience .videoQuizResultHeadline p { font-size: 0.85rem; line-height: 1.5; }
+.videoQuizPage.quizExperience .videoQuizResultScore { display: grid; place-content: center; text-align: center; flex-shrink: 0; width: 130px; height: 130px; border: 5px solid var(--accentBlue2); border-radius: 50%; }
+.videoQuizPage.quizExperience .videoQuizResultHeadline.passed .videoQuizResultScore { border-color: var(--accentGreen2); }
+.videoQuizPage.quizExperience .videoQuizResultScore strong { font-size: 2rem; font-weight: 700; letter-spacing: -0.04em; color: var(--text1); }
+.videoQuizPage.quizExperience .videoQuizResultScore span { font-size: 0.75rem; color: var(--text2); }
+@media (max-width: 980px) {
+  .videoQuizPage.quizExperience { padding: calc(var(--headerHeight, 90px) + 30px) 24px 56px; }
+  .videoQuizPage.quizExperience .videoQuizIntro { grid-template-columns: 290px minmax(0, 1fr); gap: 24px; }
+  .videoQuizPage.quizExperience .videoQuizStartPanel { padding: 22px; }
+  .videoQuizPage.quizExperience .videoQuizAttemptCard { grid-template-columns: 32px minmax(0, 1fr) auto; gap: 12px; }
+  .videoQuizPage.quizExperience .videoQuizAttemptScore { grid-column: 2; grid-row: 2; justify-items: start; display: flex; gap: 8px; align-items: center; }
+  .videoQuizPage.quizExperience .videoQuizAttemptViewButton { grid-column: 3; grid-row: 1 / 3; }
+  .videoQuizPage.quizExperience .videoQuizShell { grid-template-columns: 1fr; gap: 20px; }
+  .videoQuizPage.quizExperience .videoQuizSidebar { order: 0; position: static; width: 100%; max-height: none; margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 8px 20px; }
+  .videoQuizPage.quizExperience .videoQuizSidebarProgress { grid-column: 1 / -1; margin: 4px 0; }
+  .videoQuizPage.quizExperience .videoQuizGrid { grid-column: 1 / -1; grid-template-columns: repeat(auto-fill, 38px); max-height: 140px; }
+  .videoQuizPage.quizExperience .videoQuizReviewLink { grid-column: 1 / -1; width: auto; justify-self: end; margin-top: 6px; }
+}
+@media (max-width: 720px) {
+  .videoQuizPage.quizExperience { padding: calc(var(--headerHeight, 90px) + 24px) 16px 40px; }
+  .videoQuizPage.quizExperience .videoQuizPageContent { gap: 24px; }
+  .videoQuizPage.quizExperience .videoQuizPageContent .videoQuizHeaderRow { display: flex; align-items: flex-start; flex-wrap: wrap; }
+  .videoQuizPage.quizExperience .videoQuizPageContent .videoQuizHeading { display: flex; }
+  .videoQuizPage.quizExperience .videoQuizPageContent .videoQuizCloseButton { position: absolute; right: 0; top: 0; width: 36px; height: 36px; }
+  .videoQuizPage.quizExperience .videoQuizPageContent .videoQuizTop { align-items: stretch; }
+  .videoQuizPage.quizExperience .videoQuizPageContent .videoQuizHeading p { font-size: 0.8rem; line-height: 1.6; }
+  .videoQuizPage.quizExperience .videoQuizHeading { flex-direction: row; gap: 12px; padding-right: 44px; width: 100%; }
+  .videoQuizPage.quizExperience .videoQuizHeading h1 { font-size: 1.45rem; }
+  .videoQuizPage.quizExperience .videoQuizBadge { display: none; }
+  .videoQuizPage.quizExperience .videoQuizHeading p { font-size: 0.8rem; margin-top: 4px; }
+  .videoQuizPage.quizExperience .videoQuizTopActions { flex-direction: row; align-items: center; }
+  .videoQuizPage.quizExperience .videoQuizPageContent .videoQuizCloseButton { position: absolute; right: 0; top: 0; width: 36px; height: 36px; }
+  .videoQuizPage.quizExperience .videoQuizIntro { grid-template-columns: 1fr; gap: 28px; }
+  .videoQuizPage.quizExperience .videoQuizStartPanel { position: static; padding: 22px; }
+  .videoQuizPage.quizExperience .videoQuizFacts { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; margin: 16px 0; }
+  .videoQuizPage.quizExperience .videoQuizFacts > div { flex-direction: column; gap: 4px; padding: 12px 0; }
+  .videoQuizPage.quizExperience .videoQuizFacts > div:first-child { padding-top: 12px; }
+  .videoQuizPage.quizExperience .videoQuizFacts dd { text-align: left; }
+  .videoQuizPage.quizExperience .videoQuizCertificateNote { margin-bottom: 18px; }
+  .videoQuizPage.quizExperience .videoQuizSectionTitle { gap: 6px; margin-bottom: 16px; }
+  .videoQuizPage.quizExperience .videoQuizAttemptCard { padding: 18px 0; }
+  .videoQuizPage.quizExperience .videoQuizAttemptViewButton { width: auto; padding: 0 12px; }
+  .videoQuizPage.quizExperience .videoQuizAttemptText time { font-size: 0.72rem; }
+  .videoQuizPage.quizExperience .videoQuizQuestionPanel { padding: 0; border-radius: 0; }
+  .videoQuizPage.quizExperience .videoQuizQuestionTopline { margin-bottom: 10px; gap: 8px; }
+  .videoQuizPage.quizExperience .videoQuizQuestionHeader { margin-bottom: 18px; }
+  .videoQuizPage.quizExperience .videoQuizOption { padding: 14px 12px; gap: 12px; min-height: 64px; }
+  .videoQuizPage.quizExperience .videoQuizOptionText { gap: 10px; }
+  .videoQuizPage.quizExperience .videoQuizOptionText span { font-size: 0.85rem; }
+  .videoQuizPage.quizExperience .videoQuizOptionText strong { min-width: 28px; height: 28px; }
+  .videoQuizPage.quizExperience .videoQuizActionRow { gap: 10px; }
+  .videoQuizPage.quizExperience .videoQuizActionRow > button { width: auto; flex: 1; padding: 0 12px; }
+  .videoQuizPage.quizExperience .videoQuizQuestionPanel .videoQuizActionRow { margin-bottom: 0; }
+  .videoQuizPage.quizExperience .videoQuizReviewPanel .videoQuizActionRow { order: 3; margin: 22px 0 0; }
+  .videoQuizPage.quizExperience .videoQuizReviewPanel .videoQuizReviewList { order: 2; }
+  .videoQuizPage.quizExperience .videoQuizReviewCard { padding-right: 58px; }
+  .videoQuizPage.quizExperience .videoQuizResultHeadline { flex-direction: column; text-align: center; gap: 20px; padding: 24px; }
+  .videoQuizPage.quizExperience .videoQuizResultScore { width: 112px; height: 112px; }
+  .videoQuizPage.quizExperience .videoQuizResultHeadline h3 { font-size: 1.4rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .videoQuizPage.quizExperience *, .videoQuizPage.quizExperience *::before, .videoQuizPage.quizExperience *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+.videoQuizPage.quizExperience .videoQuizFeedbackCard { border: 0; }
+.videoQuizPage.quizExperience :is(button, a, select):focus-visible { outline: none; outline-offset: 0; box-shadow: inset 0 0 0 2px var(--accentBlue2); }
+.videoQuizPage.quizExperience .videoQuizGridButton:focus-visible { box-shadow: inset 0 0 0 2px var(--borderWhite); border-color: var(--accentBlue2); }
+
+.videoQuizPage.quizExperience .videoQuizReviewPanel > .videoQuizResultHeadline { margin-bottom: 28px; }
+.videoQuizPage.quizExperience .videoQuizGridButton.current.correct { background: var(--accentGreen2); color: var(--background1); }
+.videoQuizPage.quizExperience .videoQuizGridButton.current.incorrect { background: var(--accentRed); color: var(--borderWhite); }
+.videoQuizPage.quizExperience .videoQuizGridButton.current.partial { background: var(--analyticsViewsOverTime); color: var(--background1); }
