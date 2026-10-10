@@ -50,3 +50,40 @@ export async function deleteQuestionGroup(database, groupId, userId) {
   );
   return rowCount > 0;
 }
+
+export async function lockGroupQuestions(database, userId, questionIds) {
+  if (!questionIds.length) return true;
+  const { rows } = await database.query(`
+    SELECT id FROM public.questions
+    WHERE user_id = $1 AND id = ANY($2::uuid[])
+    ORDER BY id FOR UPDATE
+  `, [userId, questionIds]);
+  return rows.length === questionIds.length;
+}
+
+export async function lockQuestionGroup(database, groupId, userId) {
+  const { rows } = await database.query(`
+    SELECT ${GROUP_COLUMNS} FROM public.question_groups
+    WHERE id = $1 AND user_id = $2 FOR UPDATE
+  `, [groupId, userId]);
+  return rows[0] || null;
+}
+
+export async function syncQuestionGroupQuestions(database, groupId, questionIds) {
+  if (questionIds.length) {
+    await database.query(`
+      INSERT INTO public.question_group_items (group_id, question_id)
+      SELECT $1, question_id FROM unnest($2::uuid[]) AS requested(question_id)
+      ORDER BY question_id
+      ON CONFLICT (group_id, question_id) DO NOTHING
+    `, [groupId, questionIds]);
+  }
+  await database.query(`
+    DELETE FROM public.question_group_items
+    WHERE group_id = $1 AND NOT (question_id = ANY($2::uuid[]))
+  `, [groupId, questionIds]);
+  const { rows } = await database.query(
+    'SELECT question_id FROM public.question_group_items WHERE group_id = $1 ORDER BY question_id', [groupId],
+  );
+  return rows.map(row => row.question_id);
+}

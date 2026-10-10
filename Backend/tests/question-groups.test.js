@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { mock, test } from 'node:test';
 import {
   createQuestionGroupSchema, updateQuestionGroupSchema, listQuestionGroupsSchema,
-  mapQuestionGroupWriteError,
+  mapQuestionGroupWriteError, syncQuestionGroupQuestionsSchema,
 } from '../src/modules/quizzes/question-groups/helpers/question-groups.validation.js';
 
 test('group creation trims text and defaults the optional description to null', () => {
@@ -48,15 +48,29 @@ test('only the group name uniqueness violation maps to a 409', () => {
   assert.equal(mapQuestionGroupWriteError(failure), failure);
 });
 
+test('membership PUT requires a UUID array, deduplicates IDs and accepts explicit clearing', () => {
+  const questionId = '12345678-abcd-4234-8234-123456789abc';
+  assert.deepEqual(syncQuestionGroupQuestionsSchema.parse({ question_ids: [questionId, questionId.toUpperCase()] }), { question_ids: [questionId] });
+  assert.deepEqual(syncQuestionGroupQuestionsSchema.parse({ question_ids: [] }), { question_ids: [] });
+  for (const input of [undefined, null, [], {}, { question_ids: null }, { question_ids: questionId },
+    { question_ids: ['invalid'] }, { question_ids: [1] }, { question_ids: [], user_id: 'spoofed' }, { question_ids: [], name: 'Override' }]) {
+    assert.equal(syncQuestionGroupQuestionsSchema.safeParse(input).success, false);
+  }
+});
+
 let databaseCalls = 0;
 mock.module(new URL('../src/database/index.js', import.meta.url).href, {
-  namedExports: { writePool: { async query() { databaseCalls++; throw new Error('Unexpected database access'); } } },
+  namedExports: { writePool: {
+    async query() { databaseCalls++; throw new Error('Unexpected database access'); },
+    async connect() { databaseCalls++; throw new Error('Unexpected database access'); },
+  } },
 });
 const { createQuestionGroupInternal: create } = await import('../src/modules/quizzes/question-groups/handlers/createQuestionGroup.js');
 const { getQuestionGroupInternal: get } = await import('../src/modules/quizzes/question-groups/handlers/getQuestionGroup.js');
 const { getQuestionGroupsInternal: list } = await import('../src/modules/quizzes/question-groups/handlers/getQuestionGroups.js');
 const { updateQuestionGroupInternal: update } = await import('../src/modules/quizzes/question-groups/handlers/updateQuestionGroup.js');
 const { deleteQuestionGroupInternal: remove } = await import('../src/modules/quizzes/question-groups/handlers/deleteQuestionGroup.js');
+const { syncQuestionGroupQuestionsInternal: sync } = await import('../src/modules/quizzes/question-groups/handlers/syncQuestionGroupQuestions.js');
 const userId = '12345678-1234-4234-8234-123456789abc';
 const params = { groupId: userId };
 
@@ -66,10 +80,14 @@ test('every handler rejects unauthenticated or invalid requests before database 
   await assert.rejects(list({}), { status: 401 });
   await assert.rejects(update(params, { name: 'A' }), { status: 401 });
   await assert.rejects(remove(params), { status: 401 });
+  await assert.rejects(sync(params, { question_ids: [] }), { status: 401 });
   await assert.rejects(create({ name: 'A', user_id: userId }, userId), { status: 400 });
   await assert.rejects(get({ groupId: 'invalid' }, userId), { status: 400 });
   await assert.rejects(list({ limit: '101' }, userId), { status: 400 });
   await assert.rejects(update(params, {}, userId), { status: 400 });
   await assert.rejects(remove({ groupId: 'invalid' }, userId), { status: 400 });
+  await assert.rejects(sync({ groupId: 'invalid' }, { question_ids: [] }, userId), { status: 400 });
+  await assert.rejects(sync(params, {}, userId), { status: 400 });
+  await assert.rejects(sync(params, { question_ids: ['invalid'] }, userId), { status: 400 });
   assert.equal(databaseCalls, 0);
 });

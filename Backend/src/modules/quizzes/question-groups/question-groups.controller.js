@@ -4,6 +4,7 @@ import { getQuestionGroupsInternal } from './handlers/getQuestionGroups.js';
 import { getQuestionGroupInternal } from './handlers/getQuestionGroup.js';
 import { updateQuestionGroupInternal } from './handlers/updateQuestionGroup.js';
 import { deleteQuestionGroupInternal } from './handlers/deleteQuestionGroup.js';
+import { syncQuestionGroupQuestionsInternal } from './handlers/syncQuestionGroupQuestions.js';
 
 function handleGroupError(res, error, action) {
   if (!error.status || error.status >= 500) console.error(`${action} error:`, error);
@@ -41,4 +42,10 @@ export async function deleteQuestionGroup(req, res) {
   try {
     return sendSuccess(res, await deleteQuestionGroupInternal(req.params, req.user?.sub));
   } catch (error) { return handleGroupError(res, error, 'deleteQuestionGroup'); }
+}
+
+export async function syncQuestionGroupQuestions(req, res) {
+  try {
+    return sendSuccess(res, await syncQuestionGroupQuestionsInternal(req.params, req.body, req.user?.sub));
+  } catch (error) { return handleGroupError(res, error, 'syncQuestionGroupQuestions'); }
 }

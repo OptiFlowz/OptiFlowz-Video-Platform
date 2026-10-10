@@ -9,6 +9,7 @@ router.post('/', questionGroupsController.createQuestionGroup);
 router.get('/', questionGroupsController.getQuestionGroups);
 router.get('/:groupId', questionGroupsController.getQuestionGroup);
 router.patch('/:groupId', questionGroupsController.updateQuestionGroup);
+router.put('/:groupId/questions', questionGroupsController.syncQuestionGroupQuestions);
 router.delete('/:groupId', questionGroupsController.deleteQuestionGroup);
 
 export default router;

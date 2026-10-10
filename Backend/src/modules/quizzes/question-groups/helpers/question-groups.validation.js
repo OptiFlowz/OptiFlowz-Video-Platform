@@ -17,6 +17,11 @@ export const updateQuestionGroupSchema = z.object(groupFields).partial().strict(
   { message: 'Provide at least one question group field to update' },
 );
 
+export const syncQuestionGroupQuestionsSchema = z.object({
+  question_ids: z.array(z.string().uuid('Invalid question ID').transform(id => id.toLowerCase()))
+    .transform(ids => [...new Set(ids)]),
+}).strict();
+
 export const listQuestionGroupsSchema = z.object({
   name: z.string().trim().max(255).optional(),
   sortBy: z.enum(['name', 'id']).optional().default('name'),

@@ -2,7 +2,7 @@
 
 All routes require a Bearer token and operate only on the authenticated user's
 groups. Missing and foreign groups return 404. Request bodies cannot set `id`,
-`user_id` or question memberships.
+`user_id`. Group metadata bodies cannot set question memberships.
 
 | Method | Path | Response data |
 | --- | --- | --- |
@@ -11,6 +11,7 @@ groups. Missing and foreign groups return 404. Request bodies cannot set `id`,
 | GET | `/api/quizzes/question-groups/:groupId` | `{ group: {...} }` |
 | PATCH | `/api/quizzes/question-groups/:groupId` | `{ group: {...} }` |
 | DELETE | `/api/quizzes/question-groups/:groupId` | `{ deleted: true }` |
+| PUT | `/api/quizzes/question-groups/:groupId/questions` | `{ group: {...}, question_ids: [...] }` |
 
 Successful responses include `success: true`. Errors include `success: false`
 and `message`. Invalid input returns 400, unauthenticated access returns 401,
@@ -30,6 +31,35 @@ Name is trimmed and must contain 1–255 characters. Description is optional,
 trimmed when provided, and defaults to null. PATCH accepts a nonempty subset of
 these fields, preserves omitted fields, and accepts `description: null` to clear
 the description. Unknown fields are rejected.
+
+## Synchronize group membership
+
+`PUT /api/quizzes/question-groups/:groupId/questions` replaces the group's
+membership set. Body:
+
+```json
+{
+  "question_ids": ["12345678-1234-4234-8234-123456789abc"]
+}
+```
+
+The array is required. `question_ids: []` clears all memberships. UUIDs are
+normalized to lowercase and deduplicated. Every question and the group must
+exist and belong to the authenticated user. Missing and foreign resources
+return 404; malformed IDs or bodies return 400.
+
+New links are inserted, omitted links removed, and existing links retained.
+Memberships in other groups remain unchanged. Question records, answers and
+group metadata are preserved. The response includes group metadata and the
+saved question IDs in UUID order. Repeating the same PUT is idempotent.
+
+The operation uses one transaction and rolls back all membership changes on
+failure. Requested question rows are locked in UUID order before locking the
+group, matching the question CRUD lock order. The group is exclusively locked
+during synchronization, serializing competing group replacements and blocking
+concurrent linking and group deletion. No timestamps are changed on question records.
+
+## List groups
 
 List query parameters:
 
@@ -70,8 +100,8 @@ UUID ascending breaks ties when sorting by name. All reads use the primary.
 
 Group deletion cascades to existing `question_group_items` memberships and
 preserves questions. Question CREATE/PATCH manage memberships through optional
-`group_ids`; see `QUESTIONS.md`. There are no standalone membership endpoints.
-Group responses contain only `id`, `user_id`, `name` and `description`.
+`group_ids`; see `QUESTIONS.md`. The PUT endpoint provides synchronization from
+the group side. Group metadata contains `id`, `user_id`, `name` and `description`.
 
 Apply the existing question-groups migration with `npm run migrate:deploy`.
 Run `npm run test:question-groups`; set `TEST_DATABASE_URL` to enable the

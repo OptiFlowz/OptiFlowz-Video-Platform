@@ -6,6 +6,7 @@ import { mock, test } from 'node:test';
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import pg from 'pg';
+import { errorHandler } from '../src/middleware/error-handler.js';
 
 test('question group CRUD against PostgreSQL session-local tables', { skip: !process.env.TEST_DATABASE_URL }, async t => {
   const client = new pg.Client({ connectionString: process.env.TEST_DATABASE_URL, connectionTimeoutMillis: 5000, statement_timeout: 10000 });
@@ -18,9 +19,20 @@ test('question group CRUD against PostgreSQL session-local tables', { skip: !pro
   }
   const userId = randomUUID(), otherUserId = randomUUID();
   await client.query('INSERT INTO pg_temp.users(id) VALUES ($1),($2)', [userId, otherUserId]);
-  const query = (sql, params) => client.query(sql.replaceAll('public.', 'pg_temp.'), params);
-  mock.module(new URL('../src/database/index.js', import.meta.url).href, { namedExports: { writePool: { query } } });
+  let failSync = false, releases = 0;
+  const query = async (sql, params) => {
+    const result = await client.query(sql.replaceAll('public.', 'pg_temp.'), params);
+    if (failSync && /DELETE FROM public.question_group_items/.test(sql)) {
+      failSync = false;
+      throw new Error('Injected failure after group membership replacement');
+    }
+    return result;
+  };
+  mock.module(new URL('../src/database/index.js', import.meta.url).href, { namedExports: { writePool: {
+    query, async connect() { return { query, release() { releases++; } }; },
+  } } });
   const { default: router } = await import('../src/modules/quizzes/quizzes.routes.js');
+  const { syncQuestionGroupQuestionsInternal: sync } = await import('../src/modules/quizzes/question-groups/handlers/syncQuestionGroupQuestions.js');
   const previousSecret = process.env.JWT_SECRET;
   process.env.JWT_SECRET = 'question-groups-test-secret';
   t.after(() => { if (previousSecret === undefined) delete process.env.JWT_SECRET; else process.env.JWT_SECRET = previousSecret; });
@@ -29,6 +41,7 @@ test('question group CRUD against PostgreSQL session-local tables', { skip: !pro
   const app = express();
   app.use(express.json());
   app.use('/api/quizzes', router);
+  app.use(errorHandler);
   const server = app.listen(0, '127.0.0.1');
   await once(server, 'listening');
   t.after(() => new Promise(resolve => server.close(resolve)));
@@ -40,6 +53,16 @@ test('question group CRUD against PostgreSQL session-local tables', { skip: !pro
     });
     return { status: response.status, ...await response.json() };
   }
+  async function questionRequest(method, path = '', body) {
+    const response = await fetch(baseUrl.replace(/question-groups$/, 'questions') + path, {
+      method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    return { status: response.status, ...await response.json() };
+  }
+  const groupItems = async groupId => (await client.query(
+    'SELECT question_id, ctid::text AS row_id FROM pg_temp.question_group_items WHERE group_id=$1 ORDER BY question_id', [groupId],
+  )).rows;
   async function scenario(name, run) {
     await t.test(name, async () => {
       await client.query('TRUNCATE pg_temp.question_groups CASCADE');
@@ -47,9 +70,9 @@ test('question group CRUD against PostgreSQL session-local tables', { skip: !pro
     });
   }
 
-  await scenario('all five group endpoints require access tokens', async () => {
+  await scenario('all group endpoints require access tokens', async () => {
     const temporary = jwt.sign({ sub: userId, purpose: 'two_factor' }, process.env.JWT_SECRET);
-    for (const [method, path] of [['POST', ''], ['GET', ''], ['GET', `/${randomUUID()}`], ['PATCH', `/${randomUUID()}`], ['DELETE', `/${randomUUID()}`]]) {
+    for (const [method, path] of [['POST', ''], ['GET', ''], ['GET', `/${randomUUID()}`], ['PATCH', `/${randomUUID()}`], ['DELETE', `/${randomUUID()}`], ['PUT', `/${randomUUID()}/questions`]]) {
       assert.equal((await request(method, path, undefined, null)).status, 401);
       assert.equal((await request(method, path, undefined, temporary)).status, 401);
     }
@@ -143,7 +166,7 @@ test('question group CRUD against PostgreSQL session-local tables', { skip: !pro
     }
   });
 
-  await scenario('invalid requests and membership payloads return 400, and no membership route is registered', async () => {
+  await scenario('invalid metadata and membership payloads return 400, and membership POST is not registered', async () => {
     for (const [method, path, body] of [
       ['POST', '', {}], ['POST', '', { name: ' ' }], ['POST', '', { name: 'x'.repeat(256) }],
       ['POST', '', { name: 'A', user_id: otherUserId }], ['POST', '', { name: 'A', question_ids: [] }],
@@ -170,5 +193,99 @@ test('question group CRUD against PostgreSQL session-local tables', { skip: !pro
     assert.equal((await client.query('SELECT count(*)::int AS n FROM pg_temp.questions WHERE id=$1', [question.id])).rows[0].n, 1);
     assert.deepEqual((await request('GET', `/${retained.id}`)).group, retained);
     assert.equal((await client.query('SELECT count(*)::int AS n FROM pg_temp.question_group_items WHERE group_id=$1', [retained.id])).rows[0].n, 1);
+  });
+
+  await scenario('membership PUT adds, retains, removes and clears all question types without changing questions or other groups', async () => {
+    const { group } = await request('POST', '', { name: 'Target' });
+    const { group: other } = await request('POST', '', { name: 'Other' });
+    const questions = [];
+    for (const type of ['single_choice', 'multiple_choice', 'matching']) {
+      const body = type === 'matching'
+        ? { type, content: 'Match', matching_options: [{ option_no: 1, content: 'Answer', position: 1 }],
+          matching_items: [{ item_no: 1, content: 'Item', correct_option_no: 1, position: 1 }] }
+        : { type, content: 'Choose', options: [{ option_no: 1, content: 'Answer', is_correct: true, position: 1 }] };
+      const created = await questionRequest('POST', '', { ...body, group_ids: type === 'single_choice' ? [other.id] : [] });
+      assert.equal(created.status, 201); questions.push(created.question);
+    }
+    const ids = questions.map(question => question.id);
+    const response = await request('PUT', `/${group.id}/questions`, { question_ids: [ids[2], ids[0], ids[1], ids[0].toUpperCase()] });
+    assert.deepEqual(response, { status: 200, success: true, group, question_ids: ids.slice().sort() });
+    const before = await groupItems(group.id);
+    const replaced = await request('PUT', `/${group.id}/questions`, { question_ids: ids.slice(1) });
+    assert.deepEqual(replaced.question_ids, ids.slice(1).sort());
+    const retained = await groupItems(group.id);
+    for (const item of retained) assert.equal(item.row_id, before.find(previous => previous.question_id === item.question_id).row_id);
+    assert.deepEqual((await groupItems(other.id)).map(item => item.question_id), [ids[0]]);
+    assert.equal((await request('PUT', `/${group.id}/questions`, { question_ids: ids.slice(1) })).status, 200);
+    assert.deepEqual(await groupItems(group.id), retained);
+    const cleared = await request('PUT', `/${group.id}/questions`, { question_ids: [] });
+    assert.deepEqual(cleared, { status: 200, success: true, group, question_ids: [] });
+    assert.deepEqual(await groupItems(group.id), []);
+    for (const question of questions) assert.deepEqual((await questionRequest('GET', `/${question.id}`)).question, question);
+    assert.deepEqual((await request('GET', `/${group.id}`)).group, group);
+  });
+
+  await scenario('group and question-side membership operations agree on the same many-to-many links', async () => {
+    const { group: first } = await request('POST', '', { name: 'First' });
+    const { group: second } = await request('POST', '', { name: 'Second' });
+    const created = await questionRequest('POST', '', { type: 'single_choice', content: 'Draft', group_ids: [second.id] });
+    const questionId = created.question.id;
+    assert.equal((await request('PUT', `/${first.id}/questions`, { question_ids: [questionId] })).status, 200);
+    assert.deepEqual((await questionRequest('GET', `/${questionId}`)).question.group_ids, [first.id, second.id].sort());
+    assert.equal((await questionRequest('PATCH', `/${questionId}`, { group_ids: [first.id] })).status, 200);
+    assert.deepEqual(await groupItems(second.id), []);
+    assert.equal((await request('PUT', `/${first.id}/questions`, { question_ids: [] })).status, 200);
+    assert.deepEqual((await questionRequest('GET', `/${questionId}`)).question.group_ids, []);
+    assert.equal((await questionRequest('PATCH', `/${questionId}`, { group_ids: [first.id, second.id] })).status, 200);
+    assert.equal((await request('PUT', `/${first.id}/questions`, { question_ids: [questionId] })).status, 200);
+    assert.deepEqual((await groupItems(second.id)).map(item => item.question_id), [questionId]);
+  });
+
+  await scenario('missing and foreign groups/questions reject the entire membership replacement', async () => {
+    const { group } = await request('POST', '', { name: 'Private target' });
+    const { group: foreignGroup } = await request('POST', '', { name: 'Foreign target' }, otherToken);
+    const old = (await questionRequest('POST', '', { type: 'single_choice', content: 'Old', group_ids: [group.id] })).question;
+    const added = (await questionRequest('POST', '', { type: 'single_choice', content: 'New' })).question;
+    const foreignQuestion = (await client.query("INSERT INTO pg_temp.questions(user_id,type,content) VALUES ($1,'matching','Foreign') RETURNING id", [otherUserId])).rows[0].id;
+    const before = await groupItems(group.id);
+    for (const invalidQuestion of [foreignQuestion, randomUUID()]) {
+      assert.equal((await request('PUT', `/${group.id}/questions`, { question_ids: [added.id, invalidQuestion] })).status, 404);
+      assert.deepEqual(await groupItems(group.id), before);
+      assert.deepEqual((await questionRequest('GET', `/${old.id}`)).question, old);
+      assert.deepEqual((await questionRequest('GET', `/${added.id}`)).question, added);
+    }
+    for (const groupId of [foreignGroup.id, randomUUID()]) {
+      assert.equal((await request('PUT', `/${groupId}/questions`, { question_ids: [added.id] })).status, 404);
+      assert.equal((await request('PUT', `/${groupId}/questions`, { question_ids: [] })).status, 404);
+    }
+    assert.equal((await request('PUT', `/${group.id}/questions`, { question_ids: [foreignQuestion] }, otherToken)).status, 404);
+    assert.deepEqual(await groupItems(group.id), before);
+  });
+
+  await scenario('membership PUT rejects omitted, malformed or spoofed bodies instead of accidentally clearing a group', async () => {
+    const { group } = await request('POST', '', { name: 'Validation target' });
+    const question = (await questionRequest('POST', '', { type: 'single_choice', content: 'Preserve', group_ids: [group.id] })).question;
+    const before = await groupItems(group.id);
+    for (const body of [undefined, null, [], {}, { question_ids: null }, { question_ids: question.id },
+      { question_ids: ['invalid'] }, { question_ids: [], user_id: otherUserId }, { question_ids: [], name: 'Rename' }]) {
+      assert.equal((await request('PUT', `/${group.id}/questions`, body)).status, 400);
+      assert.deepEqual(await groupItems(group.id), before);
+    }
+    assert.equal((await request('PUT', '/invalid/questions', { question_ids: [] })).status, 400);
+  });
+
+  await scenario('membership replacement failure rolls back inserted and removed links and releases the connection', async () => {
+    const { group } = await request('POST', '', { name: 'Rollback target' });
+    const old = (await questionRequest('POST', '', { type: 'single_choice', content: 'Old', group_ids: [group.id] })).question;
+    const added = (await questionRequest('POST', '', { type: 'single_choice', content: 'New' })).question;
+    const before = await groupItems(group.id), releasedBefore = releases;
+    failSync = true;
+    await assert.rejects(sync({ groupId: group.id }, { question_ids: [added.id] }, userId), /Injected failure after group membership replacement/);
+    assert.equal(releases, releasedBefore + 1);
+    assert.deepEqual(await groupItems(group.id), before);
+    assert.deepEqual((await questionRequest('GET', `/${old.id}`)).question, old);
+    assert.deepEqual((await questionRequest('GET', `/${added.id}`)).question, added);
+    const retry = await request('PUT', `/${group.id}/questions`, { question_ids: [added.id] });
+    assert.deepEqual(retry.question_ids, [added.id]);
   });
 });

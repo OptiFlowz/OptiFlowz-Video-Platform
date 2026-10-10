@@ -86,6 +86,8 @@ Create and PATCH also accept optional `group_ids`, an array of group UUIDs:
 This example is a PATCH body; creation additionally requires `type` and
 `content`. `group_ids` manages rows in `question_group_items` and is not a
 column in `questions`. Every group must exist and belong to the question owner.
+`PUT /api/quizzes/question-groups/:groupId/questions` also replaces a group's
+question memberships; see `QUESTION_GROUPS.md`.
 Missing and foreign groups both return 404. Malformed group IDs return 400.
 Duplicate IDs are normalized to lowercase and deduplicated; the composite
 membership PK also prevents duplicates.
