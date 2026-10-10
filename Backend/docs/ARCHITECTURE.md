@@ -60,15 +60,15 @@ to playlist moderation; existing API paths remain unchanged.
 
 ## Resource authorization and shared IP helpers
 
-Quiz management and video analytics routes authorize resources through
+Video analytics and content management routes authorize resources through
 `src/modules/authorization/resource-authorization.js`. Its `ownPermission`
 checks still require matching ownership; `anyPermission` and the platform Owner
 role allow access to other users' resources. Handlers rely on these route guards
-instead of repeating authorization through the former `assertQuizOwner` and
-`assertVideoOwner` helpers. New callers must use the same authorization boundary.
+instead of repeating authorization through the former `assertVideoOwner`
+helper. New callers must use the same authorization boundary.
 Controllers merge URL parameters last so body/query fields cannot substitute a
-resource ID after middleware has authorized it. Quiz attempt ownership and video
-visibility checks remain separate and are still required.
+resource ID after middleware has authorized it. Video visibility checks remain
+separate and are still required.
 
 Livestream management uses the same boundary through `requireLiveStreamAccess`.
 Edit/thumbnail, deletion and encoder credentials have separate own/any permission

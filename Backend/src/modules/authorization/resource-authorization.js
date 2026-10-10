@@ -84,14 +84,6 @@ async function loadLiveStream(liveStreamId) {
   return rows[0] || null;
 }
 
-async function loadQuiz(quizId) {
-  const { rows } = await writePool.query(
-    `SELECT id, created_by AS owner_id, is_active FROM quizzes WHERE id = $1 LIMIT 1`,
-    [quizId],
-  );
-  return rows[0] || null;
-}
-
 async function loadComment(commentId) {
   const { rows } = await writePool.query(
     `
@@ -113,48 +105,6 @@ async function loadPostComment(commentId) {
   );
   return rows[0] || null;
 }
-
-const quizChildLoaders = {
-  question: async (questionId) => {
-    const { rows } = await writePool.query(
-      `
-        SELECT qq.id, q.id AS quiz_id, q.created_by AS owner_id
-        FROM quiz_questions qq
-        JOIN quizzes q ON q.id = qq.quiz_id
-        WHERE qq.id = $1
-        LIMIT 1
-      `,
-      [questionId],
-    );
-    return rows[0] || null;
-  },
-  rule: async (ruleId) => {
-    const { rows } = await writePool.query(
-      `
-        SELECT qar.id, q.id AS quiz_id, q.created_by AS owner_id
-        FROM quiz_access_rules qar
-        JOIN quizzes q ON q.id = qar.quiz_id
-        WHERE qar.id = $1
-        LIMIT 1
-      `,
-      [ruleId],
-    );
-    return rows[0] || null;
-  },
-  questionSource: async (sourceId) => {
-    const { rows } = await writePool.query(
-      `
-        SELECT qqs.id, q.id AS quiz_id, q.created_by AS owner_id
-        FROM quiz_question_sources qqs
-        JOIN quizzes q ON q.id = qqs.quiz_id
-        WHERE qqs.id = $1
-        LIMIT 1
-      `,
-      [sourceId],
-    );
-    return rows[0] || null;
-  },
-};
 
 function ownedResourceMiddleware({
   resourceName,
@@ -209,34 +159,6 @@ export function requireLiveStreamAccess({ ownPermission, anyPermission }) {
     resourceName: 'Live stream',
     idParameter: 'liveStreamId',
     loadResource: loadLiveStream,
-    ownPermission,
-    anyPermission,
-  });
-}
-
-export function requireQuizAccess({ ownPermission, anyPermission }) {
-  return ownedResourceMiddleware({
-    resourceName: 'Quiz',
-    idParameter: 'quizId',
-    loadResource: loadQuiz,
-    ownPermission,
-    anyPermission,
-  });
-}
-
-export function requireQuizChildAccess({
-  childType,
-  idParameter,
-  ownPermission,
-  anyPermission,
-}) {
-  const loadResource = quizChildLoaders[childType];
-  if (!loadResource) throw new Error(`Unsupported quiz child type: ${childType}`);
-
-  return ownedResourceMiddleware({
-    resourceName: 'Quiz resource',
-    idParameter,
-    loadResource,
     ownPermission,
     anyPermission,
   });

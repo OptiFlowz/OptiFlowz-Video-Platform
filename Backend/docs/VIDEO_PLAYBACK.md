@@ -100,7 +100,7 @@ Frontend changes are separate: cards should use the returned fields, load
 animated images on hover, and retain the thumbnail if a preview fails.
 Updated backend list responses include search, trending, history, liked videos,
 continue watching, recommendations, the uploader library, channels, playlist
-videos, quiz requirements, and top-viewed video cards.
+videos and top-viewed video cards.
 
 `mux_thumbnail_url` is built independently from the playback ID and saved
 `mux_thumbnail_time`. Missing or null timestamps use time 0. Width 1280, height 720,

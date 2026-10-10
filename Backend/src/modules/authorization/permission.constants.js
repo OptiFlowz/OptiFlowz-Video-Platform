@@ -37,12 +37,6 @@ export const Permissions = Object.freeze({
   PLAYLISTS_LIBRARY_READ: 'playlists.library.read',
   PLAYLISTS_SAVE: 'playlists.save',
 
-  QUIZZES_CREATE: 'quizzes.create',
-  QUIZZES_MANAGE_OWN: 'quizzes.manage_own',
-  QUIZZES_MANAGE_ANY: 'quizzes.manage_any',
-  QUIZZES_PARTICIPATE: 'quizzes.participate',
-  QUIZZES_CERTIFICATES: 'quizzes.certificates',
-
   COMMENTS_CREATE: 'comments.create',
   COMMENTS_EDIT_OWN: 'comments.edit_own',
   COMMENTS_DELETE_OWN: 'comments.delete_own',
