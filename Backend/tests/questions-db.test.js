@@ -55,10 +55,10 @@ test('question CRUD against PostgreSQL session-local tables', { skip: !process.e
   mock.module(new URL('../src/database/index.js', import.meta.url).href, {
     namedExports: { writePool: { query: database.query, async connect() { return database; } } },
   });
-  const { default: router } = await import('../src/modules/quizzes/quizzes.routes.js');
-  const { createQuestionInternal: create } = await import('../src/modules/quizzes/questions/handlers/createQuestion.js');
-  const { updateQuestionInternal: update } = await import('../src/modules/quizzes/questions/handlers/updateQuestion.js');
-  const { deleteQuestionInternal: remove } = await import('../src/modules/quizzes/questions/handlers/deleteQuestion.js');
+  const { default: router } = await import('../src/modules/quizzes-engine/quizzes-engine.routes.js');
+  const { createQuestionInternal: create } = await import('../src/modules/quizzes-engine/questions/handlers/createQuestion.js');
+  const { updateQuestionInternal: update } = await import('../src/modules/quizzes-engine/questions/handlers/updateQuestion.js');
+  const { deleteQuestionInternal: remove } = await import('../src/modules/quizzes-engine/questions/handlers/deleteQuestion.js');
   const previousSecret = process.env.JWT_SECRET;
   process.env.JWT_SECRET = 'questions-test-secret';
   t.after(() => { if (previousSecret === undefined) delete process.env.JWT_SECRET; else process.env.JWT_SECRET = previousSecret; });
@@ -369,7 +369,7 @@ test('question CRUD against PostgreSQL session-local tables', { skip: !process.e
       content: 'Must roll back', options: [], group_ids: groupIds.slice(1),
     }, userId), /Injected failure after membership removal/);
     // Handler returns Date timestamps; compare the read through the same handler.
-    const { getQuestionInternal: get } = await import('../src/modules/quizzes/questions/handlers/getQuestion.js');
+    const { getQuestionInternal: get } = await import('../src/modules/quizzes-engine/questions/handlers/getQuestion.js');
     assert.deepEqual(await get({ questionId: question.id }, userId), question);
     assert.deepEqual(await memberships(question.id), links);
     assert.equal(releases, releasedBefore + 3);
@@ -382,7 +382,7 @@ test('question CRUD against PostgreSQL session-local tables', { skip: !process.e
     const releasedBefore = releases;
     failQuestionDelete = true;
     await assert.rejects(remove({ questionId: question.id }, userId), /Injected failure after question deletion/);
-    const { getQuestionInternal: get } = await import('../src/modules/quizzes/questions/handlers/getQuestion.js');
+    const { getQuestionInternal: get } = await import('../src/modules/quizzes-engine/questions/handlers/getQuestion.js');
     assert.deepEqual(await get({ questionId: question.id }, userId), question);
     assert.deepEqual(await memberships(question.id), links);
     assert.equal(releases, releasedBefore + 1);

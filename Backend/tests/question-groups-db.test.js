@@ -31,8 +31,8 @@ test('question group CRUD against PostgreSQL session-local tables', { skip: !pro
   mock.module(new URL('../src/database/index.js', import.meta.url).href, { namedExports: { writePool: {
     query, async connect() { return { query, release() { releases++; } }; },
   } } });
-  const { default: router } = await import('../src/modules/quizzes/quizzes.routes.js');
-  const { syncQuestionGroupQuestionsInternal: sync } = await import('../src/modules/quizzes/question-groups/handlers/syncQuestionGroupQuestions.js');
+  const { default: router } = await import('../src/modules/quizzes-engine/quizzes-engine.routes.js');
+  const { syncQuestionGroupQuestionsInternal: sync } = await import('../src/modules/quizzes-engine/question-groups/handlers/syncQuestionGroupQuestions.js');
   const previousSecret = process.env.JWT_SECRET;
   process.env.JWT_SECRET = 'question-groups-test-secret';
   t.after(() => { if (previousSecret === undefined) delete process.env.JWT_SECRET; else process.env.JWT_SECRET = previousSecret; });

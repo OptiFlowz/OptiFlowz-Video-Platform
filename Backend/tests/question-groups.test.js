@@ -3,7 +3,7 @@ import { mock, test } from 'node:test';
 import {
   createQuestionGroupSchema, updateQuestionGroupSchema, listQuestionGroupsSchema,
   mapQuestionGroupWriteError, syncQuestionGroupQuestionsSchema,
-} from '../src/modules/quizzes/question-groups/helpers/question-groups.validation.js';
+} from '../src/modules/quizzes-engine/question-groups/helpers/question-groups.validation.js';
 
 test('group creation trims text and defaults the optional description to null', () => {
   assert.deepEqual(createQuestionGroupSchema.parse({ name: ' Languages ' }), { name: 'Languages', description: null });
@@ -65,12 +65,12 @@ mock.module(new URL('../src/database/index.js', import.meta.url).href, {
     async connect() { databaseCalls++; throw new Error('Unexpected database access'); },
   } },
 });
-const { createQuestionGroupInternal: create } = await import('../src/modules/quizzes/question-groups/handlers/createQuestionGroup.js');
-const { getQuestionGroupInternal: get } = await import('../src/modules/quizzes/question-groups/handlers/getQuestionGroup.js');
-const { getQuestionGroupsInternal: list } = await import('../src/modules/quizzes/question-groups/handlers/getQuestionGroups.js');
-const { updateQuestionGroupInternal: update } = await import('../src/modules/quizzes/question-groups/handlers/updateQuestionGroup.js');
-const { deleteQuestionGroupInternal: remove } = await import('../src/modules/quizzes/question-groups/handlers/deleteQuestionGroup.js');
-const { syncQuestionGroupQuestionsInternal: sync } = await import('../src/modules/quizzes/question-groups/handlers/syncQuestionGroupQuestions.js');
+const { createQuestionGroupInternal: create } = await import('../src/modules/quizzes-engine/question-groups/handlers/createQuestionGroup.js');
+const { getQuestionGroupInternal: get } = await import('../src/modules/quizzes-engine/question-groups/handlers/getQuestionGroup.js');
+const { getQuestionGroupsInternal: list } = await import('../src/modules/quizzes-engine/question-groups/handlers/getQuestionGroups.js');
+const { updateQuestionGroupInternal: update } = await import('../src/modules/quizzes-engine/question-groups/handlers/updateQuestionGroup.js');
+const { deleteQuestionGroupInternal: remove } = await import('../src/modules/quizzes-engine/question-groups/handlers/deleteQuestionGroup.js');
+const { syncQuestionGroupQuestionsInternal: sync } = await import('../src/modules/quizzes-engine/question-groups/handlers/syncQuestionGroupQuestions.js');
 const userId = '12345678-1234-4234-8234-123456789abc';
 const params = { groupId: userId };
 

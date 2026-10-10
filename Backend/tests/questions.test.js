@@ -3,7 +3,7 @@ import { mock, test } from 'node:test';
 import {
   createQuestionSchema, updateQuestionSchema, listQuestionsSchema,
   mergeQuestionUpdates, validateQuestionForActivation,
-} from '../src/modules/quizzes/questions/helpers/questions.validation.js';
+} from '../src/modules/quizzes-engine/questions/helpers/questions.validation.js';
 
 const option = { option_no: 7, content: 'Answer', is_correct: true, position: 1 };
 const choice = { type: 'single_choice', content: 'Question', options: [option] };
@@ -114,11 +114,11 @@ mock.module(new URL('../src/database/index.js', import.meta.url).href, {
     async connect() { databaseCalls++; throw new Error('Unexpected database access'); },
   } },
 });
-const { createQuestionInternal: create } = await import('../src/modules/quizzes/questions/handlers/createQuestion.js');
-const { updateQuestionInternal: update } = await import('../src/modules/quizzes/questions/handlers/updateQuestion.js');
-const { getQuestionInternal: get } = await import('../src/modules/quizzes/questions/handlers/getQuestion.js');
-const { getQuestionsInternal: list } = await import('../src/modules/quizzes/questions/handlers/getQuestions.js');
-const { deleteQuestionInternal: remove } = await import('../src/modules/quizzes/questions/handlers/deleteQuestion.js');
+const { createQuestionInternal: create } = await import('../src/modules/quizzes-engine/questions/handlers/createQuestion.js');
+const { updateQuestionInternal: update } = await import('../src/modules/quizzes-engine/questions/handlers/updateQuestion.js');
+const { getQuestionInternal: get } = await import('../src/modules/quizzes-engine/questions/handlers/getQuestion.js');
+const { getQuestionsInternal: list } = await import('../src/modules/quizzes-engine/questions/handlers/getQuestions.js');
+const { deleteQuestionInternal: remove } = await import('../src/modules/quizzes-engine/questions/handlers/deleteQuestion.js');
 const userId = '12345678-1234-4234-8234-123456789abc';
 const params = { questionId: userId };
 

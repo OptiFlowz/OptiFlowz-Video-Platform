@@ -30,6 +30,7 @@
     "test:drop-quizzes": "node --test tests/drop-quizzes-db.test.js",
     "test:questions": "node --experimental-test-module-mocks --test tests/questions.test.js tests/questions-db.test.js",
     "test:question-groups": "node --experimental-test-module-mocks --test tests/question-groups.test.js tests/question-groups-db.test.js",
+    "test:quizzes": "node --experimental-test-module-mocks --test tests/quizzes.test.js tests/quizzes-db.test.js",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "dev:worker": "nodemon --signal SIGTERM src/workers/video-indexing.js",
