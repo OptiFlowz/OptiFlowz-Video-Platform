@@ -44,3 +44,11 @@
   .page :global(.captionsButtonGroup button) { min-width: 0; padding-inline: .65rem; white-space: normal; }
 }
 @media (prefers-reduced-motion: reduce) { .videoRow { transition: none !important; } }
+
+.pickerSearch { display: flex; flex-direction: column; gap: .75rem; margin-block: 1rem; }
+.pickerResults { display: flex; flex-direction: column; gap: .5rem; }
+.page :global(.playlistVideoSearchRow).pickerRow { flex-direction: row; align-items: center; background: var(--background2); border-radius: 12px; padding: .65rem; }
+.pickerMeta { display: flex; flex-direction: column; gap: .25rem; min-width: 0; flex: 1; }
+.pickerMeta strong { overflow-wrap: anywhere; font-size: .9rem; }
+.pickerMeta small { color: var(--text2); }
+.pickerRow :global(.playlistVideoAddBtn) svg { width: 18px; height: 18px; }

@@ -21,6 +21,7 @@ function loadModules() {
     if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, 'index.ts');
     if (!path.extname(file)) file += fs.existsSync(file + '.ts') ? '.ts' : '.tsx';
     if (file.endsWith('.json')) return JSON.parse(fs.readFileSync(file, 'utf8'));
+    if (/\.(webp|png|jpe?g|svg)$/.test(file)) return '/test-image.webp';
     if (cache.has(file)) return cache.get(file).exports;
     const mod = { exports: {} }; cache.set(file, mod);
     const code = ts.transpileModule(fs.readFileSync(file, 'utf8'), {

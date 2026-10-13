@@ -4,7 +4,7 @@ import { P } from "~/authorization/permissions";
 import { useI18n } from "~/i18n";
 import { BRAND_NAME, MARKETING_WEBSITE_URL } from "~/changeables";
 import {
-    LiveSVG, AnalyticsSVG, ChannelMenuSVG, ContinueWatchingSVG, CupOutlineSVG, ExternalSiteMenuSVG, HistorySVG,
+    CollectionsSVG, LiveSVG, AnalyticsSVG, ChannelMenuSVG, ContinueWatchingSVG, CupOutlineSVG, ExternalSiteMenuSVG, HistorySVG,
     ArrowSVG, HomeMenuSVG, LanguageMenuSVG, LikeSVG, PeopleSVG, PlatformMenuSVG,
     PlaylistSVG, PostSVG, QuizSVG, RecommendedMenuSVG, TrendingMenuSVG, UserSVG,
 } from "~/constants";
@@ -14,7 +14,7 @@ import type { ReactNode } from "react";
 export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     const { t, locale, setLocale } = useI18n();
     const { can, canAccess, user } = useAuthorization();
-    const hasChannelAccess = canAccess('videos') || canAccess('myLivestreams') || canAccess('playlists') || canAccess('posts') || canAccess('quizzes') || canAccess('people') || canAccess('channelAnalytics') || canAccess('upload') || canAccess('createLive');
+    const hasChannelAccess = canAccess('videos') || canAccess('myLivestreams') || canAccess('playlists') || canAccess('collections') || canAccess('posts') || canAccess('quizzes') || canAccess('people') || canAccess('channelAnalytics') || canAccess('upload') || canAccess('createLive');
     const platformHome = canAccess('platformAnalytics') ? '/platform-analytics' : canAccess('platformUsers') ? '/platform-users' : canAccess('platformSettings') ? '/platform-settings?page=access' : null;
     const item = (to: string, label: string, icon: ReactNode) => <NavLink key={to} to={to} end
         className={({ isActive }) => `appSidebarItem${isActive ? ' isActive' : ''}`} onClick={onNavigate}>
@@ -23,6 +23,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     const management = [
         canAccess('videos') && item('/my-videos', t('navMyVideos'), ChannelMenuSVG),
         canAccess('playlists') && item('/my-playlists', t('navMyPlaylists'), PlaylistSVG),
+        canAccess('collections') && item('/my-collections', t('navMyCollections'), CollectionsSVG),
         canAccess('posts') && item('/my-posts', t('navMyPosts'), PostSVG),
         canAccess('myLivestreams') && item('/my-livestreams', t('liveMyStreams'), LiveSVG),
         canAccess('quizzes') && item('/quizzes', t('navQuizzes'), QuizSVG),

@@ -1,6 +1,5 @@
 import { ThumbnailDropZone, isThumbnailImage } from "../shared/thumbnailDropZone";
 import "~/styles/editor.css";
-import { getVideoThumbnail } from "~/components/shared/videoMedia";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import {
   useEffect,
@@ -11,17 +10,16 @@ import {
   type KeyboardEvent,
 } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AddSVG, CloseSVG, UploadSVG } from "~/constants";
+import { CloseSVG, UploadSVG } from "~/constants";
 import { fetchFn } from "~/API";
-import { fetchVectorVideos } from "~/videoDiscovery";
 import { getToken } from "~/functions";
 import type {
   FetchPlaylistT,
   PlaylistVideoT,
   PlaylistVideosT,
-  SearchT,
 } from "~/types";
 import Sidebar from "../myVideosPage/sidebar/sidebar";
+import PlaylistVideoPicker from "./PlaylistVideoPicker";
 import PlaylistVideoList from "./playlistVideoList";
 import styles from "./editPlaylistPage.module.css";
 import statusStyles from "../uploadPage/uploadStatus.module.css";
@@ -87,9 +85,6 @@ function EditPlaylistPage() {
   const [thumbnailMarkedForRemoval, setThumbnailMarkedForRemoval] =
     useState(false);
   const [playlistVideos, setPlaylistVideos] = useState<PlaylistVideoT[]>([]);
-  const [playlistVideoSearch, setPlaylistVideoSearch] = useState("");
-  const [debouncedPlaylistVideoSearch, setDebouncedPlaylistVideoSearch] =
-    useState("");
   const [isReorderingPlaylistVideos, setIsReorderingPlaylistVideos] =
     useState(false);
   const [isAddingVideoId, setIsAddingVideoId] = useState<string | null>(null);
@@ -190,14 +185,6 @@ function EditPlaylistPage() {
     };
   }, [pendingThumbnailUrl]);
 
-  useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      setDebouncedPlaylistVideoSearch(playlistVideoSearch.trim());
-    }, 300);
-
-    return () => window.clearTimeout(timeout);
-  }, [playlistVideoSearch]);
-
   const detailsModified = useMemo(() => {
     return (
       title !== oldTitle ||
@@ -224,31 +211,6 @@ function EditPlaylistPage() {
     : pendingThumbnailUrl || thumbnailUrl;
 
   const thumbnailModified = thumbnailMarkedForRemoval || !!pendingThumbnailFile;
-
-  const { data: playlistVideoSearchData, isFetching: isSearchingPlaylistVideos } =
-    useQuery({
-      queryKey: ["playlist-video-search", debouncedPlaylistVideoSearch],
-      queryFn: ({ signal }) =>
-        fetchVectorVideos<SearchT>({
-          route: `api/videos/search?q=${encodeURIComponent(
-            debouncedPlaylistVideoSearch
-          )}`,
-          options: {
-            signal,
-            method: "GET",
-            headers: myHeaders.current,
-          },
-        }),
-      enabled: !!token && debouncedPlaylistVideoSearch.length > 0,
-      refetchOnWindowFocus: false,
-    });
-
-  const filteredSearchVideos = useMemo(() => {
-    const existingIds = new Set(playlistVideos.map((video) => video.id));
-    return (playlistVideoSearchData?.videos || []).filter(
-      (video) => !existingIds.has(video.id)
-    );
-  }, [playlistVideoSearchData?.videos, playlistVideos]);
 
   const addTag = () => {
     const normalized = tagInput.trim();
@@ -489,8 +451,6 @@ function EditPlaylistPage() {
       }
 
       setPlaylistVideos((currentVideos) => [...currentVideos, video]);
-      setPlaylistVideoSearch("");
-      setDebouncedPlaylistVideoSearch("");
     } catch (err) {
       console.error("Error adding video to playlist:", err);
       setError(t("playlistAddVideoFailed"));
@@ -808,76 +768,6 @@ function EditPlaylistPage() {
                   <h2 className="editSectionTitle">{t("playlistVideos")}</h2>
 
                   <div className="formGroup">
-                    <label htmlFor="playlistVideoSearch">{t("addVideo")}</label>
-                    <input
-                      id="playlistVideoSearch"
-                      type="text"
-                      className="playlistVideoSearchInput"
-                      value={playlistVideoSearch}
-                      onChange={(e) => setPlaylistVideoSearch(e.target.value)}
-                      placeholder={t("searchVideosAddPlaylist")}
-                    />
-
-                    <div className="playlistVideoSearchBlock">
-                      {debouncedPlaylistVideoSearch && (
-                        <div className="playlistVideoSearchResults">
-                          {isSearchingPlaylistVideos ? (
-                            <p className="formHint">{t("searchingVideos")}</p>
-                          ) : filteredSearchVideos.length ? (
-                            filteredSearchVideos.map((video) => (
-                              <div
-                                key={video.id}
-                                className="playlistVideoSearchRow"
-                              >
-                                <div className="playlistVideoSearchInfo">
-                                  <img
-                                    src={getVideoThumbnail(video)}
-                                    alt={video.title}
-                                    className="playlistVideoSearchThumb"
-                                  />
-                                  <span className="flex flex-col gap-1 min-w-0">
-                                    <strong className="line-clamp-2">
-                                      {video.title}
-                                    </strong>
-                                    <span className="text-sm opacity-80">
-                                      {video.uploader_name}
-                                    </span>
-                                  </span>
-                                </div>
-
-                                <button
-                                  type="button"
-                                  className="saveCaptionsBtn playlistVideoAddBtn"
-                                  onClick={() => handleAddPlaylistVideo(video)}
-                                  disabled={videosBusy || videosLoading || videosError}
-                                >
-                                  {isAddingVideoId === video.id ? (
-                                    <>
-                                      <div className="uploadSpinner tiny" />
-                                      {t("saving")}
-                                    </>
-                                  ) : (
-                                    <>
-                                      {AddSVG}
-                                      {t("addVideo")}
-                                    </>
-                                  )}
-                                </button>
-                              </div>
-                            ))
-                          ) : (
-                            <p className="formHint">
-                              {t("playlistSearchEmpty")}
-                            </p>
-                          )}
-                        </div>
-                      )}
-
-                      <div className="playlistVideoSearchDivider" />
-                    </div>
-                  </div>
-
-                  <div className="formGroup">
                     {videosLoading ? <p className="formHint" role="status">{t("playlistLoading")}</p> : videosError ? <div role="alert"><p>{t("playlistLoadFailed")}</p><button type="button" className="saveCaptionsBtn" onClick={() => void reloadVideos()}>{t("usersRetry")}</button></div> : playlistVideos.length ? (
                       <>
                         <PlaylistVideoList videos={playlistVideos} disabled={videosBusy} onMove={handlePlaylistVideoMove} onDelete={handleDeletePlaylistVideo} />
@@ -898,6 +788,11 @@ function EditPlaylistPage() {
                       <p className="formHint">{t("playlistNoVideos")}</p>
                     )}
                   </div>
+                </section>
+                <section className="editSection">
+                  <h2 className="editSectionTitle">{t('playlistAddVideos')}</h2>
+                  <p className="formHint">{t('playlistVideoPickerHelp')}</p>
+                  <PlaylistVideoPicker included={playlistVideos.map(video => video.id)} busy={videosBusy || videosLoading || videosError} addingId={isAddingVideoId} onAdd={video => void handleAddPlaylistVideo(video)} />
                 </section>
             </aside>
           </div>

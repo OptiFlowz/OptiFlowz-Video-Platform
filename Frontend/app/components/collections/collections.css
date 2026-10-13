@@ -1,0 +1,44 @@
+.collectionState { padding: 2rem 1rem; text-align: center; color: var(--text2); }
+.collectionNotice { margin-block: 1rem; color: var(--accentGreen2); }
+.collectionsManagement .collectionRowText { min-width: 0; }
+.collectionRowActions { flex-wrap: wrap; }
+.collectionMobileStatus { display: none; }
+main.collectionsManagement td span.collectionVisibility { cursor: default; }
+main.collectionsManagement td span.collectionVisibility:hover { filter: none; }
+.collectionsManagement .playlistAddBtn { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.collectionEditor .collectionCreateForm { max-width: 720px; }
+.collectionEditor .editSection { margin-bottom: 1.5rem; }
+.collectionEditor .formGroup { margin-top: 1rem; }
+.collectionEditor .formHint { color: var(--text2); margin-block: .5rem 1rem; font-size: .9rem; }
+.collectionFormActions { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; margin-top: 1.25rem; }
+.collectionFormActions > a, .collectionFormActions > button { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; }
+.collectionFormActions svg { width: 20px; height: 20px; }
+.collectionFormActions svg path { stroke: currentColor; }
+.collectionThumbnail { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 20px; margin-block: 1rem; }
+.collectionPickerSearch { display: flex; flex-direction: column; gap: .75rem; margin-block: 1rem; }
+.collectionPickerResults { display: flex; flex-direction: column; gap: .5rem; }
+.collectionPicker .playlistVideoSearchRow { display: flex; align-items: center; background: var(--background2); border-radius: 12px; padding: .65rem; }
+.collectionPicker .playlistVideoSearchMeta { display: flex; flex-direction: column; gap: .25rem; min-width: 0; flex: 1; }
+.collectionPicker .playlistVideoSearchMeta strong { overflow-wrap: anywhere; font-size: .9rem; }
+.collectionPicker .playlistVideoSearchMeta small { color: var(--text2); }
+.collectionPicker .playlistVideoAddBtn svg { width: 18px; height: 18px; }
+.collectionEditor button:disabled, .collectionsManagement button:disabled { opacity: .5; cursor: not-allowed; }
+.collectionCards { display: grid; grid-template-columns: repeat(var(--video-grid-columns-count, 3), minmax(0, 1fr)); gap: 1.5rem; }
+.collectionCardLabel { position: absolute; inset-inline-end: .75rem; bottom: .75rem; display: flex; align-items: center; gap: .35rem; padding: .35rem .65rem; border-radius: 999px; background: var(--background2); color: var(--text1); font-size: .8rem; }
+.collectionCardLabel svg { width: 16px; height: 16px; }
+.collectionCards h3 { margin-top: .5rem; font-size: 1.1rem; font-weight: 600; overflow-wrap: anywhere; }
+.collectionCardSubtitle { margin-top: .25rem; color: var(--text2); overflow-wrap: anywhere; }
+.collectionEditor :focus-visible, .collectionsManagement :focus-visible, .collectionDetailsPage :focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: -2px; }
+@media (max-width: 1000px) { .collectionCards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 768px) {
+  .collectionMobileStatus { display: block; margin-top: .35rem; }
+  main.myVideos.collectionsManagement table td .videoInfo .collectionRowActions { display: flex; }
+  .collectionsManagement.mediaManagementPage table td > span { padding-right: 0; }
+}
+@media (max-width: 500px) { .collectionCards { grid-template-columns: minmax(0, 1fr); } }
+
+.collectionFormActions .cancelBtn { width: auto; margin-top: 0; }
+.channelSortControl[hidden] { display: none; }
+
+/* The collection header also contains selection controls; keep sorting within its button. */
+main.collectionsManagement table th:first-child .platformUsersSortButton { position: relative; }

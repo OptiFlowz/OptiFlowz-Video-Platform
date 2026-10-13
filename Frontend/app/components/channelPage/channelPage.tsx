@@ -1,3 +1,4 @@
+import ChannelCollections from "../collections/ChannelCollections";
 import ExpandableDescription from "../shared/ExpandableDescription";
 import ChannelPosts from '../posts/ChannelPosts';
 import { LiveList } from '../live/LiveList';
@@ -5,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo, useRef, useState, useId } from "react";
 import { useLocation, useNavigate, useParams } from "react-router";
 import { fetchFn } from "~/API";
-import { LiveSVG, ChannelMenuSVG, PlaylistSVG, PostSVG, ShareSVG } from "~/constants";
+import { CollectionsSVG, LiveSVG, ChannelMenuSVG, PlaylistSVG, PostSVG, ShareSVG } from "~/constants";
 import { env } from "~/env";
 import { getToken } from "~/functions";
 import { useI18n } from "~/i18n";
@@ -68,8 +69,8 @@ function ChannelPage() {
     const navigate = useNavigate();
     const channelPath = `/channel/${encodeURIComponent(channelId || '')}`;
     const tabSegment = pathname.replace(/\/$/, '').split('/')[3];
-    const activeTab = tabSegment === 'playlists' || tabSegment === 'posts' || tabSegment === 'live' ? tabSegment : 'videos';
-    const selectTab = (tab: 'videos' | 'playlists' | 'posts' | 'live') => {
+    const activeTab = tabSegment === 'collections' || tabSegment === 'playlists' || tabSegment === 'posts' || tabSegment === 'live' ? tabSegment : 'videos';
+    const selectTab = (tab: 'videos' | 'playlists' | 'collections' | 'posts' | 'live') => {
         if (tab === activeTab) return;
         navigate(tab === 'videos' ? channelPath : `${channelPath}/${tab}`, { preventScrollReset: true, shallow: true });
     };
@@ -232,7 +233,7 @@ function ChannelPage() {
 
             <div className="channelNavigation">
                 <ProfileTabs className="channelTabs" label={t("channelLabel")}>
-                    {(["videos", "live", "playlists", "posts"] as const).map((tab, index) => (
+                    {(["videos", "live", "playlists", "collections", "posts"] as const).map((tab, index) => (
                         <button
                             key={tab}
                             ref={(element) => { tabRefs.current[index] = element; }}
@@ -246,15 +247,15 @@ function ChannelPage() {
                             onKeyDown={(event) => {
                                 if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
                                 event.preventDefault();
-                                const next = event.key === "Home" ? 0 : event.key === "End" ? 3 : (index + (event.key === "ArrowRight" ? 1 : -1) + 4) % 4;
-                                selectTab((["videos", "live", "playlists", "posts"] as const)[next]);
+                                const next = event.key === "Home" ? 0 : event.key === "End" ? 4 : (index + (event.key === "ArrowRight" ? 1 : -1) + 5) % 5;
+                                selectTab((["videos", "live", "playlists", "collections", "posts"] as const)[next]);
                                 tabRefs.current[next]?.focus();
                                 tabRefs.current[next]?.scrollIntoView({ block: "nearest", inline: "nearest" });
                             }}
-                        ><span className={`profileTabIcon${tab === "posts" ? " profileTabIcon--posts" : ""}`} aria-hidden="true">{tab === "live" ? LiveSVG : tab === "videos" ? ChannelMenuSVG : tab === "playlists" ? PlaylistSVG : PostSVG}</span><span>{t(tab === "live" ? "liveTitle" : `${tab}Tab`)}</span></button>
+                        ><span className={`profileTabIcon${tab === "posts" ? " profileTabIcon--posts" : ""}`} aria-hidden="true">{tab === "live" ? LiveSVG : tab === "videos" ? ChannelMenuSVG : tab === "playlists" ? PlaylistSVG : tab === "collections" ? CollectionsSVG : PostSVG}</span><span>{t(tab === "live" ? "liveTitle" : `${tab}Tab`)}</span></button>
                     ))}
                 </ProfileTabs>
-                <div className="channelSortControl">
+                <div className="channelSortControl" hidden={activeTab === "collections"}>
                     {activeTab === 'live' ? <CustomSelect value={liveSort} onChange={setLiveSort} ariaLabel={t('searchSortBy')} rootClassName="channelSortSelect" options={[
                         { value: 'streamed_at:desc', label: t('channelSortNewest') },
                         { value: 'streamed_at:asc', label: t('channelSortOldest') },
@@ -286,6 +287,9 @@ function ChannelPage() {
             </div>
             <div className="channelPanel" role="tabpanel" id={`${tabsId}-live-panel`} aria-labelledby={`${tabsId}-live-tab`} hidden={activeTab !== 'live'} tabIndex={0}>
                 {channelId && <LiveList key={channelId} channelId={channelId} sort={liveSort} active={activeTab === 'live'} />}
+            </div>
+            <div className="channelPanel" role="tabpanel" id={`${tabsId}-collections-panel`} aria-labelledby={`${tabsId}-collections-tab`} hidden={activeTab !== "collections"} tabIndex={0}>
+                {activeTab === "collections" && channelId && <ChannelCollections key={channelId} channelId={channelId} />}
             </div>
             <div className="channelPanel" role="tabpanel" id={`${tabsId}-posts-panel`} aria-labelledby={`${tabsId}-posts-tab`} hidden={activeTab !== 'posts'} tabIndex={0}>
                 {activeTab === 'posts' && channel && <ChannelPosts channelId={channelId || ''} author={channel} videos={normalizedVideos} ascending={postAscending} />}

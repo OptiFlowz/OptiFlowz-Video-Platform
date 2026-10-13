@@ -512,3 +512,6 @@ export const CupOutlineSVG = <svg width="24" height="24" viewBox="0 0 24 24" fil
 export const LiveSVG = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <path d="M8.46447 15.5355c-1.95262-1.9526-1.95262-5.1184.0-7.07103M5.63592 18.364c-3.51472-3.5147-3.51472-9.21323.0-12.72795M15.5355 15.5355c1.9526-1.9526 1.9526-5.1184.0-7.07103M18.364 18.364c3.5148-3.5147 3.5148-9.21323.0-12.72795M13 12.0001C13 12.5523 12.5523 13.0001 12 13.0001S11 12.5523 11 12.0001C11 11.4478 11.4477 11.0001 12 11.0001S13 11.4478 13 12.0001z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
 </svg>;
+
+// ICONCINO folder: a collection groups playlists.
+export const CollectionsSVG = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fillRule="evenodd" clipRule="evenodd" d="M3 7c0-1.10457.89543-2 2-2H8.67157C9.20201 5 9.71071 5.21071 10.0858 5.58579L10.9142 6.41421C11.2893 6.78929 11.798 7 12.3284 7H19c1.1046.0 2 .89543 2 2v8C21 18.1046 20.1046 19 19 19H5C3.89543 19 3 18.1046 3 17V7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;

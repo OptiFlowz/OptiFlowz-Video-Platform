@@ -41,7 +41,7 @@ function Header({ onMenuToggle, menuExpanded = false }: HeaderProps){
 
 
     const { can, canOwn, canAccess, user: authUser } = useAuthorization();
-    const channelHome = canAccess('videos') ? '/my-videos' : canAccess('myLivestreams') ? '/my-livestreams' : canAccess('playlists') ? '/my-playlists' : canAccess('quizzes') ? '/quizzes' : canAccess('people') ? '/speakers-chairs' : canAccess('channelAnalytics') ? '/channel-analytics' : canAccess('upload') ? '/upload' : null;
+    const channelHome = canAccess('videos') ? '/my-videos' : canAccess('myLivestreams') ? '/my-livestreams' : canAccess('playlists') ? '/my-playlists' : canAccess('collections') ? '/my-collections' : canAccess('quizzes') ? '/quizzes' : canAccess('people') ? '/speakers-chairs' : canAccess('channelAnalytics') ? '/channel-analytics' : canAccess('upload') ? '/upload' : null;
     const platformHome = canAccess('platformAnalytics') ? '/platform-analytics' : canAccess('platformUsers') ? '/platform-users' : canAccess('platformSettings') ? '/platform-settings?page=access' : null;
     const hasManagementAccess = !!channelHome || !!platformHome;
     const userRoleNames = authUser?.roles?.map(role => role.name.trim().toLowerCase()) ?? [];
