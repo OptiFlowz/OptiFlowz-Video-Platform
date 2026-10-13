@@ -37,6 +37,12 @@ export const Permissions = Object.freeze({
   PLAYLISTS_LIBRARY_READ: 'playlists.library.read',
   PLAYLISTS_SAVE: 'playlists.save',
 
+  COLLECTIONS_CREATE: 'collections.create',
+  COLLECTIONS_UPDATE_OWN: 'collections.update_own',
+  COLLECTIONS_UPDATE_ANY: 'collections.update_any',
+  COLLECTIONS_DELETE_OWN: 'collections.delete_own',
+  COLLECTIONS_DELETE_ANY: 'collections.delete_any',
+
   COMMENTS_CREATE: 'comments.create',
   COMMENTS_EDIT_OWN: 'comments.edit_own',
   COMMENTS_DELETE_OWN: 'comments.delete_own',

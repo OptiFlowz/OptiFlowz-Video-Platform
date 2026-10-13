@@ -10,6 +10,7 @@
     "test:subtitles": "node --experimental-test-module-mocks --test tests/video-subtitles.test.js",
     "test:video-details": "node --experimental-test-module-mocks --test tests/video-details.test.js",
     "test:notes": "node --experimental-test-module-mocks --test tests/notes.test.js",
+    "test:collections": "node --experimental-test-module-mocks --test tests/collections.test.js tests/collections-db.test.js tests/collections-management-db.test.js",
     "test:posts": "node --experimental-test-module-mocks --test tests/posts.test.js",
     "test:live-streams": "node --experimental-test-module-mocks --test tests/live-streams.test.js tests/live-streaming-details.test.js",
     "test:live-permissions": "node --experimental-test-module-mocks --test tests/live-permissions-db.test.js",

@@ -76,6 +76,14 @@ async function loadPlaylist(playlistId) {
   return rows[0] || null;
 }
 
+async function loadCollection(collectionId) {
+  const { rows } = await writePool.query(
+    'SELECT id, created_by AS owner_id FROM public.collections WHERE id = $1 LIMIT 1',
+    [collectionId],
+  );
+  return rows[0] || null;
+}
+
 async function loadLiveStream(liveStreamId) {
   const { rows } = await writePool.query(
     'SELECT id, user_id AS owner_id FROM public.live_streams WHERE id = $1 LIMIT 1',
@@ -149,6 +157,16 @@ export function requirePlaylistAccess({ ownPermission, anyPermission }) {
     resourceName: 'Playlist',
     idParameter: 'playlistId',
     loadResource: loadPlaylist,
+    ownPermission,
+    anyPermission,
+  });
+}
+
+export function requireCollectionAccess({ ownPermission, anyPermission }) {
+  return ownedResourceMiddleware({
+    resourceName: 'Collection',
+    idParameter: 'collectionId',
+    loadResource: loadCollection,
     ownPermission,
     anyPermission,
   });
