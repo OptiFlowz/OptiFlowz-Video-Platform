@@ -1434,7 +1434,12 @@
   "collectionDetails": "Collection details",
   "collectionsEmpty": "No collections yet.",
   "collectionNoPlaylists": "No playlists to show in this collection yet.",
-  "collectionPlaylistCount": {"one": "{{param.count}} playlist", "other": "{{param.count}} playlists"},
+  "collectionPlaylistCount": {
+    "select": "count",
+    "rule": "cardinal",
+    "one": "{{param.count}} playlist",
+    "other": "{{param.count}} playlists"
+  },
   "collectionPlaylists": "Playlists ({{param.count}})",
   "collectionCreateHelp": "Add the collection details and an optional cover. You can add playlists after creating it.",
   "collectionPublicHelp": "Anyone can view this collection. Private playlists remain visible only to their owners.",

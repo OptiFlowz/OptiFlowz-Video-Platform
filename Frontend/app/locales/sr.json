@@ -1420,7 +1420,13 @@
   "collectionDetails": "Detalji kolekcije",
   "collectionsEmpty": "Još nema kolekcija.",
   "collectionNoPlaylists": "Ova kolekcija još nema plejlista za prikaz.",
-  "collectionPlaylistCount": {"one": "{{param.count}} plejlista", "few": "{{param.count}} plejliste", "other": "{{param.count}} plejlista"},
+  "collectionPlaylistCount": {
+    "select": "count",
+    "rule": "cardinal",
+    "one": "{{param.count}} plejlista",
+    "few": "{{param.count}} plejliste",
+    "other": "{{param.count}} plejlista"
+  },
   "collectionPlaylists": "Plejliste ({{param.count}})",
   "collectionCreateHelp": "Unesite detalje kolekcije i, po želji, naslovnu sliku. Plejliste možete dodati nakon kreiranja.",
   "collectionPublicHelp": "Svi mogu da vide kolekciju. Privatne plejliste ostaju vidljive samo njihovim vlasnicima.",
