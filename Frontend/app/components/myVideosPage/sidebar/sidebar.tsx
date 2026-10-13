@@ -1,7 +1,7 @@
 import { useAuthorization } from "~/authorization/authorization";
 import { Link, NavLink } from "react-router";
 import DefaultProfile from "../../../../assets/DefaultProfile.webp";
-import { AnalyticsSVG, LiveSVG, PeopleSVG, PostSVG, PlaylistSVG, PlaySVG, QuizSVG } from "~/constants";
+import { AnalyticsSVG, LiveSVG, PeopleSVG, PostSVG, PlaylistSVG, ChannelMenuSVG, QuizSVG } from "~/constants";
 import backgroundImage from "../../../../assets/LoginBackground.webp";
 import { memo } from "react";
 import { useI18n } from "~/i18n";
@@ -34,7 +34,7 @@ function Sidebar() {
                 </section>
                 <nav>
                     {canAccess('videos') && <NavLink to="/my-videos" end className={({ isActive }) => (isActive ? "active" : "")}>
-                        {PlaySVG}&nbsp;{t("navMyVideos")}
+                        {ChannelMenuSVG}&nbsp;{t("navMyVideos")}
                     </NavLink>}
                     {canAccess('playlists') && <NavLink to="/my-playlists" end className={({ isActive }) => (isActive ? "active" : "")}>
                         {PlaylistSVG}&nbsp;{t("navMyPlaylists")}

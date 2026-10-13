@@ -207,11 +207,7 @@ header[data-app-header].appHeader > .appHeaderInner {
 .appSidebarItem.isActive .appSidebarIcon { color: var(--accentBlue2); }
 .appSidebarIcon { display: grid; place-items: center; flex: 0 0 22px; width: 22px; height: 22px; }
 .appSidebarIcon svg { width: 22px; height: 22px; }
-.appSidebarNav svg, .appSidebarNav svg * { stroke-width: 1; }
-.appSidebarItem.isActive .appSidebarIcon svg { fill: currentColor; }
-.appSidebarItem.isActive .appSidebarIcon[data-line-icon] path { fill: none; }
 .appSidebarIcon svg [stroke] { stroke: currentColor; }
-.appSidebarItem.isActive .appSidebarIcon svg [stroke] { stroke: var(--background1); }
 .appSidebarIcon svg [fill]:not([fill="none"]) { fill: currentColor; }
 .appSidebarNav .customLanguageSelect--mobile .customLanguageTrigger { padding: 10px 14px; font-size: .94rem; gap: 16px; }
 .appSidebarDialog {
