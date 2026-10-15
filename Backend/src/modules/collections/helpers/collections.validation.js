@@ -6,6 +6,7 @@ const collectionFields = {
   subheading: z.string().trim().max(255).nullable(),
   description: z.string().trim().nullable(),
   visibility: z.enum(['private', 'public']),
+  is_featured: z.boolean(),
 };
 const uuid = z.string().uuid().transform(id => id.toLowerCase());
 const playlistIds = z.array(uuid).refine(ids => new Set(ids).size === ids.length, {
@@ -17,6 +18,7 @@ export const createCollectionSchema = z.object({
   description: collectionFields.description.optional().default(null),
   subheading: collectionFields.subheading.optional().default(null),
   visibility: collectionFields.visibility.optional().default('public'),
+  is_featured: collectionFields.is_featured.optional().default(false),
 }).strict();
 
 export const collectionIdSchema = z.object({ collectionId: uuid });
@@ -34,6 +36,7 @@ export const listCollectionsSchema = z.object({
   userId: uuid.optional(),
   title: z.string().trim().max(255).optional(),
   visibility: collectionFields.visibility.optional(),
+  is_featured: z.enum(['true', 'false']).transform(value => value === 'true').optional(),
   sortBy: z.enum(['created_at', 'updated_at', 'title']).optional().default('created_at'),
   sortOrder: z.enum(['asc', 'desc']).optional().default('asc'),
   page: z.coerce.number().int().min(1).optional().default(1),

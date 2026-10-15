@@ -7,17 +7,17 @@ import {
 
 test('collection creation normalizes text and accepts optional or null descriptions', () => {
   assert.deepEqual(createCollectionSchema.parse({ title: ' Collection ' }), {
-    title: 'Collection', description: null, subheading: null, visibility: 'public',
+    title: 'Collection', description: null, subheading: null, visibility: 'public', is_featured: false,
   });
   assert.deepEqual(createCollectionSchema.parse({ title: 'Collection', description: ' Description ' }), {
-    title: 'Collection', description: 'Description', subheading: null, visibility: 'public',
+    title: 'Collection', description: 'Description', subheading: null, visibility: 'public', is_featured: false,
   });
   assert.equal(createCollectionSchema.parse({ title: 'x'.repeat(255), description: null }).description, null);
 });
 
 test('collection visibility and subheading validate on create, update and listing', () => {
   assert.deepEqual(createCollectionSchema.parse({ title: 'Private', subheading: ' Subtitle ', visibility: 'private' }), {
-    title: 'Private', description: null, subheading: 'Subtitle', visibility: 'private',
+    title: 'Private', description: null, subheading: 'Subtitle', visibility: 'private', is_featured: false,
   });
   assert.deepEqual(updateCollectionSchema.parse({ visibility: 'private', subheading: null }), { visibility: 'private', subheading: null });
   assert.deepEqual(updateCollectionSchema.parse({ subheading: ' Subtitle ' }), { subheading: 'Subtitle' });
@@ -43,6 +43,23 @@ test('collection listing follows quiz pagination and sorting with an optional cr
     { sortBy: 'title; DROP TABLE collections' }, { sortOrder: 'DESC' }, { created_by: userId },
     { page: String(Number.MAX_SAFE_INTEGER), limit: 100 }, { title: ['one', 'two'] },
   ]) assert.equal(listCollectionsSchema.safeParse(query).success, false);
+});
+
+test('featured writes require real booleans and query filters parse true and false explicitly', () => {
+  for (const value of [true, false]) {
+    assert.equal(createCollectionSchema.parse({ title: 'Collection', is_featured: value }).is_featured, value);
+    assert.deepEqual(updateCollectionSchema.parse({ is_featured: value }), { is_featured: value });
+    assert.equal(listCollectionsSchema.parse({ is_featured: String(value) }).is_featured, value);
+  }
+  for (const value of ['true', 'false', null, 0, 1, [], {}]) {
+    assert.equal(createCollectionSchema.safeParse({ title: 'Collection', is_featured: value }).success, false);
+    assert.equal(updateCollectionSchema.safeParse({ is_featured: value }).success, false);
+  }
+  for (const value of ['', 'TRUE', '1', '0', 'yes', null, ['true', 'false']]) {
+    assert.equal(listCollectionsSchema.safeParse({ is_featured: value }).success, false);
+  }
+  assert.equal(listCollectionsSchema.parse({}).is_featured, undefined);
+  assert.equal(updateCollectionSchema.parse({ title: 'Unchanged featured status' }).is_featured, undefined);
 });
 
 test('collection PATCH preserves omission, accepts null descriptions and rejects readonly fields', () => {

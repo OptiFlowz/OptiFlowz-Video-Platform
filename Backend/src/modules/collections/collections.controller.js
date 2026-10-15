@@ -19,7 +19,7 @@ function handleCollectionError(res, error, action) {
 
 export async function createCollection(req, res) {
   try {
-    const collection = await createCollectionInternal(req.body, req.user?.sub);
+    const collection = await createCollectionInternal(req.body, req.user?.sub, req.authorization);
     return sendSuccess(res, { collection }, 201);
   } catch (error) {
     return handleCollectionError(res, error, 'createCollection');
@@ -42,7 +42,7 @@ export async function getCollection(req, res) {
 
 export async function updateCollection(req, res) {
   try {
-    const collection = await updateCollectionInternal(req.params, req.body, req.user?.sub, req.resourceAccess);
+    const collection = await updateCollectionInternal(req.params, req.body, req.user?.sub, req.resourceAccess, req.authorization);
     return sendSuccess(res, { collection });
   } catch (error) { return handleCollectionError(res, error, 'updateCollection'); }
 }

@@ -38,6 +38,7 @@ export const Permissions = Object.freeze({
   PLAYLISTS_SAVE: 'playlists.save',
 
   COLLECTIONS_CREATE: 'collections.create',
+  COLLECTIONS_FEATURE: 'collections.feature',
   COLLECTIONS_UPDATE_OWN: 'collections.update_own',
   COLLECTIONS_UPDATE_ANY: 'collections.update_any',
   COLLECTIONS_DELETE_OWN: 'collections.delete_own',

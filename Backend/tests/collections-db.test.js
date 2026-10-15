@@ -33,6 +33,7 @@ test('collection schema, permissions and rollback against session-local PostgreS
   const [schemaUp, schemaDown] = await migration('1791849600000_add-collections.sql');
   const [fieldsUp, fieldsDown] = await migration('1791849600002_add-collections-visibility-subheading.sql');
   const [permissionsUp, permissionsDown] = await migration('1791849600001_add-collections-permissions.sql');
+  const [featuredUp, featuredDown] = await migration('1792022400000_add-collections-featured.sql');
   await client.query(basePermissions);
   await client.query(schemaUp);
   const userId = randomUUID(), playlistId = randomUUID();
@@ -98,8 +99,9 @@ test('collection schema, permissions and rollback against session-local PostgreS
 
   await t.test('permission seed matches constants and grants only the intended roles', async () => {
     await client.query(permissionsUp);
+    await client.query(featuredUp);
     const keys = Object.entries(Permissions).filter(([name]) => name.startsWith('COLLECTIONS_')).map(([, key]) => key).sort();
-    assert.equal(keys.length, 5);
+    assert.equal(keys.length, 6);
     const seeded = (await client.query("SELECT key FROM permissions WHERE resource_type = 'collection' ORDER BY key")).rows.map(row => row.key);
     assert.deepEqual(seeded, keys);
     const grants = (await client.query(`
@@ -111,6 +113,7 @@ test('collection schema, permissions and rollback against session-local PostgreS
     `)).rows;
     assert.deepEqual(grants, [
       { name: 'Administrator', keys },
+      { name: 'Owner', keys: ['collections.feature'] },
       { name: 'Uploader', keys: ['collections.create', 'collections.delete_own', 'collections.update_own'] },
     ]);
     await client.query(`UPDATE role_permissions SET effect = 'deny'
@@ -123,10 +126,25 @@ test('collection schema, permissions and rollback against session-local PostgreS
     assert.equal(rows[0].effect, 'deny');
   });
 
+  await t.test('featured migration defaults existing rows to false, rejects null and rolls back cleanly', async () => {
+    const before = (await client.query('SELECT * FROM collections')).rows[0];
+    assert.equal(before.is_featured, false);
+    assert.equal((await create()).is_featured, false);
+    await assert.rejects(client.query('UPDATE collections SET is_featured = NULL'), { code: '23502' });
+    await client.query('UPDATE collections SET is_featured = true');
+    await client.query(featuredDown);
+    const { is_featured, ...originalFields } = before;
+    assert.deepEqual((await client.query('SELECT * FROM collections WHERE id=$1', [before.id])).rows[0], originalFields);
+    assert.equal((await client.query("SELECT count(*)::int AS n FROM permissions WHERE key='collections.feature'")).rows[0].n, 0);
+    await client.query(featuredUp);
+    assert.equal((await client.query('SELECT bool_or(is_featured) AS featured FROM collections')).rows[0].featured, false);
+  });
+
   await t.test('rollback removes only collection schema and permissions and supports reapplying', async () => {
     const before = await count('permissions');
+    await client.query(featuredDown);
     await client.query(permissionsDown);
-    assert.equal(await count('permissions'), before - 5);
+    assert.equal(await count('permissions'), before - 6);
     await client.query(schemaDown);
     const { rows } = await client.query("SELECT to_regclass('pg_temp.collections') AS collections, to_regclass('pg_temp.collection_playlists') AS links");
     assert.deepEqual(rows[0], { collections: null, links: null });
@@ -134,6 +152,7 @@ test('collection schema, permissions and rollback against session-local PostgreS
     await client.query(schemaUp);
     await client.query(fieldsUp);
     await client.query(permissionsUp);
+    await client.query(featuredUp);
     assert.equal(await count('permissions'), before);
     assert.equal(await count('collections'), 0);
   });

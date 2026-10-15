@@ -35,7 +35,8 @@ test('collection listing and management against isolated PostgreSQL schema', {
     await setup.query('INSERT INTO users (id, role) VALUES ($1, $2)', [id, role]);
   }
   for (const file of ['1785683496295_add-permission-tables.sql', '1791849600000_add-collections.sql',
-    '1791849600001_add-collections-permissions.sql', '1791849600002_add-collections-visibility-subheading.sql']) {
+    '1791849600001_add-collections-permissions.sql', '1791849600002_add-collections-visibility-subheading.sql',
+    '1792022400000_add-collections-featured.sql']) {
     const sql = await readFile(new URL(`../src/database/migrations/${file}`, import.meta.url), 'utf8');
     await setup.query(sql.split('-- Down Migration')[0].replaceAll('public.', `${schema}.`));
   }
@@ -161,6 +162,84 @@ test('collection listing and management against isolated PostgreSQL schema', {
     }
     for (const query of ['page=0', 'limit=101', 'sortBy=invalid', 'sortOrder=DESC', 'userId=invalid', 'page=9007199254740991&limit=100']) {
       assert.equal((await request('GET', `?${query}`)).status, 400);
+    }
+  });
+
+  await scenario('featured creation and updates require a separate permission and preserve ordinary edits', async () => {
+    const normal = await create();
+    assert.equal(normal.is_featured, false);
+    assert.equal((await request('POST', '', { title: 'Not featured', is_featured: false })).status, 201);
+    assert.equal((await request('POST', '', { title: 'Denied', is_featured: true })).status, 403);
+    assert.equal((await setup.query("SELECT count(*)::int AS n FROM collections WHERE title='Denied'")).rows[0].n, 0);
+    for (const is_featured of [true, false]) {
+      const before = await saved(normal.id);
+      assert.equal((await request('PATCH', `/${normal.id}`, { title: 'Must not change', is_featured })).status, 403);
+      assert.deepEqual(await saved(normal.id), before);
+    }
+    for (const userId of [admin, owner]) {
+      const featured = await request('POST', '', { title: 'Featured', is_featured: true }, userId);
+      assert.equal(featured.status, 201); assert.equal(featured.collection.is_featured, true);
+    }
+    const featured = await request('PATCH', `/${normal.id}`, { is_featured: true }, admin);
+    assert.equal(featured.status, 200); assert.equal(featured.collection.is_featured, true);
+    assert.equal((await request('GET', `/${normal.id}`, undefined, null)).collection.is_featured, true);
+    const edit = await request('PATCH', `/${normal.id}`, { title: 'Ordinary edit' });
+    assert.equal(edit.status, 200); assert.equal(edit.collection.is_featured, true);
+    const cleared = await request('PATCH', `/${normal.id}`, { is_featured: false }, admin);
+    assert.equal(cleared.status, 200); assert.equal(cleared.collection.is_featured, false);
+    for (const value of ['true', 'false', null, 1]) {
+      assert.equal((await request('POST', '', { title: 'Invalid', is_featured: value }, admin)).status, 400);
+      assert.equal((await request('PATCH', `/${normal.id}`, { is_featured: value }, admin)).status, 400);
+    }
+  });
+
+  await scenario('featured permission comes from active roles, respects denies and does not grant collection access', async t => {
+    const { rows: [role] } = await setup.query("INSERT INTO roles(name, position) VALUES ('Feature curator', 5) RETURNING id");
+    t.after(() => setup.query('DELETE FROM roles WHERE id=$1', [role.id]));
+    await setup.query(`INSERT INTO role_permissions(role_id, permission_id, effect)
+      SELECT $1, id, 'allow' FROM permissions WHERE key='collections.feature'`, [role.id]);
+    for (const userId of [creator, viewer]) {
+      await setup.query('INSERT INTO user_roles(user_id, role_id) VALUES ($1, $2)', [userId, role.id]);
+    }
+    const mine = await request('POST', '', { title: 'Curated', is_featured: true });
+    assert.equal(mine.status, 201);
+    const otherCollection = await create('Other', other);
+    assert.equal((await request('PATCH', `/${otherCollection.id}`, { is_featured: true })).status, 403);
+    assert.equal((await request('POST', '', { title: 'Viewer', is_featured: true }, viewer)).status, 403);
+    assert.equal((await request('PATCH', `/${mine.collection.id}`, { is_featured: false }, viewer)).status, 403);
+    await setup.query("UPDATE user_roles SET expires_at=now()-interval '1 minute' WHERE user_id=$1 AND role_id=$2", [creator, role.id]);
+    assert.equal((await request('PATCH', `/${mine.collection.id}`, { is_featured: false })).status, 403);
+    await setup.query('UPDATE user_roles SET expires_at=NULL WHERE user_id=$1 AND role_id=$2', [creator, role.id]);
+    assert.equal((await request('PATCH', `/${mine.collection.id}`, { is_featured: false })).status, 200);
+    await setup.query("UPDATE role_permissions SET effect='deny' WHERE role_id=$1", [role.id]);
+    for (const userId of [admin, owner]) {
+      await setup.query('INSERT INTO user_roles(user_id, role_id) VALUES ($1,$2)', [userId, role.id]);
+      assert.equal((await request('POST', '', { title: 'Denied by role', is_featured: true }, userId)).status, 403);
+      assert.equal((await request('PATCH', `/${mine.collection.id}`, { is_featured: true }, userId)).status, 403);
+    }
+  });
+
+  await scenario('featured filters combine with visibility, creator, title, pagination and sorting', async () => {
+    const a = await request('POST', '', { title: 'Featured Alpha', is_featured: true }, admin);
+    const b = await request('POST', '', { title: 'Featured Beta', is_featured: true }, admin);
+    const privateFeatured = await request('POST', '', { title: 'Featured Private', is_featured: true, visibility: 'private' }, admin);
+    const normal = await create('Normal');
+    const guest = await request('GET', '?is_featured=true&sortBy=title&sortOrder=desc&limit=1', undefined, null);
+    assert.equal(guest.status, 200); assert.deepEqual(guest.collections.map(row => row.id), [b.collection.id]);
+    assert.equal(guest.collections[0].is_featured, true);
+    assert.deepEqual(guest.pagination, { page: 1, limit: 1, total: 2, totalPages: 2, hasNextPage: true, hasPreviousPage: false });
+    assert.deepEqual((await request('GET', '?is_featured=true&sortBy=title&sortOrder=desc&limit=1&page=2', undefined, null)).collections.map(row => row.id), [a.collection.id]);
+    const beyond = await request('GET', '?is_featured=true&page=99&limit=1', undefined, null);
+    assert.equal(beyond.pagination.total, 2); assert.deepEqual(beyond.collections, []);
+    assert.deepEqual((await request('GET', '?is_featured=false', undefined, null)).collections.map(row => row.id), [normal.id]);
+    assert.equal((await request('GET', '', undefined, null)).pagination.total, 3);
+    assert.equal((await request('GET', '?is_featured=true', undefined, admin)).pagination.total, 3);
+    assert.deepEqual((await request('GET', `?is_featured=true&userId=${admin}&title=Alpha`, undefined, null)).collections.map(row => row.id), [a.collection.id]);
+    assert.equal((await request('GET', `?is_featured=true&userId=${admin}&visibility=private`, undefined, null)).pagination.total, 0);
+    assert.deepEqual((await request('GET', `?is_featured=true&userId=${admin}&visibility=private`, undefined, admin)).collections.map(row => row.id), [privateFeatured.collection.id]);
+    assert.equal((await request('GET', `/${privateFeatured.collection.id}`, undefined, null)).status, 404);
+    for (const value of ['', '1', '0', 'TRUE', 'null', 'true&is_featured=false']) {
+      assert.equal((await request('GET', `?is_featured=${value}`, undefined, null)).status, 400);
     }
   });
 

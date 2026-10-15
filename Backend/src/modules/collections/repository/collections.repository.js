@@ -1,16 +1,16 @@
 import { buildPlaylistCardSelect, buildPlaylistCardJoins } from '../../../database/sql/playlistCardFragments.js';
 
-const COLLECTION_COLUMNS = 'id, title, subheading, description, visibility, thumbnail_url, created_by, created_at, updated_at';
+const COLLECTION_COLUMNS = 'id, title, subheading, description, visibility, is_featured, thumbnail_url, created_by, created_at, updated_at';
 
 export async function createCollection(database, userId, collection) {
   const { rows } = await database.query(`
-    INSERT INTO public.collections (title, description, created_by, subheading, visibility)
-    VALUES ($1, $2, $3, $4, $5) RETURNING ${COLLECTION_COLUMNS}
-  `, [collection.title, collection.description, userId, collection.subheading, collection.visibility]);
+    INSERT INTO public.collections (title, description, created_by, subheading, visibility, is_featured)
+    VALUES ($1, $2, $3, $4, $5, $6) RETURNING ${COLLECTION_COLUMNS}
+  `, [collection.title, collection.description, userId, collection.subheading, collection.visibility, collection.is_featured]);
   return rows[0];
 }
 
-export async function listCollections(database, { userId, title, visibility, sortBy, sortOrder, limit, offset }, viewerId = null) {
+export async function listCollections(database, { userId, title, visibility, is_featured, sortBy, sortOrder, limit, offset }, viewerId = null) {
   const pattern = title ? `%${title.replace(/[\\%_]/g, '\\$&')}%` : null;
   const fields = { created_at: 'created_at', updated_at: 'updated_at', title: 'title' };
   const direction = sortOrder === 'desc' ? 'DESC' : 'ASC';
@@ -21,12 +21,13 @@ export async function listCollections(database, { userId, title, visibility, sor
       WHERE ($1::uuid IS NULL OR created_by = $1) AND ($2::text IS NULL OR title ILIKE $2)
         AND (visibility = 'public' OR created_by = $5::uuid)
         AND ($6::text IS NULL OR visibility = $6)
+        AND ($7::boolean IS NULL OR is_featured = $7)
     ), page AS (
       SELECT * FROM filtered_collections ORDER BY ${ordering} LIMIT $3 OFFSET $4
     )
     SELECT COALESCE((SELECT jsonb_agg(to_jsonb(page) ORDER BY ${ordering}) FROM page), '[]'::jsonb) AS collections,
       (SELECT count(*)::integer FROM filtered_collections) AS total
-  `, [userId ?? null, pattern, limit, offset, viewerId, visibility ?? null]);
+  `, [userId ?? null, pattern, limit, offset, viewerId, visibility ?? null, is_featured ?? null]);
   return rows[0];
 }
 
@@ -58,11 +59,12 @@ export async function updateCollection(database, collectionId, userId, updates, 
       description = CASE WHEN $4::boolean THEN $5::text ELSE description END,
       subheading = CASE WHEN $7::boolean THEN $8::text ELSE subheading END,
       visibility = COALESCE($9::text, visibility),
+      is_featured = COALESCE($10::boolean, is_featured),
       updated_at = now()
     WHERE id = $1 AND (created_by = $2 OR $6::boolean)
     RETURNING ${COLLECTION_COLUMNS}
   `, [collectionId, userId, updates.title ?? null, updates.description !== undefined, updates.description ?? null,
-    canAccessAny, updates.subheading !== undefined, updates.subheading ?? null, updates.visibility ?? null]);
+    canAccessAny, updates.subheading !== undefined, updates.subheading ?? null, updates.visibility ?? null, updates.is_featured ?? null]);
   return rows[0] || null;
 }
 
