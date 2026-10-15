@@ -193,7 +193,7 @@ test('collection listing and management against isolated PostgreSQL schema', {
     }
   });
 
-  await scenario('featured permission comes from active roles, respects denies and does not grant collection access', async t => {
+  await scenario('featured permission respects active roles and denies, with the standard Owner bypass', async t => {
     const { rows: [role] } = await setup.query("INSERT INTO roles(name, position) VALUES ('Feature curator', 5) RETURNING id");
     t.after(() => setup.query('DELETE FROM roles WHERE id=$1', [role.id]));
     await setup.query(`INSERT INTO role_permissions(role_id, permission_id, effect)
@@ -211,11 +211,20 @@ test('collection listing and management against isolated PostgreSQL schema', {
     assert.equal((await request('PATCH', `/${mine.collection.id}`, { is_featured: false })).status, 403);
     await setup.query('UPDATE user_roles SET expires_at=NULL WHERE user_id=$1 AND role_id=$2', [creator, role.id]);
     assert.equal((await request('PATCH', `/${mine.collection.id}`, { is_featured: false })).status, 200);
+    await setup.query(`DELETE FROM role_permissions WHERE role_id IN (SELECT id FROM roles WHERE is_owner)
+      AND permission_id = (SELECT id FROM permissions WHERE key='collections.feature')`);
+    t.after(() => setup.query(`INSERT INTO role_permissions(role_id, permission_id, effect)
+      SELECT r.id, p.id, 'allow' FROM roles r CROSS JOIN permissions p
+      WHERE r.is_owner AND p.key='collections.feature'`));
+    assert.equal((await request('POST', '', { title: 'Owner without grant', is_featured: true }, owner)).status, 201);
+    assert.equal((await request('PATCH', `/${mine.collection.id}`, { is_featured: true }, owner)).status, 200);
     await setup.query("UPDATE role_permissions SET effect='deny' WHERE role_id=$1", [role.id]);
     for (const userId of [admin, owner]) {
       await setup.query('INSERT INTO user_roles(user_id, role_id) VALUES ($1,$2)', [userId, role.id]);
-      assert.equal((await request('POST', '', { title: 'Denied by role', is_featured: true }, userId)).status, 403);
-      assert.equal((await request('PATCH', `/${mine.collection.id}`, { is_featured: true }, userId)).status, 403);
+      assert.equal((await request('POST', '', { title: 'Role deny', is_featured: true }, userId)).status, userId === owner ? 201 : 403);
+      const updated = await request('PATCH', `/${mine.collection.id}`, { is_featured: false }, userId);
+      assert.equal(updated.status, userId === owner ? 200 : 403);
+      if (userId === owner) assert.equal(updated.collection.is_featured, false);
     }
   });
 
