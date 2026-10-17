@@ -3,6 +3,8 @@ import { HttpError } from '../../../../common/httpError.js';
 
 const positiveInteger = z.number().int().min(1).max(2147483647);
 const quizStatus = z.enum(['draft', 'published', 'archived']);
+const percentage = z.number().finite().min(0).max(100).multipleOf(0.01);
+const feedbackVisibility = z.enum(['never', 'after_check', 'after_finish']);
 const quizFields = {
   title: z.string().trim().min(1).max(255),
   description: z.string().trim().nullable(),
@@ -10,10 +12,20 @@ const quizFields = {
   question_count: positiveInteger,
   time_limit_seconds: positiveInteger.nullable(),
   max_attempts: positiveInteger.nullable(),
-  passing_score_percentage: z.number().finite().min(0).max(100).multipleOf(0.01),
+  passing_score_percentage: percentage,
   shuffle_questions: z.boolean(),
   shuffle_options: z.boolean(),
   has_certificate: z.boolean(),
+  min_answered_percentage: percentage,
+  min_correct_percentage: percentage,
+  correctness_visibility: feedbackVisibility,
+  correct_answers_visibility: feedbackVisibility,
+  explanation_visibility: feedbackVisibility,
+  explanation_incorrect_only: z.boolean(),
+  allow_answer_changes_after_check: z.boolean(),
+  allow_attempt_review: z.boolean(),
+  show_final_score: z.boolean(),
+  scoring_mode: z.enum(['exact_match', 'partial_credit']),
 };
 
 export const quizIdSchema = z.object({ quizId: z.string().uuid('Invalid quiz ID') });
@@ -27,6 +39,16 @@ export const createQuizSchema = z.object({
   shuffle_questions: z.boolean().optional().default(true),
   shuffle_options: z.boolean().optional().default(true),
   has_certificate: z.boolean().optional().default(false),
+  min_answered_percentage: percentage.optional().default(0),
+  min_correct_percentage: percentage.optional().default(0),
+  correctness_visibility: feedbackVisibility.optional().default('after_finish'),
+  correct_answers_visibility: feedbackVisibility.optional().default('after_finish'),
+  explanation_visibility: feedbackVisibility.optional().default('after_finish'),
+  explanation_incorrect_only: z.boolean().optional().default(false),
+  allow_answer_changes_after_check: z.boolean().optional().default(false),
+  allow_attempt_review: z.boolean().optional().default(true),
+  show_final_score: z.boolean().optional().default(true),
+  scoring_mode: quizFields.scoring_mode.optional().default('exact_match'),
 }).strict();
 
 export const updateQuizSchema = z.object(quizFields).partial().strict().refine(

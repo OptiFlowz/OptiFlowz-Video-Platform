@@ -7,6 +7,8 @@ const router = express.Router();
 router.use(requireAuth);
 router.post('/', controller.createQuizRequirement);
 router.get('/', controller.getQuizRequirements);
+router.get('/:quizId/check', controller.checkQuizRequirements);
+router.get('/:quizId/progress', controller.getQuizRequirementsProgress);
 router.get('/:quizId/:videoId', controller.getQuizRequirement);
 router.patch('/:quizId/:videoId', controller.updateQuizRequirement);
 router.delete('/:quizId/:videoId', controller.deleteQuizRequirement);

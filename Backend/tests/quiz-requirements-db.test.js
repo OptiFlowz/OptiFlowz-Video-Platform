@@ -21,10 +21,11 @@ test('requirement CRUD, authorization, video cards and pagination against sessio
     visibility text DEFAULT 'public', published_at timestamptz DEFAULT now(),
     duration_seconds integer, view_count integer DEFAULT 10, created_at timestamptz DEFAULT now()
   )`);
-  await client.query('CREATE TEMP TABLE watch_progress (user_id uuid, video_id uuid, progress_seconds integer, percentage_watched numeric, PRIMARY KEY (user_id, video_id))');
+  await client.query('CREATE TEMP TABLE watch_progress (user_id uuid, video_id uuid, progress_seconds integer, percentage_watched numeric, total_watch_seconds numeric DEFAULT 0, PRIMARY KEY (user_id, video_id))');
   await client.query('CREATE TEMP TABLE people (id uuid PRIMARY KEY, name text, image_url text)');
   await client.query('CREATE TEMP TABLE video_chairs (video_id uuid, person_id uuid, type text)');
-  for (const file of ['1791590400004_add-quizzes.sql', '1791763200000_add-quiz-requirements.sql', '1791763200001_cascade-quiz-requirements-video-delete.sql']) {
+  for (const file of ['1791590400004_add-quizzes.sql', '1791763200000_add-quiz-requirements.sql', '1791763200001_cascade-quiz-requirements-video-delete.sql',
+    '1792195200000_add-quiz-feedback-and-scoring-settings.sql']) {
     const sql = await readFile(new URL(`../src/database/migrations/${file}`, import.meta.url), 'utf8');
     await client.query(sql.split('-- Down Migration')[0].replaceAll('public.', 'pg_temp.'));
   }
@@ -46,7 +47,7 @@ test('requirement CRUD, authorization, video cards and pagination against sessio
     [id, uploader, title, visibility, duration, policy, `playback-${id}`, 'https://cdn.example.test/thumbnail.jpg']);
   await client.query("UPDATE videos SET mux_status='preparing' WHERE id=$1", [pendingVideo]);
   await client.query("UPDATE videos SET published_at=now()+interval '1 day' WHERE id=$1", [scheduledVideo]);
-  await client.query('INSERT INTO watch_progress VALUES ($1,$3,30,25),($2,$3,90,75)', [owner, other, ownVideo]);
+  await client.query('INSERT INTO watch_progress(user_id,video_id,progress_seconds,percentage_watched) VALUES ($1,$3,30,25),($2,$3,90,75)', [owner, other, ownVideo]);
   const person = randomUUID();
   await client.query("INSERT INTO people VALUES ($1,'Speaker','https://cdn.example.test/person.jpg')", [person]);
   await client.query("INSERT INTO video_chairs VALUES ($1,$2,'speaker'),($1,$2,'host')", [ownVideo, person]);
@@ -64,6 +65,7 @@ test('requirement CRUD, authorization, video cards and pagination against sessio
   process.env.MUX_PRIVATE_KEY = Buffer.from(privateKey.export({ type: 'pkcs8', format: 'pem' })).toString('base64');
   t.after(() => { for (const key of envKeys) { if (previous[key] === undefined) delete process.env[key]; else process.env[key] = previous[key]; } });
   const { default: router } = await import('../src/modules/quizzes-engine/quizzes-engine.routes.js');
+  const { checkQuizRequirementsInternal: checkRequirements } = await import('../src/modules/quizzes-engine/quiz-requirements/handlers/checkQuizRequirements.js');
   const token = jwt.sign({ sub: owner, authzVersion: 1 }, process.env.JWT_SECRET);
   const otherToken = jwt.sign({ sub: other, authzVersion: 1 }, process.env.JWT_SECRET);
   const app = express();
@@ -87,12 +89,155 @@ test('requirement CRUD, authorization, video cards and pagination against sessio
     await t.test(name, async () => { await client.query('TRUNCATE pg_temp.quiz_requirements'); await run(); });
   }
 
+  await scenario('requirement checks use participant total watch time and require every threshold to be met', async () => {
+    const quizId = randomUUID(), percentageVideo = randomUUID(), secondsVideo = randomUUID();
+    await client.query("INSERT INTO pg_temp.quizzes(id,user_id,title,question_count) VALUES ($1,$2,'Eligibility',1)", [quizId, owner]);
+    await client.query('INSERT INTO videos(id,uploaded_by,duration_seconds,visibility) VALUES ($1,$3,200,\'private\'),($2,$3,120,\'public\')',
+      [percentageVideo, secondsVideo, owner]);
+    assert.equal(await checkRequirements(quizId, other), true); // An existing quiz without requirements.
+    assert.equal(await checkRequirements(randomUUID(), other), false);
+    await client.query(`INSERT INTO pg_temp.quiz_requirements(quiz_id,video_id,min_watch_percentage,min_watch_seconds)
+      VALUES ($1,$2,75.25,NULL),($1,$3,NULL,60)`, [quizId, percentageVideo, secondsVideo]);
+    assert.equal(await checkRequirements(quizId, other), false); // No progress rows.
+    await client.query(`INSERT INTO watch_progress(user_id,video_id,total_watch_seconds,progress_seconds,percentage_watched)
+      VALUES ($1,$3,200,0,0),($1,$4,120,0,0),($2,$3,150.49,200,100)`, [owner, other, percentageVideo, secondsVideo]);
+    assert.equal(await checkRequirements(quizId, owner), true);
+    assert.equal(await checkRequirements(quizId, other), false); // Another user's progress cannot satisfy it.
+    await client.query('UPDATE watch_progress SET total_watch_seconds=150.5 WHERE user_id=$1 AND video_id=$2', [other, percentageVideo]);
+    assert.equal(await checkRequirements(quizId, other), false); // One missing requirement still blocks.
+    await client.query('INSERT INTO watch_progress(user_id,video_id,total_watch_seconds) VALUES ($1,$2,59.99)', [other, secondsVideo]);
+    assert.equal(await checkRequirements(quizId, other), false);
+    await client.query('UPDATE watch_progress SET total_watch_seconds=60 WHERE user_id=$1 AND video_id=$2', [other, secondsVideo]);
+    assert.equal(await checkRequirements(quizId.toUpperCase(), other.toUpperCase()), true); // Exact boundaries count.
+    await client.query('UPDATE watch_progress SET total_watch_seconds=150.49 WHERE user_id=$1 AND video_id=$2', [other, percentageVideo]);
+    assert.equal(await checkRequirements(quizId, other), false); // Do not round up the watched percentage.
+    await client.query('UPDATE watch_progress SET total_watch_seconds=150.5 WHERE user_id=$1 AND video_id=$2', [other, percentageVideo]);
+    await client.query('UPDATE watch_progress SET total_watch_seconds=NULL WHERE user_id=$1 AND video_id=$2', [other, secondsVideo]);
+    assert.equal(await checkRequirements(quizId, other), false);
+    await client.query('UPDATE watch_progress SET total_watch_seconds=500 WHERE user_id=$1 AND video_id=ANY($2::uuid[])', [other, [percentageVideo, secondsVideo]]);
+    assert.equal(await checkRequirements(quizId, other), true); // Repeated watch time may exceed duration.
+    for (const duration of [null, 0]) {
+      await client.query('UPDATE videos SET duration_seconds=$2 WHERE id=$1', [percentageVideo, duration]);
+      assert.equal(await checkRequirements(quizId, other), false);
+    }
+    await client.query('UPDATE videos SET duration_seconds=200 WHERE id=$1', [percentageVideo]);
+    await client.query('UPDATE videos SET duration_seconds=600 WHERE id=$1', [secondsVideo]);
+    assert.equal(await checkRequirements(quizId, other), true); // Seconds do not depend on duration.
+    await client.query('DELETE FROM pg_temp.quiz_requirements WHERE quiz_id=$1 AND video_id=$2', [quizId, percentageVideo]);
+    await client.query('UPDATE watch_progress SET total_watch_seconds=59 WHERE user_id=$1 AND video_id=$2', [other, secondsVideo]);
+    assert.equal(await checkRequirements(quizId, other), false);
+  });
+
   await scenario('all endpoints require access tokens and reject temporary authentication tokens', async () => {
     const temporary = jwt.sign({ sub: owner, purpose: 'two_factor' }, process.env.JWT_SECRET);
-    for (const [method, url] of [['POST', ''], ['GET', ''], ['GET', path()], ['PATCH', path()], ['DELETE', path()]]) {
+    for (const [method, url] of [['POST', ''], ['GET', ''], ['GET', `/${quizA}/check`], ['GET', `/${quizA}/progress`], ['GET', path()], ['PATCH', path()], ['DELETE', path()]]) {
       assert.equal((await request(method, url, undefined, null)).status, 401);
       assert.equal((await request(method, url, undefined, temporary)).status, 401);
     }
+  });
+
+  await scenario('check route reports only the authenticated participant progress and precedes the video ID route', async () => {
+    const checkPath = `/${quizA}/check`;
+    assert.deepEqual(await request('GET', checkPath, undefined, otherToken), { status: 200, success: true, requirements_met: true });
+    await client.query('INSERT INTO pg_temp.quiz_requirements(quiz_id,video_id,min_watch_seconds) VALUES ($1,$2,60)', [quizA, ownVideo]);
+    await client.query('UPDATE watch_progress SET total_watch_seconds=60 WHERE user_id=$1 AND video_id=$2', [owner, ownVideo]);
+    assert.deepEqual(await request('GET', checkPath), { status: 200, success: true, requirements_met: true });
+    assert.deepEqual(await request('GET', `${checkPath}?userId=${owner}`, undefined, otherToken),
+      { status: 200, success: true, requirements_met: false });
+    assert.deepEqual(await request('GET', `/${randomUUID()}/check`), { status: 200, success: true, requirements_met: false });
+    assert.equal((await request('GET', '/invalid/check')).status, 400);
+    assert.equal((await request('GET', checkPath, undefined, 'invalid')).status, 401);
+    const response = await fetch(base + checkPath, { headers: { Authorization: `Bearer ${token}` } });
+    assert.equal(response.headers.get('cache-control'), 'private, no-store');
+    await response.json();
+  });
+
+  await scenario('progress route handles empty quizzes, missing IDs and cache protection', async () => {
+    assert.deepEqual(await request('GET', `/${quizA}/progress`, undefined, otherToken), {
+      status: 200, success: true, quiz_id: quizA, requirements_met: true, requirements: [],
+    });
+    assert.equal((await request('GET', `/${randomUUID()}/progress`)).status, 404);
+    assert.equal((await request('GET', '/invalid/progress')).status, 400);
+    assert.equal((await request('GET', `/${quizA}/progress`, undefined, 'invalid')).status, 401);
+    const response = await fetch(`${base}/${quizA}/progress`, { headers: { Authorization: `Bearer ${token}` } });
+    assert.equal(response.headers.get('cache-control'), 'private, no-store');
+    await response.json();
+  });
+
+  await scenario('progress includes ordered video cards, both thresholds and authenticated participant completion', async () => {
+    await client.query(`INSERT INTO pg_temp.quiz_requirements(quiz_id,video_id,min_watch_percentage,min_watch_seconds,position)
+      VALUES ($1,$2,50,NULL,1),($1,$3,NULL,30,0)`, [quizA, publicVideo, signedVideo]);
+    await client.query(`INSERT INTO watch_progress(user_id,video_id,total_watch_seconds,progress_seconds,percentage_watched)
+      VALUES ($1,$2,15,59,99),($1,$3,30,0,0)`, [other, publicVideo, signedVideo]);
+    const progressPath = `/${quizA}/progress`;
+    const result = await request('GET', `${progressPath}?userId=${owner}`, undefined, otherToken);
+    assert.equal(result.status, 200); assert.equal(result.quiz_id, quizA);
+    assert.equal(result.requirements_met, false);
+    assert.deepEqual(result.requirements.map(item => item.video_id), [signedVideo, publicVideo]);
+    const [seconds, percentage] = result.requirements;
+    const withoutCard = ({ video_card, ...details }) => details;
+    assert.deepEqual(withoutCard(seconds), {
+      quiz_id: quizA, video_id: signedVideo, min_watch_percentage: null, min_watch_seconds: 30, position: 0,
+      total_watch_seconds: 30, required_watch_seconds: 30, watched_percentage: 33.33, completion_percentage: 100, is_met: true,
+    });
+    assert.deepEqual(withoutCard(percentage), {
+      quiz_id: quizA, video_id: publicVideo, min_watch_percentage: 50, min_watch_seconds: null, position: 1,
+      total_watch_seconds: 15, required_watch_seconds: 30, watched_percentage: 25, completion_percentage: 50, is_met: false,
+    });
+    assert.equal(percentage.video_card.id, publicVideo);
+    assert.equal(percentage.video_card.title, 'Public video');
+    assert.equal(percentage.video_card.duration_seconds, 60);
+    assert.equal(percentage.video_card.progress_seconds, 59);
+    assert.equal(percentage.video_card.percentage_watched, 99);
+    assert.equal(seconds.video_card, null); // This private video belongs to the other participant.
+    const noProgress = await request('GET', progressPath);
+    assert.ok(noProgress.requirements.every(item => !item.is_met && item.total_watch_seconds === 0 && item.completion_percentage === 0));
+    const signedCard = noProgress.requirements[0].video_card;
+    assert.ok(signedCard.media_expires_at > Date.now() / 1000);
+    jwt.verify(new URL(signedCard.mux_thumbnail_url).searchParams.get('token'), publicKey,
+      { algorithms: ['RS256'], audience: 't', subject: `playback-${signedVideo}` });
+    for (const [watched, completion, met] of [[29.999, 99.99, false], [30, 100, true], [120, 100, true]]) {
+      await client.query('UPDATE watch_progress SET total_watch_seconds=$3 WHERE user_id=$1 AND video_id=$2', [other, publicVideo, watched]);
+      const current = await request('GET', progressPath, undefined, otherToken);
+      const item = current.requirements[1];
+      assert.equal(item.total_watch_seconds, watched);
+      assert.equal(item.completion_percentage, completion); assert.equal(item.is_met, met);
+      assert.equal(current.requirements_met, (await request('GET', `/${quizA}/check`, undefined, otherToken)).requirements_met);
+      if (watched === 120) assert.equal(item.watched_percentage, 100);
+    }
+    await client.query('UPDATE pg_temp.quiz_requirements SET min_watch_percentage=75.25 WHERE quiz_id=$1 AND video_id=$2', [quizA, publicVideo]);
+    await client.query('UPDATE watch_progress SET total_watch_seconds=45.15 WHERE user_id=$1 AND video_id=$2', [other, publicVideo]);
+    const fractional = (await request('GET', progressPath, undefined, otherToken)).requirements[1];
+    assert.equal(fractional.required_watch_seconds, 45.15); assert.equal(fractional.watched_percentage, 75.25);
+    assert.equal(fractional.completion_percentage, 100); assert.equal(fractional.is_met, true);
+    await client.query('UPDATE watch_progress SET total_watch_seconds=NULL WHERE user_id=$1 AND video_id=$2', [other, publicVideo]);
+    const missing = (await request('GET', progressPath, undefined, otherToken)).requirements[1];
+    assert.equal(missing.total_watch_seconds, 0); assert.equal(missing.is_met, false);
+    await client.query('UPDATE pg_temp.quiz_requirements SET position=0 WHERE quiz_id=$1', [quizA]);
+    assert.deepEqual((await request('GET', progressPath)).requirements.map(item => item.video_id), [signedVideo, publicVideo].sort());
+  });
+
+  await scenario('progress retains hidden videos as null cards and reports uncomputable percentage thresholds as null', async () => {
+    await client.query(`INSERT INTO pg_temp.quiz_requirements(quiz_id,video_id,min_watch_percentage,position)
+      VALUES ($1,$2,50,0),($1,$3,75.25,1),($1,$4,50,2)`, [quizA, privateVideo, unknownVideo, pendingVideo]);
+    await client.query('INSERT INTO watch_progress(user_id,video_id,total_watch_seconds) VALUES ($1,$2,60),($1,$3,100)',
+      [owner, privateVideo, unknownVideo]);
+    for (const duration of [null, 0]) {
+      await client.query('UPDATE videos SET duration_seconds=$2 WHERE id=$1', [unknownVideo, duration]);
+      const result = await request('GET', `/${quizA}/progress`);
+      assert.equal(result.status, 200); assert.equal(result.requirements.length, 3);
+      assert.equal(result.requirements_met, false);
+      const [hidden, unknown, pending] = result.requirements;
+      assert.equal(hidden.video_card, null); assert.equal(hidden.is_met, true);
+      assert.equal(hidden.completion_percentage, 100);
+      assert.equal(pending.video_card, null); assert.equal(pending.is_met, false);
+      assert.equal(unknown.video_card.id, unknownVideo);
+      assert.equal(unknown.total_watch_seconds, 100); assert.equal(unknown.is_met, false);
+      assert.equal(unknown.required_watch_seconds, null);
+      assert.equal(unknown.watched_percentage, null); assert.equal(unknown.completion_percentage, null);
+      assert.equal(result.requirements_met, (await request('GET', `/${quizA}/check`)).requirements_met);
+    }
+    await client.query('UPDATE videos SET duration_seconds=NULL WHERE id=$1', [unknownVideo]);
   });
 
   await scenario('creates percentage and seconds requirements and GET returns complete existing video cards', async () => {
@@ -282,7 +427,8 @@ test('requirement CRUD, authorization, video cards and pagination against sessio
     const sql = await readFile(new URL('../src/database/migrations/1791763200001_cascade-quiz-requirements-video-delete.sql', import.meta.url), 'utf8');
     const [up, down] = sql.replaceAll('public.', 'pg_temp.').split('-- Down Migration');
     await client.query(down);
-    await assert.rejects(client.query('DELETE FROM videos WHERE id=$1', [publicVideo]), { code: '23503' });
+    await assert.rejects(client.query('DELETE FROM videos WHERE id=$1', [publicVideo]), error =>
+      ['23503', '23001'].includes(error.code) && error.constraint === 'quiz_requirements_video_id_fkey');
     assert.equal((await request('GET', path(quizB, publicVideo))).status, 200);
     await client.query(up);
     assert.equal((await request('GET', path(quizB, publicVideo))).status, 200);

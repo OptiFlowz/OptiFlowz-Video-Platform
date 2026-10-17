@@ -3,6 +3,60 @@ const COLUMNS = `r.quiz_id, r.video_id,
 const RETURNING_COLUMNS = `quiz_id, video_id,
   min_watch_percentage::double precision AS min_watch_percentage, min_watch_seconds, position`;
 
+// Both the boolean check and the progress view use this exact, unrounded comparison.
+const REQUIREMENT_MET_SQL = `CASE
+  WHEN r.min_watch_seconds IS NOT NULL THEN
+    COALESCE(wp.total_watch_seconds, 0) >= r.min_watch_seconds
+  WHEN r.min_watch_percentage IS NOT NULL THEN
+    v.duration_seconds > 0
+    AND COALESCE(wp.total_watch_seconds, 0)::numeric * 100
+      >= v.duration_seconds::numeric * r.min_watch_percentage
+  ELSE false
+END`;
+
+export async function areQuizRequirementsMet(database, quizId, userId) {
+  const { rows } = await database.query(`
+    SELECT EXISTS (SELECT 1 FROM public.quizzes WHERE id = $1)
+      AND NOT EXISTS (
+        SELECT 1 FROM public.quiz_requirements r
+        LEFT JOIN public.videos v ON v.id = r.video_id
+        LEFT JOIN public.watch_progress wp ON wp.video_id = r.video_id AND wp.user_id = $2
+        WHERE r.quiz_id = $1 AND (${REQUIREMENT_MET_SQL}) IS NOT TRUE
+      ) AS requirements_met
+  `, [quizId, userId]);
+  return rows[0].requirements_met;
+}
+
+export async function getQuizRequirementsProgress(database, quizId, userId) {
+  const { rows } = await database.query(`
+    WITH requirement_progress AS (
+      SELECT ${COLUMNS},
+        COALESCE(wp.total_watch_seconds, 0)::numeric AS total_watch_seconds,
+        CASE
+          WHEN r.min_watch_seconds IS NOT NULL THEN r.min_watch_seconds::numeric
+          WHEN v.duration_seconds > 0 THEN v.duration_seconds::numeric * r.min_watch_percentage / 100
+        END AS required_watch_seconds,
+        CASE WHEN v.duration_seconds > 0 THEN
+          LEAST(100, TRUNC(COALESCE(wp.total_watch_seconds, 0)::numeric * 100 / v.duration_seconds::numeric, 2))
+        END AS watched_percentage,
+        (${REQUIREMENT_MET_SQL}) IS TRUE AS is_met
+      FROM public.quiz_requirements r
+      LEFT JOIN public.videos v ON v.id = r.video_id
+      LEFT JOIN public.watch_progress wp ON wp.video_id = r.video_id AND wp.user_id = $2
+      WHERE r.quiz_id = $1
+    ), progress AS (
+      SELECT *, CASE WHEN required_watch_seconds > 0 THEN
+        LEAST(100, TRUNC(total_watch_seconds * 100 / required_watch_seconds, 2))
+      END AS completion_percentage
+      FROM requirement_progress
+    )
+    SELECT id AS quiz_id,
+      COALESCE((SELECT jsonb_agg(to_jsonb(progress) ORDER BY position, video_id) FROM progress), '[]'::jsonb) AS requirements
+    FROM public.quizzes WHERE id = $1
+  `, [quizId, userId]);
+  return rows[0] || null;
+}
+
 export async function getOwnedQuiz(database, quizId, userId, lock = false) {
   const { rows } = await database.query(`
     SELECT id FROM public.quizzes WHERE id = $1 AND user_id = $2 ${lock ? 'FOR SHARE' : ''}

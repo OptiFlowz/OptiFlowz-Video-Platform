@@ -10,6 +10,10 @@ test('quiz creation trims text and applies all database-aligned defaults', () =>
   assert.deepEqual(createQuizSchema.parse({ ...body, title: ' Quiz ' }), {
     ...body, description: null, status: 'draft', time_limit_seconds: null, max_attempts: null,
     passing_score_percentage: 50, shuffle_questions: true, shuffle_options: true, has_certificate: false,
+    min_answered_percentage: 0, min_correct_percentage: 0,
+    correctness_visibility: 'after_finish', correct_answers_visibility: 'after_finish', explanation_visibility: 'after_finish',
+    explanation_incorrect_only: false, allow_answer_changes_after_check: false,
+    allow_attempt_review: true, show_final_score: true, scoring_mode: 'exact_match',
   });
   for (const status of ['draft', 'published', 'archived']) {
     assert.equal(createQuizSchema.parse({ ...body, status }).status, status);
@@ -44,6 +48,29 @@ test('PATCH permits false, zero score and explicit null limits while preserving 
   assert.deepEqual(updateQuizSchema.parse({ title: ' New title ' }), { title: 'New title' });
   for (const input of [{}, { title: '' }, { status: null }, { question_count: null }, { user_id: 'spoof' }, { question_ids: [] }]) {
     assert.equal(updateQuizSchema.safeParse(input).success, false);
+  }
+});
+
+test('submission, feedback and scoring settings validate equally on create and PATCH', () => {
+  const fields = {
+    min_answered_percentage: { valid: [0, 0.29, 75.25, 100], invalid: [-0.01, 100.01, 1.001, '50', NaN, Infinity] },
+    min_correct_percentage: { valid: [0, 0.29, 75.25, 100], invalid: [-0.01, 100.01, 1.001, '50', NaN, Infinity] },
+    ...Object.fromEntries(['correctness_visibility', 'correct_answers_visibility', 'explanation_visibility'].map(field =>
+      [field, { valid: ['never', 'after_check', 'after_finish'], invalid: ['always', 'AFTER_FINISH', '', true] }])),
+    ...Object.fromEntries(['explanation_incorrect_only', 'allow_answer_changes_after_check', 'allow_attempt_review', 'show_final_score'].map(field =>
+      [field, { valid: [true, false], invalid: ['true', 'false', 0, 1] }])),
+    scoring_mode: { valid: ['exact_match', 'partial_credit'], invalid: ['partial', 'EXACT_MATCH', '', true] },
+  };
+  for (const [field, { valid, invalid }] of Object.entries(fields)) {
+    for (const value of valid) {
+      assert.equal(createQuizSchema.parse({ ...body, [field]: value })[field], value);
+      assert.deepEqual(updateQuizSchema.parse({ [field]: value }), { [field]: value });
+    }
+    for (const value of [...invalid, null, [], {}]) {
+      assert.equal(createQuizSchema.safeParse({ ...body, [field]: value }).success, false, field);
+      assert.equal(updateQuizSchema.safeParse({ [field]: value }).success, false, field);
+    }
+    assert.equal(field in updateQuizSchema.parse({ title: 'Only title' }), false);
   }
 });
 

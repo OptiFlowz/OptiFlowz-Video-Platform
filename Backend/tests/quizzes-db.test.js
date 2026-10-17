@@ -8,12 +8,65 @@ import jwt from 'jsonwebtoken';
 import pg from 'pg';
 import { errorHandler } from '../src/middleware/error-handler.js';
 
+test('quiz settings migration preserves existing quizzes, enforces database constraints and supports rollback', {
+  skip: !process.env.TEST_DATABASE_URL,
+}, async t => {
+  const client = new pg.Client({ connectionString: process.env.TEST_DATABASE_URL, connectionTimeoutMillis: 5000, statement_timeout: 10000 });
+  await client.connect();
+  t.after(() => client.end());
+  await client.query('CREATE TEMP TABLE users (id uuid PRIMARY KEY)');
+  const readMigration = async file => (await readFile(new URL(`../src/database/migrations/${file}`, import.meta.url), 'utf8'))
+    .replaceAll('public.', 'pg_temp.').split('-- Down Migration');
+  const [baseUp] = await readMigration('1791590400004_add-quizzes.sql');
+  const [up, down] = await readMigration('1792195200000_add-quiz-feedback-and-scoring-settings.sql');
+  await client.query(baseUp);
+  const userId = randomUUID();
+  await client.query('INSERT INTO pg_temp.users(id) VALUES ($1)', [userId]);
+  const insert = () => client.query("INSERT INTO pg_temp.quizzes(user_id,title,question_count) VALUES ($1,'Existing quiz',5) RETURNING *", [userId]);
+  const before = (await insert()).rows[0];
+  await client.query(up);
+  const defaults = {
+    min_answered_percentage: '0.00', min_correct_percentage: '0.00',
+    correctness_visibility: 'after_finish', correct_answers_visibility: 'after_finish', explanation_visibility: 'after_finish',
+    explanation_incorrect_only: false, allow_answer_changes_after_check: false,
+    allow_attempt_review: true, show_final_score: true, scoring_mode: 'exact_match',
+  };
+  assert.deepEqual((await client.query('SELECT * FROM pg_temp.quizzes WHERE id=$1', [before.id])).rows[0], { ...before, ...defaults });
+  const fresh = (await insert()).rows[0];
+  for (const [field, value] of Object.entries(defaults)) {
+    assert.equal(fresh[field], value);
+    await assert.rejects(client.query(`UPDATE pg_temp.quizzes SET ${field}=NULL`), { code: '23502' });
+  }
+  for (const field of ['min_answered_percentage', 'min_correct_percentage']) {
+    for (const value of [-0.01, 100.01]) {
+      await assert.rejects(client.query(`UPDATE pg_temp.quizzes SET ${field}=$1`, [value]), { code: '23514' });
+    }
+    for (const value of [0, 0.29, 75.25, 100]) {
+      await client.query(`UPDATE pg_temp.quizzes SET ${field}=$1`, [value]);
+      assert.equal(Number((await client.query(`SELECT ${field} FROM pg_temp.quizzes`)).rows[0][field]), value);
+    }
+  }
+  for (const field of ['correctness_visibility', 'correct_answers_visibility', 'explanation_visibility']) {
+    for (const value of ['never', 'after_check', 'after_finish']) await client.query(`UPDATE pg_temp.quizzes SET ${field}=$1`, [value]);
+    await assert.rejects(client.query(`UPDATE pg_temp.quizzes SET ${field}='invalid'`), { code: '22P02' });
+  }
+  for (const value of ['exact_match', 'partial_credit']) await client.query('UPDATE pg_temp.quizzes SET scoring_mode=$1', [value]);
+  await assert.rejects(client.query("UPDATE pg_temp.quizzes SET scoring_mode='invalid'"), { code: '22P02' });
+  await client.query(down);
+  assert.deepEqual((await client.query('SELECT * FROM pg_temp.quizzes WHERE id=$1', [before.id])).rows[0], before);
+  assert.deepEqual((await client.query("SELECT to_regtype('pg_temp.feedback_visibility') AS feedback, to_regtype('pg_temp.quiz_scoring_mode') AS scoring")).rows[0],
+    { feedback: null, scoring: null });
+  await client.query(up);
+  assert.deepEqual((await client.query('SELECT * FROM pg_temp.quizzes WHERE id=$1', [before.id])).rows[0], { ...before, ...defaults });
+});
+
 test('quiz CRUD and existing submodule routing against PostgreSQL session-local tables', { skip: !process.env.TEST_DATABASE_URL }, async t => {
   const client = new pg.Client({ connectionString: process.env.TEST_DATABASE_URL, connectionTimeoutMillis: 5000, statement_timeout: 10000 });
   await client.connect();
   t.after(() => client.end());
   await client.query("CREATE TEMP TABLE users (id uuid PRIMARY KEY, status text DEFAULT 'active', authz_version integer DEFAULT 1)");
-  for (const file of ['1791590400001_add-questions.sql', '1791590400002_add-question-timestamps.sql', '1791590400003_add-question-groups.sql', '1791590400004_add-quizzes.sql']) {
+  for (const file of ['1791590400001_add-questions.sql', '1791590400002_add-question-timestamps.sql', '1791590400003_add-question-groups.sql', '1791590400004_add-quizzes.sql',
+    '1792195200000_add-quiz-feedback-and-scoring-settings.sql']) {
     const sql = await readFile(new URL(`../src/database/migrations/${file}`, import.meta.url), 'utf8');
     await client.query(sql.split('-- Down Migration')[0].replaceAll('public.', 'pg_temp.'));
   }
@@ -61,7 +114,12 @@ test('quiz CRUD and existing submodule routing against PostgreSQL session-local 
     const quiz = created.quiz;
     assert.deepEqual(quiz, { id: quiz.id, user_id: userId, ...minimal, description: null, status: 'draft',
       time_limit_seconds: null, max_attempts: null, passing_score_percentage: 50, shuffle_questions: true,
-      shuffle_options: true, has_certificate: false, created_at: quiz.created_at, updated_at: quiz.updated_at });
+      shuffle_options: true, has_certificate: false,
+      min_answered_percentage: 0, min_correct_percentage: 0,
+      correctness_visibility: 'after_finish', correct_answers_visibility: 'after_finish', explanation_visibility: 'after_finish',
+      explanation_incorrect_only: false, allow_answer_changes_after_check: false,
+      allow_attempt_review: true, show_final_score: true, scoring_mode: 'exact_match',
+      created_at: quiz.created_at, updated_at: quiz.updated_at });
     assert.equal(quiz.created_at, quiz.updated_at); assert.ok(Number.isFinite(Date.parse(quiz.created_at)));
     assert.deepEqual((await request('GET', `/${quiz.id}`)).quiz, quiz);
     assert.equal((await request('POST', '', minimal)).status, 201);
@@ -72,6 +130,49 @@ test('quiz CRUD and existing submodule routing against PostgreSQL session-local 
     assert.equal(saved.status, 201);
     for (const [field, value] of Object.entries(configured)) assert.equal(saved.quiz[field], field === 'description' ? 'Details' : value);
     assert.equal(typeof saved.quiz.passing_score_percentage, 'number');
+  });
+
+  await scenario('new quiz settings round-trip through create, PATCH, detail and list without resetting omitted fields', async () => {
+    const normalizeTimestamps = quiz => ({ ...quiz,
+      created_at: new Date(quiz.created_at).toISOString(), updated_at: new Date(quiz.updated_at).toISOString() });
+    const settings = {
+      min_answered_percentage: 75.25, min_correct_percentage: 0.29,
+      correctness_visibility: 'after_check', correct_answers_visibility: 'never', explanation_visibility: 'after_check',
+      explanation_incorrect_only: true, allow_answer_changes_after_check: true,
+      allow_attempt_review: false, show_final_score: false, scoring_mode: 'partial_credit',
+    };
+    const created = await request('POST', '', { ...minimal, ...settings });
+    assert.equal(created.status, 201);
+    for (const [key, value] of Object.entries(settings)) assert.equal(created.quiz[key], value);
+    const path = `/${created.quiz.id}`;
+    assert.deepEqual((await request('GET', path)).quiz, created.quiz);
+    assert.deepEqual((await request('GET', '')).quizzes.map(normalizeTimestamps), [created.quiz]);
+    const renamed = await request('PATCH', path, { title: 'Renamed' });
+    assert.equal(renamed.status, 200);
+    for (const [key, value] of Object.entries(settings)) assert.equal(renamed.quiz[key], value);
+    const changes = {
+      min_answered_percentage: 0, min_correct_percentage: 100,
+      correctness_visibility: 'never', correct_answers_visibility: 'after_check', explanation_visibility: 'after_finish',
+      explanation_incorrect_only: false, allow_answer_changes_after_check: false,
+      allow_attempt_review: true, show_final_score: true, scoring_mode: 'exact_match',
+    };
+    const updated = await request('PATCH', path, changes);
+    assert.equal(updated.status, 200);
+    assert.deepEqual(updated.quiz, { ...renamed.quiz, ...changes, updated_at: updated.quiz.updated_at });
+    assert.deepEqual((await request('GET', path)).quiz, updated.quiz);
+    assert.deepEqual((await request('GET', '')).quizzes.map(normalizeTimestamps), [updated.quiz]);
+    assert.equal((await request('PATCH', path, { scoring_mode: 'partial_credit' }, otherToken)).status, 404);
+    for (const invalid of [
+      { min_answered_percentage: -1 }, { min_correct_percentage: 100.01 }, { min_answered_percentage: 1.001 },
+      { correctness_visibility: 'always' }, { correct_answers_visibility: null }, { explanation_visibility: 'AFTER_CHECK' },
+      { explanation_incorrect_only: 'false' }, { allow_answer_changes_after_check: 1 },
+      { allow_attempt_review: null }, { show_final_score: 'true' }, { scoring_mode: 'invalid' },
+    ]) {
+      assert.equal((await request('POST', '', { ...minimal, ...invalid })).status, 400);
+      assert.equal((await request('PATCH', path, { title: 'Must not change', ...invalid })).status, 400);
+    }
+    assert.deepEqual((await request('GET', path)).quiz, updated.quiz);
+    assert.equal((await request('GET', '')).pagination.total, 1);
   });
 
   await scenario('partial PATCH preserves omitted fields, supports null/false/zero and updates the timestamp', async () => {

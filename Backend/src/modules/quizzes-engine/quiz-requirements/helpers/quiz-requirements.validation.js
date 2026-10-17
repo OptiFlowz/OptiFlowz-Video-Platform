@@ -13,6 +13,7 @@ function exactlyOneThreshold(value) {
 const thresholdMessage = 'Exactly one of min_watch_percentage and min_watch_seconds must be set';
 
 export const quizRequirementIdSchema = z.object({ quizId: uuid, videoId: uuid });
+export const checkQuizRequirementsSchema = z.object({ quizId: uuid, userId: uuid });
 export const quizRequirementFieldsSchema = z.object(fields).strict()
   .refine(exactlyOneThreshold, { message: thresholdMessage });
 export const createQuizRequirementSchema = z.object({

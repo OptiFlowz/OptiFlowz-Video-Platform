@@ -60,6 +60,8 @@ const { getQuizRequirementInternal: get } = await import('../src/modules/quizzes
 const { getQuizRequirementsInternal: list } = await import('../src/modules/quizzes-engine/quiz-requirements/handlers/getQuizRequirements.js');
 const { updateQuizRequirementInternal: update } = await import('../src/modules/quizzes-engine/quiz-requirements/handlers/updateQuizRequirement.js');
 const { deleteQuizRequirementInternal: remove } = await import('../src/modules/quizzes-engine/quiz-requirements/handlers/deleteQuizRequirement.js');
+const { checkQuizRequirementsInternal: check } = await import('../src/modules/quizzes-engine/quiz-requirements/handlers/checkQuizRequirements.js');
+const { getQuizRequirementsProgressInternal: progress } = await import('../src/modules/quizzes-engine/quiz-requirements/handlers/getQuizRequirementsProgress.js');
 const params = { quizId: id, videoId: id };
 
 test('all requirement handlers reject missing users and malformed input before querying PostgreSQL', async () => {
@@ -68,6 +70,12 @@ test('all requirement handlers reject missing users and malformed input before q
   await assert.rejects(list({}), { status: 401 });
   await assert.rejects(update(params, { position: 1 }), { status: 401 });
   await assert.rejects(remove(params), { status: 401 });
+  await assert.rejects(check(id), { status: 401 });
+  await assert.rejects(check('invalid', id), { status: 400 });
+  await assert.rejects(check(id, 'invalid'), { status: 400 });
+  await assert.rejects(progress(id), { status: 401 });
+  await assert.rejects(progress('invalid', id), { status: 400 });
+  await assert.rejects(progress(id, 'invalid'), { status: 400 });
   await assert.rejects(create({ ...body, user_id: id }, id), { status: 400 });
   await assert.rejects(get({ quizId: id, videoId: 'invalid' }, id), { status: 400 });
   await assert.rejects(list({ limit: '101' }, id), { status: 400 });

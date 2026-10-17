@@ -1,10 +1,18 @@
 const QUIZ_COLUMNS = `id, user_id, title, description, status, question_count,
   time_limit_seconds, max_attempts, passing_score_percentage::double precision AS passing_score_percentage,
-  shuffle_questions, shuffle_options, has_certificate, created_at, updated_at`;
+  shuffle_questions, shuffle_options, has_certificate,
+  min_answered_percentage::double precision AS min_answered_percentage,
+  min_correct_percentage::double precision AS min_correct_percentage,
+  correctness_visibility, correct_answers_visibility, explanation_visibility,
+  explanation_incorrect_only, allow_answer_changes_after_check, allow_attempt_review,
+  show_final_score, scoring_mode, created_at, updated_at`;
 
 const WRITABLE_FIELDS = [
   'title', 'description', 'status', 'question_count', 'time_limit_seconds', 'max_attempts',
   'passing_score_percentage', 'shuffle_questions', 'shuffle_options', 'has_certificate',
+  'min_answered_percentage', 'min_correct_percentage', 'correctness_visibility',
+  'correct_answers_visibility', 'explanation_visibility', 'explanation_incorrect_only',
+  'allow_answer_changes_after_check', 'allow_attempt_review', 'show_final_score', 'scoring_mode',
 ];
 
 export async function createQuiz(database, userId, quiz) {
