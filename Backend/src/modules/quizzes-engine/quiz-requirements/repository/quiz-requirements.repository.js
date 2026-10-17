@@ -16,15 +16,15 @@ END`;
 
 export async function areQuizRequirementsMet(database, quizId, userId) {
   const { rows } = await database.query(`
-    SELECT EXISTS (SELECT 1 FROM public.quizzes WHERE id = $1)
-      AND NOT EXISTS (
+    SELECT NOT EXISTS (
         SELECT 1 FROM public.quiz_requirements r
         LEFT JOIN public.videos v ON v.id = r.video_id
         LEFT JOIN public.watch_progress wp ON wp.video_id = r.video_id AND wp.user_id = $2
         WHERE r.quiz_id = $1 AND (${REQUIREMENT_MET_SQL}) IS NOT TRUE
       ) AS requirements_met
+    FROM public.quizzes WHERE id = $1 AND status = 'published'
   `, [quizId, userId]);
-  return rows[0].requirements_met;
+  return rows[0]?.requirements_met ?? null;
 }
 
 export async function getQuizRequirementsProgress(database, quizId, userId) {
@@ -52,7 +52,7 @@ export async function getQuizRequirementsProgress(database, quizId, userId) {
     )
     SELECT id AS quiz_id,
       COALESCE((SELECT jsonb_agg(to_jsonb(progress) ORDER BY position, video_id) FROM progress), '[]'::jsonb) AS requirements
-    FROM public.quizzes WHERE id = $1
+    FROM public.quizzes WHERE id = $1 AND status = 'published'
   `, [quizId, userId]);
   return rows[0] || null;
 }

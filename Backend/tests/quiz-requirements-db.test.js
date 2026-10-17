@@ -34,7 +34,7 @@ test('requirement CRUD, authorization, video cards and pagination against sessio
   const ownVideo = randomUUID(), publicVideo = randomUUID(), privateVideo = randomUUID();
   const pendingVideo = randomUUID(), scheduledVideo = randomUUID(), unknownVideo = randomUUID(), signedVideo = randomUUID();
   await client.query("INSERT INTO users(id,full_name) VALUES ($1,'Owner'),($2,'Other')", [owner, other]);
-  await client.query("INSERT INTO pg_temp.quizzes(id,user_id,title,question_count) VALUES ($1,$4,'A',1),($2,$4,'B',1),($3,$5,'Foreign',1)", [quizA, quizB, foreignQuiz, owner, other]);
+  await client.query("INSERT INTO pg_temp.quizzes(id,user_id,title,question_count,status) VALUES ($1,$4,'A',1,'published'),($2,$4,'B',1,'published'),($3,$5,'Foreign',1,'published')", [quizA, quizB, foreignQuiz, owner, other]);
   for (const [id, uploader, title, visibility, duration, policy] of [
     [ownVideo, owner, 'Own private', 'private', 120, 'public'],
     [publicVideo, other, 'Public video', 'public', 60, 'public'],
@@ -91,11 +91,11 @@ test('requirement CRUD, authorization, video cards and pagination against sessio
 
   await scenario('requirement checks use participant total watch time and require every threshold to be met', async () => {
     const quizId = randomUUID(), percentageVideo = randomUUID(), secondsVideo = randomUUID();
-    await client.query("INSERT INTO pg_temp.quizzes(id,user_id,title,question_count) VALUES ($1,$2,'Eligibility',1)", [quizId, owner]);
+    await client.query("INSERT INTO pg_temp.quizzes(id,user_id,title,question_count,status) VALUES ($1,$2,'Eligibility',1,'published')", [quizId, owner]);
     await client.query('INSERT INTO videos(id,uploaded_by,duration_seconds,visibility) VALUES ($1,$3,200,\'private\'),($2,$3,120,\'public\')',
       [percentageVideo, secondsVideo, owner]);
     assert.equal(await checkRequirements(quizId, other), true); // An existing quiz without requirements.
-    assert.equal(await checkRequirements(randomUUID(), other), false);
+    await assert.rejects(checkRequirements(randomUUID(), other), { status: 404 });
     await client.query(`INSERT INTO pg_temp.quiz_requirements(quiz_id,video_id,min_watch_percentage,min_watch_seconds)
       VALUES ($1,$2,75.25,NULL),($1,$3,NULL,60)`, [quizId, percentageVideo, secondsVideo]);
     assert.equal(await checkRequirements(quizId, other), false); // No progress rows.
@@ -144,7 +144,7 @@ test('requirement CRUD, authorization, video cards and pagination against sessio
     assert.deepEqual(await request('GET', checkPath), { status: 200, success: true, requirements_met: true });
     assert.deepEqual(await request('GET', `${checkPath}?userId=${owner}`, undefined, otherToken),
       { status: 200, success: true, requirements_met: false });
-    assert.deepEqual(await request('GET', `/${randomUUID()}/check`), { status: 200, success: true, requirements_met: false });
+    assert.deepEqual(await request('GET', `/${randomUUID()}/check`), { status: 404, success: false, message: 'Quiz not found' });
     assert.equal((await request('GET', '/invalid/check')).status, 400);
     assert.equal((await request('GET', checkPath, undefined, 'invalid')).status, 401);
     const response = await fetch(base + checkPath, { headers: { Authorization: `Bearer ${token}` } });
@@ -162,6 +162,31 @@ test('requirement CRUD, authorization, video cards and pagination against sessio
     const response = await fetch(`${base}/${quizA}/progress`, { headers: { Authorization: `Bearer ${token}` } });
     assert.equal(response.headers.get('cache-control'), 'private, no-store');
     await response.json();
+  });
+
+  await scenario('check and progress only expose published quizzes, including to the creator', async () => {
+    const quizId = randomUUID();
+    await client.query("INSERT INTO pg_temp.quizzes(id,user_id,title,question_count) VALUES ($1,$2,'Publication status',1)", [quizId, owner]);
+    for (const hasRequirements of [false, true]) {
+      if (hasRequirements) await client.query(
+        'INSERT INTO pg_temp.quiz_requirements(quiz_id,video_id,min_watch_seconds) VALUES ($1,$2,60)', [quizId, ownVideo]);
+      for (const status of ['draft', 'published', 'archived', 'published']) {
+        await client.query('UPDATE pg_temp.quizzes SET status=$2 WHERE id=$1', [quizId, status]);
+        for (const bearer of [token, otherToken]) {
+          const checked = await request('GET', `/${quizId}/check`, undefined, bearer);
+          const progress = await request('GET', `/${quizId}/progress`, undefined, bearer);
+          if (status === 'published') {
+            assert.equal(checked.status, 200); assert.equal(progress.status, 200);
+            assert.equal(checked.requirements_met, progress.requirements_met);
+            assert.equal(progress.requirements.length, hasRequirements ? 1 : 0);
+            if (!hasRequirements) assert.equal(checked.requirements_met, true);
+          } else {
+            const unavailable = { status: 404, success: false, message: 'Quiz not found' };
+            assert.deepEqual(checked, unavailable); assert.deepEqual(progress, unavailable);
+          }
+        }
+      }
+    }
   });
 
   await scenario('progress includes ordered video cards, both thresholds and authenticated participant completion', async () => {
