@@ -33,6 +33,7 @@
     "test:question-groups": "node --experimental-test-module-mocks --test tests/question-groups.test.js tests/question-groups-db.test.js",
     "test:quizzes": "node --experimental-test-module-mocks --test tests/quizzes.test.js tests/quizzes-db.test.js",
     "test:quiz-requirements": "node --experimental-test-module-mocks --test tests/quiz-requirements.test.js tests/quiz-requirements-db.test.js",
+    "test:quiz-attempts": "node --test tests/quiz-attempts-db.test.js",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "dev:worker": "nodemon --signal SIGTERM src/workers/video-indexing.js",
