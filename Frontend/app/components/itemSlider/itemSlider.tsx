@@ -11,6 +11,8 @@ import { fetchRecommendedVideos, type RecommendationResult } from "~/videoDiscov
 import Item from "./item";
 import { CurrentNavContext } from "~/context";
 import PlaylistItem from "./playlistItem";
+import CollectionItem from "./collectionItem";
+import { getCollections } from "../collections/api";
 import { getToken } from "~/functions";
 import { useI18n } from "~/i18n";
 import { usePrivacyPreferences } from "~/privacy/privacyPreferences";
@@ -26,7 +28,7 @@ const SkeletonItem = () => (
     </div>
 );
 
-function ItemSlider({props, showLatestPosts = false}: {props: ItemSliderT; showLatestPosts?: boolean}){
+function ItemSlider({props, showFeaturedCollections = false, showLatestPosts = false}: {props: ItemSliderT; showFeaturedCollections?: boolean; showLatestPosts?: boolean}){
     const { t } = useI18n();
     const { preferences } = usePrivacyPreferences();
     // const { onDataStateChange } = props;
@@ -42,6 +44,7 @@ function ItemSlider({props, showLatestPosts = false}: {props: ItemSliderT; showL
 
     let route = null;
     const isPlaylist = props.type === 5 || props.type === 6;
+    const hasFeaturedCollections = props.type === 5 && showFeaturedCollections;
     const isGrid = props.type === 1 || props.type === 2;
     const { can } = useAuthorization();
     const hasLibraryAccess = !requiresAuth || can(props.type === 6 ? P.playlistsLibrary : P.videosLibrary);
@@ -107,6 +110,18 @@ function ItemSlider({props, showLatestPosts = false}: {props: ItemSliderT; showL
         refetchOnWindowFocus: false,
     });
 
+    const featuredCollections = useQuery({
+        queryKey: ['collections', 'featured', 'public', props.limit],
+        queryFn: ({ signal }) => getCollections({
+            page: 1, limit: Math.min(props.limit || 20, 100), isFeatured: true, visibility: 'public',
+        }, signal),
+        enabled: hasFeaturedCollections,
+        gcTime: 30 * 60 * 1000,
+        refetchOnWindowFocus: false,
+    });
+    const collectionItems = hasFeaturedCollections ? featuredCollections.data?.collections ?? [] : [];
+    const featuredError = hasFeaturedCollections && (isError || featuredCollections.isError);
+
     // Only horizontal collections need scroll controls and edge fades.
     useEffect(() => {
         if (isGrid) return;
@@ -132,12 +147,12 @@ function ItemSlider({props, showLatestPosts = false}: {props: ItemSliderT; showL
             currentCollection?.removeEventListener('scroll', updateScrollState);
             window.removeEventListener('resize', updateScrollState);
         };
-    }, [data, isGrid]);
+    }, [data, isGrid, featuredCollections.data, featuredCollections.isPending]);
 
     if (!hasLibraryAccess || !route || (requiresAuth && !token) || (props.type === 1 && !preferences.personalization)) return null;
 
     const empty = !data || (("videos" in data) && data.videos.length === 0) || (("playlists" in data) && data.playlists.length === 0);
-    if (empty && data && props.type != 1) return null;
+    if (empty && data && !collectionItems.length && !(hasFeaturedCollections && featuredCollections.isPending) && !featuredError && props.type != 1) return null;
 
     // Funkcije za skrolovanje
     const scrollLeft = () => {
@@ -179,15 +194,15 @@ function ItemSlider({props, showLatestPosts = false}: {props: ItemSliderT; showL
         <div className="contentSection mt-8 max-[450px]:mt-3">
             <span className="collection-header">
                 <span className="flex items-center gap-5">
-                    <h2 className="subTitle p-0!">{sliderTitle.current}</h2>
+                    <h2 className="subTitle p-0!">{collectionItems.length ? t("featured") : sliderTitle.current}</h2>
 
-                    {props.type != 1 && itemsArray && (props.type === 2 ? itemsArray.length > 0 : itemsArray.length >= 5) && <Link className="button flex items-center gap-2 z-1" to={`/videos/${props.type}`} onClick={() => setCurrentNav(-1)}>
+                    {props.type != 1 && !collectionItems.length && itemsArray && (props.type === 2 ? itemsArray.length > 0 : itemsArray.length >= 5) && <Link className="button flex items-center gap-2 z-1" to={`/videos/${props.type}`} onClick={() => setCurrentNav(-1)}>
                         <p className="font-semibold">{t("viewAll")}</p>
                         {ArrowSVG}
                     </Link>}
                 </span>
                 
-                {data && !isGrid && hasOverflow && (
+                {(data || collectionItems.length > 0) && !isGrid && hasOverflow && (
                     <div className="scroll-buttons">
                         <button 
                             className="scrollLeftBtn" 
@@ -207,6 +222,13 @@ function ItemSlider({props, showLatestPosts = false}: {props: ItemSliderT; showL
                 )}
             </span>
 
+            {featuredError && <div className="mt-4" role="alert">
+                <p>{t("searchLoadFailed")}</p>
+                <button type="button" className="button mt-4" onClick={() => {
+                    if (isError) void refetch();
+                    if (featuredCollections.isError) void featuredCollections.refetch();
+                }}>{t("usersRetry")}</button>
+            </div>}
             {isError && props.type === 1 ?
                 <div className="watchToRecommend" role="alert">
                     <p>{t("searchLoadFailed")}</p>
@@ -219,7 +241,9 @@ function ItemSlider({props, showLatestPosts = false}: {props: ItemSliderT; showL
                     className={`collectionViewport ${!isGrid && showLeftFade ? "show-left-fade" : ""} ${!isGrid && showRightFade ? "show-right-fade" : ""} ${isGrid ? 'notscrollable' : ''}`}
                 >
                     <div ref={collectionRef} className={`collection ${isGrid ? 'notscrollable' : ''} ${isPlaylist ? "featuredColl" : ""}`}>
-                        {!data ? skeletonArray : itemsArray}
+                        {!data && !(hasFeaturedCollections && isError) ? skeletonArray : itemsArray}
+                        {collectionItems.map(collection => <CollectionItem key={`collection-${collection.id}`} collection={collection} />)}
+                        {hasFeaturedCollections && featuredCollections.isPending && data && <SkeletonItem />}
                     </div>
                 </div>
             }

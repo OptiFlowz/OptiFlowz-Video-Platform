@@ -14,6 +14,7 @@ export const P = {
   videosProgress: 'videos.progress.update', videosReact: 'videos.react',
   playlistsCreate: 'playlists.create', playlistsUpdateOwn: 'playlists.update_own', playlistsUpdateAny: 'playlists.update_any',
   playlistsDeleteOwn: 'playlists.delete_own', playlistsDeleteAny: 'playlists.delete_any', playlistsLibrary: 'playlists.library.read', playlistsSave: 'playlists.save',
+  collectionsFeature: 'collections.feature',
   collectionsCreate: 'collections.create', collectionsUpdateOwn: 'collections.update_own', collectionsUpdateAny: 'collections.update_any',
   collectionsDeleteOwn: 'collections.delete_own', collectionsDeleteAny: 'collections.delete_any',
   quizzesCreate: 'quizzes.create', quizzesManageOwn: 'quizzes.manage_own', quizzesManageAny: 'quizzes.manage_any', quizzesParticipate: 'quizzes.participate', quizzesCertificates: 'quizzes.certificates',

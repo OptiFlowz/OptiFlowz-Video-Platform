@@ -54,7 +54,7 @@ function NewCollection() {
     let id = createdId;
     try {
       if (!id) {
-        const { collection } = await createCollection(fields);
+        const { collection } = await createCollection(collectionFields(fields, can(P.collectionsFeature)));
         id = collection.id; setCreatedId(id);
       }
       // The thumbnail endpoint needs an existing collection ID. Keep it on failure
@@ -90,11 +90,12 @@ function NewCollection() {
 }
 
 function ExistingCollection({ data }: { data: CollectionDetails }) {
-  const { t } = useI18n(); const { canOwn } = useAuthorization(); const client = useQueryClient();
+  const { t } = useI18n(); const { can, canOwn } = useAuthorization(); const client = useQueryClient();
   const { collection, playlists } = data; const id = collection.id;
   const canEdit = canOwn(P.collectionsUpdateOwn, P.collectionsUpdateAny, collection.created_by);
   const [fields, setFields] = useState<Fields>(() => collectionFields(collection));
   const [savedFields, setSavedFields] = useState(() => collectionFields(collection));
+  const [isSavingDetails, setIsSavingDetails] = useState(false);
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('');
   const pending = useRef(false), input = useRef<HTMLInputElement>(null); const { confirm, dialogProps } = useConfirm();
   const dirty = JSON.stringify(collectionFields(fields)) !== JSON.stringify(savedFields);
@@ -111,9 +112,17 @@ function ExistingCollection({ data }: { data: CollectionDetails }) {
       await client.invalidateQueries({ queryKey: ['collections'] });
     } finally { pending.current = false; setBusy(false); }
   }
-  function save(event: FormEvent) {
-    event.preventDefault(); if (!fields.title.trim()) return;
-    void mutate(async () => { const result = await updateCollection(id, fields); setSavedFields(collectionFields(result.collection)); }, t('collectionSaved'));
+  async function save(event: FormEvent) {
+    event.preventDefault(); if (pending.current || !dirty || !fields.title.trim()) return;
+    setIsSavingDetails(true);
+    try {
+      await mutate(async () => {
+        const result = await updateCollection(id, collectionFields(fields, can(P.collectionsFeature)));
+        const saved = collectionFields(result.collection);
+        setFields(saved);
+        setSavedFields(saved);
+      }, t('collectionSaved'));
+    } finally { setIsSavingDetails(false); }
   }
   function selectThumbnail(file: File) {
     if (!validCollectionThumbnail(file)) { setError(t('collectionThumbnailHelp')); return; }
@@ -144,8 +153,16 @@ function ExistingCollection({ data }: { data: CollectionDetails }) {
         </ThumbnailDropZone>
         <form className="editSection" onSubmit={save}><h2>{t('collectionDetails')}</h2>
           <CollectionFields value={fields} onChange={value => { setFields(value); setMessage(''); }} disabled={busy} />
-          <div className="collectionFormActions"><button type="button" className="cancelBtn thumbnailCancelBtn" disabled={busy || !dirty} onClick={() => setFields(savedFields)}>{t('adminCancel')}</button>
-            <button type="submit" className="saveCaptionsBtn" disabled={busy || !dirty || !fields.title.trim()}>{t(busy ? 'saving' : 'adminSave')}</button></div>
+          <div className="captionsActions">
+            <p className="formHint">
+              {dirty && <span className="unsavedIndicator">• {t('editorUnsavedChanges')}</span>}
+            </p>
+            <div className="captionsButtonGroup">
+              <button type="submit" className="saveCaptionsBtn" disabled={busy || !dirty || !fields.title.trim()}>
+                {isSavingDetails ? <><div className="uploadSpinner tiny" />{t('saving')}</> : t('saveChanges')}
+              </button>
+            </div>
+          </div>
         </form>
       </div>
       <div className={editor.videosColumn}>

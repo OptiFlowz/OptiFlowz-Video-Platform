@@ -354,10 +354,6 @@ main.homePage .collection-header{
   border-radius: 24px;
 }
 
-.item .info {
-  margin-top: 0.8rem;
-}
-
 .item .info h2 {
   font-size: 1.08rem;
   color: var(--text1);
@@ -3532,6 +3528,11 @@ mux-player::part(menu-item) {
 .verticalSlider .pins p svg path,
 .featured .pins p svg path {
   stroke: var(--text1);
+}
+.playlistItem .pins p svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 .playCard .banner p.watched {
   z-index: 3;

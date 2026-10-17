@@ -12,14 +12,15 @@ function request<T>(route: string, method = 'GET', body?: unknown, signal?: Abor
   return fetchFn<T>({ route, options: { method, headers, signal,
     ...(body === undefined ? {} : { body: multipart ? body as FormData : JSON.stringify(body) }) } });
 }
-export function getCollections({ userId, page, limit, title = '', sortBy = 'created_at', sortOrder = 'desc', visibility }: {
+export function getCollections({ userId, page, limit, title = '', sortBy = 'created_at', sortOrder = 'desc', visibility, isFeatured }: {
   userId?: string; page: number; limit: number; title?: string; sortBy?: CollectionSort;
-  sortOrder?: 'asc' | 'desc'; visibility?: 'public' | 'private';
+  sortOrder?: 'asc' | 'desc'; visibility?: 'public' | 'private'; isFeatured?: boolean;
 }, signal?: AbortSignal) {
   const params = new URLSearchParams({ page: String(page), limit: String(limit), sortBy, sortOrder });
   if (userId) params.set('userId', userId);
   if (title.trim()) params.set('title', title.trim());
   if (visibility) params.set('visibility', visibility);
+  if (isFeatured !== undefined) params.set('is_featured', String(isFeatured));
   return request<CollectionsResult>(`api/collections?${params}`, 'GET', undefined, signal);
 }
 export const getCollection = (id: string, signal?: AbortSignal) => request<CollectionDetails>(`api/collections/${encodeURIComponent(id)}`, 'GET', undefined, signal);

@@ -38,7 +38,7 @@ function HomePage(){
         <main className="homePage pb-10">
             <HomeBanner />
 
-            <ItemSlider props={{type: 5}} />
+            <ItemSlider showFeaturedCollections props={{type: 5}} />
             <ItemSlider props={{type: 2, limit: 6}} />
             <ItemSlider props={{type: 1}} showLatestPosts />
         </main>
