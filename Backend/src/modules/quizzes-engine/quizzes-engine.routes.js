@@ -5,6 +5,7 @@ import quizzesRoutes from './quizzes/quizzes.routes.js';
 import quizRequirementsRoutes from './quiz-requirements/quiz-requirements.routes.js';
 import quizAttemptsRoutes from './quiz-attempts/quiz-attempts.routes.js';
 import quizQuestionsRoutes from './quiz-questions/quiz-questions.routes.js';
+import quizSourcesRoutes from './quiz-sources/quiz-sources.routes.js';
 
 const router = express.Router();
 
@@ -12,6 +13,7 @@ router.use('/questions', questionsRoutes);
 router.use('/question-groups', questionGroupsRoutes);
 router.use('/quiz-requirements', quizRequirementsRoutes);
 router.use('/:quizId/questions', quizQuestionsRoutes);
+router.use('/:quizId/sources', quizSourcesRoutes);
 router.use('/', quizAttemptsRoutes);
 // Keep the root quiz resource after the more specific submodule routes.
 router.use('/', quizzesRoutes);
