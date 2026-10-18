@@ -33,7 +33,7 @@
     "test:question-groups": "node --experimental-test-module-mocks --test tests/question-groups.test.js tests/question-groups-db.test.js",
     "test:quizzes": "node --experimental-test-module-mocks --test tests/quizzes.test.js tests/quizzes-db.test.js",
     "test:quiz-requirements": "node --experimental-test-module-mocks --test tests/quiz-requirements.test.js tests/quiz-requirements-db.test.js",
-    "test:quiz-attempts": "node --experimental-test-module-mocks --test tests/quiz-attempts-db.test.js tests/quiz-eligibility.test.js tests/quiz-eligibility-db.test.js",
+    "test:quiz-attempts": "node --experimental-test-module-mocks --test tests/quiz-attempts-db.test.js tests/quiz-eligibility.test.js tests/quiz-eligibility-db.test.js tests/quiz-attempt-start.test.js tests/quiz-attempt-start-db.test.js",
     "test:quiz-questions": "node --experimental-test-module-mocks --test tests/quiz-questions.test.js tests/quiz-questions-db.test.js",
     "test:quiz-sources": "node --experimental-test-module-mocks --test tests/quiz-sources.test.js tests/quiz-sources-db.test.js",
     "start": "node src/server.js",
