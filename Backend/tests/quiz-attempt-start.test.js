@@ -54,7 +54,7 @@ test('selection is random independently of display ordering and never mutates th
   assert.throws(() => selectAttemptQuestions(pool, [], settings(4), stable), { status: 422 });
 });
 
-test('snapshots preserve stable answer IDs and shuffle positions; public output strips every answer key and explanation', () => {
+test('snapshots preserve answer IDs and shuffle positions; public output contains no questions', () => {
   const question = {
     type: 'matching', content: 'Match', explanation: 'secret explanation', options: [],
     matching_options: [{ option_no: 1, content: 'A', position: 1 }, { option_no: 2, content: 'B', position: 2 }],
@@ -65,8 +65,9 @@ test('snapshots preserve stable answer IDs and shuffle positions; public output 
   assert.equal(snapshots[0].question_snapshot.matching_options[0].position, 1);
   assert.equal(snapshots[0].question_snapshot.matching_items[0].correct_option_no, 1);
   assert.equal(question.matching_options[0].option_no, 1);
-  const response = publicAttempt({ settings_snapshot: { scoring_mode: 'partial_credit' } }, snapshots);
+  const response = publicAttempt({ settings_snapshot: { scoring_mode: 'partial_credit' }, questions: snapshots });
   assert.equal(response.settings.scoring_mode, 'partial_credit');
+  assert.equal(Object.hasOwn(response, 'questions'), false);
   assert.doesNotMatch(JSON.stringify(response), /correct_option_no|is_correct|explanation|source_group_id|question_snapshot/);
 });
 

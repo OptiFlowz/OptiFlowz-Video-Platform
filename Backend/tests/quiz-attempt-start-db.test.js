@@ -116,7 +116,7 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
     }
   });
 
-  await t.test('creation persists complete snapshots, point weights and times, returning no answer keys', async () => {
+  await t.test('creation persists complete snapshots, point weights and times, returning no questions', async () => {
     const id = await quiz();
     const a = await question(id, { position: 2, points: 2.25 });
     const b = await question(id, { position: 1, points: 3.5, type: 'matching' });
@@ -125,18 +125,19 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
     assert.equal(response.cache, 'private, no-store');
     assert.equal(response.body.attempt_no, 1);
     assert.equal(response.body.status, 'in_progress');
-    assert.deepEqual(response.body.questions.map(q => q.question_id), [b, a]);
-    assert.deepEqual(response.body.questions.map(q => q.question_no), [1, 2]);
-    assert.deepEqual(response.body.questions.map(q => q.max_points), [3.5, 2.25]);
+    assert.equal(Object.hasOwn(response.body, 'questions'), false);
     assert.equal(new Date(response.body.expires_at) - new Date(response.body.started_at), 120000);
     assert.equal(response.body.settings.scoring_mode, 'exact_match');
-    assert.doesNotMatch(JSON.stringify(response.body.questions), /is_correct|correct_option_no|explanation|SECRET|source_group_id/);
+    assert.doesNotMatch(JSON.stringify(response.body), /is_correct|correct_option_no|SECRET|source_group_id|question_snapshot/);
     const attempt = (await admin.query('SELECT * FROM quiz_attempts WHERE id=$1', [response.body.id])).rows[0];
     assert.equal(attempt.user_id, participant);
     assert.equal(attempt.max_points, '5.75');
     assert.equal(attempt.earned_points, null);
     assert.deepEqual(attempt.settings_snapshot, response.body.settings);
     const saved = await savedQuestions(attempt.id);
+    assert.deepEqual(saved.map(q => q.question_id), [b, a]);
+    assert.deepEqual(saved.map(q => q.question_no), [1, 2]);
+    assert.deepEqual(saved.map(q => Number(q.max_points)), [3.5, 2.25]);
     assert.equal(saved[0].question_snapshot.matching_items[0].correct_option_no, 2);
     assert.equal(saved[1].question_snapshot.options[0].is_correct, true);
     assert.equal(saved[1].question_snapshot.explanation, 'SECRET explanation');
@@ -153,13 +154,17 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
     const video = randomUUID();
     await admin.query('INSERT INTO videos VALUES ($1,200)', [video]);
     await admin.query('INSERT INTO quiz_requirements(quiz_id,video_id,min_watch_seconds) VALUES ($1,$2,100)', [id, video]);
+    const beforeResume = await savedQuestions(initial.body.id);
     const resumed = await request(id);
     assert.equal(resumed.status, 200);
     assert.equal(resumed.body.id, initial.body.id);
     assert.deepEqual(resumed.body.settings, initial.body.settings);
-    assert.equal(resumed.body.questions[0].content, 'Original content');
-    assert.equal(resumed.body.questions[0].question_id, null);
-    assert.equal(resumed.body.questions[0].options[0].content, 'A');
+    assert.equal(Object.hasOwn(resumed.body, 'questions'), false);
+    const saved = await savedQuestions(initial.body.id);
+    assert.deepEqual(saved, beforeResume);
+    assert.equal(saved[0].question_snapshot.content, 'Original content');
+    assert.equal(saved[0].question_id, null);
+    assert.equal(saved[0].question_snapshot.options[0].content, 'A');
     assert.equal(await totalAttempts(id), 1);
   });
 
@@ -251,6 +256,7 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
     assert.equal(rows.filter(q => q.question_snapshot.source_group_id === left).length, 2);
     assert.equal(rows.filter(q => q.question_snapshot.source_group_id === right).length, 1);
     assert.deepEqual((await request(id)).body, initial.body);
+    assert.deepEqual(await savedQuestions(initial.body.id), rows);
   });
 
   await t.test('concurrent requests create exactly one attempt and return it to every caller', async () => {
@@ -259,7 +265,8 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
     const results = await Promise.all(Array.from({ length: 4 }, () => request(id)));
     assert.deepEqual(results.map(r => r.status).sort(), [200, 200, 200, 201]);
     assert.equal(new Set(results.map(r => r.body.id)).size, 1);
-    assert.ok(results.every(r => JSON.stringify(r.body.questions) === JSON.stringify(results[0].body.questions)));
+    assert.ok(results.every(r => !Object.hasOwn(r.body, 'questions')));
+    assert.equal((await savedQuestions(results[0].body.id)).length, 1);
     assert.equal(await totalAttempts(id), 1);
     await admin.query("UPDATE quiz_attempts SET status='submitted' WHERE quiz_id=$1", [id]);
     assert.deepEqual((await Promise.all([request(id), request(id)])).map(r => r.status), [409, 409]);

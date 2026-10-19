@@ -4,7 +4,7 @@ import { quizEligibilitySchema, requireQuizAttemptUser } from '../helpers/quiz-a
 import { areQuizRequirementsMet } from '../../quiz-requirements/repository/quiz-requirements.repository.js';
 import {
   lockAttemptCreation, lockQuizForAttempt, getActiveAttempt, getAttemptHistory,
-  getAttemptQuestionPool, getAttemptSources, createAttempt, createAttemptQuestions, getAttemptQuestions,
+  getAttemptQuestionPool, getAttemptSources, createAttempt, createAttemptQuestions,
 } from '../repository/quiz-attempts.repository.js';
 import {
   attemptError, snapshotQuizSettings, validateCandidates, selectAttemptQuestions, snapshotAttemptQuestions, publicAttempt,
@@ -31,9 +31,8 @@ export async function startQuizAttemptInternal(quizId, userId) {
         // and block creation instead of bypassing the one-active-attempt index.
         throw attemptError(409, 'ATTEMPT_FINALIZATION_PENDING', 'The expired attempt must be finalized before a new attempt can start');
       }
-      const questions = await getAttemptQuestions(client, active.id);
       await client.query('COMMIT');
-      return { created: false, attempt: publicAttempt(active, questions) };
+      return { created: false, attempt: publicAttempt(active) };
     }
     if (quiz.status !== 'published') throw attemptError(409, 'QUIZ_UNAVAILABLE', 'The quiz is not available for a new attempt');
     if (!await areQuizRequirementsMet(client, input.quizId, input.userId)) {
@@ -61,7 +60,7 @@ export async function startQuizAttemptInternal(quizId, userId) {
     const attempt = await createAttempt(client, quiz.id, input.userId, history.last_attempt_no + 1, settings, (cents / 100).toFixed(2));
     await createAttemptQuestions(client, attempt.id, questions);
     await client.query('COMMIT');
-    return { created: true, attempt: publicAttempt(attempt, questions) };
+    return { created: true, attempt: publicAttempt(attempt) };
   } catch (error) {
     await client.query('ROLLBACK').catch(() => {});
     if (error.code === '23505' && ['quiz_attempts_one_active', 'quiz_attempts_quiz_user_attempt_no_unique'].includes(error.constraint)) {

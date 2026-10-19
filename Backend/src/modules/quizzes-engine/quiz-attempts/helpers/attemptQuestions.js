@@ -147,23 +147,12 @@ export function snapshotAttemptQuestions(selected, settings, random = randomInt)
   }));
 }
 
-// Explicit allowlists: answer keys and explanations remain server-side even when
-// feedback is configured for after_check. They are not available at attempt start.
-export function publicAttempt(attempt, questions) {
+// Starting or resuming returns only attempt metadata and its saved settings.
+// Question snapshots stay in the database for a separate retrieval endpoint.
+export function publicAttempt(attempt) {
   return {
     id: attempt.id, quiz_id: attempt.quiz_id, attempt_no: attempt.attempt_no, status: attempt.status,
     started_at: attempt.started_at, expires_at: attempt.expires_at,
     settings: attempt.settings_snapshot,
-    questions: questions.map(row => {
-      const question = row.question_snapshot;
-      const option = value => ({ option_no: value.option_no, content: value.content, position: value.position });
-      return {
-        question_no: row.question_no, question_id: row.question_id, max_points: Number(row.max_points),
-        type: question.type, content: question.content,
-        options: question.options.map(option),
-        matching_options: question.matching_options.map(option),
-        matching_items: question.matching_items.map(item => ({ item_no: item.item_no, content: item.content, position: item.position })),
-      };
-    }),
   };
 }
