@@ -1,3 +1,4 @@
+import { installQuizPermissions } from './helpers/quiz-permissions-schema.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
@@ -21,6 +22,7 @@ test('quiz candidate migration and CRUD against session-local PostgreSQL tables'
   }
   const owner = randomUUID(), other = randomUUID();
   await client.query('INSERT INTO users(id) VALUES ($1),($2)', [owner, other]);
+  await installQuizPermissions(client);
   let failAfterInsert = false, releases = 0;
   const query = async (sql, params) => {
     const result = await client.query(sql.replaceAll('public.', 'pg_temp.'), params);

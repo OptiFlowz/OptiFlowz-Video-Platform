@@ -1,3 +1,4 @@
+import { installQuizPermissions } from './helpers/quiz-permissions-schema.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
@@ -19,6 +20,7 @@ test('question group CRUD against PostgreSQL session-local tables', { skip: !pro
   }
   const userId = randomUUID(), otherUserId = randomUUID();
   await client.query('INSERT INTO pg_temp.users(id) VALUES ($1),($2)', [userId, otherUserId]);
+  await installQuizPermissions(client);
   let failSync = false, releases = 0;
   const query = async (sql, params) => {
     const result = await client.query(sql.replaceAll('public.', 'pg_temp.'), params);
@@ -167,17 +169,18 @@ test('question group CRUD against PostgreSQL session-local tables', { skip: !pro
   });
 
   await scenario('invalid metadata and membership payloads return 400, and membership POST is not registered', async () => {
+    const { group: existing } = await request('POST', '', { name: 'Existing' });
     for (const [method, path, body] of [
       ['POST', '', {}], ['POST', '', { name: ' ' }], ['POST', '', { name: 'x'.repeat(256) }],
       ['POST', '', { name: 'A', user_id: otherUserId }], ['POST', '', { name: 'A', question_ids: [] }],
       ['GET', '/invalid'], ['DELETE', '/invalid'], ['PATCH', '/invalid', { name: 'A' }],
-      ['PATCH', `/${randomUUID()}`, {}], ['PATCH', `/${randomUUID()}`, { questions: [] }],
+      ['PATCH', `/${existing.id}`, {}], ['PATCH', `/${existing.id}`, { questions: [] }],
       ['GET', '?page=0'], ['GET', '?limit=101'], ['GET', '?offset=0'],
       ['GET', '?sortBy=invalid'], ['GET', '?sortOrder=invalid'],
     ]) assert.equal((await request(method, path, body)).status, 400, `${method} ${path}`);
     const response = await fetch(`${baseUrl}/${randomUUID()}/questions`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
     assert.equal(response.status, 404);
-    assert.equal((await client.query('SELECT count(*)::int AS n FROM pg_temp.question_groups')).rows[0].n, 0);
+    assert.equal((await client.query('SELECT count(*)::int AS n FROM pg_temp.question_groups')).rows[0].n, 1);
   });
 
   await scenario('deleting a group clears its memberships and preserves questions and other groups', async () => {

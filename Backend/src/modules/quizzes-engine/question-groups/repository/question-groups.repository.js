@@ -24,7 +24,7 @@ export async function listQuestionGroups(database, userId, { name, sortBy, sortO
   const { rows } = await database.query(`
     WITH owned_groups AS (
       SELECT ${GROUP_COLUMNS} FROM public.question_groups
-      WHERE user_id = $1 AND ($2::text IS NULL OR name ILIKE $2)
+      WHERE ($1::uuid IS NULL OR user_id = $1) AND ($2::text IS NULL OR name ILIKE $2)
     ), page AS (
       SELECT * FROM owned_groups ORDER BY ${ordering} LIMIT $3 OFFSET $4
     )

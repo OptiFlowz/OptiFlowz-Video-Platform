@@ -14,14 +14,14 @@ function handleError(res, error, action) {
 
 export async function createQuizRequirement(req, res) {
   try {
-    const requirement = await createQuizRequirementInternal(req.body, req.user?.sub);
+    const requirement = await createQuizRequirementInternal(req.body, req.resourceOwnerId ?? req.user?.sub);
     return sendSuccess(res, { requirement }, 201);
   } catch (error) { return handleError(res, error, 'createQuizRequirement'); }
 }
 
 export async function getQuizRequirements(req, res) {
   try {
-    return sendSuccess(res, await getQuizRequirementsInternal(req.query, req.user?.sub));
+    return sendSuccess(res, await getQuizRequirementsInternal(req.query, req.resourceOwnerId ?? req.user?.sub, req.resourceAccess, req.user?.sub));
   } catch (error) { return handleError(res, error, 'getQuizRequirements'); }
 }
 
@@ -42,20 +42,20 @@ export async function getQuizRequirementsProgress(req, res) {
 
 export async function getQuizRequirement(req, res) {
   try {
-    const requirement = await getQuizRequirementInternal(req.params, req.user?.sub);
+    const requirement = await getQuizRequirementInternal(req.params, req.resourceOwnerId ?? req.user?.sub, req.user?.sub);
     return sendSuccess(res, { requirement });
   } catch (error) { return handleError(res, error, 'getQuizRequirement'); }
 }
 
 export async function updateQuizRequirement(req, res) {
   try {
-    const requirement = await updateQuizRequirementInternal(req.params, req.body, req.user?.sub);
+    const requirement = await updateQuizRequirementInternal(req.params, req.body, req.resourceOwnerId ?? req.user?.sub);
     return sendSuccess(res, { requirement });
   } catch (error) { return handleError(res, error, 'updateQuizRequirement'); }
 }
 
 export async function deleteQuizRequirement(req, res) {
   try {
-    return sendSuccess(res, await deleteQuizRequirementInternal(req.params, req.user?.sub));
+    return sendSuccess(res, await deleteQuizRequirementInternal(req.params, req.resourceOwnerId ?? req.user?.sub));
   } catch (error) { return handleError(res, error, 'deleteQuizRequirement'); }
 }

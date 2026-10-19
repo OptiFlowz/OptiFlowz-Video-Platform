@@ -1,3 +1,4 @@
+import { installQuizPermissions } from './helpers/quiz-permissions-schema.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
@@ -72,6 +73,7 @@ test('quiz CRUD and existing submodule routing against PostgreSQL session-local 
   }
   const userId = randomUUID(), otherUserId = randomUUID();
   await client.query('INSERT INTO pg_temp.users(id) VALUES ($1),($2)', [userId, otherUserId]);
+  await installQuizPermissions(client);
   const query = (sql, params) => client.query(sql.replaceAll('public.', 'pg_temp.'), params);
   mock.module(new URL('../src/database/index.js', import.meta.url).href, { namedExports: { writePool: { query } } });
   const { default: router } = await import('../src/modules/quizzes-engine/quizzes-engine.routes.js');
@@ -272,16 +274,17 @@ test('quiz CRUD and existing submodule routing against PostgreSQL session-local 
   });
 
   await scenario('invalid settings, readonly fields and malformed queries return 400 without writes', async () => {
+    const { quiz: existing } = await request('POST', '', minimal);
     for (const [method, path, payload] of [
       ['POST', '', {}], ['POST', '', { ...minimal, question_count: 0 }], ['POST', '', { ...minimal, max_attempts: 0 }],
       ['POST', '', { ...minimal, passing_score_percentage: 100.01 }], ['POST', '', { ...minimal, passing_score_percentage: 50.555 }],
       ['POST', '', { ...minimal, user_id: otherUserId }], ['POST', '', { ...minimal, group_ids: [] }],
-      ['PATCH', `/${randomUUID()}`, {}], ['PATCH', `/${randomUUID()}`, { updated_at: '2026-01-01' }],
-      ['PATCH', `/${randomUUID()}`, { time_limit_seconds: -1 }], ['GET', '/invalid'], ['DELETE', '/invalid'],
+      ['PATCH', `/${existing.id}`, {}], ['PATCH', `/${existing.id}`, { updated_at: '2026-01-01' }],
+      ['PATCH', `/${existing.id}`, { time_limit_seconds: -1 }], ['GET', '/invalid'], ['DELETE', '/invalid'],
       ['GET', '?page=0'], ['GET', '?limit=101'], ['GET', '?status=invalid'],
       ['GET', '?sortBy=invalid'], ['GET', '?sortOrder=invalid'], ['GET', '?offset=0'],
     ]) assert.equal((await request(method, path, payload)).status, 400, `${method} ${path}`);
-    assert.equal((await client.query('SELECT count(*)::int AS n FROM pg_temp.quizzes')).rows[0].n, 0);
+    assert.equal((await client.query('SELECT count(*)::int AS n FROM pg_temp.quizzes')).rows[0].n, 1);
   });
 
   await scenario('quiz deletion is owner scoped and preserves questions/groups submodule routes', async () => {

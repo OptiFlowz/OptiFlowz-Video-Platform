@@ -13,14 +13,14 @@ function handleError(res, error, action) {
 
 export async function createQuizSource(req, res) {
   try {
-    const result = await createQuizSourceInternal(req.params, req.body, req.user?.sub);
+    const result = await createQuizSourceInternal(req.params, req.body, req.resourceOwnerId ?? req.user?.sub);
     return sendSuccess(res, { source: result }, 201);
   } catch (error) { return handleError(res, error, 'createQuizSource'); }
 }
 
 export async function replaceQuizSources(req, res) {
   try {
-    const result = await replaceQuizSourcesInternal(req.params, req.body, req.user?.sub);
+    const result = await replaceQuizSourcesInternal(req.params, req.body, req.resourceOwnerId ?? req.user?.sub);
     return sendSuccess(res, result, 200);
   } catch (error) { return handleError(res, error, 'replaceQuizSources'); }
 }
@@ -28,7 +28,7 @@ export async function replaceQuizSources(req, res) {
 export async function getQuizSources(req, res) {
   res.set('Cache-Control', 'private, no-store');
   try {
-    const result = await getQuizSourcesInternal(req.params, req.query, req.user?.sub);
+    const result = await getQuizSourcesInternal(req.params, req.query, req.resourceOwnerId ?? req.user?.sub);
     return sendSuccess(res, result, 200);
   } catch (error) { return handleError(res, error, 'getQuizSources'); }
 }
@@ -36,21 +36,21 @@ export async function getQuizSources(req, res) {
 export async function getQuizSource(req, res) {
   res.set('Cache-Control', 'private, no-store');
   try {
-    const result = await getQuizSourceInternal(req.params, req.user?.sub);
+    const result = await getQuizSourceInternal(req.params, req.resourceOwnerId ?? req.user?.sub);
     return sendSuccess(res, { source: result }, 200);
   } catch (error) { return handleError(res, error, 'getQuizSource'); }
 }
 
 export async function updateQuizSource(req, res) {
   try {
-    const result = await updateQuizSourceInternal(req.params, req.body, req.user?.sub);
+    const result = await updateQuizSourceInternal(req.params, req.body, req.resourceOwnerId ?? req.user?.sub);
     return sendSuccess(res, { source: result }, 200);
   } catch (error) { return handleError(res, error, 'updateQuizSource'); }
 }
 
 export async function deleteQuizSource(req, res) {
   try {
-    const result = await deleteQuizSourceInternal(req.params, req.user?.sub);
+    const result = await deleteQuizSourceInternal(req.params, req.resourceOwnerId ?? req.user?.sub);
     return sendSuccess(res, result, 200);
   } catch (error) { return handleError(res, error, 'deleteQuizSource'); }
 }

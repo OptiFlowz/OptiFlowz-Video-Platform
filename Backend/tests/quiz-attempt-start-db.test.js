@@ -1,3 +1,4 @@
+import { installQuizPermissions } from './helpers/quiz-permissions-schema.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
@@ -31,6 +32,7 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
   }
   const owner = randomUUID(), participant = randomUUID(), other = randomUUID();
   await admin.query('INSERT INTO users(id) VALUES ($1),($2),($3)', [owner, participant, other]);
+  await installQuizPermissions(admin, { schema });
   let failQuestions = false, released = 0;
   const queryOn = database => async (sql, params) => {
     const result = await database.query(sql.replaceAll('public.', `${schema}.`), params);

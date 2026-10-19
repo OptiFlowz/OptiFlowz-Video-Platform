@@ -31,7 +31,7 @@ export async function listQuestions(database, userId, { type, limit, offset, sor
   const { rows } = await database.query(`
     WITH owned_questions AS (
       SELECT ${QUESTION_COLUMNS} FROM public.questions
-      WHERE user_id = $1 AND ($2::public.question_type IS NULL OR type = $2)
+      WHERE ($1::uuid IS NULL OR user_id = $1) AND ($2::public.question_type IS NULL OR type = $2)
     ), page AS (
       SELECT * FROM owned_questions ORDER BY ${orderByField} ${orderByDirection}, id ASC LIMIT $3 OFFSET $4
     )

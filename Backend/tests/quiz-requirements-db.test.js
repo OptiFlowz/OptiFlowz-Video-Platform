@@ -1,3 +1,4 @@
+import { installQuizPermissions } from './helpers/quiz-permissions-schema.js';
 import assert from 'node:assert/strict';
 import { randomUUID, generateKeyPairSync } from 'node:crypto';
 import { once } from 'node:events';
@@ -34,6 +35,7 @@ test('requirement CRUD, authorization, video cards and pagination against sessio
   const ownVideo = randomUUID(), publicVideo = randomUUID(), privateVideo = randomUUID();
   const pendingVideo = randomUUID(), scheduledVideo = randomUUID(), unknownVideo = randomUUID(), signedVideo = randomUUID();
   await client.query("INSERT INTO users(id,full_name) VALUES ($1,'Owner'),($2,'Other')", [owner, other]);
+  await installQuizPermissions(client);
   await client.query("INSERT INTO pg_temp.quizzes(id,user_id,title,question_count,status) VALUES ($1,$4,'A',1,'published'),($2,$4,'B',1,'published'),($3,$5,'Foreign',1,'published')", [quizA, quizB, foreignQuiz, owner, other]);
   for (const [id, uploader, title, visibility, duration, policy] of [
     [ownVideo, owner, 'Own private', 'private', 120, 'public'],

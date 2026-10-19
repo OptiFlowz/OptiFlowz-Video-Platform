@@ -44,7 +44,7 @@ export async function listQuizzes(database, userId, { title, status, limit, offs
   const { rows } = await database.query(`
     WITH owned_quizzes AS (
       SELECT ${QUIZ_COLUMNS} FROM public.quizzes
-      WHERE user_id = $1 AND ($2::text IS NULL OR title ILIKE $2)
+      WHERE ($1::uuid IS NULL OR user_id = $1) AND ($2::text IS NULL OR title ILIKE $2)
         AND ($3::public.quiz_status IS NULL OR status = $3)
     ), page AS (
       SELECT * FROM owned_quizzes ORDER BY ${ordering} LIMIT $4 OFFSET $5

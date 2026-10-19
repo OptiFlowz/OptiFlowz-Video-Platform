@@ -3,11 +3,11 @@ import { validateOrThrow } from '../../../../common/input.validation.js';
 import { listQuestionGroupsSchema, requireQuestionGroupUser } from '../helpers/question-groups.validation.js';
 import { listQuestionGroups } from '../repository/question-groups.repository.js';
 
-export async function getQuestionGroupsInternal(query, userId) {
+export async function getQuestionGroupsInternal(query, userId, access) {
   requireQuestionGroupUser(userId);
   const { name, page, limit, sortBy, sortOrder } = validateOrThrow(listQuestionGroupsSchema.safeParse(query));
   const offset = (page - 1) * limit;
-  const { groups, total } = await listQuestionGroups(writePool, userId, { name, limit, offset, sortBy, sortOrder });
+  const { groups, total } = await listQuestionGroups(writePool, access?.canAccessAny === true ? null : userId, { name, limit, offset, sortBy, sortOrder });
   const totalPages = Math.ceil(total / limit);
   return {
     groups,

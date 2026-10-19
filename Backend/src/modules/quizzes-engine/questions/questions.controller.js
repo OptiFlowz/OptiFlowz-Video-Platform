@@ -19,26 +19,26 @@ export async function createQuestion(req, res) {
 
 export async function getQuestions(req, res) {
   try {
-    return sendSuccess(res, await getQuestionsInternal(req.query, req.user?.sub));
+    return sendSuccess(res, await getQuestionsInternal(req.query, req.resourceOwnerId ?? req.user?.sub, req.resourceAccess));
   } catch (error) { return handleQuestionError(res, error, 'getQuestions'); }
 }
 
 export async function getQuestion(req, res) {
   try {
-    const question = await getQuestionInternal(req.params, req.user?.sub);
+    const question = await getQuestionInternal(req.params, req.resourceOwnerId ?? req.user?.sub);
     return sendSuccess(res, { question });
   } catch (error) { return handleQuestionError(res, error, 'getQuestion'); }
 }
 
 export async function updateQuestion(req, res) {
   try {
-    const question = await updateQuestionInternal(req.params, req.body, req.user?.sub);
+    const question = await updateQuestionInternal(req.params, req.body, req.resourceOwnerId ?? req.user?.sub);
     return sendSuccess(res, { question });
   } catch (error) { return handleQuestionError(res, error, 'updateQuestion'); }
 }
 
 export async function deleteQuestion(req, res) {
   try {
-    return sendSuccess(res, await deleteQuestionInternal(req.params, req.user?.sub));
+    return sendSuccess(res, await deleteQuestionInternal(req.params, req.resourceOwnerId ?? req.user?.sub));
   } catch (error) { return handleQuestionError(res, error, 'deleteQuestion'); }
 }

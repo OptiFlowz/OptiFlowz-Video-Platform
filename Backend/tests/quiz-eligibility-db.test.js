@@ -1,3 +1,4 @@
+import { installQuizPermissions } from './helpers/quiz-permissions-schema.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
@@ -21,6 +22,7 @@ test('quiz eligibility HTTP route against session-local PostgreSQL tables', { sk
   }
   const owner = randomUUID(), participant = randomUUID(), inactive = randomUUID();
   await client.query('INSERT INTO users(id) VALUES ($1),($2),($3)', [owner, participant, inactive]);
+  await installQuizPermissions(client);
   await client.query("UPDATE users SET status='inactive' WHERE id=$1", [inactive]);
   const queries = [];
   const query = (sql, params) => {

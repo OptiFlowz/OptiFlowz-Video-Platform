@@ -1,3 +1,4 @@
+import { installQuizPermissions } from './helpers/quiz-permissions-schema.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
@@ -29,6 +30,7 @@ test('source migration, HTTP CRUD and concurrent allocations in an isolated Post
   }
   const owner = randomUUID(), other = randomUUID();
   await admin.query('INSERT INTO users(id) VALUES ($1),($2)', [owner, other]);
+  await installQuizPermissions(admin, { schema });
   let releases = 0;
   const queryOn = database => (sql, params) => database.query(sql.replaceAll('public.', `${schema}.`), params);
   mock.module(new URL('../src/database/index.js', import.meta.url).href, { namedExports: { writePool: {

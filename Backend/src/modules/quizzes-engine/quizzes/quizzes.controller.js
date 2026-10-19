@@ -19,26 +19,26 @@ export async function createQuiz(req, res) {
 
 export async function getQuizzes(req, res) {
   try {
-    return sendSuccess(res, await getQuizzesInternal(req.query, req.user?.sub));
+    return sendSuccess(res, await getQuizzesInternal(req.query, req.resourceOwnerId ?? req.user?.sub, req.resourceAccess));
   } catch (error) { return handleQuizError(res, error, 'getQuizzes'); }
 }
 
 export async function getQuiz(req, res) {
   try {
-    const quiz = await getQuizInternal(req.params, req.user?.sub);
+    const quiz = await getQuizInternal(req.params, req.resourceOwnerId ?? req.user?.sub);
     return sendSuccess(res, { quiz });
   } catch (error) { return handleQuizError(res, error, 'getQuiz'); }
 }
 
 export async function updateQuiz(req, res) {
   try {
-    const quiz = await updateQuizInternal(req.params, req.body, req.user?.sub);
+    const quiz = await updateQuizInternal(req.params, req.body, req.resourceOwnerId ?? req.user?.sub);
     return sendSuccess(res, { quiz });
   } catch (error) { return handleQuizError(res, error, 'updateQuiz'); }
 }
 
 export async function deleteQuiz(req, res) {
   try {
-    return sendSuccess(res, await deleteQuizInternal(req.params, req.user?.sub));
+    return sendSuccess(res, await deleteQuizInternal(req.params, req.resourceOwnerId ?? req.user?.sub));
   } catch (error) { return handleQuizError(res, error, 'deleteQuiz'); }
 }

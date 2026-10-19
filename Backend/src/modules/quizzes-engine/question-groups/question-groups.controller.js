@@ -20,32 +20,32 @@ export async function createQuestionGroup(req, res) {
 
 export async function getQuestionGroups(req, res) {
   try {
-    return sendSuccess(res, await getQuestionGroupsInternal(req.query, req.user?.sub));
+    return sendSuccess(res, await getQuestionGroupsInternal(req.query, req.resourceOwnerId ?? req.user?.sub, req.resourceAccess));
   } catch (error) { return handleGroupError(res, error, 'getQuestionGroups'); }
 }
 
 export async function getQuestionGroup(req, res) {
   try {
-    const group = await getQuestionGroupInternal(req.params, req.user?.sub);
+    const group = await getQuestionGroupInternal(req.params, req.resourceOwnerId ?? req.user?.sub);
     return sendSuccess(res, { group });
   } catch (error) { return handleGroupError(res, error, 'getQuestionGroup'); }
 }
 
 export async function updateQuestionGroup(req, res) {
   try {
-    const group = await updateQuestionGroupInternal(req.params, req.body, req.user?.sub);
+    const group = await updateQuestionGroupInternal(req.params, req.body, req.resourceOwnerId ?? req.user?.sub);
     return sendSuccess(res, { group });
   } catch (error) { return handleGroupError(res, error, 'updateQuestionGroup'); }
 }
 
 export async function deleteQuestionGroup(req, res) {
   try {
-    return sendSuccess(res, await deleteQuestionGroupInternal(req.params, req.user?.sub));
+    return sendSuccess(res, await deleteQuestionGroupInternal(req.params, req.resourceOwnerId ?? req.user?.sub));
   } catch (error) { return handleGroupError(res, error, 'deleteQuestionGroup'); }
 }
 
 export async function syncQuestionGroupQuestions(req, res) {
   try {
-    return sendSuccess(res, await syncQuestionGroupQuestionsInternal(req.params, req.body, req.user?.sub));
+    return sendSuccess(res, await syncQuestionGroupQuestionsInternal(req.params, req.body, req.resourceOwnerId ?? req.user?.sub));
   } catch (error) { return handleGroupError(res, error, 'syncQuestionGroupQuestions'); }
 }

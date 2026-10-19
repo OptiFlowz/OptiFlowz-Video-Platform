@@ -105,7 +105,7 @@ export async function listQuizRequirements(database, userId, { quiz_id, sortBy, 
     WITH owned_requirements AS (
       SELECT ${COLUMNS} FROM public.quiz_requirements r
       JOIN public.quizzes q ON q.id = r.quiz_id
-      WHERE q.user_id = $1 AND ($2::uuid IS NULL OR r.quiz_id = $2)
+      WHERE ($1::uuid IS NULL OR q.user_id = $1) AND ($2::uuid IS NULL OR r.quiz_id = $2)
     ), page AS (
       SELECT * FROM owned_requirements ORDER BY ${ordering} LIMIT $3 OFFSET $4
     )

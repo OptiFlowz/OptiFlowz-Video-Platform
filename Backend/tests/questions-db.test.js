@@ -1,3 +1,4 @@
+import { installQuizPermissions } from './helpers/quiz-permissions-schema.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
@@ -18,6 +19,7 @@ test('question CRUD against PostgreSQL session-local tables', { skip: !process.e
   await client.query(migration.split('-- Down Migration')[0].replaceAll('public.', 'pg_temp.'));
   const userId = randomUUID(), otherUserId = randomUUID();
   await client.query('INSERT INTO pg_temp.users(id) VALUES ($1), ($2)', [userId, otherUserId]);
+  await installQuizPermissions(client);
   const { rows: [legacy] } = await client.query(
     "INSERT INTO pg_temp.questions(user_id,type,content) VALUES ($1,'matching','Before timestamp migration') RETURNING id", [otherUserId],
   );
