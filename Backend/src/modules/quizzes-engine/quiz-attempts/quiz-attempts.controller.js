@@ -1,6 +1,17 @@
 import { sendSuccess, sendError } from '../../../common/response.js';
 import { getQuizEligibilityInternal } from './handlers/getQuizEligibility.js';
 import { startQuizAttemptInternal } from './handlers/startQuizAttempt.js';
+import { getQuizAttemptsInternal } from './handlers/getQuizAttempts.js';
+
+export async function getQuizAttempts(req, res) {
+  res.set('Cache-Control', 'private, no-store');
+  try {
+    return sendSuccess(res, await getQuizAttemptsInternal(req.params.quizId, req.query, req.user?.sub));
+  } catch (error) {
+    if (!error.status || error.status >= 500) console.error('getQuizAttempts error:', error);
+    return sendError(res, error.status && error.status < 500 ? error.message : 'Unable to list quiz attempts', error.status || 500);
+  }
+}
 
 export async function startQuizAttempt(req, res) {
   res.set('Cache-Control', 'private, no-store');

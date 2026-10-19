@@ -65,6 +65,12 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
     });
     return { status: response.status, cache: response.headers.get('cache-control'), body: await response.json() };
   }
+  async function list(id, query = '', bearer = token) {
+    const response = await fetch(`http://127.0.0.1:${server.address().port}/api/quizzes/${id}/attempts${query}`, {
+      headers: bearer ? { Authorization: `Bearer ${bearer}` } : {},
+    });
+    return { status: response.status, cache: response.headers.get('cache-control'), body: await response.json() };
+  }
   async function quiz({ count = 2, limit = null, time = 120, status = 'published' } = {}) {
     const id = randomUUID();
     await admin.query(`INSERT INTO quizzes(id,user_id,title,status,question_count,max_attempts,time_limit_seconds,shuffle_questions,shuffle_options)
@@ -286,5 +292,71 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
     const retried = await request(id);
     assert.equal(retried.status, 201);
     assert.equal(retried.body.attempt_no, 1);
+  });
+
+  await t.test('attempt listing scopes to authenticated participant and quiz, paginates, sorts and filters all statuses', async () => {
+    const id = await quiz({ count: 1 });
+    await question(id);
+    await historical(id, 'submitted', 1);
+    await historical(id, 'timed_out', 2);
+    await historical(id, 'cancelled', 3);
+    await historical(id, 'submitted', 99, other);
+    const unrelated = await quiz({ count: 1 });
+    await historical(unrelated, 'submitted', 88);
+    const active = await request(id);
+    assert.equal(active.status, 201);
+    await admin.query("UPDATE quiz_attempts SET started_at = '2026-01-01T00:00:00Z'::timestamptz + attempt_no * interval '1 minute' WHERE quiz_id=$1", [id]);
+    const first = await list(id, '?limit=2');
+    assert.equal(first.status, 200);
+    assert.equal(first.cache, 'private, no-store');
+    assert.deepEqual(first.body.attempts.map(a => a.attempt_no), [4, 3]);
+    assert.deepEqual(first.body.sorting, { sortBy: 'started_at', sortOrder: 'desc' });
+    assert.deepEqual(first.body.pagination, { page: 1, limit: 2, total: 4, totalPages: 2, hasNextPage: true, hasPreviousPage: false });
+    assert.ok(first.body.attempts.every(a => a.quiz_id === id && !Object.hasOwn(a, 'questions')));
+    const second = await list(id, '?limit=2&page=2&sortBy=attempt_no&sortOrder=asc');
+    assert.deepEqual(second.body.attempts.map(a => a.attempt_no), [3, 4]);
+    assert.equal(second.body.pagination.hasNextPage, false);
+    const filtered = await list(id, '?status=timed_out');
+    assert.deepEqual(filtered.body.attempts.map(a => a.attempt_no), [2]);
+    assert.equal(filtered.body.pagination.total, 1);
+    const pastEnd = await list(id, '?page=10');
+    assert.deepEqual(pastEnd.body.attempts, []);
+    assert.equal(pastEnd.body.pagination.total, 4);
+    const empty = await list(id, '', tokenFor(owner));
+    assert.deepEqual(empty.body.attempts, []);
+    assert.equal(empty.body.pagination.total, 0);
+    for (const query of ['?page=0', '?limit=101', '?status=bad', '?sortBy=score_percentage', '?sortOrder=bad', '?user_id=' + other]) {
+      assert.equal((await list(id, query)).status, 400);
+    }
+    assert.equal((await list('bad')).status, 400);
+    assert.equal((await list(randomUUID())).status, 404);
+    assert.equal((await list(id, '', null)).status, 401);
+    const noPermission = randomUUID();
+    await admin.query('INSERT INTO users(id) VALUES ($1)', [noPermission]);
+    assert.equal((await list(id, '', tokenFor(noPermission))).status, 403);
+    await admin.query("UPDATE quizzes SET status='archived' WHERE id=$1", [id]);
+    assert.equal((await list(id)).status, 404);
+    assert.equal((await list(id, '', tokenFor(owner))).status, 200);
+  });
+
+  await t.test('attempt list uses saved settings and hides unfinished or disabled final scores', async () => {
+    const id = await quiz({ count: 1 });
+    for (const [index, status] of ['submitted', 'timed_out', 'cancelled', 'in_progress'].entries()) {
+      await historical(id, status, index + 1);
+    }
+    await admin.query(`UPDATE quiz_attempts SET earned_points=7.5, max_points=10, score_percentage=75, passed=true,
+      settings_snapshot='{"show_final_score":true,"question_count":1}' WHERE quiz_id=$1`, [id]);
+    await admin.query(`UPDATE quiz_attempts SET settings_snapshot='{"show_final_score":false,"question_count":1}'
+      WHERE quiz_id=$1 AND attempt_no=2`, [id]);
+    await admin.query('UPDATE quizzes SET show_final_score=false,question_count=99 WHERE id=$1', [id]);
+    const response = await list(id, '?sortBy=attempt_no&sortOrder=asc');
+    assert.equal(response.status, 200);
+    const [visible, ...hidden] = response.body.attempts;
+    assert.equal(visible.earned_points, 7.5);
+    assert.equal(visible.score_percentage, 75);
+    assert.equal(visible.passed, true);
+    assert.equal(visible.settings.question_count, 1);
+    assert.ok(hidden.every(a => a.earned_points === null && a.score_percentage === null && a.passed === null));
+    assert.ok(response.body.attempts.every(a => !Object.hasOwn(a, 'questions') && !Object.hasOwn(a, 'settings_snapshot')));
   });
 });

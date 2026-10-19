@@ -1,3 +1,31 @@
+export async function listQuizAttempts(database, quizId, userId, { status, limit, offset, sortBy, sortOrder }) {
+  const fields = { started_at: 'started_at', finished_at: 'finished_at', attempt_no: 'attempt_no', status: 'status' };
+  const direction = sortOrder === 'asc' ? 'ASC' : 'DESC';
+  const ordering = `${fields[sortBy]} ${direction} NULLS LAST, id ASC`;
+  const { rows } = await database.query(`
+    WITH visible_quiz AS (
+      SELECT id FROM public.quizzes WHERE id = $1 AND (status = 'published' OR user_id = $2)
+    ), owned_attempts AS (
+      SELECT a.id, a.quiz_id, a.attempt_no, a.status, a.started_at, a.expires_at, a.finished_at,
+        a.max_points::double precision AS max_points, a.settings_snapshot AS settings,
+        CASE WHEN a.status IN ('submitted', 'timed_out') AND a.settings_snapshot->>'show_final_score' = 'true'
+          THEN a.earned_points::double precision END AS earned_points,
+        CASE WHEN a.status IN ('submitted', 'timed_out') AND a.settings_snapshot->>'show_final_score' = 'true'
+          THEN a.score_percentage::double precision END AS score_percentage,
+        CASE WHEN a.status IN ('submitted', 'timed_out') AND a.settings_snapshot->>'show_final_score' = 'true'
+          THEN a.passed END AS passed
+      FROM public.quiz_attempts a JOIN visible_quiz q ON q.id = a.quiz_id
+      WHERE a.user_id = $2 AND ($3::public.quiz_attempt_status IS NULL OR a.status = $3)
+    ), page AS (
+      SELECT * FROM owned_attempts ORDER BY ${ordering} LIMIT $4 OFFSET $5
+    )
+    SELECT COALESCE((SELECT jsonb_agg(to_jsonb(page) ORDER BY ${ordering}) FROM page), '[]'::jsonb) AS attempts,
+      (SELECT count(*)::integer FROM owned_attempts) AS total
+    FROM visible_quiz
+  `, [quizId, userId, status ?? null, limit, offset]);
+  return rows[0] || null;
+}
+
 export async function lockAttemptCreation(database, quizId, userId) {
   // Every start request for the same participant/quiz shares this transaction lock.
   await database.query("SELECT pg_advisory_xact_lock(hashtextextended('quiz-attempt:' || $1::text || ':' || $2::text, 0))", [quizId, userId]);
