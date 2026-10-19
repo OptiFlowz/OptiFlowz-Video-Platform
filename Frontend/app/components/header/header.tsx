@@ -49,6 +49,16 @@ function Header({ onMenuToggle, menuExpanded = false }: HeaderProps){
         : userRoleNames.includes('administrator') ? 'systemRoleAdministrator' : null;
 
     const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+    const [mobileSearchAnimated, setMobileSearchAnimated] = useState(false);
+    useEffect(() => {
+        const mobileViewport = window.matchMedia("(max-width: 650px)");
+        const resetMobileSearch = () => {
+            setMobileSearchAnimated(false);
+            setMobileSearchOpen(false);
+        };
+        mobileViewport.addEventListener("change", resetMobileSearch);
+        return () => mobileViewport.removeEventListener("change", resetMobileSearch);
+    }, []);
     const searchInputRef = useRef<HTMLInputElement>(null);
     const searchFormRef = useRef<HTMLFormElement>(null);
     const searchToggleRef = useRef<HTMLButtonElement>(null);
@@ -231,7 +241,7 @@ function Header({ onMenuToggle, menuExpanded = false }: HeaderProps){
                 </Link>
 
                 </div>
-                <form id="header-search" ref={searchFormRef} className={`appHeaderSearch${mobileSearchOpen ? " isMobileOpen" : ""}`} role="search" onSubmit={handleSearch}
+                <form id="header-search" ref={searchFormRef} className={`appHeaderSearch${mobileSearchAnimated ? " isMobileSearchAnimated" : ""}${mobileSearchOpen ? " isMobileOpen" : ""}`} role="search" onSubmit={handleSearch}
                     onKeyDown={event => { if (event.key === "Escape") voice.cancel(); }}>
                     <div className="appHeaderSearchField">
                     <input ref={searchInputRef} type="search" value={searchTerm} onChange={event => { voice.cancel(); setSearchTerm(event.target.value); }}
@@ -256,7 +266,7 @@ function Header({ onMenuToggle, menuExpanded = false }: HeaderProps){
                     )}
                     <button ref={searchToggleRef} type="button" className="appMenuToggle appMobileSearchToggle"
                         aria-label={t(mobileSearchOpen ? "close" : "searchAria")} aria-expanded={mobileSearchOpen}
-                        aria-controls="header-search" onClick={() => setMobileSearchOpen(open => !open)}>
+                        aria-controls="header-search" onClick={() => { setMobileSearchAnimated(true); setMobileSearchOpen(open => !open); }}>
                         {mobileSearchOpen ? CloseSVG : SearchSVGWhite}
                     </button>
                     {/* Account Icon */}

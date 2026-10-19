@@ -283,6 +283,10 @@ header[data-app-header].appHeader > .appHeaderInner {
         transform: translateY(-10px);
         visibility: hidden;
         pointer-events: none;
+        transition: none;
+    }
+    /* Animate explicit mobile toggles, never the desktop-to-mobile breakpoint. */
+    .appHeaderSearch.isMobileSearchAnimated {
         transition:
             opacity var(--sidebar-duration) var(--sidebar-easing),
             transform var(--sidebar-duration) var(--sidebar-easing),
@@ -293,6 +297,8 @@ header[data-app-header].appHeader > .appHeaderInner {
         transform: translateY(0);
         visibility: visible;
         pointer-events: auto;
+    }
+    .appHeaderSearch.isMobileSearchAnimated.isMobileOpen {
         transition:
             opacity var(--sidebar-duration) var(--sidebar-easing),
             transform var(--sidebar-duration) var(--sidebar-easing),
