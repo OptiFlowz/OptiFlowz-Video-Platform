@@ -1,6 +1,6 @@
 "use client";
 
-import VideoQuizPage from "~/components/playPage/playerCollection/videoQuizPage";
+import VideoQuizPage from "~/components/quizEngine/QuizOverview";
 import { FramedPage } from "../../page-shell";
 
 export default function Page() {

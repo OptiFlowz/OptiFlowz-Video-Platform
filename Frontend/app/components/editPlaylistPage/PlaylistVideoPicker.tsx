@@ -12,6 +12,7 @@ import { getVideoThumbnail } from '~/components/shared/videoMedia';
 import InfiniteScroll from '~/components/library/infiniteScroll';
 import { nextResultsPage, uniqueResults } from '~/components/library/infiniteResults';
 import CustomSelect from '~/components/customSelect/customSelect';
+import Loader from '~/components/loaders/loader';
 import styles from './editPlaylistPage.module.css';
 
 type Candidate = PlaylistVideoT & { visibility?: 'public' | 'private' };
@@ -31,12 +32,12 @@ export async function findPlaylistVideos(scope: 'mine' | 'public', search: strin
   return scope === 'mine' ? fetchFn<VideoPage>(request) : fetchVectorVideos<VideoPage>(request);
 }
 
-export default function PlaylistVideoPicker({ included, busy, addingId, onAdd }: {
-  included: string[]; busy: boolean; addingId: string | null; onAdd: (video: PlaylistVideoT) => void;
+export default function PlaylistVideoPicker({ included, busy, addingId, onAdd, ownerId }: {
+  ownerId?: string; included: string[]; busy: boolean; addingId: string | null; onAdd: (video: PlaylistVideoT) => void;
 }) {
   const { t } = useI18n();
   const { can, user } = useAuthorization();
-  const allowMine = can(P.videosUpdateOwn);
+  const allowMine = can(P.videosUpdateOwn) && (!ownerId || ownerId === user?.id);
   const token = getToken();
   const [scope, setScope] = useState<'mine' | 'public'>(allowMine ? 'mine' : 'public');
   const [filter, setFilter] = useState(''), [search, setSearch] = useState('');
@@ -59,7 +60,7 @@ export default function PlaylistVideoPicker({ included, busy, addingId, onAdd }:
       {allowMine && <CustomSelect value={effectiveScope} onChange={value => setScope(value as 'mine' | 'public')} ariaLabel={t('playlistVideoSource')}
         options={[{ value: 'mine', label: t('navMyVideos') }, { value: 'public', label: t('playlistPublicVideos') }]} />}
     </div>
-    {query.isPending ? <p className="formHint" role="status">{t('videoLoadingData')}</p> : query.isError && !query.data ?
+    {query.isPending ? <div role="status" aria-label={t('videoLoadingData')}><Loader /><span className="sr-only">{t('videoLoadingData')}</span></div> : query.isError && !query.data ?
       <div role="alert"><p className="formHint">{t('searchLoadFailed')}</p><button type="button" className="saveCaptionsBtn" onClick={() => void query.refetch()}>{t('usersRetry')}</button></div> :
       <div className={styles.pickerResults}>{videos.map(video => {
         const added = included.includes(video.id);

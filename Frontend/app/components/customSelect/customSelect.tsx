@@ -66,12 +66,21 @@ function CustomSelect({
     const viewport = window.visualViewport;
     let top = viewport?.offsetTop ?? 0;
     let bottom = top + (viewport?.height ?? window.innerHeight);
+    let leftBound = (viewport?.offsetLeft ?? 0) + VIEWPORT_MARGIN;
+    let rightBound = (viewport?.offsetLeft ?? 0)
+      + (viewport?.width ?? document.documentElement.clientWidth) - VIEWPORT_MARGIN;
     // A popup's scrollable body can end well before the viewport does.
     for (let parent = rootRef.current?.parentElement; parent; parent = parent.parentElement) {
-      if (!/(auto|scroll|hidden|clip)/.test(window.getComputedStyle(parent).overflowY)) continue;
+      const style = window.getComputedStyle(parent);
       const bounds = parent.getBoundingClientRect();
-      top = Math.max(top, bounds.top + parent.clientTop);
-      bottom = Math.min(bottom, bounds.top + parent.clientTop + parent.clientHeight);
+      if (/(auto|scroll|hidden|clip)/.test(style.overflowY)) {
+        top = Math.max(top, bounds.top + parent.clientTop);
+        bottom = Math.min(bottom, bounds.top + parent.clientTop + parent.clientHeight);
+      }
+      if (/(auto|scroll|hidden|clip)/.test(style.overflowX)) {
+        leftBound = Math.max(leftBound, bounds.left + parent.clientLeft);
+        rightBound = Math.min(rightBound, bounds.left + parent.clientLeft + parent.clientWidth);
+      }
     }
     const spaceBelow = Math.max(0, bottom - rect.bottom - VIEWPORT_MARGIN);
     const spaceAbove = Math.max(0, rect.top - top - VIEWPORT_MARGIN);
@@ -80,16 +89,13 @@ function CustomSelect({
 
     const menu = menuRef.current;
     if (menu) {
-      const viewportLeft = (viewport?.offsetLeft ?? 0) + VIEWPORT_MARGIN;
-      const viewportRight = (viewport?.offsetLeft ?? 0)
-        + (viewport?.width ?? document.documentElement.clientWidth) - VIEWPORT_MARGIN;
-      menu.style.maxWidth = `${Math.max(0, viewportRight - viewportLeft)}px`;
+      menu.style.maxWidth = `${Math.max(0, rightBound - leftBound)}px`;
 
       // Measure the layout width, unaffected by the opening scale animation.
       const width = menu.offsetWidth;
       let left = rect.right - width;
-      if (left < viewportLeft) left = rect.left;
-      left = Math.max(viewportLeft, Math.min(left, viewportRight - width));
+      if (left < leftBound) left = rect.left;
+      left = Math.max(leftBound, Math.min(left, rightBound - width));
       menu.style.left = `${left - rect.left - (rootRef.current?.clientLeft ?? 0)}px`;
       menu.style.right = "auto";
       menu.style.transformOrigin = `${Math.max(0, Math.min(width, rect.right - left))}px ${shouldOpenUpward ? "bottom" : "top"}`;

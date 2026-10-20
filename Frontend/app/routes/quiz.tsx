@@ -1,6 +1,6 @@
 import Footer from "~/components/footer/footer";
 import Header from "~/components/header/header";
-import VideoQuizPage from "~/components/playPage/playerCollection/videoQuizPage";
+import VideoQuizPage from "~/components/quizEngine/QuizOverview";
 import type { Route } from "./+types/quiz";
 
 export function meta({}: Route.MetaArgs) {

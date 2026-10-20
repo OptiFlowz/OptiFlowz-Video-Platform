@@ -1,0 +1,237 @@
+.page { min-width: 0; color: var(--text1); }
+.header, .toolbar, .actions, .row, .tabs { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.header { justify-content: space-between; margin-bottom: 24px; }
+.header h1 { margin: 0 0 6px; }
+.header p, .muted { color: var(--text2); }
+.tabs { margin-bottom: 24px; }
+.tabs button, .button { border: 1px solid var(--border1); border-radius: 999px; background: var(--background2); color: var(--text1); padding: 10px 18px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+.tabs button[aria-pressed='true'], .primary { background: var(--accentBlue); color: var(--text1); }
+.button svg, .icon svg { width: 20px; height: 20px; }
+.icon { background: var(--background3); color: var(--accentBlue); border: 0; padding: 10px; border-radius: 50%; display: inline-flex; cursor: pointer; }
+.danger { color: var(--accentRed); }
+.page button:disabled { opacity: .45; cursor: not-allowed; }
+.page button:focus-visible, .page a:focus-visible { outline: 2px solid var(--accentBlue); outline-offset: 3px; }
+.toolbar { justify-content: space-between; margin-bottom: 20px; }
+.toolbar input { max-width: 460px; }
+.select { width: fit-content; min-width: 150px; max-width: 100%; }
+.tableWrap { overflow-x: auto; border: 1px solid var(--border1); border-radius: 20px; background: var(--background2); }
+.table { width: 100%; border-collapse: collapse; text-align: start; }
+.table th { color: var(--text2); font-weight: 600; background: var(--background3); }
+.table th, .table td { padding: 18px; border-bottom: 1px solid var(--border1); }
+.table tr:last-child td { border-bottom: none; }
+.table th:first-child, .table td:first-child { width: 48px; }
+.table p { color: var(--text2); margin: 6px 0; overflow-wrap: anywhere; }
+.table input[type='checkbox'], .check input { width: 20px; height: 20px; accent-color: var(--accentBlue); }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.panel { background: var(--background2); border-radius: 24px; padding: 24px; min-width: 0; margin-bottom: 24px; }
+.panel h2 { color: var(--accentBlue); margin: 0 0 20px; }
+.panel fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.row { padding: 14px 0; border-bottom: 1px solid var(--border1); }
+.row > .grow { flex: 1; min-width: 120px; overflow-wrap: anywhere; }
+.row input[type='number'] { width: 100px; }
+.row input[type='text'] { flex: 1; min-width: 120px; }
+.check { display: flex; align-items: center; gap: 10px; padding: 10px 0; }
+.save { display: flex; justify-content: flex-end; margin-top: 24px; }
+.error { color: var(--accentRed); overflow-wrap: anywhere; }
+.success { color: var(--accentGreen2); }
+.picker { max-height: 420px; overflow: auto; margin-block: 16px; }
+.note { padding: 16px; border: 1px solid var(--border1); border-radius: 14px; color: var(--text2); margin-bottom: 20px; }
+.badge { display: inline-block; padding: 4px 10px; border-radius: 8px; background: var(--background3); color: var(--text2); font-size: .875rem; }
+.progress { width: 100%; accent-color: var(--accentBlue); }
+.videoImage { width: 120px; aspect-ratio: 16/9; object-fit: cover; border-radius: 10px; }
+@media(max-width: 850px) { .grid { grid-template-columns: 1fr; } .panel { padding: 18px; } .table th, .table td { padding: 12px; } }
+@media(prefers-reduced-motion: reduce) { .page * { scroll-behavior: auto; } }
+.page:not(.management) input:not([type='checkbox']):not([type='radio']), .page textarea { padding: 12px 16px; background: var(--background3); border: 1px solid var(--border1); border-radius: 12px; color: var(--text1); font: inherit; max-width: 100%; }
+.page textarea { min-height: 130px; resize: vertical; }
+.page input:focus-visible, .page textarea:focus-visible { outline: 2px solid var(--accentBlue); outline-offset: 2px; }
+.page input[type='checkbox'], .page input[type='radio'] { accent-color: var(--accentBlue); }
+.row label { display: flex; flex-direction: column; gap: 6px; color: var(--text2); font-size: .875rem; }
+/* Use the shared management shell, controls and table on each platform. */
+.resourceTabs { display: flex; gap: 8px; overflow-x: auto; padding-block: 2px; margin-bottom: 8px; }
+.listToolbar { flex-wrap: wrap; }
+.listFilters { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-inline-start: auto; }
+.listFilters .select { min-width: 150px; max-width: 260px; }
+.listFilters :global(.customSelectTrigger) { border: 1px solid var(--border1); border-radius: 999px; background: var(--background3); font-size: .9rem; }
+main.management :global(.filter) input { border: 0; border-radius: 0; padding: 0; background: transparent; font-size: .95rem; }
+main.management .listTableWrap { overflow-x: auto; }
+main.management .listTable { min-width: 680px; }
+main.management .listTable th:first-child { width: 50%; }
+main.management .listTable td { vertical-align: middle; }
+.listIdentity { display: flex; align-items: center; gap: 12px; }
+.listInfo { min-width: 0; flex: 1; }
+.listInfo :global(.managementRowActions) { margin-top: 8px; }
+.rowTitle { display: block; text-align: start; color: var(--text1); font-size: .88rem; font-weight: 500; line-height: 1.35; cursor: pointer; overflow-wrap: anywhere; }
+.rowTitle:hover { color: var(--accentBlue2); }
+.listInfo p { color: var(--text2); margin: 4px 0; }
+main.management .listTable .checkbox, .page .check input[type='checkbox'] { appearance: none; display: inline-grid; place-content: center; flex: 0 0 26px; width: 26px; height: 26px; border-radius: 8px; border: 1px solid var(--border1); background: var(--background2); cursor: pointer; padding: 0; }
+main.management .listTable .checkbox:checked, .page .check input:checked { background: var(--accentBlue2); }
+main.management .listTable .checkbox:checked::after, .page .check input:checked::after { content: '✓'; color: var(--text1); font-size: 16px; }
+main.management .listTable .checkbox:indeterminate::after { content: '−'; color: var(--text1); }
+main.management .listTable .checkbox:disabled { opacity: .45; cursor: not-allowed; }
+main.management .listTable td.empty { padding: 2rem; text-align: center; }
+.bulkActions { display: flex; gap: 16px; align-items: center; }
+@media (max-width: 768px) {
+  main.management { padding-top: 83px; }
+  main.management :global(.libraryContent) { padding: 0 0 1rem; min-width: 0; }
+  main.management :global(.libraryShell) { padding: 1rem; min-width: 0; }
+  .listFilters { margin-inline-start: 0; width: 100%; }
+  .listFilters :global(.playlistAddBtn) { margin-inline-start: auto; }
+  main.management .listTable th, main.management .listTable td { display: table-cell; }
+  main.management .listTable .checkbox { display: inline-grid; }
+}
+
+/* Keep authoring in the same compact popup flow as the original quiz tools. */
+.popupLayer { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; background: var(--backgroundC1); }
+.popupPanel { display: flex; flex-direction: column; width: min(560px, 94vw); height: min(720px, calc(100dvh - 32px)); max-height: calc(100dvh - 32px); padding: 24px; border: 1px solid var(--border1); border-radius: 24px; background: var(--background1); box-shadow: 0 24px 80px var(--seethroughtBlack); overflow: hidden; outline: none; }
+.compactPopup { height: min(560px, calc(100dvh - 32px)); }
+.popupHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-shrink: 0; }
+.popupHeader h3 { font-size: 1.25rem; font-weight: 600; margin: 0; }
+.popupHeader p { font-size: .875rem; margin-top: 8px; }
+.popupHeader > button { flex-shrink: 0; }
+.popupContent { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.settingsForm { overflow: hidden; flex: 1; }
+.settingsForm fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.popupPanel :global(.formGroup) { display: flex; flex-direction: column; gap: 8px; margin: 0 0 16px; }
+.popupPanel :global(.formGroup) > label { font-size: 1rem; font-weight: 500; color: var(--text1); }
+.popupPanel :global(.formGroup) > input, .popupPanel :global(.formGroup) > textarea { width: 100%; background: var(--background2); }
+.popupPanel :global(.formHint) { font-size: .82rem; color: var(--text2); margin: 0; }
+.popupPanel .select { width: 100%; min-width: 0; }
+.popupPanel :global(.customSelectTrigger) { width: 100%; padding: 12px 16px; border-radius: 16px; border: 1px solid var(--border1); background: var(--background2); color: var(--text1); font-size: .95rem; }
+.popupPanel .check { flex-direction: row; }
+.popupPanel .check input { flex-shrink: 0; }
+.sectionTitle { font-size: 1rem; font-weight: 600; margin: 8px 0 16px; color: var(--text1); }
+.readiness { border: 1px solid var(--border1); border-radius: 16px; padding: 14px; }
+.readiness summary { cursor: pointer; font-weight: 500; }
+.readiness .note { border: 0; padding: 0; margin: 12px 0; font-size: .875rem; }
+.popupScroll { overflow-y: auto; min-height: 0; overscroll-behavior: contain; padding-right: 14px; }
+.popupContent > form:not(.settingsForm) { overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--accentBlue2) transparent; }
+.popupPanel .panel { padding: 0; margin: 0 0 20px; background: transparent; border-radius: 0; }
+.popupPanel .panel h2 { font-size: 1rem; color: var(--text1); margin: 16px 0 12px; }
+.popupPanel .panel .note { padding: 0; border: 0; font-size: .875rem; }
+.popupPanel .panel .row { padding: 12px; margin-block: 10px; border: 1px solid var(--border1); border-radius: 16px; background: var(--background2); }
+.popupPanel .row .select { flex: 1; min-width: 140px; }
+.popupPanel .row .grow { flex-basis: 100%; }
+.popupPanel .row label { flex: 1; }
+.popupPanel .row label input { width: 100%; }
+.popupPanel .row input[type='text'] { width: 100%; }
+.popupPanel .save { position: sticky; bottom: 0; padding-block: 16px 0; background: var(--background1); }
+.popupPanel :global(.quizPopupBody) { overscroll-behavior: contain; flex: 1; }
+@media(max-width: 600px) {
+  .popupLayer { padding: 10px; }
+  .popupPanel { padding: 18px; width: 100%; max-height: calc(100dvh - 20px); }
+  .popupPanel :global(.quizPopupActions) { flex-wrap: wrap; }
+  .popupPanel :global(.quizPopupManageActions) { display: flex; }
+  .popupPanel :global(.quizPopupManageActions) button { flex: 1 1 120px; width: auto; }
+}
+.popupPanel :global(.quizPopupActions) :global(.cancelBtn),
+.popupPanel :global(.quizPopupActions) :global(.saveCaptionsBtn) { display: inline-flex; align-items: center; justify-content: center; padding: 10px 16px; min-height: 40px; font-size: .875rem; line-height: 1.25; cursor: pointer; }
+.popupPanel :global(.quizPopupToggleRow) { padding: 16px; background: var(--background2); }
+.popupPanel :global(.quizPopupToggleRow) strong { color: var(--text1); }
+.popupPanel :global(.quizPopupToggleRow) input:not(:checked) { background: var(--background3); }
+.toggleTitle { margin-top: 28px; }
+.popupPanel :global(.quizPopupGrid) :global(.formGroup) { margin-bottom: 0; }
+
+/* Summary cards and separate edit dialogs follow the original quiz popup layout. */
+.widePopup { width: min(760px, 94vw); }
+.partBody { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+.partBody > * { flex-shrink: 0; }
+.partHeading { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 1rem; font-weight: 600; }
+.partHeading span { border-radius: 999px; background: var(--background2); padding: 2px 10px; font-size: .875rem; font-variant-numeric: tabular-nums; color: var(--text2); }
+.partCard { border: 1px solid var(--border1); border-radius: 24px; background: var(--background2); padding: 16px 20px; }
+.partMeta { color: var(--text2); font-size: .875rem; line-height: 1.5; }
+.partCardBody { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.partMeta + .partCardBody { margin-top: 12px; }
+.partIdentity { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+.partText { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.partText p { margin: 0; font-size: 1rem; font-weight: 500; line-height: 1.4; }
+.partText small { display: block; margin-top: 4px; color: var(--text2); font-size: .875rem; line-height: 1.4; }
+.partThumbnail { display: flex; align-items: center; justify-content: center; width: 96px; height: 56px; flex-shrink: 0; object-fit: cover; border-radius: 12px; background: var(--background1); color: var(--text2); font-size: .75rem; text-align: center; }
+.partActions { display: flex; flex-shrink: 0; gap: 8px; }
+.partActions button { width: auto; padding: 6px 12px; border: 1px solid var(--border1); border-radius: 999px; background: var(--background1); color: var(--text1); font-size: .875rem; cursor: pointer; }
+.partActions button:hover { background: var(--background3); }
+.partActions .partRemove { border-color: var(--accentRed); background: var(--background15); color: var(--accentRed3); }
+.partAdd { display: inline-flex; align-items: center; align-self: flex-start; gap: 12px; width: auto; padding: 12px 16px; border: 1px solid var(--border1); border-radius: 16px; background: var(--background2); color: var(--text1); font-size: .875rem; font-weight: 500; cursor: pointer; }
+.partAdd:hover { background: var(--background3); }
+.partAdd svg { width: 20px; height: 20px; }
+.partAdd svg path { stroke: currentColor; }
+.partEmpty { border: 1px dashed var(--border1); border-radius: 24px; padding: 24px 20px; background: var(--background2); color: var(--text2); font-size: .875rem; }
+.partFooter { flex-shrink: 0; margin-top: 16px; }
+.partFilter { width: 100%; }
+.draftTitle { margin: 0 0 16px; font-weight: 500; }
+.popupPanel :global(.customSelectValue) { white-space: normal; text-align: start; overflow-wrap: anywhere; }
+@media(max-width: 600px) {
+  .partCard { padding: 16px; }
+  .partCardBody { flex-wrap: wrap; }
+  .partIdentity { flex-basis: 100%; }
+  .partThumbnail { width: 64px; }
+  .partActions { margin-inline-start: auto; }
+}
+
+/* Popup content uses filled surfaces; outlines are reserved for keyboard focus. */
+.popupPanel .partCard,
+.popupPanel .partEmpty,
+.popupPanel .partAdd,
+.popupPanel .partActions button,
+.popupPanel .button,
+.popupPanel .readiness,
+.popupPanel .note,
+.popupPanel .panel .row,
+.popupPanel :global(.customSelectTrigger),
+.popupPanel :global(.customSelectMenu),
+.popupPanel.page input:not([type='checkbox']):not([type='radio']),
+.popupPanel.page textarea,
+.popupPanel .check input[type='checkbox'],
+.popupPanel :global(.quizPopupToggleRow) { border: 0; }
+
+/* Reserve the loaded layout while fetching, including nested editors. */
+.loadingSkeleton { display: flex; flex-direction: column; gap: 12px; overflow: hidden; flex-shrink: 0; }
+.formSkeleton { flex: 1; }
+.skeletonBlock { padding: 20px; border-radius: 20px; background: var(--background2); min-height: 112px; }
+.skeletonBlock :global(.skeleton-title),
+.skeletonBlock :global(.skeleton-text),
+.skeletonField { background: var(--background3); border-radius: 8px; animation: quizSkeletonPulse 1.5s ease-in-out infinite; }
+.skeletonBlock :global(.skeleton-title) { height: 18px; width: 60%; margin: 0 0 14px; }
+.skeletonBlock :global(.skeleton-text) { height: 14px; width: 85%; margin: 0; }
+.skeletonField { height: 44px; margin-top: 16px; }
+@keyframes quizSkeletonPulse { 50% { opacity: .4; } }
+
+/* Author answers in the same order and shape in which participants see them. */
+.popupPanel .questionCanvas { display: block; padding: 0; width: 100%; position: static; z-index: auto; margin-bottom: 24px; background: transparent; }
+.questionCanvas :global(.videoQuizQuestionHeader) { margin-bottom: 12px; }
+.popupPanel.page .questionPrompt { width: 100%; min-height: 88px; padding: 16px; background: var(--background2); font-size: 1.15rem; font-weight: 600; line-height: 1.5; }
+.answerHint { margin: 12px 0 16px; color: var(--text2); font-size: .875rem; line-height: 1.5; }
+.popupPanel .questionCanvas .answerRow,
+.popupPanel .questionCanvas .matchRow { display: flex; gap: 10px; padding: 12px; min-height: 64px; border: 0; border-radius: 16px; background: var(--background2); cursor: default; }
+.popupPanel .questionCanvas .answerRow:global(.selected) { background: color-mix(in srgb, var(--accentBlue2) 16%, var(--background2)); }
+.popupPanel.page .answerText { flex: 1; min-width: 0; width: 100%; min-height: 40px; padding: 8px; background: transparent; border: 0; border-radius: 8px; font-size: .95rem; line-height: 1.5; field-sizing: content; }
+.popupPanel.page .explanationText { min-height: 80px; }
+.answerLetter { color: var(--text2); font-size: .875rem; font-weight: 600; flex-shrink: 0; }
+.questionCanvas .answerMarker { appearance: none; display: grid; place-content: center; width: 24px; height: 24px; flex: 0 0 24px; border: 0; border-radius: 6px; background: var(--background3); cursor: pointer; }
+.questionCanvas .answerMarker[type='radio'] { border-radius: 50%; }
+.questionCanvas .answerMarker:checked { background: var(--accentBlue2); }
+.questionCanvas .answerMarker:checked::after { content: '✓'; color: var(--text1); font-size: 16px; }
+.answerTools { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.answerOrder { display: flex; flex-direction: column; }
+.answerOrder button { display: grid; place-content: center; width: 28px; height: 24px; background: transparent; color: var(--text2); cursor: pointer; border-radius: 6px; }
+.answerOrder button:hover { background: var(--background3); }
+.answerOrder svg { width: 7px; height: 13px; transform: rotate(-90deg); }
+.answerOrder button + button svg { transform: rotate(90deg); }
+.answerOrder svg path { stroke: currentColor; }
+.questionCanvas .answerTools .icon { padding: 8px; background: transparent; }
+.questionCanvas .partAdd { margin-top: 12px; }
+.popupPanel .questionCanvas .matchRow { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(160px, 1fr) auto; }
+.questionCanvas .matchRow :global(.customSelectTrigger) { background: var(--background3); padding: 10px 12px; font-size: .875rem; }
+.groupChoices { display: grid; gap: 8px; }
+.popupPanel .groupChoices .check { padding: 12px 16px; border-radius: 16px; background: var(--background2); cursor: pointer; }
+.popupPanel .groupChoices input:not(:checked) { background: var(--background3); }
+@media(max-width: 600px) {
+  .popupPanel .questionCanvas .answerRow { gap: 6px; padding: 10px; flex-wrap: wrap; }
+  .questionCanvas .answerRow .answerText { width: auto; flex-basis: calc(100% - 70px); }
+  .answerRow .answerTools { margin-inline-start: auto; }
+  .popupPanel .questionCanvas .matchRow { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .matchRow .select { grid-column: 2; }
+  .matchRow .answerTools { grid-column: 3; grid-row: 1 / 3; }
+}
+@media(prefers-reduced-motion: reduce) {
+  .skeletonBlock :global(.skeleton-title), .skeletonBlock :global(.skeleton-text), .skeletonField { animation: none; }
+}
