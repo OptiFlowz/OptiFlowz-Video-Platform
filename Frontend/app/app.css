@@ -15,6 +15,11 @@ html:is([lang="ar"], [lang="he"], [lang="fa"], [lang="ur"]) :where(
 }
 
 :root {
+  /* Question bank type colors, shared by badges and item icons. */
+  --questionSingleChoiceColor: color-mix(in srgb, var(--accentBlue2) 65%, var(--text2));
+  --questionMultipleChoiceColor: color-mix(in srgb, var(--accentGreen2) 65%, var(--text2));
+  --questionMatchingColor: color-mix(in srgb, var(--analyticsActiveUsersOverTime) 65%, var(--text2));
+
   /* Expanded desktop sidebar: fit up to three columns with a 340px card minimum. */
   --video-grid-columns: repeat(auto-fill, minmax(min(100%, max(340px, calc((100% - 2 * var(--video-grid-gap)) / 3))), 1fr));
   --background: #090a0b;

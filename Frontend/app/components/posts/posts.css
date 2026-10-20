@@ -63,6 +63,9 @@ main.myPostsPage .postsTable .videoInfo > span { flex: 1; min-width: 0; }
 main.myPostsPage .postsTable .videoInfo h5 { overflow-wrap: anywhere; }
 .postManagementIcon { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; background: var(--background2); color: var(--accentBlue); }
 .postManagementIcon svg { width: 24px; height: 24px; }
+main.myPostsPage .postsTable .postManagementIcon { flex: 0 0 96px; width: 96px; height: 64px; border-radius: 12px; background: var(--background2); color: var(--accentBlue2); }
+main.myPostsPage .postsTable .postManagementIcon svg { width: 32px; height: 32px; }
+main.myPostsPage .postsTable .postManagementIcon [stroke-width="2"] { stroke-width: 1; }
 main.myPostsPage .postTypeTags { overflow-wrap: anywhere; }
 main.myPostsPage .postSelectionHeading { flex-wrap: wrap; }
 main.myPostsPage #selectedButtons { flex-wrap: wrap; margin-left: 0; }

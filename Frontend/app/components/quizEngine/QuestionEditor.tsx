@@ -1,10 +1,32 @@
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useI18n } from '~/i18n';
 import { AddSVG, ArrowSVG, DeleteSVG } from '~/constants';
 import { request } from './api';
 import { Field, Select, Notice, LoadState, useAction, useAccess, useAll, useDetail, styles } from './shared';
-import { typeLabels, type Question, type QuestionInput, type Group, type QuestionType } from './model';
+import { typeLabels, type Question, type QuestionInput, type Category, type QuestionType } from './model';
 import { questionReady } from './readiness';
+import CategoryEditor from './CategoryEditor';
+import EditorPopup from './EditorPopup';
+import { useConfirm } from '~/components/confirmPopup/useConfirm';
+import { ConfirmDialog } from '~/components/confirmPopup/confirmDialog';
+
+function CreateCategoryPopup({ onCreated, onClose }: { onCreated: (category: Category) => void; onClose: () => void }) {
+  const { t } = useI18n(), { confirm, dialogProps } = useConfirm();
+  const [dirty, setDirty] = useState(false);
+  useEffect(() => {
+    if (!dirty) return;
+    const guard = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
+    window.addEventListener('beforeunload', guard);
+    return () => window.removeEventListener('beforeunload', guard);
+  }, [dirty]);
+  const close = async () => {
+    if (dirty && !await confirm({ title: t('qeUnsaved'), message: t('qeDiscard'), yesText: t('qeDiscardAction'), noText: t('adminCancel') })) return;
+    onClose();
+  };
+  return <><EditorPopup open compact title={t('qeCreateCategory')} onClose={() => void close()}>
+    <CategoryEditor id="new" onDirty={setDirty} onCreated={onCreated} onSaved={onClose} onClose={() => void close()} />
+  </EditorPopup><ConfirmDialog {...dialogProps} /></>;
+}
 
 function move<T extends { position: number }>(rows: T[], index: number, direction: number): T[] {
   const next = [...rows], target = index + direction;
@@ -23,31 +45,34 @@ export default function QuestionEditor({ id, onSaved, onDirty, onClose }: { id: 
   return <QuestionForm key={id} initial={detail.data?.question} onSaved={onSaved} onDirty={onDirty} onClose={onClose} />;
 }
 function QuestionForm({ initial, onSaved, onDirty, onClose }: { initial?: Question; onSaved: (id: string) => void; onDirty: (dirty: boolean) => void; onClose: () => void }) {
-  const { t } = useI18n(), access = useAccess('questions', initial), groupAccess = useAccess('groups'), answerName = useId();
-  const groups = useAll<Group>('/question-groups', 'groups', groupAccess.read);
+  const { t } = useI18n(), access = useAccess('questions', initial), categoryAccess = useAccess('categories'), answerName = useId();
+  const categories = useAll<Category>('/question-categories', 'categories', categoryAccess.read);
+  const [creatingCategory, setCreatingCategory] = useState(false), [createdCategories, setCreatedCategories] = useState<Category[]>([]);
   const [form, setForm] = useState<QuestionInput>(() => ({
     type: initial?.type ?? 'single_choice', content: initial?.content ?? '', explanation: initial?.explanation ?? null,
     options: [...(initial?.options ?? (initial ? [] : emptyOptions()))].sort((a, b) => a.position - b.position || a.option_no - b.option_no),
     matching_options: [...(initial?.matching_options ?? [])].sort((a, b) => a.position - b.position || a.option_no - b.option_no),
     matching_items: [...(initial?.matching_items ?? [])].sort((a, b) => a.position - b.position || a.item_no - b.item_no),
-    group_ids: initial?.groups.map(g => g.id) ?? [],
+    category_id: initial?.category?.id ?? null,
   }));
   const [baseline, setBaseline] = useState(JSON.stringify(form));
   const action = useAction(), editable = initial ? access.update : access.create;
   const change = (patch: Partial<QuestionInput>) => { const next = { ...form, ...patch }; setForm(next); onDirty(JSON.stringify(next) !== baseline); };
   const matching = form.type === 'matching', options = matching ? form.matching_options : form.options;
   const setOptions = (next: typeof options) => change(matching ? { matching_options: next } : { options: next });
-  const ownedGroups = (groups.data ?? []).filter(g => g.user_id === (initial?.user_id ?? access.user?.id));
-  const ready = questionReady({ ...form, id: '', user_id: '', groups: [] });
+  const ownedCategories = [...new Map([...(initial?.category ? [initial.category] : []), ...createdCategories, ...(categories.data ?? []).filter(category => category.user_id === (initial?.user_id ?? access.user?.id))].map(category => [category.id, category])).values()];
+  const [categoryHintDismissed, setCategoryHintDismissed] = useState(false);
+  const categoryCreationHint = !categoryAccess.create ? 'qeCategoryCreatePermission' : initial && initial.user_id !== access.user?.id ? 'qeCategoryCreateOwnerOnly' : null;
+  const ready = questionReady({ ...form, id: '', user_id: '', category: null });
   const optionRows = <div className="videoQuizOptions">{options.map((option, index) => <div className={`videoQuizOption ${option.is_correct && !matching ? 'selected' : ''} ${styles.answerRow}`} key={option.option_no}>
     {!matching && <input className={styles.answerMarker} type={form.type === 'single_choice' ? 'radio' : 'checkbox'} name={answerName} checked={!!option.is_correct} aria-label={`${t('quizCorrectAnswer')} ${index + 1}`} onChange={e => setOptions(options.map(o => ({ ...o, is_correct: o.option_no === option.option_no ? e.target.checked : form.type === 'single_choice' ? false : o.is_correct })))} />}
     <span className={styles.answerLetter}>{String.fromCharCode(65 + index % 26)}</span>
     <textarea className={styles.answerText} rows={1} placeholder={t('quizOptionNumber', { number: index + 1 })} aria-label={t('quizOptionNumber', { number: index + 1 })} value={option.content} onChange={e => setOptions(options.map(o => o.option_no === option.option_no ? { ...o, content: e.target.value } : o))} />
     <div className={styles.answerTools}><OrderButtons index={index} count={options.length} onMove={direction => setOptions(move(options, index, direction))} /><button type="button" className={`${styles.icon} ${styles.danger}`} aria-label={`${t('quizRemove')} ${index + 1}`} disabled={matching && form.matching_items.some(item => item.correct_option_no === option.option_no)} onClick={() => setOptions(options.filter(o => o.option_no !== option.option_no))}>{DeleteSVG}</button></div>
   </div>)}</div>;
-  return <form className={`quizPopupForm ${styles.settingsForm}`} onSubmit={event => { event.preventDefault(); void action.run(async () => {
-    const { group_ids, ...body } = form;
-    const result = await request<{ question: Question }>(initial ? `/questions/${initial.id}` : '/questions', initial ? 'PATCH' : 'POST', { ...body, ...(groups.isSuccess ? { group_ids } : {}) });
+  return <><form className={`quizPopupForm ${styles.settingsForm}`} onSubmit={event => { event.preventDefault(); void action.run(async () => {
+    const { category_id, ...body } = form;
+    const result = await request<{ question: Question }>(initial ? `/questions/${initial.id}` : '/questions', initial ? 'PATCH' : 'POST', { ...body, ...(categories.isSuccess || createdCategories.length > 0 ? { category_id } : {}) });
     setBaseline(JSON.stringify(form)); onDirty(false); onSaved(result.question.id);
   }); }}>
     <div className="quizPopupBody"><Notice {...action} /><fieldset disabled={action.busy || !editable}>
@@ -67,10 +92,17 @@ function QuestionForm({ initial, onSaved, onDirty, onClose }: { initial?: Questi
         <button type="button" className={styles.partAdd} disabled={Math.max(0, ...options.map(o => o.option_no)) >= 32767} onClick={() => setOptions([...options, { option_no: Math.max(0, ...options.map(o => o.option_no)) + 1, content: '', position: Math.max(0, ...options.map(o => o.position)) + 1, ...(!matching ? { is_correct: false } : {}) }])}>{AddSVG}{t('quizAddOption')}</button>
       </section>
       <Field label={t('quizExplanation')}><textarea className={styles.explanationText} aria-label={t('quizExplanation')} placeholder={t('quizExplanationPlaceholder')} rows={2} value={form.explanation ?? ''} onChange={e => change({ explanation: e.target.value || null })} /></Field>
-      <h4 className={styles.sectionTitle}>{t('qeGroups')}</h4>
-      {groupAccess.read ? <><LoadState query={groups} variant="inline" /><div className={styles.groupChoices}>{ownedGroups.map(group => <label className={styles.check} key={group.id}><input type="checkbox" checked={form.group_ids?.includes(group.id)} onChange={e => change({ group_ids: e.target.checked ? [...form.group_ids ?? [], group.id] : form.group_ids?.filter(id => id !== group.id) })} />{group.name}</label>)}</div></> : <p className={styles.muted}>{initial?.groups.map(g => g.name).join(', ') || t('adminZeroResults')}</p>}
+      <Field label={t('qeCategory')}>
+        {categoryAccess.read ? <><LoadState query={categories} variant="inline" />{(categories.isSuccess || createdCategories.length > 0) && <Select label={t('qeCategory')} value={form.category_id ?? ''} values={[{ value: '', label: t('qeUncategorized') }, ...ownedCategories.map(category => ({ value: category.id, label: category.name }))]} onChange={value => change({ category_id: value || null })} />}</> : <p className={styles.muted}>{initial?.category?.name || t('qeUncategorized')}</p>}
+        {editable && <span className={styles.categoryCreateAction} tabIndex={categoryCreationHint ? 0 : undefined} aria-label={categoryCreationHint ? t('qeCreateCategory') : undefined} aria-describedby={categoryCreationHint ? `${answerName}-category-help` : undefined} data-hint-dismissed={categoryHintDismissed || undefined} onMouseEnter={() => setCategoryHintDismissed(false)} onFocus={() => setCategoryHintDismissed(false)} onKeyDown={event => { if (event.key === 'Escape' && categoryCreationHint) { event.preventDefault(); event.stopPropagation(); setCategoryHintDismissed(true); } }}>
+          <button type="button" className={styles.partAdd} disabled={!!categoryCreationHint} onClick={() => setCreatingCategory(true)}>{AddSVG}{t('qeCreateCategory')}</button>
+          {categoryCreationHint && <span role="tooltip" className={styles.categoryCreateTooltip} id={`${answerName}-category-help`}>{t(categoryCreationHint)}</span>}
+        </span>}
+      </Field>
       <p className={styles.answerHint}>{t(ready ? 'qeQuestionReady' : 'qeDraftQuestion')}</p>
     </fieldset></div>
     <div className="quizPopupActions"><button type="button" className="cancelBtn" disabled={action.busy} onClick={onClose}>{t('adminCancel')}</button>{editable && <button type="submit" className="saveCaptionsBtn" disabled={action.busy || (!!initial && JSON.stringify(form) === baseline)}>{t(action.busy ? 'saving' : 'quizSaveQuestion')}</button>}</div>
-  </form>;
+  </form>
+    {creatingCategory && <CreateCategoryPopup onClose={() => setCreatingCategory(false)} onCreated={category => { setCreatedCategories(previous => [...previous, category]); change({ category_id: category.id }); }} />}
+  </>;
 }

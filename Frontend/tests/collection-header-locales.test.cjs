@@ -76,9 +76,10 @@ test('every supported catalogue includes the new collection, quiz and video-pick
   for (const file of fs.readdirSync(locales).filter(file => file.endsWith('.json'))) {
     const catalogue = JSON.parse(fs.readFileSync(path.join(locales, file), 'utf8'));
     for (const key of keys) {
-      assert.equal(typeof catalogue[key], 'string', `${file}: ${key}`);
-      assert.ok(catalogue[key].trim(), `${file}: ${key} is empty`);
-      const placeholders = value => [...value.matchAll(/\{\{[^{}]+\}\}/g)].map(match => match[0]).sort();
+      const variants = value => typeof value === 'string' ? [value] : Object.entries(value).filter(([name]) => !['select', 'rule'].includes(name)).map(([, text]) => text);
+      assert.ok(catalogue[key], `${file}: ${key} is missing`);
+      for (const text of variants(catalogue[key])) assert.ok(text.trim(), `${file}: ${key} is empty`);
+      const placeholders = value => [...new Set(variants(value).flatMap(text => [...text.matchAll(/\{\{[^{}]+\}\}/g)].map(match => match[0])))].sort();
       assert.deepEqual(placeholders(catalogue[key]), placeholders(english[key]), `${file}: ${key}`);
     }
   }

@@ -7,16 +7,18 @@ import { useConfirm } from '~/components/confirmPopup/useConfirm';
 import { request } from './api';
 import { Field, Select, Notice, LoadState, useAction, useAccess, useAll, styles } from './shared';
 import EditorPopup from './EditorPopup';
-import { typeLabels, type Quiz, type Candidate, type Question, type Group, type Source, type Requirement, type VideoCard } from './model';
-import { allocationValid, sourceQuotas } from './readiness';
+import { typeLabels, type Quiz, type Candidate, type Question, type Category, type Source, type Requirement, type VideoCard } from './model';
+import { allocationValid, nextPosition, questionCount } from './readiness';
 import { numberDraftValue, type NumberDraft } from './numberDraft';
 import CandidateList from './CandidateList';
+import { saveRequirement } from './saveRequirement';
 
-type PartProps = { quiz: Quiz; editable: boolean; onBack: () => void };
+type PartProps = { quiz: Quiz; editable: boolean; onBack?: () => void };
 const scrollClass = `quizPopupScroll ${styles.popupScroll} ${styles.partBody}`;
-function Footer({ onBack, busy = false, children }: { onBack: () => void; busy?: boolean; children?: ReactNode }) {
+function Footer({ onBack, busy = false, children }: { onBack?: () => void; busy?: boolean; children?: ReactNode }) {
   const { t } = useI18n();
-  return <div className={`quizPopupActions ${styles.partFooter}`}><button type="button" className="cancelBtn" disabled={busy} onClick={onBack}>{t('back')}</button>{children}</div>;
+  if (!onBack && !children) return null;
+  return <div className={`quizPopupActions ${styles.partFooter}`}>{onBack && <button type="button" className="cancelBtn" disabled={busy} onClick={onBack}>{t('back')}</button>}{children}</div>;
 }
 function AddButton({ children, onClick, disabled }: { children: ReactNode; onClick: () => void; disabled?: boolean }) {
   return <button type="button" className={styles.partAdd} disabled={disabled} onClick={onClick}>{AddSVG}{children}</button>;
@@ -37,8 +39,8 @@ function PartCard({ title, meta, children, image, video = false, editable, busy,
   </article>;
 }
 /** Keep editing separate from the summary cards, as in the original quiz popups. */
-function DraftDialog<T extends object>({ title, initial, onClose, save, children, valid = () => true }: {
-  title: string; initial: T; onClose: () => void; save: (draft: T) => Promise<void>; children: (draft: T, update: (patch: Partial<T>) => void) => ReactNode; valid?: (draft: T) => boolean;
+function DraftDialog<T extends object>({ title, initial, onClose, save, children, valid = () => true, className }: {
+  title: string; initial: T; onClose: () => void; save: (draft: T) => Promise<void>; children: (draft: T, update: (patch: Partial<T>) => void) => ReactNode; valid?: (draft: T) => boolean; className?: string;
 }) {
   const { t } = useI18n(), action = useAction();
   const [draft, setDraft] = useState(initial), { confirm, dialogProps } = useConfirm();
@@ -54,7 +56,7 @@ function DraftDialog<T extends object>({ title, initial, onClose, save, children
     if (dirty && !await confirm({ title: t('qeUnsaved'), message: t('qeDiscard'), yesText: t('qeDiscardAction'), noText: t('adminCancel') })) return;
     onClose();
   };
-  return <EditorPopup open compact title={title} onClose={() => void close()}>
+  return <EditorPopup open compact title={title} onClose={() => void close()} className={className}>
     <form className={`quizPopupForm ${styles.settingsForm}`} onSubmit={event => { event.preventDefault(); event.stopPropagation(); if (!valid(draft)) return; let saved = false; void action.run(async () => { await save(draft); saved = true; }).then(() => { if (saved) onClose(); }); }}>
       <div className="quizPopupBody"><Notice {...action} /><fieldset disabled={action.busy}>{children(draft, patch => setDraft(previous => ({ ...previous, ...patch })))}</fieldset></div>
       <div className="quizPopupActions"><button type="button" className="cancelBtn" disabled={action.busy} onClick={() => void close()}>{t('adminCancel')}</button><button type="submit" className="saveCaptionsBtn" disabled={action.busy || !valid(draft)}>{t(action.busy ? 'saving' : 'adminSave')}</button></div>
@@ -69,8 +71,10 @@ function Position({ value, change }: { value: number | ''; change: (value: numbe
 export function Candidates({ quiz, editable, onBack, onDirty = () => {} }: PartProps & { onDirty?: (dirty: boolean) => void }) {
   const { t } = useI18n(), bankAccess = useAccess('questions');
   const linked = useAll<Candidate>(`/${quiz.id}/questions`, 'questions');
+  const sources = useAll<Source>(`/${quiz.id}/sources`, 'sources');
   const bank = useAll<Question>('/questions', 'questions', bankAccess.read);
-  const [adding, setAdding] = useState(false), [filter, setFilter] = useState('');
+  const [adding, setAdding] = useState(false), [filter, setFilter] = useState(''), [categoryFilter, setCategoryFilter] = useState('');
+  const bankCategories = [...new Map((bank.data ?? []).filter(q => q.user_id === quiz.user_id && q.category).map(q => [q.category!.id, q.category!])).values()];
   const [order, setOrder] = useState<Candidate[] | null>(null);
   const mutation = useRef(false), dirtyPoints = useRef(new Set<string>());
   const action = useAction(), { confirm, dialogProps } = useConfirm();
@@ -90,8 +94,8 @@ export function Candidates({ quiz, editable, onBack, onDirty = () => {} }: PartP
     if (from < 0 || to < 0 || from === to) return;
     const next = [...rows], [moved] = next.splice(from, 1);
     next.splice(to, 0, moved);
-    setOrder(next.map((row, position) => ({ ...row, position })));
-    try { await mutate(async () => { await request(`/${quiz.id}/questions/${id}`, 'PATCH', { position: to }); }); }
+    setOrder(next);
+    try { await mutate(async () => { await request(`/${quiz.id}/questions/${id}`, 'PATCH', { position: rows[to].position }); }); }
     finally { setOrder(null); }
   };
   const remove = (row: Candidate) => void mutate(async () => {
@@ -107,8 +111,8 @@ export function Candidates({ quiz, editable, onBack, onDirty = () => {} }: PartP
       {editable && bankAccess.read && <AddButton disabled={action.busy || !linked.isSuccess} onClick={() => setAdding(true)}>{t('quizAddQuestion')}</AddButton>}
     </div><Footer onBack={onBack} busy={action.busy} />
     <EditorPopup open={adding} title={t('quizAddQuestion')} description={t('qeCandidatesHelp')} onClose={() => { if (!action.busy) setAdding(false); }} wide>
-      <div className={scrollClass}><Notice {...action} /><LoadState query={bank} /><input className={styles.partFilter} type="search" placeholder={t('qeFilterQuestions')} aria-label={t('qeFilterQuestions')} value={filter} onChange={e => setFilter(e.target.value)} />
-        {bank.data?.filter(q => q.user_id === quiz.user_id && q.content.toLowerCase().includes(filter.toLowerCase())).map(q => <div className={`${styles.partCard} ${included.has(q.id) ? styles.usedQuestion : ''}`} key={q.id}><div className={styles.partCardBody}><div className={styles.partText}><p>{q.content || t('qeUntitledQuestion')}</p><small>{t(typeLabels[q.type])} · {q.groups.map(g => g.name).join(', ')}</small></div><button type="button" className={styles.icon} aria-label={`${t('quizAddQuestion')}: ${q.content}`} disabled={action.busy || !linked.isSuccess || included.has(q.id)} onClick={() => void action.run(async () => { await request(`/${quiz.id}/questions`, 'POST', { question_id: q.id, position: Math.max(-1, ...linked.data!.map(item => item.position)) + 1, max_points: 1 }); })}>{AddSVG}</button></div></div>)}
+      <div className={scrollClass}><Notice {...action} /><LoadState query={bank} /><LoadState query={sources} variant="inline" /><Select label={t('qeCategory')} value={categoryFilter} values={[{ value: '', label: t('qeAllCategories') }, { value: '__uncategorized__', label: t('qeUncategorized') }, ...bankCategories.map(category => ({ value: category.id, label: category.name }))]} onChange={setCategoryFilter} /><input className={styles.partFilter} type="search" placeholder={t('qeFilterQuestions')} aria-label={t('qeFilterQuestions')} value={filter} onChange={e => setFilter(e.target.value)} />
+        {bank.data?.filter(q => q.user_id === quiz.user_id && q.content.toLowerCase().includes(filter.toLowerCase()) && (!categoryFilter || (q.category?.id ?? '__uncategorized__') === categoryFilter)).map(q => <div className={`${styles.partCard} ${included.has(q.id) ? styles.usedQuestion : ''}`} key={q.id}><div className={styles.partCardBody}><div className={styles.partText}><p>{q.content || t('qeUntitledQuestion')}</p><small>{t(typeLabels[q.type])} · {q.category?.name || t('qeUncategorized')}</small></div><button type="button" className={styles.icon} aria-label={`${t('quizAddQuestion')}: ${q.content}`} disabled={action.busy || !linked.isSuccess || !sources.isSuccess || included.has(q.id)} onClick={() => void action.run(async () => { await request(`/${quiz.id}/questions`, 'POST', { question_id: q.id, position: nextPosition(linked.data!, sources.data!), max_points: 1 }); })}>{AddSVG}</button></div></div>)}
       </div><Footer busy={action.busy} onBack={() => setAdding(false)} />
     </EditorPopup>
     <ConfirmDialog {...dialogProps} />
@@ -121,35 +125,61 @@ export function Sources({ quiz, editable, onDirty, onBack }: PartProps & { onDir
   return <SourceForm quiz={quiz} initial={sources.data} editable={editable} onDirty={onDirty} onBack={onBack} />;
 }
 function SourceForm({ quiz, initial, editable, onDirty, onBack }: PartProps & { initial: Source[]; onDirty: (value: boolean) => void }) {
-  const { t } = useI18n(), groupAccess = useAccess('groups');
-  const groups = useAll<Group>('/question-groups', 'groups', groupAccess.read);
-  const [rows, setRows] = useState<Source[]>(initial), [mode, setMode] = useState(initial[0]?.question_count != null ? 'count' : 'percentage');
+  const { t } = useI18n(), categoryAccess = useAccess('categories');
+  const categories = useAll<Category>('/question-categories', 'categories', categoryAccess.read);
+  const [rows, setRows] = useState<Source[]>(initial);
+  const fixed = useAll<Candidate>(`/${quiz.id}/questions`, 'questions');
   const [baseline, setBaseline] = useState(JSON.stringify(initial)), [editing, setEditing] = useState<{ index: number; row: Source } | null>(null);
   const action = useAction(), { confirm, dialogProps } = useConfirm();
   const update = (next: Source[]) => { setRows(next); onDirty(JSON.stringify(next) !== baseline); };
-  const choices = [...new Map([...(initial.flatMap(s => s.group ? [{ ...s.group, user_id: quiz.user_id }] : [])), ...(groups.data ?? [])].map(g => [g.id, g])).values()].filter(g => g.user_id === quiz.user_id);
-  const valid = allocationValid(rows, quiz.question_count), quotas = valid ? sourceQuotas(rows, quiz.question_count) : [];
+  const choices = [...new Map([...(initial.flatMap(s => s.category ? [{ ...s.category, user_id: quiz.user_id }] : [])), ...(categories.data ?? [])].map(g => [g.id, g])).values()].filter(g => g.user_id === quiz.user_id);
+  const valid = allocationValid(rows);
   return <>
     <div className={scrollClass}><h4 className={styles.partHeading}>{t('quizSourcesButton')} <span>{rows.length}</span></h4><Notice {...action} />
-      <Field label={t('qeAllocationMode')} hint={t('qeAllocationModeHelp')}><Select label={t('qeAllocationMode')} disabled={action.busy || !editable} value={mode} values={[{ value: 'percentage', label: t('quizPercentage') }, { value: 'count', label: t('quizFixedQuestionCount') }]} onChange={value => { setMode(value); update(rows.map(row => ({ ...row, question_percentage: value === 'percentage' ? 1 : null, question_count: value === 'count' ? 1 : null }))); }} /></Field>
-      {groupAccess.read && <LoadState query={groups} variant="inline" />}
-      {rows.map((row, index) => <PartCard key={`${index}:${row.group_id}`} title={choices.find(g => g.id === row.group_id)?.name || row.group?.name || row.group_id} meta={<>{mode === 'percentage' ? `${row.question_percentage}%` : t('quizFixedQuestionsCount', { count: row.question_count ?? 0 })}{valid && <> · {t('quizQuestionsCount', { count: quotas[index] })}</>}</>} editable={editable} busy={action.busy} onEdit={() => setEditing({ index, row })} onRemove={() => void (async () => {
+      {categoryAccess.read && <LoadState query={categories} variant="inline" />}
+      {rows.map((row, index) => <PartCard key={`${index}:${row.category_id}`} title={row.category_id === null ? t('qeUncategorized') : choices.find(g => g.id === row.category_id)?.name || row.category?.name || row.category_id} meta={<>{t('quizQuestionsCount', { count: row.question_count })} · {t('qePointsPerQuestion')}: {row.max_points}</>} editable={editable} busy={action.busy} onEdit={() => setEditing({ index, row })} onRemove={() => void (async () => {
         if (await confirm({ title: t('quizRemove'), message: t('quizDeleteSourceMessage'), yesText: t('quizRemove'), noText: t('adminCancel') })) update(rows.filter((_, i) => i !== index));
       })()}><small>{t('qePosition')}: {row.position}</small></PartCard>)}
       {!rows.length && <p className={styles.partEmpty}>{t('quizNoSourcesYet')}</p>}
-      {editable && <AddButton disabled={action.busy || !groups.isSuccess || rows.length >= 1000} onClick={() => setEditing({ index: rows.length, row: { group_id: '', position: Math.max(-1, ...rows.map(row => row.position)) + 1, question_percentage: mode === 'percentage' ? 1 : null, question_count: mode === 'count' ? 1 : null } })}>{t('quizAddSource')}</AddButton>}
-      <p className={styles.partMeta}>{t('qeAllocationTotal', { total: rows.reduce((sum, s) => sum + Number(mode === 'percentage' ? s.question_percentage : s.question_count), 0), required: mode === 'percentage' ? 100 : quiz.question_count })}</p>
+      {editable && <AddButton disabled={action.busy || !fixed.isSuccess || rows.length >= 1000} onClick={() => setEditing({ index: rows.length, row: { category_id: '', position: nextPosition(rows, fixed.data ?? []), question_count: 1, max_points: 1 } })}>{t('quizAddSource')}</AddButton>}
+      <LoadState query={fixed} variant="inline" />
+      {fixed.data && <p className={styles.partMeta}>{t('quizQuestionCount')}: {questionCount(fixed.data, rows)} · {t('qeDerivedCountHelp')}</p>}
       {!valid && <p className={styles.error}>{t('qeAllocationInvalid')}</p>}
     </div><Footer onBack={onBack} busy={action.busy}>{editable && <button type="button" className="saveCaptionsBtn" disabled={action.busy || !valid || JSON.stringify(rows) === baseline} onClick={() => void action.run(async () => {
-      await request(`/${quiz.id}/sources`, 'PUT', { sources: rows.map(({ group_id, position, question_percentage, question_count }) => ({ group_id, position, question_percentage, question_count })) });
-      setBaseline(JSON.stringify(rows)); onDirty(false);
+      const result = await request<{ sources: Source[] }>(`/${quiz.id}/sources`, 'PUT', { sources: rows.map(({ category_id, position, max_points, question_count }) => ({ category_id, position, max_points, question_count })) });
+      setRows(result.sources); setBaseline(JSON.stringify(result.sources)); onDirty(false);
     })}>{t(action.busy ? 'saving' : 'saveChanges')}</button>}</Footer>
-    {editing && <DraftDialog<NumberDraft<Source>> title={t(editing.index < rows.length ? 'quizEditSource' : 'quizAddSource')} initial={editing.row} onClose={() => setEditing(null)} valid={draft => !!draft.group_id} save={async draft => {
-      const next = [...rows]; next[editing.index] = { ...draft, position: Number(draft.position), question_percentage: draft.question_percentage === null ? null : Number(draft.question_percentage), question_count: draft.question_count === null ? null : Number(draft.question_count), group: choices.find(g => g.id === draft.group_id) }; update(next);
+    {editing && <DraftDialog<NumberDraft<Source>> title={t(editing.index < rows.length ? 'quizEditSource' : 'quizAddSource')} initial={editing.row} onClose={() => setEditing(null)} valid={draft => draft.category_id === null || !!draft.category_id} save={async draft => {
+      const next = [...rows]; next[editing.index] = { ...draft, position: Number(draft.position), max_points: Number(draft.max_points), question_count: Number(draft.question_count), category: choices.find(g => g.id === draft.category_id) }; update(next);
     }}>{(draft, change) => <>
-      <Field label={t('qeGroup')}><Select label={t('qeGroup')} value={draft.group_id} values={[{ value: '', label: t('quizSelect') }, ...choices.map(g => ({ value: g.id, label: g.name, disabled: rows.some((s, i) => i !== editing.index && s.group_id === g.id) }))]} onChange={group_id => change({ group_id })} /></Field>
-      <div className="quizPopupGrid"><Field label={t(mode === 'percentage' ? 'quizPercentage' : 'quizQuestionCount')}><input aria-label={t(mode === 'percentage' ? 'quizPercentage' : 'quizQuestionCount')} type="number" required min={mode === 'percentage' ? 0.01 : 1} max={mode === 'percentage' ? 100 : 2147483647} step={mode === 'percentage' ? 0.01 : 1} value={mode === 'percentage' ? draft.question_percentage ?? '' : draft.question_count ?? ''} onChange={e => change({ [mode === 'percentage' ? 'question_percentage' : 'question_count']: numberDraftValue(e.target.value) })} /></Field><Position value={draft.position} change={position => change({ position })} /></div>
+      <Field label={t('qeCategory')}><Select label={t('qeCategory')} value={draft.category_id ?? '__uncategorized__'} values={[{ value: '', label: t('quizSelect'), disabled: true }, { value: '__uncategorized__', label: t('qeUncategorized'), disabled: rows.some((s, i) => i !== editing.index && s.category_id === null) }, ...choices.map(g => ({ value: g.id, label: g.name, disabled: rows.some((s, i) => i !== editing.index && s.category_id === g.id) }))]} onChange={value => change({ category_id: value === '__uncategorized__' ? null : value })} /></Field>
+      <div className="quizPopupGrid"><Field label={t('quizQuestionCount')}><input aria-label={t('quizQuestionCount')} type="number" required min={1} max={2147483647} step={1} value={draft.question_count} onChange={e => change({ question_count: numberDraftValue(e.target.value) })} /></Field>
+      <Field label={t('qePointsPerQuestion')}><input aria-label={t('qePointsPerQuestion')} type="number" required min={0.01} max={99999999.99} step={0.01} value={draft.max_points} onChange={e => change({ max_points: numberDraftValue(e.target.value) })} /></Field>
+      <Position value={draft.position} change={position => change({ position })} /></div><p className={styles.note}>{t('qeSharedPositionHelp')}</p>
     </>}</DraftDialog>}<ConfirmDialog {...dialogProps} />
+  </>;
+}
+
+function RuleVideoField({ video, ownerId, included, onChange }: {
+  video: VideoCard; ownerId: string; included: string[]; onChange: (video: VideoCard) => void;
+}) {
+  const { t } = useI18n();
+  const [choosing, setChoosing] = useState(false);
+  const thumbnail = video.thumbnail_url || video.mux_thumbnail_url;
+  return <>
+    <Field label={t('quizRequiredVideo')}>
+      <div className={styles.ruleVideo}>
+        <div className={styles.partIdentity}>
+          {thumbnail && <img className={styles.partThumbnail} src={thumbnail} alt="" />}
+          <div className={styles.partText}><p>{video.title}</p></div>
+        </div>
+        <button type="button" className="cancelBtn" onClick={() => setChoosing(true)}>{t('qeChangeVideo')}</button>
+      </div>
+    </Field>
+    <EditorPopup open={choosing} title={t('qeChangeVideo')} description={t('quizSelectVideoForRule')} onClose={() => setChoosing(false)} wide className={styles.rulePopup}>
+      <div className={`${scrollClass} ${styles.ruleVideoPicker}`}><PlaylistVideoPicker ownerId={ownerId} included={[...included, video.id]} busy={false} addingId={null} onAdd={next => { onChange(next); setChoosing(false); }} /></div>
+      <Footer onBack={() => setChoosing(false)} />
+    </EditorPopup>
   </>;
 }
 
@@ -167,16 +197,16 @@ export function Requirements({ quiz, editable, onBack }: PartProps) {
       {query.isSuccess && !query.data?.length && <p className={styles.partEmpty}>{t('quizNoRulesYet')}</p>}
       {editable && <AddButton disabled={action.busy || !query.isSuccess} onClick={() => setAdding(true)}>{t('quizAddRule')}</AddButton>}
     </div><Footer onBack={onBack} busy={action.busy} />
-    <EditorPopup open={adding} title={t('quizAddRule')} description={t('quizSelectVideoForRule')} onClose={() => setAdding(false)} wide>
-      <div className={scrollClass}><PlaylistVideoPicker ownerId={quiz.user_id} included={query.data?.map(r => r.video_id) ?? []} busy={!query.isSuccess} addingId={null} onAdd={selectVideo} /></div><Footer onBack={() => setAdding(false)} />
+    <EditorPopup open={adding} title={t('quizAddRule')} description={t('quizSelectVideoForRule')} onClose={() => setAdding(false)} wide className={styles.rulePopup}>
+      <div className={`${scrollClass} ${styles.ruleVideoPicker}`}><PlaylistVideoPicker ownerId={quiz.user_id} included={query.data?.map(r => r.video_id) ?? []} busy={!query.isSuccess} addingId={null} onAdd={selectVideo} /></div><Footer onBack={() => setAdding(false)} />
     </EditorPopup>
-    {editing && <DraftDialog<NumberDraft<{ mode: string; value: number }>> title={t(editing.isNew ? 'quizAddRule' : 'quizEditRule')} initial={{ mode: editing.row.min_watch_percentage !== null ? 'percentage' : 'seconds', value: Number(editing.row.min_watch_percentage ?? editing.row.min_watch_seconds) }} onClose={() => setEditing(null)} save={async draft => {
+    {editing && <DraftDialog<NumberDraft<{ mode: string; value: number; video: VideoCard }>> className={styles.rulePopup} title={t(editing.isNew ? 'quizAddRule' : 'quizEditRule')} initial={{ mode: editing.row.min_watch_percentage !== null ? 'percentage' : 'seconds', value: Number(editing.row.min_watch_percentage ?? editing.row.min_watch_seconds), video: editing.row.video_card ?? { id: editing.row.video_id, title: t('quizRequiredVideo') } }} onClose={() => setEditing(null)} save={async draft => {
       const patch = { min_watch_percentage: draft.mode === 'percentage' ? Number(draft.value) : null, min_watch_seconds: draft.mode === 'seconds' ? Number(draft.value) : null };
-      await request(editing.isNew ? '/quiz-requirements' : `/quiz-requirements/${quiz.id}/${editing.row.video_id}`, editing.isNew ? 'POST' : 'PATCH', editing.isNew ? { quiz_id: quiz.id, video_id: editing.row.video_id, position: editing.row.position, ...patch } : patch);
+      await saveRequirement(request, editing.row, editing.isNew, draft.video.id, patch, t('qeRuleReplacementIncomplete'));
     }}>{(draft, change) => <>
-      <p className={styles.draftTitle}>{editing.row.video_card?.title || t('quizRequiredVideo')}</p>
+      <RuleVideoField video={draft.video} ownerId={quiz.user_id} included={(query.data ?? []).filter(row => row.video_id !== editing.row.video_id).map(row => row.video_id)} onChange={video => change({ video })} />
       <Field label={t('quizRuleType')}><Select label={t('quizRuleType')} value={draft.mode} values={[{ value: 'percentage', label: t('quizVideoWatchPercentage') }, { value: 'seconds', label: t('quizVideoWatchSeconds') }]} onChange={mode => change({ mode, value: mode === 'percentage' ? 100 : 1 })} /></Field>
-      <Field label={t(draft.mode === 'percentage' ? 'quizRequiredPercentage' : 'quizRequiredSeconds')}><input aria-label={t(draft.mode === 'percentage' ? 'quizRequiredPercentage' : 'quizRequiredSeconds')} required type="number" min={draft.mode === 'percentage' ? 0.01 : 1} max={draft.mode === 'percentage' ? 100 : editing.row.video_card?.duration_seconds || 2147483647} step={draft.mode === 'percentage' ? 0.01 : 1} value={draft.value} onChange={e => change({ value: numberDraftValue(e.target.value) })} /></Field>
+      <Field label={t(draft.mode === 'percentage' ? 'quizRequiredPercentage' : 'quizRequiredSeconds')}><input aria-label={t(draft.mode === 'percentage' ? 'quizRequiredPercentage' : 'quizRequiredSeconds')} required type="number" min={draft.mode === 'percentage' ? 0.01 : 1} max={draft.mode === 'percentage' ? 100 : draft.video.duration_seconds ?? 2147483647} step={draft.mode === 'percentage' ? 0.01 : 1} value={draft.value} onChange={e => change({ value: numberDraftValue(e.target.value) })} /></Field>
     </>}</DraftDialog>}<ConfirmDialog {...dialogProps} />
   </>;
 }

@@ -32,7 +32,7 @@ export const accessPermissions = {
   playlists: [P.playlistsUpdateOwn], editPlaylist: [P.playlistsUpdateOwn, P.playlistsUpdateAny],
   collections: [P.collectionsCreate, P.collectionsUpdateOwn, P.collectionsUpdateAny, P.collectionsDeleteOwn, P.collectionsDeleteAny],
   editCollection: [P.collectionsCreate, P.collectionsUpdateOwn, P.collectionsUpdateAny],
-  quizzes: [P.quizzesCreate, 'quizzes.read_own', 'quizzes.read_any', 'questions.create', 'questions.read_own', 'questions.read_any', 'question_groups.create', 'question_groups.read_own', 'question_groups.read_any'], participate: [P.quizzesParticipate], people: [P.peopleManage],
+  quizzes: [P.quizzesCreate, 'quizzes.read_own', 'quizzes.read_any', 'questions.create', 'questions.read_own', 'questions.read_any', 'question_categories.create', 'question_categories.read_own', 'question_categories.read_any'], participate: [P.quizzesParticipate], people: [P.peopleManage],
   videoAnalytics: [P.videoAnalyticsOwn, P.videoAnalyticsAny], channelAnalytics: [P.channelAnalyticsOwn],
   platformUsers: [P.usersSearch], platformSettings: [P.rolesManage], platformAnalytics: [P.platformAnalytics],
 } as const;

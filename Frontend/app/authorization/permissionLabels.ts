@@ -7,7 +7,7 @@ export function permissionLabel(key: string, fallback: string, t: (key: string) 
 
 const permissionGroupKeys: Record<string, string> = {
   roles: "usersRoles", users: "rolesUsers", members: "rolesUsers",
-  livestreams: "liveTitle", live_streams: "liveTitle", videos: "videosTab", playlists: "playlistsTab", collections: "collectionsTab", quizzes: "navQuizzes", questions: "qeBank", question_groups: "qeGroups",
+  livestreams: "liveTitle", live_streams: "liveTitle", videos: "videosTab", playlists: "playlistsTab", collections: "collectionsTab", quizzes: "navQuizzes", questions: "qeBank", question_categories: "qeCategories",
   comments: "comments", people: "permission.groupPeople", analytics: "navAnalytics", reports: "permission.groupReports",
 };
 export function permissionGroupLabel(name: string, t: (key: string) => string) {

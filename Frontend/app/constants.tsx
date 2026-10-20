@@ -410,6 +410,10 @@ export const AIButtonSVG = <svg width="24" height="24" viewBox="0 0 24 24" fill=
 export const QuizSVG = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <path d="M9 17h3M9 9h6M9 13h6M10 2h4M7 21H17C18.1046 21 19 20.1046 19 19V7C19 5.89543 18.1046 5 17 5H7C5.89543 5 5 5.89543 5 7V19c0 1.1046.89543 2 2 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
 </svg>;
+export const QuestionSVG = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
+    <path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 2-2.5 2-2.5 4M12 16h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+</svg>;
 // Access & Roles icons exported from the EAES Figma screen.
 // They inherit color from CSS so both themes continue to use the defined palette.
 export const RoleAddSVG = <svg viewBox="0 0 13.3333 13.3333" fill="none" aria-hidden="true"><path d="M6.66667 1V12.3333M12.3333 6.66667H1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>;
@@ -515,3 +519,23 @@ export const LiveSVG = <svg width="24" height="24" viewBox="0 0 24 24" fill="non
 
 // ICONCINO folder: a collection groups playlists.
 export const CollectionsSVG = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fillRule="evenodd" clipRule="evenodd" d="M3 7c0-1.10457.89543-2 2-2H8.67157C9.20201 5 9.71071 5.21071 10.0858 5.58579L10.9142 6.41421C11.2893 6.78929 11.798 7 12.3284 7H19c1.1046.0 2 .89543 2 2v8C21 18.1046 20.1046 19 19 19H5C3.89543 19 3 18.1046 3 17V7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+
+
+export const SingleChoiceQuestionSVG = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <circle cx="6" cy="7" r="3" stroke="currentColor" strokeWidth="2" />
+    <circle cx="6" cy="7" r="1.25" fill="currentColor" />
+    <circle cx="6" cy="17" r="3" stroke="currentColor" strokeWidth="2" />
+    <path d="M13 7h8M13 17h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+</svg>;
+export const MultipleChoiceQuestionSVG = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <rect x="2" y="3" width="8" height="8" rx="2" stroke="currentColor" strokeWidth="2" />
+    <rect x="2" y="14" width="8" height="8" rx="2" stroke="currentColor" strokeWidth="2" />
+    <path d="m4 7 1.5 1.5L8 6M4 18l1.5 1.5L8 17M14 7h7M14 18h7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+</svg>;
+export const MatchingQuestionSVG = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <rect x="2" y="4" width="6" height="6" rx="2" stroke="currentColor" strokeWidth="2" />
+    <rect x="16" y="4" width="6" height="6" rx="2" stroke="currentColor" strokeWidth="2" />
+    <rect x="2" y="14" width="6" height="6" rx="2" stroke="currentColor" strokeWidth="2" />
+    <rect x="16" y="14" width="6" height="6" rx="2" stroke="currentColor" strokeWidth="2" />
+    <path d="M8 7h8M8 17h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+</svg>;

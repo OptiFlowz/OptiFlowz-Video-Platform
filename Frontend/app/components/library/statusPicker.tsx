@@ -25,7 +25,7 @@ export default function StatusPicker<Value extends string>({ value, title, optio
   const presence = usePopupPresence(open);
   const [draft, setDraft] = useState(value);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!presence.mounted) return;
@@ -60,12 +60,12 @@ export default function StatusPicker<Value extends string>({ value, title, optio
     if (draft === value) { setOpen(false); return; }
     savingRef.current = true;
     setSaving(true);
-    setError(false);
+    setError("");
     try {
       await onSave(draft);
       setOpen(false);
-    } catch {
-      setError(true);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : t("errorUnexpected"));
     } finally {
       savingRef.current = false;
       setSaving(false);
@@ -77,7 +77,7 @@ export default function StatusPicker<Value extends string>({ value, title, optio
       className={`statusPickerTrigger ${className}`}
       aria-label={`${title}: ${selected?.label ?? value}`}
       aria-haspopup="dialog" aria-expanded={open}
-      onClick={() => { setDraft(value); setError(false); setOpen(true); }}>
+      onClick={() => { setDraft(value); setError(""); setOpen(true); }}>
       {selected?.icon}
       {selected?.label ?? value}
     </button>
@@ -100,7 +100,7 @@ export default function StatusPicker<Value extends string>({ value, title, optio
           <span>{option.label}</span>
         </label>)}
       </fieldset>
-      {error && <p role="alert" className="statusPickerError">{t("errorUnexpected")}</p>}
+      {error && <p role="alert" className="statusPickerError">{error}</p>}
       <div className="statusPickerActions">
         <button type="button" disabled={saving} onClick={() => setOpen(false)}>{t("adminCancel")}</button>
         <button type="button" className="statusPickerSave" disabled={saving} onClick={() => void save()}>{saving && <span className="uploadSpinner tiny" />}{t("adminSave")}</button>

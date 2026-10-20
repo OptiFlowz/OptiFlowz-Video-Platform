@@ -12,8 +12,8 @@ export const EditorBusyContext = createContext<((busy: boolean) => void) | undef
 export const EditorNoticeContext = createContext<HTMLElement | null | undefined>(undefined);
 
 /** Shared popup shell for the new engine, using the existing quiz popup motion and layout. */
-export default function EditorPopup({ open, title, description, onClose, children, wide = false, compact = false }: {
-  open: boolean; title: string; description?: string; onClose: () => void; children: ReactNode; wide?: boolean; compact?: boolean;
+export default function EditorPopup({ open, title, description, onClose, children, wide = false, compact = false, className = '' }: {
+  open: boolean; title: string; description?: string; onClose: () => void; children: ReactNode; wide?: boolean; compact?: boolean; className?: string;
 }) {
   const { t } = useI18n(), titleId = useId();
   const [mounted, setMounted] = useState(open), [visible, setVisible] = useState(false), [busy, setBusy] = useState(false);
@@ -57,7 +57,7 @@ export default function EditorPopup({ open, title, description, onClose, childre
   }, [open, busy]);
   if (!mounted) return null;
   return <PopupPortal><div className={`${styles.popupLayer} popupMotionLayer ${visible ? 'opacity-100' : 'opacity-0'}`} onMouseDown={event => { if (event.target === event.currentTarget && open && !busy) onClose(); }}>
-    <div ref={panel} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-busy={busy} tabIndex={-1} className={`${styles.page} ${styles.popupPanel} ${compact ? styles.compactPopup : ""} ${(presentation?.wide ?? wide) ? styles.widePopup : ""} popupMotionPanel ${visible ? 'isOpen' : ''}`}>
+    <div ref={panel} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-busy={busy} tabIndex={-1} className={`${styles.page} ${styles.popupPanel} ${compact ? styles.compactPopup : ""} ${(presentation?.wide ?? wide) ? styles.widePopup : ""} ${className} popupMotionPanel ${visible ? 'isOpen' : ''}`}>
       <div className={`quizPopupHeader ${styles.popupHeader}`}><div><h3 id={titleId}>{presentation?.title ?? retained.current.title}</h3>{(presentation?.description ?? retained.current.description) && <p>{presentation?.description ?? retained.current.description}</p>}</div><button type="button" className={styles.icon} aria-label={t('close')} disabled={busy || !open} onClick={onClose}>{CloseSVG}</button></div>
       <EditorNoticeContext.Provider value={noticeTarget}><EditorPresentationContext.Provider value={setPresentation}><EditorBusyStatusContext.Provider value={busy}><EditorBusyContext.Provider value={setBusy}><div className={styles.popupContent}>{retained.current.children}</div></EditorBusyContext.Provider></EditorBusyStatusContext.Provider></EditorPresentationContext.Provider></EditorNoticeContext.Provider>
       <div ref={setNoticeTarget} className={styles.popupNotice} />

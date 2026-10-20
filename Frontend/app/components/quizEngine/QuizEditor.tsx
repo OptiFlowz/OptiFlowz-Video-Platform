@@ -1,74 +1,47 @@
-import { useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { useI18n } from '~/i18n';
-import { ConfirmDialog } from '~/components/confirmPopup/confirmDialog';
-import { useConfirm } from '~/components/confirmPopup/useConfirm';
+import ProfileTabs from '~/components/library/ProfileTabs';
 import { Field, Select, Notice, LoadState, useAction, useAccess, useDetail, styles } from './shared';
-import { request, all } from './api';
-import { defaultSettings, settingsOf, type Quiz, type QuizSettings, type Candidate, type Question, type Source } from './model';
-import { readiness } from './readiness';
+import { request } from './api';
+import { defaultSettings, settingsOf, type Quiz, type QuizSettings } from './model';
+import { inspectQuiz } from './inspectQuiz';
 import { Candidates, Sources, Requirements } from './QuizParts';
-import { EditorPresentationContext } from './EditorPopup';
+import { EditorBusyStatusContext } from './EditorPopup';
 import { numberDraftValue, type NumberDraft } from './numberDraft';
 
-export default function QuizEditor({ id, onSaved, onDirty, onClose }: { id: string; onSaved: (id: string) => void; onDirty: (dirty: boolean) => void; onClose: () => void }) {
-  const { t } = useI18n();
-  const setPresentation = useContext(EditorPresentationContext);
+const editorTabs = { settings: 'qeSettings', questions: 'quizQuestionsButton', sources: 'quizSourcesButton', rules: 'quizRulesButton' };
+export default function QuizEditor({ id, section, onSectionChange, onSaved, onDirty, onClose }: {
+  id: string; section: string; onSectionChange: (section: string) => void; onSaved: (id: string) => void; onDirty: (dirty: boolean) => void; onClose: () => void;
+}) {
+  const { t } = useI18n(), busy = useContext(EditorBusyStatusContext);
   const detail = useDetail<{ quiz: Quiz }>(`/${id}`, id !== 'new');
-  const access = useAccess('quizzes', detail.data?.quiz);
-  const [tab, setTab] = useState('settings'), dirty = useRef(false);
-  const { confirm, dialogProps } = useConfirm();
-  const track = (value: boolean) => { dirty.current = value; onDirty(value); };
-  useEffect(() => { setTab('settings'); }, [id]);
-  useEffect(() => {
-    setPresentation?.(tab === 'settings' ? null : {
-      title: t(tab === 'candidates' ? 'quizEditQuestions' : tab === 'sources' ? 'quizQuestionSources' : 'quizRulesTitle'),
-      description: tab === 'candidates' ? t('qeCandidatesHelp') : tab === 'sources' ? t('qeSourcesHelp') : t('quizRulesDescription', { title: detail.data?.quiz.title || t('quizThisQuiz') }),
-      wide: true,
-    });
-    return () => setPresentation?.(null);
-  }, [tab, t, detail.data?.quiz.title, setPresentation]);
-  if (id !== 'new' && !detail.data) return <LoadState query={detail} variant="form" />;
-  const quiz = detail.data?.quiz;
-  const changeTab = async (value: string) => {
-    if (dirty.current && !await confirm({ title: t('qeUnsaved'), message: t('qeDiscard'), yesText: t('qeDiscardAction'), noText: t('adminCancel') })) return;
-    track(false); setTab(value);
-  };
-  return <>
-    {tab === 'settings' ? <Settings key={id} initial={quiz} onSaved={onSaved} onDirty={track} onClose={onClose} manage={quiz ? <div className="quizPopupManageActions">
-      <button type="button" className="saveCaptionsBtn" onClick={() => void changeTab('candidates')}>{t('quizQuestionsButton')}</button>
-      <button type="button" className="saveCaptionsBtn" onClick={() => void changeTab('sources')}>{t('quizSourcesButton')}</button>
-      <button type="button" className="saveCaptionsBtn" onClick={() => void changeTab('requirements')}>{t('quizRulesButton')}</button>
-    </div> : undefined} /> : <>
-      {quiz && tab === 'candidates' && <Candidates quiz={quiz} editable={access.update} onDirty={track} onBack={() => void changeTab('settings')} />}
-      {quiz && tab === 'sources' && <Sources quiz={quiz} editable={access.update} onDirty={track} onBack={() => void changeTab('settings')} />}
-      {quiz && tab === 'requirements' && <Requirements quiz={quiz} editable={access.update} onBack={() => void changeTab('settings')} />}
-    </>}
-    <ConfirmDialog {...dialogProps} />
-  </>;
+  const access = useAccess('quizzes', detail.data?.quiz), quiz = detail.data?.quiz;
+  const tab = id === 'new' || !Object.hasOwn(editorTabs, section) ? 'settings' : section as keyof typeof editorTabs;
+  return <div className={`${styles.page} ${styles.editorPage}`}>
+    <div className="libraryHeader"><div className="libraryHeading"><h1>{quiz?.title || t(id === 'new' ? 'quizCreateTitle' : 'quizEditTitle')}</h1><p>{t(id === 'new' ? 'qePublishAfterCreate' : 'qeIntro')}</p></div>{quiz && <span className={`managementStatus ${quiz.status === 'published' ? 'active' : ''}`}>{t(`qe${quiz.status[0].toUpperCase()}${quiz.status.slice(1)}`)}</span>}</div>
+    <ProfileTabs className={styles.resourceTabs} label={t('qeSettings')}>{Object.entries(editorTabs).map(([key, label]) => <button type="button" role="tab" key={key} id={`quiz-tab-${key}`} aria-selected={tab === key} aria-controls="quiz-editor-panel" disabled={busy || (key !== 'settings' && !quiz)} onClick={() => { if (tab !== key) onSectionChange(key); }}>{t(label)}</button>)}</ProfileTabs>
+    <div id="quiz-editor-panel" role="tabpanel" aria-labelledby={`quiz-tab-${tab}`} className={styles.editorBody}>
+      {id !== 'new' && !detail.data ? <LoadState query={detail} variant="form" /> : <>
+        {tab === 'settings' && <Settings key={id} initial={quiz} onSaved={onSaved} onDirty={onDirty} onClose={onClose} />}
+        {quiz && tab === 'questions' && <><p className={styles.sectionHelp}>{t('qeCandidatesHelp')}</p><Candidates quiz={quiz} editable={access.update} onDirty={onDirty} /></>}
+        {quiz && tab === 'sources' && <><p className={styles.sectionHelp}>{t('qeSourcesHelp')}</p><Sources quiz={quiz} editable={access.update} onDirty={onDirty} /></>}
+        {quiz && tab === 'rules' && <><p className={styles.sectionHelp}>{t('quizRulesDescription', { title: quiz.title })}</p><Requirements quiz={quiz} editable={access.update} /></>}
+      </>}
+    </div>
+  </div>;
+}
 
-}
-async function inspectQuiz(id: string, settings: QuizSettings) {
-  const [candidates, sources] = await Promise.all([all<Candidate>(`/${id}/questions`, 'questions'), all<Source>(`/${id}/sources`, 'sources')]);
-  const questions: Question[] = [];
-  // Keep requests bounded when a bank contains hundreds of candidate questions.
-  for (let i = 0; i < candidates.length; i += 8) {
-    const batch = await Promise.all(candidates.slice(i, i + 8).map(row => request<{ question: Question }>(`/questions/${row.question_id}`)));
-    questions.push(...batch.map(result => result.question));
-  }
-  return readiness(settings, questions, sources);
-}
-function Settings({ initial, onSaved, onDirty, onClose, manage }: { initial?: Quiz; onSaved: (id: string) => void; onDirty: (dirty: boolean) => void; onClose: () => void; manage?: ReactNode }) {
+function Settings({ initial, onSaved, onDirty, onClose }: { initial?: Quiz; onSaved: (id: string) => void; onDirty: (dirty: boolean) => void; onClose: () => void }) {
   const { t } = useI18n(), access = useAccess('quizzes', initial);
   const [form, setForm] = useState<NumberDraft<QuizSettings>>(() => initial ? settingsOf(initial) : { ...defaultSettings });
   const [baseline, setBaseline] = useState(JSON.stringify(form)), [issues, setIssues] = useState<string[] | null>(null);
-  const body = useRef<HTMLDivElement>(null), readinessPanel = useRef<HTMLDetailsElement>(null);
-  const scrollToBottom = () => body.current?.scrollTo({ top: body.current.scrollHeight, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+  const readinessPanel = useRef<HTMLDetailsElement>(null);
+  const scrollToBottom = () => readinessPanel.current?.scrollIntoView({ block: 'nearest', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
   useEffect(() => { if (issues && readinessPanel.current?.open) scrollToBottom(); }, [issues]);
   const action = useAction(), editable = initial ? access.update : access.create;
   const change = (patch: Partial<NumberDraft<QuizSettings>>) => { const next = { ...form, ...patch }; setForm(next); setIssues(null); onDirty(JSON.stringify(next) !== baseline); };
   const settings = (): QuizSettings => ({ ...form,
-    question_count: Number(form.question_count),
     time_limit_seconds: form.time_limit_seconds === null ? null : Number(form.time_limit_seconds),
     max_attempts: form.max_attempts === null ? null : Number(form.max_attempts),
     passing_score_percentage: Number(form.passing_score_percentage),
@@ -80,41 +53,36 @@ function Settings({ initial, onSaved, onDirty, onClose, manage }: { initial?: Qu
   const feedback = (key: 'correctness_visibility' | 'correct_answers_visibility' | 'explanation_visibility', label: string) => <Field key={key} label={t(label)}><Select label={t(label)} value={form[key]} values={[{ value: 'never', label: t('qeNever') }, { value: 'after_check', label: t('qeAfterCheck') }, { value: 'after_finish', label: t('qeAfterFinish') }]} onChange={value => change({ [key]: value })} /></Field>;
   return <form className={`quizPopupForm ${styles.settingsForm}`} onSubmit={e => { e.preventDefault(); void action.run(async () => {
     if (!form.title.trim()) throw new Error(t('quizTitleRequired'));
-    if (initial && form.question_count !== initial.question_count) {
-      const sources = await all<Source>(`/${initial.id}/sources`, 'sources');
-      if (sources.some(s => s.question_count !== null)) throw new Error(t('qeCountChange'));
-    }
     if (form.status === 'published') {
       if (!initial) throw new Error(t('qePublishAfterCreate'));
-      const problems = await inspectQuiz(initial.id, settings()); setIssues(problems);
+      const problems = await inspectQuiz(initial); setIssues(problems);
       if (problems.length) throw new Error(t('qeNotReady'));
     }
     const body = { ...settings(), title: form.title.trim(), description: form.description?.trim() || null };
     const result = await request<{ quiz: Quiz }>(initial ? `/${initial.id}` : '', initial ? 'PATCH' : 'POST', body);
     const saved = settingsOf(result.quiz); setForm(saved); setBaseline(JSON.stringify(saved)); onDirty(false); onSaved(result.quiz.id);
   }); }}>
-    <div ref={body} className="quizPopupBody"><Notice {...action} /><fieldset disabled={action.busy || !editable}>
+    <div className="quizPopupBody"><Notice {...action} /><div className={styles.settingsLayout}><div className={styles.settingsColumn}><fieldset disabled={action.busy || !editable}><section className={styles.settingsSection}><h2>{t('qeSettings')}</h2>
       <Field label={t('title')}><input required maxLength={255} aria-label={t('title')} value={form.title} onChange={e => change({ title: e.target.value })} /></Field>
       <Field label={t('description')}><textarea aria-label={t('description')} value={form.description ?? ''} onChange={e => change({ description: e.target.value || null })} /></Field>
       <div className="quizPopupGrid"><Field label={t('adminTableStatus')}><Select label={t('adminTableStatus')} value={form.status} values={['draft', 'published', 'archived'].map(value => ({ value, label: t(`qe${value[0].toUpperCase()}${value.slice(1)}`), disabled: !initial && value === 'published' }))} onChange={value => change({ status: value as QuizSettings['status'] })} /></Field>
-      {number('question_count', 'quizQuestionCount', 1, 2147483647)}
+      <Field label={t('quizQuestionCount')} hint={t('qeDerivedCountHelp')}><output className={styles.derivedCount}>{initial?.question_count ?? 0}</output></Field>
       {number('time_limit_seconds', 'quizTimeLimitSeconds', 1, 2147483647, true)}
       {number('max_attempts', 'quizMaxAttempts', 1, 2147483647, true)}
       {number('passing_score_percentage', 'quizPassingScore', 0, 100, false, 0.01)}
       {number('min_answered_percentage', 'qeMinAnswered', 0, 100, false, 0.01)}
       {number('min_correct_percentage', 'qeMinCorrect', 0, 100, false, 0.01)}
-      </div><h4 className={styles.sectionTitle}>{t('qeFeedback')}</h4><div className="quizPopupGrid">
+      </div></section></fieldset>{initial && <details ref={readinessPanel} className={`${styles.settingsSection} ${styles.readiness}`} onToggle={event => { if (event.currentTarget.open) scrollToBottom(); }}><summary>{t('qeReadiness')}</summary><p className={styles.note}>{t('qeReadinessHelp')}</p><button type="button" className={styles.button} disabled={action.busy} onClick={() => void action.run(async () => { setIssues(await inspectQuiz(initial)); }, false)}>{t('qeCheck')}</button>
+      {issues && (issues.length ? <ul>{issues.map(key => <li className={styles.error} key={key}>{t(key)}</li>)}</ul> : <p className={styles.success}>{t('qeReady')}</p>)}
+    </details>}</div><fieldset className={styles.settingsColumn} disabled={action.busy || !editable}><section className={styles.settingsSection}><h2>{t('qeFeedback')}</h2><div className="quizPopupGrid">
       <Field label={t('quizScoring')}><Select label={t('quizScoring')} value={form.scoring_mode} values={[{ value: 'exact_match', label: t('quizScoringStrict') }, { value: 'partial_credit', label: t('quizScoringPartial') }]} onChange={value => change({ scoring_mode: value as QuizSettings['scoring_mode'] })} /></Field>
       {feedback('correctness_visibility', 'qeCorrectness')}{feedback('correct_answers_visibility', 'quizCorrectAnswer')}{feedback('explanation_visibility', 'quizExplanation')}
-      </div><h4 className={`${styles.sectionTitle} ${styles.toggleTitle}`}>{t('settingsAdvancedTab')}</h4><div className="quizPopupToggleList">{toggle('explanation_incorrect_only', 'qeIncorrectOnly')}{toggle('allow_answer_changes_after_check', 'qeAnswerChanges')}{toggle('allow_attempt_review', 'qeReview')}{toggle('show_final_score', 'qeFinalScore')}
+      </div></section><section className={styles.settingsSection}><h2>{t('settingsAdvancedTab')}</h2><div className="quizPopupToggleList">{toggle('explanation_incorrect_only', 'qeIncorrectOnly')}{toggle('allow_answer_changes_after_check', 'qeAnswerChanges')}{toggle('allow_attempt_review', 'qeReview')}{toggle('show_final_score', 'qeFinalScore')}
       {toggle('shuffle_questions', 'quizShuffleQuestions')}{toggle('shuffle_options', 'quizShuffleOptions')}{toggle('has_certificate', 'quizHasCertificate')}
-    </div></fieldset>
-    {initial && <details ref={readinessPanel} className={styles.readiness} onToggle={event => { if (event.currentTarget.open) scrollToBottom(); }}><summary>{t('qeReadiness')}</summary><p className={styles.note}>{t('qeReadinessHelp')}</p><button type="button" className={styles.button} disabled={action.busy} onClick={() => void action.run(async () => { setIssues(await inspectQuiz(initial.id, settings())); }, false)}>{t('qeCheck')}</button>
-      {issues && (issues.length ? <ul>{issues.map(key => <li className={styles.error} key={key}>{t(key)}</li>)}</ul> : <p className={styles.success}>{t('qeReady')}</p>)}
-    </details>}
+    </div></section></fieldset></div>
+
     </div>
-    <fieldset disabled={action.busy}>{manage}</fieldset>
-    <div className="quizPopupActions"><button type="button" className="cancelBtn" disabled={action.busy} onClick={onClose}>{t('adminCancel')}</button>
+    <div className="quizPopupActions"><button type="button" className="cancelBtn" disabled={action.busy} onClick={onClose}>{t('navQuizzes')}</button>
       {initial && access.can('quizzes.participate') && initial.status === 'published' && JSON.stringify(form) === baseline && !action.busy && <Link className="cancelBtn" to={`/quiz/${initial.id}`}>{t('quizView')}</Link>}
       {editable && <button type="submit" className="saveCaptionsBtn" disabled={action.busy || (!!initial && JSON.stringify(form) === baseline)}>{action.busy ? t('saving') : t(initial ? 'quizSaveQuiz' : 'quizCreateQuiz')}</button>}
     </div>

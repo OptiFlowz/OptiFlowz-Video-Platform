@@ -5,25 +5,25 @@ export type Option = { option_no: number; content: string; position: number; is_
 export type MatchItem = { item_no: number; content: string; position: number; correct_option_no: number };
 export type Question = Owned & {
   type: QuestionType; content: string; explanation: string | null;
-  groups: { id: string; name: string }[];
+  category: { id: string; name: string } | null;
   options?: Option[]; matching_options?: Option[]; matching_items?: MatchItem[];
 };
 export type QuestionInput = Pick<Question, 'type' | 'content' | 'explanation'> & {
-  options: Option[]; matching_options: Option[]; matching_items: MatchItem[]; group_ids?: string[];
+  options: Option[]; matching_options: Option[]; matching_items: MatchItem[]; category_id?: string | null;
 };
-export type Group = Owned & { name: string; description: string | null; questions?: Question[] };
+export type Category = Owned & { name: string; description: string | null; questions?: Question[] };
 export type QuizSettings = {
   title: string; description: string | null; status: 'draft' | 'published' | 'archived';
-  question_count: number; time_limit_seconds: number | null; max_attempts: number | null;
+  time_limit_seconds: number | null; max_attempts: number | null;
   passing_score_percentage: number; min_answered_percentage: number; min_correct_percentage: number;
   shuffle_questions: boolean; shuffle_options: boolean; has_certificate: boolean;
   correctness_visibility: Feedback; correct_answers_visibility: Feedback; explanation_visibility: Feedback;
   explanation_incorrect_only: boolean; allow_answer_changes_after_check: boolean;
   allow_attempt_review: boolean; show_final_score: boolean; scoring_mode: 'exact_match' | 'partial_credit';
 };
-export type Quiz = Owned & QuizSettings;
+export type Quiz = Owned & QuizSettings & { question_count: number };
 export const defaultSettings: QuizSettings = {
-  title: '', description: null, status: 'draft', question_count: 1, time_limit_seconds: null, max_attempts: null,
+  title: '', description: null, status: 'draft', time_limit_seconds: null, max_attempts: null,
   passing_score_percentage: 50, min_answered_percentage: 0, min_correct_percentage: 0,
   shuffle_questions: true, shuffle_options: true, has_certificate: false,
   correctness_visibility: 'after_finish', correct_answers_visibility: 'after_finish', explanation_visibility: 'after_finish',
@@ -33,8 +33,8 @@ export const defaultSettings: QuizSettings = {
 export function settingsOf(quiz: Quiz): QuizSettings {
   return Object.fromEntries(Object.keys(defaultSettings).map(key => [key, quiz[key as keyof QuizSettings]])) as QuizSettings;
 }
-export type Candidate = { quiz_id: string; question_id: string; position: number; max_points: number; question: Pick<Question, 'id' | 'type' | 'content' | 'explanation'> };
-export type Source = { quiz_id?: string; group_id: string; position: number; question_percentage: number | null; question_count: number | null; group?: Pick<Group, 'id' | 'name' | 'description'> };
+export type Candidate = { quiz_id: string; question_id: string; position: number; max_points: number; question: Pick<Question, 'id' | 'type' | 'content' | 'explanation'> & Partial<Pick<Question, 'category'>> };
+export type Source = { id?: string; quiz_id?: string; category_id: string | null; position: number; question_count: number; max_points: number; category?: Pick<Category, 'id' | 'name' | 'description'> | null };
 export type VideoCard = { id: string; title: string; duration_seconds?: number; thumbnail_url?: string | null; mux_thumbnail_url?: string | null };
 export type Requirement = {
   quiz_id: string; video_id: string; position: number; min_watch_percentage: number | null; min_watch_seconds: number | null;
@@ -43,7 +43,7 @@ export type Requirement = {
 };
 export type PageInfo = { page: number; limit: number; total: number; totalPages: number; hasNextPage: boolean; hasPreviousPage: boolean };
 export type Listing<T> = { items: T[]; pagination: PageInfo };
-export const resourcePaths = { quizzes: '', questions: '/questions', groups: '/question-groups' };
+export const resourcePaths = { quizzes: '', questions: '/questions', categories: '/question-categories' };
 export type Resource = keyof typeof resourcePaths;
-export function resourcePermission(resource: Resource, action: string) { return `${resource === 'groups' ? 'question_groups' : resource}.${action}`; }
+export function resourcePermission(resource: Resource, action: string) { return `${resource === 'categories' ? 'question_categories' : resource}.${action}`; }
 export const typeLabels = { single_choice: 'quizSingleChoice', multiple_choice: 'quizMultipleChoice', matching: 'quizMatching' };

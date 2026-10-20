@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { DndContext, DragOverlay, MouseSensor, TouchSensor, KeyboardSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, useSortable, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { MenuSVG } from '~/constants';
+import { MenuSVG, DeleteSVG } from '~/constants';
 import { useI18n } from '~/i18n';
 import { numberDraftValue } from './numberDraft';
 import { typeLabels, type Candidate } from './model';
@@ -42,16 +42,16 @@ function PointsInput({ row, busy, onPoints, onDirty }: Pick<CardProps, 'row' | '
 function CandidateCard({ row, index, editable, busy, onPoints, onDirty, onRemove, handle }: CardProps & { handle?: ReactNode }) {
   const { t } = useI18n();
   return <article className={`${styles.partCard} ${styles.candidateCard}`}>
-    <div className={styles.candidateHeader}>
-      <span className={styles.candidatePosition} aria-label={`${t('qePosition')}: ${index + 1}`}>{index + 1}</span>
-      <span className={styles.partMeta}>{t(typeLabels[row.question.type])}{!editable && <> · {t('quizPointsShort', { count: row.max_points })}</>}</span>{handle}
+    <div className={styles.candidateLeading}>{handle}<span className={styles.candidatePosition}>{index + 1}</span></div>
+    <div className={styles.candidateContent}>
+      <p>{row.question.content || t('qeUntitledQuestion')}</p>
+      <span className={styles.partMeta}>{t(typeLabels[row.question.type])} · {row.question.category?.name || t('qeUncategorized')}{!editable && <> · {t('quizPointsShort', { count: row.max_points })}</>}</span>
     </div>
-    <div className={styles.partCardBody}><div className={styles.partText}><p>{row.question.content || t('qeUntitledQuestion')}</p></div>
-      {editable && <div className={`${styles.partActions} ${styles.candidateActions}`}>
-        <PointsInput row={row} busy={busy} onPoints={onPoints} onDirty={onDirty} />
-        <button type="button" className={styles.partRemove} disabled={busy} onClick={() => onRemove(row)}>{t('quizRemove')}</button>
-      </div>}
-    </div>
+    {editable && <div className={`${styles.partActions} ${styles.candidateActions}`}>
+      <PointsInput row={row} busy={busy} onPoints={onPoints} onDirty={onDirty} />
+      <button type="button" className={styles.partRemove} disabled={busy} onClick={() => onRemove(row)}
+        aria-label={`${t('quizRemove')}: ${row.question.content || t('qeUntitledQuestion')}`} title={t('quizRemove')}>{DeleteSVG}</button>
+    </div>}
   </article>;
 }
 
