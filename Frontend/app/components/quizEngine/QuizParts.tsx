@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useI18n } from '~/i18n';
 import { AddSVG } from '~/constants';
 import PlaylistVideoPicker from '~/components/editPlaylistPage/PlaylistVideoPicker';
@@ -9,6 +9,8 @@ import { Field, Select, Notice, LoadState, useAction, useAccess, useAll, styles 
 import EditorPopup from './EditorPopup';
 import { typeLabels, type Quiz, type Candidate, type Question, type Group, type Source, type Requirement, type VideoCard } from './model';
 import { allocationValid, sourceQuotas } from './readiness';
+import { numberDraftValue, type NumberDraft } from './numberDraft';
+import CandidateList from './CandidateList';
 
 type PartProps = { quiz: Quiz; editable: boolean; onBack: () => void };
 const scrollClass = `quizPopupScroll ${styles.popupScroll} ${styles.partBody}`;
@@ -59,35 +61,57 @@ function DraftDialog<T extends object>({ title, initial, onClose, save, children
     </form><ConfirmDialog {...dialogProps} />
   </EditorPopup>;
 }
-function Position({ value, change }: { value: number; change: (value: number) => void }) {
+function Position({ value, change }: { value: number | ''; change: (value: number | '') => void }) {
   const { t } = useI18n();
-  return <Field label={t('qePosition')}><input aria-label={t('qePosition')} required type="number" min={0} max={2147483647} value={value} onChange={e => change(Number(e.target.value))} /></Field>;
+  return <Field label={t('qePosition')}><input aria-label={t('qePosition')} required type="number" min={0} max={2147483647} value={value} onChange={e => change(numberDraftValue(e.target.value))} /></Field>;
 }
 
-export function Candidates({ quiz, editable, onBack }: PartProps) {
+export function Candidates({ quiz, editable, onBack, onDirty = () => {} }: PartProps & { onDirty?: (dirty: boolean) => void }) {
   const { t } = useI18n(), bankAccess = useAccess('questions');
   const linked = useAll<Candidate>(`/${quiz.id}/questions`, 'questions');
   const bank = useAll<Question>('/questions', 'questions', bankAccess.read);
-  const [adding, setAdding] = useState(false), [editing, setEditing] = useState<Candidate | null>(null), [filter, setFilter] = useState('');
+  const [adding, setAdding] = useState(false), [filter, setFilter] = useState('');
+  const [order, setOrder] = useState<Candidate[] | null>(null);
+  const mutation = useRef(false), dirtyPoints = useRef(new Set<string>());
   const action = useAction(), { confirm, dialogProps } = useConfirm();
   const included = new Set(linked.data?.map(q => q.question_id));
+  const rows = order ?? [...(linked.data ?? [])].sort((a, b) => a.position - b.position || a.question_id.localeCompare(b.question_id));
+  const reportDirty = (id: string, dirty: boolean) => { if (dirty) dirtyPoints.current.add(id); else dirtyPoints.current.delete(id); onDirty(dirtyPoints.current.size > 0); };
+  const mutate = async (work: () => Promise<void | boolean>) => {
+    if (mutation.current || !editable) return false;
+    mutation.current = true;
+    let saved = false;
+    try { await action.run(async () => { const result = await work(); saved = result !== false; return result; }); return saved; }
+    finally { mutation.current = false; }
+  };
+  const move = async (id: string, targetId: string) => {
+    if (mutation.current || action.busy || !editable) return;
+    const from = rows.findIndex(row => row.question_id === id), to = rows.findIndex(row => row.question_id === targetId);
+    if (from < 0 || to < 0 || from === to) return;
+    const next = [...rows], [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    setOrder(next.map((row, position) => ({ ...row, position })));
+    try { await mutate(async () => { await request(`/${quiz.id}/questions/${id}`, 'PATCH', { position: to }); }); }
+    finally { setOrder(null); }
+  };
+  const remove = (row: Candidate) => void mutate(async () => {
+    if (!await confirm({ title: t('quizRemove'), message: t('qeUnlinkQuestion'), yesText: t('quizRemove'), noText: t('adminCancel') })) return false;
+    await request(`/${quiz.id}/questions/${row.question_id}`, 'DELETE');
+    reportDirty(row.question_id, false);
+  });
   return <>
     <div className={scrollClass}><h4 className={styles.partHeading}>{t('qeCandidates')} {linked.data && <span>{linked.data.length}</span>}</h4><Notice {...action} /><LoadState query={linked} />
-      {linked.data?.map(row => <PartCard key={row.question_id} title={row.question.content || t('qeUntitledQuestion')} meta={<>{t(typeLabels[row.question.type])} · {t('quizPointsShort', { count: row.max_points })} · {t('qePosition')}: {row.position}</>} editable={editable} busy={action.busy} onEdit={() => setEditing(row)} onRemove={() => void action.run(async () => {
-        if (!await confirm({ title: t('quizRemove'), message: t('qeUnlinkQuestion'), yesText: t('quizRemove'), noText: t('adminCancel') })) return false;
-        await request(`/${quiz.id}/questions/${row.question_id}`, 'DELETE');
-      })} />)}
+      <CandidateList rows={rows} editable={editable} busy={action.busy} onMove={(id, targetId) => { void move(id, targetId); }} onDirty={reportDirty} onRemove={remove}
+        onPoints={(row, max_points) => mutate(async () => { await request(`/${quiz.id}/questions/${row.question_id}`, 'PATCH', { max_points }); })} />
       {!linked.data?.length && linked.isSuccess && <p className={styles.partEmpty}>{t('quizNoQuestionsYet')}</p>}
       {editable && bankAccess.read && <AddButton disabled={action.busy || !linked.isSuccess} onClick={() => setAdding(true)}>{t('quizAddQuestion')}</AddButton>}
     </div><Footer onBack={onBack} busy={action.busy} />
     <EditorPopup open={adding} title={t('quizAddQuestion')} description={t('qeCandidatesHelp')} onClose={() => { if (!action.busy) setAdding(false); }} wide>
       <div className={scrollClass}><Notice {...action} /><LoadState query={bank} /><input className={styles.partFilter} type="search" placeholder={t('qeFilterQuestions')} aria-label={t('qeFilterQuestions')} value={filter} onChange={e => setFilter(e.target.value)} />
-        {bank.data?.filter(q => q.user_id === quiz.user_id && q.content.toLowerCase().includes(filter.toLowerCase())).map(q => <div className={styles.partCard} key={q.id}><div className={styles.partCardBody}><div className={styles.partText}><p>{q.content || t('qeUntitledQuestion')}</p><small>{t(typeLabels[q.type])} · {q.groups.map(g => g.name).join(', ')}</small></div><button type="button" className={styles.icon} aria-label={`${t('quizAddQuestion')}: ${q.content}`} disabled={action.busy || !linked.isSuccess || included.has(q.id)} onClick={() => void action.run(async () => { await request(`/${quiz.id}/questions`, 'POST', { question_id: q.id, position: Math.max(-1, ...linked.data!.map(item => item.position)) + 1, max_points: 1 }); })}>{AddSVG}</button></div></div>)}
+        {bank.data?.filter(q => q.user_id === quiz.user_id && q.content.toLowerCase().includes(filter.toLowerCase())).map(q => <div className={`${styles.partCard} ${included.has(q.id) ? styles.usedQuestion : ''}`} key={q.id}><div className={styles.partCardBody}><div className={styles.partText}><p>{q.content || t('qeUntitledQuestion')}</p><small>{t(typeLabels[q.type])} · {q.groups.map(g => g.name).join(', ')}</small></div><button type="button" className={styles.icon} aria-label={`${t('quizAddQuestion')}: ${q.content}`} disabled={action.busy || !linked.isSuccess || included.has(q.id)} onClick={() => void action.run(async () => { await request(`/${quiz.id}/questions`, 'POST', { question_id: q.id, position: Math.max(-1, ...linked.data!.map(item => item.position)) + 1, max_points: 1 }); })}>{AddSVG}</button></div></div>)}
       </div><Footer busy={action.busy} onBack={() => setAdding(false)} />
     </EditorPopup>
-    {editing && <DraftDialog title={t('quizEditQuestion')} initial={{ position: editing.position, max_points: Number(editing.max_points) }} onClose={() => setEditing(null)} save={async patch => { await request(`/${quiz.id}/questions/${editing.question_id}`, 'PATCH', patch); }}>
-      {(draft, update) => <><p className={styles.draftTitle}>{editing.question.content}</p><div className="quizPopupGrid"><Position value={draft.position} change={position => update({ position })} /><Field label={t('quizPoints')}><input aria-label={t('quizPoints')} required type="number" min={0.01} step={0.01} max={99999999.99} value={draft.max_points} onChange={e => update({ max_points: Number(e.target.value) })} /></Field></div></>}
-    </DraftDialog>}<ConfirmDialog {...dialogProps} />
+    <ConfirmDialog {...dialogProps} />
   </>;
 }
 
@@ -120,11 +144,11 @@ function SourceForm({ quiz, initial, editable, onDirty, onBack }: PartProps & { 
       await request(`/${quiz.id}/sources`, 'PUT', { sources: rows.map(({ group_id, position, question_percentage, question_count }) => ({ group_id, position, question_percentage, question_count })) });
       setBaseline(JSON.stringify(rows)); onDirty(false);
     })}>{t(action.busy ? 'saving' : 'saveChanges')}</button>}</Footer>
-    {editing && <DraftDialog title={t(editing.index < rows.length ? 'quizEditSource' : 'quizAddSource')} initial={editing.row} onClose={() => setEditing(null)} valid={draft => !!draft.group_id} save={async draft => {
-      const next = [...rows]; next[editing.index] = { ...draft, group: choices.find(g => g.id === draft.group_id) }; update(next);
+    {editing && <DraftDialog<NumberDraft<Source>> title={t(editing.index < rows.length ? 'quizEditSource' : 'quizAddSource')} initial={editing.row} onClose={() => setEditing(null)} valid={draft => !!draft.group_id} save={async draft => {
+      const next = [...rows]; next[editing.index] = { ...draft, position: Number(draft.position), question_percentage: draft.question_percentage === null ? null : Number(draft.question_percentage), question_count: draft.question_count === null ? null : Number(draft.question_count), group: choices.find(g => g.id === draft.group_id) }; update(next);
     }}>{(draft, change) => <>
       <Field label={t('qeGroup')}><Select label={t('qeGroup')} value={draft.group_id} values={[{ value: '', label: t('quizSelect') }, ...choices.map(g => ({ value: g.id, label: g.name, disabled: rows.some((s, i) => i !== editing.index && s.group_id === g.id) }))]} onChange={group_id => change({ group_id })} /></Field>
-      <div className="quizPopupGrid"><Field label={t(mode === 'percentage' ? 'quizPercentage' : 'quizQuestionCount')}><input aria-label={t(mode === 'percentage' ? 'quizPercentage' : 'quizQuestionCount')} type="number" required min={mode === 'percentage' ? 0.01 : 1} max={mode === 'percentage' ? 100 : 2147483647} step={mode === 'percentage' ? 0.01 : 1} value={mode === 'percentage' ? draft.question_percentage ?? '' : draft.question_count ?? ''} onChange={e => change({ [mode === 'percentage' ? 'question_percentage' : 'question_count']: Number(e.target.value) })} /></Field><Position value={draft.position} change={position => change({ position })} /></div>
+      <div className="quizPopupGrid"><Field label={t(mode === 'percentage' ? 'quizPercentage' : 'quizQuestionCount')}><input aria-label={t(mode === 'percentage' ? 'quizPercentage' : 'quizQuestionCount')} type="number" required min={mode === 'percentage' ? 0.01 : 1} max={mode === 'percentage' ? 100 : 2147483647} step={mode === 'percentage' ? 0.01 : 1} value={mode === 'percentage' ? draft.question_percentage ?? '' : draft.question_count ?? ''} onChange={e => change({ [mode === 'percentage' ? 'question_percentage' : 'question_count']: numberDraftValue(e.target.value) })} /></Field><Position value={draft.position} change={position => change({ position })} /></div>
     </>}</DraftDialog>}<ConfirmDialog {...dialogProps} />
   </>;
 }
@@ -139,20 +163,20 @@ export function Requirements({ quiz, editable, onBack }: PartProps) {
       {query.data?.map(row => <PartCard key={row.video_id} video image={row.video_card?.thumbnail_url || row.video_card?.mux_thumbnail_url} title={row.min_watch_percentage !== null ? t('quizWatchPercentageSummary', { percentage: row.min_watch_percentage, video: row.video_card?.title || t('quizRequiredVideo') }) : t('quizWatchSecondsSummary', { seconds: row.min_watch_seconds ?? 0, video: row.video_card?.title || t('quizRequiredVideo') })} meta={t(row.min_watch_percentage !== null ? 'quizVideoWatchPercentage' : 'quizVideoWatchSeconds')} editable={editable} busy={action.busy} onEdit={() => setEditing({ row, isNew: false })} onRemove={() => void action.run(async () => {
         if (!await confirm({ title: t('quizRemove'), message: t('quizDeleteRuleMessage'), yesText: t('quizRemove'), noText: t('adminCancel') })) return false;
         await request(`/quiz-requirements/${quiz.id}/${row.video_id}`, 'DELETE');
-      })}><small>{row.video_card?.title || row.video_id} · {t('qePosition')}: {row.position}</small></PartCard>)}
+      })}><small>{row.video_card?.title || row.video_id}</small></PartCard>)}
       {query.isSuccess && !query.data?.length && <p className={styles.partEmpty}>{t('quizNoRulesYet')}</p>}
       {editable && <AddButton disabled={action.busy || !query.isSuccess} onClick={() => setAdding(true)}>{t('quizAddRule')}</AddButton>}
     </div><Footer onBack={onBack} busy={action.busy} />
     <EditorPopup open={adding} title={t('quizAddRule')} description={t('quizSelectVideoForRule')} onClose={() => setAdding(false)} wide>
       <div className={scrollClass}><PlaylistVideoPicker ownerId={quiz.user_id} included={query.data?.map(r => r.video_id) ?? []} busy={!query.isSuccess} addingId={null} onAdd={selectVideo} /></div><Footer onBack={() => setAdding(false)} />
     </EditorPopup>
-    {editing && <DraftDialog title={t(editing.isNew ? 'quizAddRule' : 'quizEditRule')} initial={{ mode: editing.row.min_watch_percentage !== null ? 'percentage' : 'seconds', value: Number(editing.row.min_watch_percentage ?? editing.row.min_watch_seconds), position: editing.row.position }} onClose={() => setEditing(null)} save={async draft => {
-      const patch = { position: draft.position, min_watch_percentage: draft.mode === 'percentage' ? draft.value : null, min_watch_seconds: draft.mode === 'seconds' ? draft.value : null };
-      await request(editing.isNew ? '/quiz-requirements' : `/quiz-requirements/${quiz.id}/${editing.row.video_id}`, editing.isNew ? 'POST' : 'PATCH', editing.isNew ? { quiz_id: quiz.id, video_id: editing.row.video_id, ...patch } : patch);
+    {editing && <DraftDialog<NumberDraft<{ mode: string; value: number }>> title={t(editing.isNew ? 'quizAddRule' : 'quizEditRule')} initial={{ mode: editing.row.min_watch_percentage !== null ? 'percentage' : 'seconds', value: Number(editing.row.min_watch_percentage ?? editing.row.min_watch_seconds) }} onClose={() => setEditing(null)} save={async draft => {
+      const patch = { min_watch_percentage: draft.mode === 'percentage' ? Number(draft.value) : null, min_watch_seconds: draft.mode === 'seconds' ? Number(draft.value) : null };
+      await request(editing.isNew ? '/quiz-requirements' : `/quiz-requirements/${quiz.id}/${editing.row.video_id}`, editing.isNew ? 'POST' : 'PATCH', editing.isNew ? { quiz_id: quiz.id, video_id: editing.row.video_id, position: editing.row.position, ...patch } : patch);
     }}>{(draft, change) => <>
       <p className={styles.draftTitle}>{editing.row.video_card?.title || t('quizRequiredVideo')}</p>
       <Field label={t('quizRuleType')}><Select label={t('quizRuleType')} value={draft.mode} values={[{ value: 'percentage', label: t('quizVideoWatchPercentage') }, { value: 'seconds', label: t('quizVideoWatchSeconds') }]} onChange={mode => change({ mode, value: mode === 'percentage' ? 100 : 1 })} /></Field>
-      <div className="quizPopupGrid"><Field label={t(draft.mode === 'percentage' ? 'quizRequiredPercentage' : 'quizRequiredSeconds')}><input aria-label={t(draft.mode === 'percentage' ? 'quizRequiredPercentage' : 'quizRequiredSeconds')} required type="number" min={draft.mode === 'percentage' ? 0.01 : 1} max={draft.mode === 'percentage' ? 100 : editing.row.video_card?.duration_seconds || 2147483647} step={draft.mode === 'percentage' ? 0.01 : 1} value={draft.value} onChange={e => change({ value: Number(e.target.value) })} /></Field><Position value={draft.position} change={position => change({ position })} /></div>
+      <Field label={t(draft.mode === 'percentage' ? 'quizRequiredPercentage' : 'quizRequiredSeconds')}><input aria-label={t(draft.mode === 'percentage' ? 'quizRequiredPercentage' : 'quizRequiredSeconds')} required type="number" min={draft.mode === 'percentage' ? 0.01 : 1} max={draft.mode === 'percentage' ? 100 : editing.row.video_card?.duration_seconds || 2147483647} step={draft.mode === 'percentage' ? 0.01 : 1} value={draft.value} onChange={e => change({ value: numberDraftValue(e.target.value) })} /></Field>
     </>}</DraftDialog>}<ConfirmDialog {...dialogProps} />
   </>;
 }

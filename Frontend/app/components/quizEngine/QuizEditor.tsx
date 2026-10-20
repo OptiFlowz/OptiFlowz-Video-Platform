@@ -9,6 +9,7 @@ import { defaultSettings, settingsOf, type Quiz, type QuizSettings, type Candida
 import { readiness } from './readiness';
 import { Candidates, Sources, Requirements } from './QuizParts';
 import { EditorPresentationContext } from './EditorPopup';
+import { numberDraftValue, type NumberDraft } from './numberDraft';
 
 export default function QuizEditor({ id, onSaved, onDirty, onClose }: { id: string; onSaved: (id: string) => void; onDirty: (dirty: boolean) => void; onClose: () => void }) {
   const { t } = useI18n();
@@ -39,7 +40,7 @@ export default function QuizEditor({ id, onSaved, onDirty, onClose }: { id: stri
       <button type="button" className="saveCaptionsBtn" onClick={() => void changeTab('sources')}>{t('quizSourcesButton')}</button>
       <button type="button" className="saveCaptionsBtn" onClick={() => void changeTab('requirements')}>{t('quizRulesButton')}</button>
     </div> : undefined} /> : <>
-      {quiz && tab === 'candidates' && <Candidates quiz={quiz} editable={access.update} onBack={() => void changeTab('settings')} />}
+      {quiz && tab === 'candidates' && <Candidates quiz={quiz} editable={access.update} onDirty={track} onBack={() => void changeTab('settings')} />}
       {quiz && tab === 'sources' && <Sources quiz={quiz} editable={access.update} onDirty={track} onBack={() => void changeTab('settings')} />}
       {quiz && tab === 'requirements' && <Requirements quiz={quiz} editable={access.update} onBack={() => void changeTab('settings')} />}
     </>}
@@ -59,11 +60,22 @@ async function inspectQuiz(id: string, settings: QuizSettings) {
 }
 function Settings({ initial, onSaved, onDirty, onClose, manage }: { initial?: Quiz; onSaved: (id: string) => void; onDirty: (dirty: boolean) => void; onClose: () => void; manage?: ReactNode }) {
   const { t } = useI18n(), access = useAccess('quizzes', initial);
-  const [form, setForm] = useState<QuizSettings>(() => initial ? settingsOf(initial) : { ...defaultSettings });
+  const [form, setForm] = useState<NumberDraft<QuizSettings>>(() => initial ? settingsOf(initial) : { ...defaultSettings });
   const [baseline, setBaseline] = useState(JSON.stringify(form)), [issues, setIssues] = useState<string[] | null>(null);
+  const body = useRef<HTMLDivElement>(null), readinessPanel = useRef<HTMLDetailsElement>(null);
+  const scrollToBottom = () => body.current?.scrollTo({ top: body.current.scrollHeight, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+  useEffect(() => { if (issues && readinessPanel.current?.open) scrollToBottom(); }, [issues]);
   const action = useAction(), editable = initial ? access.update : access.create;
-  const change = (patch: Partial<QuizSettings>) => { const next = { ...form, ...patch }; setForm(next); setIssues(null); onDirty(JSON.stringify(next) !== baseline); };
-  const number = (key: keyof QuizSettings, label: string, min: number, max: number, nullable = false, step = 1) => <Field key={key} label={t(label)} hint={nullable ? t('qeUnlimitedHelp') : undefined}><input required={!nullable} aria-label={t(label)} type="number" min={min} max={max} step={step} value={form[key] === null ? '' : String(form[key])} onChange={e => change({ [key]: e.target.value === '' && nullable ? null : Number(e.target.value) })} /></Field>;
+  const change = (patch: Partial<NumberDraft<QuizSettings>>) => { const next = { ...form, ...patch }; setForm(next); setIssues(null); onDirty(JSON.stringify(next) !== baseline); };
+  const settings = (): QuizSettings => ({ ...form,
+    question_count: Number(form.question_count),
+    time_limit_seconds: form.time_limit_seconds === null ? null : Number(form.time_limit_seconds),
+    max_attempts: form.max_attempts === null ? null : Number(form.max_attempts),
+    passing_score_percentage: Number(form.passing_score_percentage),
+    min_answered_percentage: Number(form.min_answered_percentage),
+    min_correct_percentage: Number(form.min_correct_percentage),
+  });
+  const number = (key: keyof QuizSettings, label: string, min: number, max: number, nullable = false, step = 1) => <Field key={key} label={t(label)} hint={nullable ? t('qeUnlimitedHelp') : undefined}><input required={!nullable} aria-label={t(label)} type="number" min={min} max={max} step={step} value={form[key] === null ? '' : String(form[key])} onChange={e => change({ [key]: e.target.value === '' && nullable ? null : numberDraftValue(e.target.value) })} /></Field>;
   const toggle = (key: keyof QuizSettings, label: string) => <label className={`quizPopupToggleRow ${styles.check}`} key={key}><div><strong>{t(label)}</strong>{['quizShuffleQuestions', 'quizShuffleOptions', 'quizHasCertificate'].includes(label) && <span>{t(`${label}Help`)}</span>}</div><input type="checkbox" checked={!!form[key]} onChange={e => change({ [key]: e.target.checked })} /></label>;
   const feedback = (key: 'correctness_visibility' | 'correct_answers_visibility' | 'explanation_visibility', label: string) => <Field key={key} label={t(label)}><Select label={t(label)} value={form[key]} values={[{ value: 'never', label: t('qeNever') }, { value: 'after_check', label: t('qeAfterCheck') }, { value: 'after_finish', label: t('qeAfterFinish') }]} onChange={value => change({ [key]: value })} /></Field>;
   return <form className={`quizPopupForm ${styles.settingsForm}`} onSubmit={e => { e.preventDefault(); void action.run(async () => {
@@ -74,14 +86,14 @@ function Settings({ initial, onSaved, onDirty, onClose, manage }: { initial?: Qu
     }
     if (form.status === 'published') {
       if (!initial) throw new Error(t('qePublishAfterCreate'));
-      const problems = await inspectQuiz(initial.id, form); setIssues(problems);
+      const problems = await inspectQuiz(initial.id, settings()); setIssues(problems);
       if (problems.length) throw new Error(t('qeNotReady'));
     }
-    const body = { ...form, title: form.title.trim(), description: form.description?.trim() || null };
+    const body = { ...settings(), title: form.title.trim(), description: form.description?.trim() || null };
     const result = await request<{ quiz: Quiz }>(initial ? `/${initial.id}` : '', initial ? 'PATCH' : 'POST', body);
     const saved = settingsOf(result.quiz); setForm(saved); setBaseline(JSON.stringify(saved)); onDirty(false); onSaved(result.quiz.id);
   }); }}>
-    <div className="quizPopupBody"><Notice {...action} /><fieldset disabled={action.busy || !editable}>
+    <div ref={body} className="quizPopupBody"><Notice {...action} /><fieldset disabled={action.busy || !editable}>
       <Field label={t('title')}><input required maxLength={255} aria-label={t('title')} value={form.title} onChange={e => change({ title: e.target.value })} /></Field>
       <Field label={t('description')}><textarea aria-label={t('description')} value={form.description ?? ''} onChange={e => change({ description: e.target.value || null })} /></Field>
       <div className="quizPopupGrid"><Field label={t('adminTableStatus')}><Select label={t('adminTableStatus')} value={form.status} values={['draft', 'published', 'archived'].map(value => ({ value, label: t(`qe${value[0].toUpperCase()}${value.slice(1)}`), disabled: !initial && value === 'published' }))} onChange={value => change({ status: value as QuizSettings['status'] })} /></Field>
@@ -97,7 +109,7 @@ function Settings({ initial, onSaved, onDirty, onClose, manage }: { initial?: Qu
       </div><h4 className={`${styles.sectionTitle} ${styles.toggleTitle}`}>{t('settingsAdvancedTab')}</h4><div className="quizPopupToggleList">{toggle('explanation_incorrect_only', 'qeIncorrectOnly')}{toggle('allow_answer_changes_after_check', 'qeAnswerChanges')}{toggle('allow_attempt_review', 'qeReview')}{toggle('show_final_score', 'qeFinalScore')}
       {toggle('shuffle_questions', 'quizShuffleQuestions')}{toggle('shuffle_options', 'quizShuffleOptions')}{toggle('has_certificate', 'quizHasCertificate')}
     </div></fieldset>
-    {initial && <details className={styles.readiness}><summary>{t('qeReadiness')}</summary><p className={styles.note}>{t('qeReadinessHelp')}</p><button type="button" className={styles.button} disabled={action.busy} onClick={() => void action.run(async () => { setIssues(await inspectQuiz(initial.id, form)); }, false)}>{t('qeCheck')}</button>
+    {initial && <details ref={readinessPanel} className={styles.readiness} onToggle={event => { if (event.currentTarget.open) scrollToBottom(); }}><summary>{t('qeReadiness')}</summary><p className={styles.note}>{t('qeReadinessHelp')}</p><button type="button" className={styles.button} disabled={action.busy} onClick={() => void action.run(async () => { setIssues(await inspectQuiz(initial.id, settings())); }, false)}>{t('qeCheck')}</button>
       {issues && (issues.length ? <ul>{issues.map(key => <li className={styles.error} key={key}>{t(key)}</li>)}</ul> : <p className={styles.success}>{t('qeReady')}</p>)}
     </details>}
     </div>

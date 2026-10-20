@@ -3,11 +3,13 @@ import PopupPortal from '~/components/popupPortal/popupPortal';
 import { CloseSVG } from '~/constants';
 import { useI18n } from '~/i18n';
 import styles from './engine.module.css';
+import { lockEditorPageScroll } from './scrollLock';
 
 type Presentation = { title: string; description?: string; wide?: boolean };
 export const EditorPresentationContext = createContext<((value: Presentation | null) => void) | undefined>(undefined);
 export const EditorBusyStatusContext = createContext(false);
 export const EditorBusyContext = createContext<((busy: boolean) => void) | undefined>(undefined);
+export const EditorNoticeContext = createContext<HTMLElement | null | undefined>(undefined);
 
 /** Shared popup shell for the new engine, using the existing quiz popup motion and layout. */
 export default function EditorPopup({ open, title, description, onClose, children, wide = false, compact = false }: {
@@ -16,6 +18,7 @@ export default function EditorPopup({ open, title, description, onClose, childre
   const { t } = useI18n(), titleId = useId();
   const [mounted, setMounted] = useState(open), [visible, setVisible] = useState(false), [busy, setBusy] = useState(false);
   const [presentation, setPresentation] = useState<Presentation | null>(null);
+  const [noticeTarget, setNoticeTarget] = useState<HTMLDivElement | null>(null);
   const panel = useRef<HTMLDivElement>(null), previousFocus = useRef<HTMLElement | null>(null);
   const retained = useRef({ title, description, children });
   if (open) retained.current = { title, description, children };
@@ -33,9 +36,8 @@ export default function EditorPopup({ open, title, description, onClose, childre
   }, [open]);
   useEffect(() => {
     if (!mounted) return;
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = overflow; previousFocus.current?.focus({ preventScroll: true }); };
+    const unlock = lockEditorPageScroll();
+    return () => { unlock(); previousFocus.current?.focus({ preventScroll: true }); };
   }, [mounted]);
   useEffect(() => {
     if (!open) return;
@@ -57,7 +59,8 @@ export default function EditorPopup({ open, title, description, onClose, childre
   return <PopupPortal><div className={`${styles.popupLayer} popupMotionLayer ${visible ? 'opacity-100' : 'opacity-0'}`} onMouseDown={event => { if (event.target === event.currentTarget && open && !busy) onClose(); }}>
     <div ref={panel} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-busy={busy} tabIndex={-1} className={`${styles.page} ${styles.popupPanel} ${compact ? styles.compactPopup : ""} ${(presentation?.wide ?? wide) ? styles.widePopup : ""} popupMotionPanel ${visible ? 'isOpen' : ''}`}>
       <div className={`quizPopupHeader ${styles.popupHeader}`}><div><h3 id={titleId}>{presentation?.title ?? retained.current.title}</h3>{(presentation?.description ?? retained.current.description) && <p>{presentation?.description ?? retained.current.description}</p>}</div><button type="button" className={styles.icon} aria-label={t('close')} disabled={busy || !open} onClick={onClose}>{CloseSVG}</button></div>
-      <EditorPresentationContext.Provider value={setPresentation}><EditorBusyStatusContext.Provider value={busy}><EditorBusyContext.Provider value={setBusy}><div className={styles.popupContent}>{retained.current.children}</div></EditorBusyContext.Provider></EditorBusyStatusContext.Provider></EditorPresentationContext.Provider>
+      <EditorNoticeContext.Provider value={noticeTarget}><EditorPresentationContext.Provider value={setPresentation}><EditorBusyStatusContext.Provider value={busy}><EditorBusyContext.Provider value={setBusy}><div className={styles.popupContent}>{retained.current.children}</div></EditorBusyContext.Provider></EditorBusyStatusContext.Provider></EditorPresentationContext.Provider></EditorNoticeContext.Provider>
+      <div ref={setNoticeTarget} className={styles.popupNotice} />
     </div>
   </div></PopupPortal>;
 }

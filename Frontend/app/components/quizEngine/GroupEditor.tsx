@@ -31,7 +31,7 @@ function GroupForm({ initial, onSaved, onDirty }: { initial?: Group; onSaved: (i
     {initial && <><h2>{t('quizQuestions')} ({ids.length})</h2><p className={styles.note}>{t('qeMembershipHelp')}</p>
       {questionAccess.read && <LoadState query={questions} />}
       <input type="search" aria-label={t('qeFilterQuestions')} placeholder={t('qeFilterQuestions')} value={filter} onChange={e => setFilter(e.target.value)} />
-      <div className={styles.picker}>{candidates.filter(q => q.content.toLowerCase().includes(filter.toLowerCase())).map(q => <label className={styles.check} key={q.id}><input type="checkbox" checked={ids.includes(q.id)} onChange={e => { const next = e.target.checked ? [...ids, q.id] : ids.filter(id => id !== q.id); setIds(next); dirty(name, description, next); }} />{q.content || t('qeUntitledQuestion')}</label>)}</div>
+      <div className={`${styles.picker} ${styles.groupChoices}`}>{candidates.filter(q => q.content.toLowerCase().includes(filter.toLowerCase())).map(q => <label className={styles.check} key={q.id}><input type="checkbox" checked={ids.includes(q.id)} onChange={e => { const next = e.target.checked ? [...ids, q.id] : ids.filter(id => id !== q.id); setIds(next); dirty(name, description, next); }} />{q.content || t('qeUntitledQuestion')}</label>)}</div>
     </>}
     {editable && <Save busy={action.busy} disabled={!name.trim() || (!!initial && JSON.stringify([name, description, ids]) === baseline)} />}
     </fieldset>

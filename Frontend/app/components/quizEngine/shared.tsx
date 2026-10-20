@@ -1,4 +1,5 @@
 import { useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthorization } from '~/authorization/authorization';
 import { getToken } from '~/functions';
@@ -8,7 +9,7 @@ import { engineKey, request, all } from './api';
 import type { Resource, Owned } from './model';
 import { resourcePermission } from './model';
 import styles from './engine.module.css';
-import { EditorBusyContext } from './EditorPopup';
+import { EditorBusyContext, EditorNoticeContext } from './EditorPopup';
 export { styles };
 export function useAccess(resource: Resource, record?: Owned) {
   const auth = useAuthorization();
@@ -45,7 +46,10 @@ export function useAction() {
   return { busy, error, success, run, setError, setSuccess };
 }
 export function Notice({ error, success }: { error?: string; success?: string }) {
-  return <>{error && <p className={styles.error} role="alert">{error}</p>}{success && <p className={styles.success} role="status">{success}</p>}</>;
+  const target = useContext(EditorNoticeContext);
+  const message = error ? <p className={styles.error} role="alert">{error}</p> : success ? <p className={styles.success} role="status">{success}</p> : null;
+  if (target === undefined) return <div className={styles.noticeInline}>{message}</div>;
+  return target && message ? createPortal(message, target) : null;
 }
 export function LoadingSkeleton({ variant = 'cards' }: { variant?: 'cards' | 'form' | 'inline' }) {
   const { t } = useI18n();
@@ -61,8 +65,8 @@ export function LoadState({ query, variant = 'cards' }: { query: { isPending: bo
 export function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
   return <div className="formGroup"><label>{label}</label>{children}{hint && <p className="formHint">{hint}</p>}</div>;
 }
-export function Select({ label, value, values, onChange, disabled = false }: { label: string; value: string | number; values: { value: string | number; label: string; disabled?: boolean }[]; onChange: (value: string) => void; disabled?: boolean }) {
-  return <CustomSelect ariaLabel={label} value={value} options={values} onChange={onChange} disabled={disabled} rootClassName={styles.select} />;
+export function Select({ label, value, values, onChange, disabled = false, placement = 'auto' }: { label: string; value: string | number; values: { value: string | number; label: string; disabled?: boolean }[]; onChange: (value: string) => void; disabled?: boolean; placement?: 'auto' | 'top' | 'bottom' }) {
+  return <CustomSelect ariaLabel={label} value={value} options={values} onChange={onChange} disabled={disabled} placement={placement} rootClassName={styles.select} />;
 }
 export function Save({ busy, disabled = false }: { busy: boolean; disabled?: boolean }) {
   const { t } = useI18n(); return <div className={styles.save}><button className="saveCaptionsBtn" type="submit" disabled={busy || disabled}>{busy ? t('saving') : t('saveChanges')}</button></div>;

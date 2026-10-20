@@ -19,7 +19,7 @@ type CustomSelectProps = {
   leadingContent?: ReactNode;
   valueContent?: ReactNode;
   typeAhead?: boolean;
-  placement?: "auto" | "top";
+  placement?: "auto" | "top" | "bottom";
 };
 
 const MAX_MENU_HEIGHT = 280;
@@ -84,7 +84,7 @@ function CustomSelect({
     }
     const spaceBelow = Math.max(0, bottom - rect.bottom - VIEWPORT_MARGIN);
     const spaceAbove = Math.max(0, rect.top - top - VIEWPORT_MARGIN);
-    const shouldOpenUpward = placement === "top" || (spaceBelow < MAX_MENU_HEIGHT && spaceAbove > spaceBelow);
+    const shouldOpenUpward = placement === "top" || (placement === "auto" && spaceBelow < MAX_MENU_HEIGHT && spaceAbove > spaceBelow);
     const availableSpace = shouldOpenUpward ? spaceAbove : spaceBelow;
 
     const menu = menuRef.current;
@@ -121,7 +121,7 @@ function CustomSelect({
   const closeMenu = (restoreFocus = false) => {
     typeAheadRef.current = { text: "", lastTypedAt: 0 };
     setOpen(false);
-    if (restoreFocus) window.requestAnimationFrame(() => buttonRef.current?.focus());
+    if (restoreFocus) window.requestAnimationFrame(() => buttonRef.current?.focus({ preventScroll: true }));
   };
 
   useEffect(() => {
@@ -140,7 +140,7 @@ function CustomSelect({
     const observer = new ResizeObserver(handleViewportChange);
     if (rootRef.current) observer.observe(rootRef.current);
     if (menuRef.current) observer.observe(menuRef.current);
-    window.requestAnimationFrame(() => optionRefs.current[activeIndex]?.focus());
+    window.requestAnimationFrame(() => focusOption(activeIndex));
 
     return () => {
       observer.disconnect();
@@ -167,7 +167,16 @@ function CustomSelect({
 
   const focusOption = (index: number) => {
     setActiveIndex(index);
-    optionRefs.current[index]?.focus();
+    const option = optionRefs.current[index], scroller = option?.parentElement;
+    option?.focus({ preventScroll: true });
+    // Keep keyboard navigation inside the menu without scrolling the popup body.
+    if (option && scroller) {
+      const top = option.offsetTop - scroller.offsetTop;
+      if (top < scroller.scrollTop) scroller.scrollTop = top;
+      else if (top + option.offsetHeight > scroller.scrollTop + scroller.clientHeight) {
+        scroller.scrollTop = top + option.offsetHeight - scroller.clientHeight;
+      }
+    }
   };
 
   const focusMatchingOption = (key: string, currentIndex: number) => {
