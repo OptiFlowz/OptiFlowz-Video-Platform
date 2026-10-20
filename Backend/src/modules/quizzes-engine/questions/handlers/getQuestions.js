@@ -5,9 +5,9 @@ import { listQuestions } from '../repository/questions.repository.js';
 
 export async function getQuestionsInternal(query, userId, access) {
   requireQuestionUser(userId);
-  const { type, page, limit, sortBy, sortOrder } = validateOrThrow(listQuestionsSchema.safeParse(query));
+  const { type, group_id, page, limit, sortBy, sortOrder } = validateOrThrow(listQuestionsSchema.safeParse(query));
   const offset = (page - 1) * limit;
-  const { questions, total } = await listQuestions(writePool, access?.canAccessAny === true ? null : userId, { type, limit, offset, sortBy, sortOrder });
+  const { questions, total } = await listQuestions(writePool, access?.canAccessAny === true ? null : userId, { type, group_id, limit, offset, sortBy, sortOrder });
   const totalPages = Math.ceil(total / limit);
   return {
     questions,

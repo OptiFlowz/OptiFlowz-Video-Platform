@@ -81,6 +81,7 @@ export const updateQuestionSchema = z.object(questionFields).partial().strict().
 
 export const listQuestionsSchema = z.object({
   type: questionType.optional(),
+  group_id: z.string().uuid('Invalid question group ID').transform(id => id.toLowerCase()).optional(),
   sortBy: z.enum(['created_at', 'updated_at', 'content', 'type']).optional().default('created_at'),
   sortOrder: z.enum(['asc', 'desc']).optional().default('asc'),
   page: z.coerce.number().int().min(1).optional().default(1),

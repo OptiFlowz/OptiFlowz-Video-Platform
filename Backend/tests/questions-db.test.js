@@ -122,6 +122,8 @@ test('question CRUD against PostgreSQL session-local tables', { skip: !process.e
     assert.deepEqual(choice.options.map(option => option.option_no), [5, 20]);
     assert.equal(choice.options[1].is_correct, false);
     assert.deepEqual((await request('GET', `/${choice.id}`)).question, choice);
+    assert.deepEqual(choice.groups, []);
+    assert.equal(Object.hasOwn(choice, 'group_ids'), false);
     const matched = await request('POST', '', matchingBody);
     assert.equal(matched.status, 201); matching = matched.question;
     assert.ok(Number.isFinite(Date.parse(matching.created_at)));
@@ -138,6 +140,7 @@ test('question CRUD against PostgreSQL session-local tables', { skip: !process.e
     assert.deepEqual(listed.pagination, { page: 1, limit: 20, total: 2, totalPages: 1, hasNextPage: false, hasPreviousPage: false });
     assert.deepEqual(listed.sorting, { sortBy: 'created_at', sortOrder: 'asc' });
     assert.ok(listed.questions.every(question => question.user_id === userId));
+    assert.ok(listed.questions.every(question => Array.isArray(question.groups) && question.groups.length === 0 && !Object.hasOwn(question, 'group_ids')));
     assert.ok(listed.questions.every(question => Number.isFinite(Date.parse(question.created_at)) && Number.isFinite(Date.parse(question.updated_at))));
     assert.equal('total' in listed, false); assert.equal('offset' in listed, false);
     const filtered = await request('GET', '?type=matching&limit=1&page=1');
@@ -287,7 +290,8 @@ test('question CRUD against PostgreSQL session-local tables', { skip: !process.e
       const response = await request('POST', '', { ...body, group_ids: [groupIds[0], groupIds[0].toUpperCase(), groupIds[1]] });
       assert.equal(response.status, 201);
       const question = response.question;
-      assert.deepEqual(question.group_ids, groupIds.slice(0, 2).sort());
+      assert.deepEqual(question.groups, (await client.query('SELECT id, name FROM pg_temp.question_groups WHERE id = ANY($1::uuid[]) ORDER BY id', [groupIds.slice(0, 2)])).rows);
+      assert.equal(Object.hasOwn(question, 'group_ids'), false);
       assert.equal((await memberships(question.id)).length, 2);
       assert.deepEqual((await request('GET', `/${question.id}`)).question, question);
       assert.equal(body.type === 'matching' ? question.matching_items.length : question.options.length,
@@ -295,6 +299,34 @@ test('question CRUD against PostgreSQL session-local tables', { skip: !process.e
       created.push(question);
     }
     assert.equal((await client.query('SELECT count(*)::int AS n FROM pg_temp.question_group_items WHERE group_id=$1', [groupIds[0]])).rows[0].n, 3);
+    const filtered = await request('GET', `?group_id=${groupIds[0].toUpperCase()}&limit=2&sortBy=type&sortOrder=asc`);
+    assert.equal(filtered.status, 200);
+    assert.equal(filtered.pagination.total, 3);
+    assert.equal(filtered.pagination.totalPages, 2);
+    assert.equal(filtered.questions.length, 2);
+    assert.ok(filtered.questions.every(question => created.some(item => item.id === question.id)));
+    const expectedGroups = (await client.query(
+      'SELECT id, name FROM pg_temp.question_groups WHERE id = ANY($1::uuid[]) ORDER BY id', [groupIds.slice(0, 2)],
+    )).rows;
+    for (const question of filtered.questions) {
+      assert.deepEqual(question.groups, expectedGroups);
+      assert.equal(Object.hasOwn(question, 'group_ids'), false);
+    }
+    const secondPage = await request('GET', `?group_id=${groupIds[0]}&limit=2&page=2&sortBy=type&sortOrder=asc`);
+    assert.equal(secondPage.questions.length, 1);
+    assert.equal(new Set([...filtered.questions, ...secondPage.questions].map(question => question.id)).size, 3);
+    const matchingOnly = await request('GET', `?group_id=${groupIds[0]}&type=matching`);
+    assert.equal(matchingOnly.pagination.total, 1);
+    assert.equal(matchingOnly.questions[0].type, 'matching');
+    for (const groupId of [groupIds[2], randomUUID()]) {
+      const empty = await request('GET', `?group_id=${groupId}`);
+      assert.deepEqual(empty.questions, []);
+      assert.equal(empty.pagination.total, 0);
+    }
+    const foreignView = await request('GET', `?group_id=${groupIds[0]}`, undefined, otherToken);
+    assert.deepEqual(foreignView.questions, []);
+    assert.equal(foreignView.pagination.total, 0);
+    assert.equal((await request('GET', '?group_id=invalid')).status, 400);
     for (const question of created) {
       assert.equal((await request('DELETE', `/${question.id}`)).status, 200);
       assert.deepEqual(await memberships(question.id), []);
@@ -308,19 +340,19 @@ test('question CRUD against PostgreSQL session-local tables', { skip: !process.e
     const questionId = response.question.id;
     const before = await memberships(questionId);
     const omitted = await request('PATCH', `/${questionId}`, { content: 'Metadata only' });
-    assert.equal(omitted.status, 200); assert.deepEqual(omitted.question.group_ids, groupIds.slice(0, 2).sort());
+    assert.equal(omitted.status, 200); assert.deepEqual(omitted.question.groups.map(group => group.id), groupIds.slice(0, 2).sort());
     assert.deepEqual(await memberships(questionId), before);
     const changedType = await request('PATCH', `/${questionId}`, matchingBody);
-    assert.equal(changedType.status, 200); assert.deepEqual(changedType.question.group_ids, groupIds.slice(0, 2).sort());
+    assert.equal(changedType.status, 200); assert.deepEqual(changedType.question.groups.map(group => group.id), groupIds.slice(0, 2).sort());
     assert.deepEqual(await memberships(questionId), before);
     const changed = await request('PATCH', `/${questionId}`, { group_ids: [groupIds[1], groupIds[2], groupIds[1]] });
-    assert.equal(changed.status, 200); assert.deepEqual(changed.question.group_ids, groupIds.slice(1).sort());
+    assert.equal(changed.status, 200); assert.deepEqual(changed.question.groups.map(group => group.id), groupIds.slice(1).sort());
     const after = await memberships(questionId);
     assert.equal(after.find(row => row.group_id === groupIds[1]).row_id, before.find(row => row.group_id === groupIds[1]).row_id);
     const repeated = await request('PATCH', `/${questionId}`, { group_ids: groupIds.slice(1) });
     assert.equal(repeated.status, 200); assert.deepEqual(await memberships(questionId), after);
     const cleared = await request('PATCH', `/${questionId}`, { group_ids: [] });
-    assert.equal(cleared.status, 200); assert.deepEqual(cleared.question.group_ids, []);
+    assert.equal(cleared.status, 200); assert.deepEqual(cleared.question.groups.map(group => group.id), []);
     assert.deepEqual(await memberships(questionId), []);
     assert.equal(cleared.question.type, 'matching');
     assert.equal(cleared.question.matching_items.length, matchingBody.matching_items.length);

@@ -15,6 +15,28 @@ export async function getQuestionGroup(database, groupId, userId) {
   return rows[0] || null;
 }
 
+export async function getQuestionGroupDetails(database, groupId, userId) {
+  // Read group metadata and its question list from the same database snapshot.
+  const { rows } = await database.query(`
+    SELECT g.id, g.user_id, g.name, g.description,
+      COALESCE((
+        SELECT jsonb_agg(to_jsonb(question) ORDER BY question.created_at, question.id)
+        FROM (
+          SELECT q.id, q.user_id, q.type, q.content, q.explanation, q.created_at, q.updated_at,
+            COALESCE((SELECT jsonb_agg(jsonb_build_object('id', member_group.id, 'name', member_group.name) ORDER BY member_group.id)
+              FROM public.question_group_items membership
+              JOIN public.question_groups member_group ON member_group.id = membership.group_id
+              WHERE membership.question_id = q.id), '[]'::jsonb) AS groups
+          FROM public.question_group_items gi
+          JOIN public.questions q ON q.id = gi.question_id
+          WHERE gi.group_id = g.id AND q.user_id = g.user_id
+        ) question
+      ), '[]'::jsonb) AS questions
+    FROM public.question_groups g WHERE g.id = $1 AND g.user_id = $2
+  `, [groupId, userId]);
+  return rows[0] || null;
+}
+
 export async function listQuestionGroups(database, userId, { name, sortBy, sortOrder, limit, offset }) {
   // Escape LIKE wildcards so user input searches for a literal substring.
   const pattern = name ? `%${name.replace(/[\\%_]/g, '\\$&')}%` : null;

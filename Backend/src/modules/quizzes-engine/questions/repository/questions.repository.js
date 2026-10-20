@@ -10,14 +10,15 @@ export async function getQuestion(database, questionId, userId) {
         FROM public.question_matching_options o WHERE o.question_id = q.id), '[]'::jsonb) AS matching_options,
       COALESCE((SELECT jsonb_agg(to_jsonb(i) - 'question_id' ORDER BY i.position, i.item_no)
         FROM public.question_matching_items i WHERE i.question_id = q.id), '[]'::jsonb) AS matching_items,
-      COALESCE((SELECT jsonb_agg(gi.group_id ORDER BY gi.group_id)
-        FROM public.question_group_items gi WHERE gi.question_id = q.id), '[]'::jsonb) AS group_ids
+      COALESCE((SELECT jsonb_agg(jsonb_build_object('id', g.id, 'name', g.name) ORDER BY g.id)
+        FROM public.question_group_items gi JOIN public.question_groups g ON g.id = gi.group_id
+        WHERE gi.question_id = q.id), '[]'::jsonb) AS groups
     FROM public.questions q WHERE q.id = $1 AND q.user_id = $2
   `, [questionId, userId]);
   return rows[0] || null;
 }
 
-export async function listQuestions(database, userId, { type, limit, offset, sortBy, sortOrder }) {
+export async function listQuestions(database, userId, { type, group_id, limit, offset, sortBy, sortOrder }) {
   const allowedSortFields = {
     created_at: 'created_at',
     updated_at: 'updated_at',
@@ -30,14 +31,24 @@ export async function listQuestions(database, userId, { type, limit, offset, sor
   // consistently, keeping page boundaries stable for equal sort values.
   const { rows } = await database.query(`
     WITH owned_questions AS (
-      SELECT ${QUESTION_COLUMNS} FROM public.questions
+      SELECT ${QUESTION_COLUMNS} FROM public.questions q
       WHERE ($1::uuid IS NULL OR user_id = $1) AND ($2::public.question_type IS NULL OR type = $2)
+        AND ($5::uuid IS NULL OR EXISTS (
+          SELECT 1 FROM public.question_group_items gi
+          WHERE gi.question_id = q.id AND gi.group_id = $5
+        ))
     ), page AS (
       SELECT * FROM owned_questions ORDER BY ${orderByField} ${orderByDirection}, id ASC LIMIT $3 OFFSET $4
+    ), enriched_page AS (
+      SELECT page.*, COALESCE((
+        SELECT jsonb_agg(jsonb_build_object('id', g.id, 'name', g.name) ORDER BY g.id)
+        FROM public.question_group_items gi JOIN public.question_groups g ON g.id = gi.group_id
+        WHERE gi.question_id = page.id
+      ), '[]'::jsonb) AS groups FROM page
     )
-    SELECT COALESCE((SELECT jsonb_agg(to_jsonb(page) ORDER BY ${orderByField} ${orderByDirection}, id ASC) FROM page), '[]'::jsonb) AS questions,
+    SELECT COALESCE((SELECT jsonb_agg(to_jsonb(enriched_page) ORDER BY ${orderByField} ${orderByDirection}, id ASC) FROM enriched_page), '[]'::jsonb) AS questions,
       (SELECT count(*)::integer FROM owned_questions) AS total
-  `, [userId, type ?? null, limit, offset]);
+  `, [userId, type ?? null, limit, offset, group_id ?? null]);
   return rows[0];
 }
 

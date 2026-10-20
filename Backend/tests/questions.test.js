@@ -98,12 +98,15 @@ test('listing uses bounded pagination and permits only known filters', () => {
   assert.deepEqual(listQuestionsSchema.parse({ type: 'matching', limit: '100', page: '2', sortBy: 'updated_at', sortOrder: 'desc' }),
     { type: 'matching', sortBy: 'updated_at', sortOrder: 'desc', page: 2, limit: 100 });
   assert.equal(listQuestionsSchema.parse({ page: 2, limit: 10 }).page, 2);
+  const groupId = '12345678-abcd-4234-8234-123456789abc';
+  assert.equal(listQuestionsSchema.parse({ group_id: groupId.toUpperCase() }).group_id, groupId);
   for (const input of [
     { limit: '0' }, { limit: '101' }, { page: '-1' }, { page: '0' }, { page: '1.5' },
     { page: String(Number.MAX_SAFE_INTEGER), limit: '100' }, { offset: '1' },
     { limit: '1.5' }, { limit: '' }, { type: 'unknown' }, { user_id: 'spoof' },
     { sortBy: 'invalid' }, { sortBy: 'created_at; DROP TABLE questions' },
     { sortOrder: 'invalid' }, { sortOrder: 'ASC' },
+    { group_id: 'invalid' }, { group_id: '' }, { group_id: [groupId] }, { group_id: null },
   ]) assert.equal(listQuestionsSchema.safeParse(input).success, false);
 });
 

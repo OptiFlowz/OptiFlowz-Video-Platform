@@ -84,7 +84,7 @@ test('question group CRUD against PostgreSQL session-local tables', { skip: !pro
     const created = await request('POST', '', { name: ' Languages ', description: ' Practice ' });
     assert.equal(created.status, 201); assert.equal(created.success, true);
     assert.deepEqual(created.group, { id: created.group.id, user_id: userId, name: 'Languages', description: 'Practice' });
-    assert.deepEqual((await request('GET', `/${created.group.id}`)).group, created.group);
+    assert.deepEqual((await request('GET', `/${created.group.id}`)).group, { ...created.group, questions: [] });
     const noDescription = await request('POST', '', { name: 'x'.repeat(255) });
     assert.equal(noDescription.status, 201); assert.equal(noDescription.group.description, null);
   });
@@ -96,7 +96,7 @@ test('question group CRUD against PostgreSQL session-local tables', { skip: !pro
       assert.equal((await request('PATCH', `/${groupId}`, { name: 'Stolen' }, otherToken)).status, 404);
       assert.equal((await request('DELETE', `/${groupId}`, undefined, otherToken)).status, 404);
     }
-    assert.deepEqual((await request('GET', `/${group.id}`)).group, group);
+    assert.deepEqual((await request('GET', `/${group.id}`)).group, { ...group, questions: [] });
   });
 
   await scenario('PATCH preserves omitted fields, allows clearing description and keeps ownership fixed', async () => {
@@ -112,7 +112,7 @@ test('question group CRUD against PostgreSQL session-local tables', { skip: !pro
     ]);
     assert.ok(responses.every(response => response.status === 200));
     assert.deepEqual((await request('GET', `/${group.id}`)).group,
-      { ...group, name: 'Concurrent name', description: 'Concurrent description' });
+      { ...group, name: 'Concurrent name', description: 'Concurrent description', questions: [] });
   });
 
   await scenario('duplicate create and rename return 409 while different users can reuse a name', async () => {
@@ -120,7 +120,7 @@ test('question group CRUD against PostgreSQL session-local tables', { skip: !pro
     const second = await request('POST', '', { name: 'Beta' });
     assert.equal((await request('POST', '', { name: ' Alpha ' })).status, 409);
     assert.equal((await request('PATCH', `/${second.group.id}`, { name: 'Alpha' })).status, 409);
-    assert.deepEqual((await request('GET', `/${second.group.id}`)).group, second.group);
+    assert.deepEqual((await request('GET', `/${second.group.id}`)).group, { ...second.group, questions: [] });
     assert.equal((await request('POST', '', { name: 'Alpha' }, otherToken)).status, 201);
     assert.equal((await request('POST', '', { name: 'alpha' })).status, 201);
     assert.equal((await request('PATCH', `/${first.group.id}`, { name: 'Alpha' })).status, 200);
@@ -194,7 +194,9 @@ test('question group CRUD against PostgreSQL session-local tables', { skip: !pro
     assert.equal((await request('DELETE', `/${group.id}`)).status, 404);
     assert.equal((await client.query('SELECT count(*)::int AS n FROM pg_temp.question_group_items WHERE group_id=$1', [group.id])).rows[0].n, 0);
     assert.equal((await client.query('SELECT count(*)::int AS n FROM pg_temp.questions WHERE id=$1', [question.id])).rows[0].n, 1);
-    assert.deepEqual((await request('GET', `/${retained.id}`)).group, retained);
+    const { questions: retainedQuestions, ...retainedMetadata } = (await request('GET', `/${retained.id}`)).group;
+    assert.deepEqual(retainedMetadata, retained);
+    assert.deepEqual(retainedQuestions.map(item => item.id), [question.id]);
     assert.equal((await client.query('SELECT count(*)::int AS n FROM pg_temp.question_group_items WHERE group_id=$1', [retained.id])).rows[0].n, 1);
   });
 
@@ -214,6 +216,21 @@ test('question group CRUD against PostgreSQL session-local tables', { skip: !pro
     const response = await request('PUT', `/${group.id}/questions`, { question_ids: [ids[2], ids[0], ids[1], ids[0].toUpperCase()] });
     assert.deepEqual(response, { status: 200, success: true, group, question_ids: ids.slice().sort() });
     const before = await groupItems(group.id);
+    const details = await request('GET', `/${group.id}`);
+    assert.equal(details.status, 200);
+    const expected = questions.map(({ id, user_id, type, content, explanation, created_at, updated_at, groups }) =>
+      ({ id, user_id, type, content, explanation, created_at, updated_at,
+        groups: [...groups.map(item => item.id), group.id].sort().map(groupId => ({
+          id: groupId, name: groupId === group.id ? group.name : other.name,
+        })) }));
+    // The group has no position column: ties in creation time use the UUID.
+    expected.sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id));
+    assert.deepEqual(details.group.questions.map(question => ({
+      ...question,
+      created_at: new Date(question.created_at).toISOString(),
+      updated_at: new Date(question.updated_at).toISOString(),
+    })), expected);
+    assert.deepEqual((await request('GET', `/${other.id}`)).group.questions.map(item => item.id), [ids[0]]);
     const replaced = await request('PUT', `/${group.id}/questions`, { question_ids: ids.slice(1) });
     assert.deepEqual(replaced.question_ids, ids.slice(1).sort());
     const retained = await groupItems(group.id);
@@ -225,7 +242,7 @@ test('question group CRUD against PostgreSQL session-local tables', { skip: !pro
     assert.deepEqual(cleared, { status: 200, success: true, group, question_ids: [] });
     assert.deepEqual(await groupItems(group.id), []);
     for (const question of questions) assert.deepEqual((await questionRequest('GET', `/${question.id}`)).question, question);
-    assert.deepEqual((await request('GET', `/${group.id}`)).group, group);
+    assert.deepEqual((await request('GET', `/${group.id}`)).group, { ...group, questions: [] });
   });
 
   await scenario('group and question-side membership operations agree on the same many-to-many links', async () => {
@@ -234,11 +251,12 @@ test('question group CRUD against PostgreSQL session-local tables', { skip: !pro
     const created = await questionRequest('POST', '', { type: 'single_choice', content: 'Draft', group_ids: [second.id] });
     const questionId = created.question.id;
     assert.equal((await request('PUT', `/${first.id}/questions`, { question_ids: [questionId] })).status, 200);
-    assert.deepEqual((await questionRequest('GET', `/${questionId}`)).question.group_ids, [first.id, second.id].sort());
+    assert.deepEqual((await questionRequest('GET', `/${questionId}`)).question.groups,
+      [first, second].map(({ id, name }) => ({ id, name })).sort((a, b) => a.id.localeCompare(b.id)));
     assert.equal((await questionRequest('PATCH', `/${questionId}`, { group_ids: [first.id] })).status, 200);
     assert.deepEqual(await groupItems(second.id), []);
     assert.equal((await request('PUT', `/${first.id}/questions`, { question_ids: [] })).status, 200);
-    assert.deepEqual((await questionRequest('GET', `/${questionId}`)).question.group_ids, []);
+    assert.deepEqual((await questionRequest('GET', `/${questionId}`)).question.groups, []);
     assert.equal((await questionRequest('PATCH', `/${questionId}`, { group_ids: [first.id, second.id] })).status, 200);
     assert.equal((await request('PUT', `/${first.id}/questions`, { question_ids: [questionId] })).status, 200);
     assert.deepEqual((await groupItems(second.id)).map(item => item.question_id), [questionId]);
