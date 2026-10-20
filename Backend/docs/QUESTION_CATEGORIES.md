@@ -100,8 +100,7 @@ share one SQL snapshot. `totalPages` is `Math.ceil(total / limit)`;
 UUID ascending breaks ties when sorting by name. All reads use the primary.
 
 Category deletion sets `questions.category_id` to NULL and preserves original questions.
-Source rows referencing the category cascade; deletion is rejected if surviving
-source quotas no longer add up correctly. Questions can also change category through
+Source rows referencing the category cascade; affected quiz totals update automatically. Questions can also change category through
 `category_id` in question POST/PATCH; see `QUESTIONS.md`.
 
 Apply migration `1792454400000_question-categories-and-uncategorized-sources.sql`

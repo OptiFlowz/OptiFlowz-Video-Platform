@@ -23,7 +23,6 @@ Create body:
 {
   "title": "Programming languages",
   "description": "Practice quiz",
-  "question_count": 10,
   "time_limit_seconds": 600,
   "max_attempts": 3,
   "passing_score_percentage": 75.25,
@@ -33,7 +32,7 @@ Create body:
 }
 ```
 
-`title` (trimmed, 1–255 characters) and `question_count` are required.
+Only `title` (trimmed, 1–255 characters) is required. `question_count` is read-only: fixed questions + source counts. It starts at 0; sending it in POST/PATCH returns 400.
 Other defaults match the migration: `description: null`, `status: "draft"`,
 `time_limit_seconds: null`, `max_attempts: null`, `passing_score_percentage: 50`,
 both shuffle flags true and `has_certificate: false`.
@@ -92,7 +91,7 @@ Existing questions and question-categories endpoints retain their current paths.
 This CRUD stores the quiz table fields; question selection, attempts,
 grading and certificate issuance are separate later workflows.
 Apply `1791590400004_add-quizzes.sql` using `npm run migrate:deploy` before
-using these routes. No additional migration is needed for CRUD.
+using these routes. Also apply `1792454400001_fixed-questions-and-random-category-sources.sql`; counts are maintained by database triggers.
 
 Run `npm run test:quizzes`. Set `TEST_DATABASE_URL` to enable PostgreSQL/HTTP
 integration tests; all writes use session-local objects.

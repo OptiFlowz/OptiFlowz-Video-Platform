@@ -3,40 +3,39 @@ import { mock, test } from 'node:test';
 import { sourceQuotas, selectAttemptQuestions, snapshotAttemptQuestions, publicAttempt } from '../src/modules/quizzes-engine/quiz-attempts/helpers/attemptQuestions.js';
 
 const stable = n => n - 1;
-const candidate = (id, category_id = null, position = 0) => ({ id, category_id, position, max_points: 2 });
-const source = (category_id, question_count, position = 0) => ({ category_id, question_count, question_percentage: null, position });
+const candidate = (id, category_id = null, position = 0, is_fixed = false) => ({ id, category_id, position, max_points: 2, is_fixed });
+const source = (category_id, question_count, position = 0, max_points = 3) => ({ id: category_id ?? 'uncategorized', category_id, question_count, position, max_points });
 const settings = (question_count, shuffle_questions = false) => ({ question_count, shuffle_questions, shuffle_options: false });
 
-test('largest remainder quotas use exact hundredths and deterministic position/category tie breaks', () => {
-  const percentage = (category_id, question_percentage, position = 0) => ({ category_id, question_percentage, question_count: null, position });
-  assert.deepEqual(sourceQuotas([percentage('b', 50), percentage('a', 50)], 3).map(s => [s.category_id, s.quota]), [['a', 2], ['b', 1]]);
-  assert.deepEqual(sourceQuotas([percentage('a', 50, 1), percentage('b', 50)], 3).map(s => s.quota), [2, 1]);
-  const thirds = [percentage('a', 33.33), percentage('b', 33.33), percentage('c', 33.34)];
-  assert.deepEqual(sourceQuotas(thirds, 2).map(s => s.quota), [1, 0, 1]);
-  assert.deepEqual(sourceQuotas(thirds, 100).map(s => s.quota), [33, 33, 34]);
-  for (const invalid of [[percentage('a', 99.99)], [source('a', 1)], [percentage('a', 50), source('b', 1)],
-    [percentage('a', 0), percentage('b', 100)], [percentage('a', 'NaN')], [source('a', 0)],
-    [percentage('a', 50), percentage('a', 50)]]) {
-    assert.throws(() => sourceQuotas(invalid, 2), { status: 422 });
-  }
+test('every fixed question is included, category selection excludes fixed questions and uses source weights', () => {
+  const pool = [candidate('fixed', 'x', 1, true), candidate('random-a', 'x'), candidate('random-b', 'x'), candidate('uncategorized')];
+  const selected = selectAttemptQuestions(pool, [source('x', 1, 0, 4.5), source(null, 1, 2)], settings(3), stable);
+  assert.deepEqual(selected.map(q => q.id), ['random-a', 'fixed', 'uncategorized']);
+  assert.deepEqual(selected.map(q => q.max_points), [4.5, 2, 3]);
+  assert.equal(selected[0].source_id, 'x');
+  assert.equal(selected[1].source_id, null);
+  assert.equal(new Set(selected.map(q => q.id)).size, 3);
+  assert.throws(() => selectAttemptQuestions(pool, [source('x', 3)], settings(4)), { status: 422 });
+  assert.throws(() => selectAttemptQuestions(pool, [source(null, 2)], settings(3)), { status: 422 });
+  assert.throws(() => selectAttemptQuestions(pool, [], settings(4)), { status: 422 });
 });
 
-test('category quotas select distinct candidates and uncategorized quotas never consume other categories', () => {
-  const pool = [candidate('a', 'x'), candidate('b', 'y'), candidate('c', null)];
-  const selected = selectAttemptQuestions(pool, [source('x', 1), source(null, 1)], settings(2), stable);
-  assert.deepEqual(selected.map(q => q.id), ['a', 'c']);
-  assert.throws(() => selectAttemptQuestions(pool, [source(null, 2)], settings(2), stable), { status: 422 });
-  assert.throws(() => selectAttemptQuestions(pool, [source('x', 2)], settings(2), stable), { status: 422 });
-  assert.throws(() => sourceQuotas([source(null, 1), source(null, 1)], 2), { status: 422 });
-  assert.equal(sourceQuotas([{category_id:null,position:0,question_percentage:100,question_count:null}],3)[0].quota,3);
-});
-
-test('selection is random independently of display ordering and never mutates the candidate pool', () => {
-  const pool = [candidate('b', null, 0), candidate('a', null, 0), candidate('c', null, 1)];
-  assert.deepEqual(selectAttemptQuestions(pool, [], settings(2), stable).map(q => q.id), ['a', 'b']);
-  assert.deepEqual(selectAttemptQuestions(pool, [], settings(2), () => 0).map(q => q.id), ['a', 'c']);
+test('random-only, fixed-only and mixed layouts support random selection and stable block positions', () => {
+  const pool = [candidate('b', 'x'), candidate('a', 'x'), candidate('c', 'x')];
+  assert.deepEqual(selectAttemptQuestions(pool, [source('x', 2)], settings(2), stable).map(q => q.id), ['b', 'a']);
+  assert.notDeepEqual(selectAttemptQuestions(pool, [source('x', 2)], settings(2), () => 0).map(q => q.id), ['b', 'a']);
+  const fixed = [candidate('b', null, 0, true), candidate('a', null, 0, true), candidate('c', null, 1, true)];
+  assert.deepEqual(selectAttemptQuestions(fixed, [], settings(3), stable).map(q => q.id), ['a', 'b', 'c']);
+  assert.notDeepEqual(selectAttemptQuestions(fixed, [], settings(3, true), () => 0).map(q => q.id), ['a', 'b', 'c']);
   assert.deepEqual(pool.map(q => q.id), ['b', 'a', 'c']);
-  assert.throws(() => selectAttemptQuestions(pool, [], settings(4), stable), { status: 422 });
+  assert.throws(() => selectAttemptQuestions([], [], settings(0)), { status: 422 });
+});
+
+test('source counts and points are positive; categories including null are unique', () => {
+  for (const invalid of [[source('x', 0)], [source('x', 1.5)], [source('x', 1, -1)], [source('x', 1, 0, 0)], [source(null, 1), source(null, 1)]]) {
+    assert.throws(() => sourceQuotas(invalid), { status: 422 });
+  }
+  assert.equal(sourceQuotas([source('x', 3)])[0].quota, 3);
 });
 
 test('snapshots preserve answer IDs and shuffle positions; public output contains no questions', () => {

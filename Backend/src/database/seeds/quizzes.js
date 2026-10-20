@@ -120,8 +120,8 @@ async function seedCompleteQuiz(client, userId, questions, videos, existingQuiz 
   const quizId = seedQuizId(userId);
   const settings = createQuizSchema.parse({
     title: 'Demo kviz — osnove programiranja i weba',
-    description: 'Seed primer: 20 kandidata, tri kategorije i dva video uslova. Izbor 10 pitanja po raspodeli 40/30/30%.',
-    status: 'published', question_count: 10, time_limit_seconds: 900, max_attempts: 3,
+    description: 'Seed primer: banka od 20 pitanja, 2 fiksna + 8 nasumičnih iz tri kategorije i dva video uslova.',
+    status: 'published', time_limit_seconds: 900, max_attempts: 3,
     passing_score_percentage: 70, shuffle_questions: true, shuffle_options: true,
     min_answered_percentage: 100, min_correct_percentage: 0,
     correctness_visibility: 'after_check', correct_answers_visibility: 'after_finish',
@@ -141,9 +141,9 @@ async function seedCompleteQuiz(client, userId, questions, videos, existingQuiz 
   }
 
   const categoryDefinitions = [
-    { type: 'single_choice', label: 'Jedan tačan odgovor', percentage: 40, points: 1 },
-    { type: 'multiple_choice', label: 'Više tačnih odgovora', percentage: 30, points: 2 },
-    { type: 'matching', label: 'Povezivanje pojmova', percentage: 30, points: 3 },
+    { type: 'single_choice', label: 'Jedan tačan odgovor', count: 3, points: 1 },
+    { type: 'multiple_choice', label: 'Više tačnih odgovora', count: 2, points: 2 },
+    { type: 'matching', label: 'Povezivanje pojmova', count: 3, points: 3 },
   ];
   const sources = [];
   for (const [position, definition] of categoryDefinitions.entries()) {
@@ -161,20 +161,24 @@ async function seedCompleteQuiz(client, userId, questions, videos, existingQuiz 
     const members = questions.filter(question => question.type === definition.type);
     await client.query(`UPDATE public.questions SET category_id=$1
       WHERE id=ANY($2::uuid[]) AND category_id IS NULL`, [categoryId, members.map(question => question.id)]);
-    sources.push({ category_id: categoryId, position, question_percentage: definition.percentage, question_count: null });
+    sources.push({ category_id: categoryId, position: position + 2, max_points: definition.points, question_count: definition.count });
   }
+  const fixed = ['single_choice', 'multiple_choice'].map(type => questions.find(question => question.type === type));
+  // Normalize only this demo's known question links when upgrading an older seed.
+  await client.query('DELETE FROM public.quiz_questions WHERE quiz_id=$1 AND question_id=ANY($2::uuid[]) AND NOT (question_id=ANY($3::uuid[]))',
+    [quizId, questions.map(q => q.id), fixed.map(q => q.id)]);
   await client.query(`INSERT INTO public.quiz_questions (quiz_id, question_id, position, max_points)
     SELECT $1, question_id, position, max_points FROM jsonb_to_recordset($2::jsonb)
       AS input(question_id uuid, position integer, max_points numeric)
     ON CONFLICT (quiz_id, question_id) DO NOTHING`, [quizId, JSON.stringify(
-    questions.map((question, position) => ({ question_id: question.id, position,
+    fixed.map((question, position) => ({ question_id: question.id, position,
       max_points: categoryDefinitions.find(category => category.type === question.type).points })),
   )]);
   const parsed = replaceQuizSourcesSchema.parse({ sources });
   for (const source of parsed.sources) {
-    await client.query(`INSERT INTO public.quiz_sources (quiz_id, category_id, position, question_percentage, question_count)
-      VALUES ($1, $2, $3, $4, $5) ON CONFLICT (quiz_id, category_id) WHERE category_id IS NOT NULL DO NOTHING`,
-    [quizId, source.category_id, source.position, source.question_percentage, source.question_count]);
+    await client.query(`INSERT INTO public.quiz_sources (quiz_id, category_id, position, max_points, question_count)
+      VALUES ($1, $2, $3, $4, $5) ON CONFLICT (quiz_id, category_id) WHERE category_id IS NOT NULL DO UPDATE SET position=EXCLUDED.position, max_points=EXCLUDED.max_points, question_count=EXCLUDED.question_count`,
+    [quizId, source.category_id, source.position, source.max_points, source.question_count]);
   }
   for (const video of videos) {
     const position = video.seed_position;
@@ -186,7 +190,7 @@ async function seedCompleteQuiz(client, userId, questions, videos, existingQuiz 
     validateVideoDuration(requirement, video);
     await createQuizRequirement(client, requirement);
   }
-  return quiz;
+  return (await client.query('SELECT * FROM public.quizzes WHERE id=$1', [quizId])).rows[0];
 }
 
 async function describeSeedQuiz(client, quiz) {
@@ -194,9 +198,9 @@ async function describeSeedQuiz(client, quiz) {
   const sources = await getAttemptSources(client, quiz.id);
   if (candidates.some(question => question.user_id !== quiz.user_id)
     || sources.some(source => source.user_id !== quiz.user_id)) throw new Error('Seed ownership mismatch');
-  validateCandidates(candidates);
   // Validate that quotas can be satisfied in memory; never create an attempt.
   const selection = selectAttemptQuestions(candidates, sources, snapshotQuizSettings(quiz));
+  validateCandidates(selection);
   const { rows: requirements } = await client.query(`SELECT r.*, v.title AS video_title
     FROM public.quiz_requirements r JOIN public.videos v ON v.id = r.video_id
     WHERE r.quiz_id = $1 ORDER BY r.position, r.video_id`, [quiz.id]);
@@ -204,10 +208,10 @@ async function describeSeedQuiz(client, quiz) {
     'SELECT count(*)::integer AS count FROM public.quiz_attempts WHERE quiz_id = $1', [quiz.id],
   );
   return {
-    id: quiz.id, title: quiz.title, status: quiz.status, candidate_count: candidates.length,
+    id: quiz.id, title: quiz.title, status: quiz.status, bank_pool_count: candidates.length, fixed_count: candidates.filter(q => q.is_fixed).length,
     question_count: quiz.question_count, selection_valid: selection.length === quiz.question_count,
-    sources: sources.map(source => ({ category_id: source.category_id, question_percentage: source.question_percentage,
-      question_count: source.question_count, candidates: candidates.filter(q => q.category_id === source.category_id).length })),
+    sources: sources.map(source => ({ category_id: source.category_id, max_points: source.max_points,
+      question_count: source.question_count, candidates: candidates.filter(q => !q.is_fixed && q.category_id === source.category_id).length })),
     requirements, existing_attempts: attempts,
   };
 }
@@ -215,7 +219,7 @@ async function describeSeedQuiz(client, quiz) {
 // Usage: npm run seed:quizzes -- --user-id <uuid>
 // Or:   npm run seed:quizzes -- --email <email>
 // Both seed:questions (legacy alias) and seed:quizzes seed the complete quiz.
-// Uses DATABASE_URL from the environment/.env. Existing resources are never overwritten.
+// Uses DATABASE_URL from the environment/.env. Normalizes demo links/sources; preserves question content and attempts.
 async function main() {
   const args = process.argv.slice(2);
   let flag, owner;

@@ -10,7 +10,7 @@ export async function withQuizSourceTransaction(quizId, categoryIds, userId, ope
     if (!await getOwnedQuiz(client, quizId, userId, true)) throw new HttpError(404, { message: 'Quiz not found' });
     if (!await lockOwnedCategories(client, [...new Set(categoryIds.filter(id => id !== null))], userId)) throw new HttpError(404, { message: 'One or more source categories were not found' });
     const result = await operation(client);
-    // Deferred database constraints validate the complete distribution at commit.
+    // Database triggers keep the derived quiz size in sync within this transaction.
     await client.query('COMMIT');
     return result;
   } catch (error) {

@@ -1,3 +1,4 @@
+import { upgradeFixedQuizLayout } from './helpers/fixed-quiz-schema.js';
 import { upgradeQuestionCategories } from './helpers/question-categories-schema.js';
 import { installQuizPermissions } from './helpers/quiz-permissions-schema.js';
 import assert from 'node:assert/strict';
@@ -35,6 +36,7 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
   await admin.query('INSERT INTO users(id) VALUES ($1),($2),($3)', [owner, participant, other]);
   await installQuizPermissions(admin, { schema });
   await upgradeQuestionCategories(admin, { schema });
+  await upgradeFixedQuizLayout(admin, { schema });
   let failQuestions = false, released = 0;
   const queryOn = database => async (sql, params) => {
     const result = await database.query(sql.replaceAll('public.', `${schema}.`), params);
@@ -98,9 +100,9 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
     return gid;
   }
   async function sources(id, entries) {
-    await admin.query(`INSERT INTO quiz_sources(quiz_id,category_id,position,question_percentage,question_count)
-      SELECT $1, category_id, position, question_percentage, question_count FROM jsonb_to_recordset($2::jsonb)
-        AS x(category_id uuid,position integer,question_percentage numeric,question_count integer)`, [id, JSON.stringify(entries)]);
+    await admin.query(`INSERT INTO quiz_sources(quiz_id,category_id,position,max_points,question_count)
+      SELECT $1, category_id, position, COALESCE(max_points,1), question_count FROM jsonb_to_recordset($2::jsonb)
+        AS x(category_id uuid,position integer,max_points numeric,question_count integer)`, [id, JSON.stringify(entries)]);
   }
   const totalAttempts = async id => Number((await admin.query('SELECT count(*) FROM quiz_attempts WHERE quiz_id=$1', [id])).rows[0].count);
   const savedQuestions = async id => (await admin.query('SELECT * FROM quiz_attempt_questions WHERE attempt_id=$1 ORDER BY question_no', [id])).rows;
@@ -237,34 +239,42 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
     for (const id of [empty, incomplete, overlap]) assert.equal(await totalAttempts(id), 0);
   });
 
-  await t.test('category and uncategorized quotas use only quiz candidates and snapshots preserve their assignment', async () => {
-    const id = await quiz({ count: 3 });
-    const first = await question(id), second = await question(id), unassigned = await question(id);
-    const outside = await question(id, { linked: false });
-    const a = await category([first, outside]), b = await category([second]);
-    await sources(id, [{ category_id: a, position: 0, question_count: 1 }, { category_id: b, position: 1, question_count: 1 }, { category_id: null, position: 2, question_count: 1 }]);
+  await t.test('fixed questions plus whole category sources exclude duplicates and retain per-source points and positions', async () => {
+    const id = await quiz();
+    const fixed = await question(id, { position: 1, points: 5 });
+    const random = await question(id, { linked: false });
+    const a = await category([fixed, random]);
+    const unassigned = await question(id, { linked: false });
+    // Existing uncategorized bank questions are also eligible; restrict the count assertion to scope and uniqueness.
+    await sources(id, [{ category_id:a,position:0,question_count:1,max_points:2.5 }, {category_id:null,position:2,question_count:1,max_points:3}]);
     const response = await request(id);
-    assert.equal(response.status, 201);
+    assert.equal(response.status,201);
+    assert.equal(response.body.settings.question_count,3);
     const rows = await savedQuestions(response.body.id);
-    assert.equal(new Set(rows.map(q => q.question_id)).size, 3);
-    assert.equal(rows.find(q => q.question_id === first).question_snapshot.source_category_id, a);
-    assert.equal(rows.find(q => q.question_id === unassigned).question_snapshot.source_category_id, null);
-    assert.ok(!rows.some(q => q.question_id === outside));
+    assert.equal(new Set(rows.map(q => q.question_id)).size,3);
+    assert.deepEqual(rows.slice(0,2).map(q => q.question_id),[random,fixed]);
+    assert.deepEqual(rows.map(q => Number(q.max_points)),[2.5,5,3]);
+    assert.equal(rows[0].question_snapshot.source_category_id,a);
+    assert.equal(rows[1].question_snapshot.source_id,null);
+    assert.ok(rows[2].question_snapshot.source_id);
+    assert.equal((await admin.query('SELECT category_id FROM questions WHERE id=$1',[rows[2].question_id])).rows[0].category_id,null);
+    assert.equal((await admin.query('SELECT question_count FROM quizzes WHERE id=$1',[id])).rows[0].question_count,3);
+    assert.ok(unassigned);
   });
 
-  await t.test('percentage sources allocate exactly question_count and preserve shuffled presentation on resume', async () => {
-    const id = await quiz({ count: 3 });
-    const left = await category([await question(id), await question(id)]);
-    const right = await category([await question(id), await question(id)]);
-    await sources(id, [{ category_id: left, position: 0, question_percentage: 50 }, { category_id: right, position: 1, question_percentage: 50 }]);
-    await admin.query('UPDATE quizzes SET shuffle_questions=true,shuffle_options=true WHERE id=$1', [id]);
+  await t.test('random-only categories select from the bank and preserve shuffled presentation on resume', async () => {
+    const id = await quiz();
+    const left = await category([await question(id,{linked:false}),await question(id,{linked:false})]);
+    const right = await category([await question(id,{linked:false}),await question(id,{linked:false})]);
+    await sources(id,[{category_id:left,position:0,question_count:2},{category_id:right,position:1,question_count:1}]);
+    await admin.query('UPDATE quizzes SET shuffle_questions=true,shuffle_options=true WHERE id=$1',[id]);
     const initial = await request(id);
-    assert.equal(initial.status, 201);
+    assert.equal(initial.status,201);
     const rows = await savedQuestions(initial.body.id);
-    assert.equal(rows.filter(q => q.question_snapshot.source_category_id === left).length, 2);
-    assert.equal(rows.filter(q => q.question_snapshot.source_category_id === right).length, 1);
-    assert.deepEqual((await request(id)).body, initial.body);
-    assert.deepEqual(await savedQuestions(initial.body.id), rows);
+    assert.equal(rows.filter(q=>q.question_snapshot.source_category_id===left).length,2);
+    assert.equal(rows.filter(q=>q.question_snapshot.source_category_id===right).length,1);
+    assert.deepEqual((await request(id)).body,initial.body);
+    assert.deepEqual(await savedQuestions(initial.body.id),rows);
   });
 
   await t.test('concurrent requests create exactly one attempt and return it to every caller', async () => {

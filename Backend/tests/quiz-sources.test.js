@@ -3,14 +3,14 @@ import { mock, test } from 'node:test';
 import { createQuizSourceSchema, updateQuizSourceSchema, replaceQuizSourcesSchema, listQuizSourcesSchema } from '../src/modules/quizzes-engine/quiz-sources/helpers/quiz-sources.validation.js';
 
 const id = '12345678-1234-4234-8234-123456789abc';
-test('source schemas enforce exclusive modes, numeric precision, immutable IDs and unique categories', () => {
-  assert.deepEqual(createQuizSourceSchema.parse({ category_id: id.toUpperCase(), question_percentage: 100 }), {
-    category_id: id, question_percentage: 100, question_count: null, position: 0,
+test('source schemas enforce positive counts, point precision, immutable IDs and unique categories', () => {
+  assert.deepEqual(createQuizSourceSchema.parse({ category_id: id.toUpperCase(), question_count: 3 }), {
+    category_id: id, question_count: 3, max_points: 1, position: 0,
   });
-  for (const question_percentage of [0.01, 0.29, 33.33, 100]) assert.equal(createQuizSourceSchema.safeParse({ category_id: id, question_percentage }).success, true);
+  for (const max_points of [0.01, 0.29, 33.33, 100]) assert.equal(createQuizSourceSchema.safeParse({ category_id: id, question_count: 2, max_points }).success, true);
   for (const data of [
     {}, { question_count: 0 }, { question_count: 1.5 }, { question_count: 2147483648 },
-    { question_count: '1' }, { question_percentage: 0 }, { question_percentage: 100.01 },
+    { question_count: '1' }, { question_percentage: 0 }, { question_count: 3.01 },
     { question_percentage: 0.001 }, { question_percentage: Infinity }, { question_percentage: NaN },
     { question_count: null, question_percentage: null }, { question_count: 1, question_percentage: 50 },
     { question_count: 1, position: -1 }, { question_count: 1, position: 0.5 },
@@ -18,7 +18,8 @@ test('source schemas enforce exclusive modes, numeric precision, immutable IDs a
   ]) assert.equal(createQuizSourceSchema.safeParse({ category_id: id, ...data }).success, false);
   assert.equal(updateQuizSourceSchema.safeParse({}).success, false);
   assert.equal(updateQuizSourceSchema.safeParse({ category_id: id }).success, false);
-  assert.deepEqual(updateQuizSourceSchema.parse({ question_count: 2, question_percentage: null }), { question_count: 2, question_percentage: null });
+  assert.deepEqual(updateQuizSourceSchema.parse({ question_count: 2, max_points: 1.25 }), { question_count: 2, max_points: 1.25 });
+  for (const max_points of [0,-1,1.001,NaN,Infinity,null,100000000]) assert.equal(createQuizSourceSchema.safeParse({category_id:id,question_count:1,max_points}).success,false);
   assert.equal(replaceQuizSourcesSchema.safeParse({ sources: [
     { category_id: id, question_count: 1 }, { category_id: id.toUpperCase(), question_count: 1 },
   ] }).success, false);

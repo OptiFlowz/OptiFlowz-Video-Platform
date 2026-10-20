@@ -1,3 +1,4 @@
+import { upgradeFixedQuizLayout } from './helpers/fixed-quiz-schema.js';
 import { upgradeQuestionCategories } from './helpers/question-categories-schema.js';
 import { installQuizPermissions } from './helpers/quiz-permissions-schema.js';
 import assert from 'node:assert/strict';
@@ -33,6 +34,7 @@ test('source migration, HTTP CRUD and concurrent allocations in an isolated Post
   await admin.query('INSERT INTO users(id) VALUES ($1),($2)', [owner, other]);
   await installQuizPermissions(admin, { schema });
   migration = await upgradeQuestionCategories(admin, { schema });
+  migration = await upgradeFixedQuizLayout(admin, { schema });
   let releases = 0;
   const queryOn = database => (sql, params) => database.query(sql.replaceAll('public.', `${schema}.`), params);
   mock.module(new URL('../src/database/index.js', import.meta.url).href, { namedExports: { writePool: {
@@ -72,75 +74,68 @@ test('source migration, HTTP CRUD and concurrent allocations in an isolated Post
     await admin.query('INSERT INTO question_categories(id,user_id,name) VALUES ($1,$2,$3)', [id, userId, id]);
     return id;
   }
-  const percent = (category_id, question_percentage, position = 0) => ({ category_id, question_percentage, position });
   const count = (category_id, question_count, position = 0) => ({ category_id, question_count, position });
   const stored = async id => (await admin.query('SELECT * FROM quiz_sources WHERE quiz_id=$1 ORDER BY position,category_id', [id])).rows;
 
   await t.test('all six routes require access tokens and scope access to the quiz owner', async () => {
     const id = await quiz(), gid = await category();
-    await put(id, [percent(gid, 100)]);
+    await put(id, [count(gid, 100)]);
     for (const [method, suffix, body] of [['GET', '', undefined], ['GET', `/${gid}`, undefined],
-      ['POST', '', percent(gid, 100)], ['PUT', '', { sources: [] }], ['PATCH', `/${gid}`, { position: 1 }], ['DELETE', `/${gid}`, undefined]]) {
+      ['POST', '', count(gid, 100)], ['PUT', '', { sources: [] }], ['PATCH', `/${gid}`, { position: 1 }], ['DELETE', `/${gid}`, undefined]]) {
       for (const bearer of [null, jwt.sign({ sub: owner, purpose: 'two_factor' }, process.env.JWT_SECRET)]) {
         assert.equal((await request(method, id, suffix, body, bearer)).status, 401);
       }
       assert.equal((await request(method, id, suffix, body, otherToken)).status, 404);
     }
-    assert.equal((await request('POST', id, '', percent(await category(other), 100))).status, 404);
-    assert.equal((await put(id, [percent(randomUUID(), 100)])).status, 404);
+    assert.equal((await request('POST', id, '', count(await category(other), 100))).status, 404);
+    assert.equal((await put(id, [count(randomUUID(), 100)])).status, 404);
     assert.equal((await request('GET', randomUUID())).status, 404);
     assert.equal((await request('GET', id, `/${randomUUID()}`)).status, 404);
     assert.equal((await put(await quiz(other), [])).status, 404);
   });
 
-  await t.test('single-source CRUD preserves omitted fields, allows mode switches and leaves categories intact', async () => {
-    const id = await quiz(), gid = await category();
-    const created = await request('POST', id.toUpperCase(), '', { category_id: gid.toUpperCase(), question_percentage: 100 });
-    assert.equal(created.status, 201);
-    const sourceId = created.source.id;
-    assert.equal(created.source.position, 0);
-    assert.equal(created.source.question_count, null);
-    assert.equal(created.source.category.id, gid);
-    assert.deepEqual((await request('GET', id, `/${sourceId}`)).source, created.source);
-    assert.equal((await request('POST', id, '', percent(gid, 100))).status, 409);
-    const moved = await request('PATCH', id, `/${sourceId}`, { position: 2 });
-    assert.equal(moved.status, 200);
-    assert.equal(moved.source.question_percentage, 100);
-    assert.equal(moved.source.position, 2);
-    assert.equal((await request('PATCH', id, `/${sourceId}`, { question_count: 10 })).status, 400);
-    const switched = await request('PATCH', id, `/${sourceId}`, { question_percentage: null, question_count: 10 });
-    assert.equal(switched.status, 200);
-    assert.equal(switched.source.question_percentage, null);
-    assert.equal(switched.source.question_count, 10);
-    assert.equal((await request('DELETE', id, `/${sourceId}`)).status, 200);
-    assert.equal((await request('DELETE', id, `/${sourceId}`)).status, 404);
-    assert.equal((await admin.query('SELECT id FROM question_categories WHERE id=$1', [gid])).rowCount, 1);
+  await t.test('source CRUD keeps immutable category IDs, default weights and derives the quiz total', async () => {
+    const id=await quiz(), gid=await category();
+    const created=await request('POST',id,'',{category_id:gid,question_count:3});
+    assert.equal(created.status,201);
+    assert.equal(created.source.max_points,1);
+    assert.equal(created.source.question_count,3);
+    assert.equal(created.source.category.id,gid);
+    const sid=created.source.id;
+    assert.deepEqual((await request('GET',id,`/${sid}`)).source,created.source);
+    assert.equal((await request('POST',id,'',count(gid,2))).status,409);
+    const changed=await request('PATCH',id,`/${sid}`,{question_count:5,max_points:2.25,position:4});
+    assert.equal(changed.status,200);
+    assert.equal(changed.source.max_points,2.25);
+    assert.equal((await http('GET',`/${id}`)).quiz.question_count,5);
+    assert.equal((await request('PATCH',id,`/${sid}`,{question_percentage:100})).status,400);
+    assert.equal((await request('DELETE',id,`/${sid}`)).status,200);
+    assert.equal((await http('GET',`/${id}`)).quiz.question_count,0);
+    assert.equal((await request('DELETE',id,`/${sid}`)).status,404);
+    assert.equal((await admin.query('SELECT id FROM question_categories WHERE id=$1',[gid])).rowCount,1);
   });
 
-  await t.test('atomic replacement validates exact percentage sums, same mode and rolls back every failed change', async () => {
-    const id = await quiz(), a = await category(), b = await category(), c = await category();
-    assert.equal((await put(id, [percent(a, 33.33), percent(b, 33.33), percent(c, 33.34)])).status, 200);
-    const before = await stored(id), released = releases;
-    for (const sources of [[percent(a, 99.99)], [percent(a, 60), percent(b, 60)], [percent(a, 50), count(b, 5)],
-      [count(a, 4), count(b, 5)], [count(a, 11)], [percent(a, 50), percent(a.toUpperCase(), 50)]]) {
-      assert.equal((await put(id, sources)).status, 400);
-      assert.deepEqual(await stored(id), before);
+  await t.test('replacement accepts independent counts and rolls back foreign, duplicate or invalid sources', async () => {
+    const id=await quiz(), a=await category(), b=await category();
+    assert.equal((await put(id,[count(a,3),count(b,2)])).status,200);
+    const before=await stored(id);
+    for(const entries of [[count(a,0)],[count(a,1.5)],[count(a,1),count(a,2)],[{category_id:a,question_percentage:100}]]) {
+      assert.equal((await put(id,entries)).status,400);
+      assert.deepEqual(await stored(id),before);
     }
-    assert.ok(releases > released);
-    assert.equal((await request('PATCH', id, `/${before.find(row => row.category_id === a).id}`, { question_percentage: 50 })).status, 400);
-    assert.equal((await request('DELETE', id, `/${before.find(row => row.category_id === a).id}`)).status, 400);
-    assert.deepEqual(await stored(id), before);
-    assert.equal((await put(id, [count(a, 4), count(b, 6)])).status, 200);
-    assert.equal((await put(id, [])).status, 200);
-    assert.deepEqual(await stored(id), []);
+    assert.equal((await put(id,[count(a,2),count(await category(other),1)])).status,404);
+    assert.deepEqual(await stored(id),before);
+    assert.equal((await request('DELETE',id,`/${before[0].id}`)).status,200);
+    assert.equal((await put(id,[])).status,200);
+    assert.deepEqual(await stored(id),[]);
   });
 
   await t.test('list supports all sorting fields, stable pagination, empty pages and basic category details', async () => {
     const id = await quiz(), a = await category(), b = await category(), c = await category();
-    await put(id, [percent(a, 20), percent(b, 30), percent(c, 50, 1)]);
+    await put(id, [count(a, 20), count(b, 30), count(c, 50, 1)]);
     const result = await request('GET', id);
     assert.equal(result.pagination.total, 3);
-    for (const sortBy of ['position', 'category_id', 'question_percentage', 'question_count']) {
+    for (const sortBy of ['position', 'category_id', 'max_points', 'question_count']) {
       for (const sortOrder of ['asc', 'desc']) {
         const expected = [...result.sources].sort((a, b) => {
           const diff = sortBy === 'category_id' ? a.category_id.localeCompare(b.category_id) : (a[sortBy] ?? 0) - (b[sortBy] ?? 0);
@@ -158,71 +153,51 @@ test('source migration, HTTP CRUD and concurrent allocations in an isolated Post
     for (const suffix of ['?page=0', '?limit=101', '?sortBy=name', `?user_id=${other}`]) assert.equal((await request('GET', id, suffix)).status, 400);
   });
 
-  await t.test('quiz count edits and category cascades cannot silently invalidate an allocation', async () => {
-    const id = await quiz(), a = await category(), b = await category();
-    await put(id, [count(a, 4), count(b, 6)]);
-    const edit = await http('PATCH', `/${id}`, { question_count: 11 });
-    assert.equal(edit.status, 400);
-    assert.match(edit.message, /sum/);
-    assert.equal((await admin.query('SELECT question_count FROM quizzes WHERE id=$1', [id])).rows[0].question_count, 10);
-    const deletion = await http('DELETE', `/question-categories/${a}`);
-    assert.equal(deletion.status, 400);
-    assert.equal((await stored(id)).length, 2);
-    assert.equal((await admin.query('SELECT id FROM question_categories WHERE id=$1', [a])).rowCount, 1);
-    await put(id, [percent(a, 100)]);
-    assert.equal((await http('PATCH', `/${id}`, { question_count: 11 })).status, 200);
-    assert.equal((await http('DELETE', `/question-categories/${a}`)).status, 200);
-    assert.deepEqual(await stored(id), []);
-    await put(id, [percent(b, 100)]);
-    assert.equal((await http('DELETE', `/${id}`)).status, 200);
-    assert.deepEqual(await stored(id), []);
-    assert.equal((await admin.query('SELECT id FROM question_categories WHERE id=$1', [b])).rowCount, 1);
+  await t.test('question_count is readonly and category cascades refresh it automatically', async () => {
+    const id=await quiz(), a=await category(), b=await category();
+    await put(id,[count(a,4),count(b,6)]);
+    assert.equal((await http('PATCH',`/${id}`,{question_count:11})).status,400);
+    assert.equal((await http('DELETE',`/question-categories/${a}`)).status,200);
+    assert.equal((await http('GET',`/${id}`)).quiz.question_count,6);
+    await admin.query('UPDATE quizzes SET question_count=999 WHERE id=$1',[id]);
+    assert.equal((await http('GET',`/${id}`)).quiz.question_count,6);
+    assert.equal((await http('DELETE',`/${id}`)).status,200);
+    assert.deepEqual(await stored(id),[]);
   });
 
-  await t.test('direct SQL enforces row constraints, ownership, aggregate totals and deferred multi-row writes', async () => {
-    const id = await quiz(), a = await category(), b = await category(), foreign = await category(other);
-    const insert = (gid, percentage, number, position = 0) => admin.query(
-      'INSERT INTO quiz_sources(quiz_id,category_id,question_percentage,question_count,position) VALUES ($1,$2,$3,$4,$5)', [id, gid, percentage, number, position]);
-    for (const args of [[a, null, null], [a, 100, 10], [a, 0, null], [a, 101, null], [a, 'NaN', null],
-      [a, null, 0], [a, 100, null, -1], [a, 99, null], [a, null, 9], [foreign, 100, null]]) {
-      await assert.rejects(insert(...args), { code: '23514' });
-    }
-    await assert.rejects(insert(randomUUID(), 100, null), { code: '23503' });
-    await admin.query('BEGIN');
-    try {
-      await insert(a, 60, null);
-      await insert(b, 40, null);
-      await admin.query('COMMIT');
-    } catch (error) { await admin.query('ROLLBACK'); throw error; }
-    await assert.rejects(insert(a, 100, null), { code: '23505' });
-    await assert.rejects(admin.query('UPDATE quiz_sources SET category_id=$1 WHERE quiz_id=$2 AND category_id=$3', [foreign, id, a]), { code: '23514' });
-    await assert.rejects(admin.query('UPDATE question_categories SET user_id=$1 WHERE id=$2', [other, a]), { code: '23514' });
-    await assert.rejects(admin.query('UPDATE quizzes SET user_id=$1 WHERE id=$2', [other, id]), { code: '23514' });
-    const index = await admin.query('SELECT indexdef FROM pg_indexes WHERE schemaname=$1 AND indexname=$2', [schema, 'quiz_sources_category_id_idx']);
-    assert.match(index.rows[0].indexdef, /\(category_id\)/);
+  await t.test('SQL enforces positive counts and weights, unique categories and ownership', async () => {
+    const id=await quiz(), a=await category(), foreign=await category(other);
+    const insert=(cat,n,points=1)=>admin.query('INSERT INTO quiz_sources(quiz_id,category_id,question_count,max_points) VALUES($1,$2,$3,$4)',[id,cat,n,points]);
+    for(const args of [[a,0],[a,-1],[a,1,0],[a,1,'NaN'],[foreign,1]]) await assert.rejects(insert(...args),{code:'23514'});
+    await assert.rejects(insert(a,null),{code:'23502'});
+    await assert.rejects(insert(randomUUID(),1),{code:'23503'});
+    await insert(a,2);
+    await assert.rejects(insert(a,1),{code:'23505'});
+    await assert.rejects(admin.query('UPDATE quizzes SET user_id=$1 WHERE id=$2',[other,id]),{code:'23514'});
+    await assert.rejects(admin.query('UPDATE question_categories SET user_id=$1 WHERE id=$2',[other,a]),{code:'23514'});
+    assert.equal((await http('GET',`/${id}`)).quiz.question_count,2);
   });
 
   await t.test('concurrent replacements serialize and retain a complete allocation', async () => {
     const id = await quiz(), a = await category(), b = await category(), c = await category();
-    const results = await Promise.all([put(id, [percent(a, 60), percent(b, 40)]), put(id, [count(b, 3), count(c, 7)])]);
+    const results = await Promise.all([put(id, [count(a, 60), count(b, 40)]), put(id, [count(b, 3), count(c, 7)])]);
     assert.deepEqual(results.map(result => result.status), [200, 200]);
     const rows = await stored(id);
     assert.equal(rows.length, 2);
-    assert.ok(rows.every(row => row.question_count === null) || rows.every(row => row.question_percentage === null));
-    assert.equal(rows.reduce((sum, row) => sum + Number(row.question_percentage ?? row.question_count), 0), rows[0].question_count === null ? 100 : 10);
+    assert.equal(rows.reduce((sum,row)=>sum+row.question_count,0),(await http('GET',`/${id}`)).quiz.question_count);
   });
 
-  await t.test('uncategorized source participates in both modes and CRUD uses its source ID', async () => {
+  await t.test('uncategorized source uses positive counts and CRUD uses its source ID', async () => {
     const id = await quiz(), a = await category();
-    const created = await put(id, [percent(a, 80), percent(null, 20)]);
+    const created = await put(id, [count(a, 80), count(null, 20)]);
     assert.equal(created.status, 200);
     const unassigned = created.sources.find(s => s.category_id === null);
     assert.ok(unassigned.id);
     assert.equal(unassigned.category, null);
     assert.deepEqual((await request('GET', id, `/${unassigned.id}`)).source, unassigned);
     assert.equal((await request('PATCH', id, `/${unassigned.id}`, { position: 4 })).status, 200);
-    assert.equal((await request('POST', id, '', percent(null, 20))).status, 409);
-    assert.equal((await put(id, [percent(null, 50), percent(null, 50)])).status, 400);
+    assert.equal((await request('POST', id, '', count(null, 20))).status, 409);
+    assert.equal((await put(id, [count(null, 50), count(null, 50)])).status, 400);
     assert.equal((await put(id, [count(a, 8), count(null, 2)])).status, 200);
     assert.equal((await put(id, [count(null, 10)])).status, 200);
     const sole = (await stored(id))[0];
@@ -230,11 +205,25 @@ test('source migration, HTTP CRUD and concurrent allocations in an isolated Post
     assert.equal((await request('GET', id)).pagination.total, 0);
   });
 
-  await t.test('category migration rollback preserves sources and current memberships and reapplies', async () => {
+  await t.test('moving a fixed question or source shifts the other layout items atomically', async () => {
+    const id=await quiz(), a=await category(), q1=randomUUID(), q2=randomUUID();
+    await admin.query("INSERT INTO questions(id,user_id,type,content) VALUES($1,$3,'single_choice','A'),($2,$3,'single_choice','B')",[q1,q2,owner]);
+    await http('POST',`/${id}/questions`,{question_id:q1,position:0});
+    await http('POST',`/${id}/questions`,{question_id:q2,position:2});
+    const source=(await request('POST',id,'',{category_id:a,question_count:3,position:1})).source;
+    assert.equal((await http('PATCH',`/${id}/questions/${q2}`,{position:0})).status,200);
+    assert.equal((await request('GET',id,`/${source.id}`)).source.position,2);
+    assert.equal((await request('PATCH',id,`/${source.id}`,{position:0})).status,200);
+    const fixed=(await http('GET',`/${id}/questions`)).questions;
+    assert.deepEqual(fixed.map(q=>[q.question_id,q.position]),[[q2,1],[q1,2]]);
+    assert.equal((await http('GET',`/${id}`)).quiz.question_count,5);
+  });
+
+  await t.test('fixed-layout migration rollback restores count allocations and reapplies', async () => {
     const id = await quiz(), a = await category();
     await put(id, [count(a, 10)]);
     await admin.query(migration.split('-- Down Migration')[1]);
-    assert.equal((await admin.query('SELECT * FROM question_groups WHERE id=$1', [a])).rowCount, 1);
+    assert.equal((await admin.query('SELECT * FROM question_categories WHERE id=$1', [a])).rowCount, 1);
     await admin.query(migration.split('-- Down Migration')[0]);
     assert.equal((await request('GET', id)).sources[0].category_id, a);
   });

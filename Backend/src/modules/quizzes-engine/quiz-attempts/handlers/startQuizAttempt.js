@@ -50,8 +50,8 @@ export async function startQuizAttemptInternal(quizId, userId) {
     if ([...sources, ...candidates].some(row => row.user_id !== quiz.user_id)) {
       throw attemptError(422, 'INVALID_QUIZ_CONFIGURATION', 'Quiz questions and source categories must belong to the quiz owner');
     }
-    validateCandidates(candidates);
     const selected = selectAttemptQuestions(candidates, sources, settings);
+    validateCandidates(selected);
     const questions = snapshotAttemptQuestions(selected, settings);
     const cents = questions.reduce((sum, question) => sum + Math.round(question.max_points * 100), 0);
     if (!Number.isSafeInteger(cents) || cents > 9999999999) {

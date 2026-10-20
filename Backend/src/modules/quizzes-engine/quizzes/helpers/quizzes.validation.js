@@ -9,7 +9,6 @@ const quizFields = {
   title: z.string().trim().min(1).max(255),
   description: z.string().trim().nullable(),
   status: quizStatus,
-  question_count: positiveInteger,
   time_limit_seconds: positiveInteger.nullable(),
   max_attempts: positiveInteger.nullable(),
   passing_score_percentage: percentage,

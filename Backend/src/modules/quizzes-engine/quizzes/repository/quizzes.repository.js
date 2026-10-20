@@ -8,7 +8,7 @@ const QUIZ_COLUMNS = `id, user_id, title, description, status, question_count,
   show_final_score, scoring_mode, created_at, updated_at`;
 
 const WRITABLE_FIELDS = [
-  'title', 'description', 'status', 'question_count', 'time_limit_seconds', 'max_attempts',
+  'title', 'description', 'status', 'time_limit_seconds', 'max_attempts',
   'passing_score_percentage', 'shuffle_questions', 'shuffle_options', 'has_certificate',
   'min_answered_percentage', 'min_correct_percentage', 'correctness_visibility',
   'correct_answers_visibility', 'explanation_visibility', 'explanation_incorrect_only',

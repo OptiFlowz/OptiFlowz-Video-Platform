@@ -12,7 +12,7 @@ export async function updateQuizSourceInternal(params, body, userId) {
     const existing = await getQuizSource(client, quizId, sourceId, userId);
     if (!existing) throw new HttpError(404, { message: 'Quiz source not found' });
     const source = validateOrThrow(quizSourceFieldsSchema.safeParse({
-      position: existing.position, question_percentage: existing.question_percentage,
+      position: existing.position, max_points: existing.max_points,
       question_count: existing.question_count,
       ...Object.fromEntries(Object.entries(updates).filter(([, value]) => value !== undefined)),
     }));

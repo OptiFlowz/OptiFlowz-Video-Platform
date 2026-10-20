@@ -18,7 +18,7 @@ novije promene: `category: { id, name } | null`, filter `category_id` i permisij
 4. [Banka pitanja — Questions](#4-banka-pitanja--questions)
 5. [Kategorije — Question Categories](#5-kategorije--question-categories)
 6. [Kvizovi — Quizzes](#6-kvizovi--quizzes)
-7. [Kandidati — Quiz Questions](#7-kandidati--quiz-questions)
+7. [Fiksna pitanja — Quiz Questions](#7-fiksna-pitanja--quiz-questions)
 8. [Izvori — Quiz Sources](#8-izvori--quiz-sources)
 9. [Video uslovi — Quiz Requirements](#9-video-uslovi--quiz-requirements)
 10. [Tokovi rada i osvežavanje podataka](#10-tokovi-rada-i-osvežavanje-podataka)
@@ -32,15 +32,15 @@ novije promene: `category: { id, name } | null`, filter `category_id` i permisij
 | --- | --- | --- |
 | Question | Originalno pitanje u banci | Tip, sadržaj, objašnjenje, odgovore i kategorije |
 | Question category | Organizacija banke pitanja | Naziv, opis i skup članova |
-| Quiz | Podešavanja kviza | Naslov, status, broj pitanja, bodovanje i feedback opcije |
+| Quiz | Podešavanja kviza | Naslov, status, bodovanje i feedback opcije |
 | Quiz question | Veza kviza i originalnog pitanja | Položaj i maksimalne poene za taj kviz |
-| Quiz source | Kvota jedne kategorije u kvizu | Kategoriju, položaj i procenat ili tačan broj pitanja |
+| Quiz source | Kvota jedne kategorije u kvizu | Kategoriju, položaj, broj pitanja i bodove po pitanju |
 | Quiz requirement | Obavezan video uslov | Video, položaj i minimalno gledanje |
 
 Jedno pitanje može pripadati najviše jednoj kategoriji (ili nijednoj) i biti povezano sa više kvizova.
 Dodavanje pitanja u kategoriju **ne dodaje** ga automatski u `quiz_questions`.
 Dodavanje kategorije u `quiz_sources` takođe **ne povezuje** njena pitanja sa kvizom.
-Za izvor su kandidati presek članova te kategorije i pitanja povezanih sa kvizom.
+Svaka veza u `quiz_questions` je fiksno pitanje uključeno u svaki pokušaj. Izvor bira iz cele kategorije u banci, isključujući sva fiksna pitanja tog kviza.
 
 Praktična podela UI-ja:
 
@@ -553,9 +553,7 @@ UI redosled pitanja. Ova veza nema `position` niti rutu za reordering.
 ### 5.5. DELETE
 
 Briše kategoriju i postavlja `questions.category_id` njenih pitanja na null, čuvajući originalna pitanja. Brišu se i source veze
-ka kategoriji. Ako bi preostali izvori nekog kviza imali neispravan zbir, brisanje se
-odbija sa 400; prvo uskladi ceo skup izvora kroz PUT. Brisanje poslednjeg izvora
-može ostaviti kviz bez izvora, što je dozvoljeno.
+ka kategoriji. Ukupan broj pitanja pogođenih kvizova automatski se smanjuje za uklonjene izvore. Fiksne veze ostaju.
 
 ## 6. Kvizovi — Quizzes
 
@@ -573,15 +571,14 @@ POST/GET `/` znače `/api/quizzes`, bez dodatnog `/quizzes` segmenta.
 
 ### 6.2. Podešavanja i default vrednosti
 
-Sva navedena polja dostupna su u create body-ju i PATCH-u. Samo `title` i
-`question_count` su obavezni prilikom kreiranja.
+Podešavanja su dostupna u create body-ju i PATCH-u, osim izvedenog `question_count`. Samo `title` je obavezan prilikom kreiranja. `question_count` je samo izlazno polje i ne šalje se u POST/PATCH.
 
 | Polje | Tip / dozvoljene vrednosti | Default |
 | --- | --- | --- |
 | `title` | Trimovan string, 1–255 karaktera | Obavezno |
 | `description` | Trimovan string ili null | null |
 | `status` | `draft`, `published`, `archived` | `draft` |
-| `question_count` | Pozitivan ceo broj | Obavezno |
+| `question_count` | Samo čitanje: broj fiksnih + zbir source brojeva | 0 |
 | `time_limit_seconds` | Pozitivan ceo broj ili null | null |
 | `max_attempts` | Pozitivan ceo broj ili null | null |
 | `passing_score_percentage` | Broj 0–100, do dve decimale | 50 |
@@ -600,8 +597,7 @@ Sva navedena polja dostupna su u create body-ju i PATCH-u. Samo `title` i
 | `scoring_mode` | `exact_match`, `partial_credit` | `exact_match` |
 
 Pozitivni celi brojevi su 1–2147483647. `null` za vreme/broj dozvoljenih pokušaja
-znači bez tog ograničenja. `question_count` je ciljna veličina izbora, ne trenutni
-broj povezanih kandidata, pa kandidata može biti više.
+znači bez tog ograničenja. `question_count` se automatski računa kao broj fiksnih pitanja + zbir `question_count` izvora. Prazan kviz ima 0; pokretanje takvog kviza vraća 422.
 
 Feedback enum za sva tri visibility polja:
 
@@ -628,7 +624,6 @@ bodovanja; ne implementiraj serversko bodovanje na osnovu same vrednosti enum-a.
   "title": "HTTP i osnove weba",
   "description": "Kviz za proveru osnovnih pojmova.",
   "status": "draft",
-  "question_count": 10,
   "time_limit_seconds": 900,
   "max_attempts": 3,
   "passing_score_percentage": 70,
@@ -678,8 +673,7 @@ kviza**: ne garantuje dovoljan broj validnih kandidata niti izvodljive kategorij
 Frontend treba da omogući pripremu draft-a i pre objavljivanja prikaže provere
 iz odeljka 10.
 
-Ako postoje izvori u režimu tačnih brojeva, promena `question_count` može biti
-odbijena sa 400 zbog neusklađenog zbira. Postupak promene opisan je u odeljku 8.5.
+Slanje `question_count` u POST/PATCH kviza vraća 400. Veličinu menjaj dodavanjem/uklanjanjem fiksnih pitanja ili izmenom brojeva u sources.
 
 ### 6.6. DELETE
 
@@ -689,7 +683,7 @@ kontroler nemapiranu DB grešku vraća kao generički 500. Nemoj pretpostaviti d
 neuspeh brisanja ima posebno definisan 409 odgovor. Za povlačenje iz upotrebe dostupan
 je PATCH sa `status: "archived"`.
 
-## 7. Kandidati — Quiz Questions
+## 7. Fiksna pitanja — Quiz Questions
 
 ### 7.1. Rute
 
@@ -704,7 +698,7 @@ je PATCH sa `status: "archived"`.
 Ovde `questions` predstavlja listu **veza**, različitu od liste banke pitanja.
 Identitet veze čine `(quiz_id, question_id)`; nema zaseban `id`.
 
-### 7.2. Dodavanje kandidata
+### 7.2. Dodavanje fiksnog pitanja
 
 ```http
 POST /api/quizzes/33333333-3333-4333-8333-333333333333/questions
@@ -724,7 +718,7 @@ decimale, default 1. Nula poena nije dozvoljena.
 
 Isto pitanje može biti povezano sa različitim kvizovima, ali ne dva puta sa istim:
 ponovljeno dodavanje vraća 409. Za više pitanja šalješ više POST zahteva; ne postoji
-bulk-create endpoint za kandidate.
+bulk-create endpoint za fiksna pitanja.
 
 ```json
 {
@@ -767,7 +761,7 @@ PATCH menja `position` i/ili `max_points`:
 
 Ne menja `question_id` niti sadržaj originalnog pitanja. Za drag-and-drop pošalji
 jedan PATCH za pomereno pitanje, sa njegovom novom `position`, pa ponovo učitaj
-listu. Ostala pitanja u zahvaćenom rasponu pomeraju se automatski:
+obe liste. Ostala fiksna pitanja i source blokovi u zahvaćenom rasponu pomeraju se automatski:
 
 - Sa veće na manju poziciju (npr. 4 → 1): pitanja na pozicijama `[1, 4)` dobijaju `+1`.
 - Sa manje na veću (npr. 1 → 4): pitanja na pozicijama `(1, 4]` dobijaju `-1`.
@@ -782,10 +776,13 @@ Postojeće rupe i jednake pozicije se ne normalizuju. Već započeti pokušaji
 zadržavaju sačuvani redosled pitanja.
 
 DELETE briše **samo vezu**, čuva originalno pitanje i njegova članstva.
-Dodavanje/uklanjanje kandidata ne menja automatski `quiz.question_count` ni izvore.
-Zato posle ove operacije ponovo izračunaj da li je kviz i dalje konfiguraciono spreman.
+Dodavanje/uklanjanje fiksnog pitanja automatski menja `quiz.question_count`. Posle promene osveži detalje kviza i obe liste stavki. Broj pitanja u izvorima se ne menja; dostupnost se proverava pri pokretanju.
 
 ## 8. Izvori — Quiz Sources
+
+Izvor predstavlja blok nasumičnih pitanja iz **cele kategorije istog vlasnika**.
+Pitanja iz izvora ne dodaju se u `quiz_questions`. Sva fiksna pitanja tog kviza
+isključena su iz nasumičnog izbora. Jedno pitanje se pojavljuje najviše jednom po pokušaju.
 
 ### 8.1. Rute
 
@@ -798,166 +795,78 @@ Zato posle ove operacije ponovo izračunaj da li je kviz i dalje konfiguraciono 
 | PATCH | `/:quizId/sources/:sourceId` | 200, `{ success, source }` |
 | DELETE | `/:quizId/sources/:sourceId` | 200, `{ success, deleted: true }` |
 
-Svaki izvor ima samostalni UUID `id`, koji se koristi kao `sourceId` u rutama.
-Ako `category_id` nije null, kategorija mora imati istog vlasnika kao kviz. Isti `category_id` može biti samo jedan izvor
-istog kviza. Jedna kategorija sme biti izvor više kvizova.
+`sourceId` je samostalni `source.id`, različit od `category_id`.
 
-`category_id` je UUID kategorije ili eksplicitno `null` za pitanja bez kategorije.
-Po kvizu je dozvoljen najviše jedan source za svaku kategoriju i jedan za null.
-`category` u odgovoru je objekat ili null. Posle PUT zamene koristi novovraćene ID-jeve.
-Primer raspodele 80% iz kategorije i 20% bez kategorije:
+### 8.2. Polja i primeri
 
-```json
-{
-  "sources": [
-    { "category_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "question_percentage": 80 },
-    { "category_id": null, "question_percentage": 20 }
-  ]
-}
-```
-
-### 8.2. Režimi raspodele
-
-| Polje | Pravilo | Default na POST-u / stavci PUT-a |
+| Polje | Pravilo | Default |
 | --- | --- | --- |
-| `category_id` | Obavezan UUID ili null za pitanja bez kategorije | Nema |
-| `position` | Ceo broj 0–2147483647 | 0 |
-| `question_percentage` | > 0 i <= 100, do dve decimale, ili null | null |
-| `question_count` | Pozitivan ceo broj do 2147483647, ili null | null |
+| `category_id` | Obavezan UUID kategorije ili null za pitanja bez kategorije | Nema |
+| `question_count` | Obavezan pozitivan ceo broj, najviše 2147483647 | Nema |
+| `max_points` | Bodovi za svako izabrano pitanje; >0, do 99999999.99, najviše dve decimale | 1 |
+| `position` | Položaj bloka, ceo broj 0–2147483647 | 0 |
 
-**Tačno jedno** od poslednja dva polja mora imati vrednost. Izostavljeno se na
-POST-u/PUT-u pretvara u null. Ceo kviz mora koristiti jedan režim:
+`question_percentage` više ne postoji i njegovo slanje vraća 400.
+`category_id: null` bira isključivo pitanja bez kategorije u banci vlasnika kviza.
+Jedna kategorija i null mogu se pojaviti najviše jednom u izvorima istog kviza.
 
-- Procenti: zbir svih `question_percentage` mora biti tačno **100**.
-- Tačni brojevi: zbir svih source `question_count` mora biti jednak `quiz.question_count`.
-- Prazan skup izvora je dozvoljen; tada se koristi samo skup kandidata kviza.
+Primer POST body-ja:
 
-Kategorija može imati više pitanja od svoje kvote. Izvor sam ne pravi kandidate.
-Kandidati su `quiz_questions` povezani sa pitanjima koja imaju odgovarajući
-`questions.category_id`. Izvor sa `category_id: null` koristi isključivo pitanja
-bez kategorije. To nisu pitanja iz kategorija koje nisu navedene u sources.
-Kategorije se ne preklapaju; svaki izvor mora imati dovoljno kandidata za svoju kvotu.
-
-`max_points` dolazi sa veze `quiz_questions`, a ne iz kategorije ili izvora.
-Za procente koji daju necelo pitanje, postojeći izbor koristi najveće ostatke da
-dobije tačno traženi broj; kod jednakih ostataka prednost imaju manji `position`,
-pa `category_id`. Primer: 50/50% od 3 pitanja daje 2 i 1, ne 1.5 i 1.5.
-
-### 8.3. Preporučeni UI: čuvanje cele tabele kroz PUT
-
-```http
-PUT /api/quizzes/33333333-3333-4333-8333-333333333333/sources
+```json
+{
+  "category_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "question_count": 3,
+  "max_points": 2,
+  "position": 1
+}
 ```
+
+Primer PUT body-ja:
 
 ```json
 {
   "sources": [
-    {
-      "category_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
-      "position": 0,
-      "question_percentage": 60,
-      "question_count": null
-    },
-    {
-      "category_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
-      "position": 1,
-      "question_percentage": 40,
-      "question_count": null
-    }
+    { "category_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "question_count": 3, "max_points": 2, "position": 1 },
+    { "category_id": null, "question_count": 2, "max_points": 1, "position": 3 }
   ]
 }
 ```
 
-PUT zamenjuje ceo skup izvora u jednoj transakciji. Stare izvore koji nisu poslati
-uklanja. `sources` je obavezan niz sa najviše 1000 stavki i bez ponovljenih kategorija.
-`{ "sources": [] }` uklanja sve izvore.
+Uz 5 fiksnih pitanja ovaj primer daje `quiz.question_count = 10`.
+Zbir izvora se ne poredi sa unapred zadatim brojem kviza: backend računa zbir.
+Odgovor za svaki izvor sadrži `id`, `quiz_id`, sva četiri polja iz tabele i
+`category: { id, name, description } | null`.
 
-Odgovor PUT-a je `{ success: true, sources: [...] }`, bez `pagination` i `sorting`.
-Svaki izvor ima isti oblik kao sledeći pojedinačni primer:
+### 8.3. Izmena i brisanje
 
-```json
-{
-  "success": true,
-  "source": {
-    "id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
-    "quiz_id": "33333333-3333-4333-8333-333333333333",
-    "category_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
-    "position": 0,
-    "question_percentage": 60,
-    "question_count": null,
-    "category": {
-      "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
-      "name": "HTTP osnove",
-      "description": "Pitanja o HTTP metodama i statusima"
-    }
-  }
-}
-```
+PATCH prihvata `question_count`, `max_points` i `position`; izostavljena polja se
+čuvaju. `category_id` se menja zamenom izvora kroz PUT ili DELETE + POST.
+Promena pozicije pomera ostala fiksna pitanja i source blokove u zahvaćenom rasponu.
+Posle pomeranja osveži obe liste. `max_points` ostalih stavki se čuva.
 
-Za kviz sa `question_count: 10`, primer režima tačnih brojeva je:
+PUT šalje kompletan `sources` niz (0–1000 stavki) i atomski zamenjuje sve izvore.
+`{ "sources": [] }` ostavlja samo fiksna pitanja. PUT pravi nove source ID-jeve.
+DELETE uklanja samo izvor; kategorija, originalna pitanja i fiksne veze ostaju.
+Svaka izmena broja izvora automatski ažurira broj pitanja i `updated_at` kviza.
 
-```json
-{
-  "sources": [
-    {
-      "category_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
-      "position": 0,
-      "question_percentage": null,
-      "question_count": 6
-    },
-    {
-      "category_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
-      "position": 1,
-      "question_percentage": null,
-      "question_count": 4
-    }
-  ]
-}
-```
+### 8.4. Lista i redosled
 
-Za lokalnu proveru procentnog zbira koristi stotinke: saberi
-`Math.round(value * 100)` i očekuj 10000. Server svakako ponavlja validaciju.
+GET lista: `page` od 1, `limit` 1–100 (default 20), `sortBy`:
+`position` (default), `id`, `category_id`, `max_points`, `question_count`;
+`sortOrder`: `asc` (default) ili `desc`. NULL vrednosti su poslednje, dodatni redosled `id ASC`.
 
-### 8.4. POST, PATCH, DELETE i sortiranje
+Editor može spojiti liste fiksnih pitanja i izvora u jedan prikaz po `position`.
+Kod jednakih pozicija fiksno pitanje ide pre source bloka, a zatim odlučuje UUID.
+Ako je `shuffle_questions=false`, pokušaj prati taj redosled; pitanja unutar source
+bloka su nasumično izabrana i poređana. Ako je true, meša se ceo izabrani skup.
 
-POST prima jednu stavku iz PUT niza, bez `sources` omotača. Na praznom kvizu jedan
-procentualni izvor mora biti 100%; jedan izvor u režimu broja mora pokriti ceo
-`quiz.question_count`. POST sa 60%, pa drugi POST sa 40% **ne radi**: prvi zahtev
-bi ostavio neispravan zbir. Za početnu raspodelu sa više kategorija koristi PUT.
+### 8.5. Spremnost kviza
 
-PATCH prihvata `position`, `question_percentage`, `question_count`, ali ne `category_id`.
-Izostavljena polja čuva. PATCH samo pozicije je jednostavan:
-
-```json
-{
-  "position": 2
-}
-```
-
-Promena procenta samo jednog izvora najčešće će narušiti zbir i dati 400. Za prelazak
-režima moraš postaviti staro polje na null, a novo na vrednost; za više izvora koristi
-jedan PUT cele raspodele. DELETE jednog izvora takođe može dati 400 ako preostali
-izvori više ne čine validan zbir. Uklanjanje poslednjeg izvora je dozvoljeno.
-
-GET lista: `sortBy` je `position` (default), `id`, `category_id`, `question_percentage` ili
-`question_count`; default smer `asc`; null vrednosti su poslednje. Podržani su `page`
-i `limit`, nema dodatnog filtera. Ugnježdeni `category` nije detaljan objekat sa pitanjima.
-
-### 8.5. Promena veličine kviza kada izvori koriste tačne brojeve
-
-Kviz i raspodela trenutno nemaju zajedničku rutu za atomsku izmenu. Da promeniš,
-na primer, ukupni broj sa 10 na 12:
-
-1. Sačuvaj trenutnu tabelu izvora u editoru i pripremi novu sa zbirom 12.
-2. Preporučeno: privremeno postavi kviz na `draft` da se ne koristi delimično stanje.
-3. `PUT /:quizId/sources` sa `{ "sources": [] }`.
-4. `PATCH /:quizId` sa `{ "question_count": 12 }`.
-5. PUT nove kompletne raspodele čiji je zbir 12.
-6. Proveri stanje i po potrebi vrati `published`.
-
-Ovo je niz nezavisnih zahteva, ne jedna transakcija. Posle greške ponovo učitaj stanje
-kviza i izvora i omogući nastavak čuvanja. U procentnom režimu zbir ostaje 100 pri
-promeni broja pitanja, ali ponovo proveri raspoloživost kandidata za nove kvote.
+Čuvanje izvora proverava vlasništvo, brojeve, bodove i jedinstvenost kategorije.
+Potreban broj kandidata i validnost izabranih pitanja proveravaju se pri pokretanju;
+ako kategorija nema dovoljno pitanja nakon isključenja fiksnih, rezultat je 422.
+Prazan kviz takođe ne može da započne pokušaj. Sačuvani pokušaji zadržavaju svoje
+pitanje snapshotove, redosled, bodove i prethodni `settings.question_count`.
 
 ## 9. Video uslovi — Quiz Requirements
 
@@ -1188,10 +1097,9 @@ osvežavati u razumnim intervalima.
 1. Učitaj dozvoljene akcije korisnika i pripremi autorske ekrane.
 2. Napravi kategorije kroz POST `/question-categories` i sačuvaj ID-jeve.
 3. Napravi pitanja; dodeli kategoriju kroz `category_id` ili kasnije PUT-om kategorije.
-4. Napravi `draft` kviz sa ciljanim `question_count`.
-5. Poveži kandidate kroz POST `/:quizId/questions`; postavi poene i položaje.
-6. Ako koristiš kategorije za raspodelu, proveri preseke sa kandidatima i sačuvaj sve
-   izvore jednim PUT-om. Bez izvora ovaj korak možeš preskočiti.
+4. Napravi `draft` kviz bez `question_count`.
+5. Poveži fiksna pitanja kroz POST `/:quizId/questions`; postavi poene i položaje.
+6. Po potrebi dodaj izvore sa brojem i bodovima za nasumična pitanja iz cele kategorije. Isključi fiksna pitanja kada računaš dostupnost.
 7. Dodaj potrebne video requiremente. Ako nisu potrebni, ostavi prazan skup.
 8. Proveri popunjenost pitanja, broj kandidata, kvote, vlasništvo i video pragove.
 9. Postavi `status: "published"` običnim PATCH-om kviza.
@@ -1234,8 +1142,8 @@ očisti cache. Sledeće tabele su preporuka za frontend, ne ugrađeno serversko 
 | Promena `category_id` | Detalje/liste pitanja, stare i nove detalje kategorija, preglede raspoloživosti izvora |
 | Preimenovanje kategorije | Liste/detalje kategorija, `category` u pitanjima i `category` u izvorima |
 | PUT članova kategorije | Detalje kategorije, pitanja čija se članstva menjaju, liste pitanja i provere source kandidata |
-| Veza kviza i pitanja | Listu kandidata i UI proveru raspoloživosti izvora |
-| Podešavanja/status kviza | Detalje i liste kvizova; pri `question_count` promeni i proveru izvora |
+| Veza kviza i pitanja | Liste fiksnih pitanja i izvora, detalje/listu kvizova i provere raspoloživosti |
+| Podešavanja/status kviza | Detalje i liste kvizova; promene strukture osvežavaju i automatski `question_count` |
 | PUT/PATCH/DELETE izvora | Sve strane source liste i njen lokalni zbir |
 | Mutacija requirementa | Autorske liste/detalje, participant check i progress |
 | Brisanje originalnog pitanja/kategorije | Sve liste i otvorene detalje koji su ga referencirali |
@@ -1282,11 +1190,11 @@ type QuestionListQuery = {
 };
 type SourceInput = {
   category_id: string | null; position?: number;
-  question_percentage?: number | null; question_count?: number | null;
+  question_count: number; max_points?: number;
 };
 type Source = {
   id: string; quiz_id: string; category_id: string | null; position: number;
-  question_percentage: number | null; question_count: number | null;
+  question_count: number; max_points: number;
   category: { id: string; name: string; description: string | null } | null;
 };
 
@@ -1388,7 +1296,7 @@ Zato grešku uvek prepoznaj preko **HTTP statusa**, ne samo preko `success`.
 
 | Status | Primer | Frontend postupak |
 | --- | --- | --- |
-| 400 | Neispravan UUID, nepoznato polje, prazan PATCH, nevalidan zbir izvora, oba watch praga popunjena | Prikaži poruku i sačuvaj lokalne izmene forme |
+| 400 | Neispravan UUID, nepoznato polje, prazan PATCH, nevalidan broj/bodovi izvora, oba watch praga popunjena | Prikaži poruku i sačuvaj lokalne izmene forme |
 | 401 | Nema tokena, istekao token, neaktivan nalog ili promenjeno ovlašćenje tokena | Pokreni postojeći auth tok i spreči petlju ponavljanja |
 | 403 | Nedostaje potrebna permisija | Prikaži zabranu akcije; ne ponavljaj isti zahtev automatski |
 | 404 | Resurs ne postoji ili je izvan own scope-a; participant provera za neobjavljen kviz | Osveži prikaz dostupnosti, ukloni zastareli izbor |
@@ -1402,9 +1310,6 @@ Primeri serverskih poruka korisnih pri povezivanju formi:
 - `This question is already linked to the quiz`
 - `This category is already a source for the quiz`
 - `This video is already a requirement for the quiz`
-- `Exactly one of question_percentage and question_count must be set`
-- `Source percentages must sum to 100; replace the complete allocation using PUT`
-- `Source question counts must sum to the quiz question_count; replace the complete allocation using PUT`
 - `Exactly one of min_watch_percentage and min_watch_seconds must be set`
 - `min_watch_seconds requires a known video duration and cannot exceed it`
 
@@ -1418,7 +1323,7 @@ ovog vodiča ne vraća poseban `code`.
 - Nema ugrađenog bulk povezivanja kandidata ili bulk reordering rute.
 - Nema quiz thumbnail/upload rute ni quiz `visibility` polja u ovim šemama.
 - Grupne detalje dobijaš cele; nema paginacije `category.questions` u tom odgovoru.
-- Source CRUD validira vlasništvo, režim i ukupne kvote, ali čuvanje source tabele
+- Source CRUD validira vlasništvo, broj pitanja i bodove, ali čuvanje source tabele
   samo po sebi ne potvrđuje dovoljan broj različitih, popunjenih kandidata.
 - Publish PATCH ne radi kompletnu proveru svih delova kviza.
 - Ugnježdeni odgovori `category`, `question`, `categories` zavise od konteksta; nisu svi
@@ -1437,8 +1342,8 @@ ovog vodiča ne vraća poseban `code`.
 - [ ] Početne liste i ugnježdeni summary objekti se razlikuju od detaljnih objekata.
 - [ ] Choice i matching editori čuvaju stabilne brojeve opcija i stavki.
 - [ ] PUT članstva i izvora šalje kompletan nameravani skup, učitan sa svih strana.
-- [ ] `quiz_questions` kandidati i source kategorija povezani su nezavisno i imaju istog vlasnika.
-- [ ] Izvori koriste jedan režim, tačan zbir i dovoljno različitih kandidata.
+- [ ] `quiz_questions` fiksna pitanja i source kategorija povezani su nezavisno i imaju istog vlasnika.
+- [ ] Izvori koriste pozitivan broj pitanja i imaju dovoljno kandidata nakon isključenja fiksnih pitanja.
 - [ ] Pitanja/opcije/stavke su popunjeni pre objavljivanja.
 - [ ] Video requirement ima tačno jedan prag, a video je dostupan i odgovarajućeg trajanja.
 - [ ] Progress ekran koristi serverski `is_met`, podržava `video_card: null` i prazne requiremente.
@@ -1452,7 +1357,7 @@ ovog vodiča ne vraća poseban `code`.
 - `src/modules/authorization/permission.constants.js` i `authorization.service.js` — ključevi i Owner.
 - Routes, controllers, `helpers/*.validation.js`, handlers i repositories šest podmodula opisanih u ovom dokumentu.
 - `src/common/response.js` i `src/common/input.validation.js` — envelope i validation greške.
-- `src/database/migrations/1792281600001_add-quiz-sources.sql` — validacija raspodele izvora.
+- `src/database/migrations/1792281600001_add-quiz-sources.sql` — istorijska šema izvora.
 - `src/database/sql/videoCardFragments.js` i `src/modules/videos/helpers/videoCardMedia.js` — video kartice i mediji.
 
 Pregled po rutama obuhvata 34 kombinacije HTTP metode i putanje, bez podmodula

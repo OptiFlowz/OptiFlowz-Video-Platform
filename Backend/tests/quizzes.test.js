@@ -4,7 +4,7 @@ import {
   createQuizSchema, updateQuizSchema, listQuizzesSchema,
 } from '../src/modules/quizzes-engine/quizzes/helpers/quizzes.validation.js';
 
-const body = { title: 'Quiz', question_count: 10 };
+const body = { title: 'Quiz' };
 
 test('quiz creation trims text and applies all database-aligned defaults', () => {
   assert.deepEqual(createQuizSchema.parse({ ...body, title: ' Quiz ' }), {
@@ -25,7 +25,7 @@ test('quiz creation trims text and applies all database-aligned defaults', () =>
 
 test('invalid quiz settings, readonly fields and future membership fields are rejected', () => {
   const invalid = [
-    undefined, null, {}, { title: 'Quiz' }, { ...body, title: ' ' }, { ...body, title: 'x'.repeat(256) },
+    undefined, null, {}, { ...body, question_count: 10 }, { ...body, title: ' ' }, { ...body, title: 'x'.repeat(256) },
     { ...body, status: 'unknown' }, { ...body, user_id: 'spoof' }, { ...body, id: 'spoof' },
     { ...body, created_at: '2026-01-01' }, { ...body, updated_at: '2026-01-01' },
     { ...body, question_ids: [] }, { ...body, category_ids: [] }, { ...body, description: 1 },

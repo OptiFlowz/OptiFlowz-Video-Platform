@@ -1,5 +1,9 @@
 # Prelazak sa grupa na kategorije pitanja
 
+Ovaj dokument opisuje prethodnu migraciju. Posle migracije fiksnih pitanja,
+izvori koriste samo broj i bodove, a pitanje se bira iz cele kategorije.
+Aktuelni ugovor je u `QUIZZES_ENGINE_FRONTEND_GUIDE.md`, odeljci 6–8.
+
 Pokretanje nove migracije:
 
 ```sh

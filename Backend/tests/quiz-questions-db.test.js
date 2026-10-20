@@ -1,3 +1,4 @@
+import { upgradeFixedQuizLayout } from './helpers/fixed-quiz-schema.js';
 import { upgradeQuestionCategories } from './helpers/question-categories-schema.js';
 import { installQuizPermissions } from './helpers/quiz-permissions-schema.js';
 import assert from 'node:assert/strict';
@@ -24,6 +25,8 @@ test('parallel candidate moves read positions after the quiz lock and preserve a
     const sql = (await readFile(new URL(`../src/database/migrations/${file}`, import.meta.url), 'utf8')).replaceAll('public.', `${schema}.`);
     await admin.query(sql.split('-- Down Migration')[0]);
   }
+  await upgradeQuestionCategories(admin, { schema });
+  await upgradeFixedQuizLayout(admin, { schema });
   const userId = randomUUID(), quizId = randomUUID(), ids = Array.from({ length: 4 }, () => randomUUID());
   await admin.query(`INSERT INTO ${schema}.users VALUES($1)`, [userId]);
   await admin.query(`INSERT INTO ${schema}.quizzes(id,user_id,title,question_count) VALUES($1,$2,'Quiz',4)`, [quizId, userId]);
@@ -72,6 +75,7 @@ test('quiz candidate migration and CRUD against session-local PostgreSQL tables'
   await client.query('INSERT INTO users(id) VALUES ($1),($2)', [owner, other]);
   await installQuizPermissions(client);
   await upgradeQuestionCategories(client);
+  await upgradeFixedQuizLayout(client);
   let failAfterInsert = false, failAfterMove = false, releases = 0;
   const query = async (sql, params) => {
     const result = await client.query(sql.replaceAll('public.', 'pg_temp.'), params);

@@ -1,3 +1,4 @@
+import { upgradeFixedQuizLayout } from './helpers/fixed-quiz-schema.js';
 import { upgradeQuestionCategories } from './helpers/question-categories-schema.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
@@ -36,6 +37,7 @@ test('quiz authorization uses real role grants, denies and Owner bypass on all m
   for (const id of [viewer,uploader,admin,owner,unprivileged]) await client.query('INSERT INTO users(id) VALUES ($1)',[id]);
   await installQuizPermissions(client,{ defaultRole: null });
   await upgradeQuestionCategories(client);
+  await upgradeFixedQuizLayout(client);
   for (const [id,role] of [[viewer,'Viewer'],[uploader,'Uploader'],[admin,'Administrator'],[owner,'Owner']]) {
     await client.query('INSERT INTO user_roles(user_id,role_id) SELECT $1,id FROM roles WHERE name=$2',[id,role]);
   }
@@ -66,12 +68,12 @@ test('quiz authorization uses real role grants, denies and Owner bypass on all m
   }
   const f=await fixture(),v=await fixture(viewer);
   const authorRoutes = x => [
-    ['POST','/',{title:'New',question_count:1}],['GET','/'],['GET',`/${x.quiz}`],['PATCH',`/${x.quiz}`,{title:'Changed'}],['DELETE',`/${x.quiz}`],
+    ['POST','/',{title:'New'}],['GET','/'],['GET',`/${x.quiz}`],['PATCH',`/${x.quiz}`,{title:'Changed'}],['DELETE',`/${x.quiz}`],
     ['POST','/questions',{type:'single_choice',content:'New'}],['GET','/questions'],['GET',`/questions/${x.question}`],['PATCH',`/questions/${x.question}`,{content:'Changed'}],['DELETE',`/questions/${x.question}`],
     ['POST','/question-categories',{name:'New'}],['GET','/question-categories'],['GET',`/question-categories/${x.category}`],['PATCH',`/question-categories/${x.category}`,{name:'Changed'}],['DELETE',`/question-categories/${x.category}`],['PUT',`/question-categories/${x.category}/questions`,{question_ids:[]}],
     ['POST','/quiz-requirements',{quiz_id:x.quiz,video_id:x.video,min_watch_seconds:1}],['GET','/quiz-requirements'],['GET',`/quiz-requirements/${x.quiz}/${x.video}`],['PATCH',`/quiz-requirements/${x.quiz}/${x.video}`,{position:1}],['DELETE',`/quiz-requirements/${x.quiz}/${x.video}`],
     ['POST',`/${x.quiz}/questions`,{question_id:x.question}],['GET',`/${x.quiz}/questions`],['GET',`/${x.quiz}/questions/${x.question}`],['PATCH',`/${x.quiz}/questions/${x.question}`,{position:1}],['DELETE',`/${x.quiz}/questions/${x.question}`],
-    ['POST',`/${x.quiz}/sources`,{category_id:x.category,question_percentage:100}],['PUT',`/${x.quiz}/sources`,{sources:[]}],['GET',`/${x.quiz}/sources`],['GET',`/${x.quiz}/sources/${x.category}`],['PATCH',`/${x.quiz}/sources/${x.category}`,{position:1}],['DELETE',`/${x.quiz}/sources/${x.category}`],
+    ['POST',`/${x.quiz}/sources`,{category_id:x.category,question_count:1}],['PUT',`/${x.quiz}/sources`,{sources:[]}],['GET',`/${x.quiz}/sources`],['GET',`/${x.quiz}/sources/${x.category}`],['PATCH',`/${x.quiz}/sources/${x.category}`,{position:1}],['DELETE',`/${x.quiz}/sources/${x.category}`],
   ];
   const participantRoutes = x => [['GET',`/${x.quiz}/eligibility`],['POST',`/${x.quiz}/attempts`],['GET',`/quiz-requirements/${x.quiz}/check`],['GET',`/quiz-requirements/${x.quiz}/progress`]];
 
@@ -96,7 +98,7 @@ test('quiz authorization uses real role grants, denies and Owner bypass on all m
     assert.equal((await request(actor,'PATCH',`/question-categories/${x.category}`,{name:randomUUID()})).category.user_id,uploader);
     assert.equal((await request(actor,'PUT',`/question-categories/${x.category}/questions`,{question_ids:[x.question]})).status,200);
     assert.equal((await request(actor,'POST',`/${x.quiz}/questions`,{question_id:x.question})).status,201);
-    const createdSource = await request(actor,'POST',`/${x.quiz}/sources`,{category_id:x.category,question_percentage:100});
+    const createdSource = await request(actor,'POST',`/${x.quiz}/sources`,{category_id:x.category,question_count:1});
     assert.equal(createdSource.status,201); x.source=createdSource.source.id;
     assert.equal((await request(actor,'POST','/quiz-requirements',{quiz_id:x.quiz,video_id:x.video,min_watch_seconds:1})).status,201);
     for(const path of [`/${x.quiz}`,`/questions/${x.question}`,`/question-categories/${x.category}`,`/${x.quiz}/questions`, `/${x.quiz}/questions/${x.question}`,`/${x.quiz}/sources`,`/${x.quiz}/sources/${x.source}`,`/quiz-requirements?quiz_id=${x.quiz}`,`/quiz-requirements/${x.quiz}/${x.video}`]) {
@@ -110,7 +112,7 @@ test('quiz authorization uses real role grants, denies and Owner bypass on all m
       const result=await request(actor,'GET',path);
       assert.equal(result.status,200); assert.ok(result[key].some(row=>row.user_id===viewer));
     }
-    for(const [path,body,key] of [['/',{title:'Created',question_count:1},'quiz'],['/questions',{type:'single_choice',content:'Created'},'question'],['/question-categories',{name:randomUUID()},'category']]) {
+    for(const [path,body,key] of [['/',{title:'Created'},'quiz'],['/questions',{type:'single_choice',content:'Created'},'question'],['/question-categories',{name:randomUUID()},'category']]) {
       const created=await request(actor,'POST',path,body); assert.equal(created.status,201); assert.equal(created[key].user_id,actor);
     }
   }

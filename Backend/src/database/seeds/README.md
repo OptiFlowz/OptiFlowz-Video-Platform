@@ -19,8 +19,8 @@ Seed u jednoj transakciji pravi:
 - 20 pitanja sa odgovorima i objašnjenjima (8 single choice, 6 multiple choice,
   6 matching). Pitanja prethodnog seeda istog vlasnika prepoznaje po tipu i sadržaju.
 - Tri kategorije i dodelu kategorije za svih 20 pitanja.
-- Svih 20 veza u `quiz_questions`, sa pozicijama i 1/2/3 poena prema tipu.
-- Tri izvora sa raspodelom 40/30/30%: po pokušaju 4/3/3 različita pitanja.
+- Dva fiksna pitanja u `quiz_questions`: jedno single choice i jedno multiple choice.
+- Tri izvora iz cele kategorije: 3/2/3 dodatna pitanja sa 1/2/3 poena. Fiksna pitanja su isključena iz izbora. Ukupno 2 + 8 = 10.
 - Dva video requirementa: 50% prvog videa i 30 sekundi drugog
   (ili celo trajanje drugog ako traje manje od 30 sekundi).
 
@@ -39,7 +39,7 @@ mora stvarno da ispuni video uslove pre pokretanja kviza.
 
 Ponovno pokretanje prepoznaje kviz po stabilnom ID-ju vezanom za vlasnika i dopunjava
 nedostajuća pitanja, kategorije, dodele kategorija, kandidate, izvore i video requiremente.
-Postojeće redove i podešavanja čuva, bez dupliranja ili prepisivanja ručnih izmena.
+Čuva tekst pitanja, podešavanja kviza i attemptove. Poznate veze demo pitanja svodi na dva fiksna i podešava tri demo izvora na 3/2/3; ove stavke konfiguracije se normalizuju i pri ponovnom pokretanju.
 Na kraju proverava konfiguraciju i ispisuje ID-jeve. Postojeći video requirementi imaju
 prednost; opcija `--video-id` bira videe samo za nedostajuće requiremente.
 Ako je postojeći kviz ručno izmenjen u neispravnu konfiguraciju, validacija prijavljuje

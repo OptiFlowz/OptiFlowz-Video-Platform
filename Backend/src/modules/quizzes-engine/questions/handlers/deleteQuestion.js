@@ -13,7 +13,7 @@ export async function deleteQuestionInternal(params, userId) {
     if (!await deleteQuestion(client, questionId, userId)) {
       throw new HttpError(404, { message: 'Question not found' });
     }
-    // The database cascades deletion to answers and quiz candidate links.
+    // The database cascades deletion to answers and fixed quiz links.
     await client.query('COMMIT');
     return { deleted: true };
   } catch (error) {

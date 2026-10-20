@@ -6,7 +6,7 @@ export async function withQuizQuestionTransaction(quizId, questionId, userId, op
   const client = await writePool.connect();
   try {
     await client.query('BEGIN ISOLATION LEVEL READ COMMITTED');
-    // Serialize candidate writes per quiz, using the ownership trigger's
+    // Serialize fixed-question writes per quiz, using the ownership trigger's
     // quiz-before-question lock order. Reads do not take this write lock.
     if (!await getOwnedQuiz(client, quizId, userId, true)) throw new HttpError(404, { message: 'Quiz not found' });
     if (!await lockOwnedQuestion(client, questionId, userId)) throw new HttpError(404, { message: 'Question not found' });
@@ -15,6 +15,7 @@ export async function withQuizQuestionTransaction(quizId, questionId, userId, op
     return result;
   } catch (error) {
     await client.query('ROLLBACK').catch(() => {});
+    if (error.code === '22003') throw new HttpError(400, { message: 'The total question count exceeds the supported range' });
     if (error.code === '23505' && error.constraint === 'quiz_questions_pkey') {
       throw new HttpError(409, { message: 'This question is already linked to the quiz' });
     }

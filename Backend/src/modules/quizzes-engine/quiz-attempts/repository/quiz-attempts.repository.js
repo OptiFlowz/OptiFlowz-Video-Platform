@@ -148,7 +148,7 @@ export async function getAttemptHistory(database, quizId, userId) {
 
 export async function getAttemptQuestionPool(database, quizId) {
   const { rows } = await database.query(`
-    SELECT q.id, q.user_id, qq.position, qq.max_points,
+    SELECT q.id, q.user_id, qq.position, qq.max_points, (qq.question_id IS NOT NULL) AS is_fixed,
       q.category_id,
       jsonb_build_object('type', q.type, 'content', q.content, 'explanation', q.explanation,
         'options', COALESCE((SELECT jsonb_agg(to_jsonb(o) - 'question_id' ORDER BY o.position, o.option_no)
@@ -158,8 +158,12 @@ export async function getAttemptQuestionPool(database, quizId) {
         'matching_items', COALESCE((SELECT jsonb_agg(to_jsonb(i) - 'question_id' ORDER BY i.position, i.item_no)
           FROM public.question_matching_items i WHERE i.question_id=q.id), '[]'::jsonb)
       ) AS question_snapshot
-    FROM public.quiz_questions qq JOIN public.questions q ON q.id=qq.question_id
-    WHERE qq.quiz_id=$1 ORDER BY q.id FOR SHARE OF q, qq
+    FROM public.questions q
+    LEFT JOIN public.quiz_questions qq ON qq.question_id=q.id AND qq.quiz_id=$1
+    WHERE qq.question_id IS NOT NULL OR (
+      q.user_id=(SELECT user_id FROM public.quizzes WHERE id=$1)
+      AND EXISTS (SELECT 1 FROM public.quiz_sources s WHERE s.quiz_id=$1 AND s.category_id IS NOT DISTINCT FROM q.category_id)
+    ) ORDER BY q.id FOR SHARE OF q
   `, [quizId]);
   return rows;
 }

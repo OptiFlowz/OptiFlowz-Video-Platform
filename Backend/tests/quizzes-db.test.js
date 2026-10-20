@@ -1,3 +1,4 @@
+import { upgradeFixedQuizLayout } from './helpers/fixed-quiz-schema.js';
 import { upgradeQuestionCategories } from './helpers/question-categories-schema.js';
 import { installQuizPermissions } from './helpers/quiz-permissions-schema.js';
 import assert from 'node:assert/strict';
@@ -76,6 +77,7 @@ test('quiz CRUD and existing submodule routing against PostgreSQL session-local 
   await client.query('INSERT INTO pg_temp.users(id) VALUES ($1),($2)', [userId, otherUserId]);
   await installQuizPermissions(client);
   await upgradeQuestionCategories(client);
+  await upgradeFixedQuizLayout(client);
   const query = (sql, params) => client.query(sql.replaceAll('public.', 'pg_temp.'), params);
   mock.module(new URL('../src/database/index.js', import.meta.url).href, { namedExports: { writePool: { query } } });
   const { default: router } = await import('../src/modules/quizzes-engine/quizzes-engine.routes.js');
@@ -100,9 +102,9 @@ test('quiz CRUD and existing submodule routing against PostgreSQL session-local 
     return { status: response.status, ...await response.json() };
   }
   async function scenario(name, run) {
-    await t.test(name, async () => { await client.query('TRUNCATE pg_temp.quiz_sources, pg_temp.quizzes'); await run(); });
+    await t.test(name, async () => { await client.query('TRUNCATE pg_temp.quiz_sources, pg_temp.quiz_questions, pg_temp.quizzes'); await run(); });
   }
-  const minimal = { title: 'Quiz', question_count: 10 };
+  const minimal = { title: 'Quiz' };
 
   await scenario('all five quiz endpoints require access tokens and reject temporary tokens', async () => {
     const temporary = jwt.sign({ sub: userId, purpose: 'two_factor' }, process.env.JWT_SECRET);
@@ -116,7 +118,7 @@ test('quiz CRUD and existing submodule routing against PostgreSQL session-local 
     const created = await request('POST', '', { ...minimal, title: ' Quiz ' });
     assert.equal(created.status, 201); assert.equal(created.success, true);
     const quiz = created.quiz;
-    assert.deepEqual(quiz, { id: quiz.id, user_id: userId, ...minimal, description: null, status: 'draft',
+    assert.deepEqual(quiz, { id: quiz.id, user_id: userId, ...minimal, question_count: 0, description: null, status: 'draft',
       time_limit_seconds: null, max_attempts: null, passing_score_percentage: 50, shuffle_questions: true,
       shuffle_options: true, has_certificate: false,
       min_answered_percentage: 0, min_correct_percentage: 0,
@@ -127,7 +129,7 @@ test('quiz CRUD and existing submodule routing against PostgreSQL session-local 
     assert.equal(quiz.created_at, quiz.updated_at); assert.ok(Number.isFinite(Date.parse(quiz.created_at)));
     assert.deepEqual((await request('GET', `/${quiz.id}`)).quiz, quiz);
     assert.equal((await request('POST', '', minimal)).status, 201);
-    const configured = { title: 'Configured', description: ' Details ', status: 'published', question_count: 5,
+    const configured = { title: 'Configured', description: ' Details ', status: 'published',
       time_limit_seconds: 600, max_attempts: 3, passing_score_percentage: 75.25,
       shuffle_questions: false, shuffle_options: false, has_certificate: true };
     const saved = await request('POST', '', configured);
@@ -249,7 +251,12 @@ test('quiz CRUD and existing submodule routing against PostgreSQL session-local 
       { title: 'Zulu', status: 'draft', question_count: 3, passing_score_percentage: 10.25 },
       { title: 'Alpha', status: 'published', question_count: 1, passing_score_percentage: 50 },
       { title: 'Beta', status: 'archived', question_count: 2, passing_score_percentage: 99.99 },
-    ]) quizzes.push((await request('POST', '', entry)).quiz);
+     ]) {
+      const { question_count, ...body } = entry;
+      const created = (await request('POST', '', body)).quiz;
+      await client.query('INSERT INTO pg_temp.quiz_sources(quiz_id,category_id,question_count) VALUES($1,NULL,$2)',[created.id,question_count]);
+      quizzes.push((await request('GET',`/${created.id}`)).quiz);
+    }
     for (let index = 0; index < quizzes.length; index++) {
       await client.query('UPDATE pg_temp.quizzes SET created_at=$2,updated_at=$3 WHERE id=$1',
         [quizzes[index].id, `2026-01-0${index + 1}T00:00:00Z`, `2026-02-0${3 - index}T00:00:00Z`]);

@@ -1,3 +1,4 @@
+import { shiftQuizLayout } from '../../helpers/quizLayout.js';
 const COLUMNS = `qq.quiz_id, qq.question_id, qq.position,
   qq.max_points::double precision AS max_points,
   jsonb_build_object('id', q.id, 'type', q.type, 'content', q.content, 'explanation', q.explanation) AS question`;
@@ -61,6 +62,11 @@ export async function createQuizQuestion(database, quizId, userId, input) {
 }
 
 export async function updateQuizQuestion(database, quizId, questionId, userId, updates) {
+  if (updates.position !== undefined) {
+    const existing = await getQuizQuestion(database, quizId, questionId, userId);
+    if (!existing) return null;
+    await shiftQuizLayout(database, quizId, 'fixed', questionId, existing.position, updates.position, { sourcesOnly: true });
+  }
   // The transaction holds the quiz lock before reading the old position, so
   // concurrent moves cannot calculate shifts from the same stale ordering.
   const { rowCount } = await database.query(`

@@ -1,5 +1,6 @@
+import { shiftQuizLayout } from '../../helpers/quizLayout.js';
 const COLUMNS = `s.id, s.quiz_id, s.category_id, s.position,
-  s.question_percentage::double precision AS question_percentage, s.question_count,
+  s.max_points::double precision AS max_points, s.question_count,
   CASE WHEN g.id IS NULL THEN NULL ELSE jsonb_build_object('id', g.id, 'name', g.name, 'description', g.description) END AS category`;
 
 export async function getOwnedQuiz(database, quizId, userId, lock = false) {
@@ -26,7 +27,7 @@ export async function getQuizSource(database, quizId, sourceId, userId) {
 }
 
 export async function listQuizSources(database, quizId, userId, { limit, offset, sortBy, sortOrder }) {
-  const fields = { id: 'id', position: 'position', category_id: 'category_id', question_percentage: 'question_percentage', question_count: 'question_count' };
+  const fields = { id: 'id', position: 'position', category_id: 'category_id', max_points: 'max_points', question_count: 'question_count' };
   const direction = sortOrder === 'desc' ? 'DESC' : 'ASC';
   const ordering = `${fields[sortBy]} ${direction} NULLS LAST, id ASC`;
   const { rows } = await database.query(`
@@ -44,14 +45,16 @@ export async function listQuizSources(database, quizId, userId, { limit, offset,
 }
 
 export async function createQuizSource(database, quizId, userId, source) {
-  const { rows } = await database.query(`INSERT INTO public.quiz_sources (quiz_id, category_id, position, question_percentage, question_count)
-    VALUES ($1,$2,$3,$4,$5) RETURNING id`, [quizId, source.category_id, source.position, source.question_percentage, source.question_count]);
+  const { rows } = await database.query(`INSERT INTO public.quiz_sources (quiz_id, category_id, position, max_points, question_count)
+    VALUES ($1,$2,$3,$4,$5) RETURNING id`, [quizId, source.category_id, source.position, source.max_points, source.question_count]);
   return getQuizSource(database, quizId, rows[0].id, userId);
 }
 
 export async function updateQuizSource(database, quizId, sourceId, userId, source) {
-  await database.query(`UPDATE public.quiz_sources SET position=$3, question_percentage=$4, question_count=$5
-    WHERE quiz_id=$1 AND id=$2`, [quizId, sourceId, source.position, source.question_percentage, source.question_count]);
+  const existing = await getQuizSource(database, quizId, sourceId, userId);
+  await shiftQuizLayout(database, quizId, 'source', sourceId, existing.position, source.position);
+  await database.query(`UPDATE public.quiz_sources SET position=$3, max_points=$4, question_count=$5
+    WHERE quiz_id=$1 AND id=$2`, [quizId, sourceId, source.position, source.max_points, source.question_count]);
   return getQuizSource(database, quizId, sourceId, userId);
 }
 
@@ -64,9 +67,9 @@ export async function replaceQuizSources(database, quizId, userId, sources) {
   await database.query('DELETE FROM public.quiz_sources WHERE quiz_id=$1', [quizId]);
   if (sources.length) {
     await database.query(`
-      INSERT INTO public.quiz_sources (quiz_id, category_id, position, question_percentage, question_count)
-      SELECT $1, category_id, position, question_percentage, question_count
-      FROM jsonb_to_recordset($2::jsonb) AS input(category_id uuid, position integer, question_percentage numeric, question_count integer)
+      INSERT INTO public.quiz_sources (quiz_id, category_id, position, max_points, question_count)
+      SELECT $1, category_id, position, max_points, question_count
+      FROM jsonb_to_recordset($2::jsonb) AS input(category_id uuid, position integer, max_points numeric, question_count integer)
       ORDER BY category_id
     `, [quizId, JSON.stringify(sources)]);
   }
