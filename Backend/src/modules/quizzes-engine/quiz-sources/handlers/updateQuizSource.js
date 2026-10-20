@@ -6,16 +6,16 @@ import { getQuizSource, updateQuizSource } from '../repository/quiz-sources.repo
 
 export async function updateQuizSourceInternal(params, body, userId) {
   requireQuizSourceUser(userId);
-  const { quizId, groupId } = validateOrThrow(quizSourceParamsSchema.safeParse(params));
+  const { quizId, sourceId } = validateOrThrow(quizSourceParamsSchema.safeParse(params));
   const updates = validateOrThrow(updateQuizSourceSchema.safeParse(body));
-  return withQuizSourceTransaction(quizId, [groupId], userId, async client => {
-    const existing = await getQuizSource(client, quizId, groupId, userId);
+  return withQuizSourceTransaction(quizId, [], userId, async client => {
+    const existing = await getQuizSource(client, quizId, sourceId, userId);
     if (!existing) throw new HttpError(404, { message: 'Quiz source not found' });
     const source = validateOrThrow(quizSourceFieldsSchema.safeParse({
       position: existing.position, question_percentage: existing.question_percentage,
       question_count: existing.question_count,
       ...Object.fromEntries(Object.entries(updates).filter(([, value]) => value !== undefined)),
     }));
-    return updateQuizSource(client, quizId, groupId, userId, source);
+    return updateQuizSource(client, quizId, sourceId, userId, source);
   });
 }

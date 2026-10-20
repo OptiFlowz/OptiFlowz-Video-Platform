@@ -1,3 +1,4 @@
+import { upgradeQuestionCategories } from './helpers/question-categories-schema.js';
 import { installQuizPermissions } from './helpers/quiz-permissions-schema.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
@@ -74,6 +75,7 @@ test('quiz CRUD and existing submodule routing against PostgreSQL session-local 
   const userId = randomUUID(), otherUserId = randomUUID();
   await client.query('INSERT INTO pg_temp.users(id) VALUES ($1),($2)', [userId, otherUserId]);
   await installQuizPermissions(client);
+  await upgradeQuestionCategories(client);
   const query = (sql, params) => client.query(sql.replaceAll('public.', 'pg_temp.'), params);
   mock.module(new URL('../src/database/index.js', import.meta.url).href, { namedExports: { writePool: { query } } });
   const { default: router } = await import('../src/modules/quizzes-engine/quizzes-engine.routes.js');
@@ -98,7 +100,7 @@ test('quiz CRUD and existing submodule routing against PostgreSQL session-local 
     return { status: response.status, ...await response.json() };
   }
   async function scenario(name, run) {
-    await t.test(name, async () => { await client.query('TRUNCATE pg_temp.quizzes'); await run(); });
+    await t.test(name, async () => { await client.query('TRUNCATE pg_temp.quiz_sources, pg_temp.quizzes'); await run(); });
   }
   const minimal = { title: 'Quiz', question_count: 10 };
 
@@ -278,7 +280,7 @@ test('quiz CRUD and existing submodule routing against PostgreSQL session-local 
     for (const [method, path, payload] of [
       ['POST', '', {}], ['POST', '', { ...minimal, question_count: 0 }], ['POST', '', { ...minimal, max_attempts: 0 }],
       ['POST', '', { ...minimal, passing_score_percentage: 100.01 }], ['POST', '', { ...minimal, passing_score_percentage: 50.555 }],
-      ['POST', '', { ...minimal, user_id: otherUserId }], ['POST', '', { ...minimal, group_ids: [] }],
+      ['POST', '', { ...minimal, user_id: otherUserId }], ['POST', '', { ...minimal, category_ids: [] }],
       ['PATCH', `/${existing.id}`, {}], ['PATCH', `/${existing.id}`, { updated_at: '2026-01-01' }],
       ['PATCH', `/${existing.id}`, { time_limit_seconds: -1 }], ['GET', '/invalid'], ['DELETE', '/invalid'],
       ['GET', '?page=0'], ['GET', '?limit=101'], ['GET', '?status=invalid'],
@@ -287,15 +289,15 @@ test('quiz CRUD and existing submodule routing against PostgreSQL session-local 
     assert.equal((await client.query('SELECT count(*)::int AS n FROM pg_temp.quizzes')).rows[0].n, 1);
   });
 
-  await scenario('quiz deletion is owner scoped and preserves questions/groups submodule routes', async () => {
+  await scenario('quiz deletion is owner scoped and preserves questions/categories submodule routes', async () => {
     const { quiz } = await request('POST', '', minimal);
     assert.deepEqual(await request('DELETE', `/${quiz.id}`), { status: 200, success: true, deleted: true });
     assert.equal((await request('GET', `/${quiz.id}`)).status, 404);
     assert.equal((await request('DELETE', `/${quiz.id}`)).status, 404);
     const questions = await request('GET', '/questions');
-    const groups = await request('GET', '/question-groups');
+    const categories = await request('GET', '/question-categories');
     assert.equal(questions.status, 200); assert.deepEqual(questions.questions, []);
-    assert.equal(groups.status, 200); assert.deepEqual(groups.groups, []);
+    assert.equal(categories.status, 200); assert.deepEqual(categories.categories, []);
     assert.equal((await client.query('SELECT count(*)::int AS n FROM pg_temp.quizzes')).rows[0].n, 0);
   });
 });

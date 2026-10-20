@@ -1,11 +1,11 @@
 import { HttpError } from '../../../../common/httpError.js';
 
 export function mapQuizSourceError(error) {
-  if (error.code === '23505' && error.constraint === 'quiz_sources_pkey') {
-    return new HttpError(409, { message: 'This group is already a source for the quiz' });
+  if (error.code === '23505' && ['quiz_sources_quiz_category_unique', 'quiz_sources_quiz_uncategorized_unique'].includes(error.constraint)) {
+    return new HttpError(409, { message: 'This category or uncategorized source already exists for the quiz' });
   }
   const messages = {
-    quiz_sources_same_user_check: 'The quiz and source groups must belong to the same user',
+    quiz_sources_same_user_check: 'The quiz and source categories must belong to the same user',
     quiz_sources_one_mode_check: 'Exactly one of question_percentage and question_count must be set',
     quiz_sources_allocation_mode_check: 'All quiz sources must use the same allocation mode',
     quiz_sources_percentage_total_check: 'Source percentages must sum to 100; replace the complete allocation using PUT',

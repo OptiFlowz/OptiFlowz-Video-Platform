@@ -1,3 +1,4 @@
+import { upgradeQuestionCategories } from './helpers/question-categories-schema.js';
 import { installQuizPermissions } from './helpers/quiz-permissions-schema.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
@@ -70,6 +71,7 @@ test('quiz candidate migration and CRUD against session-local PostgreSQL tables'
   const owner = randomUUID(), other = randomUUID();
   await client.query('INSERT INTO users(id) VALUES ($1),($2)', [owner, other]);
   await installQuizPermissions(client);
+  await upgradeQuestionCategories(client);
   let failAfterInsert = false, failAfterMove = false, releases = 0;
   const query = async (sql, params) => {
     const result = await client.query(sql.replaceAll('public.', 'pg_temp.'), params);
@@ -180,19 +182,19 @@ test('quiz candidate migration and CRUD against session-local PostgreSQL tables'
       assert.equal((await request('POST', id, '', { question_id: qid, position: index === 2 ? 1 : 0, max_points: index + 1 })).status, 201);
     }
     const expected = [...ids.slice(0, 2)].sort().concat(ids[2]);
-    const groups = [{ id: randomUUID(), name: 'Group A' }, { id: randomUUID(), name: 'Group B' }].sort((a, b) => a.id.localeCompare(b.id));
-    for (const group of groups) {
-      await client.query('INSERT INTO pg_temp.question_groups(id,user_id,name) VALUES($1,$2,$3)', [group.id, owner, group.name]);
-      await client.query('INSERT INTO pg_temp.question_group_items(group_id,question_id) VALUES($1,$2)', [group.id, expected[1]]);
+    const categories = [{ id: randomUUID(), name: 'Group A' }, { id: randomUUID(), name: 'Group B' }].sort((a, b) => a.id.localeCompare(b.id));
+    for (const category of categories) {
+      await client.query('INSERT INTO pg_temp.question_categories(id,user_id,name) VALUES($1,$2,$3)', [category.id, owner, category.name]);
+      await client.query('UPDATE pg_temp.questions SET category_id=$1 WHERE id=$2', [category.id, expected[1]]);
     }
     const listing = await request('GET', id);
     assert.equal(listing.questions.length, 3);
     assert.deepEqual(listing.questions.map(row => row.question_id), expected);
-    assert.deepEqual(listing.questions.map(row => row.question.groups), [[], groups, []]);
+    assert.deepEqual(listing.questions.map(row => row.question.category), [null, categories[1], null]);
     assert.deepEqual(listing.sorting, { sortBy: 'position', sortOrder: 'asc' });
     const page = await request('GET', id, '?page=2&limit=1');
     assert.equal(page.questions[0].question_id, expected[1]);
-    assert.deepEqual(page.questions[0].question.groups, groups);
+    assert.deepEqual(page.questions[0].question.category, categories[1]);
     assert.deepEqual(page.pagination, { page: 2, limit: 1, total: 3, totalPages: 3, hasNextPage: true, hasPreviousPage: true });
     for (const sortBy of ['position', 'max_points', 'question_id']) {
       for (const sortOrder of ['asc', 'desc']) {
@@ -299,7 +301,7 @@ test('quiz candidate migration and CRUD against session-local PostgreSQL tables'
     await assert.rejects(client.query('UPDATE pg_temp.quizzes SET user_id=$1 WHERE id=$2', [other, id]), { code: '23514' });
     await assert.rejects(client.query('UPDATE pg_temp.questions SET user_id=$1 WHERE id=$2', [other, qid]), { code: '23514' });
     await client.query('UPDATE pg_temp.questions SET user_id=user_id WHERE id=$1', [qid]);
-    const index = await client.query("SELECT indexdef FROM pg_indexes WHERE schemaname LIKE 'pg_temp_%' AND indexname='quiz_questions_question_id_idx'");
+    const index = await client.query("SELECT indexdef FROM pg_indexes WHERE schemaname = (SELECT nspname FROM pg_namespace WHERE oid = pg_my_temp_schema()) AND indexname='quiz_questions_question_id_idx'");
     assert.match(index.rows[0].indexdef, /\(question_id\)/);
   });
 

@@ -6,8 +6,7 @@ const identifier = z.number().int().min(1).max(32767);
 const position = z.number().int().min(1).max(2147483647);
 const content = z.string().trim();
 const questionType = z.enum(['single_choice', 'multiple_choice', 'matching']);
-const groupIds = z.array(z.string().uuid('Invalid question group ID').transform(id => id.toLowerCase()))
-  .transform(ids => [...new Set(ids)]);
+const categoryId = z.string().uuid('Invalid question category ID').transform(id => id.toLowerCase()).nullable();
 
 function distinctIdentifiers(schema, field) {
   return z.array(schema).superRefine((items, context) => {
@@ -48,7 +47,7 @@ const questionFields = {
   options: choiceOptions,
   matching_options: matchingOptions,
   matching_items: matchingItems,
-  group_ids: groupIds.optional(),
+  category_id: categoryId.optional(),
 };
 
 export const questionIdSchema = z.object({ questionId: z.string().uuid('Invalid question ID') });
@@ -81,7 +80,7 @@ export const updateQuestionSchema = z.object(questionFields).partial().strict().
 
 export const listQuestionsSchema = z.object({
   type: questionType.optional(),
-  group_id: z.string().uuid('Invalid question group ID').transform(id => id.toLowerCase()).optional(),
+  category_id: z.string().uuid('Invalid question category ID').transform(id => id.toLowerCase()).optional(),
   sortBy: z.enum(['created_at', 'updated_at', 'content', 'type']).optional().default('created_at'),
   sortOrder: z.enum(['asc', 'desc']).optional().default('asc'),
   page: z.coerce.number().int().min(1).optional().default(1),
@@ -104,7 +103,7 @@ export function mergeQuestionUpdates(question, updates) {
     options: updates.options ?? (changesType ? [] : question.options),
     matching_options: updates.matching_options ?? (changesType ? [] : question.matching_options),
     matching_items: updates.matching_items ?? (changesType ? [] : question.matching_items),
-    ...(updates.group_ids === undefined ? {} : { group_ids: updates.group_ids }),
+    ...(updates.category_id === undefined ? {} : { category_id: updates.category_id }),
   }));
 }
 

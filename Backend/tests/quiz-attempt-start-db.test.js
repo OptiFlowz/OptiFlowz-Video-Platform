@@ -1,3 +1,4 @@
+import { upgradeQuestionCategories } from './helpers/question-categories-schema.js';
 import { installQuizPermissions } from './helpers/quiz-permissions-schema.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
@@ -33,6 +34,7 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
   const owner = randomUUID(), participant = randomUUID(), other = randomUUID();
   await admin.query('INSERT INTO users(id) VALUES ($1),($2),($3)', [owner, participant, other]);
   await installQuizPermissions(admin, { schema });
+  await upgradeQuestionCategories(admin, { schema });
   let failQuestions = false, released = 0;
   const queryOn = database => async (sql, params) => {
     const result = await database.query(sql.replaceAll('public.', `${schema}.`), params);
@@ -89,16 +91,16 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
     if (linked) await admin.query('INSERT INTO quiz_questions(quiz_id,question_id,position,max_points) VALUES ($1,$2,$3,$4)', [id, qid, position, points]);
     return qid;
   }
-  async function group(questionIds) {
+  async function category(questionIds) {
     const gid = randomUUID();
-    await admin.query('INSERT INTO question_groups(id,user_id,name) VALUES ($1,$2,$3)', [gid, owner, gid]);
-    for (const qid of questionIds) await admin.query('INSERT INTO question_group_items VALUES ($1,$2)', [gid, qid]);
+    await admin.query('INSERT INTO question_categories(id,user_id,name) VALUES ($1,$2,$3)', [gid, owner, gid]);
+    for (const qid of questionIds) await admin.query('UPDATE questions SET category_id=$1 WHERE id=$2', [gid, qid]);
     return gid;
   }
   async function sources(id, entries) {
-    await admin.query(`INSERT INTO quiz_sources(quiz_id,group_id,position,question_percentage,question_count)
-      SELECT $1, group_id, position, question_percentage, question_count FROM jsonb_to_recordset($2::jsonb)
-        AS x(group_id uuid,position integer,question_percentage numeric,question_count integer)`, [id, JSON.stringify(entries)]);
+    await admin.query(`INSERT INTO quiz_sources(quiz_id,category_id,position,question_percentage,question_count)
+      SELECT $1, category_id, position, question_percentage, question_count FROM jsonb_to_recordset($2::jsonb)
+        AS x(category_id uuid,position integer,question_percentage numeric,question_count integer)`, [id, JSON.stringify(entries)]);
   }
   const totalAttempts = async id => Number((await admin.query('SELECT count(*) FROM quiz_attempts WHERE quiz_id=$1', [id])).rows[0].count);
   const savedQuestions = async id => (await admin.query('SELECT * FROM quiz_attempt_questions WHERE attempt_id=$1 ORDER BY question_no', [id])).rows;
@@ -134,7 +136,7 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
     assert.equal(Object.hasOwn(response.body, 'questions'), false);
     assert.equal(new Date(response.body.expires_at) - new Date(response.body.started_at), 120000);
     assert.equal(response.body.settings.scoring_mode, 'exact_match');
-    assert.doesNotMatch(JSON.stringify(response.body), /is_correct|correct_option_no|SECRET|source_group_id|question_snapshot/);
+    assert.doesNotMatch(JSON.stringify(response.body), /is_correct|correct_option_no|SECRET|source_category_id|question_snapshot/);
     const attempt = (await admin.query('SELECT * FROM quiz_attempts WHERE id=$1', [response.body.id])).rows[0];
     assert.equal(attempt.user_id, participant);
     assert.equal(attempt.max_points, '5.75');
@@ -217,7 +219,7 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
     assert.equal((await admin.query('SELECT status FROM quiz_attempts WHERE id=$1', [created.body.id])).rows[0].status, 'in_progress');
   });
 
-  await t.test('insufficient candidates, invalid drafts and impossible overlapping quotas return 422 without writes', async () => {
+  await t.test('insufficient candidates, invalid drafts and insufficient category quotas return 422 without writes', async () => {
     const empty = await quiz();
     assert.equal((await request(empty)).status, 422);
     const incomplete = await quiz({ count: 1 });
@@ -227,40 +229,40 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
     const shared = await question(overlap);
     await question(overlap); // In the pool but in neither source.
     const notCandidate = await question(overlap, { linked: false });
-    const g1 = await group([shared, notCandidate]), g2 = await group([shared]);
-    await sources(overlap, [{ group_id: g1, position: 0, question_count: 1 }, { group_id: g2, position: 1, question_count: 1 }]);
+    const g1 = await category([shared, notCandidate]), g2 = await category([shared]);
+    await sources(overlap, [{ category_id: g1, position: 0, question_count: 1 }, { category_id: g2, position: 1, question_count: 1 }]);
     const response = await request(overlap);
     assert.equal(response.status, 422);
     assert.equal(response.body.code, 'INSUFFICIENT_QUESTIONS');
     for (const id of [empty, incomplete, overlap]) assert.equal(await totalAttempts(id), 0);
   });
 
-  await t.test('exact source quotas assign shared questions once and exclude questions outside quiz_questions', async () => {
+  await t.test('category and uncategorized quotas use only quiz candidates and snapshots preserve their assignment', async () => {
     const id = await quiz({ count: 3 });
-    const shared = await question(id), wideOnly = await question(id), third = await question(id);
+    const first = await question(id), second = await question(id), unassigned = await question(id);
     const outside = await question(id, { linked: false });
-    const wide = await group([shared, wideOnly, outside]), narrow = await group([shared]), last = await group([third]);
-    await sources(id, [{ group_id: wide, position: 0, question_count: 1 }, { group_id: narrow, position: 1, question_count: 1 }, { group_id: last, position: 2, question_count: 1 }]);
+    const a = await category([first, outside]), b = await category([second]);
+    await sources(id, [{ category_id: a, position: 0, question_count: 1 }, { category_id: b, position: 1, question_count: 1 }, { category_id: null, position: 2, question_count: 1 }]);
     const response = await request(id);
     assert.equal(response.status, 201);
     const rows = await savedQuestions(response.body.id);
     assert.equal(new Set(rows.map(q => q.question_id)).size, 3);
-    assert.equal(rows.find(q => q.question_id === shared).question_snapshot.source_group_id, narrow);
-    assert.equal(rows.find(q => q.question_id === wideOnly).question_snapshot.source_group_id, wide);
+    assert.equal(rows.find(q => q.question_id === first).question_snapshot.source_category_id, a);
+    assert.equal(rows.find(q => q.question_id === unassigned).question_snapshot.source_category_id, null);
     assert.ok(!rows.some(q => q.question_id === outside));
   });
 
   await t.test('percentage sources allocate exactly question_count and preserve shuffled presentation on resume', async () => {
     const id = await quiz({ count: 3 });
-    const left = await group([await question(id), await question(id)]);
-    const right = await group([await question(id), await question(id)]);
-    await sources(id, [{ group_id: left, position: 0, question_percentage: 50 }, { group_id: right, position: 1, question_percentage: 50 }]);
+    const left = await category([await question(id), await question(id)]);
+    const right = await category([await question(id), await question(id)]);
+    await sources(id, [{ category_id: left, position: 0, question_percentage: 50 }, { category_id: right, position: 1, question_percentage: 50 }]);
     await admin.query('UPDATE quizzes SET shuffle_questions=true,shuffle_options=true WHERE id=$1', [id]);
     const initial = await request(id);
     assert.equal(initial.status, 201);
     const rows = await savedQuestions(initial.body.id);
-    assert.equal(rows.filter(q => q.question_snapshot.source_group_id === left).length, 2);
-    assert.equal(rows.filter(q => q.question_snapshot.source_group_id === right).length, 1);
+    assert.equal(rows.filter(q => q.question_snapshot.source_category_id === left).length, 2);
+    assert.equal(rows.filter(q => q.question_snapshot.source_category_id === right).length, 1);
     assert.deepEqual((await request(id)).body, initial.body);
     assert.deepEqual(await savedQuestions(initial.body.id), rows);
   });

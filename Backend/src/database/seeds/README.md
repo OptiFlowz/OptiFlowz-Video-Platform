@@ -18,7 +18,7 @@ Seed u jednoj transakciji pravi:
   prolaz 70%, obavezno odgovoriti na sva pitanja, partial-credit bodovanje.
 - 20 pitanja sa odgovorima i objašnjenjima (8 single choice, 6 multiple choice,
   6 matching). Pitanja prethodnog seeda istog vlasnika prepoznaje po tipu i sadržaju.
-- Tri grupe i članstva svih 20 pitanja.
+- Tri kategorije i dodelu kategorije za svih 20 pitanja.
 - Svih 20 veza u `quiz_questions`, sa pozicijama i 1/2/3 poena prema tipu.
 - Tri izvora sa raspodelom 40/30/30%: po pokušaju 4/3/3 različita pitanja.
 - Dva video requirementa: 50% prvog videa i 30 sekundi drugog
@@ -38,10 +38,10 @@ zapise, ne upisuje `watch_progress` i ne pravi niti menja attemptove. Korisnik
 mora stvarno da ispuni video uslove pre pokretanja kviza.
 
 Ponovno pokretanje prepoznaje kviz po stabilnom ID-ju vezanom za vlasnika i dopunjava
-nedostajuća pitanja, grupe, članstva, kandidate, izvore i video requiremente.
+nedostajuća pitanja, kategorije, dodele kategorija, kandidate, izvore i video requiremente.
 Postojeće redove i podešavanja čuva, bez dupliranja ili prepisivanja ručnih izmena.
 Na kraju proverava konfiguraciju i ispisuje ID-jeve. Postojeći video requirementi imaju
 prednost; opcija `--video-id` bira videe samo za nedostajuće requiremente.
 Ako je postojeći kviz ručno izmenjen u neispravnu konfiguraciju, validacija prijavljuje
-grešku; seed ga ne resetuje. Ispis sadrži quiz ID, source/group ID-jeve i video ID-jeve
+grešku; seed ga ne resetuje. Ispis sadrži quiz ID, source/category ID-jeve i video ID-jeve
 za ručno korišćenje u Postmanu. Provera izbora pitanja radi samo u memoriji.

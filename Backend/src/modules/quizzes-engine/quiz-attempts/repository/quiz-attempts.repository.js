@@ -149,8 +149,7 @@ export async function getAttemptHistory(database, quizId, userId) {
 export async function getAttemptQuestionPool(database, quizId) {
   const { rows } = await database.query(`
     SELECT q.id, q.user_id, qq.position, qq.max_points,
-      COALESCE((SELECT jsonb_agg(gi.group_id ORDER BY gi.group_id)
-        FROM public.question_group_items gi WHERE gi.question_id=q.id), '[]'::jsonb) AS group_ids,
+      q.category_id,
       jsonb_build_object('type', q.type, 'content', q.content, 'explanation', q.explanation,
         'options', COALESCE((SELECT jsonb_agg(to_jsonb(o) - 'question_id' ORDER BY o.position, o.option_no)
           FROM public.question_options o WHERE o.question_id=q.id), '[]'::jsonb),
@@ -166,8 +165,8 @@ export async function getAttemptQuestionPool(database, quizId) {
 }
 
 export async function getAttemptSources(database, quizId) {
-  const { rows } = await database.query(`SELECT s.*, g.user_id FROM public.quiz_sources s
-    JOIN public.question_groups g ON g.id=s.group_id WHERE s.quiz_id=$1 ORDER BY s.position, s.group_id`, [quizId]);
+  const { rows } = await database.query(`SELECT s.*, CASE WHEN s.category_id IS NULL THEN q.user_id ELSE c.user_id END AS user_id FROM public.quiz_sources s
+    JOIN public.quizzes q ON q.id=s.quiz_id LEFT JOIN public.question_categories c ON c.id=s.category_id WHERE s.quiz_id=$1 ORDER BY s.position, s.category_id NULLS LAST, s.id`, [quizId]);
   return rows;
 }
 

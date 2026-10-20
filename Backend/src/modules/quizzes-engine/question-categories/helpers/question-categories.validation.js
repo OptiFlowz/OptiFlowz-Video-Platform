@@ -1,28 +1,28 @@
 import { z } from 'zod';
 import { HttpError } from '../../../../common/httpError.js';
 
-const groupFields = {
+const categoryFields = {
   name: z.string().trim().min(1).max(255),
   description: z.string().trim().nullable(),
 };
 
-export const groupIdSchema = z.object({ groupId: z.string().uuid('Invalid question group ID') });
-export const createQuestionGroupSchema = z.object({
-  ...groupFields,
-  description: groupFields.description.optional().default(null),
+export const categoryIdSchema = z.object({ categoryId: z.string().uuid('Invalid question category ID') });
+export const createQuestionCategorySchema = z.object({
+  ...categoryFields,
+  description: categoryFields.description.optional().default(null),
 }).strict();
 
-export const updateQuestionGroupSchema = z.object(groupFields).partial().strict().refine(
+export const updateQuestionCategorySchema = z.object(categoryFields).partial().strict().refine(
   updates => Object.values(updates).some(value => value !== undefined),
-  { message: 'Provide at least one question group field to update' },
+  { message: 'Provide at least one question category field to update' },
 );
 
-export const syncQuestionGroupQuestionsSchema = z.object({
+export const syncQuestionCategoryQuestionsSchema = z.object({
   question_ids: z.array(z.string().uuid('Invalid question ID').transform(id => id.toLowerCase()))
     .transform(ids => [...new Set(ids)]),
 }).strict();
 
-export const listQuestionGroupsSchema = z.object({
+export const listQuestionCategoriesSchema = z.object({
   name: z.string().trim().max(255).optional(),
   sortBy: z.enum(['name', 'id']).optional().default('name'),
   sortOrder: z.enum(['asc', 'desc']).optional().default('asc'),
@@ -32,13 +32,13 @@ export const listQuestionGroupsSchema = z.object({
   message: 'Pagination offset exceeds the supported range', path: ['page'],
 });
 
-export function requireQuestionGroupUser(userId) {
+export function requireQuestionCategoryUser(userId) {
   if (!userId) throw new HttpError(401, { message: 'Unauthorized' });
 }
 
-export function mapQuestionGroupWriteError(error) {
-  if (error.code === '23505' && error.constraint === 'question_groups_user_name_key') {
-    return new HttpError(409, { message: 'A question group with this name already exists' });
+export function mapQuestionCategoryWriteError(error) {
+  if (error.code === '23505' && error.constraint === 'question_categories_user_name_key') {
+    return new HttpError(409, { message: 'A question category with this name already exists' });
   }
   return error;
 }

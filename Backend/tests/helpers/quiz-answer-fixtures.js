@@ -8,7 +8,7 @@ export const answerSettings = {
 
 export function answerSnapshot(type = 'single_choice') {
   return {
-    type, content: 'Snapshot question', explanation: 'SECRET explanation', source_group_id: null,
+    type, content: 'Snapshot question', explanation: 'SECRET explanation', source_category_id: null,
     options: type === 'matching' ? [] : [1, 2, 3, 4].map(option_no => ({
       option_no, content: `Option ${option_no}`, position: 5 - option_no,
       is_correct: option_no === 1 || (type === 'multiple_choice' && option_no === 2),

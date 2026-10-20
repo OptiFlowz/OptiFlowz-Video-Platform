@@ -38,9 +38,9 @@ export function snapshotQuizSettings(quiz) {
 
 export function sourceQuotas(sources, questionCount) {
   if (!Number.isInteger(questionCount) || questionCount < 1) throw invalid('question_count must be positive');
-  const ordered = [...sources].sort((a, b) => a.position - b.position || a.group_id.localeCompare(b.group_id));
+  const ordered = [...sources].sort((a, b) => a.position - b.position || (a.category_id ?? '~').localeCompare(b.category_id ?? '~'));
   if (!ordered.length) return [];
-  if (new Set(ordered.map(source => source.group_id)).size !== ordered.length) throw invalid('Source groups must be unique');
+  if (new Set(ordered.map(source => source.category_id)).size !== ordered.length) throw invalid('Source categories must be unique');
   const percentages = ordered[0].question_percentage !== null;
   for (const source of ordered) {
     if (!Number.isInteger(source.position) || source.position < 0
@@ -63,13 +63,12 @@ export function sourceQuotas(sources, questionCount) {
     return { ...source, quota: Math.floor(product / 10000), remainder: product % 10000 };
   });
   const remaining = questionCount - quotas.reduce((sum, source) => sum + source.quota, 0);
-  const priority = [...quotas].sort((a, b) => b.remainder - a.remainder || a.position - b.position || a.group_id.localeCompare(b.group_id));
+  const priority = [...quotas].sort((a, b) => b.remainder - a.remainder || a.position - b.position || (a.category_id ?? '~').localeCompare(b.category_id ?? '~'));
   for (let i = 0; i < remaining; i++) priority[i].quota++;
   return quotas;
 }
 
-// Augmenting paths solve the quota-to-question matching, including overlapping
-// groups where a greedy choice would fail. Each question has capacity one.
+// Select disjoint category quotas from the quiz candidate pool.
 export function selectAttemptQuestions(candidates, sources, settings, random = randomInt) {
   const quotas = sourceQuotas(sources, settings.question_count);
   if (new Set(candidates.map(question => question.id)).size !== candidates.length) throw invalid('Candidate questions must be unique');
@@ -77,46 +76,18 @@ export function selectAttemptQuestions(candidates, sources, settings, random = r
   const randomized = shuffled(candidates, random);
   let selected;
   if (!quotas.length) {
-    selected = randomized.slice(0, settings.question_count).map(question => ({ ...question, source_group_id: null }));
+    selected = randomized.slice(0, settings.question_count).map(question => ({ ...question, source_category_id: null }));
   } else {
-    const slots = [];
+    // Categories are disjoint: each question belongs to at most one category.
+    // NULL selects only uncategorized candidates, never leftovers from other categories.
+    selected = [];
     for (const source of quotas) {
-      const eligible = randomized.filter(question => question.group_ids.includes(source.group_id));
+      const eligible = randomized.filter(question => question.category_id === source.category_id);
       if (eligible.length < source.quota) throw insufficient();
-      for (let i = 0; i < source.quota; i++) slots.push({ group_id: source.group_id, candidates: eligible });
+      selected.push(...eligible.slice(0, source.quota).map(question => ({ ...question, source_category_id: source.category_id })));
     }
-    const assignments = new Array(slots.length);
-    const occupied = new Map();
-    for (let start = 0; start < slots.length; start++) {
-      const parents = new Map([[start, null]]), visited = new Set(), queue = [start];
-      let found = false;
-      for (let head = 0; head < queue.length && !found; head++) {
-        const slot = queue[head];
-        for (const question of slots[slot].candidates) {
-          if (visited.has(question.id)) continue;
-          visited.add(question.id);
-          if (occupied.has(question.id)) {
-            const next = occupied.get(question.id);
-            if (!parents.has(next)) { parents.set(next, { slot, question }); queue.push(next); }
-            continue;
-          }
-          let current = slot, nextQuestion = question;
-          while (true) {
-            assignments[current] = nextQuestion;
-            occupied.set(nextQuestion.id, current);
-            const previous = parents.get(current);
-            if (!previous) break;
-            current = previous.slot;
-            nextQuestion = previous.question;
-          }
-          found = true;
-          break;
-        }
-      }
-      if (!found) throw insufficient();
-    }
-    selected = assignments.map((question, index) => ({ ...question, source_group_id: slots[index].group_id }));
   }
+
   return settings.shuffle_questions ? shuffled(selected, random)
     : selected.sort((a, b) => a.position - b.position || a.id.localeCompare(b.id));
 }
@@ -139,7 +110,7 @@ export function snapshotAttemptQuestions(selected, settings, random = randomInt)
     question_no: index + 1, question_id: candidate.id, max_points: Number(candidate.max_points),
     question_snapshot: {
       ...candidate.question_snapshot,
-      source_group_id: candidate.source_group_id,
+      source_category_id: candidate.source_category_id,
       options: order(candidate.question_snapshot.options),
       matching_options: order(candidate.question_snapshot.matching_options),
       matching_items: order(candidate.question_snapshot.matching_items),

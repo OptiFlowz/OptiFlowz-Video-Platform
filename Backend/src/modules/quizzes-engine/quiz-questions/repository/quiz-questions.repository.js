@@ -40,12 +40,11 @@ export async function listQuizQuestions(database, quizId, userId, { limit, offse
       SELECT * FROM owned_questions ORDER BY ${ordering} LIMIT $3 OFFSET $4
     ), enriched_page AS (
       SELECT page.quiz_id, page.question_id, page.position, page.max_points,
-        page.question || jsonb_build_object('groups', COALESCE((
-          SELECT jsonb_agg(jsonb_build_object('id', g.id, 'name', g.name) ORDER BY g.id)
-          FROM public.question_group_items gi
-          JOIN public.question_groups g ON g.id = gi.group_id
-          WHERE gi.question_id = page.question_id AND g.user_id = $2
-        ), '[]'::jsonb)) AS question
+        page.question || jsonb_build_object('category', (
+          SELECT jsonb_build_object('id', c.id, 'name', c.name)
+          FROM public.questions q JOIN public.question_categories c ON c.id=q.category_id
+          WHERE q.id=page.question_id AND c.user_id=$2
+        )) AS question
       FROM page
     )
     SELECT COALESCE((SELECT jsonb_agg(to_jsonb(enriched_page) ORDER BY ${ordering}) FROM enriched_page), '[]'::jsonb) AS questions,

@@ -1,4 +1,4 @@
-const QUESTION_COLUMNS = 'id, user_id, type, content, explanation, created_at, updated_at';
+const QUESTION_COLUMNS = 'id, user_id, type, content, explanation, created_at, updated_at, category_id';
 
 export async function getQuestion(database, questionId, userId) {
   // A single statement gives the parent and its children one consistent snapshot.
@@ -10,15 +10,13 @@ export async function getQuestion(database, questionId, userId) {
         FROM public.question_matching_options o WHERE o.question_id = q.id), '[]'::jsonb) AS matching_options,
       COALESCE((SELECT jsonb_agg(to_jsonb(i) - 'question_id' ORDER BY i.position, i.item_no)
         FROM public.question_matching_items i WHERE i.question_id = q.id), '[]'::jsonb) AS matching_items,
-      COALESCE((SELECT jsonb_agg(jsonb_build_object('id', g.id, 'name', g.name) ORDER BY g.id)
-        FROM public.question_group_items gi JOIN public.question_groups g ON g.id = gi.group_id
-        WHERE gi.question_id = q.id), '[]'::jsonb) AS groups
+      (SELECT jsonb_build_object('id', c.id, 'name', c.name) FROM public.question_categories c WHERE c.id=q.category_id) AS category
     FROM public.questions q WHERE q.id = $1 AND q.user_id = $2
   `, [questionId, userId]);
   return rows[0] || null;
 }
 
-export async function listQuestions(database, userId, { type, group_id, limit, offset, sortBy, sortOrder }) {
+export async function listQuestions(database, userId, { type, category_id, limit, offset, sortBy, sortOrder }) {
   const allowedSortFields = {
     created_at: 'created_at',
     updated_at: 'updated_at',
@@ -33,22 +31,17 @@ export async function listQuestions(database, userId, { type, group_id, limit, o
     WITH owned_questions AS (
       SELECT ${QUESTION_COLUMNS} FROM public.questions q
       WHERE ($1::uuid IS NULL OR user_id = $1) AND ($2::public.question_type IS NULL OR type = $2)
-        AND ($5::uuid IS NULL OR EXISTS (
-          SELECT 1 FROM public.question_group_items gi
-          WHERE gi.question_id = q.id AND gi.group_id = $5
-        ))
+        AND ($5::uuid IS NULL OR q.category_id=$5)
     ), page AS (
       SELECT * FROM owned_questions ORDER BY ${orderByField} ${orderByDirection}, id ASC LIMIT $3 OFFSET $4
     ), enriched_page AS (
-      SELECT page.*, COALESCE((
-        SELECT jsonb_agg(jsonb_build_object('id', g.id, 'name', g.name) ORDER BY g.id)
-        FROM public.question_group_items gi JOIN public.question_groups g ON g.id = gi.group_id
-        WHERE gi.question_id = page.id
-      ), '[]'::jsonb) AS groups FROM page
+      SELECT page.id, page.user_id, page.type, page.content, page.explanation, page.created_at, page.updated_at,
+        (SELECT jsonb_build_object('id', c.id, 'name', c.name) FROM public.question_categories c WHERE c.id=page.category_id) AS category
+      FROM page
     )
     SELECT COALESCE((SELECT jsonb_agg(to_jsonb(enriched_page) ORDER BY ${orderByField} ${orderByDirection}, id ASC) FROM enriched_page), '[]'::jsonb) AS questions,
       (SELECT count(*)::integer FROM owned_questions) AS total
-  `, [userId, type ?? null, limit, offset, group_id ?? null]);
+  `, [userId, type ?? null, limit, offset, category_id ?? null]);
   return rows[0];
 }
 
@@ -60,30 +53,14 @@ export async function lockQuestion(database, questionId, userId) {
   return rows.length > 0;
 }
 
-export async function lockQuestionGroups(database, userId, groupIds) {
-  const { rows } = await database.query(`
-    SELECT id FROM public.question_groups
-    WHERE user_id = $1 AND id = ANY($2::uuid[])
-    ORDER BY id FOR SHARE
-  `, [userId, groupIds]);
-  return rows.length === groupIds.length;
+export async function lockQuestionCategory(database, userId, categoryId) {
+  const { rows } = await database.query('SELECT id FROM public.question_categories WHERE user_id=$1 AND id=$2 FOR SHARE', [userId, categoryId]);
+  return rows.length === 1;
 }
 
-async function saveGroups(database, questionId, groupIds) {
-  // Omission means preserve memberships; an explicit empty array clears them.
-  if (groupIds === undefined) return;
-  if (groupIds.length) {
-    await database.query(`
-      INSERT INTO public.question_group_items (group_id, question_id)
-      SELECT group_id, $1 FROM unnest($2::uuid[]) AS requested(group_id)
-      ORDER BY group_id
-      ON CONFLICT (group_id, question_id) DO NOTHING
-    `, [questionId, groupIds]);
-  }
-  await database.query(`
-    DELETE FROM public.question_group_items
-    WHERE question_id = $1 AND NOT (group_id = ANY($2::uuid[]))
-  `, [questionId, groupIds]);
+async function saveCategory(database, questionId, categoryId) {
+  if (categoryId === undefined) return;
+  await database.query('UPDATE public.questions SET category_id=$2 WHERE id=$1', [questionId, categoryId]);
 }
 
 async function saveChildren(database, questionId, question) {
@@ -137,7 +114,7 @@ export async function createQuestion(database, userId, question) {
   `, [userId, question.type, question.content, question.explanation]);
   const questionId = rows[0].id;
   await saveChildren(database, questionId, question);
-  await saveGroups(database, questionId, question.group_ids);
+  await saveCategory(database, questionId, question.category_id);
   return getQuestion(database, questionId, userId);
 }
 
@@ -147,7 +124,7 @@ export async function updateQuestion(database, questionId, userId, question, upd
     WHERE id = $1 AND user_id = $2
   `, [questionId, userId, question.type, question.content, question.explanation]);
   if (updateChildren) await saveChildren(database, questionId, question);
-  await saveGroups(database, questionId, question.group_ids);
+  await saveCategory(database, questionId, question.category_id);
   return getQuestion(database, questionId, userId);
 }
 

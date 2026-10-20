@@ -5,7 +5,7 @@ import { validateQuestionForActivation } from '../../modules/quizzes-engine/ques
 import { createQuestion } from '../../modules/quizzes-engine/questions/repository/questions.repository.js';
 import { v5 as uuidv5 } from 'uuid';
 import { createQuizSchema } from '../../modules/quizzes-engine/quizzes/helpers/quizzes.validation.js';
-import { createQuestionGroupSchema } from '../../modules/quizzes-engine/question-groups/helpers/question-groups.validation.js';
+import { createQuestionCategorySchema } from '../../modules/quizzes-engine/question-categories/helpers/question-categories.validation.js';
 import { createQuizRequirementSchema, validateVideoDuration } from '../../modules/quizzes-engine/quiz-requirements/helpers/quiz-requirements.validation.js';
 import { createQuizRequirement, lockAccessibleVideo } from '../../modules/quizzes-engine/quiz-requirements/repository/quiz-requirements.repository.js';
 import { replaceQuizSourcesSchema } from '../../modules/quizzes-engine/quiz-sources/helpers/quiz-sources.validation.js';
@@ -14,7 +14,7 @@ import { selectAttemptQuestions, snapshotQuizSettings, validateCandidates } from
 
 function choice(type, content, explanation, answers, correct) {
   return {
-    type, content, explanation, group_ids: [], matching_options: [], matching_items: [],
+    type, content, explanation, category_id: null, matching_options: [], matching_items: [],
     options: answers.map((answer, index) => ({
       option_no: index + 1, content: answer, is_correct: correct.includes(index + 1), position: index + 1,
     })),
@@ -23,7 +23,7 @@ function choice(type, content, explanation, answers, correct) {
 
 function matching(content, explanation, options, items) {
   return {
-    type: 'matching', content, explanation, group_ids: [], options: [],
+    type: 'matching', content, explanation, category_id: null, options: [],
     matching_options: options.map((answer, index) => ({ option_no: index + 1, content: answer, position: index + 1 })),
     matching_items: items.map(([item, correct], index) => ({
       item_no: index + 1, content: item, correct_option_no: correct, position: index + 1,
@@ -120,7 +120,7 @@ async function seedCompleteQuiz(client, userId, questions, videos, existingQuiz 
   const quizId = seedQuizId(userId);
   const settings = createQuizSchema.parse({
     title: 'Demo kviz — osnove programiranja i weba',
-    description: 'Seed primer: 20 kandidata, tri grupe i dva video uslova. Izbor 10 pitanja po raspodeli 40/30/30%.',
+    description: 'Seed primer: 20 kandidata, tri kategorije i dva video uslova. Izbor 10 pitanja po raspodeli 40/30/30%.',
     status: 'published', question_count: 10, time_limit_seconds: 900, max_attempts: 3,
     passing_score_percentage: 70, shuffle_questions: true, shuffle_options: true,
     min_answered_percentage: 100, min_correct_percentage: 0,
@@ -140,42 +140,41 @@ async function seedCompleteQuiz(client, userId, questions, videos, existingQuiz 
     quiz = rows[0];
   }
 
-  const groupDefinitions = [
+  const categoryDefinitions = [
     { type: 'single_choice', label: 'Jedan tačan odgovor', percentage: 40, points: 1 },
     { type: 'multiple_choice', label: 'Više tačnih odgovora', percentage: 30, points: 2 },
     { type: 'matching', label: 'Povezivanje pojmova', percentage: 30, points: 3 },
   ];
   const sources = [];
-  for (const [position, definition] of groupDefinitions.entries()) {
-    const groupId = uuidv5(`group:${definition.type}`, quizId);
-    const group = createQuestionGroupSchema.parse({
+  for (const [position, definition] of categoryDefinitions.entries()) {
+    const categoryId = uuidv5(`group:${definition.type}`, quizId);
+    const category = createQuestionCategorySchema.parse({
       name: `Demo kviz — ${definition.label}`,
-      description: `Grupa za kompletan seed kviz (${definition.type}).`,
+      description: `Kategorija za kompletan seed kviz (${definition.type}).`,
     });
-    await client.query(`INSERT INTO public.question_groups (id, user_id, name, description)
-      VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING`, [groupId, userId, group.name, group.description]);
-    const { rows: ownedGroups } = await client.query(
-      'SELECT id FROM public.question_groups WHERE id = $1 AND user_id = $2 FOR SHARE', [groupId, userId],
+    await client.query(`INSERT INTO public.question_categories (id, user_id, name, description)
+      VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING`, [categoryId, userId, category.name, category.description]);
+    const { rows: ownedCategories } = await client.query(
+      'SELECT id FROM public.question_categories WHERE id = $1 AND user_id = $2 FOR SHARE', [categoryId, userId],
     );
-    if (!ownedGroups.length) throw new Error('Seed group belongs to another user');
+    if (!ownedCategories.length) throw new Error('Seed category belongs to another user');
     const members = questions.filter(question => question.type === definition.type);
-    await client.query(`INSERT INTO public.question_group_items (group_id, question_id)
-      SELECT $1, id FROM unnest($2::uuid[]) AS input(id)
-      ON CONFLICT (group_id, question_id) DO NOTHING`, [groupId, members.map(question => question.id)]);
-    sources.push({ group_id: groupId, position, question_percentage: definition.percentage, question_count: null });
+    await client.query(`UPDATE public.questions SET category_id=$1
+      WHERE id=ANY($2::uuid[]) AND category_id IS NULL`, [categoryId, members.map(question => question.id)]);
+    sources.push({ category_id: categoryId, position, question_percentage: definition.percentage, question_count: null });
   }
   await client.query(`INSERT INTO public.quiz_questions (quiz_id, question_id, position, max_points)
     SELECT $1, question_id, position, max_points FROM jsonb_to_recordset($2::jsonb)
       AS input(question_id uuid, position integer, max_points numeric)
     ON CONFLICT (quiz_id, question_id) DO NOTHING`, [quizId, JSON.stringify(
     questions.map((question, position) => ({ question_id: question.id, position,
-      max_points: groupDefinitions.find(group => group.type === question.type).points })),
+      max_points: categoryDefinitions.find(category => category.type === question.type).points })),
   )]);
   const parsed = replaceQuizSourcesSchema.parse({ sources });
   for (const source of parsed.sources) {
-    await client.query(`INSERT INTO public.quiz_sources (quiz_id, group_id, position, question_percentage, question_count)
-      VALUES ($1, $2, $3, $4, $5) ON CONFLICT (quiz_id, group_id) DO NOTHING`,
-    [quizId, source.group_id, source.position, source.question_percentage, source.question_count]);
+    await client.query(`INSERT INTO public.quiz_sources (quiz_id, category_id, position, question_percentage, question_count)
+      VALUES ($1, $2, $3, $4, $5) ON CONFLICT (quiz_id, category_id) WHERE category_id IS NOT NULL DO NOTHING`,
+    [quizId, source.category_id, source.position, source.question_percentage, source.question_count]);
   }
   for (const video of videos) {
     const position = video.seed_position;
@@ -207,8 +206,8 @@ async function describeSeedQuiz(client, quiz) {
   return {
     id: quiz.id, title: quiz.title, status: quiz.status, candidate_count: candidates.length,
     question_count: quiz.question_count, selection_valid: selection.length === quiz.question_count,
-    sources: sources.map(source => ({ group_id: source.group_id, question_percentage: source.question_percentage,
-      question_count: source.question_count, candidates: candidates.filter(q => q.group_ids.includes(source.group_id)).length })),
+    sources: sources.map(source => ({ category_id: source.category_id, question_percentage: source.question_percentage,
+      question_count: source.question_count, candidates: candidates.filter(q => q.category_id === source.category_id).length })),
     requirements, existing_attempts: attempts,
   };
 }

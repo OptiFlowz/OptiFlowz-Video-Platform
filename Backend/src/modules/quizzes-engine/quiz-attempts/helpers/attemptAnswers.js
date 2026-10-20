@@ -7,7 +7,7 @@ const invalidAnswer = message => attemptError(400, 'INVALID_ANSWER', message);
 export function validateAttemptQuestion(question) {
   const snapshot = question.question_snapshot;
   try {
-    // Snapshots also contain internal metadata such as source_group_id.
+    // Snapshots also contain internal metadata such as source_category_id.
     validateQuestionForActivation(Object.fromEntries(
       ['type', 'content', 'explanation', 'options', 'matching_options', 'matching_items']
         .map(key => [key, snapshot[key]])));

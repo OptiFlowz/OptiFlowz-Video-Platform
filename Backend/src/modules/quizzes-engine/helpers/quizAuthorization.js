@@ -6,7 +6,7 @@ import { Permissions } from '../../authorization/permission.constants.js';
 const resources = {
   quizzes: { table: 'quizzes', prefix: 'QUIZZES', label: 'Quiz' },
   questions: { table: 'questions', prefix: 'QUESTIONS', label: 'Question' },
-  groups: { table: 'question_groups', prefix: 'QUESTION_GROUPS', label: 'Question group' },
+  categories: { table: 'question_categories', prefix: 'QUESTION_CATEGORIES', label: 'Question category' },
 };
 const uuid = z.string().uuid().transform(value => value.toLowerCase());
 

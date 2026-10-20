@@ -305,7 +305,7 @@ test('save answers: authentication, snapshots, grading, feedback and concurrent 
     assert.deepEqual(result.body.questions[0].options, answerSnapshot().options.map(({ option_no, content, position }) => ({ option_no, content, position })));
     assert.deepEqual(result.body.questions[2].matching_items.map(item => item.item_no), [3, 2, 1]);
     assert.equal(result.body.questions[2].max_points, 2.5);
-    assert.doesNotMatch(JSON.stringify(result.body), /is_correct|awarded_points|correct_option_no|SECRET|LIVE|question_snapshot|source_group_id/);
+    assert.doesNotMatch(JSON.stringify(result.body), /is_correct|awarded_points|correct_option_no|SECRET|LIVE|question_snapshot|source_category_id/);
   });
 
   await t.test('GET reuses PUT feedback and computes editability from checked_at and saved settings', async () => {

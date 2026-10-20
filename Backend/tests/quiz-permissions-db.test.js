@@ -1,3 +1,4 @@
+import { upgradeQuestionCategories } from './helpers/question-categories-schema.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
@@ -34,6 +35,7 @@ test('quiz authorization uses real role grants, denies and Owner bypass on all m
   const viewer = randomUUID(), uploader = randomUUID(), admin = randomUUID(), owner = randomUUID(), unprivileged = randomUUID();
   for (const id of [viewer,uploader,admin,owner,unprivileged]) await client.query('INSERT INTO users(id) VALUES ($1)',[id]);
   await installQuizPermissions(client,{ defaultRole: null });
+  await upgradeQuestionCategories(client);
   for (const [id,role] of [[viewer,'Viewer'],[uploader,'Uploader'],[admin,'Administrator'],[owner,'Owner']]) {
     await client.query('INSERT INTO user_roles(user_id,role_id) SELECT $1,id FROM roles WHERE name=$2',[id,role]);
   }
@@ -54,22 +56,22 @@ test('quiz authorization uses real role grants, denies and Owner bypass on all m
     return { ...await response.json(),status:response.status };
   }
   async function fixture(user=uploader){
-    const quiz=randomUUID(),question=randomUUID(),group=randomUUID(),video=randomUUID();
+    const quiz=randomUUID(),question=randomUUID(),category=randomUUID(),video=randomUUID();
     await client.query("INSERT INTO pg_temp.quizzes(id,user_id,title,question_count,status) VALUES ($1,$2,'Quiz',1,'published')",[quiz,user]);
     await client.query("INSERT INTO pg_temp.questions(id,user_id,type,content) VALUES ($1,$2,'single_choice','Question')",[question,user]);
     await client.query("INSERT INTO pg_temp.question_options VALUES ($1,1,'Correct',true,1),($1,2,'Incorrect',false,2)",[question]);
-    await client.query('INSERT INTO pg_temp.question_groups(id,user_id,name) VALUES ($1,$2,$3)',[group,user,group]);
+    await client.query('INSERT INTO pg_temp.question_categories(id,user_id,name) VALUES ($1,$2,$3)',[category,user,category]);
     await client.query("INSERT INTO videos(id,uploaded_by,duration_seconds,title) VALUES ($1,$2,120,'Video')",[video,user]);
-    return {quiz,question,group,video};
+    return {quiz,question,category,video};
   }
   const f=await fixture(),v=await fixture(viewer);
   const authorRoutes = x => [
     ['POST','/',{title:'New',question_count:1}],['GET','/'],['GET',`/${x.quiz}`],['PATCH',`/${x.quiz}`,{title:'Changed'}],['DELETE',`/${x.quiz}`],
     ['POST','/questions',{type:'single_choice',content:'New'}],['GET','/questions'],['GET',`/questions/${x.question}`],['PATCH',`/questions/${x.question}`,{content:'Changed'}],['DELETE',`/questions/${x.question}`],
-    ['POST','/question-groups',{name:'New'}],['GET','/question-groups'],['GET',`/question-groups/${x.group}`],['PATCH',`/question-groups/${x.group}`,{name:'Changed'}],['DELETE',`/question-groups/${x.group}`],['PUT',`/question-groups/${x.group}/questions`,{question_ids:[]}],
+    ['POST','/question-categories',{name:'New'}],['GET','/question-categories'],['GET',`/question-categories/${x.category}`],['PATCH',`/question-categories/${x.category}`,{name:'Changed'}],['DELETE',`/question-categories/${x.category}`],['PUT',`/question-categories/${x.category}/questions`,{question_ids:[]}],
     ['POST','/quiz-requirements',{quiz_id:x.quiz,video_id:x.video,min_watch_seconds:1}],['GET','/quiz-requirements'],['GET',`/quiz-requirements/${x.quiz}/${x.video}`],['PATCH',`/quiz-requirements/${x.quiz}/${x.video}`,{position:1}],['DELETE',`/quiz-requirements/${x.quiz}/${x.video}`],
     ['POST',`/${x.quiz}/questions`,{question_id:x.question}],['GET',`/${x.quiz}/questions`],['GET',`/${x.quiz}/questions/${x.question}`],['PATCH',`/${x.quiz}/questions/${x.question}`,{position:1}],['DELETE',`/${x.quiz}/questions/${x.question}`],
-    ['POST',`/${x.quiz}/sources`,{group_id:x.group,question_percentage:100}],['PUT',`/${x.quiz}/sources`,{sources:[]}],['GET',`/${x.quiz}/sources`],['GET',`/${x.quiz}/sources/${x.group}`],['PATCH',`/${x.quiz}/sources/${x.group}`,{position:1}],['DELETE',`/${x.quiz}/sources/${x.group}`],
+    ['POST',`/${x.quiz}/sources`,{category_id:x.category,question_percentage:100}],['PUT',`/${x.quiz}/sources`,{sources:[]}],['GET',`/${x.quiz}/sources`],['GET',`/${x.quiz}/sources/${x.category}`],['PATCH',`/${x.quiz}/sources/${x.category}`,{position:1}],['DELETE',`/${x.quiz}/sources/${x.category}`],
   ];
   const participantRoutes = x => [['GET',`/${x.quiz}/eligibility`],['POST',`/${x.quiz}/attempts`],['GET',`/quiz-requirements/${x.quiz}/check`],['GET',`/quiz-requirements/${x.quiz}/progress`]];
 
@@ -78,10 +80,10 @@ test('quiz authorization uses real role grants, denies and Owner bypass on all m
     for(const [method,path,body] of authorRoutes(v)) assert.equal((await request(viewer,method,path,body)).status,403,`${method} ${path}`);
   });
   await t.test('Uploader own permissions do not permit foreign reads, edits or membership changes',async()=>{
-    for(const [method,path,body] of authorRoutes(v).filter(([method,path])=>path.includes(v.quiz)||path.includes(v.question)||path.includes(v.group))) {
+    for(const [method,path,body] of authorRoutes(v).filter(([method,path])=>path.includes(v.quiz)||path.includes(v.question)||path.includes(v.category))) {
       assert.equal((await request(uploader,method,path,body)).status,404,`${method} ${path}`);
     }
-    for(const [path,key] of [['/','quizzes'],['/questions','questions'],['/question-groups','groups']]){
+    for(const [path,key] of [['/','quizzes'],['/questions','questions'],['/question-categories','categories']]){
       const result=await request(uploader,'GET',path);
       assert.equal(result.status,200);
       assert.ok(result[key].every(row=>row.user_id===uploader));
@@ -91,22 +93,24 @@ test('quiz authorization uses real role grants, denies and Owner bypass on all m
     const x=await fixture();
     assert.equal((await request(actor,'PATCH',`/${x.quiz}`,{title:'Managed'})).quiz.user_id,uploader);
     assert.equal((await request(actor,'PATCH',`/questions/${x.question}`,{content:'Managed'})).question.user_id,uploader);
-    assert.equal((await request(actor,'PATCH',`/question-groups/${x.group}`,{name:randomUUID()})).group.user_id,uploader);
-    assert.equal((await request(actor,'PUT',`/question-groups/${x.group}/questions`,{question_ids:[x.question]})).status,200);
+    assert.equal((await request(actor,'PATCH',`/question-categories/${x.category}`,{name:randomUUID()})).category.user_id,uploader);
+    assert.equal((await request(actor,'PUT',`/question-categories/${x.category}/questions`,{question_ids:[x.question]})).status,200);
     assert.equal((await request(actor,'POST',`/${x.quiz}/questions`,{question_id:x.question})).status,201);
-    assert.equal((await request(actor,'POST',`/${x.quiz}/sources`,{group_id:x.group,question_percentage:100})).status,201);
+    const createdSource = await request(actor,'POST',`/${x.quiz}/sources`,{category_id:x.category,question_percentage:100});
+    assert.equal(createdSource.status,201); x.source=createdSource.source.id;
     assert.equal((await request(actor,'POST','/quiz-requirements',{quiz_id:x.quiz,video_id:x.video,min_watch_seconds:1})).status,201);
-    for(const path of [`/${x.quiz}`,`/questions/${x.question}`,`/question-groups/${x.group}`,`/${x.quiz}/questions`, `/${x.quiz}/questions/${x.question}`,`/${x.quiz}/sources`,`/${x.quiz}/sources/${x.group}`,`/quiz-requirements?quiz_id=${x.quiz}`,`/quiz-requirements/${x.quiz}/${x.video}`]) {
+    for(const path of [`/${x.quiz}`,`/questions/${x.question}`,`/question-categories/${x.category}`,`/${x.quiz}/questions`, `/${x.quiz}/questions/${x.question}`,`/${x.quiz}/sources`,`/${x.quiz}/sources/${x.source}`,`/quiz-requirements?quiz_id=${x.quiz}`,`/quiz-requirements/${x.quiz}/${x.video}`]) {
       assert.equal((await request(actor,'GET',path)).status,200,path);
     }
-    for(const path of [`/${x.quiz}/questions/${x.question}`,`/${x.quiz}/sources/${x.group}`,`/quiz-requirements/${x.quiz}/${x.video}`]) assert.equal((await request(actor,'PATCH',path,{position:2})).status,200,path);
-    assert.equal((await request(actor,'PUT',`/${x.quiz}/sources`,{sources:[{group_id:x.group,question_count:1}]})).status,200);
-    for(const path of [`/${x.quiz}/sources/${x.group}`,`/${x.quiz}/questions/${x.question}`,`/quiz-requirements/${x.quiz}/${x.video}`,`/question-groups/${x.group}`,`/questions/${x.question}`,`/${x.quiz}`]) assert.equal((await request(actor,'DELETE',path)).status,200,path);
-    for(const [path,key] of [['/','quizzes'],['/questions','questions'],['/question-groups','groups']]) {
+    for(const path of [`/${x.quiz}/questions/${x.question}`,`/${x.quiz}/sources/${x.source}`,`/quiz-requirements/${x.quiz}/${x.video}`]) assert.equal((await request(actor,'PATCH',path,{position:2})).status,200,path);
+    const replaced = await request(actor,'PUT',`/${x.quiz}/sources`,{sources:[{category_id:x.category,question_count:1}]});
+    assert.equal(replaced.status,200); x.source=replaced.sources[0].id;
+    for(const path of [`/${x.quiz}/sources/${x.source}`,`/${x.quiz}/questions/${x.question}`,`/quiz-requirements/${x.quiz}/${x.video}`,`/question-categories/${x.category}`,`/questions/${x.question}`,`/${x.quiz}`]) assert.equal((await request(actor,'DELETE',path)).status,200,path);
+    for(const [path,key] of [['/','quizzes'],['/questions','questions'],['/question-categories','categories']]) {
       const result=await request(actor,'GET',path);
       assert.equal(result.status,200); assert.ok(result[key].some(row=>row.user_id===viewer));
     }
-    for(const [path,body,key] of [['/',{title:'Created',question_count:1},'quiz'],['/questions',{type:'single_choice',content:'Created'},'question'],['/question-groups',{name:randomUUID()},'group']]) {
+    for(const [path,body,key] of [['/',{title:'Created',question_count:1},'quiz'],['/questions',{type:'single_choice',content:'Created'},'question'],['/question-categories',{name:randomUUID()},'category']]) {
       const created=await request(actor,'POST',path,body); assert.equal(created.status,201); assert.equal(created[key].user_id,actor);
     }
   }

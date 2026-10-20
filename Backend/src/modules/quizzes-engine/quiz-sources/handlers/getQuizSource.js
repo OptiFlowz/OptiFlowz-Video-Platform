@@ -6,8 +6,8 @@ import { getQuizSource } from '../repository/quiz-sources.repository.js';
 
 export async function getQuizSourceInternal(params, userId) {
   requireQuizSourceUser(userId);
-  const { quizId, groupId } = validateOrThrow(quizSourceParamsSchema.safeParse(params));
-  const source = await getQuizSource(writePool, quizId, groupId, userId);
+  const { quizId, sourceId } = validateOrThrow(quizSourceParamsSchema.safeParse(params));
+  const source = await getQuizSource(writePool, quizId, sourceId, userId);
   if (!source) throw new HttpError(404, { message: 'Quiz source not found' });
   return source;
 }

@@ -2,13 +2,13 @@
 
 Provereno prema kodu: **20. oktobar 2026.**
 
-Ovaj dokument pokriva banku pitanja, grupe, kvizove, povezivanje pitanja sa
+Ovaj dokument pokriva banku pitanja, kategorije, kvizove, povezivanje pitanja sa
 kvizom, izvore pitanja i video requiremente, uključujući proveru i prikaz napretka
 gledanja. Podmodul `quiz-attempts` je izostavljen.
 
 Ugovori u ovom dokumentu odgovaraju trenutnim routes, controller, validation i
 repository fajlovima u `src/modules/quizzes-engine/`. Posebno su obuhvaćene
-novije promene: `groups: [{ id, name }]`, filter `group_id` i permisije `_own`/`_any`.
+novije promene: `category: { id, name } | null`, filter `category_id` i permisije `_own`/`_any`.
 
 ## Sadržaj
 
@@ -16,7 +16,7 @@ novije promene: `groups: [{ id, name }]`, filter `group_id` i permisije `_own`/`
 2. [Zajednički API ugovor](#2-zajednički-api-ugovor)
 3. [Autentifikacija i permisije](#3-autentifikacija-i-permisije)
 4. [Banka pitanja — Questions](#4-banka-pitanja--questions)
-5. [Grupe — Question Groups](#5-grupe--question-groups)
+5. [Kategorije — Question Categories](#5-kategorije--question-categories)
 6. [Kvizovi — Quizzes](#6-kvizovi--quizzes)
 7. [Kandidati — Quiz Questions](#7-kandidati--quiz-questions)
 8. [Izvori — Quiz Sources](#8-izvori--quiz-sources)
@@ -30,22 +30,22 @@ novije promene: `groups: [{ id, name }]`, filter `group_id` i permisije `_own`/`
 
 | Pojam | Namena | Šta frontend uređuje |
 | --- | --- | --- |
-| Question | Originalno pitanje u banci | Tip, sadržaj, objašnjenje, odgovore i grupe |
-| Question group | Organizacija banke pitanja | Naziv, opis i skup članova |
+| Question | Originalno pitanje u banci | Tip, sadržaj, objašnjenje, odgovore i kategorije |
+| Question category | Organizacija banke pitanja | Naziv, opis i skup članova |
 | Quiz | Podešavanja kviza | Naslov, status, broj pitanja, bodovanje i feedback opcije |
 | Quiz question | Veza kviza i originalnog pitanja | Položaj i maksimalne poene za taj kviz |
-| Quiz source | Kvota jedne grupe u kvizu | Grupu, položaj i procenat ili tačan broj pitanja |
+| Quiz source | Kvota jedne kategorije u kvizu | Kategoriju, položaj i procenat ili tačan broj pitanja |
 | Quiz requirement | Obavezan video uslov | Video, položaj i minimalno gledanje |
 
-Jedno pitanje može pripadati više grupa i biti povezano sa više kvizova.
-Dodavanje pitanja u grupu **ne dodaje** ga automatski u `quiz_questions`.
-Dodavanje grupe u `quiz_sources` takođe **ne povezuje** njena pitanja sa kvizom.
-Za izvor su kandidati presek članova te grupe i pitanja povezanih sa kvizom.
+Jedno pitanje može pripadati najviše jednoj kategoriji (ili nijednoj) i biti povezano sa više kvizova.
+Dodavanje pitanja u kategoriju **ne dodaje** ga automatski u `quiz_questions`.
+Dodavanje kategorije u `quiz_sources` takođe **ne povezuje** njena pitanja sa kvizom.
+Za izvor su kandidati presek članova te kategorije i pitanja povezanih sa kvizom.
 
 Praktična podela UI-ja:
 
 - **Banka pitanja:** lista, filteri, kreiranje i editor pitanja.
-- **Grupe:** lista, detalji i izbor članova.
+- **Kategorije:** lista, detalji i izbor članova.
 - **Editor kviza:** podešavanja, kandidati, izvori i video uslovi kao odvojeni tabovi.
 - **Prikaz video uslova za učesnika:** status ispunjenosti i kartice videa.
 
@@ -83,18 +83,21 @@ Ovo je skraćen primer envelope-a; stvarna polja pitanja navedena su u odeljku 4
 
 | Operacija | HTTP status | Dodatna polja uz `success: true` |
 | --- | --- | --- |
-| Kreiranje resursa/veze | 201 | `question`, `group`, `quiz`, `quiz_question`, `source` ili `requirement` |
+| Kreiranje resursa/veze | 201 | `question`, `category`, `quiz`, `quiz_question`, `source` ili `requirement` |
 | GET pojedinačnog resursa | 200 | Odgovarajuće jedninsko polje |
 | Lista | 200 | Odgovarajući niz, `pagination`, `sorting` |
 | PATCH | 200 | Ažuriran resurs u jedninskom polju |
-| PUT članova grupe | 200 | `group`, `question_ids` |
+| PUT članova kategorije | 200 | `category`, `question_ids` |
 | PUT izvora kviza | 200 | `sources` |
 | DELETE | 200 | `deleted: true` |
 
 DELETE ne vraća 204. Uspešno brisanje izgleda ovako:
 
 ```json
-{ "success": true, "deleted": true }
+{
+  "success": true,
+  "deleted": true
+}
 ```
 
 ### 2.3. Paginacija i sortiranje
@@ -122,7 +125,10 @@ Primer liste pitanja:
     "hasNextPage": false,
     "hasPreviousPage": false
   },
-  "sorting": { "sortBy": "created_at", "sortOrder": "asc" }
+  "sorting": {
+    "sortBy": "created_at",
+    "sortOrder": "asc"
+  }
 }
 ```
 
@@ -139,11 +145,11 @@ Za izbor svih članova ili izvora učitaj **sve strane**, ne samo prvih 20/100.
 - Body brojevi su JSON brojevi, booleani su `true`/`false`; ne šalji string `"50"`.
 - Query parametri putuju kao stringovi; `page` i `limit` backend pretvara u brojeve.
 - Šeme za body i query odbijaju nepoznata polja. Ne šalji ceo response nazad u PATCH.
-- `id`, `user_id`, timestampovi, `groups` i ugnježdeni prikazni objekti nisu edit polja.
+- `id`, `user_id`, timestampovi, `category` i ugnježdeni prikazni objekti nisu edit polja.
 - PATCH zahteva bar jedno dozvoljeno polje. Izostavljeno znači „sačuvaj postojeće“.
 - `null` možeš poslati samo za polja koja su eksplicitno nullable.
 - Prazni nizovi često znače „ukloni sve“; detalji su navedeni uz svaku rutu.
-- Ne šalji prazan filter `group_id=` ili `quiz_id=`; izostavi ga ako nije izabran.
+- Ne šalji prazan filter `category_id=` ili `quiz_id=`; izostavi ga ako nije izabran.
 - Datum parsiraj kao ISO datum. Odgovori mogu imati `Z` ili vremenski offset i
   različitu preciznost razlomka sekunde; ne poredi sirove timestamp stringove.
 
@@ -155,7 +161,7 @@ Za izbor svih članova ili izvora učitaj **sve strane**, ne samo prvih 20/100.
 | --- | --- | --- | --- | --- |
 | Kviz | `quizzes.create` | `quizzes.read_own` / `quizzes.read_any` | `quizzes.update_own` / `quizzes.update_any` | `quizzes.delete_own` / `quizzes.delete_any` |
 | Pitanje | `questions.create` | `questions.read_own` / `questions.read_any` | `questions.update_own` / `questions.update_any` | `questions.delete_own` / `questions.delete_any` |
-| Grupa | `question_groups.create` | `question_groups.read_own` / `question_groups.read_any` | `question_groups.update_own` / `question_groups.update_any` | `question_groups.delete_own` / `question_groups.delete_any` |
+| Kategorija | `question_categories.create` | `question_categories.read_own` / `question_categories.read_any` | `question_categories.update_own` / `question_categories.update_any` | `question_categories.delete_own` / `question_categories.delete_any` |
 
 `*_own` važi za resurse vlasnika jednakog prijavljenom korisniku. `*_any` dozvoljava
 rad nad resursima drugih korisnika; globalne liste tada vraćaju sve dostupne vlasnike.
@@ -177,17 +183,17 @@ izmenjeni, pa UI ne treba da odlučuje samo na osnovu imena role.
 | --- | --- |
 | Čitanje kandidata, izvora i autorskih video requirementa | `quizzes.read_own` ili `quizzes.read_any` |
 | Dodavanje/izmena/uklanjanje kandidata, izvora i requirementa | `quizzes.update_own` ili `quizzes.update_any` |
-| PUT članova grupe | `question_groups.update_own` ili `question_groups.update_any` |
+| PUT članova kategorije | `question_categories.update_own` ili `question_categories.update_any` |
 | Provera i napredak gledanja za učesnika | `quizzes.participate` |
 
-Pravo na uređivanje kviza ne omogućava povezivanje pitanja/grupa drugog vlasnika.
-**Kviz, kandidati i source grupe moraju imati istog vlasnika.** Isto pravilo važi
-za pitanje i njegove grupe. Za video requiremente važe posebna pravila dostupnosti
+Pravo na uređivanje kviza ne omogućava povezivanje pitanja/kategorija drugog vlasnika.
+**Kviz, kandidati i source kategorije moraju imati istog vlasnika.** Isto pravilo važi
+za pitanje i njegove kategorije. Za video requiremente važe posebna pravila dostupnosti
 videa iz odeljka 9.
 
 ### 3.3. Autorski GET i status `published`
 
-Autorske GET rute za kvizove, pitanja, grupe, kandidate i izvore zahtevaju autorske
+Autorske GET rute za kvizove, pitanja, kategorije, kandidate i izvore zahtevaju autorske
 read permisije. `published` ne pretvara te rute u javni katalog. Na njima je dozvoljen
 i rad sa draft/archived kvizovima u okviru ovlašćenja.
 
@@ -217,7 +223,7 @@ Autorska lista requirementa ostaje dostupna uz read permisiju.
 | `options` | Default `[]` | Odgovori choice pitanja |
 | `matching_options` | Default `[]` | Ponuđeni odgovori za matching |
 | `matching_items` | Default `[]` | Stavke koje treba povezati |
-| `group_ids` | Opciono | UUID niz grupa istog vlasnika; duplikati se uklanjaju |
+| `category_id` | Opciono | UUID jedne kategorije istog vlasnika ili null |
 
 Choice opcija: `{ option_no, content, is_correct, position }`.
 `is_correct` je opcion i default je `false`. Matching opcija:
@@ -254,12 +260,22 @@ POST /api/quizzes/questions
   "content": "Koji HTTP status označava da resurs nije pronađen?",
   "explanation": "404 označava Not Found.",
   "options": [
-    { "option_no": 1, "content": "200", "is_correct": false, "position": 1 },
-    { "option_no": 2, "content": "404", "is_correct": true, "position": 2 }
+    {
+      "option_no": 1,
+      "content": "200",
+      "is_correct": false,
+      "position": 1
+    },
+    {
+      "option_no": 2,
+      "content": "404",
+      "is_correct": true,
+      "position": 2
+    }
   ],
   "matching_options": [],
   "matching_items": [],
-  "group_ids": ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"]
+  "category_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 }
 ```
 
@@ -273,11 +289,26 @@ Sačuvaj `response.question.id` za kasnije povezivanje sa kvizom.
   "content": "Koji HTTP statusi pripadaju uspešnim odgovorima?",
   "explanation": "Uspešni statusi su u opsegu 2xx.",
   "options": [
-    { "option_no": 1, "content": "200", "is_correct": true, "position": 1 },
-    { "option_no": 2, "content": "201", "is_correct": true, "position": 2 },
-    { "option_no": 3, "content": "404", "is_correct": false, "position": 3 }
+    {
+      "option_no": 1,
+      "content": "200",
+      "is_correct": true,
+      "position": 1
+    },
+    {
+      "option_no": 2,
+      "content": "201",
+      "is_correct": true,
+      "position": 2
+    },
+    {
+      "option_no": 3,
+      "content": "404",
+      "is_correct": false,
+      "position": 3
+    }
   ],
-  "group_ids": []
+  "category_id": null
 }
 ```
 
@@ -291,39 +322,57 @@ Koristi isti POST endpoint. Nije potrebno slati neprimenljive prazne nizove.
   "content": "Poveži status sa značenjem.",
   "explanation": "200 je uspeh, a 404 znači da resurs nije pronađen.",
   "matching_options": [
-    { "option_no": 10, "content": "Uspešan zahtev", "position": 1 },
-    { "option_no": 20, "content": "Resurs nije pronađen", "position": 2 }
+    {
+      "option_no": 10,
+      "content": "Uspešan zahtev",
+      "position": 1
+    },
+    {
+      "option_no": 20,
+      "content": "Resurs nije pronađen",
+      "position": 2
+    }
   ],
   "matching_items": [
-    { "item_no": 1, "content": "200", "correct_option_no": 10, "position": 1 },
-    { "item_no": 2, "content": "404", "correct_option_no": 20, "position": 2 }
+    {
+      "item_no": 1,
+      "content": "200",
+      "correct_option_no": 10,
+      "position": 1
+    },
+    {
+      "item_no": 2,
+      "content": "404",
+      "correct_option_no": 20,
+      "position": 2
+    }
   ],
-  "group_ids": []
+  "category_id": null
 }
 ```
 
-### 4.6. GET lista i filter po grupi
+### 4.6. GET lista i filter po kategoriji
 
 ```http
-GET /api/quizzes/questions?group_id=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa&type=single_choice&page=1&limit=20&sortBy=created_at&sortOrder=desc
+GET /api/quizzes/questions?category_id=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa&type=single_choice&page=1&limit=20&sortBy=created_at&sortOrder=desc
 ```
 
 | Parametar | Opcije / značenje |
 | --- | --- |
 | `type` | Opciono: `single_choice`, `multiple_choice`, `matching` |
-| `group_id` | Opcion UUID jedne grupe; ne menja postojeći owner scope |
+| `category_id` | Opcion UUID jedne kategorije; ne menja postojeći owner scope |
 | `sortBy` | `created_at` (default), `updated_at`, `content`, `type` |
 | `sortOrder` | `asc` (default), `desc` |
 
-Filteri se kombinuju sa AND. Pitanje koje pripada više grupa pojavljuje se samo jednom.
-`groups` sadrži **sve** njegove grupe, ne samo grupu iz filtera. Nepostojeća grupa
-ili grupa bez pitanja u dozvoljenom owner scope-u daje praznu listu, ne 404.
+Filteri se kombinuju sa AND. Svako pitanje ima najviše jednu kategoriju.
+`category` sadrži njen `id` i `name`, ili je null. Nepostojeća kategorija
+ili kategorija bez pitanja u dozvoljenom owner scope-u daje praznu listu, ne 404.
 Neispravan UUID je 400. Nema query parametra za pretragu teksta pitanja.
 
 Stavka liste ima: `id`, `user_id`, `type`, `content`, `explanation`, `created_at`,
-`updated_at`, `groups`. Lista ne sadrži nizove opcija/stavki; za editor učitaj detalje.
+`updated_at`, `category`. Lista ne sadrži nizove opcija/stavki; za editor učitaj detalje.
 
-### 4.7. GET detalji i izlazni format grupa
+### 4.7. GET detalji i izlazni format kategorija
 
 GET pojedinačnog pitanja, POST i PATCH vraćaju isti detaljni oblik:
 
@@ -339,43 +388,58 @@ GET pojedinačnog pitanja, POST i PATCH vraćaju isti detaljni oblik:
     "created_at": "2026-10-20T08:00:00Z",
     "updated_at": "2026-10-20T08:00:00Z",
     "options": [
-      { "option_no": 1, "content": "200", "is_correct": false, "position": 1 },
-      { "option_no": 2, "content": "404", "is_correct": true, "position": 2 }
+      {
+        "option_no": 1,
+        "content": "200",
+        "is_correct": false,
+        "position": 1
+      },
+      {
+        "option_no": 2,
+        "content": "404",
+        "is_correct": true,
+        "position": 2
+      }
     ],
     "matching_options": [],
     "matching_items": [],
-    "groups": [
-      { "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "name": "HTTP osnove" }
-    ]
+    "category": {
+      "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "name": "HTTP osnove"
+    }
   }
 }
 ```
 
-Izlaz je `groups`, a ulaz za uređivanje je `group_ids`:
+Izlaz je `category: { id, name } | null`, a ulaz za uređivanje `category_id`:
 
 ```ts
-const selectedGroupIds = question.groups.map(group => group.id);
-const body = { group_ids: selectedGroupIds };
+const body = { category_id: question.category?.id ?? null };
 ```
 
-Bez grupa dobijaš `groups: []`. Tačni odgovori i objašnjenje u detaljima namenjeni su
-autorskom editoru; read permisija daje pristup tom autorskom prikazu.
+Bez kategorije dobijaš `category: null`. Tačni odgovori i objašnjenje u detaljima
+namenjeni su autorskom editoru; read permisija daje pristup tom prikazu.
 
 ### 4.8. PATCH — sadržaj, odgovori i članstva
 
 Samo promena teksta:
 
 ```json
-{ "content": "Izmenjen tekst pitanja", "explanation": null }
+{
+  "content": "Izmenjen tekst pitanja",
+  "explanation": null
+}
 ```
 
-Promena grupa:
+Promena kategorija:
 
 ```json
-{ "group_ids": ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"] }
+{
+  "category_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+}
 ```
 
-`group_ids` izostavljen čuva sva članstva; `[]` uklanja sva članstva.
+`category_id` izostavljen čuva postojeću kategoriju; `null` uklanja dodelu kategorije.
 Svaki poslati niz `options`, `matching_options` ili `matching_items` zamenjuje taj
 ceo niz; to nije dopuna jedne stavke. Kod promene `type`, svi izostavljeni nizovi
 odgovora prazne se, dok izostavljeni tekst i objašnjenje ostaju.
@@ -387,31 +451,34 @@ u **istom PATCH-u**. Backend proverava spojeno konačno stanje i rollback-uje ne
 
 Briše originalno pitanje, njegove odgovore, članstva i veze sa kvizovima.
 Za uklanjanje samo iz konkretnog kviza koristi DELETE veze iz odeljka 7.
-Posle brisanja osveži listu pitanja, otvorene grupe i kandidate relevantnih kvizova.
+Posle brisanja osveži listu pitanja, otvorene kategorije i kandidate relevantnih kvizova.
 
-## 5. Grupe — Question Groups
+## 5. Kategorije — Question Categories
 
 ### 5.1. Rute
 
 | Metoda | Putanja | Rezultat |
 | --- | --- | --- |
-| POST | `/question-groups` | 201, `{ success, group }` |
-| GET | `/question-groups` | 200, `{ success, groups, pagination, sorting }` |
-| GET | `/question-groups/:groupId` | 200, `{ success, group }`, uključuje `group.questions` |
-| PATCH | `/question-groups/:groupId` | 200, `{ success, group }` |
-| DELETE | `/question-groups/:groupId` | 200, `{ success, deleted: true }` |
-| PUT | `/question-groups/:groupId/questions` | 200, `{ success, group, question_ids }` |
+| POST | `/question-categories` | 201, `{ success, category }` |
+| GET | `/question-categories` | 200, `{ success, categories, pagination, sorting }` |
+| GET | `/question-categories/:categoryId` | 200, `{ success, category }`, uključuje `category.questions` |
+| PATCH | `/question-categories/:categoryId` | 200, `{ success, category }` |
+| DELETE | `/question-categories/:categoryId` | 200, `{ success, deleted: true }` |
+| PUT | `/question-categories/:categoryId/questions` | 200, `{ success, category, question_ids }` |
 
 ### 5.2. Kreiranje, izmena i lista
 
 POST primer:
 
 ```json
-{ "name": "HTTP osnove", "description": "Pitanja o HTTP metodama i statusima" }
+{
+  "name": "HTTP osnove",
+  "description": "Pitanja o HTTP metodama i statusima"
+}
 ```
 
 `name` je obavezan trimovan string 1–255 karaktera. `description` je opcion
-trimovan string ili null, default null. Isti vlasnik ne može imati dve grupe istog
+trimovan string ili null, default null. Isti vlasnik ne može imati dve kategorije istog
 naziva prema DB unique ograničenju; duplikat je 409. Različiti vlasnici mogu.
 
 PATCH prihvata `name` i/ili `description`. Za brisanje opisa pošalji
@@ -421,15 +488,15 @@ GET lista: opcioni `name` traži podstring, bez razlikovanja velikih/malih slova
 `%` i `_` se tretiraju kao tekst, ne wildcard. `sortBy`: `name` (default) ili `id`;
 `sortOrder`: `asc` (default) ili `desc`, uz zajednički `page` i `limit`.
 
-Primer: `GET /api/quizzes/question-groups?name=HTTP&page=1&limit=20&sortBy=name&sortOrder=asc`.
+Primer: `GET /api/quizzes/question-categories?name=HTTP&page=1&limit=20&sortBy=name&sortOrder=asc`.
 Stavke ove liste imaju samo `id`, `user_id`, `name`, `description`.
 
-### 5.3. Detalji grupe i njena pitanja
+### 5.3. Detalji kategorije i njena pitanja
 
 ```json
 {
   "success": true,
-  "group": {
+  "category": {
     "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     "user_id": "99999999-9999-4999-8999-999999999999",
     "name": "HTTP osnove",
@@ -443,26 +510,27 @@ Stavke ove liste imaju samo `id`, `user_id`, `name`, `description`.
         "explanation": "404 označava Not Found.",
         "created_at": "2026-10-20T08:00:00Z",
         "updated_at": "2026-10-20T08:00:00Z",
-        "groups": [
-          { "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "name": "HTTP osnove" }
-        ]
+        "category": {
+          "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "name": "HTTP osnove"
+        }
       }
     ]
   }
 }
 ```
 
-`group.questions` je ceo nepaginiran niz, sortiran po `created_at ASC`, pa `id ASC`.
-Prazna grupa vraća `questions: []`. Svako pitanje ima sve svoje `groups` sa ID-jem
+`category.questions` je ceo nepaginiran niz, sortiran po `created_at ASC`, pa `id ASC`.
+Prazna kategorija vraća `questions: []`. Svako pitanje ima svoju `category` sa ID-jem
 i nazivom, ali nema nizove odgovora. Detalje za editor učitaj sa `/questions/:questionId`.
 
-POST/PATCH grupe i PUT članstava vraćaju osnovni objekat `group` bez `questions`.
-Ne pretpostavljaj da svaki response sa poljem `group` sadrži pun detaljni oblik.
+POST/PATCH kategorije i PUT članstava vraćaju osnovni objekat `category` bez `questions`.
+Ne pretpostavljaj da svaki response sa poljem `category` sadrži pun detaljni oblik.
 
 ### 5.4. PUT — zamenjuje kompletno članstvo
 
 ```http
-PUT /api/quizzes/question-groups/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/questions
+PUT /api/quizzes/question-categories/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/questions
 ```
 
 ```json
@@ -474,18 +542,18 @@ PUT /api/quizzes/question-groups/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/questions
 }
 ```
 
-Sva pitanja moraju imati istog vlasnika kao grupa. Duplikati se uklanjaju.
-`{ "question_ids": [] }` prazni grupu. Izostavljen `question_ids` je greška 400.
-Članstva pitanja u **drugim grupama ostaju**. Ako je neki ID nepostojeći ili tuđ,
+Sva pitanja moraju imati istog vlasnika kao kategorija. Duplikati se uklanjaju.
+`{ "question_ids": [] }` prazni kategoriju. Izostavljen `question_ids` je greška 400.
+Poslata pitanja se **premeštaju iz prethodne kategorije**. Izostavljena pitanja dobijaju `category_id = null`. Ako je neki ID nepostojeći ili tuđ,
 dobijaš 404 i ceo upis se poništava.
 
-Odgovor sadrži osnovni `group` i konačni `question_ids` sortiran po UUID-u; to nije
+Odgovor sadrži osnovni `category` i konačni `question_ids` sortiran po UUID-u; to nije
 UI redosled pitanja. Ova veza nema `position` niti rutu za reordering.
 
 ### 5.5. DELETE
 
-Briše grupu i njena članstva, ali čuva originalna pitanja. Brišu se i source veze
-ka grupi. Ako bi preostali izvori nekog kviza imali neispravan zbir, brisanje se
+Briše kategoriju i postavlja `questions.category_id` njenih pitanja na null, čuvajući originalna pitanja. Brišu se i source veze
+ka kategoriji. Ako bi preostali izvori nekog kviza imali neispravan zbir, brisanje se
 odbija sa 400; prvo uskladi ceo skup izvora kroz PUT. Brisanje poslednjeg izvora
 može ostaviti kviz bez izvora, što je dozvoljeno.
 
@@ -598,12 +666,15 @@ Sort statusa prati DB enum redosled; ne oslanjaj se na abecedni red.
 ### 6.5. PATCH i objavljivanje
 
 ```json
-{ "title": "Novi naslov", "status": "published" }
+{
+  "title": "Novi naslov",
+  "status": "published"
+}
 ```
 
 Status se menja običnim PATCH-om; nema posebne publish rute. I POST može primiti
 `published`. Postavljanje tog statusa trenutno **nije kompletna validacija spremnosti
-kviza**: ne garantuje dovoljan broj validnih kandidata niti izvodljive grupne kvote.
+kviza**: ne garantuje dovoljan broj validnih kandidata niti izvodljive kategorijske kvote.
 Frontend treba da omogući pripremu draft-a i pre objavljivanja prikaže provere
 iz odeljka 10.
 
@@ -613,7 +684,7 @@ odbijena sa 400 zbog neusklađenog zbira. Postupak promene opisan je u odeljku 8
 ### 6.6. DELETE
 
 Brisanje kviza uklanja njegove kandidate, izvore i video requiremente; originalna
-pitanja, grupe i videi ostaju. Druge reference u bazi mogu blokirati DELETE;
+pitanja, kategorije i videi ostaju. Druge reference u bazi mogu blokirati DELETE;
 kontroler nemapiranu DB grešku vraća kao generički 500. Nemoj pretpostaviti da svaki
 neuspeh brisanja ima posebno definisan 409 odgovor. Za povlačenje iz upotrebe dostupan
 je PATCH sa `status: "archived"`.
@@ -674,7 +745,7 @@ bulk-create endpoint za kandidate.
 ```
 
 GET pojedinačne veze i PATCH vraćaju isti oblik. `question` je skraćen objekat,
-bez `groups`, timestampova i odgovora. Za otvaranje editora originalnog pitanja
+bez `category`, timestampova i odgovora. Za otvaranje editora originalnog pitanja
 učitaj `/questions/:questionId` uz odgovarajuću question read permisiju.
 
 ### 7.3. Lista, izmena i uklanjanje
@@ -682,15 +753,16 @@ učitaj `/questions/:questionId` uz odgovarajuću question read permisiju.
 GET lista ima zajedničku paginaciju i `sortBy`: `position` (default), `max_points`,
 `question_id`; `sortOrder`: `asc` (default) ili `desc`. Nema dodatnih filtera.
 
-Svaki element GET liste dodatno sadrži `question.groups: [{ "id": "uuid-grupe",
-"name": "Naziv grupe" }]`. Vraćaju se sve grupe tog pitanja, sortirane po ID-ju;
-ako pitanje nema grupe, `question.groups` je `[]`. Članstvo u više grupa ne
-duplira pitanja i ne utiče na paginaciju.
+Svaki element GET liste dodatno sadrži `question.category: { "id": "uuid-kategorije",
+"name": "Naziv kategorije" }`. Ako pitanje nema kategoriju, vrednost je `null`.
 
 PATCH menja `position` i/ili `max_points`:
 
 ```json
-{ "position": 1, "max_points": 3 }
+{
+  "position": 1,
+  "max_points": 3
+}
 ```
 
 Ne menja `question_id` niti sadržaj originalnog pitanja. Za drag-and-drop pošalji
@@ -722,19 +794,33 @@ Zato posle ove operacije ponovo izračunaj da li je kviz i dalje konfiguraciono 
 | POST | `/:quizId/sources` | 201, `{ success, source }` |
 | PUT | `/:quizId/sources` | 200, `{ success, sources }` |
 | GET | `/:quizId/sources` | 200, `{ success, sources, pagination, sorting }` |
-| GET | `/:quizId/sources/:groupId` | 200, `{ success, source }` |
-| PATCH | `/:quizId/sources/:groupId` | 200, `{ success, source }` |
-| DELETE | `/:quizId/sources/:groupId` | 200, `{ success, deleted: true }` |
+| GET | `/:quizId/sources/:sourceId` | 200, `{ success, source }` |
+| PATCH | `/:quizId/sources/:sourceId` | 200, `{ success, source }` |
+| DELETE | `/:quizId/sources/:sourceId` | 200, `{ success, deleted: true }` |
 
-Identitet izvora je `(quiz_id, group_id)`; nema samostalni `id`.
-Grupa mora imati istog vlasnika kao kviz. Isti `group_id` može biti samo jedan izvor
-istog kviza. Jedna grupa sme biti izvor više kvizova.
+Svaki izvor ima samostalni UUID `id`, koji se koristi kao `sourceId` u rutama.
+Ako `category_id` nije null, kategorija mora imati istog vlasnika kao kviz. Isti `category_id` može biti samo jedan izvor
+istog kviza. Jedna kategorija sme biti izvor više kvizova.
+
+`category_id` je UUID kategorije ili eksplicitno `null` za pitanja bez kategorije.
+Po kvizu je dozvoljen najviše jedan source za svaku kategoriju i jedan za null.
+`category` u odgovoru je objekat ili null. Posle PUT zamene koristi novovraćene ID-jeve.
+Primer raspodele 80% iz kategorije i 20% bez kategorije:
+
+```json
+{
+  "sources": [
+    { "category_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "question_percentage": 80 },
+    { "category_id": null, "question_percentage": 20 }
+  ]
+}
+```
 
 ### 8.2. Režimi raspodele
 
 | Polje | Pravilo | Default na POST-u / stavci PUT-a |
 | --- | --- | --- |
-| `group_id` | Obavezan UUID | Nema |
+| `category_id` | Obavezan UUID ili null za pitanja bez kategorije | Nema |
 | `position` | Ceo broj 0–2147483647 | 0 |
 | `question_percentage` | > 0 i <= 100, do dve decimale, ili null | null |
 | `question_count` | Pozitivan ceo broj do 2147483647, ili null | null |
@@ -746,16 +832,16 @@ POST-u/PUT-u pretvara u null. Ceo kviz mora koristiti jedan režim:
 - Tačni brojevi: zbir svih source `question_count` mora biti jednak `quiz.question_count`.
 - Prazan skup izvora je dozvoljen; tada se koristi samo skup kandidata kviza.
 
-Grupa može imati više pitanja od svoje kvote. Izvor sam ne pravi kandidate.
-Presek `quiz_questions` i `question_group_items` određuje raspoloživa pitanja.
-Pitanje koje pripada više izvornih grupa može se iskoristiti samo jednom i pokriti
-samo jednu kvotu. Zbog preklapanja nije dovoljno samo porediti veličinu svake grupe
-sa njenom kvotom: zbirna raspodela mora moći da koristi različita pitanja.
+Kategorija može imati više pitanja od svoje kvote. Izvor sam ne pravi kandidate.
+Kandidati su `quiz_questions` povezani sa pitanjima koja imaju odgovarajući
+`questions.category_id`. Izvor sa `category_id: null` koristi isključivo pitanja
+bez kategorije. To nisu pitanja iz kategorija koje nisu navedene u sources.
+Kategorije se ne preklapaju; svaki izvor mora imati dovoljno kandidata za svoju kvotu.
 
-`max_points` dolazi sa veze `quiz_questions`, a ne iz grupe ili izvora.
+`max_points` dolazi sa veze `quiz_questions`, a ne iz kategorije ili izvora.
 Za procente koji daju necelo pitanje, postojeći izbor koristi najveće ostatke da
 dobije tačno traženi broj; kod jednakih ostataka prednost imaju manji `position`,
-pa `group_id`. Primer: 50/50% od 3 pitanja daje 2 i 1, ne 1.5 i 1.5.
+pa `category_id`. Primer: 50/50% od 3 pitanja daje 2 i 1, ne 1.5 i 1.5.
 
 ### 8.3. Preporučeni UI: čuvanje cele tabele kroz PUT
 
@@ -767,13 +853,13 @@ PUT /api/quizzes/33333333-3333-4333-8333-333333333333/sources
 {
   "sources": [
     {
-      "group_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "category_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
       "position": 0,
       "question_percentage": 60,
       "question_count": null
     },
     {
-      "group_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "category_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
       "position": 1,
       "question_percentage": 40,
       "question_count": null
@@ -783,7 +869,7 @@ PUT /api/quizzes/33333333-3333-4333-8333-333333333333/sources
 ```
 
 PUT zamenjuje ceo skup izvora u jednoj transakciji. Stare izvore koji nisu poslati
-uklanja. `sources` je obavezan niz sa najviše 1000 stavki i bez ponovljenih grupa.
+uklanja. `sources` je obavezan niz sa najviše 1000 stavki i bez ponovljenih kategorija.
 `{ "sources": [] }` uklanja sve izvore.
 
 Odgovor PUT-a je `{ success: true, sources: [...] }`, bez `pagination` i `sorting`.
@@ -793,12 +879,13 @@ Svaki izvor ima isti oblik kao sledeći pojedinačni primer:
 {
   "success": true,
   "source": {
+    "id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
     "quiz_id": "33333333-3333-4333-8333-333333333333",
-    "group_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "category_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     "position": 0,
     "question_percentage": 60,
     "question_count": null,
-    "group": {
+    "category": {
       "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
       "name": "HTTP osnove",
       "description": "Pitanja o HTTP metodama i statusima"
@@ -813,13 +900,13 @@ Za kviz sa `question_count: 10`, primer režima tačnih brojeva je:
 {
   "sources": [
     {
-      "group_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "category_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
       "position": 0,
       "question_percentage": null,
       "question_count": 6
     },
     {
-      "group_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "category_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
       "position": 1,
       "question_percentage": null,
       "question_count": 4
@@ -836,13 +923,15 @@ Za lokalnu proveru procentnog zbira koristi stotinke: saberi
 POST prima jednu stavku iz PUT niza, bez `sources` omotača. Na praznom kvizu jedan
 procentualni izvor mora biti 100%; jedan izvor u režimu broja mora pokriti ceo
 `quiz.question_count`. POST sa 60%, pa drugi POST sa 40% **ne radi**: prvi zahtev
-bi ostavio neispravan zbir. Za početnu raspodelu sa više grupa koristi PUT.
+bi ostavio neispravan zbir. Za početnu raspodelu sa više kategorija koristi PUT.
 
-PATCH prihvata `position`, `question_percentage`, `question_count`, ali ne `group_id`.
+PATCH prihvata `position`, `question_percentage`, `question_count`, ali ne `category_id`.
 Izostavljena polja čuva. PATCH samo pozicije je jednostavan:
 
 ```json
-{ "position": 2 }
+{
+  "position": 2
+}
 ```
 
 Promena procenta samo jednog izvora najčešće će narušiti zbir i dati 400. Za prelazak
@@ -850,9 +939,9 @@ režima moraš postaviti staro polje na null, a novo na vrednost; za više izvor
 jedan PUT cele raspodele. DELETE jednog izvora takođe može dati 400 ako preostali
 izvori više ne čine validan zbir. Uklanjanje poslednjeg izvora je dozvoljeno.
 
-GET lista: `sortBy` je `position` (default), `group_id`, `question_percentage` ili
+GET lista: `sortBy` je `position` (default), `id`, `category_id`, `question_percentage` ili
 `question_count`; default smer `asc`; null vrednosti su poslednje. Podržani su `page`
-i `limit`, nema dodatnog filtera. Ugnježdeni `group` nije detaljan objekat sa pitanjima.
+i `limit`, nema dodatnog filtera. Ugnježdeni `category` nije detaljan objekat sa pitanjima.
 
 ### 8.5. Promena veličine kviza kada izvori koriste tačne brojeve
 
@@ -974,7 +1063,10 @@ PATCH prihvata samo pragove i `position`, ne `quiz_id` ili `video_id`.
 Za prelazak sa procenta na sekunde pošalji oba praga:
 
 ```json
-{ "min_watch_percentage": null, "min_watch_seconds": 60 }
+{
+  "min_watch_percentage": null,
+  "min_watch_seconds": 60
+}
 ```
 
 Za promenu videa ukloni staru vezu i kreiraj novu. DELETE uklanja samo uslov,
@@ -1013,7 +1105,10 @@ GET /api/quizzes/quiz-requirements/33333333-3333-4333-8333-333333333333/check
 ```
 
 ```json
-{ "success": true, "requirements_met": false }
+{
+  "success": true,
+  "requirements_met": false
+}
 ```
 
 Korisnik dolazi iz access tokena; ne šalješ `user_id`. Rezultat je objekat sa boolean
@@ -1091,18 +1186,18 @@ osvežavati u razumnim intervalima.
 ### 10.1. Kreiranje kompletne konfiguracije
 
 1. Učitaj dozvoljene akcije korisnika i pripremi autorske ekrane.
-2. Napravi grupe kroz POST `/question-groups` i sačuvaj ID-jeve.
-3. Napravi pitanja; dodaj grupe kroz `group_ids` ili kasnije grupnim PUT-om.
+2. Napravi kategorije kroz POST `/question-categories` i sačuvaj ID-jeve.
+3. Napravi pitanja; dodeli kategoriju kroz `category_id` ili kasnije PUT-om kategorije.
 4. Napravi `draft` kviz sa ciljanim `question_count`.
 5. Poveži kandidate kroz POST `/:quizId/questions`; postavi poene i položaje.
-6. Ako koristiš grupe za raspodelu, proveri preseke sa kandidatima i sačuvaj sve
+6. Ako koristiš kategorije za raspodelu, proveri preseke sa kandidatima i sačuvaj sve
    izvore jednim PUT-om. Bez izvora ovaj korak možeš preskočiti.
 7. Dodaj potrebne video requiremente. Ako nisu potrebni, ostavi prazan skup.
 8. Proveri popunjenost pitanja, broj kandidata, kvote, vlasništvo i video pragove.
 9. Postavi `status: "published"` običnim PATCH-om kviza.
 
 Nema jedne create rute koja automatski kreira sve ove entitete ili veze.
-Nemoj POST-ovati `questions`, `sources`, `requirements` ili `groups` unutar quiz body-ja.
+Nemoj POST-ovati `questions`, `sources`, `requirements` ili `categories` unutar quiz body-ja.
 Dozvoljene input šeme su stroge i takav payload će biti odbijen.
 
 ### 10.2. Učitavanje editora kviza
@@ -1110,7 +1205,7 @@ Dozvoljene input šeme su stroge i takav payload će biti odbijen.
 Posle uspešnog GET-a kviza, nezavisne tabove možeš učitati paralelno:
 
 - GET `/:quizId/questions` — kandidati i poeni.
-- GET `/:quizId/sources` — raspodela po grupama.
+- GET `/:quizId/sources` — raspodela po kategorijama.
 - GET `/quiz-requirements?quiz_id=...` — video uslovi i kartice.
 
 Svaki tab ima sopstvenu paginaciju. Za prebrojavanje svih kandidata koristi njegov
@@ -1124,9 +1219,9 @@ očisti cache. Sledeće tabele su preporuka za frontend, ne ugrađeno serversko 
 
 | Query | Primer oblika ključa |
 | --- | --- |
-| Lista pitanja | `["questions", userId, { type, group_id, page, limit, sortBy, sortOrder }]` |
+| Lista pitanja | `["questions", userId, { type, category_id, page, limit, sortBy, sortOrder }]` |
 | Detalji pitanja | `["question", userId, questionId]` |
-| Lista/detalji grupa | `["question-groups", userId, query]`, `["question-group", userId, groupId]` |
+| Lista/detalji kategorija | `["question-categories", userId, query]`, `["question-category", userId, categoryId]` |
 | Lista/detalji kvizova | `["quizzes", userId, query]`, `["quiz", userId, quizId]` |
 | Kandidati | `["quiz-questions", userId, quizId, query]` |
 | Izvori | `["quiz-sources", userId, quizId, query]` |
@@ -1135,19 +1230,19 @@ očisti cache. Sledeće tabele su preporuka za frontend, ne ugrađeno serversko 
 
 | Mutacija | Šta ponovo učitati / invalidirati |
 | --- | --- |
-| Tekst/tip/odgovori pitanja | Detalje i liste pitanja, prikaze grupa, kandidate koji prikazuju tekst |
-| Promena `group_ids` | Detalje/liste pitanja, stare i nove detalje grupa, preglede raspoloživosti izvora |
-| Preimenovanje grupe | Liste/detalje grupa, `groups` u pitanjima i `group` u izvorima |
-| PUT članova grupe | Detalje grupe, pitanja čija se članstva menjaju, liste pitanja i provere source kandidata |
+| Tekst/tip/odgovori pitanja | Detalje i liste pitanja, prikaze kategorija, kandidate koji prikazuju tekst |
+| Promena `category_id` | Detalje/liste pitanja, stare i nove detalje kategorija, preglede raspoloživosti izvora |
+| Preimenovanje kategorije | Liste/detalje kategorija, `category` u pitanjima i `category` u izvorima |
+| PUT članova kategorije | Detalje kategorije, pitanja čija se članstva menjaju, liste pitanja i provere source kandidata |
 | Veza kviza i pitanja | Listu kandidata i UI proveru raspoloživosti izvora |
 | Podešavanja/status kviza | Detalje i liste kvizova; pri `question_count` promeni i proveru izvora |
 | PUT/PATCH/DELETE izvora | Sve strane source liste i njen lokalni zbir |
 | Mutacija requirementa | Autorske liste/detalje, participant check i progress |
-| Brisanje originalnog pitanja/grupe | Sve liste i otvorene detalje koji su ga referencirali |
+| Brisanje originalnog pitanja/kategorije | Sve liste i otvorene detalje koji su ga referencirali |
 
 ### 10.4. Lokalno uređivanje formi
 
-- Razdvoji read model (`groups`) i write model (`group_ids`).
+- Razdvoji read model (`category`) i write model (`category_id`).
 - Drži sve matching nizove lokalno i pošalji međusobno usklađeno konačno stanje.
 - Promenu tipa pitanja tretiraj kao promenu editora odgovora; prazne nizove nakon
   promene tipa nemoj zameniti zastarelim vrednostima iz prethodnog cache-a.
@@ -1161,10 +1256,10 @@ očisti cache. Sledeće tabele su preporuka za frontend, ne ugrađeno serversko 
 ## 11. Primer frontend klijenta
 
 Ovaj TypeScript primer pokazuje postojeće envelope-e, query parametre i mapiranje
-grupa. Naziv baze/promenljive okruženja prilagodi svom frontend projektu.
+kategorija. Naziv baze/promenljive okruženja prilagodi svom frontend projektu.
 
 ```ts
-type GroupRef = { id: string; name: string };
+type CategoryRef = { id: string; name: string };
 type Pagination = {
   page: number; limit: number; total: number; totalPages: number;
   hasNextPage: boolean; hasPreviousPage: boolean;
@@ -1173,7 +1268,7 @@ type QuestionSummary = {
   id: string; user_id: string;
   type: "single_choice" | "multiple_choice" | "matching";
   content: string; explanation: string | null;
-  created_at: string; updated_at: string; groups: GroupRef[];
+  created_at: string; updated_at: string; category: CategoryRef | null;
 };
 type QuestionListResponse = {
   success: true; questions: QuestionSummary[];
@@ -1181,18 +1276,18 @@ type QuestionListResponse = {
 };
 type QuestionListQuery = {
   page?: number; limit?: number; type?: QuestionSummary["type"];
-  group_id?: string;
+  category_id?: string;
   sortBy?: "created_at" | "updated_at" | "content" | "type";
   sortOrder?: "asc" | "desc";
 };
 type SourceInput = {
-  group_id: string; position?: number;
+  category_id: string | null; position?: number;
   question_percentage?: number | null; question_count?: number | null;
 };
 type Source = {
-  quiz_id: string; group_id: string; position: number;
+  id: string; quiz_id: string; category_id: string | null; position: number;
   question_percentage: number | null; question_count: number | null;
-  group: { id: string; name: string; description: string | null };
+  category: { id: string; name: string; description: string | null } | null;
 };
 
 class ApiError extends Error {
@@ -1233,10 +1328,10 @@ function createQuizzesApi(serverBaseUrl: string, getToken: () => string) {
       const suffix = params.size ? "?" + params.toString() : "";
       return request<QuestionListResponse>("/questions" + suffix, { signal });
     },
-    setQuestionGroups(questionId: string, groups: GroupRef[]) {
+    setQuestionCategory(questionId: string, category: CategoryRef | null) {
       return request<{ success: true; question: QuestionSummary }>(
         "/questions/" + encodeURIComponent(questionId),
-        { method: "PATCH", body: { group_ids: groups.map(group => group.id) } },
+        { method: "PATCH", body: { category_id: category?.id ?? null } },
       );
     },
     replaceSources(quizId: string, sources: SourceInput[]) {
@@ -1254,7 +1349,7 @@ function createQuizzesApi(serverBaseUrl: string, getToken: () => string) {
 }
 ```
 
-`setQuestionGroups` tip koristi summary kao podskup; stvarni response dodatno sadrži
+`setQuestionCategories` tip koristi summary kao podskup; stvarni response dodatno sadrži
 nizove odgovora. Za editor uvedi detaljan tip koji uključuje `options`,
 `matching_options`, `matching_items` iz odeljka 4. Ne uklanjaj ta polja pri lokalnom
 ažuriranju cache-a ako ih ekran koristi.
@@ -1266,7 +1361,10 @@ ažuriranju cache-a ako ih ekran koristi.
 Većina kontrolera vraća:
 
 ```json
-{ "success": false, "message": "Question not found" }
+{
+  "success": false,
+  "message": "Question not found"
+}
 ```
 
 Validation helper vraća 400 i prvu poruku greške. Trenutno nema zajedničkog
@@ -1277,7 +1375,10 @@ Permisijski middleware nije potpuno isti za sve rute. `requirePermission` može
 vratiti 403 bez `success` polja:
 
 ```json
-{ "message": "Insufficient permissions", "requiredPermission": "questions.create" }
+{
+  "message": "Insufficient permissions",
+  "requiredPermission": "questions.create"
+}
 ```
 
 Resource access middleware obično vraća `{ success: false, message }`.
@@ -1291,15 +1392,15 @@ Zato grešku uvek prepoznaj preko **HTTP statusa**, ne samo preko `success`.
 | 401 | Nema tokena, istekao token, neaktivan nalog ili promenjeno ovlašćenje tokena | Pokreni postojeći auth tok i spreči petlju ponavljanja |
 | 403 | Nedostaje potrebna permisija | Prikaži zabranu akcije; ne ponavljaj isti zahtev automatski |
 | 404 | Resurs ne postoji ili je izvan own scope-a; participant provera za neobjavljen kviz | Osveži prikaz dostupnosti, ukloni zastareli izbor |
-| 409 | Dupli naziv grupe istog vlasnika, isti kandidat/izvor/video requirement već povezan | Ponovo učitaj postojeće stanje |
+| 409 | Dupli naziv kategorije istog vlasnika, isti kandidat/izvor/video requirement već povezan | Ponovo učitaj postojeće stanje |
 | 500 | Nemapirana DB/servis greška | Prikaži generičku poruku i omogući kontrolisan retry |
 
 Primeri serverskih poruka korisnih pri povezivanju formi:
 
-- `One or more question groups were not found`
+- `Question category not found`
 - `One or more questions were not found`
 - `This question is already linked to the quiz`
-- `This group is already a source for the quiz`
+- `This category is already a source for the quiz`
 - `This video is already a requirement for the quiz`
 - `Exactly one of question_percentage and question_count must be set`
 - `Source percentages must sum to 100; replace the complete allocation using PUT`
@@ -1312,15 +1413,15 @@ ovog vodiča ne vraća poseban `code`.
 
 ### 12.3. Bitna trenutna ograničenja
 
-- Liste pitanja/grupa/kvizova nemaju filter po proizvoljnom `user_id`.
-- Lista banke pitanja nema full-text/name/content pretragu; ima `type` i `group_id`.
+- Liste pitanja/kategorija/kvizova nemaju filter po proizvoljnom `user_id`.
+- Lista banke pitanja nema full-text/name/content pretragu; ima `type` i `category_id`.
 - Nema ugrađenog bulk povezivanja kandidata ili bulk reordering rute.
 - Nema quiz thumbnail/upload rute ni quiz `visibility` polja u ovim šemama.
-- Grupne detalje dobijaš cele; nema paginacije `group.questions` u tom odgovoru.
+- Grupne detalje dobijaš cele; nema paginacije `category.questions` u tom odgovoru.
 - Source CRUD validira vlasništvo, režim i ukupne kvote, ali čuvanje source tabele
   samo po sebi ne potvrđuje dovoljan broj različitih, popunjenih kandidata.
 - Publish PATCH ne radi kompletnu proveru svih delova kviza.
-- Ugnježdeni odgovori `group`, `question`, `groups` zavise od konteksta; nisu svi
+- Ugnježdeni odgovori `category`, `question`, `categories` zavise od konteksta; nisu svi
   jednaki detaljnim resursima. Vidi odeljke 4, 5, 7 i 8.
 - Ne tretiraj karticu nedostupnog videa kao ispunjen ili uklonjen uslov.
 - Medijske greške mogu biti generički 500 kroz requirement kontroler; frontend
@@ -1332,11 +1433,11 @@ ovog vodiča ne vraća poseban `code`.
 - [ ] UI akcije prate permisije, uključujući Owner i `_any` scope.
 - [ ] Reader/admin liste se ne tretiraju automatski kao sopstvene liste.
 - [ ] Filteri, sorting i pagination ulaze u query ključeve; novi filter vraća prvu stranu.
-- [ ] Pitanja se čitaju preko `groups: [{ id, name }]`, a upisuju preko `group_ids`.
+- [ ] Pitanja se čitaju preko `category: { id, name } | null`, a upisuju preko `category_id`.
 - [ ] Početne liste i ugnježdeni summary objekti se razlikuju od detaljnih objekata.
 - [ ] Choice i matching editori čuvaju stabilne brojeve opcija i stavki.
 - [ ] PUT članstva i izvora šalje kompletan nameravani skup, učitan sa svih strana.
-- [ ] `quiz_questions` kandidati i source grupa povezani su nezavisno i imaju istog vlasnika.
+- [ ] `quiz_questions` kandidati i source kategorija povezani su nezavisno i imaju istog vlasnika.
 - [ ] Izvori koriste jedan režim, tačan zbir i dovoljno različitih kandidata.
 - [ ] Pitanja/opcije/stavke su popunjeni pre objavljivanja.
 - [ ] Video requirement ima tačno jedan prag, a video je dostupan i odgovarajućeg trajanja.

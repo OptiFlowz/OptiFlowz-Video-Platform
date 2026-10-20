@@ -75,45 +75,30 @@ collections are used. Text and explanation are preserved unless supplied.
 To remove a referenced matching option, supply the updated item collection in
 the same PATCH; retained items cannot be left with dangling references.
 
-Create and PATCH also accept optional `group_ids`, an array of group UUIDs:
+Create and PATCH accept optional `category_id`, a single category UUID or null:
 
 ```json
-{
-  "group_ids": ["12345678-1234-4234-8234-123456789abc"]
-}
+{ "category_id": "12345678-1234-4234-8234-123456789abc" }
 ```
 
-This example is a PATCH body; creation additionally requires `type` and
-`content`. `group_ids` manages rows in `question_group_items` and is not a
-column in `questions`. Every group must exist and belong to the question owner.
-`PUT /api/quizzes/question-groups/:groupId/questions` also replaces a group's
-question memberships; see `QUESTION_GROUPS.md`.
-Missing and foreign groups both return 404. Malformed group IDs return 400.
-Duplicate IDs are normalized to lowercase and deduplicated; the composite
-membership PK also prevents duplicates.
+The category must belong to the question owner. Missing/foreign IDs return 404;
+invalid UUIDs and legacy `group_ids`/`category_ids` arrays return 400.
+Omission on PATCH preserves the category; null clears it. Moving to another
+category replaces the previous assignment. Every question has at most one category.
 
-- On creation, supplied groups are linked in the question's transaction.
-- On PATCH, supplied groups replace the membership set: new links are inserted,
-  omitted links removed, and retained links preserved.
-- Omitting `group_ids` on PATCH leaves all existing memberships untouched,
-  including when changing the question type.
-- `group_ids: []` removes all memberships.
+Detail, create, PATCH and list responses expose `category: { id, name }` or null.
+The list accepts a `category_id` UUID filter before pagination. Candidate lists
+at `/api/quizzes/:quizId/questions` include the same object inside `question`.
+`PUT /api/quizzes/question-categories/:categoryId/questions` replaces a category's
+question list and moves supplied questions out of previous categories.
 
-Detail, create and PATCH responses include the current `group_ids`, sorted by
-UUID. List responses remain question metadata. Question deletion cascades to
-memberships and preserves the groups themselves.
-
-Create, PATCH and DELETE execute in transactions. Changes to the question,
-answers and memberships roll back together on any failure. Target groups are
-validated and share-locked until commit, preventing concurrent deletion or
-owner changes during linking. PATCH locks
-the owned parent before reading children, serializing concurrent modifications.
-All reads use the primary database. Detail responses contain all three child
-arrays, sorted by position then their stable identifier; unused arrays are empty.
+Question changes and category assignment run in a transaction. Concurrent category
+membership mutations for one owner serialize with a transaction advisory lock.
+Deleting a category clears the question's category but preserves the question and answers.
 
 All question responses include `created_at` and `updated_at`. Creation initializes
 both timestamps; every successful PATCH updates `updated_at`, including changes
-to child arrays or group memberships, while preserving `created_at`. Clients cannot set these fields.
+to child arrays or category memberships, while preserving `created_at`. Clients cannot set these fields.
 For existing questions, the timestamp migration initializes both fields at the
 time it runs.
 
@@ -156,7 +141,7 @@ the requested page is empty. `totalPages` is `Math.ceil(total / limit)`;
 `hasNextPage` is `page < totalPages` and `hasPreviousPage` is `page > 1`, matching
 the replies API.
 
-Apply the questions, timestamp and question-groups migrations before using these endpoints:
+Apply the questions, timestamp and question-categories migrations before using these endpoints:
 `npm run migrate:deploy`.
 
 Run `npm run test:questions` for validation tests. Set `TEST_DATABASE_URL` to

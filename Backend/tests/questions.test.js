@@ -65,19 +65,13 @@ test('PATCH preserves omitted children and validates references against the merg
   }
 });
 
-test('group_ids is optional, validated, normalized and treated as a membership set', () => {
-  const groupId = '12345678-abcd-4234-8234-123456789abc';
-  assert.equal('group_ids' in createQuestionSchema.parse(choice), false);
-  assert.deepEqual(createQuestionSchema.parse({ ...choice, group_ids: [groupId, groupId.toUpperCase()] }).group_ids, [groupId]);
-  assert.deepEqual(updateQuestionSchema.parse({ group_ids: [] }), { group_ids: [] });
-  const existing = createQuestionSchema.parse({ ...choice, group_ids: [groupId] });
-  assert.equal('group_ids' in mergeQuestionUpdates(existing, { content: 'Updated' }), false);
-  assert.equal('group_ids' in mergeQuestionUpdates(existing, { type: 'matching' }), false);
-  assert.deepEqual(mergeQuestionUpdates(existing, { group_ids: [] }).group_ids, []);
-  for (const group_ids of [null, groupId, ['invalid'], [1], [groupId, null]]) {
-    assert.equal(createQuestionSchema.safeParse({ ...choice, group_ids }).success, false);
-    assert.equal(updateQuestionSchema.safeParse({ group_ids }).success, false);
-  }
+test('category_id is optional, nullable and accepts exactly one normalized UUID', () => {
+  const id = '12345678-abcd-4234-8234-123456789abc';
+  assert.equal(createQuestionSchema.parse({ ...choice, category_id: id.toUpperCase() }).category_id, id);
+  assert.equal(updateQuestionSchema.parse({ category_id: null }).category_id, null);
+  assert.equal(createQuestionSchema.parse(choice).category_id, undefined);
+  for (const category_id of [[], [id], '', 'bad', 1]) assert.equal(updateQuestionSchema.safeParse({ category_id }).success, false);
+  assert.equal(updateQuestionSchema.safeParse({ category_ids: [id] }).success, false);
 });
 
 test('activation rules are separate from saving drafts', () => {
@@ -98,15 +92,15 @@ test('listing uses bounded pagination and permits only known filters', () => {
   assert.deepEqual(listQuestionsSchema.parse({ type: 'matching', limit: '100', page: '2', sortBy: 'updated_at', sortOrder: 'desc' }),
     { type: 'matching', sortBy: 'updated_at', sortOrder: 'desc', page: 2, limit: 100 });
   assert.equal(listQuestionsSchema.parse({ page: 2, limit: 10 }).page, 2);
-  const groupId = '12345678-abcd-4234-8234-123456789abc';
-  assert.equal(listQuestionsSchema.parse({ group_id: groupId.toUpperCase() }).group_id, groupId);
+  const categoryId = '12345678-abcd-4234-8234-123456789abc';
+  assert.equal(listQuestionsSchema.parse({ category_id: categoryId.toUpperCase() }).category_id, categoryId);
   for (const input of [
     { limit: '0' }, { limit: '101' }, { page: '-1' }, { page: '0' }, { page: '1.5' },
     { page: String(Number.MAX_SAFE_INTEGER), limit: '100' }, { offset: '1' },
     { limit: '1.5' }, { limit: '' }, { type: 'unknown' }, { user_id: 'spoof' },
     { sortBy: 'invalid' }, { sortBy: 'created_at; DROP TABLE questions' },
     { sortOrder: 'invalid' }, { sortOrder: 'ASC' },
-    { group_id: 'invalid' }, { group_id: '' }, { group_id: [groupId] }, { group_id: null },
+    { category_id: 'invalid' }, { category_id: '' }, { category_id: [categoryId] }, { category_id: null },
   ]) assert.equal(listQuestionsSchema.safeParse(input).success, false);
 });
 
@@ -132,9 +126,9 @@ test('all handlers require login and reject invalid requests before database acc
   await assert.rejects(list({}), { status: 401 });
   await assert.rejects(remove(params), { status: 401 });
   await assert.rejects(create({ ...choice, user_id: userId }, userId), { status: 400 });
-  await assert.rejects(create({ ...choice, group_ids: ['invalid'] }, userId), { status: 400 });
+  await assert.rejects(create({ ...choice, category_ids: ['invalid'] }, userId), { status: 400 });
   await assert.rejects(update(params, {}, userId), { status: 400 });
-  await assert.rejects(update(params, { group_ids: null }, userId), { status: 400 });
+  await assert.rejects(update(params, { category_ids: null }, userId), { status: 400 });
   await assert.rejects(get({ questionId: 'bad' }, userId), { status: 400 });
   await assert.rejects(list({ limit: '101' }, userId), { status: 400 });
   await assert.rejects(remove({ questionId: 'bad' }, userId), { status: 400 });

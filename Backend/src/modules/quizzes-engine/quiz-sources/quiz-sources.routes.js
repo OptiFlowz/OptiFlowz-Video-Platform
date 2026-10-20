@@ -9,8 +9,8 @@ router.use(requireAuth);
 router.post('/', access('quizzes', 'update', { key: 'quizId' }), controller.createQuizSource);
 router.put('/', access('quizzes', 'update', { key: 'quizId' }), controller.replaceQuizSources);
 router.get('/', access('quizzes', 'read', { key: 'quizId' }), controller.getQuizSources);
-router.get('/:groupId', access('quizzes', 'read', { key: 'quizId' }), controller.getQuizSource);
-router.patch('/:groupId', access('quizzes', 'update', { key: 'quizId' }), controller.updateQuizSource);
-router.delete('/:groupId', access('quizzes', 'update', { key: 'quizId' }), controller.deleteQuizSource);
+router.get('/:sourceId', access('quizzes', 'read', { key: 'quizId' }), controller.getQuizSource);
+router.patch('/:sourceId', access('quizzes', 'update', { key: 'quizId' }), controller.updateQuizSource);
+router.delete('/:sourceId', access('quizzes', 'update', { key: 'quizId' }), controller.deleteQuizSource);
 
 export default router;

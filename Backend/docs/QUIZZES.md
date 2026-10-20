@@ -87,7 +87,7 @@ both filters. The response matches the questions/replies pagination format:
 
 `totalPages = Math.ceil(total / limit)`, `hasNextPage = page < totalPages`
 and `hasPreviousPage = page > 1`. Unknown input/query fields are rejected.
-Existing questions and question-groups endpoints retain their current paths.
+Existing questions and question-categories endpoints retain their current paths.
 
 This CRUD stores the quiz table fields; question selection, attempts,
 grading and certificate issuance are separate later workflows.

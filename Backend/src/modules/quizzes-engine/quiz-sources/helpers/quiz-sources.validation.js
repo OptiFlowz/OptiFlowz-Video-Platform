@@ -10,10 +10,10 @@ const fields = {
 const exactlyOne = input => (input.question_percentage !== null) !== (input.question_count !== null);
 const modeMessage = { message: 'Exactly one of question_percentage and question_count must be set' };
 export const quizSourcesParamsSchema = z.object({ quizId: uuid });
-export const quizSourceParamsSchema = z.object({ quizId: uuid, groupId: uuid });
+export const quizSourceParamsSchema = z.object({ quizId: uuid, sourceId: uuid });
 export const quizSourceFieldsSchema = z.object(fields).strict().refine(exactlyOne, modeMessage);
 export const createQuizSourceSchema = z.object({
-  group_id: uuid,
+  category_id: uuid.nullable(),
   position: fields.position.optional().default(0),
   question_percentage: fields.question_percentage.optional().default(null),
   question_count: fields.question_count.optional().default(null),
@@ -24,10 +24,10 @@ export const updateQuizSourceSchema = z.object(fields).partial().strict().refine
 );
 export const replaceQuizSourcesSchema = z.object({
   sources: z.array(createQuizSourceSchema).max(1000),
-}).strict().refine(input => new Set(input.sources.map(source => source.group_id)).size === input.sources.length,
-  { message: 'Each group can appear only once', path: ['sources'] });
+}).strict().refine(input => new Set(input.sources.map(source => source.category_id)).size === input.sources.length,
+  { message: 'Each category can appear only once', path: ['sources'] });
 export const listQuizSourcesSchema = z.object({
-  sortBy: z.enum(['position', 'group_id', 'question_percentage', 'question_count']).optional().default('position'),
+  sortBy: z.enum(['position', 'id', 'category_id', 'question_percentage', 'question_count']).optional().default('position'),
   sortOrder: z.enum(['asc', 'desc']).optional().default('asc'),
   page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce.number().int().min(1).max(100).optional().default(20),

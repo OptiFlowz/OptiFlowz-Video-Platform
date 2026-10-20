@@ -1,3 +1,4 @@
+import { upgradeQuestionCategories } from './helpers/question-categories-schema.js';
 import { installQuizPermissions } from './helpers/quiz-permissions-schema.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
@@ -28,11 +29,12 @@ test('question CRUD against PostgreSQL session-local tables', { skip: !process.e
   await client.query(timestampUp);
   const groupMigration = await readFile(new URL('../src/database/migrations/1791590400003_add-question-groups.sql', import.meta.url), 'utf8');
   await client.query(groupMigration.split('-- Down Migration')[0].replaceAll('public.', 'pg_temp.'));
-  const groupIds = [];
+  await upgradeQuestionCategories(client);
+  const categoryIds = [];
   for (const name of ['Group A', 'Group B', 'Group C']) {
-    groupIds.push((await client.query('INSERT INTO pg_temp.question_groups(user_id,name) VALUES ($1,$2) RETURNING id', [userId, name])).rows[0].id);
+    categoryIds.push((await client.query('INSERT INTO pg_temp.question_categories(user_id,name) VALUES ($1,$2) RETURNING id', [userId, name])).rows[0].id);
   }
-  const foreignGroup = (await client.query("INSERT INTO pg_temp.question_groups(user_id,name) VALUES ($1,'Foreign group') RETURNING id", [otherUserId])).rows[0].id;
+  const foreignCategory = (await client.query("INSERT INTO pg_temp.question_categories(user_id,name) VALUES ($1,'Foreign category') RETURNING id", [otherUserId])).rows[0].id;
   let failChildWrite = false, failGroupSync = false, failQuestionDelete = false, releases = 0;
   const database = {
     async query(sql, params) {
@@ -40,7 +42,7 @@ test('question CRUD against PostgreSQL session-local tables', { skip: !process.e
         failChildWrite = false;
         throw new Error('Injected child write failure');
       }
-      if (failGroupSync && /DELETE FROM public.question_group_items/.test(sql)) {
+      if (failGroupSync && /UPDATE public.questions SET category_id=\$2/.test(sql)) {
         failGroupSync = false;
         await client.query(sql.replaceAll('public.', 'pg_temp.'), params);
         throw new Error('Injected failure after membership removal');
@@ -122,8 +124,8 @@ test('question CRUD against PostgreSQL session-local tables', { skip: !process.e
     assert.deepEqual(choice.options.map(option => option.option_no), [5, 20]);
     assert.equal(choice.options[1].is_correct, false);
     assert.deepEqual((await request('GET', `/${choice.id}`)).question, choice);
-    assert.deepEqual(choice.groups, []);
-    assert.equal(Object.hasOwn(choice, 'group_ids'), false);
+    assert.equal(choice.category, null);
+    assert.equal(Object.hasOwn(choice, 'category_ids'), false);
     const matched = await request('POST', '', matchingBody);
     assert.equal(matched.status, 201); matching = matched.question;
     assert.ok(Number.isFinite(Date.parse(matching.created_at)));
@@ -140,7 +142,7 @@ test('question CRUD against PostgreSQL session-local tables', { skip: !process.e
     assert.deepEqual(listed.pagination, { page: 1, limit: 20, total: 2, totalPages: 1, hasNextPage: false, hasPreviousPage: false });
     assert.deepEqual(listed.sorting, { sortBy: 'created_at', sortOrder: 'asc' });
     assert.ok(listed.questions.every(question => question.user_id === userId));
-    assert.ok(listed.questions.every(question => Array.isArray(question.groups) && question.groups.length === 0 && !Object.hasOwn(question, 'group_ids')));
+    assert.ok(listed.questions.every(question => question.category === null && !Object.hasOwn(question, 'category_ids')));
     assert.ok(listed.questions.every(question => Number.isFinite(Date.parse(question.created_at)) && Number.isFinite(Date.parse(question.updated_at))));
     assert.equal('total' in listed, false); assert.equal('offset' in listed, false);
     const filtered = await request('GET', '?type=matching&limit=1&page=1');
@@ -280,150 +282,53 @@ test('question CRUD against PostgreSQL session-local tables', { skip: !process.e
     }
   });
 
-  const memberships = async questionId => (await client.query(
-    'SELECT group_id, ctid::text AS row_id FROM pg_temp.question_group_items WHERE question_id=$1 ORDER BY group_id', [questionId],
-  )).rows;
-
-  await t.test('all question types create answers and same-owner memberships atomically, deduplicating UUIDs', async () => {
-    const created = [];
+  await t.test('single categories appear on all reads, filter before pagination and preserve omitted assignment', async () => {
+    const made = [];
     for (const body of [choiceBody, { ...choiceBody, type: 'multiple_choice' }, matchingBody]) {
-      const response = await request('POST', '', { ...body, group_ids: [groupIds[0], groupIds[0].toUpperCase(), groupIds[1]] });
+      const response = await request('POST', '', { ...body, category_id: categoryIds[0].toUpperCase() });
       assert.equal(response.status, 201);
-      const question = response.question;
-      assert.deepEqual(question.groups, (await client.query('SELECT id, name FROM pg_temp.question_groups WHERE id = ANY($1::uuid[]) ORDER BY id', [groupIds.slice(0, 2)])).rows);
-      assert.equal(Object.hasOwn(question, 'group_ids'), false);
-      assert.equal((await memberships(question.id)).length, 2);
-      assert.deepEqual((await request('GET', `/${question.id}`)).question, question);
-      assert.equal(body.type === 'matching' ? question.matching_items.length : question.options.length,
-        body.type === 'matching' ? body.matching_items.length : body.options.length);
-      created.push(question);
+      assert.deepEqual(response.question.category, { id: categoryIds[0], name: 'Group A' });
+      made.push(response.question);
     }
-    assert.equal((await client.query('SELECT count(*)::int AS n FROM pg_temp.question_group_items WHERE group_id=$1', [groupIds[0]])).rows[0].n, 3);
-    const filtered = await request('GET', `?group_id=${groupIds[0].toUpperCase()}&limit=2&sortBy=type&sortOrder=asc`);
-    assert.equal(filtered.status, 200);
-    assert.equal(filtered.pagination.total, 3);
-    assert.equal(filtered.pagination.totalPages, 2);
-    assert.equal(filtered.questions.length, 2);
-    assert.ok(filtered.questions.every(question => created.some(item => item.id === question.id)));
-    const expectedGroups = (await client.query(
-      'SELECT id, name FROM pg_temp.question_groups WHERE id = ANY($1::uuid[]) ORDER BY id', [groupIds.slice(0, 2)],
-    )).rows;
-    for (const question of filtered.questions) {
-      assert.deepEqual(question.groups, expectedGroups);
-      assert.equal(Object.hasOwn(question, 'group_ids'), false);
-    }
-    const secondPage = await request('GET', `?group_id=${groupIds[0]}&limit=2&page=2&sortBy=type&sortOrder=asc`);
-    assert.equal(secondPage.questions.length, 1);
-    assert.equal(new Set([...filtered.questions, ...secondPage.questions].map(question => question.id)).size, 3);
-    const matchingOnly = await request('GET', `?group_id=${groupIds[0]}&type=matching`);
-    assert.equal(matchingOnly.pagination.total, 1);
-    assert.equal(matchingOnly.questions[0].type, 'matching');
-    for (const groupId of [groupIds[2], randomUUID()]) {
-      const empty = await request('GET', `?group_id=${groupId}`);
-      assert.deepEqual(empty.questions, []);
-      assert.equal(empty.pagination.total, 0);
-    }
-    const foreignView = await request('GET', `?group_id=${groupIds[0]}`, undefined, otherToken);
-    assert.deepEqual(foreignView.questions, []);
-    assert.equal(foreignView.pagination.total, 0);
-    assert.equal((await request('GET', '?group_id=invalid')).status, 400);
-    for (const question of created) {
-      assert.equal((await request('DELETE', `/${question.id}`)).status, 200);
-      assert.deepEqual(await memberships(question.id), []);
-    }
-    assert.equal((await client.query('SELECT count(*)::int AS n FROM pg_temp.question_groups')).rows[0].n, 4);
+    const page = await request('GET', `?category_id=${categoryIds[0]}&limit=2`);
+    assert.equal(page.pagination.total, 3);
+    assert.equal(page.questions.length, 2);
+    assert.ok(page.questions.every(q => q.category.id === categoryIds[0]));
+    assert.equal((await request('GET', `?category_id=${categoryIds[0]}&type=matching`)).pagination.total, 1);
+    assert.equal((await request('GET', `?category_id=${categoryIds[0]}`, undefined, otherToken)).pagination.total, 0);
+    assert.equal((await request('GET', `?category_id=${randomUUID()}`)).pagination.total, 0);
+    assert.equal((await request('GET', '?category_id=bad')).status, 400);
+    const id = made[0].id;
+    assert.deepEqual((await request('GET', `/${id}`)).question.category, made[0].category);
+    assert.equal((await request('PATCH', `/${id}`, { content: 'Changed' })).question.category.id, categoryIds[0]);
+    assert.equal((await request('PATCH', `/${id}`, { category_id: categoryIds[1] })).question.category.id, categoryIds[1]);
+    assert.equal((await request('PATCH', `/${id}`, { category_id: null })).question.category, null);
+    for (const q of made) assert.equal((await request('DELETE', `/${q.id}`)).status, 200);
   });
 
-  await t.test('PATCH adds and removes memberships, retains existing rows, and supports omission and an empty array', async () => {
-    const response = await request('POST', '', { ...choiceBody, group_ids: groupIds.slice(0, 2) });
-    assert.equal(response.status, 201);
-    const questionId = response.question.id;
-    const before = await memberships(questionId);
-    const omitted = await request('PATCH', `/${questionId}`, { content: 'Metadata only' });
-    assert.equal(omitted.status, 200); assert.deepEqual(omitted.question.groups.map(group => group.id), groupIds.slice(0, 2).sort());
-    assert.deepEqual(await memberships(questionId), before);
-    const changedType = await request('PATCH', `/${questionId}`, matchingBody);
-    assert.equal(changedType.status, 200); assert.deepEqual(changedType.question.groups.map(group => group.id), groupIds.slice(0, 2).sort());
-    assert.deepEqual(await memberships(questionId), before);
-    const changed = await request('PATCH', `/${questionId}`, { group_ids: [groupIds[1], groupIds[2], groupIds[1]] });
-    assert.equal(changed.status, 200); assert.deepEqual(changed.question.groups.map(group => group.id), groupIds.slice(1).sort());
-    const after = await memberships(questionId);
-    assert.equal(after.find(row => row.group_id === groupIds[1]).row_id, before.find(row => row.group_id === groupIds[1]).row_id);
-    const repeated = await request('PATCH', `/${questionId}`, { group_ids: groupIds.slice(1) });
-    assert.equal(repeated.status, 200); assert.deepEqual(await memberships(questionId), after);
-    const cleared = await request('PATCH', `/${questionId}`, { group_ids: [] });
-    assert.equal(cleared.status, 200); assert.deepEqual(cleared.question.groups.map(group => group.id), []);
-    assert.deepEqual(await memberships(questionId), []);
-    assert.equal(cleared.question.type, 'matching');
-    assert.equal(cleared.question.matching_items.length, matchingBody.matching_items.length);
-    assert.equal((await request('DELETE', `/${questionId}`)).status, 200);
-  });
-
-  await t.test('missing and foreign group IDs reject the whole request while preserving existing question data', async () => {
-    const counts = async () => (await client.query(`SELECT
-      (SELECT count(*)::int FROM pg_temp.questions) AS questions,
-      (SELECT count(*)::int FROM pg_temp.question_options) AS options,
-      (SELECT count(*)::int FROM pg_temp.question_group_items) AS memberships`)).rows[0];
-    const beforeCreate = await counts();
-    for (const invalidGroup of [randomUUID(), foreignGroup]) {
-      const invalid = await request('POST', '', { ...choiceBody, group_ids: [groupIds[0], invalidGroup] });
-      assert.equal(invalid.status, 404);
-      assert.deepEqual(await counts(), beforeCreate);
+  await t.test('foreign or missing categories and legacy arrays are rejected atomically', async () => {
+    const question = await create({ ...choiceBody, category_id: categoryIds[0] }, userId);
+    for (const category_id of [foreignCategory, randomUUID()]) {
+      assert.equal((await request('PATCH', `/${question.id}`, { content: 'Must rollback', category_id })).status, 404);
+      assert.equal((await request('POST', '', { ...choiceBody, category_id })).status, 404);
     }
-    const response = await request('POST', '', { ...choiceBody, group_ids: groupIds.slice(0, 2) });
-    const question = response.question;
-    const links = await memberships(question.id);
-    for (const invalidGroup of [randomUUID(), foreignGroup]) {
-      const invalid = await request('PATCH', `/${question.id}`, {
-        content: 'Must not be saved', options: [], group_ids: [groupIds[2], invalidGroup],
-      });
-      assert.equal(invalid.status, 404);
-      assert.deepEqual((await request('GET', `/${question.id}`)).question, question);
-      assert.deepEqual(await memberships(question.id), links);
-    }
-    assert.equal((await request('PATCH', `/${question.id}`, { group_ids: [foreignGroup] }, otherToken)).status, 404);
-    for (const group_ids of [null, 'not-an-array', ['invalid-uuid']]) {
-      assert.equal((await request('POST', '', { ...choiceBody, group_ids })).status, 400);
-      assert.equal((await request('PATCH', `/${question.id}`, { group_ids })).status, 400);
-    }
-    assert.equal((await request('DELETE', `/${question.id}`)).status, 200);
-  });
-
-  await t.test('membership write failure rolls back the question, answers, links and timestamp together', async () => {
-    const count = async () => (await client.query('SELECT count(*)::int AS n FROM pg_temp.questions')).rows[0].n;
-    const beforeCreate = await count(), releasedBefore = releases;
-    failGroupSync = true;
-    await assert.rejects(create({ ...choiceBody, group_ids: groupIds.slice(0, 2) }, userId), /Injected failure after membership removal/);
-    assert.equal(await count(), beforeCreate);
-    assert.equal((await client.query('SELECT count(*)::int AS n FROM pg_temp.question_group_items')).rows[0].n, 0);
-    const question = await create({ ...choiceBody, group_ids: groupIds.slice(0, 2) }, userId);
-    const links = await memberships(question.id);
-    failGroupSync = true;
-    await assert.rejects(update({ questionId: question.id }, {
-      content: 'Must roll back', options: [], group_ids: groupIds.slice(1),
-    }, userId), /Injected failure after membership removal/);
-    // Handler returns Date timestamps; compare the read through the same handler.
+    assert.equal((await request('PATCH', `/${question.id}`, { category_ids: categoryIds })).status, 400);
     const { getQuestionInternal: get } = await import('../src/modules/quizzes-engine/questions/handlers/getQuestion.js');
     assert.deepEqual(await get({ questionId: question.id }, userId), question);
-    assert.deepEqual(await memberships(question.id), links);
-    assert.equal(releases, releasedBefore + 3);
-    assert.equal((await request('DELETE', `/${question.id}`)).status, 200);
+    failGroupSync = true;
+    await assert.rejects(update({ questionId: question.id }, { category_id: categoryIds[1], content: 'Rollback' }, userId), /Injected failure/);
+    assert.deepEqual(await get({ questionId: question.id }, userId), question);
   });
 
-  await t.test('DELETE runs transactionally, restores cascaded data on failure and preserves groups on success', async () => {
-    const question = await create({ ...matchingBody, group_ids: groupIds.slice(0, 2) }, userId);
-    const links = await memberships(question.id);
-    const releasedBefore = releases;
+  await t.test('DELETE rolls back answer cascades on failure and preserves categories on success', async () => {
+    const question = await create({ ...matchingBody, category_id: categoryIds[0] }, userId);
     failQuestionDelete = true;
-    await assert.rejects(remove({ questionId: question.id }, userId), /Injected failure after question deletion/);
+    await assert.rejects(remove({ questionId: question.id }, userId), /Injected failure/);
     const { getQuestionInternal: get } = await import('../src/modules/quizzes-engine/questions/handlers/getQuestion.js');
     assert.deepEqual(await get({ questionId: question.id }, userId), question);
-    assert.deepEqual(await memberships(question.id), links);
-    assert.equal(releases, releasedBefore + 1);
-    assert.deepEqual(await remove({ questionId: question.id }, userId), { deleted: true });
-    assert.deepEqual(await memberships(question.id), []);
-    assert.equal((await client.query('SELECT count(*)::int AS n FROM pg_temp.question_matching_items WHERE question_id=$1', [question.id])).rows[0].n, 0);
-    assert.equal((await client.query('SELECT count(*)::int AS n FROM pg_temp.question_groups WHERE id=ANY($1::uuid[])', [groupIds])).rows[0].n, 3);
+    await remove({ questionId: question.id }, userId);
+    assert.equal((await client.query('SELECT * FROM pg_temp.question_matching_items WHERE question_id=$1', [question.id])).rowCount, 0);
+    assert.equal((await client.query('SELECT * FROM pg_temp.question_categories WHERE id=$1', [categoryIds[0]])).rowCount, 1);
   });
 
   await t.test('timestamp migration down removes only its columns and indexes', async () => {

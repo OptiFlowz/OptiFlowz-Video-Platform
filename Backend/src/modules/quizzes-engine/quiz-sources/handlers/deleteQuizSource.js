@@ -6,9 +6,9 @@ import { deleteQuizSource } from '../repository/quiz-sources.repository.js';
 
 export async function deleteQuizSourceInternal(params, userId) {
   requireQuizSourceUser(userId);
-  const { quizId, groupId } = validateOrThrow(quizSourceParamsSchema.safeParse(params));
-  return withQuizSourceTransaction(quizId, [groupId], userId, async client => {
-    if (!await deleteQuizSource(client, quizId, groupId)) throw new HttpError(404, { message: 'Quiz source not found' });
+  const { quizId, sourceId } = validateOrThrow(quizSourceParamsSchema.safeParse(params));
+  return withQuizSourceTransaction(quizId, [], userId, async client => {
+    if (!await deleteQuizSource(client, quizId, sourceId)) throw new HttpError(404, { message: 'Quiz source not found' });
     return { deleted: true };
   });
 }

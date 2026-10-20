@@ -3,13 +3,13 @@ import { mock, test } from 'node:test';
 import { sourceQuotas, selectAttemptQuestions, snapshotAttemptQuestions, publicAttempt } from '../src/modules/quizzes-engine/quiz-attempts/helpers/attemptQuestions.js';
 
 const stable = n => n - 1;
-const candidate = (id, group_ids = [], position = 0) => ({ id, group_ids, position, max_points: 2 });
-const source = (group_id, question_count, position = 0) => ({ group_id, question_count, question_percentage: null, position });
+const candidate = (id, category_id = null, position = 0) => ({ id, category_id, position, max_points: 2 });
+const source = (category_id, question_count, position = 0) => ({ category_id, question_count, question_percentage: null, position });
 const settings = (question_count, shuffle_questions = false) => ({ question_count, shuffle_questions, shuffle_options: false });
 
-test('largest remainder quotas use exact hundredths and deterministic position/group tie breaks', () => {
-  const percentage = (group_id, question_percentage, position = 0) => ({ group_id, question_percentage, question_count: null, position });
-  assert.deepEqual(sourceQuotas([percentage('b', 50), percentage('a', 50)], 3).map(s => [s.group_id, s.quota]), [['a', 2], ['b', 1]]);
+test('largest remainder quotas use exact hundredths and deterministic position/category tie breaks', () => {
+  const percentage = (category_id, question_percentage, position = 0) => ({ category_id, question_percentage, question_count: null, position });
+  assert.deepEqual(sourceQuotas([percentage('b', 50), percentage('a', 50)], 3).map(s => [s.category_id, s.quota]), [['a', 2], ['b', 1]]);
   assert.deepEqual(sourceQuotas([percentage('a', 50, 1), percentage('b', 50)], 3).map(s => s.quota), [2, 1]);
   const thirds = [percentage('a', 33.33), percentage('b', 33.33), percentage('c', 33.34)];
   assert.deepEqual(sourceQuotas(thirds, 2).map(s => s.quota), [1, 0, 1]);
@@ -21,33 +21,18 @@ test('largest remainder quotas use exact hundredths and deterministic position/g
   }
 });
 
-test('overlapping quotas use augmenting paths rather than greedy selection', () => {
-  const pool = [candidate('a', ['wide', 'narrow']), candidate('b', ['wide']), candidate('c', [])];
-  const selected = selectAttemptQuestions(pool, [source('wide', 1, 0), source('narrow', 1, 1)], settings(2), stable);
-  assert.deepEqual(selected.map(q => [q.id, q.source_group_id]), [['a', 'narrow'], ['b', 'wide']]);
-  assert.throws(() => selectAttemptQuestions([candidate('a', ['x', 'y']), candidate('b')],
-    [source('x', 1), source('y', 1)], settings(2), stable), { status: 422 });
-});
-
-test('quota matcher agrees with brute-force feasibility for every 3-by-3 membership graph', () => {
-  const groups = ['g0', 'g1', 'g2'];
-  for (let mask = 0; mask < 512; mask++) {
-    const pool = [0, 1, 2].map(q => candidate(`q${q}`, groups.filter((_, g) => mask & (1 << (q * 3 + g)))));
-    const possible = pool.some(a => pool.some(b => pool.some(c => a !== b && a !== c && b !== c
-      && a.group_ids.includes('g0') && b.group_ids.includes('g1') && c.group_ids.includes('g2'))));
-    if (!possible) {
-      assert.throws(() => selectAttemptQuestions(pool, groups.map(g => source(g, 1)), settings(3), stable), { status: 422 });
-    } else {
-      const chosen = selectAttemptQuestions(pool, groups.map(g => source(g, 1)), settings(3), stable);
-      assert.equal(new Set(chosen.map(q => q.id)).size, 3);
-      assert.equal(new Set(chosen.map(q => q.source_group_id)).size, 3);
-      assert.ok(chosen.every(q => q.group_ids.includes(q.source_group_id)));
-    }
-  }
+test('category quotas select distinct candidates and uncategorized quotas never consume other categories', () => {
+  const pool = [candidate('a', 'x'), candidate('b', 'y'), candidate('c', null)];
+  const selected = selectAttemptQuestions(pool, [source('x', 1), source(null, 1)], settings(2), stable);
+  assert.deepEqual(selected.map(q => q.id), ['a', 'c']);
+  assert.throws(() => selectAttemptQuestions(pool, [source(null, 2)], settings(2), stable), { status: 422 });
+  assert.throws(() => selectAttemptQuestions(pool, [source('x', 2)], settings(2), stable), { status: 422 });
+  assert.throws(() => sourceQuotas([source(null, 1), source(null, 1)], 2), { status: 422 });
+  assert.equal(sourceQuotas([{category_id:null,position:0,question_percentage:100,question_count:null}],3)[0].quota,3);
 });
 
 test('selection is random independently of display ordering and never mutates the candidate pool', () => {
-  const pool = [candidate('b', [], 0), candidate('a', [], 0), candidate('c', [], 1)];
+  const pool = [candidate('b', null, 0), candidate('a', null, 0), candidate('c', null, 1)];
   assert.deepEqual(selectAttemptQuestions(pool, [], settings(2), stable).map(q => q.id), ['a', 'b']);
   assert.deepEqual(selectAttemptQuestions(pool, [], settings(2), () => 0).map(q => q.id), ['a', 'c']);
   assert.deepEqual(pool.map(q => q.id), ['b', 'a', 'c']);
@@ -60,7 +45,7 @@ test('snapshots preserve answer IDs and shuffle positions; public output contain
     matching_options: [{ option_no: 1, content: 'A', position: 1 }, { option_no: 2, content: 'B', position: 2 }],
     matching_items: [{ item_no: 1, content: 'X', correct_option_no: 2, position: 1 }, { item_no: 2, content: 'Y', correct_option_no: 1, position: 2 }],
   };
-  const snapshots = snapshotAttemptQuestions([{ ...candidate('a'), source_group_id: null, question_snapshot: question }], { shuffle_options: true }, () => 0);
+  const snapshots = snapshotAttemptQuestions([{ ...candidate('a'), source_category_id: null, question_snapshot: question }], { shuffle_options: true }, () => 0);
   assert.equal(snapshots[0].question_snapshot.matching_options[0].option_no, 2);
   assert.equal(snapshots[0].question_snapshot.matching_options[0].position, 1);
   assert.equal(snapshots[0].question_snapshot.matching_items[0].correct_option_no, 1);
@@ -68,7 +53,7 @@ test('snapshots preserve answer IDs and shuffle positions; public output contain
   const response = publicAttempt({ settings_snapshot: { scoring_mode: 'partial_credit' }, questions: snapshots });
   assert.equal(response.settings.scoring_mode, 'partial_credit');
   assert.equal(Object.hasOwn(response, 'questions'), false);
-  assert.doesNotMatch(JSON.stringify(response), /correct_option_no|is_correct|explanation|source_group_id|question_snapshot/);
+  assert.doesNotMatch(JSON.stringify(response), /correct_option_no|is_correct|explanation|source_category_id|question_snapshot/);
 });
 
 let calls = 0;

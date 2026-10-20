@@ -28,7 +28,7 @@ test('invalid quiz settings, readonly fields and future membership fields are re
     undefined, null, {}, { title: 'Quiz' }, { ...body, title: ' ' }, { ...body, title: 'x'.repeat(256) },
     { ...body, status: 'unknown' }, { ...body, user_id: 'spoof' }, { ...body, id: 'spoof' },
     { ...body, created_at: '2026-01-01' }, { ...body, updated_at: '2026-01-01' },
-    { ...body, question_ids: [] }, { ...body, group_ids: [] }, { ...body, description: 1 },
+    { ...body, question_ids: [] }, { ...body, category_ids: [] }, { ...body, description: 1 },
     { ...body, shuffle_questions: 'false' }, { ...body, shuffle_options: 0 }, { ...body, has_certificate: null },
   ];
   for (const field of ['question_count', 'time_limit_seconds', 'max_attempts']) {

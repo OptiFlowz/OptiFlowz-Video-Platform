@@ -7,6 +7,6 @@ export async function replaceQuizSourcesInternal(params, body, userId) {
   requireQuizSourceUser(userId);
   const { quizId } = validateOrThrow(quizSourcesParamsSchema.safeParse(params));
   const { sources } = validateOrThrow(replaceQuizSourcesSchema.safeParse(body));
-  return withQuizSourceTransaction(quizId, sources.map(source => source.group_id), userId,
+  return withQuizSourceTransaction(quizId, sources.map(source => source.category_id), userId,
     async client => ({ sources: await replaceQuizSources(client, quizId, userId, sources) }));
 }

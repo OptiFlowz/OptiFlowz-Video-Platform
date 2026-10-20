@@ -48,7 +48,7 @@ export async function startQuizAttemptInternal(quizId, userId) {
     const sources = await getAttemptSources(client, quiz.id);
     const candidates = await getAttemptQuestionPool(client, quiz.id);
     if ([...sources, ...candidates].some(row => row.user_id !== quiz.user_id)) {
-      throw attemptError(422, 'INVALID_QUIZ_CONFIGURATION', 'Quiz questions and source groups must belong to the quiz owner');
+      throw attemptError(422, 'INVALID_QUIZ_CONFIGURATION', 'Quiz questions and source categories must belong to the quiz owner');
     }
     validateCandidates(candidates);
     const selected = selectAttemptQuestions(candidates, sources, settings);
