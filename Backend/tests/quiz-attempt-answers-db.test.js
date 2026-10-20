@@ -33,13 +33,25 @@ test('save answers: authentication, snapshots, grading, feedback and concurrent 
   await installQuizPermissions(admin, { schema });
   await admin.query('INSERT INTO users(id) VALUES ($1)', [noPermission]);
   let failWrite = false, expireBeforeWrite = false, onLock = null;
+  let failSubmit = false, expireBeforeSubmit = false, pauseSubmit = null;
   const queryOn = database => async (sql, params) => {
     if (sql.includes('FOR UPDATE')) onLock?.();
+    if (sql.includes("UPDATE public.quiz_attempts a SET status='submitted'")) {
+      if (pauseSubmit) await pauseSubmit();
+      if (expireBeforeSubmit) {
+        expireBeforeSubmit = false;
+        await database.query(`UPDATE ${schema}.quiz_attempts SET expires_at=clock_timestamp() WHERE id=$1`, [params[0]]);
+      }
+    }
     if (expireBeforeWrite && sql.includes('INSERT INTO public.quiz_attempt_answers')) {
       expireBeforeWrite = false;
       await database.query(`UPDATE ${schema}.quiz_attempts SET expires_at=clock_timestamp() WHERE id=$1`, [params[0]]);
     }
     const result = await database.query(sql.replaceAll('public.', `${schema}.`), params);
+    if (failSubmit && sql.includes("UPDATE public.quiz_attempts a SET status='submitted'")) {
+      failSubmit = false;
+      throw new Error('Injected submit failure');
+    }
     if (failWrite && sql.includes('INSERT INTO public.quiz_attempt_answers')) { failWrite = false; throw new Error('Injected answer write failure'); }
     return result;
   };
@@ -53,6 +65,8 @@ test('save answers: authentication, snapshots, grading, feedback and concurrent 
   const token = tokenFor(owner);
   const { quizAttemptAnswerRoutes } = await import('../src/modules/quizzes-engine/quiz-attempts/quiz-attempts.routes.js');
   const { saveQuizAttemptAnswerInternal: save } = await import('../src/modules/quizzes-engine/quiz-attempts/handlers/saveQuizAttemptAnswer.js');
+  const { submitQuizAttemptInternal: submit } = await import('../src/modules/quizzes-engine/quiz-attempts/handlers/submitQuizAttempt.js');
+  const { getQuizAttemptsInternal: listAttempts } = await import('../src/modules/quizzes-engine/quiz-attempts/handlers/getQuizAttempts.js');
   const app = express();
   app.use(express.json());
   app.use('/api/quiz-attempts', quizAttemptAnswerRoutes);
@@ -82,6 +96,184 @@ test('save answers: authentication, snapshots, grading, feedback and concurrent 
     });
     return { status: response.status, body: await response.json(), cache: response.headers.get('cache-control') };
   }
+
+  async function submitRequest(id, bearer = token) {
+    const response = await fetch(`http://127.0.0.1:${server.address().port}/api/quiz-attempts/${id}/submit`, {
+      method: 'POST', headers: bearer ? { Authorization: `Bearer ${bearer}` } : {},
+    });
+    return { status: response.status, body: await response.json(), cache: response.headers.get('cache-control') };
+  }
+  const attemptRow = async id => (await admin.query('SELECT * FROM quiz_attempts WHERE id=$1', [id])).rows[0];
+  async function addQuestion(id, number, points = 3) {
+    await admin.query('INSERT INTO quiz_attempt_questions(attempt_id,question_no,question_snapshot,max_points) VALUES($1,$2,$3,$4)',
+      [id, number, answerSnapshot(), points]);
+  }
+
+  await t.test('submit requires authentication, permission, ownership, in_progress and an unexpired deadline', async () => {
+    const { id } = await fixture();
+    assert.equal((await submitRequest(id, null)).status, 401);
+    assert.equal((await submitRequest(id, tokenFor(noPermission))).status, 403);
+    assert.equal((await submitRequest(id, tokenFor(other))).status, 404);
+    assert.equal((await submitRequest(randomUUID())).body.code, 'ATTEMPT_NOT_FOUND');
+    assert.equal((await submitRequest('bad')).status, 400);
+    for (const status of ['submitted', 'timed_out', 'cancelled']) {
+      await admin.query('UPDATE quiz_attempts SET status=$2 WHERE id=$1', [id, status]);
+      assert.equal((await submitRequest(id)).body.code, 'ATTEMPT_NOT_IN_PROGRESS');
+    }
+    await admin.query("UPDATE quiz_attempts SET status='in_progress',expires_at=clock_timestamp() WHERE id=$1", [id]);
+    assert.equal((await submitRequest(id)).body.code, 'ATTEMPT_EXPIRED');
+    assert.equal((await attemptRow(id)).status, 'in_progress');
+    assert.equal((await attemptRow(id)).earned_points, null);
+  });
+
+  await t.test('submission requirements count checked answers and fully correct questions against all snapshot questions', async () => {
+    const { id } = await fixture('multiple_choice', { min_answered_percentage: 100, min_correct_percentage: 100,
+      scoring_mode: 'partial_credit', allow_answer_changes_after_check: true });
+    await addQuestion(id, 2);
+    await admin.query(`INSERT INTO quiz_attempt_answers(attempt_id,question_no,answer) VALUES($1,2,'{"option_no":1}')`, [id]);
+    await request(id, { option_nos: [1] });
+    const before = await attemptRow(id);
+    assert.equal((await submitRequest(id)).body.code, 'MIN_ANSWERED_PERCENTAGE_NOT_MET');
+    assert.deepEqual(await attemptRow(id), before);
+    await request(id, { option_no: 1 }, { questionNo: 2 });
+    assert.equal((await submitRequest(id)).body.code, 'MIN_CORRECT_PERCENTAGE_NOT_MET');
+    assert.deepEqual(await attemptRow(id), before);
+    await request(id, { option_nos: [1, 2] });
+    assert.equal((await submitRequest(id)).status, 200);
+    assert.equal((await attemptRow(id)).earned_points, '6.00');
+  });
+
+  await t.test('thresholds use exact ratios and snapshot settings; returned object matches list with partial credit and unanswered weights', async () => {
+    const { id, quizId } = await fixture('multiple_choice', { min_answered_percentage: 33.34, min_correct_percentage: 0,
+      scoring_mode: 'partial_credit', passing_score_percentage: 30 });
+    await addQuestion(id, 2, 1);
+    await addQuestion(id, 3, 1);
+    await request(id, { option_nos: [1] }); // 1.5 / 5 points, 1 / 3 questions answered.
+    await admin.query('UPDATE quizzes SET min_answered_percentage=0,passing_score_percentage=99,question_count=100 WHERE id=$1', [quizId]);
+    assert.equal((await submitRequest(id)).body.code, 'MIN_ANSWERED_PERCENTAGE_NOT_MET');
+    await admin.query(`UPDATE quiz_attempts SET settings_snapshot=settings_snapshot || '{"min_answered_percentage":33.33}' WHERE id=$1`, [id]);
+    const answersBefore = await stored(id);
+    const response = await submitRequest(id.toUpperCase());
+    assert.equal(response.status, 200);
+    assert.equal(response.cache, 'private, no-store');
+    assert.equal(response.body.status, 'submitted');
+    assert.equal(response.body.earned_points, 1.5);
+    assert.equal(response.body.max_points, 5);
+    assert.equal(response.body.score_percentage, 30);
+    assert.equal(response.body.passed, true);
+    assert.ok(response.body.finished_at);
+    assert.deepEqual(await stored(id), answersBefore);
+    const listed = (await listAttempts(quizId, {}, owner)).attempts[0];
+    const { success, ...returned } = response.body;
+    assert.equal(success, true);
+    // JSONB timestamps may use a different ISO representation than pg Date values.
+    for (const key of ['started_at', 'expires_at', 'finished_at']) {
+      if (listed[key]) listed[key] = new Date(listed[key]).toISOString();
+    }
+    assert.deepEqual(returned, listed);
+    assert.equal((await submitRequest(id)).body.code, 'ATTEMPT_NOT_IN_PROGRESS');
+    assert.equal((await request(id, { option_nos: [1, 2] })).body.code, 'ATTEMPT_NOT_IN_PROGRESS');
+  });
+
+  await t.test('correctness threshold denominator includes unanswered questions; score rounds to two decimals before passing comparison', async () => {
+    const { id } = await fixture('single_choice', { min_correct_percentage: 33.34, passing_score_percentage: 33.33 });
+    await addQuestion(id, 2);
+    await addQuestion(id, 3);
+    await request(id);
+    assert.equal((await submitRequest(id)).body.code, 'MIN_CORRECT_PERCENTAGE_NOT_MET');
+    await admin.query(`UPDATE quiz_attempts SET settings_snapshot=settings_snapshot || '{"min_correct_percentage":33.33}' WHERE id=$1`, [id]);
+    const result = await submitRequest(id);
+    assert.equal(result.body.score_percentage, 33.33);
+    assert.equal(result.body.passed, true);
+    const failed = await fixture('single_choice', { passing_score_percentage: 33.34 });
+    await addQuestion(failed.id, 2);
+    await addQuestion(failed.id, 3);
+    await request(failed.id);
+    assert.equal((await submitRequest(failed.id)).body.passed, false);
+  });
+
+  await t.test('zero thresholds permit unanswered submission; show_final_score hides returned scores but stores them', async () => {
+    const { id } = await fixture('single_choice', { show_final_score: false });
+    const result = await submitRequest(id);
+    assert.equal(result.status, 200);
+    assert.equal(result.body.earned_points, null);
+    assert.equal(result.body.score_percentage, null);
+    assert.equal(result.body.passed, null);
+    assert.equal(result.body.max_points, 3);
+    const saved = await attemptRow(id);
+    assert.equal(saved.earned_points, '0.00');
+    assert.equal(saved.score_percentage, '0.00');
+    assert.equal(saved.passed, false);
+  });
+
+  await t.test('invalid snapshots, empty pools and incomplete grades reject without finalizing', async () => {
+    for (const invalid of ['settings', 'empty', 'grade']) {
+      const { id } = await fixture();
+      if (invalid === 'settings') await admin.query("UPDATE quiz_attempts SET settings_snapshot='{}' WHERE id=$1", [id]);
+      if (invalid === 'empty') await admin.query('DELETE FROM quiz_attempt_questions WHERE attempt_id=$1', [id]);
+      if (invalid === 'grade') await admin.query(`INSERT INTO quiz_attempt_answers(attempt_id,question_no,answer,checked_at)
+        VALUES($1,1,'{"option_no":1}',clock_timestamp())`, [id]);
+      assert.equal((await submitRequest(id)).status, 422);
+      assert.equal((await attemptRow(id)).status, 'in_progress');
+      assert.equal((await attemptRow(id)).finished_at, null);
+    }
+  });
+
+  await t.test('submit rollback and write-time expiration preserve state and allow a later retry', async () => {
+    const { id } = await fixture();
+    await request(id);
+    const before = await attemptRow(id);
+    failSubmit = true;
+    await assert.rejects(submit(id, owner), /Injected submit failure/);
+    assert.deepEqual(await attemptRow(id), before);
+    expireBeforeSubmit = true;
+    assert.equal((await submitRequest(id)).body.code, 'ATTEMPT_EXPIRED');
+    assert.deepEqual(await attemptRow(id), before);
+    assert.equal((await submitRequest(id)).status, 200);
+  });
+
+  await t.test('parallel submit calls finalize only once; a waiting answer cannot change the committed total', async () => {
+    const first = await fixture();
+    assert.deepEqual((await Promise.all([submitRequest(first.id), submitRequest(first.id)])).map(result => result.status).sort(), [200, 409]);
+    const { id } = await fixture('single_choice', { allow_answer_changes_after_check: true });
+    await request(id, { option_no: 2 });
+    let release, reached, waiting;
+    const blocked = new Promise(resolve => { release = resolve; });
+    const atUpdate = new Promise(resolve => { reached = resolve; });
+    pauseSubmit = async () => { reached(); await blocked; };
+    const pendingSubmit = submitRequest(id);
+    await atUpdate;
+    const atLock = new Promise(resolve => { waiting = resolve; });
+    onLock = waiting;
+    const pendingAnswer = request(id, { option_no: 1 });
+    try { await atLock; } finally { pauseSubmit = null; onLock = null; release(); }
+    assert.equal((await pendingSubmit).body.earned_points, 0);
+    assert.equal((await pendingAnswer).body.code, 'ATTEMPT_NOT_IN_PROGRESS');
+    assert.equal((await stored(id))[0].awarded_points, '0.00');
+  });
+
+  await t.test('submit waits for an in-flight answer and checks status/deadline after acquiring its lock', async () => {
+    for (const change of ['answer', 'expired', 'submitted']) {
+      const { id } = await fixture('single_choice', { min_answered_percentage: 100 });
+      const blocker = await pool.connect();
+      await blocker.query('BEGIN');
+      await blocker.query(`SELECT id FROM ${schema}.quiz_attempts WHERE id=$1 FOR UPDATE`, [id]);
+      let reached;
+      const atLock = new Promise(resolve => { reached = resolve; });
+      onLock = reached;
+      const pending = submitRequest(id);
+      try {
+        await atLock;
+        if (change === 'answer') await blocker.query(`INSERT INTO ${schema}.quiz_attempt_answers
+          (attempt_id,question_no,answer,checked_at,is_correct,awarded_points) VALUES($1,1,'{"option_no":1}',clock_timestamp(),true,3)`, [id]);
+        else await blocker.query(`UPDATE ${schema}.quiz_attempts SET ${change === 'expired' ? 'expires_at=clock_timestamp()' : "status='submitted'"} WHERE id=$1`, [id]);
+        await blocker.query('COMMIT');
+      } finally { onLock = null; await blocker.query('ROLLBACK'); blocker.release(); }
+      const result = await pending;
+      if (change === 'answer') { assert.equal(result.status, 200); assert.equal(result.body.earned_points, 3); }
+      else assert.equal(result.body.code, change === 'expired' ? 'ATTEMPT_EXPIRED' : 'ATTEMPT_NOT_IN_PROGRESS');
+    }
+  });
 
   await t.test('GET authenticates, scopes to the attempt owner and validates IDs', async () => {
     const { id } = await fixture();

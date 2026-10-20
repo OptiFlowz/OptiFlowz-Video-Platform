@@ -1,4 +1,5 @@
 export const answerSettings = {
+  min_answered_percentage: 0, min_correct_percentage: 0, passing_score_percentage: 50,
   scoring_mode: 'exact_match', correctness_visibility: 'after_finish',
   correct_answers_visibility: 'after_finish', explanation_visibility: 'after_finish',
   explanation_incorrect_only: false, allow_answer_changes_after_check: false,

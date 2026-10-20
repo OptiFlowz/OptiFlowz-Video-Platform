@@ -2,11 +2,13 @@ import { requirePermission } from '../../authorization/authorization.middleware.
 import { Permissions } from '../../authorization/permission.constants.js';
 import express from 'express';
 import { requireAuth } from '../../../middleware/auth.js';
-import { getQuizEligibility, startQuizAttempt, getQuizAttempts, saveQuizAttemptAnswer, getQuizAttemptQuestions } from './quiz-attempts.controller.js';
+import { getQuizEligibility, startQuizAttempt, getQuizAttempts, saveQuizAttemptAnswer, getQuizAttemptQuestions, submitQuizAttempt } from './quiz-attempts.controller.js';
 
 const router = express.Router();
 // Attempt resources use /api/quiz-attempts; quiz-scoped operations stay below.
 export const quizAttemptAnswerRoutes = express.Router();
+quizAttemptAnswerRoutes.post('/:attemptId/submit', requireAuth,
+  requirePermission(Permissions.QUIZZES_PARTICIPATE), submitQuizAttempt);
 quizAttemptAnswerRoutes.get('/:attemptId/questions', requireAuth,
   requirePermission(Permissions.QUIZZES_PARTICIPATE), getQuizAttemptQuestions);
 quizAttemptAnswerRoutes.put('/:attemptId/answers/:questionNo', requireAuth,

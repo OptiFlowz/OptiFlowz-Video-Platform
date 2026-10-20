@@ -6,7 +6,8 @@ export async function withQuizQuestionTransaction(quizId, questionId, userId, op
   const client = await writePool.connect();
   try {
     await client.query('BEGIN ISOLATION LEVEL READ COMMITTED');
-    // The database ownership trigger uses the same quiz-before-question lock order.
+    // Serialize candidate writes per quiz, using the ownership trigger's
+    // quiz-before-question lock order. Reads do not take this write lock.
     if (!await getOwnedQuiz(client, quizId, userId, true)) throw new HttpError(404, { message: 'Quiz not found' });
     if (!await lockOwnedQuestion(client, questionId, userId)) throw new HttpError(404, { message: 'Question not found' });
     const result = await operation(client);
@@ -19,6 +20,9 @@ export async function withQuizQuestionTransaction(quizId, questionId, userId, op
     }
     if (error.code === '23514' && error.constraint === 'quiz_questions_same_user_check') {
       throw new HttpError(400, { message: 'The question and quiz must belong to the same user' });
+    }
+    if (['40P01', '40001'].includes(error.code)) {
+      throw new HttpError(409, { message: 'Quiz questions changed concurrently; retry the request' });
     }
     throw error;
   } finally { client.release(); }

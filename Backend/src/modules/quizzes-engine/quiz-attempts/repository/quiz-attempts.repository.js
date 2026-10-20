@@ -1,3 +1,51 @@
+// Shared projection keeps submit and list responses, including score visibility, identical.
+const ATTEMPT_RESPONSE_FIELDS = `
+  a.id, a.quiz_id, a.attempt_no, a.status, a.started_at, a.expires_at, a.finished_at,
+  a.max_points::double precision AS max_points, a.settings_snapshot AS settings,
+  CASE WHEN a.status IN ('submitted', 'timed_out') AND a.settings_snapshot->>'show_final_score' = 'true'
+    THEN a.earned_points::double precision END AS earned_points,
+  CASE WHEN a.status IN ('submitted', 'timed_out') AND a.settings_snapshot->>'show_final_score' = 'true'
+    THEN a.score_percentage::double precision END AS score_percentage,
+  CASE WHEN a.status IN ('submitted', 'timed_out') AND a.settings_snapshot->>'show_final_score' = 'true'
+    THEN a.passed END AS passed`;
+
+export async function getAttemptSubmissionSummary(database, attemptId, settings) {
+  const { rows } = await database.query(`
+    WITH totals AS (
+      SELECT count(*)::integer AS total_questions,
+        count(*) FILTER (WHERE ans.checked_at IS NOT NULL)::integer AS answered_questions,
+        count(*) FILTER (WHERE ans.checked_at IS NOT NULL AND ans.is_correct=true)::integer AS correct_questions,
+        COALESCE(sum(ans.awarded_points) FILTER (WHERE ans.checked_at IS NOT NULL), 0) AS earned_points,
+        COALESCE(sum(q.max_points), 0) AS max_points,
+        COALESCE(bool_or(q.max_points <= 0 OR (ans.checked_at IS NOT NULL AND (
+          ans.is_correct IS NULL OR ans.awarded_points IS NULL OR ans.awarded_points < 0 OR ans.awarded_points > q.max_points
+        ))), false) AS invalid_grading
+      FROM public.quiz_attempt_questions q
+      LEFT JOIN public.quiz_attempt_answers ans ON ans.attempt_id=q.attempt_id AND ans.question_no=q.question_no
+      WHERE q.attempt_id=$1
+    ), scored AS (
+      SELECT *, round(earned_points / NULLIF(max_points, 0) * 100, 2) AS score_percentage,
+        answered_questions::numeric * 100 >= total_questions::numeric * $2::numeric AS answered_requirement_met,
+        correct_questions::numeric * 100 >= total_questions::numeric * $3::numeric AS correct_requirement_met
+      FROM totals
+    )
+    SELECT *, score_percentage >= $4::numeric AS passed FROM scored
+  `, [attemptId, settings.min_answered_percentage, settings.min_correct_percentage, settings.passing_score_percentage]);
+  return rows[0];
+}
+
+export async function submitAttempt(database, attemptId, summary) {
+  const { rows } = await database.query(`
+    WITH finished AS (SELECT clock_timestamp() AS at)
+    UPDATE public.quiz_attempts a SET status='submitted', finished_at=finished.at,
+      earned_points=$2, max_points=$3, score_percentage=$4, passed=$5
+    FROM finished
+    WHERE a.id=$1 AND a.status='in_progress' AND (a.expires_at IS NULL OR a.expires_at > finished.at)
+    RETURNING ${ATTEMPT_RESPONSE_FIELDS}
+  `, [attemptId, summary.earned_points, summary.max_points, summary.score_percentage, summary.passed]);
+  return rows[0] || null;
+}
+
 export async function getOwnedAttemptWithQuestions(database, attemptId, userId) {
   // One statement gives the attempt, snapshots and answers a consistent read;
   // use the primary pool so a reload sees the participant's latest saved answer.
@@ -61,14 +109,7 @@ export async function listQuizAttempts(database, quizId, userId, { status, limit
     WITH visible_quiz AS (
       SELECT id FROM public.quizzes WHERE id = $1 AND (status = 'published' OR user_id = $2)
     ), owned_attempts AS (
-      SELECT a.id, a.quiz_id, a.attempt_no, a.status, a.started_at, a.expires_at, a.finished_at,
-        a.max_points::double precision AS max_points, a.settings_snapshot AS settings,
-        CASE WHEN a.status IN ('submitted', 'timed_out') AND a.settings_snapshot->>'show_final_score' = 'true'
-          THEN a.earned_points::double precision END AS earned_points,
-        CASE WHEN a.status IN ('submitted', 'timed_out') AND a.settings_snapshot->>'show_final_score' = 'true'
-          THEN a.score_percentage::double precision END AS score_percentage,
-        CASE WHEN a.status IN ('submitted', 'timed_out') AND a.settings_snapshot->>'show_final_score' = 'true'
-          THEN a.passed END AS passed
+      SELECT ${ATTEMPT_RESPONSE_FIELDS}
       FROM public.quiz_attempts a JOIN visible_quiz q ON q.id = a.quiz_id
       WHERE a.user_id = $2 AND ($3::public.quiz_attempt_status IS NULL OR a.status = $3)
     ), page AS (

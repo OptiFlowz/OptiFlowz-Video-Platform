@@ -233,3 +233,78 @@ poslednjih odgovora. Ne ocenjuje ponovo, ne menja timestampove, rezultate niti
 status. Zato istekli pokušaj može i dalje imati `status: "in_progress"`, uz
 `is_expired: true`; za feedback se tretira kao završen uz dozvolu pregleda.
 Odgovor koristi `Cache-Control: private, no-store`.
+
+## Predaja pokušaja
+
+`POST /api/quiz-attempts/:attemptId/submit`
+
+Body nije potreban. Zahteva autentifikaciju, `quizzes.participate` i vlasništvo
+pokušaja. Samo `in_progress` pokušaj kome vreme nije isteklo može da se preda.
+
+Predaja koristi pitanja i već sačuvane ocene pokušaja, bez ponovnog ocenjivanja:
+
+- `total_questions`: stvarni broj redova u `quiz_attempt_questions`.
+- `answered_questions`: broj odgovora sa `checked_at IS NOT NULL`.
+- `correct_questions`: broj ocenjenih odgovora sa `is_correct = true`.
+- Oba minimalna procenta računaju se prema **svim pitanjima**, ne samo odgovorenim.
+- Pragovi `min_answered_percentage` i `min_correct_percentage` uzimaju se iz
+  `settings_snapshot` i porede bez zaokruživanja. Na primer, 1 od 3 pitanja
+  ispunjava prag 33.33%, ali ne 33.34%.
+
+Ako neki uslov nije ispunjen, vraća se `409` i kod
+`MIN_ANSWERED_PERCENTAGE_NOT_MET` ili `MIN_CORRECT_PERCENTAGE_NOT_MET`.
+Status, vreme završetka i rezultati pokušaja ostaju neizmenjeni. Ako su oba praga
+nula, dozvoljena je predaja bez odgovora, uz nula osvojenih bodova.
+
+Uspešna predaja u jednoj transakciji upisuje:
+
+- `status = submitted` i `finished_at` prema trenutnom vremenu baze.
+- `earned_points`: zbir `awarded_points` ocenjenih odgovora; neodgovorena i
+  neocenjena pitanja doprinose nulom.
+- `max_points`: zbir težina **svih** pitanja iz `quiz_attempt_questions`.
+- `score_percentage`: `earned_points / max_points * 100`, zaokruženo na dve decimale.
+- `passed`: poređenje sačuvanog procenta sa `settings_snapshot.passing_score_percentage`.
+
+Vraća `200 OK` i jedan attempt objekat na vrhu odgovora, uz `success: true`.
+Polja su ista kao za jedan element `attempts` niza u
+`GET /api/quizzes/:quizId/attempts`:
+
+```json
+{
+  "success": true,
+  "id": "7b72a061-48a3-43db-b987-de31db8ad258",
+  "quiz_id": "6305aac5-08be-4aa7-bc7d-0e485d3c9bcb",
+  "attempt_no": 1,
+  "status": "submitted",
+  "started_at": "2026-10-20T12:00:00.000Z",
+  "expires_at": "2026-10-20T12:30:00.000Z",
+  "finished_at": "2026-10-20T12:20:00.000Z",
+  "max_points": 10,
+  "earned_points": 7.5,
+  "score_percentage": 75,
+  "passed": true,
+  "settings": {
+    "min_answered_percentage": 100,
+    "min_correct_percentage": 0,
+    "passing_score_percentage": 70,
+    "show_final_score": true
+  }
+}
+```
+
+`settings` je u primeru skraćen; ruta vraća ceo sačuvani `settings_snapshot`.
+Kada je `show_final_score = false`, `earned_points`, `score_percentage` i `passed`
+u odgovoru su `null`, ali su stvarne vrednosti upisane u bazu. Pitanja, odgovori
+i broj tačnih pitanja se ne vraćaju u submit odgovoru.
+
+Ostale greške: `400` neispravan UUID, `401` bez autentifikacije, `403` bez
+permisije, `404 ATTEMPT_NOT_FOUND` za nepostojeći ili tuđ pokušaj,
+`409 ATTEMPT_NOT_IN_PROGRESS` za završen/otkazan pokušaj,
+`409 ATTEMPT_EXPIRED` za istek, `409 ATTEMPT_CONFLICT` za konflikt transakcija,
+`422 INVALID_ATTEMPT_SETTINGS` za neispravna podešavanja i
+`422 INVALID_ATTEMPT_RESULTS` za prazan skup pitanja ili neispravne ocene/težine.
+
+Submit zaključava isti red pokušaja kao PUT odgovora i ponovo proverava rok pri
+upisu. Ponovljeni submit već predatog pokušaja vraća `409`, a dalja izmena
+odgovora nije dozvoljena. Istek se ovom rutom ne finalizuje automatski.
+Odgovor ima `Cache-Control: private, no-store`.

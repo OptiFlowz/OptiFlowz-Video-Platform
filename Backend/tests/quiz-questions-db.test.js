@@ -8,6 +8,53 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import pg from 'pg';
 
+test('parallel candidate moves read positions after the quiz lock and preserve a serial ordering', { skip: !process.env.TEST_DATABASE_URL }, async t => {
+  const schema = `quiz_move_${randomUUID().replaceAll('-', '')}`;
+  const admin = new pg.Client({ connectionString: process.env.TEST_DATABASE_URL, statement_timeout: 5000 });
+  await admin.connect();
+  const pool = new pg.Pool({ connectionString: process.env.TEST_DATABASE_URL, max: 2, statement_timeout: 5000 });
+  t.after(async () => {
+    await pool.end();
+    try { await admin.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`); } finally { await admin.end(); }
+  });
+  await admin.query(`CREATE SCHEMA ${schema}`);
+  await admin.query(`CREATE TABLE ${schema}.users(id uuid PRIMARY KEY)`);
+  for (const file of ['1791590400001_add-questions.sql', '1791590400004_add-quizzes.sql', '1792281600000_add-quiz-questions.sql']) {
+    const sql = (await readFile(new URL(`../src/database/migrations/${file}`, import.meta.url), 'utf8')).replaceAll('public.', `${schema}.`);
+    await admin.query(sql.split('-- Down Migration')[0]);
+  }
+  const userId = randomUUID(), quizId = randomUUID(), ids = Array.from({ length: 4 }, () => randomUUID());
+  await admin.query(`INSERT INTO ${schema}.users VALUES($1)`, [userId]);
+  await admin.query(`INSERT INTO ${schema}.quizzes(id,user_id,title,question_count) VALUES($1,$2,'Quiz',4)`, [quizId, userId]);
+  for (const [position, id] of ids.entries()) {
+    await admin.query(`INSERT INTO ${schema}.questions(id,user_id,type,content) VALUES($1,$2,'single_choice','Question')`, [id, userId]);
+    await admin.query(`INSERT INTO ${schema}.quiz_questions(quiz_id,question_id,position) VALUES($1,$2,$3)`, [quizId, id, position]);
+  }
+  const { getOwnedQuiz, updateQuizQuestion } = await import('../src/modules/quizzes-engine/quiz-questions/repository/quiz-questions.repository.js');
+  const wrap = client => ({ query: (sql, params) => client.query(sql.replaceAll('public.', `${schema}.`), params) });
+  const first = await pool.connect();
+  const second = await pool.connect();
+  try {
+    await first.query('BEGIN');
+    await getOwnedQuiz(wrap(first), quizId, userId, true);
+    await second.query('BEGIN');
+    const pending = (async () => {
+      await getOwnedQuiz(wrap(second), quizId, userId, true);
+      await updateQuizQuestion(wrap(second), quizId, ids[2], userId, { position: 1 });
+      await second.query('COMMIT');
+    })();
+    await updateQuizQuestion(wrap(first), quizId, ids[3], userId, { position: 0 });
+    await first.query('COMMIT');
+    await pending;
+    const { rows } = await admin.query(`SELECT question_id,position FROM ${schema}.quiz_questions ORDER BY position`);
+    assert.deepEqual(rows.map(row => row.question_id), [ids[3], ids[2], ids[0], ids[1]]);
+    assert.deepEqual(rows.map(row => row.position), [0, 1, 2, 3]);
+  } finally {
+    await first.query('ROLLBACK'); await second.query('ROLLBACK');
+    first.release(); second.release();
+  }
+});
+
 test('quiz candidate migration and CRUD against session-local PostgreSQL tables', { skip: !process.env.TEST_DATABASE_URL }, async t => {
   const client = new pg.Client({ connectionString: process.env.TEST_DATABASE_URL, connectionTimeoutMillis: 5000, statement_timeout: 10000 });
   await client.connect();
@@ -15,7 +62,7 @@ test('quiz candidate migration and CRUD against session-local PostgreSQL tables'
   await client.query('SET search_path TO pg_temp, public');
   await client.query("CREATE TEMP TABLE users (id uuid PRIMARY KEY, status text DEFAULT 'active', authz_version integer DEFAULT 1)");
   let migration;
-  for (const file of ['1791590400001_add-questions.sql', '1791590400004_add-quizzes.sql', '1792281600000_add-quiz-questions.sql']) {
+  for (const file of ['1791590400001_add-questions.sql', '1791590400003_add-question-groups.sql', '1791590400004_add-quizzes.sql', '1792281600000_add-quiz-questions.sql']) {
     const sql = (await readFile(new URL(`../src/database/migrations/${file}`, import.meta.url), 'utf8')).replaceAll('public.', 'pg_temp.');
     await client.query(sql.split('-- Down Migration')[0]);
     migration = sql;
@@ -23,12 +70,16 @@ test('quiz candidate migration and CRUD against session-local PostgreSQL tables'
   const owner = randomUUID(), other = randomUUID();
   await client.query('INSERT INTO users(id) VALUES ($1),($2)', [owner, other]);
   await installQuizPermissions(client);
-  let failAfterInsert = false, releases = 0;
+  let failAfterInsert = false, failAfterMove = false, releases = 0;
   const query = async (sql, params) => {
     const result = await client.query(sql.replaceAll('public.', 'pg_temp.'), params);
     if (failAfterInsert && /INSERT INTO public.quiz_questions/.test(sql)) {
       failAfterInsert = false;
       throw new Error('Injected failure after insert');
+    }
+    if (failAfterMove && /WITH current_question AS/.test(sql)) {
+      failAfterMove = false;
+      throw new Error('Injected failure after move');
     }
     return result;
   };
@@ -42,6 +93,7 @@ test('quiz candidate migration and CRUD against session-local PostgreSQL tables'
   const otherToken = jwt.sign({ sub: other, authzVersion: 1 }, process.env.JWT_SECRET);
   const { default: router } = await import('../src/modules/quizzes-engine/quizzes-engine.routes.js');
   const { createQuizQuestionInternal: create } = await import('../src/modules/quizzes-engine/quiz-questions/handlers/createQuizQuestion.js');
+  const { updateQuizQuestionInternal: update } = await import('../src/modules/quizzes-engine/quiz-questions/handlers/updateQuizQuestion.js');
   const app = express();
   app.use(express.json());
   app.use('/api/quizzes', router);
@@ -128,12 +180,19 @@ test('quiz candidate migration and CRUD against session-local PostgreSQL tables'
       assert.equal((await request('POST', id, '', { question_id: qid, position: index === 2 ? 1 : 0, max_points: index + 1 })).status, 201);
     }
     const expected = [...ids.slice(0, 2)].sort().concat(ids[2]);
+    const groups = [{ id: randomUUID(), name: 'Group A' }, { id: randomUUID(), name: 'Group B' }].sort((a, b) => a.id.localeCompare(b.id));
+    for (const group of groups) {
+      await client.query('INSERT INTO pg_temp.question_groups(id,user_id,name) VALUES($1,$2,$3)', [group.id, owner, group.name]);
+      await client.query('INSERT INTO pg_temp.question_group_items(group_id,question_id) VALUES($1,$2)', [group.id, expected[1]]);
+    }
     const listing = await request('GET', id);
     assert.equal(listing.questions.length, 3);
     assert.deepEqual(listing.questions.map(row => row.question_id), expected);
+    assert.deepEqual(listing.questions.map(row => row.question.groups), [[], groups, []]);
     assert.deepEqual(listing.sorting, { sortBy: 'position', sortOrder: 'asc' });
     const page = await request('GET', id, '?page=2&limit=1');
     assert.equal(page.questions[0].question_id, expected[1]);
+    assert.deepEqual(page.questions[0].question.groups, groups);
     assert.deepEqual(page.pagination, { page: 2, limit: 1, total: 3, totalPages: 3, hasNextPage: true, hasPreviousPage: true });
     for (const sortBy of ['position', 'max_points', 'question_id']) {
       for (const sortOrder of ['asc', 'desc']) {
@@ -152,6 +211,60 @@ test('quiz candidate migration and CRUD against session-local PostgreSQL tables'
     const empty = await request('GET', await quiz());
     assert.deepEqual(empty.questions, []);
     assert.equal(empty.pagination.total, 0);
+  });
+
+  await t.test('moving a question shifts only the affected range, preserves weights and rolls back atomically', async () => {
+    const id = await quiz(), otherQuiz = await quiz();
+    const ids = [];
+    for (let position = 0; position < 5; position++) {
+      const qid = await question();
+      ids.push(qid);
+      await request('POST', id, '', { question_id: qid, position, max_points: position + 1 });
+    }
+    await request('POST', otherQuiz, '', { question_id: ids[4], position: 4, max_points: 9 });
+    const list = async () => (await request('GET', id)).questions;
+    let moved = await request('PATCH', id, `/${ids[4]}`, { position: 1, max_points: 7.5 });
+    assert.equal(moved.status, 200);
+    let rows = await list();
+    assert.deepEqual(rows.map(row => row.question_id), [ids[0], ids[4], ids[1], ids[2], ids[3]]);
+    assert.deepEqual(rows.map(row => row.position), [0, 1, 2, 3, 4]);
+    assert.deepEqual(rows.map(row => row.max_points), [1, 7.5, 2, 3, 4]);
+    moved = await request('PATCH', id, `/${ids[4]}`, { position: 4 });
+    assert.equal(moved.quiz_question.max_points, 7.5);
+    rows = await list();
+    assert.deepEqual(rows.map(row => row.question_id), ids);
+    assert.deepEqual(rows.map(row => row.position), [0, 1, 2, 3, 4]);
+    await request('PATCH', id, `/${ids[4]}`, { position: 4 });
+    assert.deepEqual(await list(), rows);
+    await request('PATCH', id, `/${ids[4]}`, { max_points: 8 });
+    assert.deepEqual((await list()).map(row => row.position), [0, 1, 2, 3, 4]);
+    assert.equal((await request('GET', otherQuiz, `/${ids[4]}`)).quiz_question.position, 4);
+    const before = await list();
+    const unlinked = await question();
+    assert.equal((await request('PATCH', id, `/${unlinked}`, { position: 0 })).status, 404);
+    assert.deepEqual(await list(), before);
+    failAfterMove = true;
+    await assert.rejects(update({ quizId: id, questionId: ids[4] }, { position: 0, max_points: 99 }, owner), /Injected failure after move/);
+    assert.deepEqual(await list(), before);
+    await request('PATCH', id, `/${ids[4]}`, { position: 0 });
+    assert.deepEqual((await list()).map(row => row.position), [0, 1, 2, 3, 4]);
+  });
+
+  await t.test('moves preserve sparse positions and safely shift duplicate positions and integer boundaries', async () => {
+    const id = await quiz();
+    const ids = [];
+    for (const position of [0, 2, 2, 2147483647]) {
+      const qid = await question(); ids.push(qid);
+      await request('POST', id, '', { question_id: qid, position });
+    }
+    const positions = async () => {
+      const rows = (await request('GET', id)).questions;
+      return ids.map(qid => rows.find(row => row.question_id === qid).position);
+    };
+    assert.equal((await request('PATCH', id, `/${ids[3]}`, { position: 2 })).status, 200);
+    assert.deepEqual(await positions(), [0, 3, 3, 2]);
+    assert.equal((await request('PATCH', id, `/${ids[3]}`, { position: 2147483647 })).status, 200);
+    assert.deepEqual(await positions(), [0, 2, 2, 2147483647]);
   });
 
   await t.test('invalid payloads, IDs and queries are rejected without changing the link', async () => {

@@ -4,7 +4,7 @@ const COLUMNS = `qq.quiz_id, qq.question_id, qq.position,
 
 export async function getOwnedQuiz(database, quizId, userId, lock = false) {
   const { rows } = await database.query(`
-    SELECT id FROM public.quizzes WHERE id = $1 AND user_id = $2 ${lock ? 'FOR SHARE' : ''}
+    SELECT id FROM public.quizzes WHERE id = $1 AND user_id = $2 ${lock ? 'FOR NO KEY UPDATE' : ''}
   `, [quizId, userId]);
   return rows[0] || null;
 }
@@ -38,8 +38,17 @@ export async function listQuizQuestions(database, quizId, userId, { limit, offse
       WHERE qq.quiz_id = $1 AND quiz.user_id = $2 AND q.user_id = $2
     ), page AS (
       SELECT * FROM owned_questions ORDER BY ${ordering} LIMIT $3 OFFSET $4
+    ), enriched_page AS (
+      SELECT page.quiz_id, page.question_id, page.position, page.max_points,
+        page.question || jsonb_build_object('groups', COALESCE((
+          SELECT jsonb_agg(jsonb_build_object('id', g.id, 'name', g.name) ORDER BY g.id)
+          FROM public.question_group_items gi
+          JOIN public.question_groups g ON g.id = gi.group_id
+          WHERE gi.question_id = page.question_id AND g.user_id = $2
+        ), '[]'::jsonb)) AS question
+      FROM page
     )
-    SELECT COALESCE((SELECT jsonb_agg(to_jsonb(page) ORDER BY ${ordering}) FROM page), '[]'::jsonb) AS questions,
+    SELECT COALESCE((SELECT jsonb_agg(to_jsonb(enriched_page) ORDER BY ${ordering}) FROM enriched_page), '[]'::jsonb) AS questions,
       (SELECT count(*)::integer FROM owned_questions) AS total
   `, [quizId, userId, limit, offset]);
   return rows[0];
@@ -53,12 +62,29 @@ export async function createQuizQuestion(database, quizId, userId, input) {
 }
 
 export async function updateQuizQuestion(database, quizId, questionId, userId, updates) {
+  // The transaction holds the quiz lock before reading the old position, so
+  // concurrent moves cannot calculate shifts from the same stale ordering.
   const { rowCount } = await database.query(`
+    WITH current_question AS (
+      SELECT qq.position FROM public.quiz_questions qq
+      JOIN public.quizzes quiz ON quiz.id = qq.quiz_id
+      JOIN public.questions q ON q.id = qq.question_id
+      WHERE qq.quiz_id = $1 AND qq.question_id = $2 AND quiz.user_id = $3 AND q.user_id = $3
+      FOR UPDATE OF qq
+    )
     UPDATE public.quiz_questions qq
-    SET position = COALESCE($4::integer, qq.position), max_points = COALESCE($5::numeric, qq.max_points)
-    FROM public.quizzes quiz, public.questions q
-    WHERE qq.quiz_id = $1 AND qq.question_id = $2 AND quiz.id = qq.quiz_id AND q.id = qq.question_id
-      AND quiz.user_id = $3 AND q.user_id = $3
+    SET position = CASE
+      WHEN qq.question_id = $2 THEN COALESCE($4::integer, qq.position)
+      WHEN $4 < current_question.position THEN qq.position + 1
+      ELSE qq.position - 1
+    END,
+    max_points = CASE WHEN qq.question_id = $2 THEN COALESCE($5::numeric, qq.max_points) ELSE qq.max_points END
+    FROM current_question
+    WHERE qq.quiz_id = $1 AND (
+      qq.question_id = $2
+      OR ($4 < current_question.position AND qq.position >= $4 AND qq.position < current_question.position)
+      OR ($4 > current_question.position AND qq.position > current_question.position AND qq.position <= $4)
+    )
   `, [quizId, questionId, userId, updates.position ?? null, updates.max_points ?? null]);
   return rowCount ? getQuizQuestion(database, quizId, questionId, userId) : null;
 }

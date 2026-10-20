@@ -682,6 +682,11 @@ učitaj `/questions/:questionId` uz odgovarajuću question read permisiju.
 GET lista ima zajedničku paginaciju i `sortBy`: `position` (default), `max_points`,
 `question_id`; `sortOrder`: `asc` (default) ili `desc`. Nema dodatnih filtera.
 
+Svaki element GET liste dodatno sadrži `question.groups: [{ "id": "uuid-grupe",
+"name": "Naziv grupe" }]`. Vraćaju se sve grupe tog pitanja, sortirane po ID-ju;
+ako pitanje nema grupe, `question.groups` je `[]`. Članstvo u više grupa ne
+duplira pitanja i ne utiče na paginaciju.
+
 PATCH menja `position` i/ili `max_points`:
 
 ```json
@@ -689,9 +694,20 @@ PATCH menja `position` i/ili `max_points`:
 ```
 
 Ne menja `question_id` niti sadržaj originalnog pitanja. Za drag-and-drop pošalji
-PATCH za veze čije su se pozicije promenile. Ne postoji posebna bulk reorder ruta.
+jedan PATCH za pomereno pitanje, sa njegovom novom `position`, pa ponovo učitaj
+listu. Ostala pitanja u zahvaćenom rasponu pomeraju se automatski:
+
+- Sa veće na manju poziciju (npr. 4 → 1): pitanja na pozicijama `[1, 4)` dobijaju `+1`.
+- Sa manje na veću (npr. 1 → 4): pitanja na pozicijama `(1, 4]` dobijaju `-1`.
+- Ista pozicija ili PATCH samo za `max_points`: redosled ostaje isti.
+
+Promene su u jednoj transakciji; paralelne izmene istog kviza se serijalizuju.
+`max_points` ostalih pitanja se ne menja. Odgovor i dalje vraća samo izmenjenu
+vezu kao `quiz_question`. Ne postoji posebna bulk reorder ruta.
 Pozicije kreću od 0, za razliku od odgovora unutar pitanja čije pozicije kreću od 1.
 Jednake pozicije su dozvoljene; za liste dodatni kriterijum je `question_id ASC`.
+Postojeće rupe i jednake pozicije se ne normalizuju. Već započeti pokušaji
+zadržavaju sačuvani redosled pitanja.
 
 DELETE briše **samo vezu**, čuva originalno pitanje i njegova članstva.
 Dodavanje/uklanjanje kandidata ne menja automatski `quiz.question_count` ni izvore.

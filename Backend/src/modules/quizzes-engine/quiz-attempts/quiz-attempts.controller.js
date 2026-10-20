@@ -4,6 +4,18 @@ import { startQuizAttemptInternal } from './handlers/startQuizAttempt.js';
 import { getQuizAttemptsInternal } from './handlers/getQuizAttempts.js';
 import { saveQuizAttemptAnswerInternal } from './handlers/saveQuizAttemptAnswer.js';
 import { getQuizAttemptQuestionsInternal } from './handlers/getQuizAttemptQuestions.js';
+import { submitQuizAttemptInternal } from './handlers/submitQuizAttempt.js';
+
+export async function submitQuizAttempt(req, res) {
+  res.set('Cache-Control', 'private, no-store');
+  try {
+    return sendSuccess(res, await submitQuizAttemptInternal(req.params.attemptId, req.user?.sub));
+  } catch (error) {
+    if (!error.status || error.status >= 500) console.error('submitQuizAttempt error:', error);
+    return sendError(res, error.status && error.status < 500 ? error.message : 'Unable to submit the quiz attempt', error.status || 500,
+      error.status && error.status < 500 && error.body?.code ? { code: error.body.code } : {});
+  }
+}
 
 export async function getQuizAttemptQuestions(req, res) {
   res.set('Cache-Control', 'private, no-store');
