@@ -9,6 +9,7 @@ import commentRoutes from '../modules/comments/comments.routes.js';
 import postCommentRoutes from '../modules/post-comments/post-comments.routes.js';
 import channelRoutes from '../modules/channels/channel.routes.js';
 import quizzesEngineRoutes from '../modules/quizzes-engine/quizzes-engine.routes.js';
+import { quizAttemptAnswerRoutes } from '../modules/quizzes-engine/quiz-attempts/quiz-attempts.routes.js';
 import collectionRoutes from '../modules/collections/collections.routes.js';
 import analyticsRoutes from '../modules/analytics/analytics.routes.js';
 import roleRoutes from '../modules/roles/role.routes.js';
@@ -31,6 +32,7 @@ export function registerRoutes(app) {
   app.use('/api/post-comments', postCommentRoutes);
   app.use('/api/channels',channelRoutes);
   app.use('/api/quizzes', quizzesEngineRoutes);
+  app.use('/api/quiz-attempts', quizAttemptAnswerRoutes);
   app.use('/api/collections', collectionRoutes);
   app.use('/api/analytics',analyticsRoutes);
   app.use('/api/roles', roleRoutes);

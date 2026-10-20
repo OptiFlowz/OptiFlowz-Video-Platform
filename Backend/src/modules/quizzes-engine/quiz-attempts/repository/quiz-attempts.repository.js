@@ -1,3 +1,58 @@
+export async function getOwnedAttemptWithQuestions(database, attemptId, userId) {
+  // One statement gives the attempt, snapshots and answers a consistent read;
+  // use the primary pool so a reload sees the participant's latest saved answer.
+  const { rows } = await database.query(`
+    SELECT a.id, a.status, a.expires_at, a.settings_snapshot,
+      a.expires_at IS NOT NULL AND a.expires_at <= statement_timestamp() AS expired,
+      COALESCE((SELECT jsonb_agg(jsonb_build_object(
+        'question_no', q.question_no, 'question_id', q.question_id,
+        'max_points', q.max_points, 'question_snapshot', q.question_snapshot,
+        'saved_answer', CASE WHEN ans.attempt_id IS NULL THEN NULL ELSE to_jsonb(ans) END
+      ) ORDER BY q.question_no)
+        FROM public.quiz_attempt_questions q
+        LEFT JOIN public.quiz_attempt_answers ans
+          ON ans.attempt_id=q.attempt_id AND ans.question_no=q.question_no
+        WHERE q.attempt_id=a.id), '[]'::jsonb) AS questions
+    FROM public.quiz_attempts a WHERE a.id=$1 AND a.user_id=$2
+  `, [attemptId, userId]);
+  return rows[0] || null;
+}
+
+export async function lockOwnedAttempt(database, attemptId, userId) {
+  const { rows } = await database.query('SELECT * FROM public.quiz_attempts WHERE id=$1 AND user_id=$2 FOR UPDATE', [attemptId, userId]);
+  return rows[0] || null;
+}
+
+export async function isAttemptExpired(database, attemptId) {
+  const { rows } = await database.query('SELECT expires_at IS NOT NULL AND expires_at <= clock_timestamp() AS expired FROM public.quiz_attempts WHERE id=$1', [attemptId]);
+  return rows[0].expired;
+}
+
+export async function getAttemptQuestion(database, attemptId, questionNo) {
+  const { rows } = await database.query('SELECT * FROM public.quiz_attempt_questions WHERE attempt_id=$1 AND question_no=$2', [attemptId, questionNo]);
+  return rows[0] || null;
+}
+
+export async function getSavedAttemptAnswer(database, attemptId, questionNo) {
+  const { rows } = await database.query('SELECT * FROM public.quiz_attempt_answers WHERE attempt_id=$1 AND question_no=$2', [attemptId, questionNo]);
+  return rows[0] || null;
+}
+
+export async function upsertAttemptAnswer(database, attemptId, questionNo, answer, grade) {
+  const { rows } = await database.query(`
+    WITH checked AS (SELECT clock_timestamp() AS at)
+    INSERT INTO public.quiz_attempt_answers (attempt_id, question_no, answer, checked_at, is_correct, awarded_points, updated_at)
+    SELECT a.id, $2, $3::jsonb, checked.at, $4, $5, checked.at
+    FROM public.quiz_attempts a CROSS JOIN checked
+    WHERE a.id=$1 AND a.status='in_progress' AND (a.expires_at IS NULL OR a.expires_at > checked.at)
+    ON CONFLICT (attempt_id, question_no) DO UPDATE SET
+      answer=EXCLUDED.answer, checked_at=EXCLUDED.checked_at, is_correct=EXCLUDED.is_correct,
+      awarded_points=EXCLUDED.awarded_points, updated_at=EXCLUDED.updated_at
+    RETURNING *
+  `, [attemptId, questionNo, JSON.stringify(answer), grade.is_correct, grade.awarded_points]);
+  return rows[0] || null;
+}
+
 export async function listQuizAttempts(database, quizId, userId, { status, limit, offset, sortBy, sortOrder }) {
   const fields = { started_at: 'started_at', finished_at: 'finished_at', attempt_no: 'attempt_no', status: 'status' };
   const direction = sortOrder === 'asc' ? 'ASC' : 'DESC';
