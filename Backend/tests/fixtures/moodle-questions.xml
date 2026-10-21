@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+  <question type="category"><category><text>$course$/top/Programiranje/Osnove</text></category></question>
+  <question type="multichoice">
+    <name><text>Single choice example</text></name>
+    <questiontext format="html"><text><![CDATA[<p>Šta znači A & B?</p>]]></text></questiontext>
+    <generalfeedback format="html"><text><![CDATA[<p>Objašnjenje čćžšđ.</p>]]></text></generalfeedback>
+    <defaultgrade>2.75</defaultgrade><single>true</single><shuffleanswers>1</shuffleanswers>
+    <answer fraction="100" format="html"><text><![CDATA[<b>Tačno</b>]]></text><feedback format="html"><text>Bravo!</text></feedback></answer>
+    <answer fraction="0" format="html"><text>Netačno</text></answer>
+  </question>
+  <question type="multichoice">
+    <name><text>Multiple choice example</text></name>
+    <questiontext format="html"><text>Izaberi dva odgovora</text></questiontext>
+    <defaultgrade>4</defaultgrade><single>false</single>
+    <answer fraction="50" format="html"><text>A</text></answer>
+    <answer fraction="50" format="html"><text>B</text></answer>
+    <answer fraction="-100" format="html"><text>C</text></answer>
+  </question>
+  <question type="category"><category><text>$course$/top</text></category></question>
+  <question type="matching">
+    <name><text>Matching example</text></name>
+    <questiontext format="html"><text>Poveži grad i državu</text></questiontext>
+    <defaultgrade>3</defaultgrade>
+    <subquestion format="html"><text>Beograd</text><answer><text>Srbija</text></answer></subquestion>
+    <subquestion format="html"><text>Novi Sad</text><answer><text>Srbija</text></answer></subquestion>
+    <subquestion format="html"><text>Pariz</text><answer><text>Francuska</text></answer></subquestion>
+    <subquestion format="html"><text></text><answer><text>Italija</text></answer></subquestion>
+  </question>
+</quiz>

@@ -207,10 +207,14 @@ Pitanje ima `max_points`: pozitivan broj do 99999999.99, sa najviše dve decimal
 POST podrazumeva `1`, PATCH menja vrednost samo kada je poslata, a GET pojedinačnog
 pitanja, liste i pitanja unutar kategorije vraćaju ovu vrednost.
 
+Uvoz/izvoz banke preko Moodle XML-a: [ugovor, primeri i ograničenja](QUESTIONS_MOODLE_IMPORT_EXPORT.md).
+
 ### 4.1. Rute
 
 | Metoda | Putanja | Rezultat |
 | --- | --- | --- |
+| POST | `/questions/import` | 201, `{ success, imported_count, questions, warnings }` |
+| GET | `/questions/export` | 200, XML attachment |
 | POST | `/questions` | 201, `{ success, question }` |
 | GET | `/questions` | 200, `{ success, questions, pagination, sorting }` |
 | GET | `/questions/:questionId` | 200, `{ success, question }` |
