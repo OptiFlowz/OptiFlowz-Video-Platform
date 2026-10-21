@@ -30,6 +30,7 @@ test('candidate cards edit points inline and send only the moved question positi
   let drag, resolveOrder, rejectOrder, rejectPoints = false, allowRemove = true, canEditQuestion = true;
   const styles = new Proxy({}, { get: (_, key) => String(key) });
   const mocks = {
+    '~/functions': { formatDuration: seconds => String(seconds) },
     '~/i18n': { useI18n: () => ({ t: (key, params) => key === 'quizDragQuestion' ? `Drag question ${params.position}` : key }) }, '~/constants': { AddSVG: '+', MenuSVG: '=', EditSVG: 'pencil' },
     '@dnd-kit/core': {
       DndContext: props => { drag = props; return props.children; }, DragOverlay: () => null,

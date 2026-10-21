@@ -46,7 +46,7 @@ html:is([lang="ar"], [lang="he"], [lang="fa"], [lang="ur"]) :where(
   --background1: var(--background);
   --background2: var(--backgroundC1);
   --background15: rgba(39, 41, 53, 0.15);
-  --background3: var(--backgroundC2);
+  --background3: var(--background2);
   --background4: #11141a;
 
   --backgroundGradient1: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 25%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0.04) 75%);

@@ -313,7 +313,7 @@ function EditQuizSourcesPopup({
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          className="cursor-pointer rounded-full border border-(--border1) bg-(--background1) px-3 py-1.5 text-sm transition-colors hover:bg-(--background3)"
+                          className="cursor-pointer rounded-full border border-(--border1) bg-(--background1) px-3 py-1.5 text-sm transition-colors hover:bg-(--background2)"
                           onClick={() => {
                             setSuccessMessage(null);
                             setEditingSource(source);
@@ -340,7 +340,7 @@ function EditQuizSourcesPopup({
 
               <button
                 type="button"
-                className="flex cursor-pointer items-center gap-3 self-start rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 text-sm font-medium transition-colors hover:bg-(--background3)"
+                className="flex cursor-pointer items-center gap-3 self-start rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 text-sm font-medium transition-colors hover:bg-(--background2)"
                 title={t("quizAddSource")}
                 aria-label={t("quizAddSource")}
                 onClick={() => {

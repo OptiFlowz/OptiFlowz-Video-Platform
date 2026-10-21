@@ -184,7 +184,7 @@
   color: var(--text1);
   gap: 10px;
 }
-.videoQuizPage.quizExperience .videoQuizAttemptViewButton:hover:not(:disabled) { background: var(--background3); }
+.videoQuizPage.quizExperience .videoQuizAttemptViewButton:hover:not(:disabled) { background: var(--background2); }
 .videoQuizPage.quizExperience .videoQuizAttemptViewButton svg { width: 6px; height: 12px; }
 .videoQuizPage.quizExperience .videoQuizAttemptViewButton svg path { stroke: currentColor; }
 .videoQuizPage.quizExperience .videoQuizEmptyState { padding: 36px 24px; background: var(--background2); border: 0; text-align: center; }
@@ -198,7 +198,7 @@
 .videoQuizPage.quizExperience .videoQuizUnlockNotice { font-size: 0.85rem; line-height: 1.6; }
 .videoQuizPage.quizExperience :is(.videoQuizPrimaryButton, .videoQuizGhostButton, .videoQuizDangerButton) { min-height: 46px; font-size: 0.85rem; border-radius: 12px; }
 .videoQuizPage.quizExperience .videoQuizPrimaryButton { background: var(--accentBlue); color: var(--borderWhite); }
-.videoQuizPage.quizExperience .videoQuizPrimaryButton:hover:not(:disabled) { background: color-mix(in srgb, var(--accentBlue) 82%, var(--accentBlue2)); }
+.videoQuizPage.quizExperience .videoQuizPrimaryButton:hover:not(:disabled) { background: color-mix(in srgb, var(--accentBlue) 60%, var(--accentBlue2)); }
 .videoQuizPage.quizExperience .videoQuizPrimaryButton svg path { stroke: currentColor; }
 .videoQuizPage.quizExperience .videoQuizStartActions { display: flex; margin: 0; }
 .videoQuizPage.quizExperience .videoQuizStartActions .videoQuizPrimaryButton { width: 100%; justify-content: space-between; }
@@ -211,7 +211,7 @@
 .videoQuizPage.quizExperience .videoQuizGridButton:not(.answered):not(.current):not(.correct):not(.incorrect):not(.partial) { background: var(--background1); }
 .videoQuizPage.quizExperience .videoQuizGridButton.current { background: var(--accentBlue); color: var(--borderWhite); border-color: transparent; outline: none; box-shadow: none; }
 .videoQuizPage.quizExperience .videoQuizReviewLink { margin-top: 14px; min-height: 44px; padding: 0 16px; gap: 12px; justify-content: space-between; font-size: 0.78rem; border: 0; border-radius: var(--bR); background: var(--background1); color: var(--text1); }
-.videoQuizPage.quizExperience .videoQuizReviewLink:hover:not(:disabled) { background: var(--background3); }
+.videoQuizPage.quizExperience .videoQuizReviewLink:hover:not(:disabled) { background: var(--background2); }
 .videoQuizPage.quizExperience .videoQuizReviewLinkArrow { display: flex; flex-shrink: 0; }
 .videoQuizPage.quizExperience .videoQuizReviewLinkArrow svg { width: 6px; height: 12px; }
 .videoQuizPage.quizExperience .videoQuizReviewLinkArrow svg path { stroke: currentColor; }
@@ -223,7 +223,7 @@
 .videoQuizPage.quizExperience .videoQuizQuestionHeader p { margin: 2px 0 0; line-height: 1.45; font-size: 0.85rem; color: color-mix(in srgb, var(--text1) 65%, transparent); }
 .videoQuizPage.quizExperience .videoQuizOptions { gap: 12px; }
 .videoQuizPage.quizExperience .videoQuizOption { flex-direction: row-reverse; justify-content: space-between; padding: 18px; min-height: 70px; border: 2px solid transparent; background: var(--background2); border-radius: 12px; }
-.videoQuizPage.quizExperience .videoQuizOption:hover:not(:disabled) { background: var(--background3); }
+.videoQuizPage.quizExperience .videoQuizOption:hover:not(:disabled) { background: var(--background2); }
 .videoQuizPage.quizExperience .videoQuizOption.selected { background: var(--background2); border-color: var(--accentBlue2); box-shadow: none; }
 .videoQuizPage.quizExperience .videoQuizOptionMarker { width: 23px; height: 23px; }
 .videoQuizPage.quizExperience .videoQuizOption.selected .videoQuizOptionMarker { color: var(--borderWhite); background: var(--accentBlue); border-color: var(--accentBlue); }
@@ -318,3 +318,44 @@
 .videoQuizPage.quizExperience .videoQuizGridButton.current.correct { background: var(--accentGreen2); color: var(--background1); }
 .videoQuizPage.quizExperience .videoQuizGridButton.current.incorrect { background: var(--accentRed); color: var(--borderWhite); }
 .videoQuizPage.quizExperience .videoQuizGridButton.current.partial { background: var(--analyticsViewsOverTime); color: var(--background1); }
+
+/* Compact landscape and tablet layouts retain room for quiz history and actions. */
+.videoQuizPage.quizExperience .videoQuizHeading > div,
+.videoQuizPage.quizExperience .videoQuizAttemptText,
+.videoQuizPage.quizExperience .videoQuizAttemptScore { min-width: 0; overflow-wrap: anywhere; }
+.videoQuizPage.quizExperience .videoQuizAttemptScore { flex-wrap: wrap; }
+@media (min-width: 721px) and (max-width: 900px) {
+  .videoQuizPage.quizExperience .videoQuizIntro { grid-template-columns: minmax(0, 1fr); }
+  .videoQuizPage.quizExperience .videoQuizStartPanel { position: static; }
+  .videoQuizPage.quizExperience .videoQuizFacts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; }
+  .videoQuizPage.quizExperience .videoQuizFacts > div:first-child { padding-top: 13px; }
+}
+@media (max-width: 400px) {
+  .videoQuizPage.quizExperience .videoQuizAttemptCard { grid-template-columns: 28px minmax(0, 1fr); gap: 10px; }
+  .videoQuizPage.quizExperience .videoQuizAttemptViewButton { grid-column: 2; grid-row: 3; justify-self: start; min-height: 40px; }
+  .videoQuizPage.quizExperience .videoQuizStatusIcon { width: 28px; height: 28px; }
+  .videoQuizPage.quizExperience .videoQuizStartPanel { padding: 18px; }
+  .videoQuizPage.quizExperience .videoQuizFacts { gap: 0 16px; }
+}
+@media (max-height: 540px) {
+  .videoQuizPage.quizExperience .videoQuizStartPanel { position: static; }
+}
+
+/* Avoid adding the global main gutter to the learner page's mobile padding. */
+@media (max-width: 600px) {
+  main.videoQuizPage.quizExperience { width: 100%; margin-inline: 0; padding: calc(var(--headerHeight, 90px) + 16px) 12px 24px; }
+  .videoQuizPage.quizExperience .videoQuizPageContent:is(.introStage, .flowStage, .resultsStage) { gap: 20px; }
+  .videoQuizPage.quizExperience .videoQuizTopActions:has(> .videoQuizCloseButton) { position: absolute; top: 0; right: 0; }
+  .videoQuizPage.quizExperience .videoQuizTop { padding-bottom: 16px; gap: 12px; }
+  .videoQuizPage.quizExperience .videoQuizIntro { gap: 20px; }
+  .videoQuizPage.quizExperience .videoQuizStartPanel { padding: 16px; }
+  .videoQuizPage.quizExperience .videoQuizDescription { padding-bottom: 16px; }
+  .videoQuizPage.quizExperience .videoQuizFacts { margin: 12px 0; }
+  .videoQuizPage.quizExperience .videoQuizSectionTitle { margin-bottom: 12px; }
+}
+
+.videoQuizPage.quizExperience :is(.videoQuizCloseButton, .videoQuizAttemptViewButton, .videoQuizPrimaryButton, .videoQuizReviewLink) {
+  transition: background-color 150ms ease-in-out, border-color 150ms ease-in-out, color 150ms ease-in-out;
+}
+.videoQuizPage.quizExperience :is(.videoQuizCloseButton, .videoQuizAttemptViewButton, .videoQuizReviewLink):not(:disabled):not([aria-disabled='true']):hover { filter: none; background: color-mix(in srgb, var(--background2) 94%, var(--text1)); }
+.videoQuizPage.quizExperience .videoQuizPrimaryButton:not(:disabled):hover { filter: none; }

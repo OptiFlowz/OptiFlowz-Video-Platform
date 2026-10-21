@@ -3,10 +3,11 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const ts = require('typescript');
 const React = require('react');
+const notifications = [];
 const { JSDOM } = require('jsdom');
 const messages = require('../app/locales/en.json');
 
-test('readiness progress and errors stay in the readiness section while saves use the settings heading', async t => {
+test('readiness progress and errors stay in the readiness section while saves announce through the reusable toast', async t => {
   const dom = new JSDOM('<div id="root"></div>');
   const names = ['window', 'document', 'HTMLElement', 'IS_REACT_ACT_ENVIRONMENT'];
   const previous = new Map(names.map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)]));
@@ -36,7 +37,7 @@ test('readiness progress and errors stay in the readiness section while saves us
   }
   const shared = load('shared.tsx', {
     '@tanstack/react-query': { useQueryClient: () => ({ invalidateQueries: async () => {} }) },
-    '~/constants': { InfoSVG: 'i' }, '~/authorization/authorization': {}, '~/functions': {}, '~/i18n': i18n, '~/components/customSelect/customSelect': {},
+    '~/constants': { InfoSVG: 'i' }, '~/authorization/authorization': {}, '~/functions': {}, '~/i18n': i18n, '~/components/toast/Toast': { showToast: message => notifications.push(message) }, '~/components/customSelect/customSelect': {},
     './api': { engineKey: ['quiz-engine'] }, './model': {}, './EditorPopup': popup, './engine.module.css': styles,
   });
   const model = load('model.ts');
@@ -89,10 +90,12 @@ test('readiness progress and errors stay in the readiness section while saves us
     title.dispatchEvent(new window.Event('input', { bubbles: true }));
   });
   await act(async () => save.click());
-  assert.equal(heading.querySelector('[role="status"]').textContent, messages.saving);
-  assert.ok(heading.querySelector('.uploadSpinner'));
+  assert.equal(heading.querySelector('[role="status"]'), null);
+  assert.equal(save.textContent, messages.saving);
+  assert.equal(heading.querySelector('.uploadSpinner'), null);
   assert.equal(readiness.querySelector('.uploadSpinner'), null);
   await act(async () => resolveSave({ quiz: { ...quiz, title: 'Changed' } }));
-  assert.equal(heading.querySelector('[role="status"]').textContent, messages.qeSaved);
+  assert.equal(heading.querySelector('[role="status"]'), null);
+  assert.deepEqual(notifications, [messages.qeSaved]);
   assert.equal(heading.querySelector('.uploadSpinner'), null);
 });

@@ -58,7 +58,7 @@ export function QuizQuestionCard({
           {handle ?? <span className="inline-flex h-9 w-9 items-center justify-center"><Grip /></span>}
           <button
             type="button"
-            className="cursor-pointer rounded-full border border-(--border1) bg-(--background1) px-3 py-1.5 text-sm transition-colors hover:bg-(--background3) disabled:cursor-not-allowed"
+            className="cursor-pointer rounded-full border border-(--border1) bg-(--background1) px-3 py-1.5 text-sm transition-colors hover:bg-(--background2) disabled:cursor-not-allowed"
             onClick={onEdit}
             disabled={disabled}
           >
@@ -90,7 +90,7 @@ export default function SortableQuizQuestion(props: Props) {
       ref={setNodeRef}
       style={{ transform: CSS.Translate.toString(transform), transition }}
       className={`relative rounded-3xl motion-reduce:transition-none ${
-        isDragging ? "outline-2 outline-dashed outline-(--accentBlue) bg-(--background3)" : ""
+        isDragging ? "outline-2 outline-dashed outline-(--accentBlue) bg-(--background2)" : ""
       } ${props.disabled ? "opacity-70" : ""}`}
     >
       <div className={isDragging ? "opacity-0" : ""}>
@@ -105,7 +105,7 @@ export default function SortableQuizQuestion(props: Props) {
               disabled={props.disabled}
               aria-label={t("quizDragQuestion", { position: props.position })}
               title={t("quizDragToReorder")}
-              className="inline-flex h-9 w-9 touch-none cursor-grab items-center justify-center rounded-lg text-(--text2) transition-colors hover:bg-(--background3) hover:text-(--text1) focus-visible:outline-2 focus-visible:outline-(--accentBlue) active:cursor-grabbing disabled:cursor-wait"
+              className="inline-flex h-9 w-9 touch-none cursor-grab items-center justify-center rounded-lg text-(--text2) transition-colors hover:bg-(--background2) hover:text-(--text1) focus-visible:outline-2 focus-visible:outline-(--accentBlue) active:cursor-grabbing disabled:cursor-wait"
             >
               <Grip />
             </button>

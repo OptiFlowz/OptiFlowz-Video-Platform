@@ -357,7 +357,7 @@ function EditQuizRulesPopup({
                         <button
                           type="button"
                           disabled={togglingRuleId === rule.id}
-                          className="cursor-pointer rounded-full border border-(--border1) bg-(--background1) px-3 py-1.5 text-sm transition-colors hover:bg-(--background3) disabled:cursor-wait disabled:opacity-50"
+                          className="cursor-pointer rounded-full border border-(--border1) bg-(--background1) px-3 py-1.5 text-sm transition-colors hover:bg-(--background2) disabled:cursor-wait disabled:opacity-50"
                           onClick={() => {
                             setSuccessMessage(null);
                             setEditingRule(rule);
@@ -385,7 +385,7 @@ function EditQuizRulesPopup({
 
               <button
                 type="button"
-                className="flex cursor-pointer items-center gap-3 self-start rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 text-sm font-medium transition-colors hover:bg-(--background3)"
+                className="flex cursor-pointer items-center gap-3 self-start rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 text-sm font-medium transition-colors hover:bg-(--background2)"
                 title={t("quizAddRule")}
                 aria-label={t("quizAddRule")}
                 onClick={() => {

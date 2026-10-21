@@ -437,7 +437,7 @@ function EditQuizQuestionsPopup({
             </div>
             <button
               type="button"
-              className="flex cursor-pointer items-center gap-3 rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 text-sm font-medium transition-colors hover:bg-(--background3) disabled:cursor-not-allowed"
+              className="flex cursor-pointer items-center gap-3 rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 text-sm font-medium transition-colors hover:bg-(--background2) disabled:cursor-not-allowed"
               title={t("quizAddQuestion")}
               aria-label={t("quizAddQuestion")}
               onClick={() => {

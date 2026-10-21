@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useI18n } from '~/i18n';
-import { CheckSVG, CloseSVG, QuizSVG } from '~/constants';
-import { getToken } from '~/functions';
+import { ArrowSVG, CheckSVG, CloseSVG, QuizSVG } from '~/constants';
+import { formatDescription, getToken } from '~/functions';
 import { useConfirm } from '~/components/confirmPopup/useConfirm';
 import { ConfirmDialog } from '~/components/confirmPopup/confirmDialog';
 import { engineKey } from './api';
@@ -88,7 +88,7 @@ export default function AttemptPlayer({ attemptId, onClose, onFinished, complete
     {question && <QuestionStep key={question.question_no} question={question} questions={questions} onNavigate={target => { setError(''); setIndex(target); }} reviewing={reviewing} showCheck={reviewing ? questions.some(q => typeof q.feedback.is_correct === 'boolean') : attemptSettings?.correctness_visibility === 'after_check'} index={index} total={questions.length} busy={busy} expired={expired}
       onSave={save} onPrevious={() => { setError(''); setIndex(i => i - 1); }} onNext={() => { setError(''); setIndex(i => i + 1); }} onFinish={submit} onClose={onClose} headerActions={headerActions} />}
     {query.isSuccess && !questions.length && <p>{t('quizNoQuestionsYet')}</p>}
-    {!question && headerActions && createPortal(<button className={styles.button} onClick={onClose}>{t('quizBackToQuiz')}</button>, headerActions)}
+    {!question && headerActions && createPortal(<button className={`${styles.button} ${styles.attemptBackLink}`} onClick={onClose}>{t('quizBackToQuiz')}</button>, headerActions)}
     <ConfirmDialog {...dialogProps} />
   </section></>;
 }
@@ -104,7 +104,8 @@ function QuestionStep({ question, questions, onNavigate, reviewing, showCheck, i
   const editable = question.can_edit && !reviewing && !busy && !expired;
   const complete = isCompleteAnswer(question, answer);
   const feedback = question.feedback;
-  const showFeedback = !!question.checked_at && ((showCheck && (feedback.is_correct !== undefined || feedback.awarded_points !== undefined)) || !!feedback.correct_answers?.options?.length || !!feedback.correct_answers?.matching_items?.length || !!feedback.explanation);
+  const needsCheck = !reviewing && showCheck && !expired && (changed || !question.checked_at || (feedback.is_correct === false && question.can_edit));
+  const showFeedback = !changed && !!question.checked_at && ((showCheck && (feedback.is_correct !== undefined || feedback.awarded_points !== undefined)) || !!feedback.correct_answers?.options?.length || !!feedback.correct_answers?.matching_items?.length || !!feedback.explanation);
   useEffect(() => {
     if (!changed) return;
     const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); };
@@ -154,15 +155,14 @@ function QuestionStep({ question, questions, onNavigate, reviewing, showCheck, i
         {showCheck && feedback.awarded_points !== undefined && <p>{t('quizPointsScore', { score: feedback.awarded_points, total: question.max_points })}</p>}
         {feedback.correct_answers?.options && <p>{t('quizCorrectAnswerValue', { value: question.options.filter(o => feedback.correct_answers!.options!.some(correct => correct.option_no === o.option_no && correct.is_correct)).map(o => o.content).join(', ') })}</p>}
         {feedback.correct_answers?.matching_items && <><h3>{t('quizCorrectMatches')}</h3>{feedback.correct_answers.matching_items.map(pair => <p key={pair.item_no}>{question.matching_items.find(i => i.item_no === pair.item_no)?.content} → {question.matching_options.find(o => o.option_no === pair.correct_option_no)?.content}</p>)}</>}
-        {feedback.explanation && <><h3>{t('quizExplanation')}</h3><p>{feedback.explanation}</p></>}
+        {feedback.explanation && <section className={styles.attemptExplanation}><h3>{t('quizExplanation')}</h3><div>{formatDescription(feedback.explanation)}</div></section>}
       </div>}
       <div className={styles.attemptActions}>
-        <button className={styles.button} disabled={busy || index === 0 || (changed && !complete && !expired)} onClick={() => void move(onPrevious)}>{t('quizPreviousQuestion')}</button>
-        {!reviewing && showCheck && <button className={`${styles.button} ${styles.primary}`} disabled={!editable || !complete || (!!question.checked_at && !changed)} onClick={() => void onSave(answer!)}>{t(busy ? 'saving' : 'quizCheckAnswer')}</button>}
-        {index < total - 1 ? <button className={styles.button} disabled={busy || (changed && !complete && !expired)} onClick={() => void move(onNext)}>{t('quizNextQuestion')}</button> : !reviewing && <button className={`${styles.button} ${styles.primary}`} disabled={busy || expired || (changed && !complete)} onClick={async () => { if (!changed || await onSave(answer!)) await onFinish(); }}>{t('quizFinishAttempt')}</button>}
+        <button className={styles.button} disabled={busy || index === 0 || (changed && !complete && !expired)} onClick={() => void move(onPrevious)}><span className={`${styles.attemptNavArrow} ${styles.attemptPreviousArrow}`} aria-hidden="true">{ArrowSVG}</span>{t('quizPreviousQuestion')}</button>
+        {needsCheck ? <button className={`${styles.button} ${styles.primary}`} disabled={!editable || !complete || (!!question.checked_at && !changed)} onClick={() => void onSave(answer!)}>{t(busy ? 'saving' : 'quizCheckAnswer')}</button> : index < total - 1 ? <button className={`${styles.button} ${styles.primary}`} disabled={busy || (changed && !complete && !expired)} onClick={() => void move(onNext)}>{t('quizNextQuestion')}<span className={styles.attemptNavArrow} aria-hidden="true">{ArrowSVG}</span></button> : !reviewing && <button className={`${styles.button} ${styles.primary}`} disabled={busy || expired || (changed && !complete)} onClick={async () => { if (!changed || await onSave(answer!)) await onFinish(); }}>{t('quizFinishAttempt')}</button>}
       </div>
     </article>
-    {headerActions && createPortal(<button className={styles.button} disabled={busy} onClick={() => void close()}>{t('quizBackToQuiz')}</button>, headerActions)}
+    {headerActions && createPortal(<button className={`${styles.button} ${styles.attemptBackLink}`} disabled={busy} onClick={() => void close()}>{t('quizBackToQuiz')}</button>, headerActions)}
     </div>
     <ConfirmDialog {...dialogProps} />
   </div>;

@@ -17,7 +17,7 @@ const fixtures = () => [
   { ...base, question_no: 2, question_id: 'q2', type: 'multiple_choice', content: 'Multiple answers', options: [{ option_no: 2, content: 'Alpha', position: 1 }, { option_no: 5, content: 'Beta', position: 2 }] },
   { ...base, question_no: 3, question_id: 'q3', type: 'matching', content: 'Match answers', matching_items: [{ item_no: 8, content: 'Left', position: 1 }, { item_no: 3, content: 'Other left', position: 2 }], matching_options: [{ option_no: 6, content: 'Right', position: 1 }] },
 ];
-async function mount(t, { resume = false, eligible = true, expired = false, hidden = false, saved = false, history = [], read = true, requirements = [], visibility = 'after_check', passed = false, correct = true, expiresAt = null, review = false, reviewRows, reviewError = false, directResult } = {}) {
+async function mount(t, { resume = false, eligible = true, expired = false, hidden = false, saved = false, history = [], read = true, requirements = [], visibility = 'after_check', passed = false, correct = true, allowChanges = false, explanation = '', expiresAt = null, review = false, reviewRows, reviewError = false, directResult } = {}) {
   const dom = new JSDOM('<div id="root"></div>', { url: 'http://localhost/quiz/quiz-1', pretendToBeVisual: true });
   const names = ['window', 'document', 'navigator', 'HTMLElement', 'IS_REACT_ACT_ENVIRONMENT', 'IntersectionObserver'];
   const prior = new Map(names.map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)]));
@@ -53,7 +53,7 @@ async function mount(t, { resume = false, eligible = true, expired = false, hidd
     if (route.startsWith('api/quiz-attempts/a1/answers/')) {
       if (rejectSave) throw new Error('Network unavailable');
       const no = Number(route.split('/').at(-1)), answer = JSON.parse(options.body).answer;
-      rows = rows.map(q => q.question_no === no ? { ...q, answer, checked_at: 'now', can_edit: false, feedback: hidden ? {} : { is_correct: correct, awarded_points: correct ? 1 : 0 } } : q);
+      rows = rows.map(q => q.question_no === no ? { ...q, answer, checked_at: 'now', can_edit: allowChanges, feedback: hidden ? {} : { is_correct: typeof correct === 'function' ? correct(answer) : correct, awarded_points: correct ? 1 : 0, explanation } } : q);
       const row = rows.find(q => q.question_no === no);
       return { question_no: no, answer, checked_at: 'now', feedback: row.feedback };
     }
@@ -64,7 +64,7 @@ async function mount(t, { resume = false, eligible = true, expired = false, hidd
     throw new Error('Unexpected request ' + route);
   };
   const mocks = {
-    '~/API': { fetchFn }, '~/functions': { getToken: () => 'token' }, '~/i18n': { useI18n: () => ({ t: translate, locale: 'en' }) },
+    './i18n': {}, './auth/session': {}, '~/API': { fetchFn }, '~/functions': { getToken: () => 'token' }, '~/i18n': { useI18n: () => ({ t: translate, locale: 'en' }) },
     '~/constants': { PlaySVG: '▶', CheckSVG: '✓', CloseSVG: '×', QuizSVG: 'Q' },
     '~/components/library/pagination': { default: () => null },
     '~/components/confirmPopup/useConfirm': { useConfirm: () => ({ confirm: async options => { confirmations.push(options); return true; }, dialogProps: {} }) },
@@ -88,6 +88,7 @@ async function mount(t, { resume = false, eligible = true, expired = false, hidd
     new Function('require', 'module', 'exports', code)(name => mocks[name] ? { __esModule: true, ...mocks[name] } : name.endsWith('.css') ? { __esModule: true, default: styles } : name.startsWith('~/') ? load(path.resolve('app', name.slice(2))) : name.startsWith('.') ? load(path.resolve(path.dirname(file), name)) : require(name), mod, mod.exports);
     return mod.exports;
   }
+  mocks['~/functions'].formatDescription = load(path.resolve('app/functions.tsx')).formatDescription;
   const View = load(path.resolve('app/components/quizEngine/QuizOverview.tsx')).default;
   function App() {
     const [, render] = React.useState(0);
@@ -111,9 +112,9 @@ test('new engine starts, saves all three answer formats, retains locks and submi
   await ui.choose('Second'); await ui.click('Check answer');
   assert.equal(document.querySelector('input:checked').disabled, true);
   await ui.click('Next Question');
-  await ui.choose('Alpha'); await ui.choose('Beta'); await ui.click('Next Question');
+  await ui.choose('Alpha'); await ui.choose('Beta'); await ui.click('Check answer'); await ui.click('Next Question');
   for (const select of document.querySelectorAll('select')) await act(async () => { select.value = '6'; select.dispatchEvent(new window.Event('change', { bubbles: true })); });
-  await ui.click('Finish attempt');
+  await ui.click('Check answer'); await ui.click('Finish attempt');
   assert.equal(ui.confirmations.at(-1).intent, 'primary', 'finishing is not destructive');
   assert.equal(document.querySelector('.attemptResult').dataset.outcome, 'failed');
   assert.deepEqual(ui.requests.filter(r => r.method === 'PUT').map(r => [r.route, r.body]), [
@@ -143,11 +144,11 @@ test('unmet requirements prevent starting', async t => {
 test('failed answer saves preserve the selection and prevent navigation until retry succeeds', async t => {
   const ui = await mount(t);
   await ui.click('Start quiz'); await ui.choose('First'); ui.rejectSave(true);
-  await ui.click('Next Question');
+  await ui.click('Check answer');
   assert.match(document.body.textContent, /Network unavailable/);
   assert.equal(document.querySelector('input:checked').parentElement.textContent, 'First');
   assert.match(document.body.textContent, /One answer/);
-  ui.rejectSave(false); await ui.click('Next Question');
+  ui.rejectSave(false); await ui.click('Check answer'); await ui.click('Next Question');
   assert.match(document.body.textContent, /Multiple answers/);
 });
 
@@ -155,7 +156,7 @@ test('expired attempts are read-only and cannot save or submit', async t => {
   const ui = await mount(t, { resume: true, expired: true });
   await ui.click('Continue quiz');
   assert.equal(document.querySelector('input').disabled, true);
-  assert.equal(ui.button('Check answer').disabled, true);
+  assert.equal(ui.button('Check answer'), undefined);
   await ui.click('Next Question'); await ui.click('Next Question');
   assert.equal(ui.button('Finish attempt').disabled, true);
 });
@@ -164,7 +165,9 @@ test('submission errors keep the attempt open; hidden correctness and final scor
   const ui = await mount(t, { hidden: true });
   await ui.click('Start quiz'); await ui.choose('First'); await ui.click('Check answer');
   assert.ok(!document.querySelector('.attemptFeedback .success'));
-  await ui.click('Next Question'); await ui.click('Next Question');
+  await ui.click('Next Question'); await ui.choose('Alpha'); await ui.click('Check answer'); await ui.click('Next Question');
+  for (const select of document.querySelectorAll('select')) await act(async () => { select.value = '6'; select.dispatchEvent(new window.Event('change', { bubbles: true })); });
+  await ui.click('Check answer');
   ui.rejectSubmit(true); await ui.click('Finish attempt');
   assert.match(document.body.textContent, /Minimum answered percentage not met/);
   ui.rejectSubmit(false); await ui.click('Finish attempt');
@@ -282,7 +285,7 @@ for (const visibility of ['after_finish', 'never']) test(`no Check answer for ${
   assert.match(document.body.textContent, /Multiple answers/);
 });
 test('passing result gets its own celebratory presentation', async t => {
-  const ui = await mount(t, { passed: true });
+  const ui = await mount(t, { passed: true, visibility: 'after_finish' });
   await ui.click('Start quiz'); await ui.click('Next Question'); await ui.click('Next Question'); await ui.click('Finish attempt');
   assert.equal(document.querySelector('.attemptResult').dataset.outcome, 'passed');
   assert.equal(document.querySelectorAll('.resultSpark').length, 8);
@@ -473,4 +476,34 @@ test('a direct link to an older attempt uses its snapshot settings and result ev
   await ui.click('Next Question'); await ui.click('Next Question');
   assert.equal(ui.button('Finish attempt'), undefined);
   assert.ok(ui.requests.every(r => r.method === 'GET'));
+});
+
+for (const allowChanges of [false, true]) test(`Check answer replaces Next and handles incorrect answers with changes ${allowChanges}`, async t => {
+  const ui = await mount(t, { allowChanges, correct: answer => answer.option_no === 7 });
+  await ui.click('Start quiz');
+  assert.equal(ui.button('Next Question'), undefined);
+  assert.equal(ui.button('Check answer').disabled, true);
+  assert.equal(document.querySelector('.attemptActions').lastElementChild.textContent, 'Check answer');
+  await ui.choose('First'); await ui.click('Check answer');
+  if (allowChanges) {
+    assert.equal(ui.button('Next Question'), undefined);
+    assert.equal(ui.button('Check answer').disabled, true);
+    await ui.choose('Second');
+    assert.equal(document.querySelector('.attemptFeedback'), null, 'old feedback disappears when the answer changes');
+    await ui.click('Check answer');
+  }
+  assert.equal(ui.button('Check answer'), undefined);
+  await ui.click('Next Question');
+  assert.match(document.body.textContent, /Multiple answers/);
+});
+
+test('explanations reuse safe formatting inside a dedicated box', async t => {
+  const ui = await mount(t, { explanation: '**Why** this works. [Video chapter](https://example.com/video?time=283)\n<script>alert(1)</script>' });
+  await ui.click('Start quiz'); await ui.choose('First'); await ui.click('Check answer');
+  const box = document.querySelector('.attemptExplanation');
+  assert.equal(box.querySelector('strong').textContent, 'Why');
+  assert.equal(box.querySelector('a').href, 'https://example.com/video?time=283');
+  assert.equal(box.querySelector('a').textContent, 'Video chapter');
+  assert.equal(box.querySelector('script'), null);
+  assert.ok(box.textContent.includes('<script>alert(1)</script>'));
 });

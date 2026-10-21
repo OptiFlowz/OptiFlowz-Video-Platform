@@ -102,7 +102,7 @@ function Settings({ initial, onSaved, onDirty, onClose }: { initial?: Quiz; onSa
       </div></section></fieldset></div>
 
     </div>
-    <EditorActions><button type="button" className="cancelBtn" disabled={busy} onClick={onClose}>{t('navQuizzes')}</button>
+    <EditorActions>
       {initial && access.can('quizzes.participate') && initial.status === 'published' && JSON.stringify(form) === baseline && !busy && <Link className="cancelBtn" to={`/quiz/${initial.id}`}>{t('quizView')}</Link>}
       {editable && <button type="submit" className="saveCaptionsBtn" disabled={busy || (!!initial && JSON.stringify(form) === baseline)}>{action.busy ? t('saving') : t(initial ? 'quizSaveQuiz' : 'quizCreateQuiz')}</button>}
     </EditorActions>

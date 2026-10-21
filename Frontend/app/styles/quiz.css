@@ -482,7 +482,7 @@
   aspect-ratio: 16 / 9;
   border-radius: 9px;
   object-fit: cover;
-  background: var(--background3);
+  background: var(--background2);
 }
 
 .videoQuizPage .videoQuizRequirementThumbFallback {
@@ -599,7 +599,7 @@
 
 .videoQuizPage .videoQuizRequirementWatchButton:hover {
   border-color: var(--accentBlue2);
-  background: var(--background3);
+  background: var(--background2);
 }
 
 .videoQuizPage .videoQuizRequirementWatchButton svg {
@@ -707,7 +707,7 @@
 
 .videoQuizPage .videoQuizGhostButton:hover,
 .videoQuizPage .videoQuizInlineButton:hover {
-  background: var(--background3);
+  background: var(--background2);
 }
 
 .videoQuizPage .videoQuizPrimaryButton {
@@ -941,7 +941,7 @@
 }
 
 .videoQuizPage .videoQuizGridButton.answered {
-  background: var(--background3);
+  background: var(--background2);
   color: var(--text1);
   border-color: var(--accentBlue);
 }
@@ -1125,7 +1125,7 @@
 
 .videoQuizPage .videoQuizOption.selected {
   border-color: var(--accentBlue2);
-  background: var(--background3);
+  background: var(--background2);
 }
 
 .videoQuizPage .videoQuizOptionMarker {
@@ -2168,7 +2168,7 @@ main.quizzesPage .quizMobileOptionsButton {
   transition: background-color .2s ease;
 }
 main.quizzesPage .quizMobileOptionsButton:hover {
-  background-color: var(--background3);
+  background-color: var(--background2);
 }
 main.quizzesPage .quizMobileOptionsButton svg {
   opacity: 0.5;

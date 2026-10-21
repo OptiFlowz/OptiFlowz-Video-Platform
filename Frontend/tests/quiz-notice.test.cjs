@@ -3,9 +3,10 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const ts = require('typescript');
 const React = require('react');
+const notifications = [];
 const { JSDOM } = require('jsdom');
 
-test('quiz notifications stay in a reserved area without adding children to the question list', async t => {
+test('quiz success and busy notices add no page content; errors remain visible', async t => {
   const css = fs.readFileSync('app/components/quizEngine/engine.module.css', 'utf8').replace(/:global\(([^)]+)\)/g, '$1');
   const dom = new JSDOM(`<style>${css}</style><div id="root"></div><div id="notifications" class="popupNotice"></div>`);
   const names = ['window', 'document', 'HTMLElement', 'IS_REACT_ACT_ENVIRONMENT'];
@@ -23,7 +24,7 @@ test('quiz notifications stay in a reserved area without adding children to the 
   const context = React.createContext(undefined), host = document.getElementById('notifications');
   const mocks = {
     '@tanstack/react-query': {}, '~/constants': { InfoSVG: 'i' }, '~/authorization/authorization': {}, '~/functions': {}, '~/i18n': { useI18n: () => ({ t: key => key === 'saving' ? 'Saving...' : key }) },
-    '~/components/customSelect/customSelect': {}, './api': {}, './model': {},
+    '~/components/toast/Toast': { showToast: message => notifications.push(message) }, '~/components/customSelect/customSelect': {}, './api': {}, './model': {},
     './EditorPopup': { EditorNoticeContext: context },
     './engine.module.css': { __esModule: true, default: new Proxy({}, { get: (_, key) => String(key) }) },
   };
@@ -40,14 +41,13 @@ test('quiz notifications stay in a reserved area without adding children to the 
     assert.deepEqual([...document.getElementById('questions').children].map(node => node.tagName), ['ARTICLE']);
     assert.equal(window.getComputedStyle(host).height, '36px');
     assert.equal(window.getComputedStyle(host).overflowY, 'auto');
-    if (message.success) assert.equal(host.querySelector('[role="status"]').textContent, message.success);
-    else if (message.error) assert.equal(host.querySelector('[role="alert"]').textContent, message.error);
+    if (message.error) assert.equal(host.querySelector('[role="alert"]').textContent, message.error);
     else assert.equal(host.children.length, 0);
   }
-  // Outside a popup, the same component also reserves space while empty.
-  await render({}, undefined);
-  const fallback = document.querySelector('.noticeInline');
-  assert.equal(window.getComputedStyle(fallback).height, '36px');
-  await render({ success: 'Saved' }, undefined);
-  assert.equal(window.getComputedStyle(document.querySelector('.noticeInline')).height, '36px');
+  for (const message of [{}, { busy: true }, { success: 'Saved' }]) {
+    await render(message, undefined);
+    assert.deepEqual([...document.getElementById('questions').children].map(node => node.tagName), ['ARTICLE']);
+  }
+  await render({ error: 'Save failed' }, undefined);
+  assert.equal(document.querySelector('[role="alert"]').textContent, 'Save failed');
 });

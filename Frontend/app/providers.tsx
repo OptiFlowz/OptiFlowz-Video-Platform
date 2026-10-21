@@ -1,5 +1,7 @@
 "use client";
 
+import { ToastHost } from '~/components/toast/Toast';
+
 import { AuthorizationProvider } from "~/authorization/authorization";
 
 import { useEffect, useState } from "react";
@@ -117,6 +119,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <SessionBoundary>
       <PageLoader />
       <I18nProvider>
+        <ToastHost />
         <ConnectionStatus />
         <AuthorizationProvider>
         <PrivacyPreferencesProvider>

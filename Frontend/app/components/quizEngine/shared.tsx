@@ -5,6 +5,7 @@ import { useAuthorization } from '~/authorization/authorization';
 import { InfoSVG } from '~/constants';
 import { getToken } from '~/functions';
 import { useI18n } from '~/i18n';
+import { showToast } from '~/components/toast/Toast';
 import CustomSelect from '~/components/customSelect/customSelect';
 import { engineKey, request, all } from './api';
 import type { Resource, Owned } from './model';
@@ -34,23 +35,24 @@ export function useAll<T>(path: string, key: string, enabled = true) {
 }
 export function useAction() {
   const client = useQueryClient(), { t } = useI18n(); const lock = useRef(false);
-  const [busy, setBusy] = useState(false), [error, setError] = useState(''), [success, setSuccess] = useState('');
+  const [busy, setBusy] = useState(false), [error, setError] = useState('');
   const reportBusy = useContext(EditorBusyContext);
   useEffect(() => { if (busy) reportBusy?.(true); return () => { if (busy) reportBusy?.(false); }; }, [busy, reportBusy]);
   async function run(work: () => Promise<void | boolean>, announce = true) {
     if (lock.current) return;
-    lock.current = true; setBusy(true); setError(''); setSuccess('');
-    try { const changed = await work(); if (announce && changed !== false) setSuccess(t('qeSaved')); }
+    lock.current = true; setBusy(true); setError('');
+    try { const changed = await work(); if (announce && changed !== false) showToast(t('qeSaved')); }
     catch (e) { setError(e instanceof Error ? e.message : t('quizError')); }
     finally { await client.invalidateQueries({ queryKey: engineKey }); lock.current = false; setBusy(false); }
   }
-  return { busy, error, success, run, setError, setSuccess };
+  return { busy, error, run, setError };
 }
-export function Notice({ busy = false, error, success, variant = 'block' }: { busy?: boolean; error?: string; success?: string; variant?: 'block' | 'heading' }) {
-  const target = useContext(EditorNoticeContext), { t } = useI18n();
-  const message = busy ? <p className={styles.savingStatus} role="status"><span className="uploadSpinner tiny" aria-hidden="true" />{t('saving')}</p> : error ? <p className={styles.error} role="alert">{error}</p> : success ? <p className={styles.success} role="status">{success}</p> : null;
+export function Notice({ busy = false, error, variant = 'block' }: { busy?: boolean; error?: string; variant?: 'block' | 'heading' }) {
+  const target = useContext(EditorNoticeContext);
+  if (!error || busy) return null;
+  const message = <p className={styles.error} role="alert">{error}</p>;
   if (target === undefined) return <div className={variant === 'heading' ? styles.headingNotice : styles.noticeInline}>{message}</div>;
-  return target && message ? createPortal(message, target) : null;
+  return target ? createPortal(message, target) : null;
 }
 export function LoadingSkeleton({ variant = 'cards' }: { variant?: 'cards' | 'form' | 'inline' }) {
   const { t } = useI18n();

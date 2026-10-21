@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { formatDuration } from '~/functions';
 import { DeleteSVG } from '~/constants';
 import { useI18n } from '~/i18n';
 import { Field, Select, styles } from './shared';
@@ -30,7 +31,10 @@ export default function RequirementCard({ row, editable, busy, onSave, onRemove,
   const image = row.video_card?.thumbnail_url || row.video_card?.mux_thumbnail_url;
   return <article className={`${styles.partCard} ${styles.ruleCard}`} aria-label={title}>
     <div className={styles.ruleIdentity}>
-      {image ? <img className={styles.partThumbnail} src={image} alt="" /> : <div className={styles.partThumbnail}>{t('quizNoThumbnail')}</div>}
+      <div className={styles.ruleThumbnail}>
+        {image ? <img src={image} alt="" /> : <span>{t('quizNoThumbnail')}</span>}
+        {row.video_card?.duration_seconds != null && <span className={styles.ruleDuration}>{formatDuration(row.video_card.duration_seconds)}</span>}
+      </div>
       <div className={styles.ruleTitle}><p>{title}</p>{editable && <button type="button" className={styles.ruleChangeVideo} disabled={busy} onClick={() => {
         if (value !== '' && input.current?.reportValidity()) onChangeVideo(threshold(mode, value));
       }}>{t('qeChangeVideo')}</button>}</div>

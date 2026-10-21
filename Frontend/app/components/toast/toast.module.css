@@ -1,0 +1,6 @@
+.host { position: fixed; z-index: 20000; top: max(12px, env(safe-area-inset-top)); left: 16px; right: 16px; display: flex; justify-content: center; pointer-events: none; }
+.toast { display: flex; align-items: center; gap: 8px; max-width: 100%; padding: 10px 16px; border: 1px solid var(--border1); border-radius: 999px; background: linear-gradient(var(--background2), var(--background2)), var(--background1); color: var(--text1); box-shadow: 0 6px 24px color-mix(in srgb, var(--text1) 12%, transparent); font-size: .85rem; font-weight: 500; line-height: 1.4; overflow-wrap: anywhere; animation: enter 180ms ease-out; }
+.toast > span { display: flex; flex: none; color: var(--accentGreen2); }
+.toast svg { width: 16px; height: 16px; }
+@keyframes enter { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; } }

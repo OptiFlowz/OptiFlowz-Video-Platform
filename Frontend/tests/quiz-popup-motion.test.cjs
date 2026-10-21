@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const ts = require('typescript');
 const React = require('react');
+const notifications = [];
 const { createPortal } = require('react-dom');
 const { JSDOM } = require('jsdom');
 
@@ -45,7 +46,7 @@ test('quiz popup waits for its portal before entering and finishes exiting befor
   const { Notice } = load('app/components/quizEngine/shared.tsx', {
     '@tanstack/react-query': {}, '~/constants': { InfoSVG: 'i' }, '~/authorization/authorization': {}, '~/functions': {},
     '~/i18n': { useI18n: () => ({ t: key => key === 'saving' ? 'Saving...' : key }) },
-    '~/components/customSelect/customSelect': {}, './api': {}, './model': {},
+    '~/components/toast/Toast': { showToast: message => notifications.push(message) }, '~/components/customSelect/customSelect': {}, './api': {}, './model': {},
     './EditorPopup': popupModule,
     './engine.module.css': { __esModule: true, default: new Proxy({}, { get: (_, key) => String(key) }) },
   });
@@ -75,14 +76,11 @@ test('quiz popup waits for its portal before entering and finishes exiting befor
   const feedback = panel.querySelector('.popupNotice'), actions = feedback.parentElement;
   assert.ok(actions.classList.contains('quizPopupActions'));
   assert.equal(feedback.nextElementSibling.textContent, 'Back');
-  assert.equal(feedback.querySelector('[role="status"]').textContent, 'Changes saved.');
+  assert.equal(feedback.children.length, 0, 'success is handled by the global toast');
   await render(true, true);
-  assert.equal(feedback.querySelector('[role="status"]').textContent, 'Saving...');
-  assert.ok(feedback.querySelector('.uploadSpinner'));
-  assert.equal(feedback.parentElement, actions, 'feedback stays in the action row while saving');
+  assert.equal(feedback.children.length, 0);
+  assert.equal(feedback.parentElement, actions);
   await render(true);
-  assert.equal(feedback.querySelector('[role="status"]').textContent, 'Changes saved.');
-  assert.equal(feedback.querySelector('.uploadSpinner'), null);
 
   await render(false);
   assert.equal(panel.classList.contains('isOpen'), false);

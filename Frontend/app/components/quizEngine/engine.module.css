@@ -5,9 +5,9 @@
 .header p, .muted { color: var(--text2); }
 .tabs { margin-bottom: 24px; }
 .tabs button, .button { border: 1px solid var(--border1); border-radius: 999px; background: var(--background2); color: var(--text1); padding: 10px 18px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
-.tabs button[aria-pressed='true'], .primary { background: var(--accentBlue); color: var(--seeThroughtWhite); }
+.tabs button[aria-pressed='true'], .primary { background: var(--accentBlue); color: var(--borderWhite); }
 .button svg, .icon svg { width: 20px; height: 20px; }
-.icon { background: var(--background3); color: var(--accentBlue); border: 0; padding: 10px; border-radius: 50%; display: inline-flex; cursor: pointer; }
+.icon { background: var(--background2); color: var(--accentBlue); border: 0; padding: 10px; border-radius: 50%; display: inline-flex; cursor: pointer; }
 .danger { color: var(--accentRed); }
 .page button:not([role='option']):disabled { opacity: .45; cursor: not-allowed; }
 .page button:not([role='option']):focus-visible, .page a:focus-visible { outline: 2px solid var(--accentBlue); outline-offset: 3px; }
@@ -16,7 +16,7 @@
 .select { width: fit-content; min-width: 150px; max-width: 100%; }
 .tableWrap { overflow-x: auto; border: 1px solid var(--border1); border-radius: 20px; background: var(--background2); }
 .table { width: 100%; border-collapse: collapse; text-align: start; }
-.table th { color: var(--text2); font-weight: 600; background: var(--background3); }
+.table th { color: var(--text2); font-weight: 600; background: var(--background2); }
 .table th, .table td { padding: 18px; border-bottom: 1px solid var(--border1); }
 .table tr:last-child td { border-bottom: none; }
 .table th:first-child, .table td:first-child { width: 48px; }
@@ -36,12 +36,12 @@
 .success { color: var(--accentGreen2); }
 .picker { max-height: 420px; overflow: auto; margin-block: 16px; }
 .note { padding: 16px; border: 1px solid var(--border1); border-radius: 14px; color: var(--text2); margin-bottom: 20px; }
-.badge { display: inline-block; padding: 4px 10px; border-radius: 8px; background: var(--background3); color: var(--text2); font-size: .875rem; }
+.badge { display: inline-block; padding: 4px 10px; border-radius: 8px; background: var(--background2); color: var(--text2); font-size: .875rem; }
 .progress { width: 100%; accent-color: var(--accentBlue); }
 .videoImage { width: 120px; aspect-ratio: 16/9; object-fit: cover; border-radius: 10px; }
 @media(max-width: 850px) { .grid { grid-template-columns: 1fr; } .panel { padding: 18px; } .table th, .table td { padding: 12px; } }
 @media(prefers-reduced-motion: reduce) { .page * { scroll-behavior: auto; } }
-.page:not(.management) input:not([type='checkbox']):not([type='radio']), .page textarea { padding: 8px 12px; background: var(--background3); border: 1px solid var(--border1); border-radius: 12px; color: var(--text1); font: inherit; max-width: 100%; }
+.page:not(.management) input:not([type='checkbox']):not([type='radio']), .page textarea { padding: 8px 12px; background: var(--background2); border: 1px solid var(--border1); border-radius: 12px; color: var(--text1); font: inherit; max-width: 100%; }
 .page textarea { min-height: 130px; resize: vertical; }
 .page input:focus-visible, .page textarea:focus-visible { outline: 2px solid var(--accentBlue); outline-offset: 2px; }
 .page input[type='checkbox'], .page input[type='radio'] { accent-color: var(--accentBlue); }
@@ -51,7 +51,7 @@
 .listToolbar { flex-wrap: wrap; }
 .listFilters { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-inline-start: auto; }
 .listFilters .select { min-width: 150px; max-width: 260px; }
-.listFilters :global(.customSelectTrigger) { border: 1px solid var(--border1); border-radius: 999px; background: var(--background3); font-size: .9rem; }
+.listFilters :global(.customSelectTrigger) { border: 1px solid var(--border1); border-radius: 999px; background: var(--background2); font-size: .9rem; }
 main.management :global(.filter) input { border: 0; border-radius: 0; padding: 0; background: transparent; font-size: .95rem; }
 main.management .listTableWrap { overflow-x: auto; }
 main.management .listTable { min-width: 680px; }
@@ -74,7 +74,7 @@ main.management .listTable td { vertical-align: middle; }
 .quizThumbnail [stroke-width="1.8"] { stroke-width: .8; }
 .questionCount { font-variant-numeric: tabular-nums; }
 main.management td :global(.visibility).unpublishedStatus { background: var(--background2); color: var(--text2); }
-main.management td :global(.visibility).unpublishedStatus:hover:not(:disabled) { background: var(--background3); }
+main.management td :global(.visibility).unpublishedStatus:hover:not(:disabled) { background: var(--background2); }
 .listInfo { min-width: 0; flex: 1; }
 .listInfo :global(.managementRowActions) { margin-top: 8px; }
 .rowTitle { display: block; text-align: start; color: var(--text1); font-size: .88rem; font-weight: 500; line-height: 1.35; cursor: pointer; overflow-wrap: anywhere; }
@@ -189,7 +189,7 @@ main.management .listTable td.empty { padding: 2rem; text-align: center; }
 .candidateCard > .partCardBody { align-items: center; }
 .candidateHandle { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 28px; flex-shrink: 0; border-radius: 8px; background: transparent; color: var(--text2); padding: 0; touch-action: none; cursor: grab; }
 .candidateHandle:active { cursor: grabbing; }
-.candidateHandle:hover:not(:disabled) { background: var(--background3); color: var(--text1); }
+.candidateHandle:hover:not(:disabled) { background: var(--background2); color: var(--text1); }
 .candidateHandle svg { width: 20px; height: 20px; }
 .candidateHandle svg path { stroke: currentColor; }
 .candidateActions { align-items: center; }
@@ -210,11 +210,11 @@ main.management .listTable td.empty { padding: 2rem; text-align: center; }
 .partThumbnail { display: flex; align-items: center; justify-content: center; width: 96px; height: 56px; flex-shrink: 0; object-fit: cover; border-radius: 12px; background: var(--background1); color: var(--text2); font-size: .75rem; text-align: center; }
 .partActions { display: flex; flex-shrink: 0; gap: 8px; }
 .partActions button { width: auto; padding: 6px 12px; border: 1px solid var(--border1); border-radius: 999px; background: var(--background1); color: var(--text1); font-size: .875rem; cursor: pointer; transition: background-color 180ms ease, color 180ms ease; }
-.partActions button:hover:not(:disabled) { background: var(--background3); }
+.partActions button:hover:not(:disabled) { background: var(--background2); }
 .partActions .partRemove { border-color: var(--accentRed); background: var(--background15); color: var(--accentRed3); }
 .partActions .partRemove:hover:not(:disabled) { background: color-mix(in srgb, var(--accentRed3) 18%, var(--background1)); }
 .partAdd { display: inline-flex; align-items: center; align-self: flex-start; gap: 12px; width: auto; padding: 12px 16px; border: 1px solid var(--border1); border-radius: 16px; background: var(--background2); color: var(--text1); font-size: .875rem; font-weight: 500; cursor: pointer; }
-.partAdd:hover { background: var(--background3); }
+.partAdd:hover { background: var(--background2); }
 .partAdd svg { width: 20px; height: 20px; }
 .partAdd svg path { stroke: currentColor; }
 .partEmpty { border: 1px dashed var(--border1); border-radius: 24px; padding: 24px 20px; background: var(--background2); color: var(--text2); font-size: .875rem; }
@@ -225,7 +225,7 @@ main.management .listTable td.empty { padding: 2rem; text-align: center; }
 .rulePopup .ruleVideoPicker > :global(.formGroup),
 .rulePopup .ruleVideoPicker :global(.playlistVideoSearchInput) { margin: 0; }
 .ruleVideo { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 16px; background: var(--background2); }
-.ruleVideo :global(.cancelBtn) { flex-shrink: 0; width: auto; margin: 0; padding: 8px 12px; border: 0; background: var(--background3); }
+.ruleVideo :global(.cancelBtn) { flex-shrink: 0; width: auto; margin: 0; padding: 8px 12px; border: 0; background: var(--background2); }
 @media(max-width: 600px) {
   .ruleVideo { flex-wrap: wrap; }
   .ruleVideo :global(.cancelBtn) { margin-inline-start: auto; }
@@ -259,7 +259,7 @@ main.management .listTable td.empty { padding: 2rem; text-align: center; }
 .skeletonBlock { padding: 20px; border-radius: 20px; background: var(--background2); min-height: 112px; }
 .skeletonBlock :global(.skeleton-title),
 .skeletonBlock :global(.skeleton-text),
-.skeletonField { background: var(--background3); border-radius: 8px; animation: quizSkeletonPulse 1.5s ease-in-out infinite; }
+.skeletonField { background: var(--background2); border-radius: 8px; animation: quizSkeletonPulse 1.5s ease-in-out infinite; }
 .skeletonBlock :global(.skeleton-title) { height: 18px; width: 60%; margin: 0 0 14px; }
 .skeletonBlock :global(.skeleton-text) { height: 14px; width: 85%; margin: 0; }
 .skeletonField { height: 44px; margin-top: 16px; }
@@ -276,25 +276,25 @@ main.management .listTable td.empty { padding: 2rem; text-align: center; }
 .popupPanel.page .answerText { flex: 1; min-width: 0; width: 100%; min-height: 40px; padding: 8px; background: transparent; border: 0; border-radius: 8px; font-size: .95rem; line-height: 1.5; field-sizing: content; }
 .popupPanel.page .explanationText { min-height: 80px; }
 .answerLetter { color: var(--text2); font-size: .875rem; font-weight: 600; flex-shrink: 0; }
-.questionCanvas .answerMarker { appearance: none; display: grid; place-content: center; width: 24px; height: 24px; flex: 0 0 24px; border: 0; border-radius: 6px; background: var(--background3); cursor: pointer; }
+.questionCanvas .answerMarker { appearance: none; display: grid; place-content: center; width: 24px; height: 24px; flex: 0 0 24px; border: 0; border-radius: 6px; background: var(--background2); cursor: pointer; }
 .questionCanvas .answerMarker[type='radio'] { border-radius: 50%; }
 .questionCanvas .answerMarker:checked { background: var(--accentBlue2); }
 .questionCanvas .answerMarker:checked::after { content: '✓'; color: var(--text1); font-size: 16px; }
 .answerTools { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
 .answerOrder { display: flex; flex-direction: column; }
 .answerOrder button { display: grid; place-content: center; width: 28px; height: 24px; background: transparent; color: var(--text2); cursor: pointer; border-radius: 6px; }
-.answerOrder button:hover { background: var(--background3); }
+.answerOrder button:hover { background: var(--background2); }
 .answerOrder svg { width: 7px; height: 13px; transform: rotate(-90deg); }
 .answerOrder button + button svg { transform: rotate(90deg); }
 .answerOrder svg path { stroke: currentColor; }
 .questionCanvas .answerTools .icon { padding: 8px; background: transparent; }
 .questionCanvas .partAdd { margin-top: 12px; }
 .popupPanel .questionCanvas .matchRow { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(160px, 1fr) auto; }
-.questionCanvas .matchRow :global(.customSelectTrigger) { background: var(--background3); padding: 10px 12px; font-size: .875rem; }
+.questionCanvas .matchRow :global(.customSelectTrigger) { background: var(--background2); padding: 10px 12px; font-size: .875rem; }
 .groupChoices { display: grid; gap: 8px; }
 .popupPanel .picker.groupChoices { padding-inline-end: 10px; }
 .popupPanel .groupChoices .check { padding: 12px 16px; border: 1px solid transparent; border-radius: 16px; background: var(--background2); cursor: pointer; line-height: 1.4; transition: background-color 180ms ease, border-color 180ms ease; }
-.popupPanel .groupChoices .check:has(input:enabled):hover { background: var(--background3); }
+.popupPanel .groupChoices .check:has(input:enabled):hover { background: var(--background2); }
 .popupPanel .groupChoices .check:focus-within { border-color: var(--accentBlue); }
 @media(max-width: 600px) {
   .popupPanel .questionCanvas .answerRow { gap: 6px; padding: 10px; flex-wrap: wrap; }
@@ -316,7 +316,7 @@ main.management .listTable td.empty { padding: 2rem; text-align: center; }
 .popupPanel.page[role='dialog'] input,
 .popupPanel.page[role='dialog'] textarea,
 .popupPanel.page[role='dialog'] select,
-.popupPanel.page[role='dialog'] button:not([role='option']),
+.popupPanel.page[role='dialog'] button:not([role='option']):not([aria-current='page']),
 .popupPanel.page[role='dialog'] a,
 .popupPanel.page[role='dialog'] summary {
   box-sizing: border-box;
@@ -328,7 +328,7 @@ main.management .listTable td.empty { padding: 2rem; text-align: center; }
 .popupPanel.page[role='dialog'] input:focus,
 .popupPanel.page[role='dialog'] textarea:focus,
 .popupPanel.page[role='dialog'] select:focus,
-.popupPanel.page[role='dialog'] button:not([role='option']):focus-visible,
+.popupPanel.page[role='dialog'] button:not([role='option']):not([aria-current='page']):focus-visible,
 .popupPanel.page[role='dialog'] a:focus-visible,
 .popupPanel.page[role='dialog'] summary:focus-visible,
 .popupPanel.page[role='dialog'] :global(.customSelect.isOpen) :global(.customSelectTrigger) {
@@ -357,10 +357,10 @@ main.management .listTable td.empty { padding: 2rem; text-align: center; }
 .editorPage :global(.formGroup) > input, .editorPage :global(.formGroup) > textarea { width: 100%; }
 .editorPage :global(.formHint) { margin: 0; font-size: .82rem; color: var(--text2); }
 .editorPage .select { width: 100%; min-width: 0; }
-.editorPage :global(.customSelectTrigger) { border: 1px solid var(--border1); background: var(--background3); color: var(--text1); border-radius: 12px; padding: 12px 16px; font-size: .95rem; }
+.editorPage :global(.customSelectTrigger) { border: 1px solid var(--border1); background: var(--background2); color: var(--text1); border-radius: 12px; padding: 12px 16px; font-size: .95rem; }
 .editorPage :global(.quizPopupGrid) { gap: 16px; }
 .editorPage :global(.quizPopupGrid) :global(.formGroup) { margin: 0; }
-.editorPage :global(.quizPopupToggleRow) { padding: 16px; border-radius: 16px; background: var(--background3); }
+.editorPage :global(.quizPopupToggleRow) { padding: 16px; border-radius: 16px; background: var(--background2); }
 .editorPage :global(.quizPopupToggleRow) strong { color: var(--text1); line-height: 1.4; font-size: .9rem; }
 .editorPage :global(.quizPopupToggleRow) span { line-height: 1.4; }
 .editorPage :global(.quizPopupActions) { position: static; margin-top: 24px; padding: 0; background: transparent; flex-wrap: wrap; }
@@ -417,8 +417,8 @@ main.management :global(.libraryShell) > :global(.profileTabsViewport) .resource
 .page.popupPanel[role='dialog'] textarea,
 .page.popupPanel[role='dialog'] :global(.customSelectTrigger),
 .page.popupPanel[role='dialog'] :global(.quizPopupToggleRow),
-.page.editorPage button:not([role='tab']):not([role='option']),
-.page.popupPanel[role='dialog'] button:not([role='option']),
+.page.editorPage button:not([role='tab']):not([role='option']):not([aria-current='page']),
+.page.popupPanel[role='dialog'] button:not([role='option']):not([aria-current='page']),
 .page.editorPage :global(.quizPopupActions) a {
   border: 0;
   background: var(--background2);
@@ -436,8 +436,8 @@ main.management :global(.libraryShell) > :global(.profileTabsViewport) .resource
   outline: 2px solid var(--accentBlue2);
   outline-offset: -3px;
 }
-.page.editorPage button:not([role='tab']):not([role='option']):hover:not(:disabled),
-.page.popupPanel[role='dialog'] button:not([role='option']):hover:not(:disabled) { background: var(--background3); }
+.page.editorPage button:not([role='tab']):not([role='option']):not([aria-current='page']):hover:not(:disabled),
+.page.popupPanel[role='dialog'] button:not([role='option']):not([aria-current='page']):hover:not(:disabled) { background: var(--background2); }
 .page.editorPage :global(.saveCaptionsBtn),
 .page.popupPanel[role='dialog'] :global(.saveCaptionsBtn) { color: var(--accentBlue2); }
 .derivedCount { display: block; padding: 12px 16px; min-height: 48px; border-radius: 12px; background: var(--background2); color: var(--text2); }
@@ -488,7 +488,7 @@ main.management :global(.libraryShell) > :global(.profileTabsViewport) .resource
 .candidateActions .partRemove svg { width: 20px; height: 20px; }
 .candidateActions .candidateEdit svg path,
 .candidateActions .partRemove svg path { stroke: currentColor; }
-.page .candidateActions .candidateEdit { background: var(--background3); color: var(--accentBlue2); }
+.page .candidateActions .candidateEdit { background: var(--background2); color: var(--accentBlue2); }
 .page.editorPage .candidatePoints input { width: 76px; min-height: 38px; padding: 8px 10px; font-size: .9rem; }
 @media (max-width: 650px) {
   .page .partCard.candidateCard { grid-template-columns: auto minmax(0, 1fr); gap: 12px; padding: 16px; }
@@ -500,7 +500,7 @@ main.management :global(.libraryShell) > :global(.profileTabsViewport) .resource
 .categoryCreateAction { position: relative; display: inline-flex; align-self: flex-start; max-width: 100%; border-radius: 16px; }
 .categoryCreateAction:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: 3px; }
 .categoryCreateAction > button:disabled { pointer-events: none; }
-.categoryCreateTooltip { position: absolute; bottom: calc(100% + 8px); left: 0; z-index: 20; width: max-content; max-width: min(360px, 65vw); padding: 12px 16px; border-radius: 12px; background: linear-gradient(var(--background3), var(--background3)), var(--background1); box-shadow: 0 8px 24px var(--headerShadowColor); color: var(--text1); font-size: .82rem; font-weight: 400; line-height: 1.5; visibility: hidden; opacity: 0; pointer-events: none; }
+.categoryCreateTooltip { position: absolute; bottom: calc(100% + 8px); left: 0; z-index: 20; width: max-content; max-width: min(360px, 65vw); padding: 12px 16px; border-radius: 12px; background: linear-gradient(var(--background2), var(--background2)), var(--background1); box-shadow: 0 8px 24px var(--headerShadowColor); color: var(--text1); font-size: .82rem; font-weight: 400; line-height: 1.5; visibility: hidden; opacity: 0; pointer-events: none; }
 .categoryCreateAction:not([data-hint-dismissed]):hover .categoryCreateTooltip,
 .categoryCreateAction:not([data-hint-dismissed]):focus-visible .categoryCreateTooltip { visibility: visible; opacity: 1; }
 
@@ -543,12 +543,12 @@ main.management .categoryQuestionsTable .categoryRemove { color: var(--accentRed
 .ruleIdentity { display: flex; align-items: center; gap: 14px; min-width: 0; }
 .ruleTitle { min-width: 0; }
 .ruleTitle p { margin: 0; color: var(--text1); font-size: 1rem; font-weight: 500; overflow-wrap: anywhere; }
-.page.editorPage .ruleCard .ruleChangeVideo { display: inline-flex; align-items: center; justify-content: center; width: auto; min-height: 32px; padding: 6px 12px; margin: 8px 0 0; border: 0; border-radius: 999px; background: var(--background3); color: var(--accentBlue2); font: inherit; font-size: .8rem; line-height: 1.25; cursor: pointer; }
+.page.editorPage .ruleCard .ruleChangeVideo { display: inline-flex; align-items: center; justify-content: center; width: auto; min-height: 32px; padding: 6px 12px; margin: 8px 0 0; border: 0; border-radius: 999px; background: var(--background2); color: var(--accentBlue2); font: inherit; font-size: .8rem; line-height: 1.25; cursor: pointer; }
 .page.editorPage .ruleCard .ruleChangeVideo:hover:not(:disabled) { background: var(--background1); }
 .ruleFields { display: flex; gap: 20px; align-items: center; min-width: 0; }
 .ruleFields :global(.formGroup) { display: flex; flex-direction: row; align-items: center; gap: 6px; margin: 0; min-width: 0; }
 .page.editorPage .ruleFields :global(.formGroup) > label { margin: 0; padding: 0; font-size: .75rem; line-height: 1.4; font-weight: 400; color: var(--text2); }
-.page.editorPage .ruleCard .ruleFields input { flex: 0 0 76px; width: 76px; min-height: 38px; padding: 8px 10px; border: 0; border-radius: 10px; background: var(--background2); color: var(--text1); font: inherit; font-size: .9rem; }
+.page.editorPage .ruleCard .ruleFields input { flex: none; width: 76px; min-height: 38px; padding: 8px 10px; border: 0; border-radius: 10px; background: var(--background2); color: var(--text1); font: inherit; font-size: .9rem; }
 .page .ruleFields input:focus-visible, .ruleChangeVideo:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: 2px; }
 .page.editorPage .ruleCard .ruleFields :global(.customSelectTrigger) { min-height: 38px; padding: 8px 10px; border-radius: 10px; background: var(--background2); color: var(--text1); font-size: .9rem; font-weight: 400; }
 .ruleFields .select { width: 220px; min-width: 0; }
@@ -566,15 +566,15 @@ main.management .categoryQuestionsTable .categoryRemove { color: var(--accentRed
 .attemptPlayer { width: 100%; margin-inline: auto; }
 .attemptReview { margin-top: 32px; }
 .attemptReviewHeader h2 { margin: 0; color: var(--text1); font-size: 1.5rem; font-weight: 700; line-height: 1.3; }
-.attemptQuestion h2 { color: var(--text1); font-size: 1.4rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.attemptQuestion h2 { color: var(--text1); font-size: 1.4rem; font-weight: 600; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
 .attemptOptions, .attemptMatches { display: grid; gap: 12px; margin-block: 24px; }
-.attemptOption { display: flex; align-items: center; gap: 14px; padding: 18px; border: 1px solid var(--border1); border-radius: 14px; background: var(--background3); cursor: pointer; }
+.attemptOption { display: flex; align-items: center; gap: 14px; padding: 18px; border: 1px solid var(--border1); border-radius: 14px; background: var(--background2); cursor: pointer; }
 .attemptOption[data-selected='true'] { border-color: var(--accentBlue2); }
 .attemptOption input { flex-shrink: 0; width: 20px; height: 20px; }
 .attemptOption span, .attemptMatch > span { white-space: pre-wrap; overflow-wrap: anywhere; min-width: 0; }
 .attemptOption:has(input:focus-visible) { outline: 2px solid var(--accentBlue2); outline-offset: 2px; }
 .attemptOption:has(input:disabled) { cursor: default; }
-.attemptMatch { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: center; padding: 16px; border-radius: 14px; background: var(--background3); }
+.attemptMatch { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: center; padding: 16px; border-radius: 14px; background: var(--background2); }
 .attemptMatch .select { width: 100%; min-width: 0; }
 .attemptFeedback { border-top: 1px solid var(--border1); padding-top: 16px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .attemptFeedback h3 { margin-block: 12px 6px; font-size: 1rem; }
@@ -648,8 +648,31 @@ main.management .categoryQuestionsTable .categoryRemove { color: var(--accentRed
 .resultScoreCard .attemptScore { font-size: clamp(2.5rem, 5vw, 4rem); color: var(--resultAccent); letter-spacing: -.04em; margin-block: 8px; }
 @keyframes resultArrive { from { opacity: 0; transform: scale(.7) translateY(12px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 @keyframes resultOrbit { 50% { transform: scale(1.07); opacity: .45; } }
-@media (max-width: 900px) { .attemptResult { flex-wrap: wrap; gap: 24px; } .resultArtwork { width: 120px; height: 120px; } .resultScoreCard { flex-basis: 100%; border-inline-start: 0; border-top: 1px solid var(--border1); padding: 24px 0 0; } }
-@media (max-width: 540px) { .attemptResult { flex-direction: column; text-align: center; } .resultCopy > .muted { max-width: none; } .resultScoreCard { width: 100%; } .candidateHeader { gap: 8px; } .candidateBulk { gap: 8px; } .candidateBulk > span { display: none; } }
+@media (max-width: 900px) {
+  .attemptResult { flex-wrap: wrap; gap: 20px; padding: 24px; }
+  .resultArtwork { width: 80px; height: 80px; }
+  .resultEmblem { width: 60px; height: 60px; }
+  .resultEmblem svg { width: 32px; height: 32px; }
+  .resultOrbit:nth-child(2) { inset: 12px; }
+  .resultScoreCard { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; flex-basis: 100%; min-width: 0; border-inline-start: 0; border-top: 1px solid var(--border1); padding: 16px 0 0; }
+  .resultScoreCard .attemptScore { margin: 0; font-size: 2.25rem; line-height: 1.1; }
+}
+@media (max-width: 540px) {
+  .attemptResult { display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: start; gap: 16px 14px; padding: 20px 16px; text-align: start; }
+  .resultArtwork { width: 56px; height: 56px; }
+  .resultEmblem { width: 44px; height: 44px; }
+  .resultEmblem svg { width: 26px; height: 26px; }
+  .resultOrbit { inset: 0; }
+  .resultOrbit:nth-child(2) { inset: 7px; }
+  .resultSpark::before { width: 3px; height: 5px; margin-top: -2px; }
+  .resultCopy .resultEyebrow { margin-bottom: 4px; font-size: .65rem; }
+  .resultCopy h2 { margin-bottom: 8px; font-size: 1.4rem; font-weight: 600; }
+  .resultCopy > .muted { max-width: none; margin-bottom: 12px; font-size: .85rem; line-height: 1.5; }
+  .resultStatus { margin-bottom: 12px; font-size: .85rem; }
+  .resultCopy .button { padding: 10px 14px; font-size: .85rem; }
+  .resultScoreCard { grid-column: 1 / -1; width: 100%; gap: 6px 12px; }
+  .resultScoreCard p { font-size: .8rem; }
+  .candidateHeader { gap: 8px; } .candidateBulk { gap: 8px; } .candidateBulk > span { display: none; } }
 @media (prefers-reduced-motion: reduce) { .resultOrbit, .resultEmblem, .resultSpark { animation: none; } }
 
 .editorPage :global(.formGroup) > .fieldLabel > label, .popupPanel :global(.formGroup) > .fieldLabel > label { color: var(--text1); font-size: .95rem; font-weight: 500; }
@@ -684,13 +707,13 @@ main.management .categoryQuestionsTable .categoryRemove { color: var(--accentRed
 .attemptStep { min-width: 0; }
 .attemptNavigation { position: sticky; top: 104px; min-width: 0; padding: 20px; border-radius: 20px; background: var(--background2); }
 .attemptNavigation h2 { margin: 0 0 18px; color: var(--text1); font-size: 1.05rem; font-weight: 600; }
-.attemptQuestionGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; max-height: min(60vh, 520px); overflow-y: auto; padding: 3px; margin: -3px; }
+.attemptQuestionGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; max-height: min(60vh, 520px); overflow-y: auto; padding: 3px 10px 3px 3px; margin: -3px; scrollbar-width: thin; scrollbar-color: var(--accentBlue2) transparent; overscroll-behavior: contain; }
 .attemptQuestionGrid button { position: relative; display: grid; place-items: center; aspect-ratio: 1; min-height: 36px; padding: 4px; border: 1px solid var(--border1); border-radius: 8px; background: var(--background2); color: var(--text1); font-size: .9rem; font-weight: 500; cursor: pointer; }
 /* State colors are shared by the numbered tiles and their legend. */
 .attemptQuestionGrid [data-state='answered'], .attemptNavigationLegend [data-state='answered'] { --question-state-color: var(--accentBlue); }
 .attemptQuestionGrid [data-state='correct'], .attemptNavigationLegend [data-state='correct'] { --question-state-color: var(--accentGreen2); }
 .attemptQuestionGrid [data-state='incorrect'], .attemptNavigationLegend [data-state='incorrect'] { --question-state-color: var(--accentRed); }
-.attemptQuestionGrid button[data-answered='true'] { background: var(--question-state-color); border-color: var(--question-state-color); color: var(--seeThroughtWhite); }
+.attemptQuestionGrid button[data-answered='true'] { background: var(--question-state-color); border-color: var(--question-state-color); color: var(--borderWhite); }
 .attemptQuestionGrid button[aria-current='step'] { outline: 2px solid var(--accentBlue2); outline-offset: 1px; }
 .attemptQuestionGrid button:hover:not(:disabled) { filter: brightness(1.15); }
 .attemptNavigationLegend { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 16px 0 0; color: var(--text2); font-size: .8rem; }
@@ -731,7 +754,7 @@ main.management .categoryQuestionsTable .categoryRemove { color: var(--accentRed
 @media (max-width: 600px) { .headerActions { width: 100%; margin-inline-start: 0; justify-content: flex-start; } }
 
 .settingsForm .fileDropzone { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; min-height: 176px; padding: 24px; border: 2px dashed var(--border1); border-radius: 16px; background: var(--background2); color: var(--text1); text-align: center; transition: border-color 150ms ease, background-color 150ms ease; }
-.settingsForm .fileDropzone:hover, .settingsForm .fileDropzone:focus-within { background: var(--background3); }
+.settingsForm .fileDropzone:hover, .settingsForm .fileDropzone:focus-within { background: var(--background2); }
 .settingsForm .fileDropzone:focus-within, .settingsForm .fileDropzone input[type='file']:focus { outline: none; }
 .settingsForm .fileDropzone input[type='file'] { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; padding: 0; margin: 0; opacity: 0; cursor: pointer; }
 .settingsForm .fileDropzone:has(input:disabled) { opacity: .55; }
@@ -746,3 +769,235 @@ main.management .categoryQuestionsTable .categoryRemove { color: var(--accentRed
 .transferBody :global(.formGroup), .transferBody p { margin: 0; }
 .transferFormat { color: var(--text2); line-height: 1.6; }
 .transferFormat .fieldHelp { margin-inline-start: 6px; vertical-align: middle; }
+
+.attemptQuestionGrid::-webkit-scrollbar { width: 5px; }
+.attemptQuestionGrid::-webkit-scrollbar-track { background: transparent; }
+.attemptQuestionGrid::-webkit-scrollbar-thumb { min-height: 32px; border-radius: var(--bR); background: var(--accentBlue2); }
+.attemptQuestionGrid::-webkit-scrollbar-thumb:hover { background: var(--accentBlue3); }
+.attemptQuestionGrid::-webkit-scrollbar-button { display: none; }
+.attemptExplanation { margin-top: 20px; padding: 20px; border-radius: 16px; background: var(--background2); line-height: 1.6; overflow-wrap: anywhere; }
+.attemptExplanation h3 { margin: 0 0 8px; font-size: 1rem; font-weight: 600; }
+.attemptExplanation a { color: var(--accentBlue2); text-decoration: underline; text-underline-offset: 3px; }
+
+.ruleThumbnail { position: relative; display: flex; align-items: center; justify-content: center; flex: 0 0 128px; width: 128px; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 12px; background: var(--background2); color: var(--text2); font-size: .75rem; text-align: center; }
+.ruleThumbnail img { width: 100%; height: 100%; object-fit: cover; }
+.ruleDuration { position: absolute; inset-inline-end: 5px; bottom: 5px; padding: 2px 7px; border: 1px solid var(--border2); border-radius: 999px; background: var(--seethroughtBlack); color: var(--text1); font-size: .75rem; font-weight: 500; line-height: 1.4; white-space: nowrap; font-variant-numeric: tabular-nums; -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); pointer-events: none; }
+@media (max-width: 600px) { .ruleThumbnail { flex-basis: 96px; width: 96px; } }
+
+/* Respond to the space left by the channel sidebar, not just the viewport. */
+main.management :global(.libraryContent), main.management :global(.libraryShell) { min-width: 0; max-width: 100%; }
+main.management :global(.libraryShell) { container: quiz-management / inline-size; }
+.editorPage { container: quiz-editor / inline-size; }
+.editorPage .settingsLayout { grid-template-columns: repeat(auto-fit, minmax(min(100%, 390px), 1fr)); }
+.page.editorPage :global(.quizPopupGrid) { grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); }
+.editorBreadcrumb { flex-wrap: wrap; overflow-wrap: anywhere; }
+.page .resourceTabs button { flex-shrink: 0; white-space: nowrap; }
+.resourceHeader > :global(.libraryHeading) { flex: 1 1 auto; min-width: 0; }
+main.management .resourceHeader { flex-direction: row; align-items: center; }
+.headerActions { max-width: 100%; }
+.headerActions .button { justify-content: center; }
+.partBody > .partEmpty { margin: 0; }
+.partBody > .candidateList:empty { display: none; }
+.partBody > .partHeader.candidateHeader { min-height: 32px; margin: 0 0 8px; padding-inline: 0; }
+.partHeader .partHeading { min-width: 0; flex-shrink: 1; flex-wrap: wrap; }
+.candidateBulk { flex-wrap: wrap; }
+.candidateBulk[data-visible='false'] { display: none; }
+.page .ruleFields { flex-wrap: wrap; }
+.page .ruleFields .select { width: 220px; }
+.page :global(.customSelectValue) { min-width: 0; }
+.page :global(.quizPopupToggleRow) > div { min-width: 0; overflow-wrap: anywhere; }
+.page :global(.quizPopupToggleRow) input { flex-shrink: 0; }
+.listTableWrap { max-width: 100%; overscroll-behavior-inline: contain; scrollbar-width: thin; scrollbar-color: var(--accentBlue2) transparent; }
+@container quiz-editor (max-width: 1050px) {
+  .page .partCard.ruleCard { grid-template-columns: minmax(0, 1fr) auto; gap: 18px; }
+  .ruleFields { grid-column: 1 / -1; grid-row: 2; }
+}
+@container quiz-editor (max-width: 760px) {
+  .page .partCard.candidateCard { grid-template-columns: auto minmax(0, 1fr); gap: 12px; }
+  .candidateLeading { align-self: start; }
+  .page .candidateActions { grid-column: 1 / -1; justify-content: flex-end; flex-wrap: wrap; }
+  .editorPage .categoryDetails :global(.formGroup) { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .editorPage .categoryDetails :global(.formGroup) > label { padding-top: 0; }
+}
+@container quiz-management (max-width: 900px) {
+  main.management .listToolbar { align-items: stretch; }
+  main.management .listToolbar > :global(.filter) { flex: 1 1 100%; max-width: none; }
+  .listFilters { width: 100%; margin-inline-start: 0; }
+  .listFilters .select { flex: 1 1 150px; max-width: none; }
+  .listFilters :global(.playlistAddBtn) { margin-inline-start: auto; flex-shrink: 0; }
+  .headerActions { margin-inline-start: 0; }
+}
+main.management .listTable thead tr > th, main.management .listTable tbody tr > td { display: table-cell; }
+/* On narrow screens each table row becomes a labelled record; sorting and bulk actions stay available. */
+@container quiz-management (max-width: 600px) {
+  main.management .listTable, main.management .listTable[data-resource] { display: block; width: 100%; min-width: 0; }
+  main.management .listTable thead, main.management .listTable tbody { display: block; }
+  main.management .listTable thead tr { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px; }
+  main.management .listTable thead tr > th { display: block; width: auto; padding: 0; border: 0; }
+  main.management .listTable thead tr > th:first-child { width: 100%; }
+  main.management .listTable thead tr > th.notHoverable:not(:first-child) { display: none; }
+  main.management .listTable th.sortable { flex: 1 1 auto; }
+  main.management .listTable th > span { flex-wrap: wrap; gap: 10px; }
+  main.management .listTable th :global(#selectedButtons) { flex-wrap: wrap; }
+  main.management .listTable th.sortable :global(.platformUsersSortButton) { min-height: 36px; }
+  main.management .listTable tbody tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 16px; gap: 12px 16px; border-top: 1px solid var(--border1); }
+  main.management .listTable tbody tr > td { display: block; min-width: 0; width: auto; padding: 0 !important; border: 0 !important; text-align: start; overflow-wrap: anywhere; }
+  main.management .listTable td:first-child, main.management .listTable td.empty { grid-column: 1 / -1; }
+  main.management .listTable td[data-label]::before { content: attr(data-label); display: block; margin-bottom: 5px; color: var(--text2); font-size: .75rem; font-weight: 500; }
+  main.management .listTable td.categoryCell { grid-column: 1 / -1; }
+  main.management .listTable td:has(:global(.managementRowActions)):last-child { align-self: end; justify-self: end; }
+  .listIdentity { align-items: flex-start; gap: 10px; }
+  .listIdentity .quizThumbnail { display: none; }
+  main.management .listTable .rowTitle, .categoryQuestionText { font-size: .95rem; }
+  .headerActions { width: 100%; gap: 8px; }
+  .headerActions .button { flex: 1 1 130px; }
+  .editorPage :global(.libraryHeader) { flex-wrap: wrap; }
+  .editorBody { min-height: 0; }
+  .sectionHelp { margin-bottom: 20px; }
+  .page .ruleFields { flex-direction: column; align-items: stretch; gap: 14px; }
+  .page .ruleFields :global(.formGroup) { flex-direction: column; align-items: stretch; gap: 8px; }
+  .page .ruleFields .select { width: 100%; flex: none; }
+  .page .ruleFields input { align-self: flex-start; flex: none; }
+  .ruleIdentity { align-items: flex-start; }
+  .ruleThumbnail { width: 96px; flex-basis: 96px; }
+  .page.editorPage :global(.quizPopupActions) { gap: 10px; }
+}
+/* Dialogs keep their header/actions visible while only the body scrolls. */
+.popupPanel { container: quiz-dialog / inline-size; box-sizing: border-box; }
+.popupPanel :global(.quizPopupBody), .popupPanel .popupScroll { min-width: 0; scrollbar-gutter: stable; }
+.popupPanel :global(.quizPopupActions) { flex-wrap: wrap; gap: 10px; }
+.popupPanel .popupNotice:empty { display: none; }
+.popupPanel .popupNotice:not(:empty) { flex: 1 0 100%; height: auto; max-height: 64px; }
+@container quiz-dialog (max-width: 480px) {
+  .popupPanel :global(.quizPopupGrid) { grid-template-columns: minmax(0, 1fr); }
+  .popupPanel .questionCanvas .matchRow { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .matchRow .select { grid-column: 2; }
+  .matchRow .answerTools { grid-column: 3; grid-row: 1 / 3; }
+  .popupPanel .partCardBody { flex-wrap: wrap; }
+  .popupPanel .partIdentity { flex-basis: 100%; }
+  .popupPanel .partActions { margin-inline-start: auto; }
+  .categoryBankRow { gap: 10px; padding: 12px; }
+  .categoryBankRow .quizThumbnail { display: none; }
+}
+@media (max-width: 480px) {
+  .popupPanel { padding: 16px; border-radius: 20px; }
+  .popupHeader { gap: 12px; margin-bottom: 16px; }
+  .popupScroll { padding-inline-end: 6px; }
+  .popupPanel :global(.quizPopupActions) > button { flex: 1 1 110px; justify-content: center; }
+  .page .partCard.candidateCard { padding: 14px; gap: 10px; }
+  .page .candidateActions { gap: 8px; flex-wrap: wrap; }
+  .partCardBody > .partText { flex-basis: 100%; }
+  .attemptNavigation { padding: 16px; }
+  .attemptQuestion { padding: 18px 16px; border-radius: 20px; }
+  .attemptQuestion h2 { font-size: 1.15rem; }
+  .attemptOption { padding: 14px 12px; gap: 10px; }
+  .attemptMatch { padding: 12px; }
+  .attemptExplanation { padding: 16px; }
+  .attemptActions { gap: 8px; }
+  .attemptActions .button { padding: 10px 12px; font-size: .85rem; }
+  .resultScoreCard { min-width: 0; }
+}
+@media (max-height: 540px) {
+  .popupLayer { padding-block: 8px; }
+  .popupPanel { height: calc(100dvh - 16px); max-height: calc(100dvh - 16px); padding-block: 14px; }
+  .popupHeader { margin-bottom: 12px; }
+  .popupPanel :global(.quizPopupActions) { margin-top: 12px; }
+  .attemptNavigation { position: static; }
+}
+
+.overviewRequirements { container: quiz-requirements / inline-size; }
+@container quiz-requirements (max-width: 600px) {
+  .overviewRequirement { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; }
+  .overviewRequirementContent { grid-column: 2; }
+  .overviewRequirementImage { width: 96px; }
+  .overviewRequirement > a, .overviewRequirement .overviewRequirementComplete { grid-column: 2; justify-self: start; }
+  .overviewRequirement:has(.overviewRequirementImage) > a, .overviewRequirement:has(.overviewRequirementImage) .overviewRequirementComplete { margin-left: 0; }
+  .overviewRequirement:not(:has(.overviewRequirementImage)) { grid-template-columns: minmax(0, 1fr); }
+  .overviewRequirement:not(:has(.overviewRequirementImage)) > * { grid-column: 1; }
+}
+@container quiz-requirements (max-width: 320px) {
+  .overviewRequirement { grid-template-columns: minmax(0, 1fr); }
+  .overviewRequirement > *,
+  .overviewRequirement .overviewRequirementComplete { grid-column: 1; }
+  .overviewRequirementImage { width: 128px; }
+}
+
+@container quiz-editor (max-width: 480px) {
+  .page .partCard.candidateCard { grid-template-columns: minmax(0, 1fr); }
+  .candidateContent, .candidateLeading, .page .candidateActions { grid-column: 1; }
+  .page .partCard.ruleCard { grid-template-columns: minmax(0, 1fr) auto; padding: 16px; gap: 12px; }
+  .ruleIdentity { grid-column: 1 / -1; }
+  .ruleFields { grid-column: 1 / -1; }
+  .ruleCard > .icon { grid-column: 2; grid-row: 3; justify-self: end; }
+}
+
+@container quiz-management (max-width: 600px) {
+  main.management .listTable tbody tr > td > span { padding-right: 0; }
+  main.management .listTable tbody tr { border: 0 !important; border-radius: 16px; background: var(--background2); }
+  main.management .listTable tbody { display: grid; gap: 12px; }
+  main.management .listTable thead tr { padding: 12px 0 !important; }
+  main.management .listTableWrap { border: 0; background: transparent; }
+}
+
+@container quiz-management (max-width: 600px) {
+  main.management .listTable thead tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  main.management .listTable thead tr > th { min-width: 0; padding: 8px !important; border-radius: 8px; }
+  main.management .listTable thead tr > th:first-child,
+  main.management .listTable[data-resource] thead tr > th:first-child { grid-column: 1 / -1; width: auto; }
+  main.management .listTable th :global(.platformUsersSortButton) { white-space: normal; text-align: start; }
+}
+@media (max-width: 768px) {
+  :global(.appFrameContent) > main.management { width: 100%; }
+}
+
+@media (max-width: 600px) {
+  .overviewMain { gap: 20px; }
+  .overviewRequirements { padding: 16px; }
+  .overviewRequirements h3 { margin-bottom: 16px; }
+  .overviewStartHint { margin-bottom: 12px; }
+  .overviewEmptyHistory { padding: 20px 16px; }
+}
+
+@media (max-width: 720px) {
+  .attemptBackLink,
+  :global(.videoQuizTopActions):has(> .attemptBackLink) { display: none; }
+}
+
+.attemptNavArrow { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 14px; }
+.attemptNavArrow svg { width: 8px; height: 14px; }
+.attemptPreviousArrow { transform: rotate(180deg); }
+
+.attemptNavArrow svg path { stroke: currentColor; }
+
+/* background3 aliases background2; mix theme colors to keep hover visibly distinct. */
+.page { --quizButtonHover: color-mix(in srgb, var(--background2) 94%, var(--text1)); }
+.page :where(button, a.button):not(nav *):not([role='option']):not([role='tab']) {
+  transition: background-color 150ms ease-in-out, border-color 150ms ease-in-out, color 150ms ease-in-out;
+}
+:is(.page, .page.editorPage, .page.popupPanel[role='dialog']) :where(button, a.button):not(nav *):not([role='option']):not([role='tab']):not(:disabled):not([aria-disabled='true']):hover {
+  filter: none;
+  background: var(--quizButtonHover);
+}
+:is(.page, .page.editorPage, .page.popupPanel[role='dialog']) .button.primary:not(:disabled):not([aria-disabled='true']):hover {
+  filter: none;
+  background: color-mix(in srgb, var(--accentBlue) 60%, var(--accentBlue2));
+  color: var(--borderWhite);
+}
+:is(.page, .page.editorPage, .page.popupPanel[role='dialog']) button[class*='bg-(--accentRed)']:not(:disabled):not([aria-disabled='true']):hover {
+  background: color-mix(in srgb, var(--accentRed) 80%, var(--borderWhite));
+  color: var(--borderWhite);
+}
+.page .attemptQuestionGrid button {
+  transition: background-color 150ms ease-in-out, border-color 150ms ease-in-out;
+}
+.page .attemptQuestionGrid button:not(:disabled):not([aria-disabled='true']):hover {
+  filter: none;
+  background: var(--quizButtonHover);
+}
+.page .attemptQuestionGrid button[data-answered='true']:not(:disabled):not([aria-disabled='true']):hover {
+  background: color-mix(in srgb, var(--question-state-color) 90%, var(--borderWhite));
+}
+@media (prefers-reduced-motion: reduce) {
+  .page :where(button, a.button):not(nav *):not([role='option']):not([role='tab']),
+  .page .attemptQuestionGrid button { transition: none; }
+}

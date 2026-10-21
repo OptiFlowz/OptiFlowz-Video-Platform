@@ -22,6 +22,7 @@ test('rules edit inline, validate and retry values, and use a video-only picker 
   let rows = [{ quiz_id: 'quiz', video_id: 'video', position: 3, min_watch_percentage: 50, min_watch_seconds: null, video_card: { id: 'video', title: 'Video', duration_seconds: 120 } }];
   const styles = new Proxy({}, { get: (_, key) => String(key) });
   const mocks = {
+    '~/functions': { formatDuration: seconds => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}` },
     '~/i18n': { useI18n: () => ({ t: key => key }) }, '~/constants': { AddSVG: '+', DeleteSVG: 'delete' },
     '~/components/editPlaylistPage/PlaylistVideoPicker': { __esModule: true, default: ({ onAdd, busy }) => React.createElement('button', { 'data-pick-video': true, disabled: busy, onClick: () => onAdd({ id: 'replacement', title: 'Replacement', duration_seconds: 120 }) }, 'Pick video') },
     '~/components/confirmPopup/confirmDialog': { ConfirmDialog: () => null },
