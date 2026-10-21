@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 
 type ConfirmOptions = {
+  intent?: "danger" | "primary";
   title?: string;
   message?: string;
   yesText?: string;
@@ -31,6 +32,7 @@ export function useConfirm() {
     confirm, // call this from anywhere in the component
     dialogProps: {
       open,
+      intent: options.intent,
       title: options.title,
       message: options.message,
       yesText: options.yesText,

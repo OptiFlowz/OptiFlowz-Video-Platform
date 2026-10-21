@@ -50,7 +50,7 @@ export async function getOwnedAttemptWithQuestions(database, attemptId, userId) 
   // One statement gives the attempt, snapshots and answers a consistent read;
   // use the primary pool so a reload sees the participant's latest saved answer.
   const { rows } = await database.query(`
-    SELECT a.id, a.status, a.expires_at, a.settings_snapshot,
+    SELECT ${ATTEMPT_RESPONSE_FIELDS}, a.settings_snapshot,
       a.expires_at IS NOT NULL AND a.expires_at <= statement_timestamp() AS expired,
       COALESCE((SELECT jsonb_agg(jsonb_build_object(
         'question_no', q.question_no, 'question_id', q.question_id,

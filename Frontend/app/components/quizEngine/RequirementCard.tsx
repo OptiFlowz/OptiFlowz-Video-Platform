@@ -36,10 +36,10 @@ export default function RequirementCard({ row, editable, busy, onSave, onRemove,
       }}>{t('qeChangeVideo')}</button>}</div>
     </div>
     <div className={styles.ruleFields}>
-      <Field label={t('quizRuleType')}><Select label={`${t('quizRuleType')}: ${title}`} value={mode} disabled={!editable || busy}
+      <Field label={t('quizRuleType')} help={`${t('quizVideoWatchPercentageHelp')} ${t('quizVideoWatchSecondsHelp')}`}><Select label={`${t('quizRuleType')}: ${title}`} value={mode} disabled={!editable || busy}
         values={[{ value: 'percentage', label: t('quizVideoWatchPercentage') }, { value: 'seconds', label: t('quizVideoWatchSeconds') }]}
         onChange={next => { const nextMode = next as Mode, nextValue = nextMode === 'percentage' ? 100 : 1; setMode(nextMode); setValue(nextValue); onDirty(nextMode !== savedMode || nextValue !== savedValue); void save(nextMode, nextValue); }} /></Field>
-      <Field label={t(mode === 'percentage' ? 'quizRequiredPercentage' : 'quizRequiredSeconds')}><input ref={input} aria-label={`${t(mode === 'percentage' ? 'quizRequiredPercentage' : 'quizRequiredSeconds')}: ${title}`} required type="number"
+      <Field label={t(mode === 'percentage' ? 'quizRequiredPercentage' : 'quizRequiredSeconds')} help={t(mode === 'percentage' ? 'quizVideoWatchPercentageHelp' : 'quizVideoWatchSecondsHelp')}><input ref={input} aria-label={`${t(mode === 'percentage' ? 'quizRequiredPercentage' : 'quizRequiredSeconds')}: ${title}`} required type="number"
         min={mode === 'percentage' ? 0.01 : 1} max={mode === 'percentage' ? 100 : row.video_card?.duration_seconds ?? 2147483647} step={mode === 'percentage' ? 0.01 : 1} value={value} disabled={!editable || busy}
         onChange={event => { const next = numberDraftValue(event.target.value); setValue(next); onDirty(mode !== savedMode || next !== savedValue); }}
         onBlur={event => { if (event.currentTarget.reportValidity()) void save(mode, value); }}

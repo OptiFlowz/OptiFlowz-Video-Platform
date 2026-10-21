@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
 export type CustomSelectOption = {
   value: string | number;
@@ -113,7 +113,6 @@ function CustomSelect({
   const openMenu = (index = selectedIndex) => {
     if (disabled || options.length === 0) return;
     typeAheadRef.current = { text: "", lastTypedAt: 0 };
-    prepareMenu();
     setActiveIndex(options[index]?.disabled ? firstEnabledIndex : index);
     setOpen(true);
   };
@@ -123,6 +122,12 @@ function CustomSelect({
     setOpen(false);
     if (restoreFocus) window.requestAnimationFrame(() => buttonRef.current?.focus({ preventScroll: true }));
   };
+
+  // Closed menus have no layout box. Measure after opening, before the browser
+  // paints, so placement never adds a temporary scroll area to a popup.
+  useLayoutEffect(() => {
+    if (open) prepareMenu();
+  }, [open, placement, options.length]);
 
   useEffect(() => {
     if (!open) return;

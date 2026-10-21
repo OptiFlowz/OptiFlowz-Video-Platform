@@ -22,7 +22,7 @@ test('quiz notifications stay in a reserved area without adding children to the 
   });
   const context = React.createContext(undefined), host = document.getElementById('notifications');
   const mocks = {
-    '@tanstack/react-query': {}, '~/authorization/authorization': {}, '~/functions': {}, '~/i18n': { useI18n: () => ({ t: key => key === 'saving' ? 'Saving...' : key }) },
+    '@tanstack/react-query': {}, '~/constants': { InfoSVG: 'i' }, '~/authorization/authorization': {}, '~/functions': {}, '~/i18n': { useI18n: () => ({ t: key => key === 'saving' ? 'Saving...' : key }) },
     '~/components/customSelect/customSelect': {}, './api': {}, './model': {},
     './EditorPopup': { EditorNoticeContext: context },
     './engine.module.css': { __esModule: true, default: new Proxy({}, { get: (_, key) => String(key) }) },

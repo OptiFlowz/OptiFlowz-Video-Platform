@@ -70,5 +70,5 @@ export function UploadSessionSlot() {
     attach?.(slotRef.current);
     return () => attach?.(null);
   }, [attach]);
-  return <div ref={slotRef} />;
+  return <div ref={slotRef} className={styles.sessionSlot} />;
 }

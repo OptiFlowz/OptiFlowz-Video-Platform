@@ -4,14 +4,14 @@ export type Owned = { id: string; user_id: string; created_at?: string; updated_
 export type Option = { option_no: number; content: string; position: number; is_correct?: boolean };
 export type MatchItem = { item_no: number; content: string; position: number; correct_option_no: number };
 export type Question = Owned & {
-  type: QuestionType; content: string; explanation: string | null;
+  type: QuestionType; content: string; explanation: string | null; max_points: number;
   category: { id: string; name: string } | null;
   options?: Option[]; matching_options?: Option[]; matching_items?: MatchItem[];
 };
-export type QuestionInput = Pick<Question, 'type' | 'content' | 'explanation'> & {
+export type QuestionInput = Pick<Question, 'type' | 'content' | 'explanation' | 'max_points'> & {
   options: Option[]; matching_options: Option[]; matching_items: MatchItem[]; category_id?: string | null;
 };
-export type Category = Owned & { name: string; description: string | null; questions?: Question[] };
+export type Category = Owned & { name: string; description: string | null; question_count: number; questions?: Question[] };
 export type QuizSettings = {
   title: string; description: string | null; status: 'draft' | 'published' | 'archived';
   time_limit_seconds: number | null; max_attempts: number | null;
@@ -34,7 +34,7 @@ export function settingsOf(quiz: Quiz): QuizSettings {
   return Object.fromEntries(Object.keys(defaultSettings).map(key => [key, quiz[key as keyof QuizSettings]])) as QuizSettings;
 }
 export type Candidate = { quiz_id: string; question_id: string; position: number; max_points: number; question: Pick<Question, 'id' | 'type' | 'content' | 'explanation'> & Partial<Pick<Question, 'category'>> };
-export type Source = { id?: string; quiz_id?: string; category_id: string | null; position: number; question_count: number; max_points: number; category?: Pick<Category, 'id' | 'name' | 'description'> | null };
+export type Source = { id?: string; quiz_id?: string; category_id: string | null; position: number; question_count: number; max_points: number | null; category?: Pick<Category, 'id' | 'name' | 'description'> | null };
 export type VideoCard = { id: string; title: string; duration_seconds?: number; thumbnail_url?: string | null; mux_thumbnail_url?: string | null };
 export type Requirement = {
   quiz_id: string; video_id: string; position: number; min_watch_percentage: number | null; min_watch_seconds: number | null;

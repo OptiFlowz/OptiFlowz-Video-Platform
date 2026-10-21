@@ -5,7 +5,7 @@
 .header p, .muted { color: var(--text2); }
 .tabs { margin-bottom: 24px; }
 .tabs button, .button { border: 1px solid var(--border1); border-radius: 999px; background: var(--background2); color: var(--text1); padding: 10px 18px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
-.tabs button[aria-pressed='true'], .primary { background: var(--accentBlue); color: var(--text1); }
+.tabs button[aria-pressed='true'], .primary { background: var(--accentBlue); color: var(--seeThroughtWhite); }
 .button svg, .icon svg { width: 20px; height: 20px; }
 .icon { background: var(--background3); color: var(--accentBlue); border: 0; padding: 10px; border-radius: 50%; display: inline-flex; cursor: pointer; }
 .danger { color: var(--accentRed); }
@@ -80,11 +80,11 @@ main.management td :global(.visibility).unpublishedStatus:hover:not(:disabled) {
 .rowTitle { display: block; text-align: start; color: var(--text1); font-size: .88rem; font-weight: 500; line-height: 1.35; cursor: pointer; overflow-wrap: anywhere; }
 .rowTitle:hover { color: var(--accentBlue2); }
 .listInfo p { color: var(--text2); margin: 4px 0; }
-main.management .listTable .checkbox, .page .check input[type='checkbox'] { appearance: none; display: inline-grid; place-content: center; flex: 0 0 26px; width: 26px; height: 26px; border-radius: 8px; border: 1px solid var(--border1); background: var(--background2); cursor: pointer; padding: 0; }
-main.management .listTable .checkbox:checked, .page .check input:checked { background: var(--accentBlue2); }
-main.management .listTable .checkbox:checked::after, .page .check input:checked::after { content: '✓'; color: var(--text1); font-size: 16px; }
-main.management .listTable .checkbox:indeterminate::after { content: '−'; color: var(--text1); }
-main.management .listTable .checkbox:disabled { opacity: .45; cursor: not-allowed; }
+main.management .listTable .checkbox, .page .check input[type='checkbox'], .page input.candidateCheckbox { appearance: none; display: inline-grid; place-content: center; flex: 0 0 26px; width: 26px; height: 26px; border-radius: 8px; border: 1px solid var(--border1); background: var(--background2); cursor: pointer; padding: 0; }
+main.management .listTable .checkbox:checked, .page .check input:checked, .page input.candidateCheckbox:checked { background: var(--accentBlue2); }
+main.management .listTable .checkbox:checked::after, .page .check input:checked::after, .page input.candidateCheckbox:checked::after { content: '✓'; color: var(--text1); font-size: 16px; }
+main.management .listTable .checkbox:indeterminate::after, .page input.candidateCheckbox:indeterminate::after { content: '−'; color: var(--text1); }
+main.management .listTable .checkbox:disabled, .page input.candidateCheckbox:disabled { opacity: .45; cursor: not-allowed; }
 main.management .listTable td.empty { padding: 2rem; text-align: center; }
 @media (max-width: 768px) {
   main.management { padding-top: 83px; }
@@ -351,7 +351,7 @@ main.management .listTable td.empty { padding: 2rem; text-align: center; }
 .editorPage .settingsLayout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start; }
 .settingsColumn { display: grid; gap: 24px; min-width: 0; }
 .settingsSection { border-radius: 24px; padding: 24px; background: var(--background2); min-width: 0; }
-.settingsSection h2 { margin: 0 0 24px; font-size: 1.15rem; color: var(--accentBlue2); }
+.settingsSection h2 { margin: 0 0 24px; font-size: 1.15rem; color: var(--text1); }
 .editorPage :global(.formGroup) { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; min-width: 0; }
 .editorPage :global(.formGroup) > label { color: var(--text1); font-size: .95rem; font-weight: 500; }
 .editorPage :global(.formGroup) > input, .editorPage :global(.formGroup) > textarea { width: 100%; }
@@ -561,3 +561,188 @@ main.management .categoryQuestionsTable .categoryRemove { color: var(--accentRed
   .ruleFields :global(.formGroup) { justify-content: space-between; }
   .ruleFields .select { flex: 0 1 220px; }
 }
+
+/* Participant questions follow the existing quiz card and control styles. */
+.attemptPlayer { width: 100%; margin-inline: auto; }
+.attemptReview { margin-top: 32px; }
+.attemptReview > h2 { margin: 0 0 24px; }
+.attemptQuestion h2 { color: var(--text1); font-size: 1.4rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.attemptOptions, .attemptMatches { display: grid; gap: 12px; margin-block: 24px; }
+.attemptOption { display: flex; align-items: center; gap: 14px; padding: 18px; border: 1px solid var(--border1); border-radius: 14px; background: var(--background3); cursor: pointer; }
+.attemptOption[data-selected='true'] { border-color: var(--accentBlue2); }
+.attemptOption input { flex-shrink: 0; width: 20px; height: 20px; }
+.attemptOption span, .attemptMatch > span { white-space: pre-wrap; overflow-wrap: anywhere; min-width: 0; }
+.attemptOption:has(input:focus-visible) { outline: 2px solid var(--accentBlue2); outline-offset: 2px; }
+.attemptOption:has(input:disabled) { cursor: default; }
+.attemptMatch { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: center; padding: 16px; border-radius: 14px; background: var(--background3); }
+.attemptMatch .select { width: 100%; min-width: 0; }
+.attemptFeedback { border-top: 1px solid var(--border1); padding-top: 16px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.attemptFeedback h3 { margin-block: 12px 6px; font-size: 1rem; }
+.attemptActions { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+.attemptResult { text-align: center; }
+.attemptScore { display: block; color: var(--accentBlue2); font-size: 3rem; margin-block: 12px; }
+@media (max-width: 600px) { .attemptMatch { grid-template-columns: minmax(0, 1fr); gap: 10px; } .attemptActions .button { flex: 1 1 auto; justify-content: center; } }
+
+/* Quiz introduction: plain guidance and video rows, without nested card surfaces. */
+.overviewStartHint { margin: 0 0 18px; color: var(--text2); font-size: .85rem; line-height: 1.6; }
+.overviewMain { display: grid; gap: 36px; min-width: 0; }
+.overviewRequirements { min-width: 0; padding: 28px; border-radius: 20px; background: var(--background2); }
+.overviewRequirements h3 { margin: 0 0 20px; font-size: 1.15rem; font-weight: 650; line-height: 1.35; }
+.overviewRequirementList { display: grid; gap: 20px; }
+.overviewRequirement { display: flex; align-items: center; gap: 16px; padding: 0 0 20px; border-bottom: 1px solid var(--border1); }
+.overviewRequirement > a { text-decoration: none; }
+.overviewRequirement:last-child { padding-bottom: 0; border-bottom: 0; }
+.overviewRequirementImage { width: 112px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px; flex-shrink: 0; }
+.overviewRequirementContent { flex: 1; min-width: 0; }
+.overviewRequirementContent strong { display: block; font-size: .9rem; line-height: 1.45; overflow-wrap: anywhere; }
+.overviewRequirementContent p { margin: 6px 0 10px; font-size: .8rem; line-height: 1.5; color: var(--text2); }
+.overviewRequirementProgress { display: block; appearance: none; border: 0; border-radius: 999px; overflow: hidden; width: 100%; height: 5px; background: var(--background2); color: var(--accentBlue2); }
+.overviewRequirementProgress::-webkit-progress-bar { background: var(--background2); }
+.overviewRequirementProgress::-webkit-progress-value { background: var(--accentBlue2); border-radius: 999px; }
+.overviewRequirementProgress::-moz-progress-bar { background: var(--accentBlue2); border-radius: 999px; }
+.overviewRequirementComplete { display: inline-flex; align-items: center; gap: 6px; color: var(--accentGreen2); font-size: .8rem; }
+.overviewRequirementComplete svg { width: 16px; height: 16px; flex-shrink: 0; }
+.overviewEmptyHistory { margin: 0; padding: 28px 24px; border-radius: 16px; background: var(--background2); color: var(--text2); text-align: center; font-size: .85rem; line-height: 1.6; }
+@media (max-width: 600px) {
+  .overviewRequirements { padding: 22px; }
+  .overviewRequirement { flex-wrap: wrap; gap: 12px; }
+  .overviewRequirementImage { width: 80px; }
+  .overviewRequirementContent { flex-basis: calc(100% - 92px); }
+  .overviewRequirement:has(.overviewRequirementImage) > a, .overviewRequirement:has(.overviewRequirementImage) .overviewRequirementComplete { margin-left: 92px; }
+}
+
+/* Field help lives above clipping/scroll containers and stays legible in both themes. */
+.fieldLabel { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.fieldLabel > label { margin: 0; }
+:global(.formGroup) > .fieldLabel { margin-bottom: 8px; }
+.fieldHelp { display: inline-flex; flex: none; color: var(--text2); }
+.fieldHelp > [role='button'] { display: inline-flex; padding: 2px; border-radius: 50%; cursor: help; }
+.fieldHelp svg { width: 16px; height: 16px; }
+.fieldHelp > [role='button'] { transition: color 150ms ease; }
+.fieldHelp > [role='button']:is(:hover, :focus-visible) { color: var(--text1); outline: none; }
+.fieldTooltip { position: fixed; z-index: 200; box-sizing: border-box; padding: 12px 16px; border: 1px solid var(--border1); border-radius: 12px; background: linear-gradient(var(--background2), var(--background2)), var(--background1); box-shadow: 0 8px 24px var(--headerShadowColor); color: var(--text1); font-size: .82rem; font-weight: 400; line-height: 1.6; pointer-events: none; max-height: 40vh; overflow: auto; }
+.settingsSection > :global(.quizPopupToggleList) { margin-top: 24px; }
+.page input.candidateCheckbox { width: 24px; height: 24px; min-height: 24px; padding: 0; flex: none; cursor: pointer; }
+.candidateHeader { min-height: 48px; flex-wrap: wrap; margin: 0 0 16px; padding: 0; }
+.candidateBulk { display: flex; align-items: center; gap: 12px; font-size: .82rem; }
+.candidateBulk[data-visible='false'] { visibility: hidden; pointer-events: none; }
+.page .candidateBulk .button { color: var(--accentRed); font-size: .82rem; padding: 8px 12px; }
+.attemptResult { --resultAccent: var(--accentBlue2); display: flex; align-items: center; gap: clamp(24px, 4vw, 64px); padding: clamp(28px, 4vw, 64px); text-align: start; position: relative; overflow: hidden; }
+.attemptResult[data-outcome='passed'] { --resultAccent: var(--accentGreen2); }
+.attemptResult[data-outcome='failed'] { --resultAccent: var(--accentRed); }
+.resultArtwork { position: relative; width: 160px; height: 160px; display: grid; place-items: center; flex: none; }
+.resultOrbit { position: absolute; inset: 4px; border: 1px solid color-mix(in srgb, var(--resultAccent) 28%, var(--background2)); border-radius: 50%; animation: resultOrbit 5s ease-in-out 2; }
+.resultOrbit:nth-child(2) { inset: 20px; animation-delay: .4s; }
+.resultEmblem { width: 92px; height: 92px; border-radius: 50%; background: color-mix(in srgb, var(--resultAccent) 12%, var(--background2)); color: var(--resultAccent); display: grid; place-items: center; animation: resultArrive .7s cubic-bezier(.2, .8, .3, 1.2) both; }
+.resultEmblem svg { width: 44px; height: 44px; }
+.resultEmblem svg path { stroke: currentColor; }
+.resultSpark { position: absolute; inset: 0; animation: resultArrive .8s ease-out both; }
+.resultSpark::before { content: ''; display: block; width: 5px; height: 10px; margin: -4px auto 0; border-radius: 4px; background: var(--resultAccent); }
+.resultCopy { flex: 1; min-width: 0; }
+.resultCopy .resultEyebrow { color: var(--text2); font-size: .8rem; letter-spacing: .09em; text-transform: uppercase; margin: 0 0 8px; }
+.resultCopy h2 { font-size: clamp(1.6rem, 3vw, 2.5rem); color: var(--text1); margin: 0 0 12px; line-height: 1.2; }
+.resultCopy > .muted { line-height: 1.6; max-width: 38ch; margin: 0 0 20px; }
+.resultStatus { display: block; color: var(--resultAccent); font-weight: 600; margin-bottom: 20px; }
+.resultScoreCard { text-align: center; min-width: 180px; padding-inline-start: 32px; border-inline-start: 1px solid var(--border1); }
+.resultScoreCard p { margin: 0; color: var(--text2); font-size: .9rem; }
+.resultScoreCard .attemptScore { font-size: clamp(2.5rem, 5vw, 4rem); color: var(--resultAccent); letter-spacing: -.04em; margin-block: 8px; }
+@keyframes resultArrive { from { opacity: 0; transform: scale(.7) translateY(12px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes resultOrbit { 50% { transform: scale(1.07); opacity: .45; } }
+@media (max-width: 900px) { .attemptResult { flex-wrap: wrap; gap: 24px; } .resultArtwork { width: 120px; height: 120px; } .resultScoreCard { flex-basis: 100%; border-inline-start: 0; border-top: 1px solid var(--border1); padding: 24px 0 0; } }
+@media (max-width: 540px) { .attemptResult { flex-direction: column; text-align: center; } .resultCopy > .muted { max-width: none; } .resultScoreCard { width: 100%; } .candidateHeader { gap: 8px; } .candidateBulk { gap: 8px; } .candidateBulk > span { display: none; } }
+@media (prefers-reduced-motion: reduce) { .resultOrbit, .resultEmblem, .resultSpark { animation: none; } }
+
+.editorPage :global(.formGroup) > .fieldLabel > label, .popupPanel :global(.formGroup) > .fieldLabel > label { color: var(--text1); font-size: .95rem; font-weight: 500; }
+.page.editorPage .ruleFields :global(.formGroup) > .fieldLabel { margin: 0; }
+.page.editorPage .ruleFields .fieldLabel > label { margin: 0; padding: 0; font-size: .75rem; line-height: 1.4; font-weight: 400; color: var(--text2); }
+.candidatePoints .fieldLabel label { color: var(--text2); font-size: .75rem; font-weight: 400; }
+
+/* Keep quiz controls and selection aligned with the rest of the admin UI. */
+.page.editorPage .settingsSection h2 { color: var(--text1); min-height: 28px; line-height: 28px; }
+.page.editorPage .settingsForm :global(.formGroup) > .fieldLabel { margin: 0; min-height: 24px; }
+.page.editorPage .settingsForm :global(.formGroup) > .fieldLabel > label { margin: 0; color: var(--text1); font-size: .95rem; font-weight: 500; }
+.settingsGroup + .settingsGroup { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border1); }
+.settingsGroup > :global(.formGroup):last-child { margin-bottom: 0; }
+.settingsGroup > :global(.quizPopupToggleList) { margin-top: 20px; }
+.page.editorPage .settingsForm :global(.formGroup) > input,
+.page.editorPage .settingsForm :global(.formGroup) > output,
+.page.editorPage .settingsForm :global(.customSelectTrigger),
+.page.popupPanel[role='dialog'] :global(.formGroup) > input:not([type='checkbox']):not([type='radio']),
+.page.popupPanel[role='dialog'] :global(.customSelectTrigger) { box-sizing: border-box; height: 48px; min-height: 48px; padding: 12px 16px; line-height: 24px; font-size: .95rem; border-radius: 12px; }
+.page.editorPage .settingsForm :global(.customSelectValue) { line-height: 24px; }
+.page.editorPage .check input[type='checkbox'], .page.editorPage input.candidateCheckbox { appearance: none; position: relative; width: 26px; height: 26px; min-width: 26px; min-height: 26px; flex: 0 0 26px; margin: 0; padding: 0; border: 1px solid var(--border1); border-radius: 8px; background: var(--background2); cursor: pointer; transition: background-color 150ms ease; }
+.page.editorPage .check input[type='checkbox']:checked, .page.editorPage input.candidateCheckbox:checked { background: var(--accentBlue2); }
+.page.editorPage .check input[type='checkbox']:checked::after, .page.editorPage input.candidateCheckbox:checked::after, .page.editorPage input.candidateCheckbox:indeterminate::after { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: var(--text1); font-size: 14px; line-height: 1; }
+.page.editorPage .candidateHeader { margin: 0 0 16px; padding-inline: 20px; gap: 12px; align-items: center; }
+.page.editorPage .candidateHeader .partHeading { margin: 0; line-height: 26px; display: inline-flex; align-items: center; gap: 8px; }
+@media (max-width: 600px) { .page.editorPage .candidateHeader { padding-inline: 16px; } }
+
+.page.editorPage .settingsForm :global(.quizPopupGrid) :global(.formGroup) > .fieldLabel { flex: 1; }
+
+/* Attempt navigation and answer controls share the admin selection styling. */
+.attemptLayout { display: grid; grid-template-columns: 220px minmax(0, 1fr); align-items: start; gap: 28px; }
+.attemptStep { min-width: 0; }
+.attemptNavigation { position: sticky; top: 104px; min-width: 0; padding: 20px; border-radius: 20px; background: var(--background2); }
+.attemptNavigation h2 { margin: 0 0 18px; color: var(--text1); font-size: 1.05rem; font-weight: 600; }
+.attemptQuestionGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; max-height: min(60vh, 520px); overflow-y: auto; padding: 3px; margin: -3px; }
+.attemptQuestionGrid button { position: relative; display: grid; place-items: center; aspect-ratio: 1; min-height: 36px; padding: 4px; border: 1px solid var(--border1); border-radius: 8px; background: var(--background2); color: var(--text1); font-size: .9rem; font-weight: 500; cursor: pointer; }
+/* State colors are shared by the numbered tiles and their legend. */
+.attemptQuestionGrid [data-state='answered'], .attemptNavigationLegend [data-state='answered'] { --question-state-color: var(--accentBlue); }
+.attemptQuestionGrid [data-state='correct'], .attemptNavigationLegend [data-state='correct'] { --question-state-color: var(--accentGreen2); }
+.attemptQuestionGrid [data-state='incorrect'], .attemptNavigationLegend [data-state='incorrect'] { --question-state-color: var(--accentRed); }
+.attemptQuestionGrid button[data-answered='true'] { background: var(--question-state-color); border-color: var(--question-state-color); color: var(--seeThroughtWhite); }
+.attemptQuestionGrid button[aria-current='step'] { outline: 2px solid var(--accentBlue2); outline-offset: 1px; }
+.attemptQuestionGrid button:hover:not(:disabled) { filter: brightness(1.15); }
+.attemptNavigationLegend { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 16px 0 0; color: var(--text2); font-size: .8rem; }
+.attemptNavigationLegend > span { display: inline-flex; align-items: center; gap: 6px; }
+.attemptNavigationLegend i { width: 12px; height: 12px; flex-shrink: 0; border-radius: 3px; background: var(--question-state-color); }
+.attemptOption input[type='checkbox'], .attemptOption input[type='radio'] { appearance: none; position: relative; display: inline-grid; place-content: center; box-sizing: border-box; width: 26px; height: 26px; min-width: 26px; flex: 0 0 26px; padding: 0; margin: 0; border: 1px solid var(--border1); border-radius: 8px; background: var(--background2); cursor: pointer; transition: background-color 150ms ease; }
+.attemptOption input[type='radio'] { border-radius: 50%; }
+.attemptOption input:checked { background: var(--accentBlue2); }
+.attemptOption input[type='checkbox']:checked::after { content: '✓'; color: var(--text1); font-size: 14px; line-height: 1; }
+.attemptOption input[type='radio']:checked::after { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--text1); }
+.attemptOption input:disabled { cursor: default; }
+@media (max-width: 800px) {
+  .attemptLayout { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .attemptNavigation { position: static; }
+  .attemptQuestionGrid { grid-template-columns: repeat(auto-fill, minmax(38px, 1fr)); max-height: 180px; }
+  .attemptQuestionGrid button { max-height: 48px; }
+}
+
+.attemptTimeValue { color: var(--accentOrange); font-variant-numeric: tabular-nums; }
+
+.transferWarnings { padding-inline-start: 20px; color: var(--text2); overflow-wrap: anywhere; }
+.transferWarnings li + li { margin-top: 12px; }
+
+.page .listTable .tableText { line-height: 1.5; padding: 0; }
+/* Keep long titles and category descriptions from stretching table rows. */
+.page .rowTitle, .page .listTable .tableText, .page .categoryQuestionText, .categoryBankText > p, .categoryBankText > span {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.resourceHeader { align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.headerActions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex-wrap: wrap; margin-inline-start: auto; }
+@media (max-width: 600px) { .headerActions { width: 100%; margin-inline-start: 0; justify-content: flex-start; } }
+
+.settingsForm .fileDropzone { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; min-height: 176px; padding: 24px; border: 2px dashed var(--border1); border-radius: 16px; background: var(--background2); color: var(--text1); text-align: center; transition: border-color 150ms ease, background-color 150ms ease; }
+.settingsForm .fileDropzone:hover, .settingsForm .fileDropzone:focus-within { background: var(--background3); }
+.settingsForm .fileDropzone:focus-within, .settingsForm .fileDropzone input[type='file']:focus { outline: none; }
+.settingsForm .fileDropzone input[type='file'] { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; padding: 0; margin: 0; opacity: 0; cursor: pointer; }
+.settingsForm .fileDropzone:has(input:disabled) { opacity: .55; }
+.settingsForm .fileDropzone input:disabled { cursor: not-allowed; }
+.fileDropzoneIcon { display: flex; color: var(--accentBlue2); }
+.fileDropzoneIcon svg { width: 32px; height: 32px; }
+.fileDropzoneName { max-width: 100%; overflow-wrap: anywhere; font-size: .95rem; }
+.fileDropzoneHint { color: var(--text2); font-size: .82rem; }
+
+.settingsForm .transferBody { gap: 24px; }
+.settingsForm .transferBody fieldset { display: flex; flex-direction: column; gap: 24px; }
+.transferBody :global(.formGroup), .transferBody p { margin: 0; }
+.transferFormat { color: var(--text2); line-height: 1.6; }
+.transferFormat .fieldHelp { margin-inline-start: 6px; vertical-align: middle; }

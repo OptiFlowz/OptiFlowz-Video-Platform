@@ -364,23 +364,31 @@ test('save answers: authentication, snapshots, grading, feedback and concurrent 
     assert.equal(Object.hasOwn(denied.body, 'questions'), false);
   });
 
-  await t.test('GET timed_out attempts follows review policy; submitted and cancelled attempts are unavailable', async () => {
-    const { id } = await fixture();
-    await request(id);
-    await admin.query("UPDATE quiz_attempts SET status='timed_out' WHERE id=$1", [id]);
-    const result = await getQuestions(id);
-    assert.equal(result.status, 200);
-    assert.equal(result.body.is_expired, true);
-    assert.equal(result.body.questions[0].can_edit, false);
-    assert.equal(result.body.questions[0].feedback.is_correct, true);
-    await admin.query(`UPDATE quiz_attempts SET settings_snapshot=settings_snapshot || '{"allow_attempt_review":false}' WHERE id=$1`, [id]);
-    assert.equal((await getQuestions(id)).status, 403);
-    for (const status of ['submitted', 'cancelled']) {
+  await t.test('GET submitted and timed_out attempts follow snapshot review policy; cancelled attempts are unavailable', async () => {
+    for (const status of ['submitted', 'timed_out']) {
+      const { id } = await fixture();
+      await request(id);
       await admin.query('UPDATE quiz_attempts SET status=$2 WHERE id=$1', [id, status]);
-      const blocked = await getQuestions(id);
-      assert.equal(blocked.status, 409);
-      assert.equal(blocked.body.code, 'ATTEMPT_NOT_IN_PROGRESS');
+      const before = await stored(id);
+      const result = await getQuestions(id);
+      assert.equal(result.status, 200);
+      assert.equal(result.body.status, status);
+      assert.equal(result.body.settings.allow_attempt_review, true);
+      assert.equal(result.body.result.status, status);
+      assert.equal(result.body.questions[0].can_edit, false);
+      assert.equal(result.body.questions[0].feedback.is_correct, true);
+      assert.deepEqual(await stored(id), before);
+      await admin.query(`UPDATE quiz_attempts SET settings_snapshot=settings_snapshot || '{"allow_attempt_review":false}' WHERE id=$1`, [id]);
+      const denied = await getQuestions(id);
+      assert.equal(denied.status, 403);
+      assert.equal(denied.body.code, 'ATTEMPT_REVIEW_NOT_ALLOWED');
+      assert.equal(Object.hasOwn(denied.body, 'questions'), false);
     }
+    const { id } = await fixture();
+    await admin.query("UPDATE quiz_attempts SET status='cancelled' WHERE id=$1", [id]);
+    const blocked = await getQuestions(id);
+    assert.equal(blocked.status, 409);
+    assert.equal(blocked.body.code, 'ATTEMPT_NOT_IN_PROGRESS');
     const active = await fixture('single_choice', { allow_attempt_review: false });
     assert.equal((await getQuestions(active.id)).status, 200);
   });

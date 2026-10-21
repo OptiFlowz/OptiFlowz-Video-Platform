@@ -8,6 +8,7 @@ import { useI18n } from '~/i18n';
 import { numberDraftValue } from './numberDraft';
 import { typeLabels, type Candidate } from './model';
 import styles from './engine.module.css';
+import { FieldHelp } from './shared';
 
 type CardProps = {
   row: Candidate; index: number; editable: boolean; busy: boolean;
@@ -15,6 +16,7 @@ type CardProps = {
   onDirty: (id: string, dirty: boolean) => void;
   onRemove: (row: Candidate) => void;
   onEdit?: (row: Candidate) => void;
+  selected?: string[]; onSelect?: (id: string, checked: boolean) => void;
 };
 
 function PointsInput({ row, busy, onPoints, onDirty }: Pick<CardProps, 'row' | 'busy' | 'onPoints' | 'onDirty'>) {
@@ -28,8 +30,8 @@ function PointsInput({ row, busy, onPoints, onDirty }: Pick<CardProps, 'row' | '
     try { if (await onPoints(row, value)) onDirty(row.question_id, false); }
     finally { saving.current = false; }
   };
-  return <label className={styles.candidatePoints}><span>{t('quizPoints')}</span>
-    <input type="number" required min={0.01} max={99999999.99} step={0.01} value={value} disabled={busy}
+  return <div className={styles.candidatePoints} data-no-drag><div className={styles.fieldLabel}><label htmlFor={`points-${row.question_id}`}>{t('quizPoints')}</label><FieldHelp label={t('quizPoints')} help={t('qeHelp_max_points')} /></div>
+    <input id={`points-${row.question_id}`} type="number" required min={0.01} max={99999999.99} step={0.01} value={value} disabled={busy}
       aria-label={`${t('quizPoints')}: ${row.question.content || t('qeUntitledQuestion')}`}
       onChange={event => { const next = numberDraftValue(event.target.value); setValue(next); onDirty(row.question_id, next !== Number(row.max_points)); }}
       onBlur={event => { void save(event.currentTarget); }}
@@ -37,13 +39,13 @@ function PointsInput({ row, busy, onPoints, onDirty }: Pick<CardProps, 'row' | '
         if (event.key === 'Enter') { event.preventDefault(); event.currentTarget.blur(); }
         if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); setValue(Number(row.max_points)); onDirty(row.question_id, false); }
       }} />
-  </label>;
+  </div>;
 }
 
-function CandidateCard({ row, index, editable, busy, onPoints, onDirty, onRemove, onEdit, handle }: CardProps & { handle?: ReactNode }) {
+function CandidateCard({ row, index, editable, busy, onPoints, onDirty, onRemove, onEdit, selected, onSelect, handle }: CardProps & { handle?: ReactNode }) {
   const { t } = useI18n();
   return <article className={`${styles.partCard} ${styles.candidateCard}`}>
-    <div className={styles.candidateLeading}>{handle}<span className={styles.candidatePosition}>{index + 1}</span></div>
+    <div className={styles.candidateLeading}>{editable && onSelect && <input className={styles.candidateCheckbox} type="checkbox" aria-label={`${t('quizSelect')}: ${row.question.content || t('qeUntitledQuestion')}`} checked={selected?.includes(row.question_id) ?? false} disabled={busy} onChange={event => onSelect(row.question_id, event.target.checked)} />}{handle}<span className={styles.candidatePosition}>{index + 1}</span></div>
     <div className={styles.candidateContent}>
       <p>{row.question.content || t('qeUntitledQuestion')}</p>
       <span className={styles.partMeta}>{t(typeLabels[row.question.type])} · {row.question.category?.name || t('qeUncategorized')}{!editable && <> · {t('quizPointsShort', { count: row.max_points })}</>}</span>
@@ -62,7 +64,7 @@ function SortableCandidate(props: CardProps) {
   const { t } = useI18n();
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: props.row.question_id, disabled: props.busy || !props.editable });
   const canDragFrom = (target: EventTarget | null) => props.editable && !props.busy && target instanceof Element
-    && !target.closest('button, input, textarea, select, label, a, [contenteditable="true"]');
+    && !target.closest('button, input, textarea, select, label, a, [data-no-drag], [role="button"], [contenteditable="true"]');
   return <div ref={setNodeRef} style={{ transform: CSS.Translate.toString(transform), transition }}
     className={`${props.editable && !props.busy ? styles.candidateSortable : ''} ${isDragging ? styles.candidateDragging : ''}`}
     onMouseDown={event => { if (canDragFrom(event.target)) listeners?.onMouseDown?.(event); }}
@@ -72,7 +74,7 @@ function SortableCandidate(props: CardProps) {
   </div>;
 }
 
-export default function CandidateList({ rows, editable, busy, onMove, onPoints, onDirty, onRemove, onEdit }: Omit<CardProps, 'row' | 'index'> & {
+export default function CandidateList({ rows, editable, busy, onMove, onPoints, onDirty, onRemove, onEdit, selected, onSelect }: Omit<CardProps, 'row' | 'index'> & {
   rows: Candidate[]; onMove: (id: string, targetId: string) => void;
 }) {
   const { t } = useI18n(), [activeId, setActiveId] = useState<string | null>(null);
@@ -91,7 +93,7 @@ export default function CandidateList({ rows, editable, busy, onMove, onPoints, 
     onDragStart={({ active }) => setActiveId(String(active.id))} onDragCancel={() => setActiveId(null)}
     onDragEnd={({ active, over }) => { setActiveId(null); if (over && active.id !== over.id) onMove(String(active.id), String(over.id)); }}>
     <SortableContext items={rows.map(row => row.question_id)} strategy={verticalListSortingStrategy}>
-      <div className={styles.candidateList}>{rows.map((row, index) => <SortableCandidate key={row.question_id} {...{ row, index, editable, busy, onPoints, onDirty, onRemove, onEdit }} />)}</div>
+      <div className={styles.candidateList}>{rows.map((row, index) => <SortableCandidate key={row.question_id} {...{ row, index, editable, busy, onPoints, onDirty, onRemove, onEdit, selected, onSelect }} />)}</div>
     </SortableContext>
     {typeof document !== 'undefined' && createPortal(<DragOverlay dropAnimation={null} zIndex={90}>
       {activeIndex >= 0 && <div className={`${styles.page} ${styles.candidateOverlay}`} aria-hidden="true">

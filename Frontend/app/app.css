@@ -1179,7 +1179,15 @@ header .primaryNavigation .primaryNavigationBrand::before {
 		visibility 0s linear 220ms;
 }
 
+/* Invisible positioned menus still enlarge scrollable popup bodies. */
+.customSelect:not(.isOpen) .customSelectMenu {
+	display: none;
+}
+
 .customSelect.isOpen .customSelectMenu {
+	animation:
+		customSelectFadeIn 190ms ease,
+		customSelectSlideIn 260ms cubic-bezier(0.16, 1, 0.3, 1);
 	opacity: 1;
 	pointer-events: auto;
 	transform: translateY(0) scale(1);
@@ -1234,6 +1242,7 @@ header .primaryNavigation .primaryNavigationBrand::before {
 }
 
 .customSelectMenu.opensUpward {
+	--custom-select-enter-y: 7px;
 	top: auto;
 	bottom: calc(100% + 8px);
 	transform: translateY(7px) scale(0.975);
@@ -1244,8 +1253,21 @@ header .primaryNavigation .primaryNavigationBrand::before {
 	transform: translateY(0) scale(1);
 }
 
+/* Entry animations restart when a menu returns from display: none. */
+@keyframes customSelectFadeIn {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+@keyframes customSelectSlideIn {
+	from { transform: translateY(var(--custom-select-enter-y, -7px)) scale(0.975); }
+	to { transform: translateY(0) scale(1); }
+}
+
 @media (prefers-reduced-motion: reduce) {
-	.customSelectMenu {
+	.customSelectMenu,
+	.customSelect.isOpen .customSelectMenu {
+		animation: none;
 		transition: none;
 	}
 }

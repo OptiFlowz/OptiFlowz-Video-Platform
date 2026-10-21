@@ -26,6 +26,7 @@ test('candidate cards edit points inline and send only the moved question positi
     { question_id: 'second', position: 7, max_points: 5, question: { content: 'Second question', type: 'matching' } },
   ];
   const bank = [{ id: 'third', user_id: 'owner', content: 'Third question', type: 'single_choice' }];
+  let failRemoval = false;
   let drag, resolveOrder, rejectOrder, rejectPoints = false, allowRemove = true, canEditQuestion = true;
   const styles = new Proxy({}, { get: (_, key) => String(key) });
   const mocks = {
@@ -62,10 +63,11 @@ test('candidate cards edit points inline and send only the moved question positi
         });
       }
       if (method === 'POST') rows = [...rows, { ...body, question: bank.find(question => question.id === body.question_id) }];
+      if (method === 'DELETE' && failRemoval && route.endsWith('/first')) throw new Error('Removal failed');
       if (method === 'DELETE') rows = rows.filter(row => !route.endsWith(`/${row.question_id}`));
     } },
     './shared': {
-      styles, Field: ({ label, children }) => React.createElement('label', null, label, children), Select: () => null,
+      styles, FieldHelp: () => null, Field: ({ label, children }) => React.createElement('label', null, label, children), Select: () => null,
       Notice: ({ error }) => error ? React.createElement('p', { role: 'alert' }, error) : null, LoadState: () => null, useAccess: () => ({ read: true, canOwn: () => canEditQuestion }),
       useAction: () => {
         const [busy, setBusy] = React.useState(false), [error, setError] = React.useState('');
@@ -103,7 +105,7 @@ test('candidate cards edit points inline and send only the moved question positi
   assert.deepEqual(dragStarts, ['mouse', 'touch', 'mouse']);
   await act(async () => {
     mouseDown(points);
-    mouseDown(points.closest('label').querySelector('span'));
+    mouseDown(points.closest('.candidatePoints').querySelector('label'));
     mouseDown(document.querySelector('.partRemove'));
     mouseDown(document.querySelector('.candidateEdit'));
     points.dispatchEvent(new window.Event('touchstart', { bubbles: true }));
@@ -169,7 +171,7 @@ test('candidate cards edit points inline and send only the moved question positi
   const click = async element => act(async () => element.click());
   await click(document.querySelector('.partAdd'));
   await click(document.querySelector('[aria-label="quizAddQuestion: Third question"]'));
-  assert.deepEqual(requests.at(-1), ['/quiz/questions', 'POST', { question_id: 'third', position: 11, max_points: 1 }]);
+  assert.deepEqual(requests.at(-1), ['/quiz/questions', 'POST', { question_id: 'third', position: 11 }]);
   assert.ok(rows.some(row => row.question_id === 'third'));
   const beforeRemove = requests.length;
   allowRemove = false;
@@ -199,6 +201,27 @@ test('candidate cards edit points inline and send only the moved question positi
   assert.equal(document.querySelector('[data-editing-question]'), null);
   assert.ok(titles().includes('Updated question'), 'refreshed question appears in its existing quiz row');
   assert.equal(rows.find(row => row.question_id === 'first').max_points, 4.5);
+  // Bulk removal uses only quiz links and retains the failed selection for retry.
+  const originalRows = [...rows];
+  await click(document.querySelector('[aria-label="qeSelectAll"]'));
+  assert.equal(document.querySelectorAll('.candidateCard input[type="checkbox"]:checked').length, 2);
+  await click(document.querySelector('.candidateCard input[type="checkbox"]'));
+  assert.equal(document.querySelector('[aria-label="qeSelectAll"]').indeterminate, true);
+  await click(document.querySelector('[aria-label="qeSelectAll"]'));
+  const beforeBulk = requests.length;
+  allowRemove = false;
+  await click(document.querySelector('.candidateBulk button'));
+  assert.equal(requests.length, beforeBulk);
+  allowRemove = true; failRemoval = true;
+  await click(document.querySelector('.candidateBulk button'));
+  assert.equal(rows.length, 1, 'successful deletion is retained when the second fails');
+  assert.equal(document.querySelector('.candidateCard input[type="checkbox"]').checked, true);
+  assert.equal(document.querySelector('[role="alert"]').textContent, 'Removal failed');
+  failRemoval = false;
+  await click(document.querySelector('.candidateBulk button'));
+  assert.equal(rows.length, 0);
+  assert.deepEqual(requests.slice(beforeBulk).map(([route]) => route), ['/quiz/questions/second', '/quiz/questions/first', '/quiz/questions/first']);
+  rows = originalRows;
   canEditQuestion = false;
   await act(async () => root.render(React.createElement(Candidates, props)));
   assert.equal(document.querySelector('.candidateEdit'), null, 'question editing requires question update permission');

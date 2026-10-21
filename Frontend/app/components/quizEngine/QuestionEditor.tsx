@@ -4,6 +4,7 @@ import { AddSVG, ArrowSVG, DeleteSVG } from '~/constants';
 import { request } from './api';
 import { Field, Select, Notice, LoadState, useAction, useAccess, useAll, useDetail, styles } from './shared';
 import { typeLabels, type Question, type QuestionInput, type Category, type QuestionType } from './model';
+import { numberDraftValue, type NumberDraft } from './numberDraft';
 import { questionReady } from './readiness';
 import CategoryEditor from './CategoryEditor';
 import EditorPopup, { EditorActions } from './EditorPopup';
@@ -48,8 +49,8 @@ function QuestionForm({ initial, onSaved, onDirty, onClose }: { initial?: Questi
   const { t } = useI18n(), access = useAccess('questions', initial), categoryAccess = useAccess('categories'), answerName = useId();
   const categories = useAll<Category>('/question-categories', 'categories', categoryAccess.read);
   const [creatingCategory, setCreatingCategory] = useState(false), [createdCategories, setCreatedCategories] = useState<Category[]>([]);
-  const [form, setForm] = useState<QuestionInput>(() => ({
-    type: initial?.type ?? 'single_choice', content: initial?.content ?? '', explanation: initial?.explanation ?? null,
+  const [form, setForm] = useState<NumberDraft<QuestionInput>>(() => ({
+    max_points: initial?.max_points ?? 1, type: initial?.type ?? 'single_choice', content: initial?.content ?? '', explanation: initial?.explanation ?? null,
     options: [...(initial?.options ?? (initial ? [] : emptyOptions()))].sort((a, b) => a.position - b.position || a.option_no - b.option_no),
     matching_options: [...(initial?.matching_options ?? [])].sort((a, b) => a.position - b.position || a.option_no - b.option_no),
     matching_items: [...(initial?.matching_items ?? [])].sort((a, b) => a.position - b.position || a.item_no - b.item_no),
@@ -57,13 +58,13 @@ function QuestionForm({ initial, onSaved, onDirty, onClose }: { initial?: Questi
   }));
   const [baseline, setBaseline] = useState(JSON.stringify(form));
   const action = useAction(), editable = initial ? access.update : access.create;
-  const change = (patch: Partial<QuestionInput>) => { const next = { ...form, ...patch }; setForm(next); onDirty(JSON.stringify(next) !== baseline); };
+  const change = (patch: Partial<NumberDraft<QuestionInput>>) => { const next = { ...form, ...patch }; setForm(next); onDirty(JSON.stringify(next) !== baseline); };
   const matching = form.type === 'matching', options = matching ? form.matching_options : form.options;
   const setOptions = (next: typeof options) => change(matching ? { matching_options: next } : { options: next });
   const ownedCategories = [...new Map([...(initial?.category ? [initial.category] : []), ...createdCategories, ...(categories.data ?? []).filter(category => category.user_id === (initial?.user_id ?? access.user?.id))].map(category => [category.id, category])).values()];
   const [categoryHintDismissed, setCategoryHintDismissed] = useState(false);
   const categoryCreationHint = !categoryAccess.create ? 'qeCategoryCreatePermission' : initial && initial.user_id !== access.user?.id ? 'qeCategoryCreateOwnerOnly' : null;
-  const ready = questionReady({ ...form, id: '', user_id: '', category: null });
+  const ready = questionReady({ ...form, max_points: Number(form.max_points), id: '', user_id: '', category: null });
   const optionRows = <div className="videoQuizOptions">{options.map((option, index) => <div className={`videoQuizOption ${option.is_correct && !matching ? 'selected' : ''} ${styles.answerRow}`} key={option.option_no}>
     {!matching && <input className={styles.answerMarker} type={form.type === 'single_choice' ? 'radio' : 'checkbox'} name={answerName} checked={!!option.is_correct} aria-label={`${t('quizCorrectAnswer')} ${index + 1}`} onChange={e => setOptions(options.map(o => ({ ...o, is_correct: o.option_no === option.option_no ? e.target.checked : form.type === 'single_choice' ? false : o.is_correct })))} />}
     <span className={styles.answerLetter}>{String.fromCharCode(65 + index % 26)}</span>
@@ -72,11 +73,12 @@ function QuestionForm({ initial, onSaved, onDirty, onClose }: { initial?: Questi
   </div>)}</div>;
   return <><form className={`quizPopupForm ${styles.settingsForm}`} onSubmit={event => { event.preventDefault(); void action.run(async () => {
     const { category_id, ...body } = form;
-    const result = await request<{ question: Question }>(initial ? `/questions/${initial.id}` : '/questions', initial ? 'PATCH' : 'POST', { ...body, ...(categories.isSuccess || createdCategories.length > 0 ? { category_id } : {}) });
+    const result = await request<{ question: Question }>(initial ? `/questions/${initial.id}` : '/questions', initial ? 'PATCH' : 'POST', { ...body, max_points: Number(body.max_points), ...(categories.isSuccess || createdCategories.length > 0 ? { category_id } : {}) });
     setBaseline(JSON.stringify(form)); onDirty(false); onSaved(result.question.id);
   }); }}>
     <div className="quizPopupBody"><Notice {...action} /><fieldset disabled={action.busy || !editable}>
       <Field label={t('quizQuestionType')}><Select label={t('quizQuestionType')} placement="bottom" value={form.type} values={Object.entries(typeLabels).map(([value, key]) => ({ value, label: t(key) }))} onChange={value => change({ type: value as QuestionType, options: value === 'matching' ? [] : emptyOptions(), matching_options: value === 'matching' ? emptyOptions().map(({ is_correct, ...option }) => option) : [], matching_items: value === 'matching' ? [1, 2].map(item_no => ({ item_no, content: '', position: item_no, correct_option_no: item_no })) : [] })} /></Field>
+      <Field label={t('quizPoints')} help={t('qeHelp_max_points')}><input aria-label={t('quizPoints')} type="number" required min={0.01} max={99999999.99} step={0.01} value={form.max_points} onChange={event => change({ max_points: numberDraftValue(event.target.value) })} /></Field>
       <section className={`videoQuizPage ${styles.questionCanvas}`} aria-label={t('quizQuestionText')}>
         <div className="videoQuizQuestionHeader"><textarea className={styles.questionPrompt} aria-label={t('quizQuestionText')} placeholder={t('quizQuestionTextPlaceholder')} rows={2} value={form.content} onChange={e => change({ content: e.target.value })} /></div>
         <p className={styles.answerHint}>{t(matching ? 'qeMatchingHelp' : form.type === 'single_choice' ? 'quizSingleCorrectHelp' : 'quizMultipleCorrectHelp')}</p>

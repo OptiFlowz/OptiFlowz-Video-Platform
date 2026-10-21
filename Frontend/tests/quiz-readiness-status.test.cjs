@@ -36,7 +36,7 @@ test('readiness progress and errors stay in the readiness section while saves us
   }
   const shared = load('shared.tsx', {
     '@tanstack/react-query': { useQueryClient: () => ({ invalidateQueries: async () => {} }) },
-    '~/authorization/authorization': {}, '~/functions': {}, '~/i18n': i18n, '~/components/customSelect/customSelect': {},
+    '~/constants': { InfoSVG: 'i' }, '~/authorization/authorization': {}, '~/functions': {}, '~/i18n': i18n, '~/components/customSelect/customSelect': {},
     './api': { engineKey: ['quiz-engine'] }, './model': {}, './EditorPopup': popup, './engine.module.css': styles,
   });
   const model = load('model.ts');
@@ -46,12 +46,22 @@ test('readiness progress and errors stay in the readiness section while saves us
     '~/i18n': i18n, 'react-router': { Link: () => null },
     '~/components/library/ProfileTabs': { __esModule: true, default: ({ children }) => React.createElement('div', null, children) },
     './shared': { ...shared, styles: styles.default, useDetail: () => ({ data: { quiz } }), useAccess: () => ({ update: true, create: true, can: () => true }),
-      Field: ({ label, children }) => React.createElement('label', null, label, children), Select: () => null },
+      Select: () => null },
     './api': { request: () => new Promise(resolve => { resolveSave = resolve; }) }, './model': model,
     './inspectQuiz': { inspectQuiz: () => { checks++; return new Promise((resolve, reject) => { resolveCheck = resolve; rejectCheck = reject; }); } },
     './QuizParts': {}, './EditorPopup': popup, './numberDraft': load('numberDraft.ts'),
   });
   await act(async () => root.render(React.createElement(QuizEditor, { id: quiz.id, section: 'settings', onSectionChange() {}, onSaved() {}, onDirty() {}, onClose() {} })));
+  const scoring = [...document.querySelectorAll('.settingsSection')].find(el => el.querySelector('h2')?.textContent === messages.qeFeedback);
+  for (const key of ['quizPassingScore', 'qeMinAnswered', 'qeMinCorrect']) assert.ok(scoring.querySelector(`input[aria-label="${messages[key]}"]`), `${key} belongs to scoring`);
+  assert.equal(document.querySelectorAll('.formHint').length, 0, 'help is no longer permanently below fields');
+  const help = document.querySelector('[role="button"][aria-label="Correct answers required to submit (%)"]');
+  assert.equal(document.querySelector('[role="tooltip"]'), null);
+  await act(async () => help.focus());
+  assert.equal(document.querySelector('[role="tooltip"]').textContent, messages.qeHelp_min_correct_percentage);
+  assert.equal(document.querySelector('[role="tooltip"]').parentElement, document.body, 'help escapes panel clipping');
+  await act(async () => help.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+  assert.equal(document.querySelector('[role="tooltip"]'), null);
   const readiness = document.querySelector('.readiness'), check = readiness.querySelector('button');
   const heading = document.querySelector('.settingsSection .partHeader');
   const save = document.querySelector('.actions .saveCaptionsBtn');

@@ -43,7 +43,7 @@ test('quiz popup waits for its portal before entering and finishes exiting befor
   });
   const { default: EditorPopup, EditorActions } = popupModule;
   const { Notice } = load('app/components/quizEngine/shared.tsx', {
-    '@tanstack/react-query': {}, '~/authorization/authorization': {}, '~/functions': {},
+    '@tanstack/react-query': {}, '~/constants': { InfoSVG: 'i' }, '~/authorization/authorization': {}, '~/functions': {},
     '~/i18n': { useI18n: () => ({ t: key => key === 'saving' ? 'Saving...' : key }) },
     '~/components/customSelect/customSelect': {}, './api': {}, './model': {},
     './EditorPopup': popupModule,

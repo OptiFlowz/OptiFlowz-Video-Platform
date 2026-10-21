@@ -1,7 +1,8 @@
-import { useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useContext, useId, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthorization } from '~/authorization/authorization';
+import { InfoSVG } from '~/constants';
 import { getToken } from '~/functions';
 import { useI18n } from '~/i18n';
 import CustomSelect from '~/components/customSelect/customSelect';
@@ -62,8 +63,38 @@ export function LoadState({ query, variant = 'cards' }: { query: { isPending: bo
   const { t } = useI18n();
   return query.isPending ? <LoadingSkeleton variant={variant} /> : query.isError ? <div role="alert"><p>{query.error?.message}</p><button type="button" className="saveCaptionsBtn" onClick={() => query.refetch()}>{t('usersRetry')}</button></div> : null;
 }
-export function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
-  return <div className="formGroup"><label>{label}</label>{children}{hint && <p className="formHint">{hint}</p>}</div>;
+export function FieldHelp({ label, help }: { label: string; help: string }) {
+  const id = useId(), anchor = useRef<HTMLSpanElement>(null), tooltip = useRef<HTMLSpanElement>(null);
+  const [position, setPosition] = useState<{ left: number; top: number; width: number } | null>(null);
+  const open = () => {
+    const rect = anchor.current?.getBoundingClientRect();
+    if (!rect) return;
+    const width = Math.min(320, window.innerWidth - 32);
+    setPosition({ left: Math.max(16, Math.min(rect.left, window.innerWidth - width - 16)), top: rect.bottom + 8, width });
+  };
+  useLayoutEffect(() => {
+    if (!position || !tooltip.current || !anchor.current) return;
+    const height = tooltip.current.getBoundingClientRect().height;
+    if (position.top + height > window.innerHeight - 16) {
+      const top = Math.max(16, anchor.current.getBoundingClientRect().top - height - 8);
+      if (top !== position.top) setPosition(current => current && ({ ...current, top }));
+    }
+  }, [position]);
+  useEffect(() => {
+    if (!position) return;
+    const close = () => setPosition(null);
+    window.addEventListener('scroll', close, true); window.addEventListener('resize', close);
+    return () => { window.removeEventListener('scroll', close, true); window.removeEventListener('resize', close); };
+  }, [position]);
+  return <span className={styles.fieldHelp} onMouseEnter={open} onMouseLeave={() => setPosition(null)}>
+    <span ref={anchor} role="button" tabIndex={0} aria-label={label} aria-describedby={position ? id : undefined}
+      onFocus={open} onBlur={() => setPosition(null)} onClick={() => position ? setPosition(null) : open()}
+      onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); setPosition(null); } else if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); open(); } }}>{InfoSVG}</span>
+    {position && createPortal(<span ref={tooltip} id={id} role="tooltip" className={styles.fieldTooltip} style={position}>{help}</span>, document.body)}
+  </span>;
+}
+export function Field({ label, children, hint, help }: { label: string; children: ReactNode; hint?: string; help?: string }) {
+  return <div className="formGroup">{help ? <div className={styles.fieldLabel}><label>{label}</label><FieldHelp label={label} help={help} /></div> : <label>{label}</label>}{children}{hint && <p className="formHint">{hint}</p>}</div>;
 }
 export function Select({ label, value, values, onChange, disabled = false, placement = 'auto' }: { label: string; value: string | number; values: { value: string | number; label: string; disabled?: boolean }[]; onChange: (value: string) => void; disabled?: boolean; placement?: 'auto' | 'top' | 'bottom' }) {
   return <CustomSelect ariaLabel={label} value={value} options={values} onChange={onChange} disabled={disabled} placement={placement} rootClassName={styles.select} />;

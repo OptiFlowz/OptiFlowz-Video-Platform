@@ -91,3 +91,7 @@
 .page .scheduleFields input:focus { border-color: var(--accentBlue3); outline: none; }
 .page .scheduleFields p { margin: 0; font-size: 0.85rem; }
 .scheduleError { color: var(--accentRed3); }
+
+/* The persistent upload portal has wrapper divs, unlike the other editor pages. */
+.sessionSlot { width: calc(100% - 40px); min-width: 0; flex: 1; }
+.sessionSlot :global(main.uploadMain) { width: 100%; }

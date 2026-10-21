@@ -11,8 +11,8 @@ export function questionReady(q: Question): boolean {
 export function allocationValid(sources: Source[]): boolean {
   return sources.length <= 1000 && new Set(sources.map(s => s.category_id)).size === sources.length && sources.every(s =>
     (s.category_id === null || !!s.category_id) && Number.isInteger(s.question_count) && s.question_count > 0 && s.question_count <= 2147483647
-    && Number.isFinite(s.max_points) && s.max_points > 0 && s.max_points <= 99999999.99
-    && Math.abs(s.max_points * 100 - Math.round(s.max_points * 100)) < 1e-6
+    && (s.max_points === null || (Number.isFinite(s.max_points) && s.max_points > 0 && s.max_points <= 99999999.99
+    && Math.abs(s.max_points * 100 - Math.round(s.max_points * 100)) < 1e-6))
     && Number.isInteger(s.position) && s.position >= 0 && s.position <= 2147483647);
 }
 export function questionCount(fixed: { question_id: string }[], sources: Source[]): number {

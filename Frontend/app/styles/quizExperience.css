@@ -168,7 +168,8 @@
 .videoQuizPage.quizExperience .videoQuizAttemptStatus { font-size: 0.72rem; color: var(--text2); }
 .videoQuizPage.quizExperience .videoQuizAttemptStatus.passed { color: var(--accentGreen2); }
 .videoQuizPage.quizExperience .videoQuizAttemptStatus.failed { color: var(--accentRed3); }
-.videoQuizPage.quizExperience .videoQuizAttemptStatus.in_progress { color: var(--accentBlue2); }
+.videoQuizPage.quizExperience .videoQuizAttemptStatus.in_progress { color: var(--analyticsViewsOverTime); }
+.videoQuizPage.quizExperience .videoQuizStatusIcon.in_progress svg path { fill: currentColor; }
 .videoQuizPage.quizExperience .videoQuizStatusIcon { width: 36px; height: 36px; border: 0; }
 .videoQuizPage.quizExperience .videoQuizStatusIcon.passed { color: var(--accentGreen2); }
 .videoQuizPage.quizExperience .videoQuizAttemptViewButton {

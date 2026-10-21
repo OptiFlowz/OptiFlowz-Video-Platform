@@ -171,13 +171,18 @@ mešanje koje je urađeno pri kreiranju pokušaja.
 | --- | --- |
 | `in_progress`, vreme nije isteklo | `200`, pitanja i dozvoljeni `after_check` feedback |
 | `in_progress`, vreme isteklo, `allow_attempt_review = true` | `200`, pregled bez izmena; dozvoljeni `after_check` i `after_finish` feedback |
-| `timed_out`, `allow_attempt_review = true` | `200`, isti režim pregleda |
-| Istekao / `timed_out`, `allow_attempt_review` nije `true` | `403 ATTEMPT_REVIEW_NOT_ALLOWED` |
-| `submitted` ili `cancelled` | `409 ATTEMPT_NOT_IN_PROGRESS` |
+| `submitted` / `timed_out`, `allow_attempt_review = true` | `200`, isti režim pregleda |
+| Istekao / `submitted` / `timed_out`, `allow_attempt_review` nije `true` | `403 ATTEMPT_REVIEW_NOT_ALLOWED` |
+| `cancelled` | `409 ATTEMPT_NOT_IN_PROGRESS` |
 
 Pristup pre isteka ne zavisi od `allow_attempt_review`. `expires_at = NULL` nema
 rok; poređenje roka koristi vreme baze. Nedostajući ili tuđi pokušaj vraća
 `404 ATTEMPT_NOT_FOUND`, neispravan UUID `400`.
+
+Odgovor uključuje `settings` iz snapshota pokušaja. Za `submitted` i `timed_out`
+vraća i `result` (`id`, `status`, `max_points`, `earned_points`, `score_percentage`,
+`passed`, `settings`); konačni poeni i prolaz ostaju `null` kada je `show_final_score`
+isključen. Pregled koristi sačuvane odgovore i ocene, bez ponovnog bodovanja ili izmena.
 
 Primer odgovora za pitanje bez sačuvanog odgovora:
 
