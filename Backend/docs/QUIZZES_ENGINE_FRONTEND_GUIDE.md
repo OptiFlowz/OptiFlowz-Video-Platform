@@ -203,6 +203,10 @@ Autorska lista requirementa ostaje dostupna uz read permisiju.
 
 ## 4. Banka pitanja — Questions
 
+Pitanje ima `max_points`: pozitivan broj do 99999999.99, sa najviše dve decimale.
+POST podrazumeva `1`, PATCH menja vrednost samo kada je poslata, a GET pojedinačnog
+pitanja, liste i pitanja unutar kategorije vraćaju ovu vrednost.
+
 ### 4.1. Rute
 
 | Metoda | Putanja | Rezultat |
@@ -714,7 +718,9 @@ POST /api/quizzes/33333333-3333-4333-8333-333333333333/questions
 
 `question_id` je obavezan UUID pitanja istog vlasnika kao kviz. `position` je ceo broj
 0–2147483647, default 0. `max_points` je JSON broj > 0 i <= 99999999.99, do dve
-decimale, default 1. Nula poena nije dozvoljena.
+decimale. Ako ga izostaviš, kopira se trenutni `questions.max_points`. Eksplicitna
+vrednost ima prednost. Kasnija izmena pitanja u banci ne menja bodove već povezanih
+pitanja u kvizovima niti snapshotove pokušaja. Nula poena nije dozvoljena.
 
 Isto pitanje može biti povezano sa različitim kvizovima, ali ne dva puta sa istim:
 ponovljeno dodavanje vraća 409. Za više pitanja šalješ više POST zahteva; ne postoji
@@ -803,7 +809,7 @@ isključena su iz nasumičnog izbora. Jedno pitanje se pojavljuje najviše jedno
 | --- | --- | --- |
 | `category_id` | Obavezan UUID kategorije ili null za pitanja bez kategorije | Nema |
 | `question_count` | Obavezan pozitivan ceo broj, najviše 2147483647 | Nema |
-| `max_points` | Bodovi za svako izabrano pitanje; >0, do 99999999.99, najviše dve decimale | 1 |
+| `max_points` | Broj >0, do 99999999.99, najviše dve decimale; `null` preuzima bodove svakog pitanja iz banke | 1 |
 | `position` | Položaj bloka, ceo broj 0–2147483647 | 0 |
 
 `question_percentage` više ne postoji i njegovo slanje vraća 400.
@@ -838,6 +844,8 @@ Odgovor za svaki izvor sadrži `id`, `quiz_id`, sva četiri polja iz tabele i
 `category: { id, name, description } | null`.
 
 ### 8.3. Izmena i brisanje
+
+`max_points: null` koristi `questions.max_points` svakog izabranog pitanja u trenutku kreiranja pokušaja. Eksplicitan broj nadjačava bodove iz banke. Ako polje izostaviš pri kreiranju izvora, ostaje default `1`. Izabrani bodovi se čuvaju u `quiz_attempt_questions.max_points` i kasnije izmene banke ili izvora ne menjaju postojeći pokušaj.
 
 PATCH prihvata `question_count`, `max_points` i `position`; izostavljena polja se
 čuvaju. `category_id` se menja zamenom izvora kroz PUT ili DELETE + POST.
@@ -1190,11 +1198,11 @@ type QuestionListQuery = {
 };
 type SourceInput = {
   category_id: string | null; position?: number;
-  question_count: number; max_points?: number;
+  question_count: number; max_points?: number | null;
 };
 type Source = {
   id: string; quiz_id: string; category_id: string | null; position: number;
-  question_count: number; max_points: number;
+  question_count: number; max_points: number | null;
   category: { id: string; name: string; description: string | null } | null;
 };
 

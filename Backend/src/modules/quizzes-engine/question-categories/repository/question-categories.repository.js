@@ -22,7 +22,7 @@ export async function getQuestionCategoryDetails(database, categoryId, userId) {
       COALESCE((
         SELECT jsonb_agg(to_jsonb(question) ORDER BY question.created_at, question.id)
         FROM (
-          SELECT q.id, q.user_id, q.type, q.content, q.explanation, q.created_at, q.updated_at,
+          SELECT q.id, q.user_id, q.type, q.content, q.explanation, q.max_points::double precision AS max_points, q.created_at, q.updated_at,
             jsonb_build_object('id', g.id, 'name', g.name) AS category
           FROM public.questions q
           WHERE q.category_id=g.id AND q.user_id=g.user_id

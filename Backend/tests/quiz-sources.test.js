@@ -7,7 +7,7 @@ test('source schemas enforce positive counts, point precision, immutable IDs and
   assert.deepEqual(createQuizSourceSchema.parse({ category_id: id.toUpperCase(), question_count: 3 }), {
     category_id: id, question_count: 3, max_points: 1, position: 0,
   });
-  for (const max_points of [0.01, 0.29, 33.33, 100]) assert.equal(createQuizSourceSchema.safeParse({ category_id: id, question_count: 2, max_points }).success, true);
+  for (const max_points of [null, 0.01, 0.29, 33.33, 100]) assert.equal(createQuizSourceSchema.safeParse({ category_id: id, question_count: 2, max_points }).success, true);
   for (const data of [
     {}, { question_count: 0 }, { question_count: 1.5 }, { question_count: 2147483648 },
     { question_count: '1' }, { question_percentage: 0 }, { question_count: 3.01 },
@@ -16,10 +16,12 @@ test('source schemas enforce positive counts, point precision, immutable IDs and
     { question_count: 1, position: -1 }, { question_count: 1, position: 0.5 },
     { question_count: 1, quiz_id: id }, { question_count: 1, user_id: id },
   ]) assert.equal(createQuizSourceSchema.safeParse({ category_id: id, ...data }).success, false);
+  assert.deepEqual(updateQuizSourceSchema.parse({ max_points: null }), { max_points: null });
+  assert.equal(replaceQuizSourcesSchema.parse({ sources: [{ category_id: null, question_count: 2, max_points: null }] }).sources[0].max_points, null);
   assert.equal(updateQuizSourceSchema.safeParse({}).success, false);
   assert.equal(updateQuizSourceSchema.safeParse({ category_id: id }).success, false);
   assert.deepEqual(updateQuizSourceSchema.parse({ question_count: 2, max_points: 1.25 }), { question_count: 2, max_points: 1.25 });
-  for (const max_points of [0,-1,1.001,NaN,Infinity,null,100000000]) assert.equal(createQuizSourceSchema.safeParse({category_id:id,question_count:1,max_points}).success,false);
+  for (const max_points of [0,-1,1.001,NaN,Infinity,100000000]) assert.equal(createQuizSourceSchema.safeParse({category_id:id,question_count:1,max_points}).success,false);
   assert.equal(replaceQuizSourcesSchema.safeParse({ sources: [
     { category_id: id, question_count: 1 }, { category_id: id.toUpperCase(), question_count: 1 },
   ] }).success, false);

@@ -67,3 +67,12 @@ test('start rejects unauthenticated and malformed IDs before opening a transacti
   await assert.rejects(start(id, 'bad'), { status: 400 });
   assert.equal(calls, 0);
 });
+
+
+test('null source points inherit individual bank points while explicit points override them', () => {
+  const pool = [{ ...candidate('a', 'x'), max_points: '2.75' }, { ...candidate('b', 'x'), max_points: '4.50' }, candidate('fixed', 'x', 1, true)];
+  const inherited = selectAttemptQuestions(pool, [source('x', 2, 0, null)], settings(3), stable);
+  assert.deepEqual(inherited.map(q => q.max_points), [2.75, 4.5, 2]);
+  const overridden = selectAttemptQuestions(pool, [source('x', 2, 0, 5)], settings(3), stable);
+  assert.deepEqual(overridden.map(q => q.max_points), [5, 5, 2]);
+});

@@ -8,5 +8,6 @@ export async function upgradeFixedQuizLayout(database, { schema = 'pg_temp' } = 
   }
   const migration = await read(fixedQuizMigration);
   await database.query(migration.split('-- Down Migration')[0]);
+  await database.query((await read('1792540800001_nullable-quiz-source-max-points.sql')).split('-- Down Migration')[0]);
   return migration;
 }

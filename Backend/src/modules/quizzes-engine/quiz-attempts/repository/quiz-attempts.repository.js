@@ -148,7 +148,8 @@ export async function getAttemptHistory(database, quizId, userId) {
 
 export async function getAttemptQuestionPool(database, quizId) {
   const { rows } = await database.query(`
-    SELECT q.id, q.user_id, qq.position, qq.max_points, (qq.question_id IS NOT NULL) AS is_fixed,
+    SELECT q.id, q.user_id, qq.position, COALESCE(qq.max_points, q.max_points) AS max_points,
+      (qq.question_id IS NOT NULL) AS is_fixed,
       q.category_id,
       jsonb_build_object('type', q.type, 'content', q.content, 'explanation', q.explanation,
         'options', COALESCE((SELECT jsonb_agg(to_jsonb(o) - 'question_id' ORDER BY o.position, o.option_no)

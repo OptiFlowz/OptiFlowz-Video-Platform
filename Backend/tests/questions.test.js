@@ -134,3 +134,16 @@ test('all handlers require login and reject invalid requests before database acc
   await assert.rejects(remove({ questionId: 'bad' }, userId), { status: 400 });
   assert.equal(databaseCalls, 0);
 });
+
+
+test('question points default to one, allow positive cents and survive partial updates', () => {
+  assert.equal(createQuestionSchema.parse(choice).max_points, 1);
+  const existing = createQuestionSchema.parse({ ...choice, max_points: 2.75 });
+  assert.equal(mergeQuestionUpdates(existing, { content: 'Edited' }).max_points, 2.75);
+  assert.equal(mergeQuestionUpdates(existing, { max_points: 3.5 }).max_points, 3.5);
+  assert.equal(updateQuestionSchema.parse({ content: 'Edited' }).max_points, undefined);
+  for (const max_points of [null, 0, -1, 0.001, 100000000, Infinity, NaN, '2']) {
+    assert.equal(createQuestionSchema.safeParse({ ...choice, max_points }).success, false);
+    assert.equal(updateQuestionSchema.safeParse({ max_points }).success, false);
+  }
+});

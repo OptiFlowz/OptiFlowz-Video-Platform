@@ -56,8 +56,10 @@ export async function listQuizQuestions(database, quizId, userId, { limit, offse
 
 export async function createQuizQuestion(database, quizId, userId, input) {
   await database.query(`
-    INSERT INTO public.quiz_questions (quiz_id, question_id, position, max_points) VALUES ($1, $2, $3, $4)
-  `, [quizId, input.question_id, input.position, input.max_points]);
+    INSERT INTO public.quiz_questions (quiz_id, question_id, position, max_points)
+    SELECT $1, q.id, $3, COALESCE($4::numeric, q.max_points)
+    FROM public.questions q WHERE q.id = $2 AND q.user_id = $5
+  `, [quizId, input.question_id, input.position, input.max_points ?? null, userId]);
   return getQuizQuestion(database, quizId, input.question_id, userId);
 }
 

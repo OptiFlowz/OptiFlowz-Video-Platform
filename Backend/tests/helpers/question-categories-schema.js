@@ -14,5 +14,6 @@ export async function upgradeQuestionCategories(database, { schema = 'pg_temp' }
   let migration = await read(categoryMigration);
   if (!await exists('permissions')) migration = migration.replace(/UPDATE [\w.]+permissions[\s\S]*?;/g, '');
   await database.query(migration.split('-- Down Migration')[0]);
+  await database.query((await read('1792540800000_add-question-max-points.sql')).split('-- Down Migration')[0]);
   return migration;
 }

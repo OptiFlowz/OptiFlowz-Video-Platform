@@ -5,7 +5,7 @@ import { createQuizQuestionSchema, updateQuizQuestionSchema, listQuizQuestionsSc
 const id = '12345678-1234-4234-8234-123456789abc';
 
 test('candidate validation enforces positive two-decimal points, nonnegative positions and immutable IDs', () => {
-  assert.deepEqual(createQuizQuestionSchema.parse({ question_id: id.toUpperCase() }), { question_id: id, position: 0, max_points: 1 });
+  assert.deepEqual(createQuizQuestionSchema.parse({ question_id: id.toUpperCase() }), { question_id: id, position: 0 });
   for (const max_points of [0.01, 0.29, 1, 99999999.99]) {
     assert.equal(createQuizQuestionSchema.parse({ question_id: id, max_points }).max_points, max_points);
   }

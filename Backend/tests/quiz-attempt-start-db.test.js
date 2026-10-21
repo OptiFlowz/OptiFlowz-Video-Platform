@@ -240,12 +240,14 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
   });
 
   await t.test('fixed questions plus whole category sources exclude duplicates and retain per-source points and positions', async () => {
+    // Isolate the uncategorized pool from incomplete drafts created by earlier tests.
+    const previous = (await admin.query('SELECT id FROM questions WHERE user_id=$1 AND category_id IS NULL', [owner])).rows;
+    await category(previous.map(q => q.id));
     const id = await quiz();
     const fixed = await question(id, { position: 1, points: 5 });
     const random = await question(id, { linked: false });
     const a = await category([fixed, random]);
     const unassigned = await question(id, { linked: false });
-    // Existing uncategorized bank questions are also eligible; restrict the count assertion to scope and uniqueness.
     await sources(id, [{ category_id:a,position:0,question_count:1,max_points:2.5 }, {category_id:null,position:2,question_count:1,max_points:3}]);
     const response = await request(id);
     assert.equal(response.status,201);
@@ -259,7 +261,27 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
     assert.ok(rows[2].question_snapshot.source_id);
     assert.equal((await admin.query('SELECT category_id FROM questions WHERE id=$1',[rows[2].question_id])).rows[0].category_id,null);
     assert.equal((await admin.query('SELECT question_count FROM quizzes WHERE id=$1',[id])).rows[0].question_count,3);
-    assert.ok(unassigned);
+    assert.equal(rows[2].question_id, unassigned);
+  });
+
+  await t.test('null source points are copied from each bank question and frozen for the attempt', async () => {
+    const id = await quiz();
+    const a = await question(id, { linked: false }), b = await question(id, { linked: false });
+    const cat = await category([a, b]);
+    await admin.query('UPDATE questions SET max_points=CASE WHEN id=$1 THEN 2.75 ELSE 4.5 END WHERE id=ANY($2::uuid[])', [a, [a,b]]);
+    await admin.query('INSERT INTO quiz_sources(quiz_id,category_id,question_count,max_points) VALUES ($1,$2,2,NULL)', [id,cat]);
+    const created = await request(id);
+    assert.equal(created.status,201);
+    const saved = await savedQuestions(created.body.id);
+    assert.deepEqual(saved.map(q => Number(q.max_points)).sort((a,b) => a-b), [2.75,4.5]);
+    assert.equal(Number((await admin.query('SELECT max_points FROM quiz_attempts WHERE id=$1', [created.body.id])).rows[0].max_points),7.25);
+    await admin.query('UPDATE questions SET max_points=10 WHERE id=ANY($1::uuid[])', [[a,b]]);
+    await admin.query('UPDATE quiz_sources SET max_points=6 WHERE quiz_id=$1', [id]);
+    assert.equal((await request(id)).status,200);
+    assert.deepEqual(await savedQuestions(created.body.id), saved);
+    await admin.query("UPDATE quiz_attempts SET status='cancelled' WHERE id=$1", [created.body.id]);
+    const overridden = await request(id);
+    assert.deepEqual((await savedQuestions(overridden.body.id)).map(q => Number(q.max_points)),[6,6]);
   });
 
   await t.test('random-only categories select from the bank and preserve shuffled presentation on resume', async () => {

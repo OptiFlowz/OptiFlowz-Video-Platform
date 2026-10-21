@@ -331,6 +331,32 @@ test('question CRUD against PostgreSQL session-local tables', { skip: !process.e
     assert.equal((await client.query('SELECT * FROM pg_temp.question_categories WHERE id=$1', [categoryIds[0]])).rowCount, 1);
   });
 
+  await t.test('question points are persisted, returned and preserved on unrelated updates', async () => {
+    assert.equal((await client.query('SELECT max_points::float AS points FROM pg_temp.questions WHERE id=$1', [legacy.id])).rows[0].points, 1);
+    const made = await request('POST', '', { ...choiceBody, max_points: 2.75 });
+    assert.equal(made.status, 201);
+    assert.equal(made.question.max_points, 2.75);
+    const id = made.question.id;
+    assert.equal((await request('PATCH', `/${id}`, { content: 'Changed points question' })).question.max_points, 2.75);
+    assert.equal((await request('PATCH', `/${id}`, { max_points: 4.5 })).question.max_points, 4.5);
+    assert.equal((await request('GET', `/${id}`)).question.max_points, 4.5);
+    assert.equal((await request('GET', '?limit=100')).questions.find(q => q.id === id).max_points, 4.5);
+    assert.equal((await request('POST', '', choiceBody)).question.max_points, 1);
+    for (const max_points of [null, 0, -2, 1.001]) {
+      assert.equal((await request('PATCH', `/${id}`, { max_points })).status, 400);
+    }
+    for (const value of [0, -1, 'NaN', null]) {
+      await assert.rejects(client.query('UPDATE pg_temp.questions SET max_points=$2 WHERE id=$1', [id, value]),
+        error => ['23514', '23502'].includes(error.code));
+    }
+    const sql = (await readFile(new URL('../src/database/migrations/1792540800000_add-question-max-points.sql', import.meta.url), 'utf8')).replaceAll('public.', 'pg_temp.');
+    const [up, down] = sql.split('-- Down Migration');
+    await client.query(down);
+    assert.equal((await client.query('SELECT content FROM pg_temp.questions WHERE id=$1', [id])).rows[0].content, 'Changed points question');
+    await client.query(up);
+    assert.equal((await request('GET', `/${id}`)).question.max_points, 1);
+  });
+
   await t.test('timestamp migration down removes only its columns and indexes', async () => {
     const { rows: [before] } = await client.query('SELECT count(*)::int AS total FROM pg_temp.questions');
     await client.query(timestampDown);

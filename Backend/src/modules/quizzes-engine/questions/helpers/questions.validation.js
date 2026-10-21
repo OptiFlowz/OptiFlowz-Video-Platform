@@ -42,6 +42,7 @@ const matchingItems = distinctIdentifiers(z.object({
 
 const questionFields = {
   type: questionType,
+  max_points: z.number().finite().gt(0).max(99999999.99).multipleOf(0.01),
   content,
   explanation: z.string().trim().nullable(),
   options: choiceOptions,
@@ -53,6 +54,7 @@ const questionFields = {
 export const questionIdSchema = z.object({ questionId: z.string().uuid('Invalid question ID') });
 export const createQuestionSchema = z.object({
   ...questionFields,
+  max_points: questionFields.max_points.optional().default(1),
   explanation: questionFields.explanation.optional().default(null),
   options: choiceOptions.optional().default([]),
   matching_options: matchingOptions.optional().default([]),
@@ -98,6 +100,7 @@ export function mergeQuestionUpdates(question, updates) {
   // On type changes, keep text but start with empty children of the new type.
   return validateOrThrow(createQuestionSchema.safeParse({
     type: updates.type ?? question.type,
+    max_points: updates.max_points ?? question.max_points,
     content: updates.content ?? question.content,
     explanation: updates.explanation === undefined ? question.explanation : updates.explanation,
     options: updates.options ?? (changesType ? [] : question.options),

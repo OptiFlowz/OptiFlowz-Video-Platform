@@ -44,8 +44,8 @@ export function sourceQuotas(sources) {
   return sources.map(source => {
     if (!Number.isInteger(source.question_count) || source.question_count < 1
       || !Number.isInteger(source.position) || source.position < 0
-      || !Number.isFinite(Number(source.max_points)) || Number(source.max_points) <= 0
-      || Number(source.max_points) > 99999999.99) throw invalid('Invalid random category source');
+      || (source.max_points !== null && (!Number.isFinite(Number(source.max_points)) || Number(source.max_points) <= 0
+      || Number(source.max_points) > 99999999.99))) throw invalid('Invalid random category source');
     return { ...source, quota: source.question_count };
   });
 }
@@ -65,7 +65,8 @@ export function selectAttemptQuestions(candidates, sources, settings, random = r
     if (eligible.length < source.quota) throw insufficient();
     blocks.push({ position: source.position, kind: 1, id: source.id,
       questions: eligible.slice(0, source.quota).map(question => ({ ...question,
-        max_points: Number(source.max_points), source_category_id: source.category_id, source_id: source.id })) });
+        max_points: Number(source.max_points === null ? question.max_points : source.max_points),
+        source_category_id: source.category_id, source_id: source.id })) });
   }
   // Positions are shared by fixed questions and random blocks; fixed wins a tie,
   // then the resource UUID. Random block contents retain their sampled order.

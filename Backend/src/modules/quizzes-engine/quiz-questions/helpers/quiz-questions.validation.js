@@ -12,7 +12,7 @@ export const quizQuestionParamsSchema = z.object({ quizId: uuid, questionId: uui
 export const createQuizQuestionSchema = z.object({
   question_id: uuid,
   position: fields.position.optional().default(0),
-  max_points: fields.max_points.optional().default(1),
+  max_points: fields.max_points.optional(),
 }).strict();
 export const updateQuizQuestionSchema = z.object(fields).partial().strict().refine(
   updates => Object.values(updates).some(value => value !== undefined),

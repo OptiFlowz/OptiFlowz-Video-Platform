@@ -133,6 +133,17 @@ test('quiz candidate migration and CRUD against session-local PostgreSQL tables'
     }
   });
 
+  await t.test('adding a fixed question copies bank points unless overridden and keeps existing quiz points independent', async () => {
+    const qid = await question(), first = await quiz(), second = await quiz(), third = await quiz();
+    await client.query('UPDATE pg_temp.questions SET max_points=2.75 WHERE id=$1', [qid]);
+    assert.equal((await request('POST', first, '', { question_id: qid })).quiz_question.max_points, 2.75);
+    assert.equal((await request('POST', second, '', { question_id: qid, max_points: 6 })).quiz_question.max_points, 6);
+    await client.query('UPDATE pg_temp.questions SET max_points=4.5 WHERE id=$1', [qid]);
+    assert.equal((await request('GET', first, `/${qid}`)).quiz_question.max_points, 2.75);
+    assert.equal((await request('PATCH', first, `/${qid}`, { position: 1 })).quiz_question.max_points, 2.75);
+    assert.equal((await request('POST', third, '', { question_id: qid })).quiz_question.max_points, 4.5);
+  });
+
   await t.test('CRUD preserves original questions, defaults and independent candidate membership', async () => {
     const id = await quiz(), secondQuiz = await quiz(owner, 'published'), qid = await question();
     const created = await request('POST', id.toUpperCase(), '', { question_id: qid.toUpperCase() });

@@ -4,7 +4,7 @@ import { HttpError } from '../../../../common/httpError.js';
 const uuid = z.string().uuid().transform(value => value.toLowerCase());
 const fields = {
   position: z.number().int().min(0).max(2147483647),
-  max_points: z.number().finite().gt(0).max(99999999.99).multipleOf(0.01),
+  max_points: z.number().finite().gt(0).max(99999999.99).multipleOf(0.01).nullable(),
   question_count: z.number().int().min(1).max(2147483647),
 };
 export const quizSourcesParamsSchema = z.object({ quizId: uuid });

@@ -219,6 +219,30 @@ test('source migration, HTTP CRUD and concurrent allocations in an isolated Post
     assert.equal((await http('GET',`/${id}`)).quiz.question_count,5);
   });
 
+  await t.test('source CRUD preserves explicit null points, omission and positive overrides; migration rolls back', async () => {
+    const id = await quiz(), cat = await category();
+    const created = await request('POST', id, '', { category_id:cat, question_count:2, max_points:null });
+    assert.equal(created.status,201);
+    assert.equal(created.source.max_points,null);
+    const sid = created.source.id;
+    assert.equal((await request('PATCH',id,`/${sid}`,{question_count:3})).source.max_points,null);
+    assert.equal((await request('GET',id,`/${sid}`)).source.max_points,null);
+    assert.equal((await request('GET',id)).sources[0].max_points,null);
+    assert.equal((await request('PATCH',id,`/${sid}`,{max_points:2.5})).source.max_points,2.5);
+    assert.equal((await request('PATCH',id,`/${sid}`,{max_points:null})).source.max_points,null);
+    const replaced = await put(id,[{category_id:cat,question_count:2,max_points:null},{category_id:null,question_count:1}]);
+    assert.equal(replaced.status,200);
+    assert.equal(replaced.sources.find(s => s.category_id===cat).max_points,null);
+    assert.equal(replaced.sources.find(s => s.category_id===null).max_points,1);
+    const sql = (await readFile(new URL('../src/database/migrations/1792540800001_nullable-quiz-source-max-points.sql', import.meta.url),'utf8')).replaceAll('public.',`${schema}.`);
+    const [up,down] = sql.split('-- Down Migration');
+    await admin.query(down);
+    assert.equal((await request('GET',id)).sources.find(s => s.category_id===cat).max_points,1);
+    await admin.query(up);
+    const restored = (await request('GET',id)).sources.find(s => s.category_id===cat);
+    assert.equal((await request('PATCH',id,`/${restored.id}`,{max_points:null})).source.max_points,null);
+  });
+
   await t.test('fixed-layout migration rollback restores count allocations and reapplies', async () => {
     const id = await quiz(), a = await category();
     await put(id, [count(a, 10)]);

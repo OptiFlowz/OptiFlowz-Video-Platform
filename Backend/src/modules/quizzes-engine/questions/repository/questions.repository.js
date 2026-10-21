@@ -1,9 +1,9 @@
-const QUESTION_COLUMNS = 'id, user_id, type, content, explanation, created_at, updated_at, category_id';
+const QUESTION_COLUMNS = 'id, user_id, type, content, explanation, created_at, updated_at, category_id, max_points';
 
 export async function getQuestion(database, questionId, userId) {
   // A single statement gives the parent and its children one consistent snapshot.
   const { rows } = await database.query(`
-    SELECT q.id, q.user_id, q.type, q.content, q.explanation, q.created_at, q.updated_at,
+    SELECT q.id, q.user_id, q.type, q.content, q.explanation, q.max_points::double precision AS max_points, q.created_at, q.updated_at,
       COALESCE((SELECT jsonb_agg(to_jsonb(o) - 'question_id' ORDER BY o.position, o.option_no)
         FROM public.question_options o WHERE o.question_id = q.id), '[]'::jsonb) AS options,
       COALESCE((SELECT jsonb_agg(to_jsonb(o) - 'question_id' ORDER BY o.position, o.option_no)
@@ -35,7 +35,7 @@ export async function listQuestions(database, userId, { type, category_id, limit
     ), page AS (
       SELECT * FROM owned_questions ORDER BY ${orderByField} ${orderByDirection}, id ASC LIMIT $3 OFFSET $4
     ), enriched_page AS (
-      SELECT page.id, page.user_id, page.type, page.content, page.explanation, page.created_at, page.updated_at,
+      SELECT page.id, page.user_id, page.type, page.content, page.explanation, page.max_points::double precision AS max_points, page.created_at, page.updated_at,
         (SELECT jsonb_build_object('id', c.id, 'name', c.name) FROM public.question_categories c WHERE c.id=page.category_id) AS category
       FROM page
     )
@@ -109,9 +109,9 @@ async function saveChildren(database, questionId, question) {
 
 export async function createQuestion(database, userId, question) {
   const { rows } = await database.query(`
-    INSERT INTO public.questions (user_id, type, content, explanation)
-    VALUES ($1, $2, $3, $4) RETURNING id
-  `, [userId, question.type, question.content, question.explanation]);
+    INSERT INTO public.questions (user_id, type, content, explanation, max_points)
+    VALUES ($1, $2, $3, $4, $5) RETURNING id
+  `, [userId, question.type, question.content, question.explanation, question.max_points ?? 1]);
   const questionId = rows[0].id;
   await saveChildren(database, questionId, question);
   await saveCategory(database, questionId, question.category_id);
@@ -120,9 +120,9 @@ export async function createQuestion(database, userId, question) {
 
 export async function updateQuestion(database, questionId, userId, question, updateChildren) {
   await database.query(`
-    UPDATE public.questions SET type = $3, content = $4, explanation = $5, updated_at = now()
+    UPDATE public.questions SET type = $3, content = $4, explanation = $5, max_points = $6, updated_at = now()
     WHERE id = $1 AND user_id = $2
-  `, [questionId, userId, question.type, question.content, question.explanation]);
+  `, [questionId, userId, question.type, question.content, question.explanation, question.max_points]);
   if (updateChildren) await saveChildren(database, questionId, question);
   await saveCategory(database, questionId, question.category_id);
   return getQuestion(database, questionId, userId);
