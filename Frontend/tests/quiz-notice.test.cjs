@@ -22,7 +22,7 @@ test('quiz notifications stay in a reserved area without adding children to the 
   });
   const context = React.createContext(undefined), host = document.getElementById('notifications');
   const mocks = {
-    '@tanstack/react-query': {}, '~/authorization/authorization': {}, '~/functions': {}, '~/i18n': {},
+    '@tanstack/react-query': {}, '~/authorization/authorization': {}, '~/functions': {}, '~/i18n': { useI18n: () => ({ t: key => key === 'saving' ? 'Saving...' : key }) },
     '~/components/customSelect/customSelect': {}, './api': {}, './model': {},
     './EditorPopup': { EditorNoticeContext: context },
     './engine.module.css': { __esModule: true, default: new Proxy({}, { get: (_, key) => String(key) }) },
@@ -31,12 +31,12 @@ test('quiz notifications stay in a reserved area without adding children to the 
   const mod = { exports: {} };
   new Function('require', 'module', 'exports', code)(name => name in mocks ? mocks[name] : require(name), mod, mod.exports);
   const { Notice } = mod.exports;
-  async function render(message, target = host) {
+  async function render(message, target) {
     await act(async () => root.render(React.createElement(context.Provider, { value: target },
       React.createElement('div', { id: 'questions' }, React.createElement(Notice, message), React.createElement('article', null, 'Question')))));
   }
   for (const message of [{}, { success: 'Changes saved.' }, { error: 'A long failure message. '.repeat(30) }, {}]) {
-    await render(message);
+    await render(message, host);
     assert.deepEqual([...document.getElementById('questions').children].map(node => node.tagName), ['ARTICLE']);
     assert.equal(window.getComputedStyle(host).height, '36px');
     assert.equal(window.getComputedStyle(host).overflowY, 'auto');

@@ -9,7 +9,7 @@ import { Field, Notice, LoadState, useAction, useAccess, useAll, useDetail, styl
 import { typeLabels, type Category, type Question } from './model';
 import { reconcileCategoryMembers, sameCategoryMembers } from './categoryMembership';
 import QuestionEditor from './QuestionEditor';
-import EditorPopup from './EditorPopup';
+import EditorPopup, { EditorActions } from './EditorPopup';
 
 type CategoryCallbacks = { onSaved: (id: string) => void; onDirty: (dirty: boolean) => void; onCreated?: (category: Category) => void; onClose?: () => void; presentation?: 'page' | 'popup' };
 const questionIcons = { single_choice: SingleChoiceQuestionSVG, multiple_choice: MultipleChoiceQuestionSVG, matching: MatchingQuestionSVG };
@@ -84,7 +84,7 @@ function CategoryForm({ initial, onSaved, onDirty, onCreated, onClose, presentat
         <Pagination page={currentPage} limit={limit} total={filtered.length} disabled={action.busy} label={t('quizQuestions')} onPageChange={setPage} onLimitChange={value => { setLimit(value); setPage(1); }} />
       </section>}
     </div>
-    <div className="quizPopupActions">{onClose && <button type="button" className="cancelBtn" disabled={action.busy} onClick={onClose}>{t(presentation === 'page' ? 'qeCategories' : 'adminCancel')}</button>}{editable && <button type="submit" className="saveCaptionsBtn" disabled={action.busy || !name.trim() || (!!initial && !dirty)}>{t(action.busy ? 'saving' : 'saveChanges')}</button>}</div>
+    <EditorActions>{onClose && <button type="button" className="cancelBtn" disabled={action.busy} onClick={onClose}>{t(presentation === 'page' ? 'qeCategories' : 'adminCancel')}</button>}{editable && <button type="submit" className="saveCaptionsBtn" disabled={action.busy || !name.trim() || (!!initial && !dirty)}>{t(action.busy ? 'saving' : 'saveChanges')}</button>}</EditorActions>
   </form>
     <EditorPopup wide open={addingQuestions} title={t('qeCategoryAllQuestions')} description={t('qeCategoryAddHelp')} onClose={() => setAddingQuestions(false)}>
       {addingQuestions && <CategoryQuestionPicker questions={candidates.filter(q => !ids.includes(q.id))} onAdd={id => setIds(current => current.includes(id) ? current : [...current, id])} onClose={() => setAddingQuestions(false)} />}
@@ -107,12 +107,12 @@ function CategoryQuestionPicker({ questions, onAdd, onClose }: { questions: Ques
         {filtered.slice((currentPage - 1) * limit, currentPage * limit).map(q => <div key={q.id} data-question-type={q.type} className={styles.categoryBankRow}>
           <span className={styles.quizThumbnail} aria-hidden="true">{questionIcons[q.type]}</span>
           <div className={styles.categoryBankText}><p>{q.content || t('qeUntitledQuestion')}</p><span>{t(typeLabels[q.type])} · {q.category?.name || t('qeUncategorized')}</span></div>
-          <button type="button" className={styles.icon} title={t('qeAddToCategory')} aria-label={`${t('qeAddToCategory')}: ${q.content}`} onClick={() => onAdd(q.id)}>{AddSVG}</button>
+          <button type="button" className={`${styles.icon} ${styles.addIcon}`} title={t('qeAddToCategory')} aria-label={`${t('qeAddToCategory')}: ${q.content}`} onClick={() => onAdd(q.id)}>{AddSVG}</button>
         </div>)}
         {!filtered.length && <p className={styles.empty}>{t('adminZeroResults')}</p>}
       </div>
       <Pagination page={currentPage} limit={limit} total={filtered.length} label={t('quizQuestions')} onPageChange={setPage} onLimitChange={value => { setLimit(value); setPage(1); }} />
     </div>
-    <div className="quizPopupActions"><button type="button" className="cancelBtn" onClick={onClose}>{t('close')}</button></div>
+    <EditorActions><button type="button" className="cancelBtn" onClick={onClose}>{t('close')}</button></EditorActions>
   </div>;
 }

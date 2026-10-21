@@ -6,7 +6,7 @@ const ts = require('typescript');
 const React = require('react');
 const { JSDOM } = require('jsdom');
 
-test('candidate cards edit points inline and send only the moved question position, restoring the list on failure', async t => {
+test('question changes stay pending until one batch save, cancel restores them and failures preserve the draft', async t => {
   const dom = new JSDOM('<div id="root"></div>', { url: 'https://test.local/quizzes' });
   const names = ['window', 'document', 'Element', 'HTMLElement', 'IS_REACT_ACT_ENVIRONMENT'];
   const previous = new Map(names.map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)]));
@@ -24,8 +24,11 @@ test('candidate cards edit points inline and send only the moved question positi
   let rows = [
     { question_id: 'first', position: 0, max_points: 1, question: { content: 'First question', type: 'single_choice' } },
     { question_id: 'second', position: 7, max_points: 5, question: { content: 'Second question', type: 'matching' } },
+    { question_id: 'third', position: 9, max_points: 10, question: { content: 'Third question', type: 'matching' } },
   ];
-  let drag, resolveOrder, rejectOrder;
+  const originalRows = structuredClone(rows);
+  const bank = [...rows.map(row => ({ ...row.question, id: row.question_id, user_id: 'owner' })), { id: 'fourth', user_id: 'owner', content: 'Fourth question', type: 'single_choice' }];
+  let drag, resolveSave, rejectSave;
   const styles = new Proxy({}, { get: (_, key) => String(key) });
   const mocks = {
     '~/i18n': { useI18n: () => ({ t: (key, params) => key === 'quizDragQuestion' ? `Drag question ${params.position}` : key }) }, '~/constants': { AddSVG: '+', MenuSVG: '=' },
@@ -40,21 +43,25 @@ test('candidate cards edit points inline and send only the moved question positi
     '~/components/editPlaylistPage/PlaylistVideoPicker': { __esModule: true, default: () => null },
     '~/components/confirmPopup/confirmDialog': { ConfirmDialog: () => null },
     '~/components/confirmPopup/useConfirm': { useConfirm: () => ({ confirm: async () => true, dialogProps: {} }) },
-    './EditorPopup': { __esModule: true, default: ({ open, children }) => open ? children : null },
+    './EditorPopup': { __esModule: true, default: ({ open, children }) => open ? children : null, EditorActions: ({ children }) => React.createElement('div', null, children) },
     './api': { request: async (...args) => {
       requests.push(args);
       const [route, method, body] = args;
-      if (method === 'PATCH' && 'position' in body) await new Promise((resolve, reject) => { resolveOrder = resolve; rejectOrder = reject; });
-      if (method === 'PATCH') rows = rows.map(row => route.endsWith(`/${row.question_id}`) ? { ...row, ...body } : row);
+      assert.equal(route, '/quiz/questions');
+      assert.equal(method, 'PUT');
+      await new Promise((resolve, reject) => { resolveSave = resolve; rejectSave = reject; });
+      rows = body.questions.map(row => ({ ...row, question: bank.find(question => question.id === row.question_id) }));
+      return { questions: rows };
     } },
     './shared': {
       styles, Field: ({ label, children }) => React.createElement('label', null, label, children), Select: () => null,
-      Notice: ({ error }) => error ? React.createElement('p', { role: 'alert' }, error) : null, LoadState: () => null, useAccess: () => ({ read: true }),
+      Notice: ({ error, busy }) => error ? React.createElement('p', { role: 'alert' }, error) : busy ? React.createElement('p', { role: 'status' }, 'Saving...') : null,
+      LoadState: () => null, useAccess: () => ({ read: true }),
       useAction: () => {
-        const [busy, setBusy] = React.useState(false), [error, setError] = React.useState('');
-        return { busy, error, run: async work => { setBusy(true); setError(''); try { await work(); } catch (error) { setError(error.message); } finally { setBusy(false); } } };
+        const [busy, setBusy] = React.useState(false), [error, setError] = React.useState(''), [success, setSuccess] = React.useState('');
+        return { busy, error, success, setError, setSuccess, run: async work => { setBusy(true); setError(''); try { await work(); setSuccess('Saved'); } catch (error) { setError(error.message); } finally { setBusy(false); } } };
       },
-      useAll: (route, key) => ({ isSuccess: true, data: key === 'questions' && !route.startsWith('/questions') ? rows : [] }),
+      useAll: (route, key) => ({ isSuccess: true, data: key === 'sources' ? [{ position: 3 }] : route === '/questions' ? bank : rows }),
     },
   };
   function load(file) {
@@ -70,8 +77,8 @@ test('candidate cards edit points inline and send only the moved question positi
   const props = { quiz: { id: 'quiz', user_id: 'owner' }, editable: true, onBack() {}, onDirty: value => dirty.push(value) };
   await act(async () => root.render(React.createElement(Candidates, props)));
   const badges = () => [...document.querySelectorAll('.candidatePosition')].map(el => el.textContent);
-  const titles = () => [...document.querySelectorAll('.candidateCard .partText p')].map(el => el.textContent);
-  assert.deepEqual(badges(), ['1', '2']);
+  const titles = () => [...document.querySelectorAll('.candidateCard .candidateContent p')].map(el => el.textContent);
+  assert.deepEqual(badges(), ['1', '2', '3']);
   assert.equal(document.querySelector('[aria-label="qePosition"]'), null);
   assert.equal([...document.querySelectorAll('button')].some(button => button.textContent === 'adminEdit'), false);
   const points = document.querySelector('[aria-label="quizPoints: First question"]');
@@ -96,44 +103,103 @@ test('candidate cards edit points inline and send only the moved question positi
       element.dispatchEvent(new window.Event('input', { bubbles: true }));
     });
   };
-  await act(async () => points.focus());
+  const saveButton = () => document.querySelector('.candidateSaveActions .saveCaptionsBtn');
+  const cancelButton = () => document.querySelector('.candidateSaveActions .cancelBtn');
+  const click = async element => act(async () => element.click());
+  const pointsFor = name => document.querySelector(`[aria-label="quizPoints: ${name} question"]`);
+  const remove = name => document.querySelector(`[aria-label="quizRemove: ${name} question"]`);
+  assert.equal(saveButton().disabled, true);
+  assert.equal(cancelButton().disabled, true);
   await input(points, '');
   assert.equal(points.value, '');
   assert.equal(points.validity.valueMissing, true);
   assert.equal(dirty.at(-1), true);
-  await act(async () => points.blur());
-  assert.deepEqual(requests, []);
-  await act(async () => points.focus());
+  assert.equal(saveButton().disabled, true);
   await input(points, '2.5');
   await act(async () => points.blur());
-  assert.deepEqual(requests, [['/quiz/questions/first', 'PATCH', { max_points: 2.5 }]]);
+  await act(async () => drag.onDragEnd({ active: { id: 'first' }, over: { id: 'second' } }));
+  await click(remove('Third'));
+  assert.deepEqual(titles(), ['Second question', 'First question']);
+  assert.deepEqual(requests, [], 'points, moving and removing do not send individual requests');
+  assert.equal(dirty.at(-1), true);
+  await click(cancelButton());
+  assert.deepEqual(titles(), ['First question', 'Second question', 'Third question']);
+  assert.equal(pointsFor('First').value, '1');
   assert.equal(dirty.at(-1), false);
-  await act(async () => points.focus());
-  await input(points, '');
-  await act(async () => points.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
-  assert.equal(points.value, '2.5');
+  assert.deepEqual(requests, []);
+
+  await input(pointsFor('First'), '2.5');
+  await act(async () => drag.onDragEnd({ active: { id: 'first' }, over: { id: 'second' } }));
+  await click(remove('Third'));
+  await click(document.querySelector('.partAdd'));
+  await click(document.querySelector('[aria-label="quizAddQuestion: Fourth question"]'));
+  assert.deepEqual(requests, [], 'adding a question joins the pending changes');
+  await click([...document.querySelectorAll('button')].find(button => button.textContent === 'back'));
+  assert.deepEqual(titles(), ['Second question', 'First question', 'Fourth question']);
+  await input(pointsFor('First'), '1.001');
+  assert.equal(saveButton().disabled, true, 'unsupported point precision cannot be submitted');
+  await input(pointsFor('First'), '2.5');
+  await click(saveButton());
+  assert.equal(requests.length, 1);
+  assert.deepEqual(requests[0], ['/quiz/questions', 'PUT', {
+    questions: [
+      { question_id: 'second', position: 0, max_points: 5 },
+      { question_id: 'first', position: 7, max_points: 2.5 },
+      { question_id: 'fourth', position: 8, max_points: 1 },
+    ],
+    expected_questions: originalRows.map(({ question_id, position, max_points }) => ({ question_id, position, max_points })),
+  }]);
+  assert.equal(saveButton().disabled, true);
+  assert.equal(cancelButton().disabled, true);
+  assert.equal(document.querySelector('[role="status"]').textContent, 'Saving...');
+  await act(async () => rejectSave(new Error('Save failed')));
+  assert.equal(document.querySelector('[role="alert"]').textContent, 'Save failed');
+  assert.deepEqual(titles(), ['Second question', 'First question', 'Fourth question']);
+  assert.equal(pointsFor('First').value, '2.5');
+  assert.equal(dirty.at(-1), true);
+  assert.equal(saveButton().disabled, false);
+  await click(saveButton());
+  await act(async () => resolveSave());
+  assert.deepEqual(titles(), ['Second question', 'First question', 'Fourth question']);
+  assert.equal(dirty.at(-1), false);
+  assert.equal(saveButton().disabled, true);
+  assert.equal(rows.some(row => row.question_id === 'third'), false);
+  assert.equal(rows.find(row => row.question_id === 'first').max_points, 2.5);
+
+  await input(pointsFor('First'), '4.5');
+  rows = rows.map(row => row.question_id === 'first' ? { ...row, max_points: 100 } : row);
+  await act(async () => root.render(React.createElement(Candidates, props)));
+  assert.equal(pointsFor('First').value, '4.5', 'background refreshes preserve pending edits');
+  await click(cancelButton());
+  assert.equal(pointsFor('First').value, '100', 'cancel restores the latest saved data');
+  for (const name of ['First', 'Second', 'Fourth']) await click(remove(name));
+  assert.equal(document.querySelectorAll('.candidateCard').length, 0);
+  assert.equal(saveButton().disabled, false, 'removing every fixed question is a valid pending change');
+  await click(saveButton());
+  assert.deepEqual(requests.at(-1)[2].questions, []);
+  await act(async () => resolveSave());
+  assert.deepEqual(rows, []);
   assert.equal(dirty.at(-1), false);
 
-  await act(async () => drag.onDragEnd({ active: { id: 'first' }, over: { id: 'second' } }));
-  assert.deepEqual(requests.at(-1), ['/quiz/questions/first', 'PATCH', { position: 1 }]);
-  assert.equal(requests.length, 2, 'one points write and one moved-question write');
-  assert.deepEqual(titles(), ['Second question', 'First question']);
-  assert.deepEqual(badges(), ['1', '2']);
-  await act(async () => resolveOrder());
-  assert.equal(rows.find(row => row.question_id === 'first').position, 1);
-  assert.equal(rows.find(row => row.question_id === 'second').position, 7, 'no request updates another question');
-  assert.equal(rows.find(row => row.question_id === 'first').max_points, 2.5);
-  const savedTitles = titles();
-  await act(async () => drag.onDragEnd({ active: { id: 'second' }, over: { id: 'first' } }));
-  assert.deepEqual(requests.at(-1), ['/quiz/questions/second', 'PATCH', { position: 0 }]);
-  assert.deepEqual(titles(), ['Second question', 'First question']);
-  await act(async () => rejectOrder(new Error('Reorder failed')));
-  assert.deepEqual(titles(), savedTitles);
-  assert.equal(document.querySelector('[role="alert"]').textContent, 'Reorder failed');
+  rows = structuredClone(originalRows);
   await act(async () => root.render(React.createElement(Candidates, { ...props, editable: false })));
   assert.equal(document.querySelector('.candidateHandle'), null);
   assert.equal(document.querySelector('input[type="number"]'), null);
   assert.equal(document.querySelector('.partRemove'), null);
+  assert.equal(document.querySelector('.candidateSaveActions'), null);
   await act(async () => mouseDown(document.querySelector('.candidateCard')));
   assert.equal(dragStarts.length, 3, 'read-only cards do not activate dragging');
+});
+
+test('pending question order handles tied positions at the integer boundary', () => {
+  const code = ts.transpileModule(fs.readFileSync('app/components/quizEngine/candidateDraft.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
+  const mod = { exports: {} };
+  new Function('module', 'exports', code)(mod, mod.exports);
+  const { moveCandidate, candidatesValid } = mod.exports;
+  const rows = [{ question_id: 'first', position: 2147483647, max_points: 1 }, { question_id: 'second', position: 2147483647, max_points: 2 }];
+  const reordered = moveCandidate(rows, 'second', 'first');
+  assert.deepEqual(reordered.map(row => row.question_id), ['second', 'first']);
+  assert.deepEqual(reordered.map(row => row.position), [2147483646, 2147483647]);
+  assert.equal(candidatesValid(reordered), true);
+  assert.deepEqual(rows.map(row => row.position), [2147483647, 2147483647], 'the saved baseline stays intact');
 });

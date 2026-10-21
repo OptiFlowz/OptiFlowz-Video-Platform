@@ -45,10 +45,10 @@ export function useAction() {
   }
   return { busy, error, success, run, setError, setSuccess };
 }
-export function Notice({ error, success }: { error?: string; success?: string }) {
-  const target = useContext(EditorNoticeContext);
-  const message = error ? <p className={styles.error} role="alert">{error}</p> : success ? <p className={styles.success} role="status">{success}</p> : null;
-  if (target === undefined) return <div className={styles.noticeInline}>{message}</div>;
+export function Notice({ busy = false, error, success, variant = 'block' }: { busy?: boolean; error?: string; success?: string; variant?: 'block' | 'heading' }) {
+  const target = useContext(EditorNoticeContext), { t } = useI18n();
+  const message = busy ? <p className={styles.savingStatus} role="status"><span className="uploadSpinner tiny" aria-hidden="true" />{t('saving')}</p> : error ? <p className={styles.error} role="alert">{error}</p> : success ? <p className={styles.success} role="status">{success}</p> : null;
+  if (target === undefined) return <div className={variant === 'heading' ? styles.headingNotice : styles.noticeInline}>{message}</div>;
   return target && message ? createPortal(message, target) : null;
 }
 export function LoadingSkeleton({ variant = 'cards' }: { variant?: 'cards' | 'form' | 'inline' }) {

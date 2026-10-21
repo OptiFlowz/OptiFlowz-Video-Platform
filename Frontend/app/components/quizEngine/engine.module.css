@@ -41,7 +41,7 @@
 .videoImage { width: 120px; aspect-ratio: 16/9; object-fit: cover; border-radius: 10px; }
 @media(max-width: 850px) { .grid { grid-template-columns: 1fr; } .panel { padding: 18px; } .table th, .table td { padding: 12px; } }
 @media(prefers-reduced-motion: reduce) { .page * { scroll-behavior: auto; } }
-.page:not(.management) input:not([type='checkbox']):not([type='radio']), .page textarea { padding: 12px 16px; background: var(--background3); border: 1px solid var(--border1); border-radius: 12px; color: var(--text1); font: inherit; max-width: 100%; }
+.page:not(.management) input:not([type='checkbox']):not([type='radio']), .page textarea { padding: 8px 12px; background: var(--background3); border: 1px solid var(--border1); border-radius: 12px; color: var(--text1); font: inherit; max-width: 100%; }
 .page textarea { min-height: 130px; resize: vertical; }
 .page input:focus-visible, .page textarea:focus-visible { outline: 2px solid var(--accentBlue); outline-offset: 2px; }
 .page input[type='checkbox'], .page input[type='radio'] { accent-color: var(--accentBlue); }
@@ -104,13 +104,13 @@ main.management .listTable td.empty { padding: 2rem; text-align: center; }
 .popupHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-shrink: 0; }
 .popupHeader h3 { font-size: 1.25rem; font-weight: 600; margin: 0; }
 .popupHeader p { font-size: .875rem; margin-top: 8px; }
-.popupHeader > button { flex-shrink: 0; }
+.popupHeader > button { flex-shrink: 0; color: var(--text1); }
+.popupPanel .addIcon { color: var(--text1); }
 .popupHeader > div { min-width: 0; overflow-wrap: anywhere; }
 .popupContent { display: flex; flex-direction: column; min-width: 0; min-height: 0; flex: 1; overflow-wrap: anywhere; }
 .popupNotice, .noticeInline { height: 36px; flex: 0 0 36px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
-.popupNotice { margin-top: 8px; }
-.popupNotice:empty { display: none; }
-.popupNotice p, .noticeInline p { margin: 0; font-size: .82rem; line-height: 1.4; overflow-wrap: anywhere; }
+.popupNotice { flex: 1 1 0; min-width: 0; align-content: center; }
+.popupNotice p, .noticeInline p, .headingNotice p { margin: 0; font-size: .82rem; line-height: 1.4; overflow-wrap: anywhere; }
 .settingsForm { overflow: hidden; flex: 1; }
 .settingsForm fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .popupPanel :global(.formGroup) { display: flex; flex-direction: column; gap: 8px; margin: 0 0 16px; }
@@ -123,7 +123,6 @@ main.management .listTable td.empty { padding: 2rem; text-align: center; }
 .popupPanel .check input { flex-shrink: 0; }
 .sectionTitle { font-size: 1rem; font-weight: 600; margin: 8px 0 16px; color: var(--text1); }
 .readiness { border: 1px solid var(--border1); border-radius: 16px; padding: 14px; }
-.readiness summary { cursor: pointer; font-weight: 500; }
 .readiness .note { border: 0; padding: 0; margin: 12px 0; font-size: .875rem; }
 .popupScroll { overflow-y: auto; min-height: 0; overscroll-behavior: contain; padding-right: 14px; }
 .popupContent > form:not(.settingsForm) { overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--accentBlue2) transparent; }
@@ -142,6 +141,8 @@ main.management .listTable td.empty { padding: 2rem; text-align: center; }
 .popupPanel :global(.quizPopupActions),
 .popupPanel :global(.quizPopupManageActions),
 .settingsForm > fieldset { flex-shrink: 0; }
+.popupPanel :global(.quizPopupActions) { align-items: center; min-height: 40px; }
+.popupPanel :global(.quizPopupActions) > button, .popupPanel :global(.quizPopupActions) > a { flex-shrink: 0; }
 @media(max-width: 600px) {
   .popupLayer { padding: 10px; }
   .popupPanel { padding: 18px; width: 100%; max-height: calc(100dvh - 20px); }
@@ -165,9 +166,19 @@ main.management .listTable td.empty { padding: 2rem; text-align: center; }
 .partBody > * { flex-shrink: 0; }
 .partHeading { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 1rem; font-weight: 600; }
 .partHeading span { border-radius: 999px; background: var(--background2); padding: 2px 10px; font-size: .875rem; font-variant-numeric: tabular-nums; color: var(--text2); }
+.partHeader { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; min-width: 0; }
+.partHeader .partHeading { flex-shrink: 0; margin: 0; }
+.settingsSection .partHeader { margin-bottom: 24px; }
+.settingsSection .partHeader > h2 { flex-shrink: 0; margin: 0; }
+.headingNotice { flex: 1; min-width: 0; height: 28px; box-sizing: border-box; padding-block: 4px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.savingStatus { display: flex; align-items: center; gap: 8px; color: var(--text2); }
+.savingStatus :global(.uploadSpinner) { flex-shrink: 0; }
 .partCard { border: 1px solid var(--border1); border-radius: 24px; background: var(--background2); padding: 16px 20px; }
 .usedQuestion { opacity: .45; }
 .candidateList { display: flex; flex-direction: column; gap: 12px; }
+.candidateToolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.candidateSaveActions { display: flex; align-items: center; gap: 12px; margin-inline-start: auto; }
+.candidateToolbar :global(.cancelBtn), .candidateToolbar :global(.saveCaptionsBtn) { width: auto; margin: 0; padding: 12px 16px; font-size: .875rem; }
 .popupPanel .partCard.candidateCard,
 .partCard.candidateCard { position: relative; padding-block-start: 0; border: 1px solid transparent; transition: border-color 180ms ease; }
 .popupPanel .partCard.candidateCard:hover,
@@ -187,7 +198,7 @@ main.management .listTable td.empty { padding: 2rem; text-align: center; }
 .candidateHandle svg path { stroke: currentColor; }
 .candidateActions { align-items: center; }
 .candidateActions .partRemove { align-self: flex-end; }
-.candidatePoints { display: flex; flex-direction: column; gap: 4px; color: var(--text2); font-size: .75rem; cursor: auto; }
+.candidatePoints { display: flex; align-items: center; gap: 4px; color: var(--text2); font-size: .75rem; cursor: auto; }
 .candidatePoints input,
 .popupPanel.page[role='dialog'] .candidatePoints input { width: 92px; min-height: 36px; padding: 6px 10px; border: 1px solid transparent; border-radius: 10px; background: var(--background1); color: var(--text1); font: inherit; font-size: .875rem; }
 .candidateDragging .candidateCard { opacity: .25; }
@@ -383,12 +394,13 @@ main.management :global(.libraryShell) > :global(.profileTabsViewport) .resource
   border-radius: 0;
 }
 .page .resourceTabs button {
-  min-height: 56px;
-  padding: 16px 22px;
+  min-height: 44px;
+  padding: 14px 22px;
   border: 0;
   border-radius: 0;
   background: transparent;
   color: var(--text2);
+  border-radius: 10px 10px 0 0;
   font-weight: 500;
 }
 .page .resourceTabs button:hover:not(:disabled) { background: var(--background2); color: var(--text1); }
@@ -440,7 +452,7 @@ main.management :global(.libraryShell) > :global(.profileTabsViewport) .resource
 }
 
 .editorPage .settingsColumn > .readiness { margin: 0; padding: 24px; background: var(--background2); border: 0; border-radius: 24px; }
-.editorPage .settingsColumn > .readiness summary { color: var(--accentBlue2); font-size: 1.15rem; }
+.editorPage .settingsColumn > .readiness h2 { margin: 0; color: var(--accentBlue2); font-size: 1.15rem; font-weight: 500; }
 
 .page.editorPage .candidatePosition { border: 0; }
 @media (max-width: 600px) {
@@ -468,10 +480,10 @@ main.management :global(.libraryShell) > :global(.profileTabsViewport) .resource
   border-radius: 10px;
   background: var(--accentBlue);
   color: var(--borderWhite);
-  font-size: .95rem;
+  font-size: .96rem;
 }
 .candidateContent { min-width: 0; overflow-wrap: anywhere; }
-.candidateContent p { margin: 0 0 5px; color: var(--text1); font-size: 1rem; font-weight: 500; line-height: 1.5; }
+.candidateContent p { margin: 0; color: var(--text1); font-size: 1rem; font-weight: 500; line-height: 1.5; }
 .candidateContent .partMeta { font-size: .82rem; }
 .page .candidateActions { align-items: center; margin: 0; gap: 14px; flex-wrap: nowrap; }
 .page .candidateActions .partRemove { display: grid; place-items: center; align-self: center; width: 38px; height: 38px; padding: 9px; border: 0; border-radius: 50%; }

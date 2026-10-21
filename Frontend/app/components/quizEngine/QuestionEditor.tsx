@@ -6,13 +6,13 @@ import { Field, Select, Notice, LoadState, useAction, useAccess, useAll, useDeta
 import { typeLabels, type Question, type QuestionInput, type Category, type QuestionType } from './model';
 import { questionReady } from './readiness';
 import CategoryEditor from './CategoryEditor';
-import EditorPopup from './EditorPopup';
+import EditorPopup, { EditorActions } from './EditorPopup';
 import { useConfirm } from '~/components/confirmPopup/useConfirm';
 import { ConfirmDialog } from '~/components/confirmPopup/confirmDialog';
 
 function CreateCategoryPopup({ onCreated, onClose }: { onCreated: (category: Category) => void; onClose: () => void }) {
   const { t } = useI18n(), { confirm, dialogProps } = useConfirm();
-  const [dirty, setDirty] = useState(false);
+  const [dirty, setDirty] = useState(false), [open, setOpen] = useState(true);
   useEffect(() => {
     if (!dirty) return;
     const guard = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
@@ -21,10 +21,10 @@ function CreateCategoryPopup({ onCreated, onClose }: { onCreated: (category: Cat
   }, [dirty]);
   const close = async () => {
     if (dirty && !await confirm({ title: t('qeUnsaved'), message: t('qeDiscard'), yesText: t('qeDiscardAction'), noText: t('adminCancel') })) return;
-    onClose();
+    setOpen(false);
   };
-  return <><EditorPopup open compact title={t('qeCreateCategory')} onClose={() => void close()}>
-    <CategoryEditor id="new" onDirty={setDirty} onCreated={onCreated} onSaved={onClose} onClose={() => void close()} />
+  return <><EditorPopup open={open} compact title={t('qeCreateCategory')} onClose={() => void close()} onAfterClose={onClose}>
+    <CategoryEditor id="new" onDirty={setDirty} onCreated={onCreated} onSaved={() => setOpen(false)} onClose={() => void close()} />
   </EditorPopup><ConfirmDialog {...dialogProps} /></>;
 }
 
@@ -101,7 +101,7 @@ function QuestionForm({ initial, onSaved, onDirty, onClose }: { initial?: Questi
       </Field>
       <p className={styles.answerHint}>{t(ready ? 'qeQuestionReady' : 'qeDraftQuestion')}</p>
     </fieldset></div>
-    <div className="quizPopupActions"><button type="button" className="cancelBtn" disabled={action.busy} onClick={onClose}>{t('adminCancel')}</button>{editable && <button type="submit" className="saveCaptionsBtn" disabled={action.busy || (!!initial && JSON.stringify(form) === baseline)}>{t(action.busy ? 'saving' : 'quizSaveQuestion')}</button>}</div>
+    <EditorActions><button type="button" className="cancelBtn" disabled={action.busy} onClick={onClose}>{t('adminCancel')}</button>{editable && <button type="submit" className="saveCaptionsBtn" disabled={action.busy || (!!initial && JSON.stringify(form) === baseline)}>{t(action.busy ? 'saving' : 'quizSaveQuestion')}</button>}</EditorActions>
   </form>
     {creatingCategory && <CreateCategoryPopup onClose={() => setCreatingCategory(false)} onCreated={category => { setCreatedCategories(previous => [...previous, category]); change({ category_id: category.id }); }} />}
   </>;
