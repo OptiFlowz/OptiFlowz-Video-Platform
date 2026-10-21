@@ -86,7 +86,7 @@ test('question category CRUD against PostgreSQL session-local tables', { skip: !
     const created = await request('POST', '', { name: ' Languages ', description: ' Practice ' });
     assert.equal(created.status, 201); assert.equal(created.success, true);
     assert.deepEqual(created.category, { id: created.category.id, user_id: userId, name: 'Languages', description: 'Practice' });
-    assert.deepEqual((await request('GET', `/${created.category.id}`)).category, { ...created.category, questions: [] });
+    assert.deepEqual((await request('GET', `/${created.category.id}`)).category, { ...created.category, questions: [], question_count: 0 });
     const noDescription = await request('POST', '', { name: 'x'.repeat(255) });
     assert.equal(noDescription.status, 201); assert.equal(noDescription.category.description, null);
   });
@@ -98,7 +98,7 @@ test('question category CRUD against PostgreSQL session-local tables', { skip: !
       assert.equal((await request('PATCH', `/${categoryId}`, { name: 'Stolen' }, otherToken)).status, 404);
       assert.equal((await request('DELETE', `/${categoryId}`, undefined, otherToken)).status, 404);
     }
-    assert.deepEqual((await request('GET', `/${category.id}`)).category, { ...category, questions: [] });
+    assert.deepEqual((await request('GET', `/${category.id}`)).category, { ...category, questions: [], question_count: 0 });
   });
 
   await scenario('PATCH preserves omitted fields, allows clearing description and keeps ownership fixed', async () => {
@@ -114,7 +114,7 @@ test('question category CRUD against PostgreSQL session-local tables', { skip: !
     ]);
     assert.ok(responses.every(response => response.status === 200));
     assert.deepEqual((await request('GET', `/${category.id}`)).category,
-      { ...category, name: 'Concurrent name', description: 'Concurrent description', questions: [] });
+      { ...category, name: 'Concurrent name', description: 'Concurrent description', questions: [], question_count: 0 });
   });
 
   await scenario('duplicate create and rename return 409 while different users can reuse a name', async () => {
@@ -122,7 +122,7 @@ test('question category CRUD against PostgreSQL session-local tables', { skip: !
     const second = await request('POST', '', { name: 'Beta' });
     assert.equal((await request('POST', '', { name: ' Alpha ' })).status, 409);
     assert.equal((await request('PATCH', `/${second.category.id}`, { name: 'Alpha' })).status, 409);
-    assert.deepEqual((await request('GET', `/${second.category.id}`)).category, { ...second.category, questions: [] });
+    assert.deepEqual((await request('GET', `/${second.category.id}`)).category, { ...second.category, questions: [], question_count: 0 });
     assert.equal((await request('POST', '', { name: 'Alpha' }, otherToken)).status, 201);
     assert.equal((await request('POST', '', { name: 'alpha' })).status, 201);
     assert.equal((await request('PATCH', `/${first.category.id}`, { name: 'Alpha' })).status, 200);
@@ -176,7 +176,7 @@ test('question category CRUD against PostgreSQL session-local tables', { skip: !
       ['POST', '', {}], ['POST', '', { name: ' ' }], ['POST', '', { name: 'x'.repeat(256) }],
       ['POST', '', { name: 'A', user_id: otherUserId }], ['POST', '', { name: 'A', question_ids: [] }],
       ['GET', '/invalid'], ['DELETE', '/invalid'], ['PATCH', '/invalid', { name: 'A' }],
-      ['PATCH', `/${existing.id}`, {}], ['PATCH', `/${existing.id}`, { questions: [] }],
+      ['PATCH', `/${existing.id}`, {}], ['PATCH', `/${existing.id}`, { questions: [], question_count: 0 }],
       ['GET', '?page=0'], ['GET', '?limit=101'], ['GET', '?offset=0'],
       ['GET', '?sortBy=invalid'], ['GET', '?sortOrder=invalid'],
     ]) assert.equal((await request(method, path, body)).status, 400, `${method} ${path}`);
@@ -204,7 +204,12 @@ test('question category CRUD against PostgreSQL session-local tables', { skip: !
     const ids = made.map(q => q.id);
     assert.deepEqual((await request('PUT', `/${category.id}/questions`, { question_ids: [...ids, ids[0].toUpperCase()] })).question_ids, ids.slice().sort());
     assert.deepEqual((await request('GET', `/${other.id}`)).category.questions, []);
-    const details = (await request('GET', `/${category.id}`)).category.questions;
+    const detailResponse = (await request('GET', `/${category.id}`)).category;
+    assert.equal(detailResponse.question_count, 3);
+    const listed = (await request('GET', '')).categories;
+    assert.equal(listed.find(c => c.id === category.id).question_count, 3);
+    assert.equal(listed.find(c => c.id === other.id).question_count, 0);
+    const details = detailResponse.questions;
     assert.equal(details.length, 3);
     assert.ok(details.every(q => q.category.id === category.id && q.category.name === category.name));
     const before = await categoryItems(category.id);
@@ -217,6 +222,10 @@ test('question category CRUD against PostgreSQL session-local tables', { skip: !
     await request('PUT', `/${category.id}/questions`, { question_ids: [] });
     assert.equal((await questionRequest('GET', `/${ids[2]}`)).question.category, null);
     assert.equal((await questionRequest('GET', `/${ids[1]}`)).question.category.id, other.id);
+    assert.equal((await request('GET', `/${category.id}`)).category.question_count, 0);
+    assert.equal((await request('GET', `/${other.id}`)).category.question_count, 1);
+    const filtered = await request('GET', '?name=Other&limit=1');
+    assert.equal(filtered.categories[0].question_count, 1);
   });
 
   await scenario('missing and foreign categories/questions reject the entire membership replacement', async () => {

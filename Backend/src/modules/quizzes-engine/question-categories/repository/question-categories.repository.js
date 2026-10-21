@@ -19,6 +19,8 @@ export async function getQuestionCategoryDetails(database, categoryId, userId) {
   // Read category metadata and its question list from the same database snapshot.
   const { rows } = await database.query(`
     SELECT g.id, g.user_id, g.name, g.description,
+      (SELECT count(*)::integer FROM public.questions q
+        WHERE q.category_id=g.id AND q.user_id=g.user_id) AS question_count,
       COALESCE((
         SELECT jsonb_agg(to_jsonb(question) ORDER BY question.created_at, question.id)
         FROM (
@@ -45,8 +47,12 @@ export async function listQuestionCategories(database, userId, { name, sortBy, s
       WHERE ($1::uuid IS NULL OR user_id = $1) AND ($2::text IS NULL OR name ILIKE $2)
     ), page AS (
       SELECT * FROM owned_categories ORDER BY ${ordering} LIMIT $3 OFFSET $4
+    ), enriched_page AS (
+      SELECT page.*, (SELECT count(*)::integer FROM public.questions q
+        WHERE q.category_id=page.id AND q.user_id=page.user_id) AS question_count
+      FROM page
     )
-    SELECT COALESCE((SELECT jsonb_agg(to_jsonb(page) ORDER BY ${ordering}) FROM page), '[]'::jsonb) AS categories,
+    SELECT COALESCE((SELECT jsonb_agg(to_jsonb(enriched_page) ORDER BY ${ordering}) FROM enriched_page), '[]'::jsonb) AS categories,
       (SELECT count(*)::integer FROM owned_categories) AS total
   `, [userId, pattern, limit, offset]);
   return rows[0];

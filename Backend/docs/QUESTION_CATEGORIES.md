@@ -60,6 +60,10 @@ list, with each question exposing `category: { id, name }`.
 The operation uses one transaction and serializes with question-side category
 changes for the same owner. Invalid/foreign question IDs roll back the whole operation.
 
+GET list entries and GET category details include `question_count` (integer, 0 for an
+empty category). It counts all current bank questions in that category, including drafts,
+and updates automatically when questions are added, moved or deleted.
+
 ## List categories
 
 List query parameters:
