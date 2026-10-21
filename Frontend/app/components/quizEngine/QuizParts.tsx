@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useI18n } from '~/i18n';
 import { AddSVG } from '~/constants';
 import PlaylistVideoPicker from '~/components/editPlaylistPage/PlaylistVideoPicker';
@@ -11,7 +11,7 @@ import { typeLabels, type Quiz, type Candidate, type Question, type Category, ty
 import { allocationValid, nextPosition, questionCount } from './readiness';
 import { numberDraftValue, type NumberDraft } from './numberDraft';
 import CandidateList from './CandidateList';
-import { candidateValues, candidatesValid, moveCandidate, sameCandidates, type CandidateDraft } from './candidateDraft';
+import QuestionEditor from './QuestionEditor';
 import { saveRequirement } from './saveRequirement';
 
 type PartProps = { quiz: Quiz; editable: boolean; onBack?: () => void };
@@ -69,58 +69,67 @@ function Position({ value, change }: { value: number | ''; change: (value: numbe
   return <Field label={t('qePosition')}><input aria-label={t('qePosition')} required type="number" min={0} max={2147483647} value={value} onChange={e => change(numberDraftValue(e.target.value))} /></Field>;
 }
 
-export function Candidates({ quiz, editable, onBack, onDirty }: PartProps & { onDirty?: (dirty: boolean) => void }) {
+export function Candidates({ quiz, editable, onBack, onDirty = () => {} }: PartProps & { onDirty?: (dirty: boolean) => void }) {
   const { t } = useI18n(), bankAccess = useAccess('questions');
   const linked = useAll<Candidate>(`/${quiz.id}/questions`, 'questions');
   const sources = useAll<Source>(`/${quiz.id}/sources`, 'sources');
   const bank = useAll<Question>('/questions', 'questions', bankAccess.read);
   const [adding, setAdding] = useState(false), [filter, setFilter] = useState(''), [categoryFilter, setCategoryFilter] = useState('');
   const bankCategories = [...new Map((bank.data ?? []).filter(q => q.user_id === quiz.user_id && q.category).map(q => [q.category!.id, q.category!])).values()];
-  const [draft, setDraft] = useState<{ baseline: Candidate[]; rows: CandidateDraft[] } | null>(null);
-  const action = useAction();
-  const savedRows = [...(linked.data ?? [])].sort((a, b) => a.position - b.position || a.question_id.localeCompare(b.question_id));
-  const rows = draft?.rows ?? savedRows, included = new Set(rows.map(row => row.question_id));
-  const dirty = draft !== null && !sameCandidates(rows, draft.baseline), valid = candidatesValid(rows);
-  useEffect(() => { onDirty?.(dirty); }, [dirty, onDirty]);
-  const change = (update: (current: CandidateDraft[]) => CandidateDraft[]) => {
-    if (action.busy || !editable || !linked.isSuccess) return;
-    action.setError(''); action.setSuccess('');
-    setDraft(current => {
-      const baseline = current?.baseline ?? savedRows, next = update(current?.rows ?? savedRows);
-      return sameCandidates(next, baseline) ? null : { baseline, rows: next };
-    });
+  const [order, setOrder] = useState<Candidate[] | null>(null);
+  const [editingQuestion, setEditingQuestion] = useState<string | null>(null);
+  const questionDirty = useRef(false);
+  const canEditQuestions = bankAccess.read && bankAccess.canOwn('questions.update_own', 'questions.update_any', quiz.user_id);
+  const mutation = useRef(false), dirtyPoints = useRef(new Set<string>());
+  const action = useAction(), { confirm, dialogProps } = useConfirm();
+  const included = new Set(linked.data?.map(q => q.question_id));
+  const rows = order ?? [...(linked.data ?? [])].sort((a, b) => a.position - b.position || a.question_id.localeCompare(b.question_id));
+  const reportDirty = (id: string, dirty: boolean) => { if (dirty) dirtyPoints.current.add(id); else dirtyPoints.current.delete(id); onDirty(dirtyPoints.current.size > 0 || questionDirty.current); };
+  const reportQuestionDirty = (dirty: boolean) => { questionDirty.current = dirty; onDirty(dirtyPoints.current.size > 0 || dirty); };
+  const closeQuestion = async () => {
+    if (questionDirty.current && !await confirm({ title: t('qeUnsaved'), message: t('qeDiscard'), yesText: t('qeDiscardAction'), noText: t('adminCancel') })) return;
+    reportQuestionDirty(false); setEditingQuestion(null);
   };
-  const cancel = () => { if (!action.busy) { setDraft(null); action.setError(''); action.setSuccess(''); } };
-  const save = async () => {
-    if (!draft || !dirty || !valid || action.busy || !editable) return;
+  const mutate = async (work: () => Promise<void | boolean>) => {
+    if (mutation.current || !editable) return false;
+    mutation.current = true;
     let saved = false;
-    await action.run(async () => {
-      await request(`/${quiz.id}/questions`, 'PUT', { questions: candidateValues(rows), expected_questions: candidateValues(draft.baseline) });
-      saved = true;
-    });
-    // Keep the draft visible through the refresh; a failed save keeps every pending edit.
-    if (saved) { setDraft(null); onDirty?.(false); }
+    try { await action.run(async () => { const result = await work(); saved = result !== false; return result; }); return saved; }
+    finally { mutation.current = false; }
   };
+  const move = async (id: string, targetId: string) => {
+    if (mutation.current || action.busy || !editable) return;
+    const from = rows.findIndex(row => row.question_id === id), to = rows.findIndex(row => row.question_id === targetId);
+    if (from < 0 || to < 0 || from === to) return;
+    const next = [...rows], [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    setOrder(next);
+    try { await mutate(async () => { await request(`/${quiz.id}/questions/${id}`, 'PATCH', { position: rows[to].position }); }); }
+    finally { setOrder(null); }
+  };
+  const remove = (row: Candidate) => void mutate(async () => {
+    if (!await confirm({ title: t('quizRemove'), message: t('qeUnlinkQuestion'), yesText: t('quizRemove'), noText: t('adminCancel') })) return false;
+    await request(`/${quiz.id}/questions/${row.question_id}`, 'DELETE');
+    reportDirty(row.question_id, false);
+  });
   return <>
-    <div className={scrollClass}><div className={styles.partHeader}>
-      <h4 className={styles.partHeading}>{t('qeCandidates')} {linked.data && <span>{rows.length}</span>}</h4>
-      <Notice {...action} variant="heading" />
-    </div><LoadState query={linked} />
-      <CandidateList rows={rows} editable={editable} busy={action.busy} onMove={(id, targetId) => change(current => moveCandidate(current, id, targetId))}
-        onRemove={row => change(current => current.filter(item => item.question_id !== row.question_id))}
-        onPoints={(row, max_points) => change(current => current.map(item => item.question_id === row.question_id ? { ...item, max_points } : item))} />
-      {!rows.length && linked.isSuccess && <p className={styles.partEmpty}>{t('quizNoQuestionsYet')}</p>}
-      {editable && <div className={styles.candidateToolbar}>
-        {bankAccess.read && <AddButton disabled={action.busy || !linked.isSuccess} onClick={() => { action.setError(''); action.setSuccess(''); setAdding(true); }}>{t('quizAddQuestion')}</AddButton>}
-        <div className={styles.candidateSaveActions}><button type="button" className="cancelBtn" disabled={action.busy || !dirty} onClick={cancel}>{t('adminCancel')}</button>
-          <button type="button" className="saveCaptionsBtn" disabled={action.busy || !dirty || !valid} onClick={() => void save()}>{t(action.busy ? 'saving' : 'saveChanges')}</button></div>
-      </div>}
+    <div className={scrollClass}><div className={styles.partHeader}><h4 className={styles.partHeading}>{t('qeCandidates')} {linked.data && <span>{linked.data.length}</span>}</h4><Notice {...action} variant="heading" /></div><LoadState query={linked} />
+      <CandidateList rows={rows} editable={editable} busy={action.busy} onMove={(id, targetId) => { void move(id, targetId); }} onDirty={reportDirty} onRemove={remove}
+        onEdit={canEditQuestions ? row => setEditingQuestion(row.question_id) : undefined}
+        onPoints={(row, max_points) => mutate(async () => { await request(`/${quiz.id}/questions/${row.question_id}`, 'PATCH', { max_points }); })} />
+      {!linked.data?.length && linked.isSuccess && <p className={styles.partEmpty}>{t('quizNoQuestionsYet')}</p>}
+      {editable && bankAccess.read && <AddButton disabled={action.busy || !linked.isSuccess} onClick={() => setAdding(true)}>{t('quizAddQuestion')}</AddButton>}
     </div><Footer onBack={onBack} busy={action.busy} />
     <EditorPopup open={adding} title={t('quizAddQuestion')} description={t('qeCandidatesHelp')} onClose={() => { if (!action.busy) setAdding(false); }} wide>
       <div className={scrollClass}><Notice {...action} /><LoadState query={bank} /><LoadState query={sources} variant="inline" /><Select label={t('qeCategory')} value={categoryFilter} values={[{ value: '', label: t('qeAllCategories') }, { value: '__uncategorized__', label: t('qeUncategorized') }, ...bankCategories.map(category => ({ value: category.id, label: category.name }))]} onChange={setCategoryFilter} /><input className={styles.partFilter} type="search" placeholder={t('qeFilterQuestions')} aria-label={t('qeFilterQuestions')} value={filter} onChange={e => setFilter(e.target.value)} />
-        {bank.data?.filter(q => q.user_id === quiz.user_id && q.content.toLowerCase().includes(filter.toLowerCase()) && (!categoryFilter || (q.category?.id ?? '__uncategorized__') === categoryFilter)).map(q => <div className={`${styles.partCard} ${included.has(q.id) ? styles.usedQuestion : ''}`} key={q.id}><div className={styles.partCardBody}><div className={styles.partText}><p>{q.content || t('qeUntitledQuestion')}</p><small>{t(typeLabels[q.type])} · {q.category?.name || t('qeUncategorized')}</small></div><button type="button" className={`${styles.icon} ${styles.addIcon}`} aria-label={`${t('quizAddQuestion')}: ${q.content}`} disabled={action.busy || !linked.isSuccess || !sources.isSuccess || included.has(q.id)} onClick={() => change(current => [...current, { quiz_id: quiz.id, question_id: q.id, position: nextPosition(current, sources.data!), max_points: 1, question: q }])}>{AddSVG}</button></div></div>)}
+        {bank.data?.filter(q => q.user_id === quiz.user_id && q.content.toLowerCase().includes(filter.toLowerCase()) && (!categoryFilter || (q.category?.id ?? '__uncategorized__') === categoryFilter)).map(q => <div className={`${styles.partCard} ${included.has(q.id) ? styles.usedQuestion : ''}`} key={q.id}><div className={styles.partCardBody}><div className={styles.partText}><p>{q.content || t('qeUntitledQuestion')}</p><small>{t(typeLabels[q.type])} · {q.category?.name || t('qeUncategorized')}</small></div><button type="button" className={`${styles.icon} ${styles.addIcon}`} aria-label={`${t('quizAddQuestion')}: ${q.content}`} disabled={action.busy || !linked.isSuccess || !sources.isSuccess || included.has(q.id)} onClick={() => void mutate(async () => { await request(`/${quiz.id}/questions`, 'POST', { question_id: q.id, position: nextPosition(linked.data!, sources.data!), max_points: 1 }); })}>{AddSVG}</button></div></div>)}
       </div><Footer busy={action.busy} onBack={() => setAdding(false)} />
     </EditorPopup>
+    <EditorPopup wide open={!!editingQuestion} title={t('quizEditQuestion')} onClose={() => void closeQuestion()}>
+      {editingQuestion && <QuestionEditor key={editingQuestion} id={editingQuestion} onDirty={reportQuestionDirty} onClose={() => void closeQuestion()}
+        onSaved={() => { reportQuestionDirty(false); setEditingQuestion(null); }} />}
+    </EditorPopup>
+    <ConfirmDialog {...dialogProps} />
   </>;
 }
 

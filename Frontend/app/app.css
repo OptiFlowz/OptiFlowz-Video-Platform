@@ -11134,7 +11134,19 @@ main.managementPage table th.sortable { position: relative; white-space: nowrap;
 main.managementPage table th.sortable .platformUsersSortButton::after { content: ""; position: absolute; inset: 0; }
 main.managementPage table th.sortable:has(.platformUsersSortButton:focus-visible) { outline: 2px solid var(--accentBlue2); outline-offset: -2px; }
 main.managementPage table th.sortable .platformUsersSortButton:focus-visible { outline: none; }
-main.managementPage table th > span { font-size: inherit; }
+/* Reserve room for bulk actions before any rows are selected. */
+main.myVideos.managementPage table th > span {
+  min-height: 2.5rem;
+  flex-wrap: nowrap;
+  font-size: inherit;
+}
+main.myVideos.managementPage #selectedButtons { flex-wrap: nowrap; }
+main.myVideos.managementPage #selectedButtons button {
+  box-sizing: border-box;
+  height: 2.5rem;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
 main.managementPage table th p { padding-block: .25rem; }
 main.managementPage table td > span, main.managementPage table td .videoInfo { gap: .75rem; }
 main.managementPage table td .videoInfo > span { min-width: 0; }

@@ -86,7 +86,6 @@ main.management .listTable .checkbox:checked::after, .page .check input:checked:
 main.management .listTable .checkbox:indeterminate::after { content: '−'; color: var(--text1); }
 main.management .listTable .checkbox:disabled { opacity: .45; cursor: not-allowed; }
 main.management .listTable td.empty { padding: 2rem; text-align: center; }
-.bulkActions { display: flex; gap: 16px; align-items: center; }
 @media (max-width: 768px) {
   main.management { padding-top: 83px; }
   main.management :global(.libraryContent) { padding: 0 0 1rem; min-width: 0; }
@@ -176,9 +175,6 @@ main.management .listTable td.empty { padding: 2rem; text-align: center; }
 .partCard { border: 1px solid var(--border1); border-radius: 24px; background: var(--background2); padding: 16px 20px; }
 .usedQuestion { opacity: .45; }
 .candidateList { display: flex; flex-direction: column; gap: 12px; }
-.candidateToolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-.candidateSaveActions { display: flex; align-items: center; gap: 12px; margin-inline-start: auto; }
-.candidateToolbar :global(.cancelBtn), .candidateToolbar :global(.saveCaptionsBtn) { width: auto; margin: 0; padding: 12px 16px; font-size: .875rem; }
 .popupPanel .partCard.candidateCard,
 .partCard.candidateCard { position: relative; padding-block-start: 0; border: 1px solid transparent; transition: border-color 180ms ease; }
 .popupPanel .partCard.candidateCard:hover,
@@ -486,14 +482,18 @@ main.management :global(.libraryShell) > :global(.profileTabsViewport) .resource
 .candidateContent p { margin: 0; color: var(--text1); font-size: 1rem; font-weight: 500; line-height: 1.5; }
 .candidateContent .partMeta { font-size: .82rem; }
 .page .candidateActions { align-items: center; margin: 0; gap: 14px; flex-wrap: nowrap; }
+.page .candidateActions .candidateEdit,
 .page .candidateActions .partRemove { display: grid; place-items: center; align-self: center; width: 38px; height: 38px; padding: 9px; border: 0; border-radius: 50%; }
+.candidateActions .candidateEdit svg,
 .candidateActions .partRemove svg { width: 20px; height: 20px; }
+.candidateActions .candidateEdit svg path,
 .candidateActions .partRemove svg path { stroke: currentColor; }
+.page .candidateActions .candidateEdit { background: var(--background3); color: var(--accentBlue2); }
 .page.editorPage .candidatePoints input { width: 76px; min-height: 38px; padding: 8px 10px; font-size: .9rem; }
 @media (max-width: 650px) {
   .page .partCard.candidateCard { grid-template-columns: auto minmax(0, 1fr); gap: 12px; padding: 16px; }
   .candidateLeading { align-self: start; gap: 6px; }
-  .page .candidateActions { grid-column: 2; justify-content: flex-end; }
+  .page .candidateActions { grid-column: 1 / -1; justify-content: flex-end; }
   .candidateContent p { font-size: .95rem; }
 }
 

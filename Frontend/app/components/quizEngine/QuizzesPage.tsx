@@ -112,10 +112,13 @@ function ResourceList({ resource, onEdit, initialCategory, onBrowseCategory }: {
       </div>
     </div>
     {!access.read ? <p className={styles.note}>{t('qeNoRead')}</p> : <>
-    {selected.length > 0 && <div className={styles.bulkActions}><span>{t('postSelectedCount', { count: selected.length })}</span><button type="button" className={`${styles.button} ${styles.danger}`} disabled={action.busy} onClick={() => void remove(selected)}>{DeleteSVG}{t('adminDelete')}</button></div>}
     <LoadState query={query} />
     {query.data && <div className={`libraryTableWrap ${styles.listTableWrap}`} aria-busy={query.isFetching}><table className={styles.listTable} data-resource={resource}><thead><tr>
-      <th className="notHoverable"><span><input className={checkbox} ref={selectAll} type="checkbox" aria-label={t('qeSelectAll')} checked={checked} disabled={action.busy || !deletable.length} onChange={e => setSelected(e.target.checked ? deletable.map(row => row.id) : [])} /><LibrarySortButton label={t(resource === 'questions' ? 'quizQuestionText' : 'title')} direction={sort === (resource === 'questions' ? 'content' : resource === 'categories' ? 'name' : 'title') ? order as 'asc' | 'desc' : null} onClick={() => { const column = resource === 'questions' ? 'content' : resource === 'categories' ? 'name' : 'title'; setOrder(sort === column && order === 'asc' ? 'desc' : 'asc'); setSort(column); setPage(1); }} /></span></th>
+      <th className="notHoverable"><span><input className={checkbox} ref={selectAll} type="checkbox" aria-label={t('qeSelectAll')} checked={checked} disabled={action.busy || !deletable.length} onChange={e => setSelected(e.target.checked ? deletable.map(row => row.id) : [])} /><LibrarySortButton label={t(resource === 'questions' ? 'quizQuestionText' : 'title')} direction={sort === (resource === 'questions' ? 'content' : resource === 'categories' ? 'name' : 'title') ? order as 'asc' | 'desc' : null} onClick={() => { const column = resource === 'questions' ? 'content' : resource === 'categories' ? 'name' : 'title'; setOrder(sort === column && order === 'asc' ? 'desc' : 'asc'); setSort(column); setPage(1); }} />
+        {selected.length > 0 && <span id="selectedButtons" role="group" aria-label={t('postSelectedCount', { count: selected.length })}>
+          <button type="button" className="button bg-(--accentRed) text-(--text1)" disabled={action.busy} onClick={() => void remove(selected)}>{t('adminDeleteAll')}</button>
+        </span>}
+      </span></th>
       {resource === 'categories' ? <th className="notHoverable">{t('description')}</th> : sortHeading(resource === 'quizzes' ? 'status' : 'type', resource === 'quizzes' ? 'adminTableStatus' : 'quizQuestionType')}
       {resource === 'questions' && <th className="notHoverable">{t('qeCategory')}</th>}
       {resource !== 'categories' && <>{sortHeading('created_at', 'adminTableDate')}{resource === 'quizzes' && sortHeading('question_count', 'quizQuestionCount')}{sortHeading('updated_at', 'usersUpdated')}</>}
