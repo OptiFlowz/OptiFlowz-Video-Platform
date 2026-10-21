@@ -77,8 +77,9 @@ export default function AttemptPlayer({ attemptId, onClose, onFinished, complete
   </section> : null;
   if (result && !canReview) return resultSummary;
   return <>{resultSummary}<section className={`${styles.attemptPlayer} ${reviewing ? styles.attemptReview : ''}`} aria-busy={busy}>
-    {reviewing && <h2>{t('quizReviewAttempt')}</h2>}
-    <div className={styles.toolbar}><span>{t('quizAnsweredCount', { answered, total: questions.length })}</span>
+    <div className={`${styles.toolbar} ${reviewing ? styles.attemptReviewHeader : ''}`}>
+      {reviewing && <h2>{t('quizReviewAttempt')}</h2>}
+      <span>{t('quizAnsweredCount', { answered, total: questions.length })}</span>
       {!reviewing && remaining !== null && <span role="timer">{t('quizTimeLeft')} <strong className={styles.attemptTimeValue}>{Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, '0')}</strong></span>}
     </div>
     <LoadState query={query} />
