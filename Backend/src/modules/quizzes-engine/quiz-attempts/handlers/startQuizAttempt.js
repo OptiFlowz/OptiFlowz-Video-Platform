@@ -26,9 +26,8 @@ export async function startQuizAttemptInternal(quizId, userId) {
     const active = await getActiveAttempt(client, input.quizId, input.userId);
     if (active) {
       if (active.expired) {
-        // TODO: Finalize the expired attempt as timed_out, including grading,
-        // then continue below. Until finalization is implemented, preserve it
-        // and block creation instead of bypassing the one-active-attempt index.
+        // The expiration worker finalizes this attempt. Until it commits,
+        // preserve the one-active-attempt constraint; the client can retry.
         throw attemptError(409, 'ATTEMPT_FINALIZATION_PENDING', 'The expired attempt must be finalized before a new attempt can start');
       }
       await client.query('COMMIT');

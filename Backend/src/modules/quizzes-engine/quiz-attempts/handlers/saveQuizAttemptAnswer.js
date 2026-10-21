@@ -50,6 +50,6 @@ export async function saveQuizAttemptAnswerInternal(params, body, userId) {
 }
 
 function expiredAttempt() {
-  // TODO: Finalize as timed_out once attempt finalization is implemented.
+  // The expiration worker persists timed_out; reject late writes immediately.
   return attemptError(409, 'ATTEMPT_EXPIRED', 'The attempt time limit has expired');
 }

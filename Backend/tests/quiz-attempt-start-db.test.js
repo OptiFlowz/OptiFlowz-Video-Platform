@@ -209,7 +209,7 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
     assert.equal((await request(id)).body.attempt_no, 10);
   });
 
-  await t.test('expired attempts remain unchanged pending future finalization and block new writes', async () => {
+  await t.test('expired attempts block until the worker finalizes them, then allow retries subject to max_attempts', async () => {
     const id = await quiz({ count: 1 });
     await question(id);
     const created = await request(id);
@@ -219,6 +219,15 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
     assert.equal(response.body.code, 'ATTEMPT_FINALIZATION_PENDING');
     assert.equal(await totalAttempts(id), 1);
     assert.equal((await admin.query('SELECT status FROM quiz_attempts WHERE id=$1', [created.body.id])).rows[0].status, 'in_progress');
+    const { expireAttempts } = await import('../src/modules/quizzes-engine/quiz-attempts/workers/expireAttempts.js');
+    await expireAttempts({ logger: { error() {}, log() {} } });
+    assert.equal((await admin.query('SELECT status FROM quiz_attempts WHERE id=$1', [created.body.id])).rows[0].status, 'timed_out');
+    await admin.query('UPDATE quizzes SET max_attempts=1 WHERE id=$1', [id]);
+    assert.equal((await request(id)).body.code, 'MAX_ATTEMPTS_REACHED');
+    await admin.query('UPDATE quizzes SET max_attempts=NULL WHERE id=$1', [id]);
+    const retry = await request(id);
+    assert.equal(retry.status, 201);
+    assert.equal(retry.body.attempt_no, 2);
   });
 
   await t.test('insufficient candidates, invalid drafts and insufficient category quotas return 422 without writes', async () => {

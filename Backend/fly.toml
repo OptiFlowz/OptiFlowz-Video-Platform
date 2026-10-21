@@ -10,7 +10,7 @@ primary_region = 'fra'
 
 [processes]
   app = "node src/server.js"
-  worker = "node src/workers/video-indexing.js"
+  worker = "node src/workers/index.js"
 
 [http_service]
   internal_port = 4000

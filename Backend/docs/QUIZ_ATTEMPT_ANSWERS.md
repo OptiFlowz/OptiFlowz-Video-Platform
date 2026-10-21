@@ -152,9 +152,11 @@ kod nije prisutan kod svih validacionih ili middleware grešaka.
 
 Čuvanje zaključava red pokušaja u transakciji pre čitanja prethodnog odgovora.
 To sprečava da paralelni prvi zahtevi zaobiđu zabranu izmene. Rok se ponovo
-proverava neposredno pri upisu. Buduća finalizacija mora koristiti isto
-zaključavanje. Automatska finalizacija isteka u `timed_out` ostaje TODO;
-istek trenutno blokira čuvanje bez promene statusa pokušaja.
+proverava neposredno pri upisu. Automatska finalizacija u zajedničkom workeru
+koristi isto zaključavanje, postojeći obračun sačuvanih bodova i status `timed_out`.
+Podrazumevano obrađuje do 250 pokušaja po prolazu, na 30 sekundi.
+Istek odmah blokira čuvanje; status se upisuje kada worker obradi pokušaj.
+Detalji: [shared worker](../src/workers/README.md).
 
 ## Učitavanje pitanja sa sačuvanim odgovorima
 

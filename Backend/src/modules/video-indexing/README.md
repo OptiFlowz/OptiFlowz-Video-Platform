@@ -98,10 +98,11 @@ No additional migration or configuration is required.
 1. Install pgvector on PostgreSQL and apply the database migrations with `npm run migrate:deploy`.
 2. Configure `DATABASE_URL`, `OPENAI_API_KEY`, `MUX_TOKEN_ID`, and `MUX_TOKEN_SECRET`.
    Signed subtitle downloads also need the existing `MUX_SIGNING_KEY` and `MUX_PRIVATE_KEY`.
-3. Locally, run `npm run dev:all` to start the API and indexing worker together,
+3. Locally, run `npm run dev:all` to start the API and shared worker together,
    with automatic restarts on source changes and labelled output. Stop both with
    Ctrl+C. `npm run dev` still starts only the API; `npm run worker:video-indexing`
-   starts only the worker without automatic reload.
+   starts only video indexing without automatic reload. `npm run worker` starts both
+   video indexing and quiz expiration. See [shared worker configuration](../../workers/README.md).
 4. Configure Mux to deliver `video.asset.ready`, `video.asset.track.ready`,
    `video.asset.track.deleted`, `video.asset.track.errored`, and `video.asset.deleted`
    to the existing `/api/videos/webhook/mux` endpoint, using `MUX_WEBHOOK_SECRET`.
@@ -116,9 +117,9 @@ the worker is stopped or its OpenAI credentials are unavailable.
 
 ## Fly deployment
 
-`fly.toml` defines two process groups: `app` for the API and `worker` for indexing.
+`fly.toml` defines two process groups: `app` for the API and `worker` for indexing and quiz-attempt expiration.
 Only `app` receives HTTP traffic. Each group runs on its own Fly Machine using the
-same application image and application secrets; the worker requires `OPENAI_API_KEY`
+same application image and application secrets; video indexing requires `OPENAI_API_KEY`
 and the Mux/database configuration described above in the Fly app's secrets.
 Local `.env` values are not automatically uploaded as Fly secrets.
 
@@ -165,7 +166,8 @@ See [Fly process groups](https://fly.io/docs/launch/processes/),
 - `documents.js`: deterministic overview text and timestamped WebVTT chunks.
 - `embedding.service.js`: bounded OpenAI embedding requests.
 - `indexing.worker.js`: claims, retries, revision checks, and atomic publication.
-- `src/workers/video-indexing.js`: process lifecycle and graceful shutdown.
+- `src/workers/index.js`: shared process lifecycle and graceful shutdown;
+  `src/workers/video-indexing.js` is an indexing-only compatibility entrypoint.
 
 This is internal processing, so it has no public routes or controller. Existing
 video route handlers call the service. The worker uses the primary database only.
