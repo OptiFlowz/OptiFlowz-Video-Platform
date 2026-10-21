@@ -1541,5 +1541,8 @@
   "qePointsPerQuestion": "Točke na vprašanje",
   "qeSharedPositionHelp": "Položaji se začnejo pri 0 in so skupni stalnim vprašanjem in blokom virov. Pri enakem položaju so stalna vprašanja prva.",
   "qeChangeVideo": "Zamenjaj video",
-  "qeRuleReplacementIncomplete": "Zamenjave videa ni bilo mogoče dokončati. Morda sta še vedno prisotni obe pravili. Zapri to okno in preveri pravila pred ponovnim poskusom."
+  "qeRuleReplacementIncomplete": "Zamenjave videa ni bilo mogoče dokončati. Morda sta še vedno prisotni obe pravili. Zapri to okno in preveri pravila pred ponovnim poskusom.",
+  "qeOnlyMine": "Samo moje",
+  "qeFromOthers": "Od drugih",
+  "qeAllOwners": "Vsi lastniki"
 }

@@ -1578,5 +1578,8 @@
   "qePointsPerQuestion": "Bodovi po pitanju",
   "qeSharedPositionHelp": "Pozicije počinju od 0 i zajedničke su fiksnim pitanjima i blokovima izvora. Na istoj poziciji fiksna pitanja dolaze prva.",
   "qeChangeVideo": "Promijeni video",
-  "qeRuleReplacementIncomplete": "Zamjena videa nije dovršena. Oba pravila možda su još prisutna. Zatvori ovaj dijalog i provjeri pravila prije ponovnog pokušaja."
+  "qeRuleReplacementIncomplete": "Zamjena videa nije dovršena. Oba pravila možda su još prisutna. Zatvori ovaj dijalog i provjeri pravila prije ponovnog pokušaja.",
+  "qeOnlyMine": "Samo moje",
+  "qeFromOthers": "Od drugih",
+  "qeAllOwners": "Svi vlasnici"
 }

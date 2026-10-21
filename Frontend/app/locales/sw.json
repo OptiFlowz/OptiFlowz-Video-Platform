@@ -1566,5 +1566,8 @@
   "qePointsPerQuestion": "Alama kwa kila swali",
   "qeSharedPositionHelp": "Nafasi huanza na 0 na hutumiwa pamoja na maswali ya kudumu na vitalu vya vyanzo. Nafasi zikilingana, maswali ya kudumu hutangulia.",
   "qeChangeVideo": "Badilisha video",
-  "qeRuleReplacementIncomplete": "Kubadilisha video hakukukamilika. Huenda kanuni zote mbili bado zipo. Funga dirisha hili na ukague kanuni kabla ya kujaribu tena."
+  "qeRuleReplacementIncomplete": "Kubadilisha video hakukukamilika. Huenda kanuni zote mbili bado zipo. Funga dirisha hili na ukague kanuni kabla ya kujaribu tena.",
+  "qeOnlyMine": "Vyangu pekee",
+  "qeFromOthers": "Vya wengine",
+  "qeAllOwners": "Wamiliki wote"
 }

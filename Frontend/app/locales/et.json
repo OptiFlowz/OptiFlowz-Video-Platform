@@ -1566,5 +1566,8 @@
   "qePointsPerQuestion": "Punkte küsimuse kohta",
   "qeSharedPositionHelp": "Asukohad algavad 0-st ning on püsiküsimustel ja allikaplokkidel ühised. Samal asukohal tulevad püsiküsimused esimesena.",
   "qeChangeVideo": "Vaheta videot",
-  "qeRuleReplacementIncomplete": "Video vahetamist ei saanud lõpule viia. Mõlemad reeglid võivad alles olla. Sulge see aken ja kontrolli reegleid enne uuesti proovimist."
+  "qeRuleReplacementIncomplete": "Video vahetamist ei saanud lõpule viia. Mõlemad reeglid võivad alles olla. Sulge see aken ja kontrolli reegleid enne uuesti proovimist.",
+  "qeOnlyMine": "Ainult minu",
+  "qeFromOthers": "Teiste omad",
+  "qeAllOwners": "Kõik omanikud"
 }

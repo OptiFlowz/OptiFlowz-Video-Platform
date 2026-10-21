@@ -1566,5 +1566,8 @@
   "qePointsPerQuestion": "Taškai už klausimą",
   "qeSharedPositionHelp": "Pozicijos prasideda nuo 0 ir yra bendros fiksuotiems klausimams bei šaltinių blokams. Vienodoje pozicijoje fiksuoti klausimai pateikiami pirmi.",
   "qeChangeVideo": "Keisti vaizdo įrašą",
-  "qeRuleReplacementIncomplete": "Nepavyko užbaigti vaizdo įrašo keitimo. Abi taisyklės vis dar gali būti išlikusios. Uždarykite šį langą ir patikrinkite taisykles prieš bandydami dar kartą."
+  "qeRuleReplacementIncomplete": "Nepavyko užbaigti vaizdo įrašo keitimo. Abi taisyklės vis dar gali būti išlikusios. Uždarykite šį langą ir patikrinkite taisykles prieš bandydami dar kartą.",
+  "qeOnlyMine": "Tik mano",
+  "qeFromOthers": "Kitų naudotojų",
+  "qeAllOwners": "Visi savininkai"
 }

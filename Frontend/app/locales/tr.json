@@ -1541,5 +1541,8 @@
   "qePointsPerQuestion": "Soru başına puan",
   "qeSharedPositionHelp": "Konumlar 0’dan başlar ve sabit sorular ile kaynak blokları için ortaktır. Aynı konumda sabit sorular önce gelir.",
   "qeChangeVideo": "Videoyu değiştir",
-  "qeRuleReplacementIncomplete": "Video değişimi tamamlanamadı. Her iki kural da hâlâ mevcut olabilir. Bu pencereyi kapatıp tekrar denemeden önce kuralları kontrol edin."
+  "qeRuleReplacementIncomplete": "Video değişimi tamamlanamadı. Her iki kural da hâlâ mevcut olabilir. Bu pencereyi kapatıp tekrar denemeden önce kuralları kontrol edin.",
+  "qeOnlyMine": "Yalnızca benimkiler",
+  "qeFromOthers": "Başkalarına ait",
+  "qeAllOwners": "Tüm sahipler"
 }

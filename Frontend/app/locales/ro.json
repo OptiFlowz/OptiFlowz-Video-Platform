@@ -1541,5 +1541,8 @@
   "qePointsPerQuestion": "Puncte pe întrebare",
   "qeSharedPositionHelp": "Pozițiile încep de la 0 și sunt comune întrebărilor fixe și blocurilor de surse. La poziții egale, întrebările fixe apar primele.",
   "qeChangeVideo": "Schimbă videoclipul",
-  "qeRuleReplacementIncomplete": "Înlocuirea videoclipului nu a putut fi finalizată. Este posibil ca ambele reguli să existe în continuare. Închide dialogul și verifică regulile înainte de a reîncerca."
+  "qeRuleReplacementIncomplete": "Înlocuirea videoclipului nu a putut fi finalizată. Este posibil ca ambele reguli să existe în continuare. Închide dialogul și verifică regulile înainte de a reîncerca.",
+  "qeOnlyMine": "Doar ale mele",
+  "qeFromOthers": "Ale altor utilizatori",
+  "qeAllOwners": "Toți proprietarii"
 }

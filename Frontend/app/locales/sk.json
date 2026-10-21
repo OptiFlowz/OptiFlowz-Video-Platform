@@ -1646,5 +1646,8 @@
   "qePointsPerQuestion": "Body za otázku",
   "qeSharedPositionHelp": "Pozície začínajú od 0 a sú spoločné pre pevné otázky a bloky zdrojov. Na rovnakej pozícii majú pevné otázky prednosť.",
   "qeChangeVideo": "Zmeniť video",
-  "qeRuleReplacementIncomplete": "Výmenu videa sa nepodarilo dokončiť. Môžu stále existovať obe pravidlá. Zatvorte toto okno a pred ďalším pokusom pravidlá skontrolujte."
+  "qeRuleReplacementIncomplete": "Výmenu videa sa nepodarilo dokončiť. Môžu stále existovať obe pravidlá. Zatvorte toto okno a pred ďalším pokusom pravidlá skontrolujte.",
+  "qeOnlyMine": "Iba moje",
+  "qeFromOthers": "Od ostatných",
+  "qeAllOwners": "Všetci vlastníci"
 }

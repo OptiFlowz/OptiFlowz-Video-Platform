@@ -1566,5 +1566,8 @@
   "qePointsPerQuestion": "Poäng per fråga",
   "qeSharedPositionHelp": "Positionerna börjar på 0 och delas av fasta frågor och källblock. Vid samma position kommer fasta frågor först.",
   "qeChangeVideo": "Byt video",
-  "qeRuleReplacementIncomplete": "Videobytet kunde inte slutföras. Båda reglerna kan finnas kvar. Stäng dialogrutan och granska reglerna innan du försöker igen."
+  "qeRuleReplacementIncomplete": "Videobytet kunde inte slutföras. Båda reglerna kan finnas kvar. Stäng dialogrutan och granska reglerna innan du försöker igen.",
+  "qeOnlyMine": "Bara mina",
+  "qeFromOthers": "Från andra",
+  "qeAllOwners": "Alla ägare"
 }

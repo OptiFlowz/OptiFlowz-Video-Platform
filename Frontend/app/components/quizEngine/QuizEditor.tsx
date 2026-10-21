@@ -26,7 +26,7 @@ export default function QuizEditor({ id, section, onSectionChange, onSaved, onDi
         {tab === 'settings' && <Settings key={id} initial={quiz} onSaved={onSaved} onDirty={onDirty} onClose={onClose} />}
         {quiz && tab === 'questions' && <><p className={styles.sectionHelp}>{t('qeCandidatesHelp')}</p><Candidates quiz={quiz} editable={access.update} onDirty={onDirty} /></>}
         {quiz && tab === 'sources' && <><p className={styles.sectionHelp}>{t('qeSourcesHelp')}</p><Sources quiz={quiz} editable={access.update} onDirty={onDirty} /></>}
-        {quiz && tab === 'rules' && <><p className={styles.sectionHelp}>{t('quizRulesDescription', { title: quiz.title })}</p><Requirements quiz={quiz} editable={access.update} /></>}
+        {quiz && tab === 'rules' && <><p className={styles.sectionHelp}>{t('quizRulesDescription', { title: quiz.title })}</p><Requirements quiz={quiz} editable={access.update} onDirty={onDirty} /></>}
       </>}
     </div>
   </div>;

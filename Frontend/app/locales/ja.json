@@ -1566,5 +1566,8 @@
   "qePointsPerQuestion": "問題ごとの配点",
   "qeSharedPositionHelp": "位置は0から始まり、固定問題と情報源ブロックで共有されます。同じ位置では固定問題が先になります。",
   "qeChangeVideo": "動画を変更",
-  "qeRuleReplacementIncomplete": "動画の変更を完了できませんでした。両方のルールが残っている可能性があります。この画面を閉じてルールを確認してから、もう一度お試しください。"
+  "qeRuleReplacementIncomplete": "動画の変更を完了できませんでした。両方のルールが残っている可能性があります。この画面を閉じてルールを確認してから、もう一度お試しください。",
+  "qeOnlyMine": "自分のもののみ",
+  "qeFromOthers": "他のユーザーのもの",
+  "qeAllOwners": "すべての所有者"
 }

@@ -1556,5 +1556,8 @@
   "qePointsPerQuestion": "Puntos por pregunta",
   "qeSharedPositionHelp": "Las posiciones empiezan en 0 y son compartidas por las preguntas fijas y los bloques de fuentes. En posiciones iguales, las preguntas fijas van primero.",
   "qeChangeVideo": "Cambiar vídeo",
-  "qeRuleReplacementIncomplete": "No se pudo completar el cambio de vídeo. Puede que ambas reglas sigan presentes. Cierra este diálogo y revisa las reglas antes de volver a intentarlo."
+  "qeRuleReplacementIncomplete": "No se pudo completar el cambio de vídeo. Puede que ambas reglas sigan presentes. Cierra este diálogo y revisa las reglas antes de volver a intentarlo.",
+  "qeOnlyMine": "Solo los míos",
+  "qeFromOthers": "De otros usuarios",
+  "qeAllOwners": "Todos los propietarios"
 }

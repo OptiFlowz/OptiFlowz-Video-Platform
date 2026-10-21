@@ -1541,5 +1541,8 @@
   "qePointsPerQuestion": "Punten per vraag",
   "qeSharedPositionHelp": "Posities beginnen bij 0 en worden gedeeld door vaste vragen en bronblokken. Bij gelijke posities komen vaste vragen eerst.",
   "qeChangeVideo": "Video wijzigen",
-  "qeRuleReplacementIncomplete": "Het vervangen van de video kon niet worden voltooid. Mogelijk zijn beide regels nog aanwezig. Sluit dit venster en controleer de regels voordat je het opnieuw probeert."
+  "qeRuleReplacementIncomplete": "Het vervangen van de video kon niet worden voltooid. Mogelijk zijn beide regels nog aanwezig. Sluit dit venster en controleer de regels voordat je het opnieuw probeert.",
+  "qeOnlyMine": "Alleen van mij",
+  "qeFromOthers": "Van anderen",
+  "qeAllOwners": "Alle eigenaren"
 }

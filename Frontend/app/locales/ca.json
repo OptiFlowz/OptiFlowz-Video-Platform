@@ -1566,5 +1566,8 @@
   "qePointsPerQuestion": "Punts per pregunta",
   "qeSharedPositionHelp": "Les posicions comencen a 0 i són compartides per les preguntes fixes i els blocs de fonts. A igual posició, les preguntes fixes van primer.",
   "qeChangeVideo": "Canvia el vídeo",
-  "qeRuleReplacementIncomplete": "No s’ha pogut completar el canvi de vídeo. Pot ser que encara hi hagi totes dues regles. Tanca aquest diàleg i revisa les regles abans de tornar-ho a provar."
+  "qeRuleReplacementIncomplete": "No s’ha pogut completar el canvi de vídeo. Pot ser que encara hi hagi totes dues regles. Tanca aquest diàleg i revisa les regles abans de tornar-ho a provar.",
+  "qeOnlyMine": "Només els meus",
+  "qeFromOthers": "D’altres usuaris",
+  "qeAllOwners": "Tots els propietaris"
 }

@@ -1566,5 +1566,8 @@
   "qePointsPerQuestion": "每题分值",
   "qeSharedPositionHelp": "位置从 0 开始，由固定题目和来源区块共同使用。位置相同时，固定题目排在前面。",
   "qeChangeVideo": "更换视频",
-  "qeRuleReplacementIncomplete": "无法完成视频更换。两个规则可能都仍然存在。请关闭此窗口并检查规则，然后重试。"
+  "qeRuleReplacementIncomplete": "无法完成视频更换。两个规则可能都仍然存在。请关闭此窗口并检查规则，然后重试。",
+  "qeOnlyMine": "仅我的",
+  "qeFromOthers": "其他用户的",
+  "qeAllOwners": "所有所有者"
 }

@@ -1646,5 +1646,8 @@
   "qePointsPerQuestion": "Pikë për pyetje",
   "qeSharedPositionHelp": "Pozicionet fillojnë nga 0 dhe janë të përbashkëta për pyetjet fikse dhe blloqet e burimeve. Në të njëjtin pozicion, pyetjet fikse vijnë të parat.",
   "qeChangeVideo": "Ndrysho videon",
-  "qeRuleReplacementIncomplete": "Zëvendësimi i videos nuk u përfundua. Të dy rregullat mund të jenë ende të pranishme. Mbylle këtë dritare dhe kontrollo rregullat para se të provosh sërish."
+  "qeRuleReplacementIncomplete": "Zëvendësimi i videos nuk u përfundua. Të dy rregullat mund të jenë ende të pranishme. Mbylle këtë dritare dhe kontrollo rregullat para se të provosh sërish.",
+  "qeOnlyMine": "Vetëm të miat",
+  "qeFromOthers": "Nga të tjerët",
+  "qeAllOwners": "Të gjithë pronarët"
 }

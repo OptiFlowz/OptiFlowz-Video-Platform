@@ -1571,5 +1571,8 @@
   "qePointsPerQuestion": "Points per question",
   "qeSharedPositionHelp": "Positions start at 0 and are shared by fixed questions and source blocks. Fixed questions come first at equal positions.",
   "qeChangeVideo": "Change video",
-  "qeRuleReplacementIncomplete": "The video replacement could not be completed. Both rules may still be present. Close this dialog and review the rules before trying again."
+  "qeRuleReplacementIncomplete": "The video replacement could not be completed. Both rules may still be present. Close this dialog and review the rules before trying again.",
+  "qeOnlyMine": "Only mine",
+  "qeFromOthers": "From others",
+  "qeAllOwners": "All owners"
 }

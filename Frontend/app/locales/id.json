@@ -1566,5 +1566,8 @@
   "qePointsPerQuestion": "Poin per pertanyaan",
   "qeSharedPositionHelp": "Posisi dimulai dari 0 dan digunakan bersama oleh pertanyaan tetap dan blok sumber. Pada posisi yang sama, pertanyaan tetap didahulukan.",
   "qeChangeVideo": "Ganti video",
-  "qeRuleReplacementIncomplete": "Penggantian video tidak dapat diselesaikan. Kedua aturan mungkin masih ada. Tutup dialog ini dan periksa aturan sebelum mencoba lagi."
+  "qeRuleReplacementIncomplete": "Penggantian video tidak dapat diselesaikan. Kedua aturan mungkin masih ada. Tutup dialog ini dan periksa aturan sebelum mencoba lagi.",
+  "qeOnlyMine": "Hanya milik saya",
+  "qeFromOthers": "Milik orang lain",
+  "qeAllOwners": "Semua pemilik"
 }

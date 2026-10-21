@@ -1541,5 +1541,8 @@
   "qePointsPerQuestion": "Punti per domanda",
   "qeSharedPositionHelp": "Le posizioni iniziano da 0 e sono condivise dalle domande fisse e dai blocchi delle fonti. A parità di posizione, le domande fisse vengono prima.",
   "qeChangeVideo": "Cambia video",
-  "qeRuleReplacementIncomplete": "Impossibile completare la sostituzione del video. Entrambe le regole potrebbero essere ancora presenti. Chiudi questa finestra e controlla le regole prima di riprovare."
+  "qeRuleReplacementIncomplete": "Impossibile completare la sostituzione del video. Entrambe le regole potrebbero essere ancora presenti. Chiudi questa finestra e controlla le regole prima di riprovare.",
+  "qeOnlyMine": "Solo i miei",
+  "qeFromOthers": "Di altri utenti",
+  "qeAllOwners": "Tutti i proprietari"
 }

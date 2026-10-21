@@ -1541,5 +1541,8 @@
   "qePointsPerQuestion": "Punkty za pytanie",
   "qeSharedPositionHelp": "Pozycje zaczynają się od 0 i są wspólne dla stałych pytań i bloków źródeł. Na tej samej pozycji stałe pytania są pierwsze.",
   "qeChangeVideo": "Zmień film",
-  "qeRuleReplacementIncomplete": "Nie udało się dokończyć zmiany filmu. Obie reguły mogą nadal istnieć. Zamknij to okno i sprawdź reguły przed ponowną próbą."
+  "qeRuleReplacementIncomplete": "Nie udało się dokończyć zmiany filmu. Obie reguły mogą nadal istnieć. Zamknij to okno i sprawdź reguły przed ponowną próbą.",
+  "qeOnlyMine": "Tylko moje",
+  "qeFromOthers": "Innych użytkowników",
+  "qeAllOwners": "Wszyscy właściciele"
 }

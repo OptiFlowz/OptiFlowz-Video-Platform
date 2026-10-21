@@ -1566,5 +1566,8 @@
   "qePointsPerQuestion": "Stig á spurningu",
   "qeSharedPositionHelp": "Staðsetningar byrja á 0 og eru sameiginlegar fyrir fastar spurningar og heimildablokkir. Fastar spurningar koma fyrst við sömu staðsetningu.",
   "qeChangeVideo": "Skipta um myndskeið",
-  "qeRuleReplacementIncomplete": "Ekki tókst að ljúka við að skipta um myndskeið. Báðar reglurnar gætu enn verið til staðar. Lokaðu þessum glugga og athugaðu reglurnar áður en þú reynir aftur."
+  "qeRuleReplacementIncomplete": "Ekki tókst að ljúka við að skipta um myndskeið. Báðar reglurnar gætu enn verið til staðar. Lokaðu þessum glugga og athugaðu reglurnar áður en þú reynir aftur.",
+  "qeOnlyMine": "Aðeins mitt",
+  "qeFromOthers": "Frá öðrum",
+  "qeAllOwners": "Allir eigendur"
 }

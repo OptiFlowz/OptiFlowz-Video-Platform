@@ -1541,5 +1541,8 @@
   "qePointsPerQuestion": "Points par question",
   "qeSharedPositionHelp": "Les positions commencent à 0 et sont communes aux questions fixes et aux blocs sources. À position égale, les questions fixes passent en premier.",
   "qeChangeVideo": "Changer de vidéo",
-  "qeRuleReplacementIncomplete": "Le remplacement de la vidéo n’a pas pu être terminé. Les deux règles sont peut-être encore présentes. Fermez cette fenêtre et vérifiez les règles avant de réessayer."
+  "qeRuleReplacementIncomplete": "Le remplacement de la vidéo n’a pas pu être terminé. Les deux règles sont peut-être encore présentes. Fermez cette fenêtre et vérifiez les règles avant de réessayer.",
+  "qeOnlyMine": "Uniquement les miens",
+  "qeFromOthers": "D’autres utilisateurs",
+  "qeAllOwners": "Tous les propriétaires"
 }

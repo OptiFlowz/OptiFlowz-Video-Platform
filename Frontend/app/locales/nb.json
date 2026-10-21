@@ -1566,5 +1566,8 @@
   "qePointsPerQuestion": "Poeng per spørsmål",
   "qeSharedPositionHelp": "Posisjoner starter på 0 og deles av faste spørsmål og kildeblokker. Ved samme posisjon kommer faste spørsmål først.",
   "qeChangeVideo": "Bytt video",
-  "qeRuleReplacementIncomplete": "Videobyttet kunne ikke fullføres. Begge reglene kan fortsatt finnes. Lukk dialogen og kontroller reglene før du prøver igjen."
+  "qeRuleReplacementIncomplete": "Videobyttet kunne ikke fullføres. Begge reglene kan fortsatt finnes. Lukk dialogen og kontroller reglene før du prøver igjen.",
+  "qeOnlyMine": "Bare mine",
+  "qeFromOthers": "Fra andre",
+  "qeAllOwners": "Alle eiere"
 }

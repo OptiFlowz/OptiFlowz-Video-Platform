@@ -1566,5 +1566,8 @@
   "qePointsPerQuestion": "Pisteet kysymystä kohti",
   "qeSharedPositionHelp": "Sijainnit alkavat nollasta ja ovat yhteisiä kiinteille kysymyksille ja lähdelohkoille. Samassa sijainnissa kiinteät kysymykset tulevat ensin.",
   "qeChangeVideo": "Vaihda video",
-  "qeRuleReplacementIncomplete": "Videon vaihtoa ei voitu viimeistellä. Molemmat säännöt voivat yhä olla olemassa. Sulje tämä ikkuna ja tarkista säännöt ennen uutta yritystä."
+  "qeRuleReplacementIncomplete": "Videon vaihtoa ei voitu viimeistellä. Molemmat säännöt voivat yhä olla olemassa. Sulje tämä ikkuna ja tarkista säännöt ennen uutta yritystä.",
+  "qeOnlyMine": "Vain omani",
+  "qeFromOthers": "Muiden",
+  "qeAllOwners": "Kaikki omistajat"
 }

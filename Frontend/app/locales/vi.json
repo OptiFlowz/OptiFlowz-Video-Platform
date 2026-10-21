@@ -1566,5 +1566,8 @@
   "qePointsPerQuestion": "Điểm mỗi câu",
   "qeSharedPositionHelp": "Vị trí bắt đầu từ 0 và dùng chung cho câu hỏi cố định và các khối nguồn. Ở cùng vị trí, câu hỏi cố định đứng trước.",
   "qeChangeVideo": "Đổi video",
-  "qeRuleReplacementIncomplete": "Không thể hoàn tất việc thay video. Cả hai quy tắc có thể vẫn còn. Đóng hộp thoại này và kiểm tra các quy tắc trước khi thử lại."
+  "qeRuleReplacementIncomplete": "Không thể hoàn tất việc thay video. Cả hai quy tắc có thể vẫn còn. Đóng hộp thoại này và kiểm tra các quy tắc trước khi thử lại.",
+  "qeOnlyMine": "Chỉ của tôi",
+  "qeFromOthers": "Của người khác",
+  "qeAllOwners": "Tất cả chủ sở hữu"
 }

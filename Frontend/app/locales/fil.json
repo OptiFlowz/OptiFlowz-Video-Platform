@@ -1566,5 +1566,8 @@
   "qePointsPerQuestion": "Puntos bawat tanong",
   "qeSharedPositionHelp": "Nagsisimula sa 0 ang mga posisyon at pinagsasaluhan ng mga nakapirming tanong at mga bloke ng pinagmulan. Nauuna ang mga nakapirming tanong kapag magkapareho ang posisyon.",
   "qeChangeVideo": "Palitan ang video",
-  "qeRuleReplacementIncomplete": "Hindi nakumpleto ang pagpapalit ng video. Maaaring naroon pa ang parehong panuntunan. Isara ang dialog na ito at suriin ang mga panuntunan bago subukang muli."
+  "qeRuleReplacementIncomplete": "Hindi nakumpleto ang pagpapalit ng video. Maaaring naroon pa ang parehong panuntunan. Isara ang dialog na ito at suriin ang mga panuntunan bago subukang muli.",
+  "qeOnlyMine": "Akin lamang",
+  "qeFromOthers": "Mula sa iba",
+  "qeAllOwners": "Lahat ng may-ari"
 }

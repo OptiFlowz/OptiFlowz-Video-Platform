@@ -1541,5 +1541,8 @@
   "qePointsPerQuestion": "Punkte pro Frage",
   "qeSharedPositionHelp": "Positionen beginnen bei 0 und gelten gemeinsam für feste Fragen und Quellenblöcke. Bei gleicher Position stehen feste Fragen zuerst.",
   "qeChangeVideo": "Video ändern",
-  "qeRuleReplacementIncomplete": "Das Video konnte nicht vollständig ersetzt werden. Möglicherweise sind beide Regeln noch vorhanden. Schließe diesen Dialog und prüfe die Regeln, bevor du es erneut versuchst."
+  "qeRuleReplacementIncomplete": "Das Video konnte nicht vollständig ersetzt werden. Möglicherweise sind beide Regeln noch vorhanden. Schließe diesen Dialog und prüfe die Regeln, bevor du es erneut versuchst.",
+  "qeOnlyMine": "Nur meine",
+  "qeFromOthers": "Von anderen",
+  "qeAllOwners": "Alle Eigentümer"
 }

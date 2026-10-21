@@ -14,7 +14,7 @@ import LibrarySortButton from '~/components/library/librarySortButton';
 import { ConfirmDialog } from '~/components/confirmPopup/confirmDialog';
 import { useConfirm } from '~/components/confirmPopup/useConfirm';
 import { all, engineKey, list, request } from './api';
-import { filterQuestionPage } from './questionFilter';
+import { filterResourcePage, matchesOwnership, type OwnershipFilter } from './resourceFilter';
 import { resourcePaths, resourcePermission, typeLabels, type Resource, type Quiz, type Category, type Question } from './model';
 import { Select, Notice, LoadState, useAction, useAccess, useAll, styles } from './shared';
 import QuestionEditor from './QuestionEditor';
@@ -40,14 +40,14 @@ export default function QuizzesPage() {
     const handler = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
     window.addEventListener('beforeunload', handler); return () => window.removeEventListener('beforeunload', handler);
   }, [dirty]);
-  const navigate = async (tab: Resource, id?: string, section?: string, category?: string) => {
+  const navigate = async (tab: Resource, id?: string, section?: string, category?: string, scope?: OwnershipFilter) => {
     if (busy) return;
     if (dirty && !await confirm({ title: t('qeUnsaved'), message: t('qeDiscard'), yesText: t('qeDiscardAction'), noText: t('adminCancel') })) return;
-    setDirty(false); setParams({ tab, ...(id ? { edit: id } : {}), ...(section ? { section } : {}), ...(category ? { category } : {}) });
+    setDirty(false); setParams({ tab, scope: scope ?? params.get('scope') ?? 'mine', ...(id ? { edit: id } : {}), ...(section ? { section } : {}), ...(category ? { category } : {}) });
   };
   const saved = (id: string) => {
     setDirty(false);
-    if (editor === 'new') setParams({ tab: resource, ...(access.read ? { edit: id } : {}) });
+    if (editor === 'new') setParams({ tab: resource, scope: params.get('scope') ?? 'mine', ...(access.read ? { edit: id } : {}) });
   };
   const editorPage = (resource === 'quizzes' || resource === 'categories') && !!editor;
   const popupTitle = resource === 'quizzes' ? t(editor === 'new' ? 'quizCreateTitle' : 'quizEditTitle') : resource === 'questions' ? t(editor === 'new' ? 'quizAddQuestion' : 'quizEditQuestion') : t(editor === 'new' ? 'qeCreateCategory' : 'qeEditCategory');
@@ -58,7 +58,7 @@ export default function QuizzesPage() {
     </EditorBusyStatusContext.Provider></EditorBusyContext.Provider> : <>
       <div className="libraryHeader"><div className="libraryHeading"><h1>{t(names[resource])}</h1><p>{t('qeIntro')}</p></div></div>
       <ProfileTabs className={styles.resourceTabs} label={t('navQuizzes')}>{allowed.map(tab => <button type="button" role="tab" key={tab} aria-selected={resource === tab} onClick={() => void navigate(tab)}>{t(names[tab])}</button>)}</ProfileTabs>
-      <ResourceList key={`${resource}:${params.get('category') ?? ''}`} resource={resource} initialCategory={params.get('category') ?? ''} onBrowseCategory={category => void navigate('questions', undefined, undefined, category)} onEdit={id => void navigate(resource, id)} />
+      <ResourceList key={`${resource}:${params.get('category') ?? ''}`} resource={resource} initialCategory={params.get('category') ?? ''} ownership={params.get('scope') ?? 'mine'} onOwnershipChange={scope => setParams({ tab: resource, scope })} onBrowseCategory={(category, ownerId) => void navigate('questions', undefined, undefined, category, ownerId === access.user?.id ? 'mine' : 'others')} onEdit={id => void navigate(resource, id)} />
       <EditorPopup wide={resource === 'questions'} open={!!editor} title={popupTitle} onClose={() => void navigate(resource)}>
         {editor && (resource === 'questions' ? <QuestionEditor key={editor} id={editor} onSaved={saved} onDirty={setDirty} onClose={() => void navigate(resource)} /> : <CategoryEditor key={editor} id={editor} onSaved={saved} onDirty={setDirty} />)}
       </EditorPopup>
@@ -68,27 +68,30 @@ export default function QuizzesPage() {
 
 }
 
-function ResourceList({ resource, onEdit, initialCategory, onBrowseCategory }: { resource: Resource; onEdit: (id: string) => void; initialCategory: string; onBrowseCategory: (id: string) => void }) {
+function ResourceList({ resource, onEdit, initialCategory, onBrowseCategory, ownership, onOwnershipChange }: { resource: Resource; onEdit: (id: string) => void; initialCategory: string; onBrowseCategory: (id: string, ownerId: string) => void; ownership: string; onOwnershipChange: (scope: OwnershipFilter) => void }) {
   const { t, locale } = useI18n(), access = useAccess(resource), categoryAccess = useAccess('categories');
+  const canReadOthers = access.can(resourcePermission(resource, 'read_any'));
+  const scope: OwnershipFilter = canReadOthers && (ownership === 'others' || ownership === 'all') ? ownership : 'mine';
   const [search, setSearch] = useState(''), [filter, setFilter] = useState(''), [status, setStatus] = useState(''), [type, setType] = useState(''), [category, setCategory] = useState(initialCategory);
   const [page, setPage] = useState(1), [limit, setLimit] = useState(20), [sort, setSort] = useState(resource === 'categories' ? 'name' : 'created_at'), [order, setOrder] = useState('desc');
   const [selected, setSelected] = useState<string[]>([]), selectAll = useRef<HTMLInputElement>(null);
   const action = useAction(), { confirm, dialogProps } = useConfirm(); const token = getToken();
   useEffect(() => { const timer = setTimeout(() => { setSearch(filter.trim()); setPage(1); }, 300); return () => clearTimeout(timer); }, [filter]);
-  useEffect(() => setSelected([]), [page, limit, search, status, type, category, sort, order]);
+  useEffect(() => setSelected([]), [page, limit, search, status, type, category, sort, order, scope]);
   const params: Record<string, string | number> = { page, limit, sortBy: sort, sortOrder: order };
   if (resource === 'quizzes') { if (search) params.title = search; if (status) params.status = status; }
   if (resource === 'categories' && search) params.name = search;
   if (resource === 'questions') { if (type) params.type = type; if (category) params.category_id = category; }
   const searchingQuestions = resource === 'questions' && !!search;
-  const pagedQuery = useQuery({ queryKey: [...engineKey, token, access.user?.id, resource, params], enabled: !!token && access.read && !searchingQuestions, retry: false,
+  const filterLocally = canReadOthers || searchingQuestions;
+  const pagedQuery = useQuery({ queryKey: [...engineKey, token, access.user?.id, resource, params], enabled: !!token && access.read && !filterLocally, retry: false,
     queryFn: ({ signal }) => list<Row>(resourcePaths[resource], resource, params, signal) });
-  // The API has no text-search parameter. Fetch every matching page once, then
-  // filter before paginating so questions beyond the current page remain searchable.
-  const questionFilters = { ...(type ? { type } : {}), ...(category ? { category_id: category } : {}), sortBy: sort, sortOrder: order };
-  const questionSearch = useQuery({ queryKey: [...engineKey, token, access.user?.id, 'question-search', questionFilters], enabled: !!token && access.read && searchingQuestions, retry: false,
-    queryFn: ({ signal }) => all<Row>('/questions', 'questions', questionFilters, signal) });
-  const query = searchingQuestions ? { ...questionSearch, data: questionSearch.data ? filterQuestionPage(questionSearch.data, search, page, limit) : undefined } : pagedQuery;
+  // The existing API has no ownership or question-text filter. Read all matching
+  // pages for those filters so totals and results never depend on the current page.
+  const { page: _page, limit: _limit, ...allFilters } = params;
+  const allRows = useQuery({ queryKey: [...engineKey, token, access.user?.id, 'resource-filter', resource, allFilters], enabled: !!token && !!access.user?.id && access.read && filterLocally, retry: false,
+    queryFn: ({ signal }) => all<Row>(resourcePaths[resource], resource, allFilters, signal) });
+  const query = filterLocally ? { ...allRows, data: allRows.data ? filterResourcePage(allRows.data, access.user?.id, scope, searchingQuestions ? search : '', page, limit) : undefined } : pagedQuery;
   const categories = useAll<Category>('/question-categories', 'categories', resource === 'questions' && categoryAccess.read);
   const rows = query.data?.items ?? [];
   const deletable = rows.filter(row => access.canOwn(resourcePermission(resource, 'delete_own'), resourcePermission(resource, 'delete_any'), row.user_id));
@@ -106,8 +109,9 @@ function ResourceList({ resource, onEdit, initialCategory, onBrowseCategory }: {
     <Notice {...action} /><div className={`managementToolbar ${styles.listToolbar}`}>
       {access.read && <div className="filter">{SearchSVG}<input type="search" value={filter} aria-label={t(resource === 'quizzes' ? 'filterQuizzes' : resource === 'questions' ? 'qeFilterQuestions' : 'qeFilterCategories')} placeholder={t(resource === 'quizzes' ? 'filterQuizzes' : resource === 'questions' ? 'qeFilterQuestions' : 'qeFilterCategories')} onChange={e => setFilter(e.target.value)} /></div>}
       <div className={styles.listFilters}>
+        {access.read && <Select label={t('systemRoleOwner')} value={scope} values={[{ value: 'mine', label: t('qeOnlyMine') }, ...(canReadOthers ? [{ value: 'others', label: t('qeFromOthers') }, { value: 'all', label: t('qeAllOwners') }] : [])]} onChange={value => { setPage(1); setCategory(''); setSelected([]); onOwnershipChange(value as OwnershipFilter); }} />}
         {access.read && resource === 'quizzes' && <Select label={t('adminTableStatus')} value={status} values={[{ value: '', label: t('qeAllStatuses') }, ...['draft', 'published', 'archived'].map(value => ({ value, label: t(`qe${value[0].toUpperCase()}${value.slice(1)}`) }))]} onChange={value => { setStatus(value); setPage(1); }} />}
-        {access.read && resource === 'questions' && <><Select label={t('quizQuestionType')} value={type} values={[{ value: '', label: t('qeAllTypes') }, ...Object.entries(typeLabels).map(([value, key]) => ({ value, label: t(key) }))]} onChange={value => { setType(value); setPage(1); }} />{categoryAccess.read && <Select label={t('qeCategories')} value={category} values={[{ value: '', label: t('qeAllCategories') }, ...(categories.data ?? []).map(g => ({ value: g.id, label: g.name }))]} onChange={value => { setCategory(value); setPage(1); }} />}</>}
+        {access.read && resource === 'questions' && <><Select label={t('quizQuestionType')} value={type} values={[{ value: '', label: t('qeAllTypes') }, ...Object.entries(typeLabels).map(([value, key]) => ({ value, label: t(key) }))]} onChange={value => { setType(value); setPage(1); }} />{categoryAccess.read && <Select label={t('qeCategories')} value={category} values={[{ value: '', label: t('qeAllCategories') }, ...(categories.data ?? []).filter(g => matchesOwnership(g.user_id, access.user?.id, scope)).map(g => ({ value: g.id, label: g.name }))]} onChange={value => { setCategory(value); setPage(1); }} />}</>}
         {access.create && <button type="button" className="playlistAddBtn" title={createLabel} aria-label={createLabel} onClick={() => onEdit('new')}>{AddSVG}</button>}
       </div>
     </div>
@@ -127,7 +131,7 @@ function ResourceList({ resource, onEdit, initialCategory, onBrowseCategory }: {
         <input className={checkbox} type="checkbox" aria-label={`${t('quizSelect')}: ${row.title || row.name || row.content || row.id}`} disabled={action.busy || !deletable.some(item => item.id === row.id)} checked={selected.includes(row.id)} onChange={e => setSelected(e.target.checked ? [...selected, row.id] : selected.filter(id => id !== row.id))} />
         <span className={styles.quizThumbnail} aria-hidden="true">{resource === 'quizzes' ? QuizSVG : resource === 'questions' ? (row.type ? questionIcons[row.type] : QuestionSVG) : CollectionsSVG}</span>
         <div className={styles.listInfo}><button type="button" className={styles.rowTitle} onClick={() => onEdit(row.id)}>{row.title || row.name || row.content || t('qeUntitledQuestion')}</button>
-          <div className="managementRowActions">{resource === 'categories' && access.canAny(['questions.read_own', 'questions.read_any']) && <button type="button" title={t('qeBank')} aria-label={`${t('qeBank')}: ${row.name}`} onClick={() => onBrowseCategory(row.id)}>{SearchSVG}</button>}<button type="button" aria-label={`${t('adminOpen')}: ${row.title || row.name || row.content}`} title={t('adminOpen')} onClick={() => onEdit(row.id)}>{EditSVG}</button>{deletable.some(item => item.id === row.id) && <button type="button" className="danger" disabled={action.busy} aria-label={`${t('adminDelete')}: ${row.title || row.name || row.content}`} title={t('adminDelete')} onClick={() => void remove([row.id])}>{DeleteSVG}</button>}</div>
+          <div className="managementRowActions">{resource === 'categories' && access.canAny(['questions.read_own', 'questions.read_any']) && <button type="button" title={t('qeBank')} aria-label={`${t('qeBank')}: ${row.name}`} onClick={() => onBrowseCategory(row.id, row.user_id)}>{SearchSVG}</button>}<button type="button" aria-label={`${t('adminOpen')}: ${row.title || row.name || row.content}`} title={t('adminOpen')} onClick={() => onEdit(row.id)}>{EditSVG}</button>{deletable.some(item => item.id === row.id) && <button type="button" className="danger" disabled={action.busy} aria-label={`${t('adminDelete')}: ${row.title || row.name || row.content}`} title={t('adminDelete')} onClick={() => void remove([row.id])}>{DeleteSVG}</button>}</div>
         </div></div></td>
         <td>{resource === 'questions' ? <span className={`managementStatus ${styles.questionTypeBadge}`}>{t(typeLabels[row.type!])}</span> : resource === 'categories' ? row.description : <QuizStatus quiz={{ id: row.id, user_id: row.user_id, title: row.title ?? '', status: row.status! }} disabled={action.busy} />}</td>
         {resource === 'questions' && <td className={styles.categoryCell}>{row.category?.name || t('qeUncategorized')}</td>}

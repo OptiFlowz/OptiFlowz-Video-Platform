@@ -1566,5 +1566,8 @@
   "qePointsPerQuestion": "문항별 배점",
   "qeSharedPositionHelp": "위치는 0부터 시작하며 고정 문항과 출처 블록이 함께 사용합니다. 위치가 같으면 고정 문항이 먼저 나옵니다.",
   "qeChangeVideo": "동영상 변경",
-  "qeRuleReplacementIncomplete": "동영상 교체를 완료하지 못했습니다. 두 규칙이 모두 남아 있을 수 있습니다. 이 창을 닫고 규칙을 확인한 뒤 다시 시도하세요."
+  "qeRuleReplacementIncomplete": "동영상 교체를 완료하지 못했습니다. 두 규칙이 모두 남아 있을 수 있습니다. 이 창을 닫고 규칙을 확인한 뒤 다시 시도하세요.",
+  "qeOnlyMine": "내 항목만",
+  "qeFromOthers": "다른 사용자의 항목",
+  "qeAllOwners": "모든 소유자"
 }

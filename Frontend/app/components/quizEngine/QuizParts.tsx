@@ -13,6 +13,7 @@ import { numberDraftValue, type NumberDraft } from './numberDraft';
 import CandidateList from './CandidateList';
 import QuestionEditor from './QuestionEditor';
 import { saveRequirement } from './saveRequirement';
+import RequirementCard, { type RuleThreshold } from './RequirementCard';
 
 type PartProps = { quiz: Quiz; editable: boolean; onBack?: () => void };
 const scrollClass = `quizPopupScroll ${styles.popupScroll} ${styles.partBody}`;
@@ -174,53 +175,44 @@ function SourceForm({ quiz, initial, editable, onDirty, onBack }: PartProps & { 
   </>;
 }
 
-function RuleVideoField({ video, ownerId, included, onChange }: {
-  video: VideoCard; ownerId: string; included: string[]; onChange: (video: VideoCard) => void;
-}) {
-  const { t } = useI18n();
-  const [choosing, setChoosing] = useState(false);
-  const thumbnail = video.thumbnail_url || video.mux_thumbnail_url;
-  return <>
-    <Field label={t('quizRequiredVideo')}>
-      <div className={styles.ruleVideo}>
-        <div className={styles.partIdentity}>
-          {thumbnail && <img className={styles.partThumbnail} src={thumbnail} alt="" />}
-          <div className={styles.partText}><p>{video.title}</p></div>
-        </div>
-        <button type="button" className="cancelBtn" onClick={() => setChoosing(true)}>{t('qeChangeVideo')}</button>
-      </div>
-    </Field>
-    <EditorPopup open={choosing} title={t('qeChangeVideo')} description={t('quizSelectVideoForRule')} onClose={() => setChoosing(false)} wide className={styles.rulePopup}>
-      <div className={`${scrollClass} ${styles.ruleVideoPicker}`}><PlaylistVideoPicker ownerId={ownerId} included={[...included, video.id]} busy={false} addingId={null} onAdd={next => { onChange(next); setChoosing(false); }} /></div>
-      <Footer onBack={() => setChoosing(false)} />
-    </EditorPopup>
-  </>;
-}
-
-export function Requirements({ quiz, editable, onBack }: PartProps) {
+export function Requirements({ quiz, editable, onBack, onDirty = () => {} }: PartProps & { onDirty?: (dirty: boolean) => void }) {
   const { t } = useI18n(), action = useAction(), { confirm, dialogProps } = useConfirm();
   const query = useAll<Requirement>(`/quiz-requirements?quiz_id=${quiz.id}`, 'requirements');
-  const [adding, setAdding] = useState(false), [editing, setEditing] = useState<{ row: Requirement; isNew: boolean } | null>(null);
-  const selectVideo = (video: VideoCard) => setEditing({ isNew: true, row: { quiz_id: quiz.id, video_id: video.id, video_card: video, position: Math.max(-1, ...(query.data ?? []).map(r => r.position)) + 1, min_watch_percentage: 100, min_watch_seconds: null } });
+  const [picker, setPicker] = useState<{ row?: Requirement; threshold: RuleThreshold } | null>(null);
+  const [addingId, setAddingId] = useState<string | null>(null);
+  const dirtyRows = useRef(new Set<string>()), mutation = useRef(false);
+  const reportDirty = (id: string, dirty: boolean) => { if (dirty) dirtyRows.current.add(id); else dirtyRows.current.delete(id); onDirty(dirtyRows.current.size > 0); };
+  const mutate = async (work: () => Promise<void | boolean>) => {
+    if (mutation.current || !editable) return false;
+    mutation.current = true;
+    let saved = false;
+    try { await action.run(async () => { saved = await work() !== false; return saved; }); return saved; }
+    finally { mutation.current = false; }
+  };
+  const selectVideo = async (video: VideoCard) => {
+    if (!picker || mutation.current) return;
+    setAddingId(video.id);
+    const original = picker.row ?? { quiz_id: quiz.id, video_id: video.id, position: Math.max(-1, ...(query.data ?? []).map(r => r.position)) + 1, ...picker.threshold };
+    try {
+      const saved = await mutate(async () => { await saveRequirement(request, original, !picker.row, video.id, picker.threshold, t('qeRuleReplacementIncomplete')); });
+      if (saved) { reportDirty(original.video_id, false); setPicker(null); }
+    } finally { setAddingId(null); }
+  };
   return <>
     <div className={scrollClass}><div className={styles.partHeader}><h4 className={styles.partHeading}>{t('quizRulesButton')} {query.data && <span>{query.data.length}</span>}</h4><Notice {...action} variant="heading" /></div><LoadState query={query} />
-      {query.data?.map(row => <PartCard key={row.video_id} video image={row.video_card?.thumbnail_url || row.video_card?.mux_thumbnail_url} title={row.min_watch_percentage !== null ? t('quizWatchPercentageSummary', { percentage: row.min_watch_percentage, video: row.video_card?.title || t('quizRequiredVideo') }) : t('quizWatchSecondsSummary', { seconds: row.min_watch_seconds ?? 0, video: row.video_card?.title || t('quizRequiredVideo') })} meta={t(row.min_watch_percentage !== null ? 'quizVideoWatchPercentage' : 'quizVideoWatchSeconds')} editable={editable} busy={action.busy} onEdit={() => setEditing({ row, isNew: false })} onRemove={() => void action.run(async () => {
-        if (!await confirm({ title: t('quizRemove'), message: t('quizDeleteRuleMessage'), yesText: t('quizRemove'), noText: t('adminCancel') })) return false;
-        await request(`/quiz-requirements/${quiz.id}/${row.video_id}`, 'DELETE');
-      })}><small>{row.video_card?.title || row.video_id}</small></PartCard>)}
+      {query.data?.map(row => <RequirementCard key={row.video_id} row={row} editable={editable} busy={action.busy}
+        onDirty={dirty => reportDirty(row.video_id, dirty)}
+        onSave={threshold => mutate(async () => { await saveRequirement(request, row, false, row.video_id, threshold, t('qeRuleReplacementIncomplete')); })}
+        onChangeVideo={threshold => setPicker({ row, threshold })}
+        onRemove={() => void mutate(async () => {
+          if (!await confirm({ title: t('quizRemove'), message: t('quizDeleteRuleMessage'), yesText: t('quizRemove'), noText: t('adminCancel') })) return false;
+          await request(`/quiz-requirements/${quiz.id}/${row.video_id}`, 'DELETE'); reportDirty(row.video_id, false);
+        })} />)}
       {query.isSuccess && !query.data?.length && <p className={styles.partEmpty}>{t('quizNoRulesYet')}</p>}
-      {editable && <AddButton disabled={action.busy || !query.isSuccess} onClick={() => setAdding(true)}>{t('quizAddRule')}</AddButton>}
+      {editable && <AddButton disabled={action.busy || !query.isSuccess} onClick={() => setPicker({ threshold: { min_watch_percentage: 100, min_watch_seconds: null } })}>{t('quizAddRule')}</AddButton>}
     </div><Footer onBack={onBack} busy={action.busy} />
-    <EditorPopup open={adding} title={t('quizAddRule')} description={t('quizSelectVideoForRule')} onClose={() => setAdding(false)} wide className={styles.rulePopup}>
-      <div className={`${scrollClass} ${styles.ruleVideoPicker}`}><PlaylistVideoPicker ownerId={quiz.user_id} included={query.data?.map(r => r.video_id) ?? []} busy={!query.isSuccess} addingId={null} onAdd={selectVideo} /></div><Footer onBack={() => setAdding(false)} />
-    </EditorPopup>
-    {editing && <DraftDialog<NumberDraft<{ mode: string; value: number; video: VideoCard }>> className={styles.rulePopup} title={t(editing.isNew ? 'quizAddRule' : 'quizEditRule')} initial={{ mode: editing.row.min_watch_percentage !== null ? 'percentage' : 'seconds', value: Number(editing.row.min_watch_percentage ?? editing.row.min_watch_seconds), video: editing.row.video_card ?? { id: editing.row.video_id, title: t('quizRequiredVideo') } }} onClose={() => setEditing(null)} save={async draft => {
-      const patch = { min_watch_percentage: draft.mode === 'percentage' ? Number(draft.value) : null, min_watch_seconds: draft.mode === 'seconds' ? Number(draft.value) : null };
-      await saveRequirement(request, editing.row, editing.isNew, draft.video.id, patch, t('qeRuleReplacementIncomplete'));
-    }}>{(draft, change) => <>
-      <RuleVideoField video={draft.video} ownerId={quiz.user_id} included={(query.data ?? []).filter(row => row.video_id !== editing.row.video_id).map(row => row.video_id)} onChange={video => change({ video })} />
-      <Field label={t('quizRuleType')}><Select label={t('quizRuleType')} value={draft.mode} values={[{ value: 'percentage', label: t('quizVideoWatchPercentage') }, { value: 'seconds', label: t('quizVideoWatchSeconds') }]} onChange={mode => change({ mode, value: mode === 'percentage' ? 100 : 1 })} /></Field>
-      <Field label={t(draft.mode === 'percentage' ? 'quizRequiredPercentage' : 'quizRequiredSeconds')}><input aria-label={t(draft.mode === 'percentage' ? 'quizRequiredPercentage' : 'quizRequiredSeconds')} required type="number" min={draft.mode === 'percentage' ? 0.01 : 1} max={draft.mode === 'percentage' ? 100 : draft.video.duration_seconds ?? 2147483647} step={draft.mode === 'percentage' ? 0.01 : 1} value={draft.value} onChange={e => change({ value: numberDraftValue(e.target.value) })} /></Field>
-    </>}</DraftDialog>}<ConfirmDialog {...dialogProps} />
+    <EditorPopup open={!!picker} title={t(picker?.row ? 'qeChangeVideo' : 'quizAddRule')} description={t('quizSelectVideoForRule')} onClose={() => { if (!mutation.current) setPicker(null); }} wide className={styles.rulePopup}>
+      <div className={`${scrollClass} ${styles.ruleVideoPicker}`}><Notice {...action} /><PlaylistVideoPicker ownerId={quiz.user_id} included={query.data?.map(r => r.video_id) ?? []} busy={action.busy || !query.isSuccess} addingId={addingId} onAdd={video => void selectVideo(video)} /></div><Footer busy={action.busy} onBack={() => setPicker(null)} />
+    </EditorPopup><ConfirmDialog {...dialogProps} />
   </>;
 }

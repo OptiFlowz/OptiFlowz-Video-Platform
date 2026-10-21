@@ -1566,5 +1566,8 @@
   "qePointsPerQuestion": "Punkti par jautājumu",
   "qeSharedPositionHelp": "Pozīcijas sākas no 0 un ir kopīgas fiksētajiem jautājumiem un avotu blokiem. Vienādā pozīcijā fiksētie jautājumi ir pirmie.",
   "qeChangeVideo": "Mainīt video",
-  "qeRuleReplacementIncomplete": "Video nomaiņu neizdevās pabeigt. Abi noteikumi joprojām var pastāvēt. Aizveriet šo logu un pārbaudiet noteikumus pirms atkārtota mēģinājuma."
+  "qeRuleReplacementIncomplete": "Video nomaiņu neizdevās pabeigt. Abi noteikumi joprojām var pastāvēt. Aizveriet šo logu un pārbaudiet noteikumus pirms atkārtota mēģinājuma.",
+  "qeOnlyMine": "Tikai mani",
+  "qeFromOthers": "Citu lietotāju",
+  "qeAllOwners": "Visi īpašnieki"
 }

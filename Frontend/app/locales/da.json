@@ -1566,5 +1566,8 @@
   "qePointsPerQuestion": "Point pr. spørgsmål",
   "qeSharedPositionHelp": "Positioner starter ved 0 og deles af faste spørgsmål og kildeblokke. Ved samme position kommer faste spørgsmål først.",
   "qeChangeVideo": "Skift video",
-  "qeRuleReplacementIncomplete": "Videoen kunne ikke udskiftes helt. Begge regler kan stadig være til stede. Luk dialogen, og kontrollér reglerne, før du prøver igen."
+  "qeRuleReplacementIncomplete": "Videoen kunne ikke udskiftes helt. Begge regler kan stadig være til stede. Luk dialogen, og kontrollér reglerne, før du prøver igen.",
+  "qeOnlyMine": "Kun mine",
+  "qeFromOthers": "Fra andre",
+  "qeAllOwners": "Alle ejere"
 }

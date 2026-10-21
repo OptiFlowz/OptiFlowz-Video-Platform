@@ -1646,5 +1646,8 @@
   "qePointsPerQuestion": "Kérdésenkénti pontszám",
   "qeSharedPositionHelp": "A pozíciók 0-tól indulnak, és közösek a rögzített kérdések és forrásblokkok között. Azonos pozíciónál a rögzített kérdések kerülnek előre.",
   "qeChangeVideo": "Videó cseréje",
-  "qeRuleReplacementIncomplete": "A videó cseréje nem fejeződött be. Lehet, hogy mindkét szabály még létezik. Zárd be ezt az ablakot, és ellenőrizd a szabályokat, mielőtt újra próbálkozol."
+  "qeRuleReplacementIncomplete": "A videó cseréje nem fejeződött be. Lehet, hogy mindkét szabály még létezik. Zárd be ezt az ablakot, és ellenőrizd a szabályokat, mielőtt újra próbálkozol.",
+  "qeOnlyMine": "Csak a sajátjaim",
+  "qeFromOthers": "Másoké",
+  "qeAllOwners": "Minden tulajdonos"
 }
