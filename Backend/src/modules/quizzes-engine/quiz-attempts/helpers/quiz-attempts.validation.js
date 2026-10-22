@@ -17,11 +17,11 @@ export const attemptAnswerParamsSchema = attemptIdSchema.extend({
 
 const optionNumber = z.number().int().min(1).max(32767);
 export const attemptAnswerSchemas = {
-  single_choice: z.object({ option_no: optionNumber }).strict(),
-  multiple_choice: z.object({ option_nos: z.array(optionNumber).min(1).max(32767)
+  single_choice: z.object({ option_no: optionNumber.nullable() }).strict(),
+  multiple_choice: z.object({ option_nos: z.array(optionNumber).max(32767)
     .refine(values => new Set(values).size === values.length, 'Duplicate options are not allowed') }).strict(),
   matching: z.object({ pairs: z.array(z.object({ item_no: optionNumber, option_no: optionNumber }).strict())
-    .min(1).max(32767)
+    .max(32767)
     .refine(pairs => new Set(pairs.map(pair => pair.item_no)).size === pairs.length, 'Duplicate matching items are not allowed') }).strict(),
 };
 

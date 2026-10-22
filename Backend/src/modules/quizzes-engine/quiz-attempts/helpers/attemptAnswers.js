@@ -19,23 +19,39 @@ export function validateAttemptQuestion(question) {
 }
 
 // Store canonical order so reordering selections is an idempotent retry, not a change.
-export function normalizeAttemptAnswer(snapshot, input) {
+export function normalizeAttemptAnswer(snapshot, input, { allowIncomplete = false } = {}) {
   const parsed = attemptAnswerSchemas[snapshot.type]?.safeParse(input);
   if (!parsed?.success) throw invalidAnswer(parsed?.error.issues[0]?.message || 'Unsupported question type');
   const answer = parsed.data;
+  if (!allowIncomplete && !isAttemptAnswerComplete(snapshot, answer)) {
+    throw attemptError(400, 'INCOMPLETE_ANSWER', 'Complete the answer before checking it');
+  }
   if (snapshot.type === 'matching') {
     const items = new Set(snapshot.matching_items.map(item => item.item_no));
     const options = new Set(snapshot.matching_options.map(option => option.option_no));
-    if (answer.pairs.length !== items.size || answer.pairs.some(pair => !items.has(pair.item_no) || !options.has(pair.option_no))) {
-      throw invalidAnswer('Provide exactly one valid option for every matching item');
+    if (answer.pairs.some(pair => !items.has(pair.item_no) || !options.has(pair.option_no))) {
+      throw invalidAnswer('Every matching item and option must belong to this question');
     }
     // Multiple items may legitimately map to the same option in the snapshot.
     return { pairs: [...answer.pairs].sort((a, b) => a.item_no - b.item_no) };
   }
   const options = new Set(snapshot.options.map(option => option.option_no));
   const selected = snapshot.type === 'single_choice' ? [answer.option_no] : answer.option_nos;
-  if (selected.some(number => !options.has(number))) throw invalidAnswer('Every selected option must belong to this question');
+  if (selected.some(number => number !== null && !options.has(number))) throw invalidAnswer('Every selected option must belong to this question');
   return snapshot.type === 'single_choice' ? answer : { option_nos: [...selected].sort((a, b) => a - b) };
+}
+
+// Call after structural validation. A subset of multiple-choice options is complete;
+// matching requires every item, while empty selections are drafts.
+export function isAttemptAnswerComplete(snapshot, answer) {
+  if (snapshot.type === 'single_choice') return answer.option_no !== null;
+  if (snapshot.type === 'multiple_choice') return answer.option_nos.length > 0;
+  return answer.pairs.length === snapshot.matching_items.length;
+}
+
+export function canEditAttemptAnswer(attempt, saved) {
+  return attempt.status === 'in_progress' && attempt.expired !== true
+    && (saved?.checked_at == null || attempt.settings_snapshot.allow_answer_changes_after_check === true);
 }
 
 export function gradeAttemptAnswer(snapshot, answer, maxPoints, scoringMode) {
@@ -100,6 +116,7 @@ export function publicAttemptAnswer(attempt, question, saved) {
   return {
     attempt_id: saved.attempt_id, question_no: saved.question_no, answer: saved.answer,
     checked_at: saved.checked_at, updated_at: saved.updated_at, feedback,
+    can_edit: canEditAttemptAnswer(attempt, saved),
   };
 }
 
@@ -117,7 +134,6 @@ export function publicAttemptQuestion(attempt, question) {
     matching_items: (snapshot.matching_items ?? []).map(({ item_no, content, position }) => ({ item_no, content, position })),
     answer: response?.answer ?? null, checked_at: response?.checked_at ?? null,
     updated_at: response?.updated_at ?? null, feedback: response?.feedback ?? {},
-    can_edit: attempt.status === 'in_progress' && attempt.expired !== true
-      && (saved?.checked_at == null || attempt.settings_snapshot.allow_answer_changes_after_check === true),
+    can_edit: canEditAttemptAnswer(attempt, saved),
   };
 }

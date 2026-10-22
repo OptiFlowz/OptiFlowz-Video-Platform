@@ -69,7 +69,7 @@ test('feedback visibility settings are independent, checked-only and reusable fo
                   assert.equal(Object.hasOwn(result.feedback, 'awarded_points'), visible(correctness_visibility));
                   assert.equal(Object.hasOwn(result.feedback, 'correct_answers'), visible(correct_answers_visibility));
                   assert.equal(Object.hasOwn(result.feedback, 'explanation'), visible(explanation_visibility) && (!explanation_incorrect_only || !is_correct));
-                  assert.deepEqual(Object.keys(result), ['attempt_id', 'question_no', 'answer', 'checked_at', 'updated_at', 'feedback']);
+                  assert.deepEqual(Object.keys(result), ['attempt_id', 'question_no', 'answer', 'checked_at', 'updated_at', 'feedback', 'can_edit']);
                 }
   const result = publicAttemptAnswer({ status: 'in_progress', settings_snapshot: { correct_answers_visibility: 'after_check' } },
     { question_snapshot: answerSnapshot('matching') }, { checked_at: 'checked' });
@@ -91,4 +91,20 @@ test('expired in-progress attempts use the same review feedback rules as timed_o
           publicAttemptAnswer({ status: 'timed_out', settings_snapshot }, question, saved));
         assert.equal(expired.status, 'in_progress');
       }
+});
+
+
+test('draft answers allow empty selections and partial matching while validating snapshot identifiers', () => {
+  const draft = { allowIncomplete: true };
+  for (const [type, answer] of [
+    ['single_choice', { option_no: null }], ['multiple_choice', { option_nos: [] }],
+    ['matching', { pairs: [] }], ['matching', { pairs: [{ item_no: 2, option_no: 1 }] }],
+  ]) {
+    assert.deepEqual(normalizeAttemptAnswer(answerSnapshot(type), answer, draft), answer);
+    assert.throws(() => normalizeAttemptAnswer(answerSnapshot(type), answer), error => error.body.code === 'INCOMPLETE_ANSWER');
+  }
+  for (const pairs of [[{ item_no: 8, option_no: 1 }], [{ item_no: 1, option_no: 9 }],
+    [{ item_no: 1, option_no: 1 }, { item_no: 1, option_no: 2 }]]) {
+    assert.throws(() => normalizeAttemptAnswer(answerSnapshot('matching'), { pairs }, draft), { status: 400 });
+  }
 });

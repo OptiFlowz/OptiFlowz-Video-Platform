@@ -1,3 +1,4 @@
+import { checkQuizAttemptAnswerInternal } from './handlers/checkQuizAttemptAnswer.js';
 import { sendSuccess, sendError } from '../../../common/response.js';
 import { getQuizEligibilityInternal } from './handlers/getQuizEligibility.js';
 import { startQuizAttemptInternal } from './handlers/startQuizAttempt.js';
@@ -24,6 +25,17 @@ export async function getQuizAttemptQuestions(req, res) {
   } catch (error) {
     if (!error.status || error.status >= 500) console.error('getQuizAttemptQuestions error:', error);
     return sendError(res, error.status && error.status < 500 ? error.message : 'Unable to get attempt questions', error.status || 500,
+      error.status && error.status < 500 && error.body?.code ? { code: error.body.code } : {});
+  }
+}
+
+export async function checkQuizAttemptAnswer(req, res) {
+  res.set('Cache-Control', 'private, no-store');
+  try {
+    return sendSuccess(res, await checkQuizAttemptAnswerInternal(req.params, req.user?.sub));
+  } catch (error) {
+    if (!error.status || error.status >= 500) console.error('checkQuizAttemptAnswer error:', error);
+    return sendError(res, error.status && error.status < 500 ? error.message : 'Unable to check the quiz answer', error.status || 500,
       error.status && error.status < 500 && error.body?.code ? { code: error.body.code } : {});
   }
 }

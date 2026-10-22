@@ -1,18 +1,19 @@
 # Čuvanje i provera odgovora pokušaja
 
-`PUT /api/quiz-attempts/:attemptId/answers/:questionNo`
+- `PUT /api/quiz-attempts/:attemptId/answers/:questionNo` — čuva odgovor bez ocenjivanja.
+- `POST /api/quiz-attempts/:attemptId/answers/:questionNo/check` — proverava poslednji sačuvani odgovor; body nije potreban.
 
 Zahteva `Authorization: Bearer <token>`, permisiju `quizzes.participate` i
 `Content-Type: application/json`. Korisnik mora biti vlasnik pokušaja, uključujući
 korisnike sa Owner rolom. `attemptId` je UUID, a `questionNo` pozitivan redni broj
 iz `quiz_attempt_questions`, ne ID originalnog pitanja.
 
-Ruta prihvata samo pokušaj u statusu `in_progress` kojem vreme nije isteklo.
+Obe rute prihvataju samo pokušaj u statusu `in_progress` kojem vreme nije isteklo.
 Istek se proverava prema vremenu PostgreSQL servera. `expires_at = NULL` znači da
 nema vremenskog ograničenja. Trenutni status kviza i njegove naknadne izmene ne
 menjaju podešavanja već započetog pokušaja.
 
-## Request body
+## Čuvanje — request body
 
 Single choice:
 
@@ -41,29 +42,40 @@ Matching:
 ```
 
 - Šalju se stabilni `option_no` / `item_no` iz snapshota, ne pozicije u prikazu.
-- Multiple choice zahteva bar jednu opciju, bez duplikata.
-- Matching zahteva tačno jedno povezivanje za svaki item. Nepotpuni odgovori se
-  odbijaju bez upisa. Više itema sme koristiti istu opciju.
+- Multiple choice dozvoljava prazan `option_nos: []` tokom čuvanja; provera zahteva bar jednu opciju. Duplikati nisu dozvoljeni.
+- Matching dozvoljava prazan `pairs: []` ili deo povezivanja tokom čuvanja. Provera zahteva tačno jedno povezivanje za svaki item. Više itema sme koristiti istu opciju.
+- Single choice dozvoljava `option_no: null` za poništavanje izbora; provera zahteva jednu opciju.
 - Sve oznake moraju postojati u snapshotu konkretnog pitanja. Brojevi se šalju
   kao JSON brojevi, ne stringovi. Nepoznate osobine nisu dozvoljene.
 - Klijent ne šalje tip pitanja, bodove, tačnost, `checked_at` ili podešavanja.
-- PUT zamenjuje ceo odgovor za jedno pitanje. Prazan odgovor ne služi za brisanje.
+- PUT zamenjuje ceo odgovor za jedno pitanje. Prazan izbor ostaje sačuvan kao neocenjen odgovor; red u bazi se ne briše.
 
 ## Provera i izmene
 
-Svaki validan odgovor, za sva tri tipa, proverava se odmah. Upisuju se `answer`,
-`checked_at`, `is_correct`, `awarded_points` i `updated_at`.
-Tačni odgovori i objašnjenje dolaze isključivo iz `question_snapshot`, težina iz
+PUT čuva `answer` i `updated_at` bez ocenjivanja. Nov ili izmenjen odgovor ima
+`checked_at`, `is_correct` i `awarded_points` postavljene na `null`; feedback je
+prazan, a `can_edit` je `true`. To važi i kada je odgovor kompletan.
+
+POST `/check` učitava poslednji sačuvani odgovor, zahteva da je kompletan,
+ocenjuje ga i upisuje `checked_at`, `is_correct` i `awarded_points`. Ne menja
+odgovor ni njegovo `updated_at` vreme čuvanja. Ako nema sačuvanog odgovora, vraća
+`404 ANSWER_NOT_FOUND`; nepotpun odgovor vraća `400 INCOMPLETE_ANSWER`.
+Tačnost i objašnjenje dolaze iz `question_snapshot`, težina iz
 `quiz_attempt_questions.max_points`, a podešavanja iz `settings_snapshot`.
 
-Ako je `allow_answer_changes_after_check = false`, drugačiji odgovor nakon prve
-provere vraća `409 ANSWER_LOCKED`. Identičan ponovljeni PUT vraća `200` i isti
-sačuvani rezultat, bez promene timestampova. Redosled elemenata u `option_nos` i
-`pairs` ne predstavlja promenu odgovora.
+Ako je `allow_answer_changes_after_check = false`, izmena nakon provere vraća
+`409 ANSWER_LOCKED`. Ako je `true`, izmena je dozvoljena, ali briše prethodnu
+ocenu i feedback dok se novi odgovor ne proveri. Default podešavanja ostaje
+**false**. Neprovereni odgovori se mogu menjati bez obzira na ovo podešavanje.
 
-Ako je podešavanje `true`, svaki novi odgovor se ponovo čuva i proverava.
-Prethodni odgovor bez `checked_at` sme se zameniti i kada je podešavanje `false`.
-Postojeći default u konfiguraciji kviza je **false**; ova ruta ga ne menja.
+Identičan ponovljeni PUT čuva postojeće ocene i timestampove i kada su izmene
+dozvoljene. Redosled `option_nos` i `pairs` ne predstavlja promenu odgovora.
+Ponovljeni POST `/check` za već ocenjen odgovor vraća postojeći rezultat i
+trenutno dozvoljeni feedback bez ponovnog ocenjivanja.
+
+Frontend treba da sačeka završetak poslednjeg PUT-a pre poziva `/check` ili
+`/submit`. Paralelni zahtevi se obrađuju redom kojim dobiju zaključavanje; check
+ocenjuje odgovor koji je tada sačuvan, bez primanja novog odgovora u body-ju.
 
 ## Bodovanje
 
@@ -85,7 +97,7 @@ bodovi. Ruta ne ažurira konačni rezultat pokušaja.
 
 ## Odgovor i dozvoljeni feedback
 
-Prvi upis i kasnije izmene vraćaju `200 OK`:
+Čuvanje i provera vraćaju `200 OK`. Primer odgovora nakon čuvanja:
 
 ```json
 {
@@ -93,13 +105,29 @@ Prvi upis i kasnije izmene vraćaju `200 OK`:
   "attempt_id": "7b72a061-48a3-43db-b987-de31db8ad258",
   "question_no": 1,
   "answer": { "option_nos": [1] },
-  "checked_at": "2026-10-20T12:00:00.000Z",
+  "checked_at": null,
+  "updated_at": "2026-10-20T12:00:00.000Z",
+  "feedback": {},
+  "can_edit": true
+}
+```
+
+Primer nakon POST `/check`:
+
+```json
+{
+  "success": true,
+  "attempt_id": "7b72a061-48a3-43db-b987-de31db8ad258",
+  "question_no": 1,
+  "answer": { "option_nos": [1] },
+  "checked_at": "2026-10-20T12:00:05.000Z",
   "updated_at": "2026-10-20T12:00:00.000Z",
   "feedback": {
     "is_correct": false,
     "awarded_points": 1.5,
     "explanation": "Objašnjenje sačuvano uz pitanje."
-  }
+  },
+  "can_edit": false
 }
 ```
 
@@ -119,8 +147,8 @@ Svako feedback podešavanje radi nezavisno:
 odgovor. Kod delimičnih bodova odgovor je i dalje netačan, pa se objašnjenje može
 prikazati. Naziv ovog postojećeg polja nije promenjen.
 
-Vrednosti `never` i `after_finish` ne otkrivaju odgovarajuća polja kroz ovu PUT
-rutu. Nedozvoljena polja se potpuno izostavljaju; ako ništa nije dozvoljeno,
+Vrednosti `never` i `after_finish` ne otkrivaju odgovarajuća polja kroz aktivne
+PUT i POST `/check` rute. Nedozvoljena polja se potpuno izostavljaju; ako ništa nije dozvoljeno,
 odgovor sadrži `feedback: {}`. Bodovi prate vidljivost tačnosti jer mogu otkriti
 rezultat. `show_final_score` ne otkriva bodove pojedinačnih pitanja.
 
@@ -141,19 +169,25 @@ Odgovori imaju `Cache-Control: private, no-store`.
 | `403` | Nema permisiju `quizzes.participate` |
 | `404 ATTEMPT_NOT_FOUND` | Pokušaj ne postoji ili pripada drugom korisniku |
 | `404 ATTEMPT_QUESTION_NOT_FOUND` | Pitanje ne postoji u tom pokušaju |
+| `404 ANSWER_NOT_FOUND` | Check zahteva prethodno sačuvan odgovor |
+| `400 INCOMPLETE_ANSWER` | Check zahteva kompletan odgovor |
 | `409 ATTEMPT_NOT_IN_PROGRESS` | Pokušaj je završen ili otkazan |
 | `409 ATTEMPT_EXPIRED` | Vreme je isteklo; odgovor nije upisan |
 | `409 ANSWER_LOCKED` | Izmena već proverenog odgovora je zabranjena |
 | `409 ATTEMPT_CONFLICT` | Konflikt transakcija; zahtev može da se ponovi |
+| `422 INVALID_ATTEMPT_ANSWER` | Sačuvani odgovor nije validan za snapshot pitanja |
 | `422 INVALID_ATTEMPT_QUESTION` / `INVALID_ATTEMPT_SETTINGS` | Sačuvan snapshot ne podržava validno bodovanje |
 
 Greške handlera imaju oblik `{ "success": false, "message": "...", "code": "..." }`;
 kod nije prisutan kod svih validacionih ili middleware grešaka.
 
-Čuvanje zaključava red pokušaja u transakciji pre čitanja prethodnog odgovora.
-To sprečava da paralelni prvi zahtevi zaobiđu zabranu izmene. Rok se ponovo
+Čuvanje i provera zaključavaju red pokušaja u transakciji pre čitanja odgovora.
+To sprečava da paralelne izmene ili provere zaobiđu zabranu izmene. Rok se ponovo
 proverava neposredno pri upisu. Automatska finalizacija u zajedničkom workeru
-koristi isto zaključavanje, postojeći obračun sačuvanih bodova i status `timed_out`.
+koristi isto zaključavanje i zajedničko ocenjivanje kompletnih neproverenih
+odgovora pre obračuna rezultata i upisa statusa `timed_out`. Prethodne ocene se
+čuvaju, a nepotpuni odgovori ostaju neocenjeni i donose 0 bodova. Worker ne
+primenjuje minimalne procente za predaju.
 Podrazumevano obrađuje do 250 pokušaja po prolazu, na 30 sekundi.
 Istek odmah blokira čuvanje; status se upisuje kada worker obradi pokušaj.
 Detalji: [shared worker](../src/workers/README.md).
@@ -225,7 +259,7 @@ ostaje dostupan. `max_points` je težina pitanja iz pokušaja.
 li je odgovor ocenjen, a `updated_at` vreme čuvanja odgovora. Bez odgovora oba
 vremena su `null`. Sačuvan, ali neocenjen odgovor se vraća sa praznim `feedback`.
 
-Feedback ima identičan oblik kao u PUT ruti i nastaje pozivom istog formattera.
+Feedback ima identičan oblik kao u PUT i POST `/check` rutama i nastaje pozivom istog formattera.
 Tačna rešenja i objašnjenje ne postoje u osnovnom objektu pitanja ili ponuđenim
 opcijama; pojavljuju se samo u dozvoljenim poljima `feedback`. Neodgovorena i
 neocenjena pitanja ne otkrivaju feedback ni u režimu pregleda.
@@ -248,7 +282,9 @@ Odgovor koristi `Cache-Control: private, no-store`.
 Body nije potreban. Zahteva autentifikaciju, `quizzes.participate` i vlasništvo
 pokušaja. Samo `in_progress` pokušaj kome vreme nije isteklo može da se preda.
 
-Predaja koristi pitanja i već sačuvane ocene pokušaja, bez ponovnog ocenjivanja:
+Predaja prvo ocenjuje sve kompletne sačuvane odgovore bez `checked_at`, koristeći
+istu logiku kao `/check`. Već ocenjene odgovore ne ocenjuje ponovo. Nepotpuni
+odgovori ostaju neocenjeni. Tek zatim računa uslove za predaju i rezultat:
 
 - `total_questions`: stvarni broj redova u `quiz_attempt_questions`.
 - `answered_questions`: broj odgovora sa `checked_at IS NOT NULL`.
@@ -260,7 +296,10 @@ Predaja koristi pitanja i već sačuvane ocene pokušaja, bez ponovnog ocenjivan
 
 Ako neki uslov nije ispunjen, vraća se `409` i kod
 `MIN_ANSWERED_PERCENTAGE_NOT_MET` ili `MIN_CORRECT_PERCENTAGE_NOT_MET`.
-Status, vreme završetka i rezultati pokušaja ostaju neizmenjeni. Ako su oba praga
+Status, vreme završetka i rezultati pokušaja ostaju neizmenjeni. Automatske ocene
+iz tog neuspelog submit-a takođe se vraćaju rollback-om; ne zaključavaju odgovore
+niti otkrivaju novi feedback. Prethodno sačuvani odgovori i eksplicitne provere se
+čuvaju. Ako su oba praga
 nula, dozvoljena je predaja bez odgovora, uz nula osvojenih bodova.
 
 Uspešna predaja u jednoj transakciji upisuje:
@@ -311,7 +350,7 @@ permisije, `404 ATTEMPT_NOT_FOUND` za nepostojeći ili tuđ pokušaj,
 `422 INVALID_ATTEMPT_SETTINGS` za neispravna podešavanja i
 `422 INVALID_ATTEMPT_RESULTS` za prazan skup pitanja ili neispravne ocene/težine.
 
-Submit zaključava isti red pokušaja kao PUT odgovora i ponovo proverava rok pri
+Submit zaključava isti red pokušaja kao PUT odgovora i POST `/check` i ponovo proverava rok pri
 upisu. Ponovljeni submit već predatog pokušaja vraća `409`, a dalja izmena
 odgovora nije dozvoljena. Istek se ovom rutom ne finalizuje automatski.
 Odgovor ima `Cache-Control: private, no-store`.

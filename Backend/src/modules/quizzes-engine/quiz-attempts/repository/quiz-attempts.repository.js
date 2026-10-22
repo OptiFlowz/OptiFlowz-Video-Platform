@@ -86,19 +86,45 @@ export async function getSavedAttemptAnswer(database, attemptId, questionNo) {
   return rows[0] || null;
 }
 
-export async function upsertAttemptAnswer(database, attemptId, questionNo, answer, grade) {
+export async function upsertAttemptAnswer(database, attemptId, questionNo, answer) {
   const { rows } = await database.query(`
     WITH checked AS (SELECT clock_timestamp() AS at)
     INSERT INTO public.quiz_attempt_answers (attempt_id, question_no, answer, checked_at, is_correct, awarded_points, updated_at)
-    SELECT a.id, $2, $3::jsonb, checked.at, $4, $5, checked.at
+    SELECT a.id, $2, $3::jsonb, NULL, NULL, NULL, checked.at
     FROM public.quiz_attempts a CROSS JOIN checked
     WHERE a.id=$1 AND a.status='in_progress' AND (a.expires_at IS NULL OR a.expires_at > checked.at)
     ON CONFLICT (attempt_id, question_no) DO UPDATE SET
       answer=EXCLUDED.answer, checked_at=EXCLUDED.checked_at, is_correct=EXCLUDED.is_correct,
       awarded_points=EXCLUDED.awarded_points, updated_at=EXCLUDED.updated_at
     RETURNING *
-  `, [attemptId, questionNo, JSON.stringify(answer), grade.is_correct, grade.awarded_points]);
+  `, [attemptId, questionNo, JSON.stringify(answer)]);
   return rows[0] || null;
+}
+
+// Caller must hold the attempt row lock. Finalization may grade saved answers
+// after expiry, but the participant check route always enforces the deadline.
+export async function recordAttemptAnswerGrade(database, attemptId, questionNo, grade, { allowExpired = false } = {}) {
+  const { rows } = await database.query(`
+    WITH checked AS (SELECT clock_timestamp() AS at)
+    UPDATE public.quiz_attempt_answers ans
+    SET checked_at=checked.at, is_correct=$3, awarded_points=$4
+    FROM public.quiz_attempts a CROSS JOIN checked
+    WHERE ans.attempt_id=$1 AND ans.question_no=$2 AND ans.checked_at IS NULL
+      AND a.id=ans.attempt_id AND a.status='in_progress'
+      AND ($5::boolean OR a.expires_at IS NULL OR a.expires_at > checked.at)
+    RETURNING ans.*
+  `, [attemptId, questionNo, grade.is_correct, grade.awarded_points, allowExpired]);
+  return rows[0] || null;
+}
+
+export async function getUncheckedAttemptAnswers(database, attemptId) {
+  const { rows } = await database.query(`
+    SELECT q.question_no, q.question_snapshot, q.max_points, ans.answer
+    FROM public.quiz_attempt_questions q
+    JOIN public.quiz_attempt_answers ans ON ans.attempt_id=q.attempt_id AND ans.question_no=q.question_no
+    WHERE q.attempt_id=$1 AND ans.checked_at IS NULL ORDER BY q.question_no
+  `, [attemptId]);
+  return rows;
 }
 
 export async function listQuizAttempts(database, quizId, userId, { status, limit, offset, sortBy, sortOrder }) {

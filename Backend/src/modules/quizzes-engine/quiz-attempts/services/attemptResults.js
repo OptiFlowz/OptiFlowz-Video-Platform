@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { gradePendingAnswers } from './gradePendingAnswers.js';
 import { attemptError } from '../helpers/attemptQuestions.js';
 import { getAttemptSubmissionSummary } from '../repository/quiz-attempts.repository.js';
 
@@ -6,10 +7,12 @@ const percentage = z.number().finite().min(0).max(100).multipleOf(0.01);
 const scoringSettings = z.object({ passing_score_percentage: percentage });
 const submissionSettings = scoringSettings.extend({ min_answered_percentage: percentage, min_correct_percentage: percentage });
 
-// Both submission and expiration sum persisted grades; neither regrades answers.
+// Caller owns the transaction and attempt lock. Grade pending answers before totals.
+// Expiration ignores submission thresholds and can grade after the deadline.
 export async function getAttemptResults(database, attempt, { requireSubmissionRequirements = false } = {}) {
   const settings = (requireSubmissionRequirements ? submissionSettings : scoringSettings).safeParse(attempt.settings_snapshot);
   if (!settings.success) throw attemptError(422, 'INVALID_ATTEMPT_SETTINGS', 'The saved submission settings are invalid');
+  await gradePendingAnswers(database, attempt, { allowExpired: !requireSubmissionRequirements });
   const summary = await getAttemptSubmissionSummary(database, attempt.id, {
     min_answered_percentage: 0, min_correct_percentage: 0, ...settings.data,
   });

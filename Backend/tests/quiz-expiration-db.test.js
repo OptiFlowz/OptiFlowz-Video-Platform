@@ -1,3 +1,4 @@
+import { answerSnapshot } from './helpers/quiz-answer-fixtures.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
@@ -58,6 +59,42 @@ test('expiration uses saved grades safely in isolated PostgreSQL', {skip:!proces
     assert.deepEqual(await row(id),saved);
   });
 
+  await scenario('worker grades complete unchecked saved answers, skips partial drafts and preserves prior grades', async()=>{
+    const id=await fixture({settings:{scoring_mode:'partial_credit'}});
+    await admin.query('UPDATE quiz_attempt_questions SET question_snapshot=$2 WHERE attempt_id=$1 AND question_no=3', [id,answerSnapshot('multiple_choice')]);
+    await admin.query('INSERT INTO quiz_attempt_answers(attempt_id,question_no,answer) VALUES($1,3,$2)',[id,{option_nos:[1]}]);
+    const before=(await admin.query('SELECT * FROM quiz_attempt_answers WHERE attempt_id=$1 ORDER BY question_no',[id])).rows;
+    assert.equal((await run()).finalized,1);
+    assert.equal((await row(id)).earned_points,'6.00'); // Existing 3.5 + half of 5.
+    const after=(await admin.query('SELECT * FROM quiz_attempt_answers WHERE attempt_id=$1 ORDER BY question_no',[id])).rows;
+    assert.deepEqual(after.slice(0,2),before.slice(0,2));
+    assert.ok(after[2].checked_at);
+    assert.deepEqual(after[2].answer,before[2].answer);
+    assert.deepEqual(after[2].updated_at,before[2].updated_at);
+    const partial=await fixture({answered:false,settings:{scoring_mode:'partial_credit'}});
+    await admin.query('UPDATE quiz_attempt_questions SET question_snapshot=$2 WHERE attempt_id=$1 AND question_no=1',[partial,answerSnapshot('matching')]);
+    await admin.query('INSERT INTO quiz_attempt_answers(attempt_id,question_no,answer) VALUES($1,1,$2)',[partial,{pairs:[{item_no:1,option_no:1}]}]);
+    assert.equal((await run()).finalized,1);
+    assert.equal((await row(partial)).earned_points,'0.00');
+    assert.equal((await admin.query('SELECT checked_at FROM quiz_attempt_answers WHERE attempt_id=$1',[partial])).rows[0].checked_at,null);
+  });
+
+  await scenario('a failed finalization rolls back new grades together with the attempt', async()=>{
+    const id=await fixture({answered:false,settings:{scoring_mode:'exact_match'}});
+    await admin.query('UPDATE quiz_attempt_questions SET question_snapshot=$2 WHERE attempt_id=$1 AND question_no=1',[id,answerSnapshot()]);
+    await admin.query('INSERT INTO quiz_attempt_answers(attempt_id,question_no,answer) VALUES($1,1,$2)',[id,{option_no:1}]);
+    const brokenPool={async connect(){const c=await wrappedPool.connect();return {release:()=>c.release(),async query(sql,args){
+      const result=await c.query(sql,args);
+      if(sql.includes("SET status='timed_out'")) throw new Error('Injected finalization failure');
+      return result;
+    }};}};
+    await assert.rejects(run({pool:brokenPool}),/Injected finalization failure/);
+    assert.equal((await row(id)).status,'in_progress');
+    assert.equal((await admin.query('SELECT checked_at FROM quiz_attempt_answers WHERE attempt_id=$1',[id])).rows[0].checked_at,null);
+    assert.equal((await run()).finalized,1);
+    assert.equal((await row(id)).earned_points,'2.00');
+  });
+
   await scenario('zero answered scores zero; open-ended, future and terminal attempts are untouched',async()=>{
     const zero=await fixture({answered:false});
     const ids=[await fixture({expires:null}),await fixture({expires:'2099-01-01T00:00:00Z'}),await fixture({status:'submitted'}),await fixture({status:'cancelled'}),await fixture({status:'timed_out'})];
@@ -85,6 +122,16 @@ test('expiration uses saved grades safely in isolated PostgreSQL', {skip:!proces
     const result=await run(); assert.equal(result.failed,1); assert.equal(result.finalized,1);
     assert.equal((await row(bad)).status,'in_progress'); assert.equal((await row(good)).status,'timed_out');
     assert.match(messages[0],/INVALID_ATTEMPT_RESULTS/);
+  });
+
+  await scenario('malformed unchecked answers do not block healthy attempts',async()=>{
+    const bad=await fixture({answered:false,settings:{scoring_mode:'exact_match'}}),good=await fixture();
+    await admin.query('UPDATE quiz_attempt_questions SET question_snapshot=$2 WHERE attempt_id=$1 AND question_no=1',[bad,answerSnapshot()]);
+    await admin.query('INSERT INTO quiz_attempt_answers(attempt_id,question_no,answer) VALUES($1,1,$2)',[bad,{option_no:999}]);
+    const result=await run();
+    assert.equal(result.failed,1);assert.equal(result.finalized,1);
+    assert.equal((await row(bad)).status,'in_progress');assert.equal((await row(good)).status,'timed_out');
+    assert.match(messages[0],/INVALID_ATTEMPT_ANSWER/);
   });
 
   await scenario('two worker instances claim disjoint rows without double finalization',async()=>{

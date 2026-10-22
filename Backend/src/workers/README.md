@@ -54,14 +54,17 @@ cannot simultaneously finalize the same attempt. Each attempt is rechecked under
 its row lock. Already finished or unexpired attempts are left unchanged.
 
 `services/finalizeAttempt.js` calls `services/attemptResults.js`, which is also used
-by manual submission. Both reuse `getAttemptSubmissionSummary()` and saved grades:
+by manual submission. Both first grade complete unchecked saved answers through
+`gradePendingAnswers()`, then reuse `getAttemptSubmissionSummary()` and saved grades:
 
 - Sum `awarded_points` only for checked answers; unanswered/unchecked answers count as zero.
 - Sum `max_points` from attempt question snapshots.
 - Calculate score percentage and `passed` using `settings_snapshot.passing_score_percentage`.
 - Persist `status=timed_out`, `finished_at=expires_at` and the results.
 - Ignore minimum answered/correct submission thresholds on expiration.
-- Preserve question snapshots, answers, `checked_at` and per-answer grades.
+- Preserve question snapshots, answer content, save timestamps and all previously checked grades.
+- Grade complete pending answers using snapshot settings; partial/empty drafts remain unchecked with zero contribution.
+- Persist the new grades and final result atomically; failures roll them back together.
 
 The service requires a caller-owned transaction and is idempotent. It returns the
 finalized ID or null when no transition is needed. It does not expose internal scores
