@@ -25,7 +25,7 @@ test('source migration, HTTP CRUD and concurrent allocations in an isolated Post
   await admin.query("CREATE TABLE users (id uuid PRIMARY KEY, status text DEFAULT 'active', authz_version integer DEFAULT 1)");
   let migration;
   for (const file of ['1791590400001_add-questions.sql', '1791590400003_add-question-groups.sql',
-    '1791590400004_add-quizzes.sql', '1792195200000_add-quiz-feedback-and-scoring-settings.sql', '1792281600001_add-quiz-sources.sql']) {
+    '1791590400004_add-quizzes.sql', '1792195200000_add-quiz-feedback-and-scoring-settings.sql', '1792627200001_add-quiz-questions-per-page.sql', '1792281600001_add-quiz-sources.sql']) {
     const sql = (await readFile(new URL(`../src/database/migrations/${file}`, import.meta.url), 'utf8')).replaceAll('public.', `${schema}.`);
     await admin.query(sql.split('-- Down Migration')[0]);
     migration = sql;

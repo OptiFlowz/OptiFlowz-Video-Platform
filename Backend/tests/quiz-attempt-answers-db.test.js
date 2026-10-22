@@ -23,7 +23,7 @@ test('save answers: authentication, snapshots, grading, feedback and concurrent 
   await admin.query(`SET search_path TO ${schema},public`);
   await admin.query("CREATE TABLE users(id uuid PRIMARY KEY, status text DEFAULT 'active', authz_version integer DEFAULT 1)");
   for (const file of ['1791590400001_add-questions.sql', '1791590400004_add-quizzes.sql',
-    '1792195200000_add-quiz-feedback-and-scoring-settings.sql', '1792195200001_add-quiz-attempts.sql',
+    '1792195200000_add-quiz-feedback-and-scoring-settings.sql', '1792627200001_add-quiz-questions-per-page.sql', '1792195200001_add-quiz-attempts.sql',
     '1792195200002_add-quiz-attempt-questions-and-answers.sql']) {
     const sql = (await readFile(new URL(`../src/database/migrations/${file}`, import.meta.url), 'utf8')).replaceAll('public.', `${schema}.`);
     await admin.query(sql.split('-- Down Migration')[0]);

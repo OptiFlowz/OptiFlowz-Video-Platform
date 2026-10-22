@@ -579,6 +579,8 @@ POST/GET `/` znače `/api/quizzes`, bez dodatnog `/quizzes` segmenta.
 
 ### 6.2. Podešavanja i default vrednosti
 
+`questions_per_page` određuje željeni broj pitanja po stranici na frontendu. Backend ga čuva i vraća, ali ne paginira pitanja prema toj vrednosti. Novi attempt ga kopira u `settings_snapshot`; promena kviza ne menja postojeće snapshotove. Za stare attemptove bez tog polja frontend može koristiti 1.
+
 Podešavanja su dostupna u create body-ju i PATCH-u, osim izvedenog `question_count`. Samo `title` je obavezan prilikom kreiranja. `question_count` je samo izlazno polje i ne šalje se u POST/PATCH.
 
 | Polje | Tip / dozvoljene vrednosti | Default |
@@ -587,6 +589,7 @@ Podešavanja su dostupna u create body-ju i PATCH-u, osim izvedenog `question_co
 | `description` | Trimovan string ili null | null |
 | `status` | `draft`, `published`, `archived` | `draft` |
 | `question_count` | Samo čitanje: broj fiksnih + zbir source brojeva | 0 |
+| `questions_per_page` | Pozitivan ceo broj; informativan broj pitanja po stranici | 1 |
 | `time_limit_seconds` | Pozitivan ceo broj ili null | null |
 | `max_attempts` | Pozitivan ceo broj ili null | null |
 | `passing_score_percentage` | Broj 0–100, do dve decimale | 50 |

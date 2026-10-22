@@ -9,6 +9,7 @@ const quizFields = {
   title: z.string().trim().min(1).max(255),
   description: z.string().trim().nullable(),
   status: quizStatus,
+  questions_per_page: positiveInteger,
   time_limit_seconds: positiveInteger.nullable(),
   max_attempts: positiveInteger.nullable(),
   passing_score_percentage: percentage,
@@ -30,6 +31,7 @@ const quizFields = {
 export const quizIdSchema = z.object({ quizId: z.string().uuid('Invalid quiz ID') });
 export const createQuizSchema = z.object({
   ...quizFields,
+  questions_per_page: quizFields.questions_per_page.optional().default(1),
   description: quizFields.description.optional().default(null),
   status: quizStatus.optional().default('draft'),
   time_limit_seconds: quizFields.time_limit_seconds.optional().default(null),

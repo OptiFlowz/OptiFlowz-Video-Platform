@@ -8,7 +8,7 @@ const body = { title: 'Quiz' };
 
 test('quiz creation trims text and applies all database-aligned defaults', () => {
   assert.deepEqual(createQuizSchema.parse({ ...body, title: ' Quiz ' }), {
-    ...body, description: null, status: 'draft', time_limit_seconds: null, max_attempts: null,
+    ...body, questions_per_page: 1, description: null, status: 'draft', time_limit_seconds: null, max_attempts: null,
     passing_score_percentage: 50, shuffle_questions: true, shuffle_options: true, has_certificate: false,
     min_answered_percentage: 0, min_correct_percentage: 0,
     correctness_visibility: 'after_finish', correct_answers_visibility: 'after_finish', explanation_visibility: 'after_finish',
@@ -53,6 +53,7 @@ test('PATCH permits false, zero score and explicit null limits while preserving 
 
 test('submission, feedback and scoring settings validate equally on create and PATCH', () => {
   const fields = {
+    questions_per_page: { valid: [1, 5, 100, 2147483647], invalid: [0, -1, 1.5, 2147483648, "5", NaN, Infinity] },
     min_answered_percentage: { valid: [0, 0.29, 75.25, 100], invalid: [-0.01, 100.01, 1.001, '50', NaN, Infinity] },
     min_correct_percentage: { valid: [0, 0.29, 75.25, 100], invalid: [-0.01, 100.01, 1.001, '50', NaN, Infinity] },
     ...Object.fromEntries(['correctness_visibility', 'correct_answers_visibility', 'explanation_visibility'].map(field =>

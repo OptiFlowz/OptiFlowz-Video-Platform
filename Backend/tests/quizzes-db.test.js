@@ -61,6 +61,17 @@ test('quiz settings migration preserves existing quizzes, enforces database cons
     { feedback: null, scoring: null });
   await client.query(up);
   assert.deepEqual((await client.query('SELECT * FROM pg_temp.quizzes WHERE id=$1', [before.id])).rows[0], { ...before, ...defaults });
+  const [pageUp, pageDown] = await readMigration('1792627200001_add-quiz-questions-per-page.sql');
+  await client.query(pageUp);
+  assert.equal((await client.query('SELECT questions_per_page FROM pg_temp.quizzes WHERE id=$1', [before.id])).rows[0].questions_per_page, 1);
+  assert.equal((await insert()).rows[0].questions_per_page, 1);
+  await assert.rejects(client.query('UPDATE pg_temp.quizzes SET questions_per_page=NULL'), { code: '23502' });
+  for (const value of [0, -1]) {
+    await assert.rejects(client.query('UPDATE pg_temp.quizzes SET questions_per_page=$1', [value]), { code: '23514' });
+  }
+  await client.query(pageDown);
+  assert.deepEqual((await client.query('SELECT * FROM pg_temp.quizzes WHERE id=$1', [before.id])).rows[0], { ...before, ...defaults });
+  await client.query(pageUp);
 });
 
 test('quiz CRUD and existing submodule routing against PostgreSQL session-local tables', { skip: !process.env.TEST_DATABASE_URL }, async t => {
@@ -69,7 +80,7 @@ test('quiz CRUD and existing submodule routing against PostgreSQL session-local 
   t.after(() => client.end());
   await client.query("CREATE TEMP TABLE users (id uuid PRIMARY KEY, status text DEFAULT 'active', authz_version integer DEFAULT 1)");
   for (const file of ['1791590400001_add-questions.sql', '1791590400002_add-question-timestamps.sql', '1791590400003_add-question-groups.sql', '1791590400004_add-quizzes.sql',
-    '1792195200000_add-quiz-feedback-and-scoring-settings.sql']) {
+    '1792195200000_add-quiz-feedback-and-scoring-settings.sql', '1792627200001_add-quiz-questions-per-page.sql']) {
     const sql = await readFile(new URL(`../src/database/migrations/${file}`, import.meta.url), 'utf8');
     await client.query(sql.split('-- Down Migration')[0].replaceAll('public.', 'pg_temp.'));
   }
@@ -118,7 +129,7 @@ test('quiz CRUD and existing submodule routing against PostgreSQL session-local 
     const created = await request('POST', '', { ...minimal, title: ' Quiz ' });
     assert.equal(created.status, 201); assert.equal(created.success, true);
     const quiz = created.quiz;
-    assert.deepEqual(quiz, { id: quiz.id, user_id: userId, ...minimal, question_count: 0, description: null, status: 'draft',
+    assert.deepEqual(quiz, { id: quiz.id, user_id: userId, ...minimal, question_count: 0, questions_per_page: 1, description: null, status: 'draft',
       time_limit_seconds: null, max_attempts: null, passing_score_percentage: 50, shuffle_questions: true,
       shuffle_options: true, has_certificate: false,
       min_answered_percentage: 0, min_correct_percentage: 0,
@@ -138,10 +149,23 @@ test('quiz CRUD and existing submodule routing against PostgreSQL session-local 
     assert.equal(typeof saved.quiz.passing_score_percentage, 'number');
   });
 
+  await scenario('questions_per_page is informational and round-trips through CRUD', async () => {
+    const created = await request('POST', '', { title: 'Pages', questions_per_page: 7 });
+    assert.equal(created.status, 201);
+    assert.equal(created.quiz.questions_per_page, 7);
+    assert.equal(created.quiz.question_count, 0);
+    const path = `/${created.quiz.id}`;
+    assert.equal((await request('PATCH', path, { questions_per_page: 3 })).quiz.questions_per_page, 3);
+    assert.equal((await request('PATCH', path, { title: 'Renamed' })).quiz.questions_per_page, 3);
+    assert.equal((await request('GET', path)).quiz.questions_per_page, 3);
+    assert.equal((await request('GET')).quizzes.find(q => q.id === created.quiz.id).questions_per_page, 3);
+  });
+
   await scenario('new quiz settings round-trip through create, PATCH, detail and list without resetting omitted fields', async () => {
     const normalizeTimestamps = quiz => ({ ...quiz,
       created_at: new Date(quiz.created_at).toISOString(), updated_at: new Date(quiz.updated_at).toISOString() });
     const settings = {
+      questions_per_page: 5,
       min_answered_percentage: 75.25, min_correct_percentage: 0.29,
       correctness_visibility: 'after_check', correct_answers_visibility: 'never', explanation_visibility: 'after_check',
       explanation_incorrect_only: true, allow_answer_changes_after_check: true,

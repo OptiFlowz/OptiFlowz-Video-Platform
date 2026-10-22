@@ -34,7 +34,7 @@ Create body:
 
 Only `title` (trimmed, 1–255 characters) is required. `question_count` is read-only: fixed questions + source counts. It starts at 0; sending it in POST/PATCH returns 400.
 Other defaults match the migration: `description: null`, `status: "draft"`,
-`time_limit_seconds: null`, `max_attempts: null`, `passing_score_percentage: 50`,
+`questions_per_page: 1`, `time_limit_seconds: null`, `max_attempts: null`, `passing_score_percentage: 50`,
 both shuffle flags true and `has_certificate: false`.
 
 Counts and non-null limits are positive integers up to 2147483647. A null
@@ -95,3 +95,5 @@ using these routes. Also apply `1792454400001_fixed-questions-and-random-categor
 
 Run `npm run test:quizzes`. Set `TEST_DATABASE_URL` to enable PostgreSQL/HTTP
 integration tests; all writes use session-local objects.
+
+`questions_per_page` accepts a positive integer (1–2147483647) on POST/PATCH and is returned by create, update, detail and list. It is informational for frontend pagination and may exceed the question count. New attempts copy it into `settings_snapshot`; later quiz edits do not change that snapshot. Existing attempts are not backfilled; clients can use 1 when the field is absent.

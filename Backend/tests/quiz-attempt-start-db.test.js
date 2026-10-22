@@ -26,7 +26,7 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
   await admin.query('CREATE TABLE videos (id uuid PRIMARY KEY, duration_seconds integer)');
   await admin.query('CREATE TABLE watch_progress (user_id uuid, video_id uuid, total_watch_seconds numeric, PRIMARY KEY(user_id, video_id))');
   for (const file of ['1791590400001_add-questions.sql', '1791590400003_add-question-groups.sql', '1791590400004_add-quizzes.sql',
-    '1791763200000_add-quiz-requirements.sql', '1792627200000_add-quiz-requirements-is-active.sql', '1792195200000_add-quiz-feedback-and-scoring-settings.sql',
+    '1791763200000_add-quiz-requirements.sql', '1792627200000_add-quiz-requirements-is-active.sql', '1792195200000_add-quiz-feedback-and-scoring-settings.sql', '1792627200001_add-quiz-questions-per-page.sql',
     '1792195200001_add-quiz-attempts.sql', '1792195200002_add-quiz-attempt-questions-and-answers.sql',
     '1792281600000_add-quiz-questions.sql', '1792281600001_add-quiz-sources.sql']) {
     const sql = (await readFile(new URL(`../src/database/migrations/${file}`, import.meta.url), 'utf8')).replaceAll('public.', `${schema}.`);
@@ -138,6 +138,7 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
     assert.equal(Object.hasOwn(response.body, 'questions'), false);
     assert.equal(new Date(response.body.expires_at) - new Date(response.body.started_at), 120000);
     assert.equal(response.body.settings.scoring_mode, 'exact_match');
+    assert.equal(response.body.settings.questions_per_page, 1);
     assert.doesNotMatch(JSON.stringify(response.body), /is_correct|correct_option_no|SECRET|source_category_id|question_snapshot/);
     const attempt = (await admin.query('SELECT * FROM quiz_attempts WHERE id=$1', [response.body.id])).rows[0];
     assert.equal(attempt.user_id, participant);
@@ -156,9 +157,11 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
   await t.test('resume keeps original settings, order and content despite live edits and new unmet requirements', async () => {
     const id = await quiz({ count: 1, limit: 1, time: null });
     const qid = await question(id);
+    await admin.query('UPDATE quizzes SET questions_per_page=5 WHERE id=$1', [id]);
     const initial = await request(id);
+    assert.equal(initial.body.settings.questions_per_page, 5);
     assert.equal(initial.body.expires_at, null);
-    await admin.query("UPDATE quizzes SET passing_score_percentage=99,shuffle_options=true,question_count=5 WHERE id=$1", [id]);
+    await admin.query("UPDATE quizzes SET questions_per_page=10,passing_score_percentage=99,shuffle_options=true,question_count=5 WHERE id=$1", [id]);
     await admin.query("UPDATE questions SET content='Edited content',explanation='NEW SECRET' WHERE id=$1", [qid]);
     await admin.query('DELETE FROM questions WHERE id=$1', [qid]);
     const video = randomUUID();

@@ -27,7 +27,7 @@ test('quiz authorization uses real role grants, denies and Owner bypass on all m
   CREATE TEMP TABLE people(id uuid PRIMARY KEY,name text,image_url text);
   CREATE TEMP TABLE video_chairs(video_id uuid,person_id uuid,type text);`);
   for (const file of ['1791590400001_add-questions.sql','1791590400002_add-question-timestamps.sql','1791590400003_add-question-groups.sql',
-    '1791590400004_add-quizzes.sql','1791763200000_add-quiz-requirements.sql', '1792627200000_add-quiz-requirements-is-active.sql','1792195200000_add-quiz-feedback-and-scoring-settings.sql',
+    '1791590400004_add-quizzes.sql','1791763200000_add-quiz-requirements.sql', '1792627200000_add-quiz-requirements-is-active.sql','1792195200000_add-quiz-feedback-and-scoring-settings.sql', '1792627200001_add-quiz-questions-per-page.sql',
     '1792195200001_add-quiz-attempts.sql','1792195200002_add-quiz-attempt-questions-and-answers.sql',
     '1792281600000_add-quiz-questions.sql','1792281600001_add-quiz-sources.sql']) {
     const sql = await readFile(new URL(`../src/database/migrations/${file}`, import.meta.url),'utf8');

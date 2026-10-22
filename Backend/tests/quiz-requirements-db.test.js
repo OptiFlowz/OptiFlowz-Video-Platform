@@ -26,7 +26,7 @@ test('requirement CRUD, authorization, video cards and pagination against sessio
   await client.query('CREATE TEMP TABLE people (id uuid PRIMARY KEY, name text, image_url text)');
   await client.query('CREATE TEMP TABLE video_chairs (video_id uuid, person_id uuid, type text)');
   for (const file of ['1791590400004_add-quizzes.sql', '1791763200000_add-quiz-requirements.sql', '1792627200000_add-quiz-requirements-is-active.sql', '1791763200001_cascade-quiz-requirements-video-delete.sql',
-    '1792195200000_add-quiz-feedback-and-scoring-settings.sql']) {
+    '1792195200000_add-quiz-feedback-and-scoring-settings.sql', '1792627200001_add-quiz-questions-per-page.sql']) {
     const sql = await readFile(new URL(`../src/database/migrations/${file}`, import.meta.url), 'utf8');
     await client.query(sql.split('-- Down Migration')[0].replaceAll('public.', 'pg_temp.'));
   }
