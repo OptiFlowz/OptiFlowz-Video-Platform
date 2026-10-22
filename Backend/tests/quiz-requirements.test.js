@@ -27,7 +27,7 @@ test('invalid requirement bodies cannot bypass exclusive thresholds, precision, 
 
 test('requirements accept both threshold types, defaults, explicit clears and normalized IDs', () => {
   assert.deepEqual(createQuizRequirementSchema.parse({ ...body, quiz_id: id.toUpperCase() }),
-    { ...body, min_watch_seconds: null, position: 0 });
+    { ...body, min_watch_seconds: null, position: 0, is_active: true });
   for (const percentage of [0.01, 0.29, 100]) {
     assert.equal(createQuizRequirementSchema.parse({ ...body, min_watch_percentage: percentage }).min_watch_percentage, percentage);
   }
@@ -82,4 +82,17 @@ test('all requirement handlers reject missing users and malformed input before q
   await assert.rejects(update(params, {}, id), { status: 400 });
   await assert.rejects(remove({ quizId: 'invalid', videoId: id }, id), { status: 400 });
   assert.equal(databaseCalls, 0);
+});
+
+
+test('is_active accepts only booleans and PATCH does not reset omitted values', () => {
+  for (const is_active of [true, false]) {
+    assert.equal(createQuizRequirementSchema.parse({ ...body, is_active }).is_active, is_active);
+    assert.deepEqual(updateQuizRequirementSchema.parse({ is_active }), { is_active });
+  }
+  assert.equal('is_active' in updateQuizRequirementSchema.parse({ position: 1 }), false);
+  for (const is_active of [null, 'false', 'true', 0, 1]) {
+    assert.equal(createQuizRequirementSchema.safeParse({ ...body, is_active }).success, false);
+    assert.equal(updateQuizRequirementSchema.safeParse({ is_active }).success, false);
+  }
 });

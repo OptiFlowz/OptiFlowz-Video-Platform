@@ -3,6 +3,7 @@ import { HttpError } from '../../../../common/httpError.js';
 
 const uuid = z.string().uuid().transform(value => value.toLowerCase());
 const fields = {
+  is_active: z.boolean(),
   min_watch_percentage: z.number().finite().gt(0).max(100).multipleOf(0.01).nullable(),
   min_watch_seconds: z.number().int().min(1).max(2147483647).nullable(),
   position: z.number().int().min(0).max(2147483647),
@@ -19,6 +20,7 @@ export const quizRequirementFieldsSchema = z.object(fields).strict()
 export const createQuizRequirementSchema = z.object({
   quiz_id: uuid,
   video_id: uuid,
+  is_active: fields.is_active.optional().default(true),
   min_watch_percentage: fields.min_watch_percentage.optional().default(null),
   min_watch_seconds: fields.min_watch_seconds.optional().default(null),
   position: fields.position.optional().default(0),

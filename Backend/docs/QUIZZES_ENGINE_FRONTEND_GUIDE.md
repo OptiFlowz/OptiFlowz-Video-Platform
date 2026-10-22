@@ -903,6 +903,7 @@ koristi opcioni `quiz_id` query. Identitet requirementa je `(quiz_id, video_id)`
 | --- | --- | --- |
 | `quiz_id` | Obavezan UUID kviza | Nema |
 | `video_id` | Obavezan UUID dostupnog videa | Nema |
+| `is_active` | Boolean; null nije dozvoljen | true |
 | `position` | Ceo broj 0–2147483647 | 0 |
 | `min_watch_percentage` | > 0 i <= 100, do dve decimale, ili null | null |
 | `min_watch_seconds` | Ceo broj 1–2147483647 ili null | null |
@@ -961,7 +962,8 @@ POST i PATCH vraćaju samo podatke veze, bez kartice:
     "video_id": "44444444-4444-4444-8444-444444444444",
     "min_watch_percentage": 75,
     "min_watch_seconds": null,
-    "position": 0
+    "position": 0,
+    "is_active": true
   }
 }
 ```
@@ -1036,7 +1038,7 @@ Korisnik dolazi iz access tokena; ne šalješ `user_id`. Rezultat je objekat sa 
 poljem, ne goli JSON `false`. Potrebna je `quizzes.participate` permisija.
 Kviz mora biti published; nepostojeći/draft/archived daju 404.
 
-Ako kviz nema requiremente, rezultat je `requirements_met: true`.
+Ako kviz nema aktivne requiremente, rezultat je `requirements_met: true`.
 
 ### 9.7. Detaljan napredak po videu
 
@@ -1059,6 +1061,7 @@ Kartica je u ovom primeru nedostupna trenutnom gledaocu:
       "min_watch_percentage": 75,
       "min_watch_seconds": null,
       "position": 0,
+      "is_active": true,
       "total_watch_seconds": 120,
       "required_watch_seconds": 150,
       "watched_percentage": 60,
@@ -1077,7 +1080,7 @@ Kartica je u ovom primeru nedostupna trenutnom gledaocu:
 | `watched_percentage` | Deo ukupnog trajanja videa, ograničen na 100; null za nepoznato/nepozitivno trajanje |
 | `completion_percentage` | Procenat ispunjenosti samog uslova, ograničen na 100; null ako nije izračunljiv |
 | `is_met` | Serverska odluka da li je taj uslov ispunjen |
-| `requirements_met` | Da li je ispunjen svaki requirement |
+| `requirements_met` | Da li je ispunjen svaki aktivni requirement |
 
 Formula za sekunde: `total_watch_seconds >= min_watch_seconds`.
 Za procenat: `duration_seconds > 0` i
@@ -1101,6 +1104,14 @@ Obe participant rute imaju `Cache-Control: private, no-store`. Ove rute samo či
 napredak; ne upisuju gledanje. Za snimanje gledanja koristi postojeći video playback
 tok. Posle povratka iz plejera ponovo učitaj progress; u aktivnom ekranu možeš ga
 osvežavati u razumnim intervalima.
+
+`is_active` se prima kroz POST/PATCH i vraća u podacima requirementa. Na primer,
+PATCH `/quiz-requirements/:quizId/:videoId` sa `{ "is_active": false }` deaktivira
+uslov. Izostavljeno polje pri PATCH-u zadržava postojeću vrednost.
+Administrativna lista i pojedinačni GET vraćaju i neaktivne uslove.
+`check`, `progress`, eligibility i pokretanje attempta uzimaju u obzir samo aktivne
+uslove; `progress` izostavlja neaktivne stavke. Ako nema aktivnih uslova, vraća
+`requirements_met: true` i `requirements: []`.
 
 ## 10. Tokovi rada i osvežavanje podataka
 

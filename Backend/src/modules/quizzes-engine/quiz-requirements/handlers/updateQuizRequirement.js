@@ -23,6 +23,7 @@ export async function updateQuizRequirementInternal(params, body, userId) {
       min_watch_percentage: existing.min_watch_percentage,
       min_watch_seconds: existing.min_watch_seconds,
       position: existing.position,
+      is_active: existing.is_active,
       ...Object.fromEntries(Object.entries(updates).filter(([, value]) => value !== undefined)),
     }));
     validateVideoDuration(requirement, video);

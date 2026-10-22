@@ -26,7 +26,7 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
   await admin.query('CREATE TABLE videos (id uuid PRIMARY KEY, duration_seconds integer)');
   await admin.query('CREATE TABLE watch_progress (user_id uuid, video_id uuid, total_watch_seconds numeric, PRIMARY KEY(user_id, video_id))');
   for (const file of ['1791590400001_add-questions.sql', '1791590400003_add-question-groups.sql', '1791590400004_add-quizzes.sql',
-    '1791763200000_add-quiz-requirements.sql', '1792195200000_add-quiz-feedback-and-scoring-settings.sql',
+    '1791763200000_add-quiz-requirements.sql', '1792627200000_add-quiz-requirements-is-active.sql', '1792195200000_add-quiz-feedback-and-scoring-settings.sql',
     '1792195200001_add-quiz-attempts.sql', '1792195200002_add-quiz-attempt-questions-and-answers.sql',
     '1792281600000_add-quiz-questions.sql', '1792281600001_add-quiz-sources.sql']) {
     const sql = (await readFile(new URL(`../src/database/migrations/${file}`, import.meta.url), 'utf8')).replaceAll('public.', `${schema}.`);
@@ -176,6 +176,15 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
     assert.equal(saved[0].question_id, null);
     assert.equal(saved[0].question_snapshot.options[0].content, 'A');
     assert.equal(await totalAttempts(id), 1);
+  });
+
+  await t.test('a new attempt ignores inactive unmet watch requirements', async () => {
+    const id = await quiz({ count: 1 });
+    await question(id);
+    const video = randomUUID();
+    await admin.query('INSERT INTO videos(id,duration_seconds) VALUES ($1,120)', [video]);
+    await admin.query('INSERT INTO quiz_requirements(quiz_id,video_id,min_watch_seconds,is_active) VALUES ($1,$2,100,false)', [id, video]);
+    assert.equal((await request(id)).status, 201);
   });
 
   await t.test('watch requirements are rechecked from authenticated progress before limits or configuration', async () => {

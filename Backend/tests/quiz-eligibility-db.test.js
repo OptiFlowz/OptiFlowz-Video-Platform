@@ -16,7 +16,7 @@ test('quiz eligibility HTTP route against session-local PostgreSQL tables', { sk
   await client.query("CREATE TEMP TABLE users (id uuid PRIMARY KEY, status text DEFAULT 'active', authz_version integer DEFAULT 1)");
   await client.query('CREATE TEMP TABLE videos (id uuid PRIMARY KEY, duration_seconds integer)');
   await client.query('CREATE TEMP TABLE watch_progress (user_id uuid, video_id uuid, total_watch_seconds numeric, PRIMARY KEY (user_id, video_id))');
-  for (const file of ['1791590400004_add-quizzes.sql', '1791763200000_add-quiz-requirements.sql', '1792195200001_add-quiz-attempts.sql']) {
+  for (const file of ['1791590400004_add-quizzes.sql', '1791763200000_add-quiz-requirements.sql', '1792627200000_add-quiz-requirements-is-active.sql', '1792195200001_add-quiz-attempts.sql']) {
     const sql = await readFile(new URL(`../src/database/migrations/${file}`, import.meta.url), 'utf8');
     await client.query(sql.split('-- Down Migration')[0].replaceAll('public.', 'pg_temp.'));
   }
@@ -129,6 +129,16 @@ test('quiz eligibility HTTP route against session-local PostgreSQL tables', { sk
     await client.query('UPDATE videos SET duration_seconds=NULL WHERE id=$1', [percentageVideo]);
     assert.equal((await request(id)).body.reason, 'requirements_not_met');
     await client.query('UPDATE videos SET duration_seconds=0 WHERE id=$1', [percentageVideo]);
+    assert.equal((await request(id)).body.reason, 'requirements_not_met');
+  });
+
+  await t.test('inactive unmet requirements do not block eligibility', async () => {
+    const id = await quiz();
+    await requirement(id, null, 60);
+    assert.equal((await request(id)).body.reason, 'requirements_not_met');
+    await client.query('UPDATE pg_temp.quiz_requirements SET is_active=false WHERE quiz_id=$1', [id]);
+    assert.equal((await request(id)).body.can_start, true);
+    await client.query('UPDATE pg_temp.quiz_requirements SET is_active=true WHERE quiz_id=$1', [id]);
     assert.equal((await request(id)).body.reason, 'requirements_not_met');
   });
 

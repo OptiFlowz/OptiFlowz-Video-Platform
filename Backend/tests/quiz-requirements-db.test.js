@@ -25,7 +25,7 @@ test('requirement CRUD, authorization, video cards and pagination against sessio
   await client.query('CREATE TEMP TABLE watch_progress (user_id uuid, video_id uuid, progress_seconds integer, percentage_watched numeric, total_watch_seconds numeric DEFAULT 0, PRIMARY KEY (user_id, video_id))');
   await client.query('CREATE TEMP TABLE people (id uuid PRIMARY KEY, name text, image_url text)');
   await client.query('CREATE TEMP TABLE video_chairs (video_id uuid, person_id uuid, type text)');
-  for (const file of ['1791590400004_add-quizzes.sql', '1791763200000_add-quiz-requirements.sql', '1791763200001_cascade-quiz-requirements-video-delete.sql',
+  for (const file of ['1791590400004_add-quizzes.sql', '1791763200000_add-quiz-requirements.sql', '1792627200000_add-quiz-requirements-is-active.sql', '1791763200001_cascade-quiz-requirements-video-delete.sql',
     '1792195200000_add-quiz-feedback-and-scoring-settings.sql']) {
     const sql = await readFile(new URL(`../src/database/migrations/${file}`, import.meta.url), 'utf8');
     await client.query(sql.split('-- Down Migration')[0].replaceAll('public.', 'pg_temp.'));
@@ -130,6 +130,43 @@ test('requirement CRUD, authorization, video cards and pagination against sessio
     assert.equal(await checkRequirements(quizId, other), false);
   });
 
+  await scenario('inactive requirements remain manageable but do not contribute to checks or progress', async () => {
+    const created = await request('POST', '', { ...percentageBody, is_active: false });
+    assert.equal(created.status, 201);
+    assert.equal(created.requirement.is_active, false);
+    assert.equal((await request('GET', path())).requirement.is_active, false);
+    assert.equal((await request('GET', `?quiz_id=${quizA}`)).requirements[0].is_active, false);
+    const checkPath = `/${quizA}/check`, progressPath = `/${quizA}/progress`;
+    assert.equal((await request('GET', checkPath, undefined, otherToken)).requirements_met, true);
+    const empty = await request('GET', progressPath, undefined, otherToken);
+    assert.equal(empty.requirements_met, true);
+    assert.deepEqual(empty.requirements, []);
+    assert.equal((await request('PATCH', path(), { position: 2 })).requirement.is_active, false);
+    assert.equal((await request('PATCH', path(), { is_active: true })).requirement.is_active, true);
+    assert.equal((await request('GET', checkPath, undefined, otherToken)).requirements_met, false);
+    assert.equal((await request('GET', progressPath, undefined, otherToken)).requirements.length, 1);
+    assert.equal((await request('PATCH', path(), { is_active: false })).requirement.is_active, false);
+    await request('POST', '', { quiz_id: quizA, video_id: publicVideo, min_watch_seconds: 10 });
+    assert.equal((await request('GET', checkPath, undefined, otherToken)).requirements_met, false);
+    await client.query(`INSERT INTO watch_progress(user_id,video_id,total_watch_seconds) VALUES ($1,$2,10)
+      ON CONFLICT (user_id,video_id) DO UPDATE SET total_watch_seconds=10`, [other, publicVideo]);
+    const progress = await request('GET', progressPath, undefined, otherToken);
+    assert.equal(progress.requirements_met, true);
+    assert.deepEqual(progress.requirements.map(r => r.video_id), [publicVideo]);
+    assert.equal((await request('GET', checkPath, undefined, otherToken)).requirements_met, true);
+    await client.query('DELETE FROM watch_progress WHERE user_id=$1 AND video_id=$2', [other, publicVideo]);
+  });
+
+  await scenario('is_active migration defaults existing rows to true and supports rollback', async () => {
+    const sql = await readFile(new URL('../src/database/migrations/1792627200000_add-quiz-requirements-is-active.sql', import.meta.url), 'utf8');
+    const [up, down] = sql.replaceAll('public.', 'pg_temp.').split('-- Down Migration');
+    await client.query(down);
+    await client.query('INSERT INTO pg_temp.quiz_requirements(quiz_id,video_id,min_watch_seconds) VALUES ($1,$2,10)', [quizA, ownVideo]);
+    await client.query(up);
+    assert.equal((await request('GET', path())).requirement.is_active, true);
+    await assert.rejects(client.query('UPDATE pg_temp.quiz_requirements SET is_active=NULL'), { code: '23502' });
+  });
+
   await scenario('all endpoints require access tokens and reject temporary authentication tokens', async () => {
     const temporary = jwt.sign({ sub: owner, purpose: 'two_factor' }, process.env.JWT_SECRET);
     for (const [method, url] of [['POST', ''], ['GET', ''], ['GET', `/${quizA}/check`], ['GET', `/${quizA}/progress`], ['GET', path()], ['PATCH', path()], ['DELETE', path()]]) {
@@ -205,11 +242,11 @@ test('requirement CRUD, authorization, video cards and pagination against sessio
     const withoutCard = ({ video_card, ...details }) => details;
     assert.deepEqual(withoutCard(seconds), {
       quiz_id: quizA, video_id: signedVideo, min_watch_percentage: null, min_watch_seconds: 30, position: 0,
-      total_watch_seconds: 30, required_watch_seconds: 30, watched_percentage: 33.33, completion_percentage: 100, is_met: true,
+      is_active: true, total_watch_seconds: 30, required_watch_seconds: 30, watched_percentage: 33.33, completion_percentage: 100, is_met: true,
     });
     assert.deepEqual(withoutCard(percentage), {
       quiz_id: quizA, video_id: publicVideo, min_watch_percentage: 50, min_watch_seconds: null, position: 1,
-      total_watch_seconds: 15, required_watch_seconds: 30, watched_percentage: 25, completion_percentage: 50, is_met: false,
+      is_active: true, total_watch_seconds: 15, required_watch_seconds: 30, watched_percentage: 25, completion_percentage: 50, is_met: false,
     });
     assert.equal(percentage.video_card.id, publicVideo);
     assert.equal(percentage.video_card.title, 'Public video');
@@ -270,7 +307,7 @@ test('requirement CRUD, authorization, video cards and pagination against sessio
   await scenario('creates percentage and seconds requirements and GET returns complete existing video cards', async () => {
     const created = await request('POST', '', percentageBody);
     assert.equal(created.status, 201);
-    assert.deepEqual(created.requirement, { ...percentageBody, min_watch_seconds: null, position: 0 });
+    assert.deepEqual(created.requirement, { ...percentageBody, min_watch_seconds: null, position: 0, is_active: true });
     const seconds = await request('POST', '', { quiz_id: quizA, video_id: publicVideo, min_watch_seconds: 60, position: 1 });
     assert.equal(seconds.status, 201); assert.equal(seconds.requirement.min_watch_percentage, null);
     const fetched = await request('GET', path());

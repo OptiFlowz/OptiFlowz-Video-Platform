@@ -1,7 +1,7 @@
 const COLUMNS = `r.quiz_id, r.video_id,
-  r.min_watch_percentage::double precision AS min_watch_percentage, r.min_watch_seconds, r.position`;
+  r.min_watch_percentage::double precision AS min_watch_percentage, r.min_watch_seconds, r.position, r.is_active`;
 const RETURNING_COLUMNS = `quiz_id, video_id,
-  min_watch_percentage::double precision AS min_watch_percentage, min_watch_seconds, position`;
+  min_watch_percentage::double precision AS min_watch_percentage, min_watch_seconds, position, is_active`;
 
 // Both the boolean check and the progress view use this exact, unrounded comparison.
 const REQUIREMENT_MET_SQL = `CASE
@@ -20,7 +20,7 @@ export async function areQuizRequirementsMet(database, quizId, userId) {
         SELECT 1 FROM public.quiz_requirements r
         LEFT JOIN public.videos v ON v.id = r.video_id
         LEFT JOIN public.watch_progress wp ON wp.video_id = r.video_id AND wp.user_id = $2
-        WHERE r.quiz_id = $1 AND (${REQUIREMENT_MET_SQL}) IS NOT TRUE
+        WHERE r.quiz_id = $1 AND r.is_active = true AND (${REQUIREMENT_MET_SQL}) IS NOT TRUE
       ) AS requirements_met
     FROM public.quizzes WHERE id = $1 AND status = 'published'
   `, [quizId, userId]);
@@ -43,7 +43,7 @@ export async function getQuizRequirementsProgress(database, quizId, userId) {
       FROM public.quiz_requirements r
       LEFT JOIN public.videos v ON v.id = r.video_id
       LEFT JOIN public.watch_progress wp ON wp.video_id = r.video_id AND wp.user_id = $2
-      WHERE r.quiz_id = $1
+      WHERE r.quiz_id = $1 AND r.is_active = true
     ), progress AS (
       SELECT *, CASE WHEN required_watch_seconds > 0 THEN
         LEAST(100, TRUNC(total_watch_seconds * 100 / required_watch_seconds, 2))
@@ -76,11 +76,11 @@ export async function lockAccessibleVideo(database, videoId, userId) {
 }
 
 export async function createQuizRequirement(database, requirement) {
-  const { quiz_id, video_id, min_watch_percentage, min_watch_seconds, position } = requirement;
+  const { quiz_id, video_id, min_watch_percentage, min_watch_seconds, position, is_active = true } = requirement;
   const { rows } = await database.query(`
-    INSERT INTO public.quiz_requirements (quiz_id, video_id, min_watch_percentage, min_watch_seconds, position)
-    VALUES ($1, $2, $3, $4, $5) RETURNING ${RETURNING_COLUMNS}
-  `, [quiz_id, video_id, min_watch_percentage, min_watch_seconds, position]);
+    INSERT INTO public.quiz_requirements (quiz_id, video_id, min_watch_percentage, min_watch_seconds, position, is_active)
+    VALUES ($1, $2, $3, $4, $5, $6) RETURNING ${RETURNING_COLUMNS}
+  `, [quiz_id, video_id, min_watch_percentage, min_watch_seconds, position, is_active]);
   return rows[0];
 }
 
@@ -118,11 +118,11 @@ export async function listQuizRequirements(database, userId, { quiz_id, sortBy, 
 export async function updateQuizRequirement(database, quizId, videoId, userId, requirement) {
   const { rows } = await database.query(`
     UPDATE public.quiz_requirements r
-    SET min_watch_percentage = $4, min_watch_seconds = $5, position = $6
+    SET min_watch_percentage = $4, min_watch_seconds = $5, position = $6, is_active = $7
     FROM public.quizzes q
     WHERE r.quiz_id = $1 AND r.video_id = $2 AND q.id = r.quiz_id AND q.user_id = $3
     RETURNING ${COLUMNS}
-  `, [quizId, videoId, userId, requirement.min_watch_percentage, requirement.min_watch_seconds, requirement.position]);
+  `, [quizId, videoId, userId, requirement.min_watch_percentage, requirement.min_watch_seconds, requirement.position, requirement.is_active]);
   return rows[0] || null;
 }
 

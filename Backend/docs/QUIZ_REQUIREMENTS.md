@@ -17,13 +17,14 @@ POST body:
   "quiz_id": "12345678-1234-4234-8234-123456789abc",
   "video_id": "12345678-1234-4234-8234-123456789def",
   "min_watch_percentage": 75.25,
-  "position": 0
+  "position": 0,
+  "is_active": true
 }
 ```
 
 Exactly one of `min_watch_percentage` and `min_watch_seconds` must be non-null. Omitted thresholds default to null. Percentages are numbers greater than 0 and at most 100, with at most two decimal places. Seconds must be positive integers and cannot exceed `videos.duration_seconds`; unknown duration rejects seconds thresholds. Position defaults to 0 and accepts nonnegative integers.
 
-PATCH accepts only `min_watch_percentage`, `min_watch_seconds`, and `position`. Omitted fields retain their existing values. To switch threshold types, explicitly clear the previous threshold:
+PATCH accepts only `min_watch_percentage`, `min_watch_seconds`, `position`, and `is_active`. Omitted fields retain their existing values. To switch threshold types, explicitly clear the previous threshold:
 
 ```json
 { "min_watch_percentage": null, "min_watch_seconds": 60 }
@@ -51,6 +52,11 @@ Example: `GET /api/quizzes/quiz-requirements?quiz_id=12345678-1234-4234-8234-123
 }
 ```
 
-Each requirement has `quiz_id`, `video_id`, numeric/null `min_watch_percentage`, integer/null `min_watch_seconds`, and `position`. GET single and list additionally include `video_card`: the existing card shape with title, duration, views, uploader, people, the viewer's watch progress, thumbnails, preview and media expiry. Cards are resolved in batches. If a linked video becomes unavailable, `video_card` is null; the requirement remains in the list and its pagination count. POST/PATCH return requirement fields without the card.
+Each requirement has `quiz_id`, `video_id`, numeric/null `min_watch_percentage`, integer/null `min_watch_seconds`, `position`, and boolean `is_active`. GET single and list additionally include `video_card`: the existing card shape with title, duration, views, uploader, people, the viewer's watch progress, thumbnails, preview and media expiry. Cards are resolved in batches. If a linked video becomes unavailable, `video_card` is null; the requirement remains in the list and its pagination count. POST/PATCH return requirement fields without the card.
 
 Deleting a requirement preserves the quiz and video. Deleting either a quiz or a video cascades to its requirements, preserving the other resource. Apply migrations `1791763200000_add-quiz-requirements.sql` and `1791763200001_cascade-quiz-requirements-video-delete.sql` before using these endpoints. No Postman collection changes are included.
+
+
+`is_active` is a boolean, defaults to `true` on creation, and cannot be null. Existing rows become active when migration `1792627200000_add-quiz-requirements-is-active.sql` is applied. POST/PATCH accept it and all CRUD reads return it; the management list includes both active and inactive requirements. For example, PATCH `/:quizId/:videoId` with `{ "is_active": false }` disables a requirement without deleting it.
+
+Participant GET `/:quizId/check` and `/:quizId/progress` consider only active requirements; progress omits inactive entries. Eligibility and starting a new attempt use the same active-only check. If no active requirements remain, `requirements_met` is `true` and progress returns an empty `requirements` array. Check/progress still require a published quiz. Deactivation does not relax threshold or video validation for CRUD writes.
