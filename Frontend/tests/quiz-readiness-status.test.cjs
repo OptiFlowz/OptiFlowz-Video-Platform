@@ -41,20 +41,25 @@ test('readiness progress and errors stay in the readiness section while saves an
     './api': { engineKey: ['quiz-engine'] }, './model': {}, './EditorPopup': popup, './engine.module.css': styles,
   });
   const model = load('model.ts');
-  const quiz = { ...model.defaultSettings, id: 'quiz', user_id: 'owner', title: 'Test', question_count: 1 };
-  let resolveCheck, rejectCheck, resolveSave, checks = 0;
+  assert.equal(model.defaultSettings.allow_answer_changes_after_check, true);
+  assert.equal(model.defaultSettings.questions_per_page, 1);
+  assert.equal(model.settingsOf({ questions_per_page: undefined }).questions_per_page, 1);
+  const quiz = { ...model.defaultSettings, id: 'quiz', user_id: 'owner', title: 'Test', question_count: 1, allow_answer_changes_after_check: false };
+  let resolveCheck, rejectCheck, resolveSave, checks = 0, savedBody;
   const { default: QuizEditor } = load('QuizEditor.tsx', {
     '~/i18n': i18n, 'react-router': { Link: () => null },
     '~/components/library/ProfileTabs': { __esModule: true, default: ({ children }) => React.createElement('div', null, children) },
     './shared': { ...shared, styles: styles.default, useDetail: () => ({ data: { quiz } }), useAccess: () => ({ update: true, create: true, can: () => true }),
       Select: () => null },
-    './api': { request: () => new Promise(resolve => { resolveSave = resolve; }) }, './model': model,
+    './api': { request: (route, method, body) => new Promise(resolve => { savedBody = body; resolveSave = resolve; }) }, './model': model,
     './inspectQuiz': { inspectQuiz: () => { checks++; return new Promise((resolve, reject) => { resolveCheck = resolve; rejectCheck = reject; }); } },
-    './QuizParts': {}, './EditorPopup': popup, './numberDraft': load('numberDraft.ts'),
+    './QuizParts': {}, './QuizCertificate': { __esModule: true, default: () => null }, './EditorPopup': popup, './numberDraft': load('numberDraft.ts'),
   });
   await act(async () => root.render(React.createElement(QuizEditor, { id: quiz.id, section: 'settings', onSectionChange() {}, onSaved() {}, onDirty() {}, onClose() {} })));
+  assert.deepEqual([...document.querySelectorAll('[role=tab]')].map(tab => tab.textContent), ['Quiz settings', 'Questions', 'Sources', 'Rules', 'Certificate']);
   const scoring = [...document.querySelectorAll('.settingsSection')].find(el => el.querySelector('h2')?.textContent === messages.qeFeedback);
   for (const key of ['quizPassingScore', 'qeMinAnswered', 'qeMinCorrect']) assert.ok(scoring.querySelector(`input[aria-label="${messages[key]}"]`), `${key} belongs to scoring`);
+  assert.equal([...document.querySelectorAll('label')].find(el => el.textContent.includes(messages.qeAnswerChanges))?.querySelector('input').checked, false, 'existing settings are preserved');
   assert.equal(document.querySelectorAll('.formHint').length, 0, 'help is no longer permanently below fields');
   const help = document.querySelector('[role="button"][aria-label="Correct answers required to submit (%)"]');
   assert.equal(document.querySelector('[role="tooltip"]'), null);
@@ -84,6 +89,12 @@ test('readiness progress and errors stay in the readiness section while saves an
   assert.equal(heading.querySelector('[role="alert"]'), null);
   assert.equal(check.disabled, false);
 
+  const pageSize = document.querySelector('input[aria-label="Questions per page"]');
+  assert.equal(pageSize.value, '1');
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(pageSize, '3');
+    pageSize.dispatchEvent(new window.Event('input', { bubbles: true }));
+  });
   const title = document.querySelector('input[aria-label="Title"]');
   await act(async () => {
     Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(title, 'Changed');
@@ -92,6 +103,8 @@ test('readiness progress and errors stay in the readiness section while saves an
   await act(async () => save.click());
   assert.equal(heading.querySelector('[role="status"]'), null);
   assert.equal(save.textContent, messages.saving);
+  assert.equal(savedBody.questions_per_page, 3);
+  assert.equal(typeof savedBody.questions_per_page, 'number');
   assert.equal(heading.querySelector('.uploadSpinner'), null);
   assert.equal(readiness.querySelector('.uploadSpinner'), null);
   await act(async () => resolveSave({ quiz: { ...quiz, title: 'Changed' } }));

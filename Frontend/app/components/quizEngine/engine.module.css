@@ -34,6 +34,7 @@
 .save { display: flex; justify-content: flex-end; margin-top: 24px; }
 .error { color: var(--accentRed); overflow-wrap: anywhere; }
 .success { color: var(--accentGreen2); }
+.readiness .readinessResult { width: fit-content; margin: 12px 0 0; padding: 10px 14px; border-radius: 12px; background: var(--background2); font-size: .9rem; line-height: 1.5; }
 .picker { max-height: 420px; overflow: auto; margin-block: 16px; }
 .note { padding: 16px; border: 1px solid var(--border1); border-radius: 14px; color: var(--text2); margin-bottom: 20px; }
 .badge { display: inline-block; padding: 4px 10px; border-radius: 8px; background: var(--background2); color: var(--text2); font-size: .875rem; }
@@ -399,6 +400,7 @@ main.management :global(.libraryShell) > :global(.profileTabsViewport) .resource
   border-radius: 10px 10px 0 0;
   font-weight: 500;
 }
+.page .resourceTabs button { transition: background-color 150ms ease-in-out, color 150ms ease-in-out; }
 .page .resourceTabs button:hover:not(:disabled) { background: var(--background2); color: var(--text1); }
 .page .resourceTabs button[aria-selected='true'] {
   background: transparent;
@@ -538,32 +540,25 @@ main.management .categoryQuestionsTable .categoryRemove { color: var(--accentRed
 
 .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 
-/* Rule settings use the same compact, inline labels as question points. */
-.page .partCard.ruleCard { display: grid; grid-template-columns: minmax(220px, 1fr) auto auto; align-items: center; gap: 24px; padding: 20px; }
+/* Compact rule summaries; thresholds are edited in the shared popup. */
+.page .partCard.ruleCard { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 24px; padding: 20px; }
 .ruleIdentity { display: flex; align-items: center; gap: 14px; min-width: 0; }
 .ruleTitle { min-width: 0; }
+.ruleActive { width: fit-content; min-height: 38px; flex-shrink: 0; gap: 8px; margin: 0; padding: 0; font-size: .85rem; cursor: pointer; }
+.ruleActive:has(input:disabled) { cursor: default; }
 .ruleTitle p { margin: 0; color: var(--text1); font-size: 1rem; font-weight: 500; overflow-wrap: anywhere; }
 .page.editorPage .ruleCard .ruleChangeVideo { display: inline-flex; align-items: center; justify-content: center; width: auto; min-height: 32px; padding: 6px 12px; margin: 8px 0 0; border: 0; border-radius: 999px; background: var(--background2); color: var(--accentBlue2); font: inherit; font-size: .8rem; line-height: 1.25; cursor: pointer; }
 .page.editorPage .ruleCard .ruleChangeVideo:hover:not(:disabled) { background: var(--background1); }
-.ruleFields { display: flex; gap: 20px; align-items: center; min-width: 0; }
-.ruleFields :global(.formGroup) { display: flex; flex-direction: row; align-items: center; gap: 6px; margin: 0; min-width: 0; }
-.page.editorPage .ruleFields :global(.formGroup) > label { margin: 0; padding: 0; font-size: .75rem; line-height: 1.4; font-weight: 400; color: var(--text2); }
-.page.editorPage .ruleCard .ruleFields input { flex: none; width: 76px; min-height: 38px; padding: 8px 10px; border: 0; border-radius: 10px; background: var(--background2); color: var(--text1); font: inherit; font-size: .9rem; }
-.page .ruleFields input:focus-visible, .ruleChangeVideo:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: 2px; }
-.page.editorPage .ruleCard .ruleFields :global(.customSelectTrigger) { min-height: 38px; padding: 8px 10px; border-radius: 10px; background: var(--background2); color: var(--text1); font-size: .9rem; font-weight: 400; }
-.ruleFields .select { width: 220px; min-width: 0; }
-@media (max-width: 1100px) {
-  .page .partCard.ruleCard { grid-template-columns: minmax(0, 1fr) auto; gap: 18px; }
-  .ruleFields { grid-column: 1 / -1; grid-row: 2; flex-wrap: wrap; }
-}
+.ruleSummary { display: block; margin-top: 6px; color: var(--text2); font-size: .85rem; overflow-wrap: anywhere; }
+.ruleControls { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 12px; }
+.ruleControls .ruleActive { margin-right: 8px; }
 @media (max-width: 600px) {
-  .ruleFields { flex-direction: column; align-items: stretch; gap: 12px; }
-  .ruleFields :global(.formGroup) { justify-content: space-between; }
-  .ruleFields .select { flex: 0 1 220px; }
+  .page .partCard.ruleCard { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .ruleControls { justify-content: flex-start; }
 }
 
 /* Participant questions follow the existing quiz card and control styles. */
-.attemptPlayer { width: 100%; margin-inline: auto; }
+.attemptPlayer { --attempt-status-height: 52px; width: 100%; margin-inline: auto; }
 .attemptReview { margin-top: 32px; }
 .attemptReviewHeader h2 { margin: 0; color: var(--text1); font-size: 1.5rem; font-weight: 700; line-height: 1.3; }
 .attemptQuestion h2 { color: var(--text1); font-size: 1.4rem; font-weight: 600; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -676,8 +671,6 @@ main.management .categoryQuestionsTable .categoryRemove { color: var(--accentRed
 @media (prefers-reduced-motion: reduce) { .resultOrbit, .resultEmblem, .resultSpark { animation: none; } }
 
 .editorPage :global(.formGroup) > .fieldLabel > label, .popupPanel :global(.formGroup) > .fieldLabel > label { color: var(--text1); font-size: .95rem; font-weight: 500; }
-.page.editorPage .ruleFields :global(.formGroup) > .fieldLabel { margin: 0; }
-.page.editorPage .ruleFields .fieldLabel > label { margin: 0; padding: 0; font-size: .75rem; line-height: 1.4; font-weight: 400; color: var(--text2); }
 .candidatePoints .fieldLabel label { color: var(--text2); font-size: .75rem; font-weight: 400; }
 
 /* Keep quiz controls and selection aligned with the rest of the admin UI. */
@@ -705,7 +698,7 @@ main.management .categoryQuestionsTable .categoryRemove { color: var(--accentRed
 /* Attempt navigation and answer controls share the admin selection styling. */
 .attemptLayout { display: grid; grid-template-columns: 220px minmax(0, 1fr); align-items: start; gap: 28px; }
 .attemptStep { min-width: 0; }
-.attemptNavigation { position: sticky; top: 104px; min-width: 0; padding: 20px; border-radius: 20px; background: var(--background2); }
+.attemptNavigation { position: sticky; top: calc(var(--attempt-header-height, var(--headerHeight, 90px)) + var(--attempt-status-height) + 16px); min-width: 0; padding: 20px; border-radius: 20px; background: var(--background2); }
 .attemptNavigation h2 { margin: 0 0 18px; color: var(--text1); font-size: 1.05rem; font-weight: 600; }
 .attemptQuestionGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; max-height: min(60vh, 520px); overflow-y: auto; padding: 3px 10px 3px 3px; margin: -3px; scrollbar-width: thin; scrollbar-color: var(--accentBlue2) transparent; overscroll-behavior: contain; }
 .attemptQuestionGrid button { position: relative; display: grid; place-items: center; aspect-ratio: 1; min-height: 36px; padding: 4px; border: 1px solid var(--border1); border-radius: 8px; background: var(--background2); color: var(--text1); font-size: .9rem; font-weight: 500; cursor: pointer; }
@@ -802,15 +795,12 @@ main.management .resourceHeader { flex-direction: row; align-items: center; }
 .partHeader .partHeading { min-width: 0; flex-shrink: 1; flex-wrap: wrap; }
 .candidateBulk { flex-wrap: wrap; }
 .candidateBulk[data-visible='false'] { display: none; }
-.page .ruleFields { flex-wrap: wrap; }
-.page .ruleFields .select { width: 220px; }
 .page :global(.customSelectValue) { min-width: 0; }
 .page :global(.quizPopupToggleRow) > div { min-width: 0; overflow-wrap: anywhere; }
 .page :global(.quizPopupToggleRow) input { flex-shrink: 0; }
 .listTableWrap { max-width: 100%; overscroll-behavior-inline: contain; scrollbar-width: thin; scrollbar-color: var(--accentBlue2) transparent; }
 @container quiz-editor (max-width: 1050px) {
   .page .partCard.ruleCard { grid-template-columns: minmax(0, 1fr) auto; gap: 18px; }
-  .ruleFields { grid-column: 1 / -1; grid-row: 2; }
 }
 @container quiz-editor (max-width: 760px) {
   .page .partCard.candidateCard { grid-template-columns: auto minmax(0, 1fr); gap: 12px; }
@@ -854,10 +844,6 @@ main.management .listTable thead tr > th, main.management .listTable tbody tr > 
   .editorPage :global(.libraryHeader) { flex-wrap: wrap; }
   .editorBody { min-height: 0; }
   .sectionHelp { margin-bottom: 20px; }
-  .page .ruleFields { flex-direction: column; align-items: stretch; gap: 14px; }
-  .page .ruleFields :global(.formGroup) { flex-direction: column; align-items: stretch; gap: 8px; }
-  .page .ruleFields .select { width: 100%; flex: none; }
-  .page .ruleFields input { align-self: flex-start; flex: none; }
   .ruleIdentity { align-items: flex-start; }
   .ruleThumbnail { width: 96px; flex-basis: 96px; }
   .page.editorPage :global(.quizPopupActions) { gap: 10px; }
@@ -902,7 +888,6 @@ main.management .listTable thead tr > th, main.management .listTable tbody tr > 
   .popupPanel { height: calc(100dvh - 16px); max-height: calc(100dvh - 16px); padding-block: 14px; }
   .popupHeader { margin-bottom: 12px; }
   .popupPanel :global(.quizPopupActions) { margin-top: 12px; }
-  .attemptNavigation { position: static; }
 }
 
 .overviewRequirements { container: quiz-requirements / inline-size; }
@@ -926,9 +911,8 @@ main.management .listTable thead tr > th, main.management .listTable tbody tr > 
   .page .partCard.candidateCard { grid-template-columns: minmax(0, 1fr); }
   .candidateContent, .candidateLeading, .page .candidateActions { grid-column: 1; }
   .page .partCard.ruleCard { grid-template-columns: minmax(0, 1fr) auto; padding: 16px; gap: 12px; }
-  .ruleIdentity { grid-column: 1 / -1; }
-  .ruleFields { grid-column: 1 / -1; }
-  .ruleCard > .icon { grid-column: 2; grid-row: 3; justify-self: end; }
+  .ruleIdentity, .ruleControls { grid-column: 1 / -1; }
+  .ruleControls { justify-content: flex-start; }
 }
 
 @container quiz-management (max-width: 600px) {
@@ -969,24 +953,24 @@ main.management .listTable thead tr > th, main.management .listTable tbody tr > 
 
 .attemptNavArrow svg path { stroke: currentColor; }
 
+.page { --quizPrimaryHover: color-mix(in srgb, var(--accentBlue) 80%, var(--background1)); }
+
 /* background3 aliases background2; mix theme colors to keep hover visibly distinct. */
 .page { --quizButtonHover: color-mix(in srgb, var(--background2) 94%, var(--text1)); }
 .page :where(button, a.button):not(nav *):not([role='option']):not([role='tab']) {
+  filter: none;
   transition: background-color 150ms ease-in-out, border-color 150ms ease-in-out, color 150ms ease-in-out;
 }
 :is(.page, .page.editorPage, .page.popupPanel[role='dialog']) :where(button, a.button):not(nav *):not([role='option']):not([role='tab']):not(:disabled):not([aria-disabled='true']):hover {
   filter: none;
-  background: var(--quizButtonHover);
+  background: var(--quizControlHover, var(--quizButtonHover));
 }
-:is(.page, .page.editorPage, .page.popupPanel[role='dialog']) .button.primary:not(:disabled):not([aria-disabled='true']):hover {
-  filter: none;
-  background: color-mix(in srgb, var(--accentBlue) 60%, var(--accentBlue2));
-  color: var(--borderWhite);
-}
-:is(.page, .page.editorPage, .page.popupPanel[role='dialog']) button[class*='bg-(--accentRed)']:not(:disabled):not([aria-disabled='true']):hover {
-  background: color-mix(in srgb, var(--accentRed) 80%, var(--borderWhite));
-  color: var(--borderWhite);
-}
+/* Keep each button's semantic color through the same hover transition. */
+.page .primary, .page :global(.saveCaptionsBtn) { --quizControlHover: var(--quizPrimaryHover); }
+.page :global(.saveCaptionsBtn):not(:disabled):hover,
+.page.editorPage :global(.saveCaptionsBtn):not(:disabled):hover,
+.page.popupPanel[role='dialog'] :global(.saveCaptionsBtn):not(:disabled):hover { color: var(--borderWhite); }
+.page button[class*='bg-(--accentRed)'] { --quizControlHover: color-mix(in srgb, var(--accentRed) 85%, var(--background4)); }
 .page .attemptQuestionGrid button {
   transition: background-color 150ms ease-in-out, border-color 150ms ease-in-out;
 }
@@ -999,5 +983,37 @@ main.management .listTable thead tr > th, main.management .listTable tbody tr > 
 }
 @media (prefers-reduced-motion: reduce) {
   .page :where(button, a.button):not(nav *):not([role='option']):not([role='tab']),
-  .page .attemptQuestionGrid button { transition: none; }
+  .page .attemptQuestionGrid button,
+  .page .resourceTabs button { transition: none; }
 }
+
+.attemptQuestionPage { display: grid; gap: 20px; align-content: start; }
+.attemptQuestionPage > .attemptActions { margin-top: 0; }
+.attemptQuestionPage > .attemptQuestion { margin-bottom: 0; scroll-margin-top: calc(var(--attempt-header-height, var(--headerHeight, 90px)) + var(--attempt-status-height) + 16px); }
+.attemptQuestion:focus { outline: none; }
+.attemptCheckAction { justify-content: flex-end; }
+@media (max-width: 600px) { .attemptQuestionPage { gap: 14px; } }
+
+/* Source selection aligns with the fixed-question and rule checkboxes. */
+.selectablePartCard { display: flex; align-items: center; gap: 16px; }
+.selectedPartContent { flex: 1; min-width: 0; }
+
+@media (min-width: 801px) {
+  .attemptNavigation { display: flex; flex-direction: column; max-height: calc(100dvh - var(--attempt-header-height, var(--headerHeight, 90px)) - var(--attempt-status-height) - 32px); box-sizing: border-box; }
+  .attemptNavigation h2, .attemptNavigationLegend { flex-shrink: 0; }
+  .attemptQuestionGrid { min-height: 0; flex: 0 1 auto; }
+}
+
+.attemptStatusBar { position: sticky; top: var(--attempt-header-height, var(--headerHeight, 90px)); z-index: 5; min-height: 52px; box-sizing: border-box; padding-block: 12px; background: var(--background1); }
+.attemptStatusBar > span { white-space: nowrap; }
+
+.autosaveStatus { display: flex; align-items: center; flex-wrap: wrap; flex-shrink: 0; gap: 12px; min-height: 24px; margin-top: 12px; font-size: .875rem; }
+
+.certificateTab { display: grid; gap: 24px; min-width: 0; }
+.certificateTab > section { min-width: 0; }
+.certificateTab .actions { margin-top: 16px; }
+.certificateSearch { width: 100%; margin-bottom: 16px; }
+.certificateList { display: grid; gap: 12px; margin-bottom: 20px; }
+.certificateList h3, .certificateList p { overflow-wrap: anywhere; }
+.certificateFields { display: grid; gap: 16px; min-width: 0; }
+.page textarea.certificateCode { font-family: monospace; font-size: .9rem; line-height: 1.5; min-height: 160px; resize: vertical; }

@@ -1,7 +1,7 @@
 'use client';
 import '~/styles/editor.css';
 import '~/styles/quiz.css';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { useI18n } from '~/i18n';
@@ -35,6 +35,7 @@ export default function QuizzesPage() {
   const resource: Resource = requested && allowed.includes(requested) ? requested : allowed[0] ?? 'quizzes';
   const access = useAccess(resource); const editor = params.get('edit');
   const [busy, setBusy] = useState(false);
+  const [headerTransfer, setHeaderTransfer] = useState<'import' | 'export' | null>(null);
   const [dirty, setDirty] = useState(false), { confirm, dialogProps } = useConfirm();
   useEffect(() => {
     if (!dirty) return;
@@ -44,7 +45,7 @@ export default function QuizzesPage() {
   const navigate = async (tab: Resource, id?: string, section?: string, category?: string, scope?: OwnershipFilter) => {
     if (busy) return;
     if (dirty && !await confirm({ title: t('qeUnsaved'), message: t('qeDiscard'), yesText: t('qeDiscardAction'), noText: t('adminCancel') })) return;
-    setDirty(false); setParams({ tab, scope: scope ?? params.get('scope') ?? 'mine', ...(id ? { edit: id } : {}), ...(section ? { section } : {}), ...(category ? { category } : {}) });
+    setDirty(false); setHeaderTransfer(null); setParams({ tab, scope: scope ?? params.get('scope') ?? 'mine', ...(id ? { edit: id } : {}), ...(section ? { section } : {}), ...(category ? { category } : {}) });
   };
   const saved = (id: string) => {
     setDirty(false);
@@ -57,7 +58,15 @@ export default function QuizzesPage() {
       <div className={styles.editorBreadcrumb}><button type="button" disabled={busy} onClick={() => void navigate(resource)}>{t(names[resource])}</button><span aria-hidden="true">/</span><span>{popupTitle}</span></div>
       {resource === 'categories' ? <CategoryEditor key={editor} id={editor!} presentation="page" onSaved={saved} onDirty={setDirty} onClose={() => void navigate('categories')} /> : <QuizEditor key={editor} id={editor!} section={params.get('section') ?? 'settings'} onSectionChange={section => void navigate('quizzes', editor!, section)} onSaved={saved} onDirty={setDirty} onClose={() => void navigate('quizzes')} />}
     </EditorBusyStatusContext.Provider></EditorBusyContext.Provider> : <>
-      <ResourceList tabs={<ProfileTabs className={styles.resourceTabs} label={t('navQuizzes')}>{allowed.map(tab => <button type="button" role="tab" key={tab} aria-selected={resource === tab} onClick={() => void navigate(tab)}>{t(names[tab])}</button>)}</ProfileTabs>} key={`${resource}:${params.get('category') ?? ''}`} resource={resource} initialCategory={params.get('category') ?? ''} ownership={params.get('scope') ?? 'mine'} onOwnershipChange={scope => setParams({ tab: resource, scope })} onBrowseCategory={(category, ownerId) => void navigate('questions', undefined, undefined, category, ownerId === access.user?.id ? 'mine' : 'others')} onEdit={id => void navigate(resource, id)} />
+      <div className={`libraryHeader ${styles.resourceHeader}`}>
+        <div className="libraryHeading"><h1>{t(names[resource])}</h1><p>{t('qeIntro')}</p></div>
+        {resource === 'questions' && <div className={styles.headerActions}>
+          {access.create && <button type="button" className={styles.button} onClick={() => setHeaderTransfer('import')}>{t('qeImportQuestions')}</button>}
+          {access.read && <button type="button" className={styles.button} onClick={() => setHeaderTransfer('export')}>{t('qeExportQuestions')}</button>}
+        </div>}
+      </div>
+      <ProfileTabs className={styles.resourceTabs} label={t('navQuizzes')}>{allowed.map(tab => <button type="button" role="tab" key={tab} aria-selected={resource === tab} onClick={() => { if (resource !== tab) void navigate(tab); }}>{t(names[tab])}</button>)}</ProfileTabs>
+      <ResourceList headerTransfer={headerTransfer} onCloseTransfer={() => setHeaderTransfer(null)} key={`${resource}:${params.get('category') ?? ''}`} resource={resource} initialCategory={params.get('category') ?? ''} ownership={params.get('scope') ?? 'mine'} onOwnershipChange={scope => setParams({ tab: resource, scope })} onBrowseCategory={(category, ownerId) => void navigate('questions', undefined, undefined, category, ownerId === access.user?.id ? 'mine' : 'others')} onEdit={id => void navigate(resource, id)} />
       <EditorPopup wide={resource === 'questions'} open={!!editor} title={popupTitle} onClose={() => void navigate(resource)}>
         {editor && (resource === 'questions' ? <QuestionEditor key={editor} id={editor} onSaved={saved} onDirty={setDirty} onClose={() => void navigate(resource)} /> : <CategoryEditor key={editor} id={editor} onSaved={saved} onDirty={setDirty} />)}
       </EditorPopup>
@@ -67,7 +76,7 @@ export default function QuizzesPage() {
 
 }
 
-function ResourceList({ tabs, resource, onEdit, initialCategory, onBrowseCategory, ownership, onOwnershipChange }: { tabs?: ReactNode; resource: Resource; onEdit: (id: string) => void; initialCategory: string; onBrowseCategory: (id: string, ownerId: string) => void; ownership: string; onOwnershipChange: (scope: OwnershipFilter) => void }) {
+function ResourceList({ headerTransfer, onCloseTransfer, resource, onEdit, initialCategory, onBrowseCategory, ownership, onOwnershipChange }: { headerTransfer: 'import' | 'export' | null; onCloseTransfer: () => void; resource: Resource; onEdit: (id: string) => void; initialCategory: string; onBrowseCategory: (id: string, ownerId: string) => void; ownership: string; onOwnershipChange: (scope: OwnershipFilter) => void }) {
   const navigateTo = useNavigate();
   const { t, locale } = useI18n(), access = useAccess(resource), categoryAccess = useAccess('categories');
   const canReadOthers = access.can(resourcePermission(resource, 'read_any'));
@@ -110,14 +119,6 @@ function ResourceList({ tabs, resource, onEdit, initialCategory, onBrowseCategor
   const date = (value?: string) => value ? new Date(value).toLocaleDateString(locale === 'sr' ? 'sr-Latn' : locale, { dateStyle: 'medium' }) : '—';
   const checkbox = styles.checkbox;
   return <>
-    <div className={`libraryHeader ${styles.resourceHeader}`}>
-      <div className="libraryHeading"><h1>{t(names[resource])}</h1><p>{t('qeIntro')}</p></div>
-      {resource === 'questions' && <div className={styles.headerActions}>
-        {access.create && <button type="button" className={styles.button} onClick={() => setTransfer('import')}>{t('qeImportQuestions')}</button>}
-        {access.read && <button type="button" className={styles.button} onClick={() => setTransfer('export')}>{t('qeExportQuestions')}</button>}
-      </div>}
-    </div>
-    {tabs}
     <Notice {...action} /><div className={`managementToolbar ${styles.listToolbar}`}>
       {access.read && <div className="filter">{SearchSVG}<input type="search" value={filter} aria-label={t(resource === 'quizzes' ? 'filterQuizzes' : resource === 'questions' ? 'qeFilterQuestions' : 'qeFilterCategories')} placeholder={t(resource === 'quizzes' ? 'filterQuizzes' : resource === 'questions' ? 'qeFilterQuestions' : 'qeFilterCategories')} onChange={e => setFilter(e.target.value)} /></div>}
       <div className={styles.listFilters}>
@@ -157,7 +158,7 @@ function ResourceList({ tabs, resource, onEdit, initialCategory, onBrowseCategor
     </tbody></table></div>}
     <Pagination page={page} limit={limit} total={query.data?.pagination.total} totalPages={query.data?.pagination.totalPages} loading={query.isFetching} disabled={action.busy} label={t(names[resource])} onPageChange={setPage} onLimitChange={value => { setLimit(value); setPage(1); }} />
     </>}
-    {transfer && <QuestionTransfer mode={transfer} selectedIds={selectedOwn} onClose={() => setTransfer(null)} />}
+    {(transfer || headerTransfer) && <QuestionTransfer mode={(transfer || headerTransfer)!} selectedIds={selectedOwn} onClose={() => { setTransfer(null); onCloseTransfer(); }} />}
     <ConfirmDialog {...dialogProps} />
   </>;
 }

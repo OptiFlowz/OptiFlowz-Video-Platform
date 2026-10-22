@@ -8,9 +8,10 @@ import { defaultSettings, settingsOf, type Quiz, type QuizSettings } from './mod
 import { inspectQuiz } from './inspectQuiz';
 import { Candidates, Sources, Requirements } from './QuizParts';
 import { EditorActions, EditorBusyStatusContext } from './EditorPopup';
+import QuizCertificate from './QuizCertificate';
 import { numberDraftValue, type NumberDraft } from './numberDraft';
 
-const editorTabs = { settings: 'qeSettings', questions: 'quizQuestionsButton', sources: 'quizSourcesButton', rules: 'quizRulesButton' };
+const editorTabs = { settings: 'qeSettings', questions: 'quizQuestionsButton', sources: 'quizSourcesButton', rules: 'quizRulesButton', certificate: 'quizCertificateTab' };
 export default function QuizEditor({ id, section, onSectionChange, onSaved, onDirty, onClose }: {
   id: string; section: string; onSectionChange: (section: string) => void; onSaved: (id: string) => void; onDirty: (dirty: boolean) => void; onClose: () => void;
 }) {
@@ -27,6 +28,7 @@ export default function QuizEditor({ id, section, onSectionChange, onSaved, onDi
         {quiz && tab === 'questions' && <><p className={styles.sectionHelp}>{t('qeCandidatesHelp')}</p><Candidates quiz={quiz} editable={access.update} onDirty={onDirty} /></>}
         {quiz && tab === 'sources' && <><p className={styles.sectionHelp}>{t('qeSourcesHelp')}</p><Sources quiz={quiz} editable={access.update} onDirty={onDirty} /></>}
         {quiz && tab === 'rules' && <><p className={styles.sectionHelp}>{t('quizRulesDescription', { title: quiz.title })}</p><Requirements quiz={quiz} editable={access.update} onDirty={onDirty} /></>}
+        {quiz && tab === 'certificate' && <QuizCertificate key={quiz.id} quiz={quiz} editable={access.update} onDirty={onDirty} />}
       </>}
     </div>
   </div>;
@@ -43,6 +45,7 @@ function Settings({ initial, onSaved, onDirty, onClose }: { initial?: Quiz; onSa
   useEffect(() => { if (issues && !readinessAction.busy) scrollToBottom(); }, [issues, readinessAction.busy]);
   const change = (patch: Partial<NumberDraft<QuizSettings>>) => { const next = { ...form, ...patch }; setForm(next); setIssues(null); readinessAction.setError(''); onDirty(JSON.stringify(next) !== baseline); };
   const settings = (): QuizSettings => ({ ...form,
+    questions_per_page: Number(form.questions_per_page),
     time_limit_seconds: form.time_limit_seconds === null ? null : Number(form.time_limit_seconds),
     max_attempts: form.max_attempts === null ? null : Number(form.max_attempts),
     passing_score_percentage: Number(form.passing_score_percentage),
@@ -76,13 +79,14 @@ function Settings({ initial, onSaved, onDirty, onClose }: { initial?: Quiz; onSa
       <Field label={t('description')} help={help('description')}><textarea aria-label={t('description')} value={form.description ?? ''} onChange={e => change({ description: e.target.value || null })} /></Field>
       </div><div className={styles.settingsGroup}><div className="quizPopupGrid"><Field label={t('adminTableStatus')} help={t('qeHelp_status')}><Select label={t('adminTableStatus')} value={form.status} values={['draft', 'published', 'archived'].map(value => ({ value, label: t(`qe${value[0].toUpperCase()}${value.slice(1)}`), disabled: !initial && value === 'published' }))} onChange={value => change({ status: value as QuizSettings['status'] })} /></Field>
       <Field label={t('quizQuestionCount')} help={t('qeDerivedCountHelp')}><output className={styles.derivedCount}>{initial?.question_count ?? 0}</output></Field>
+      {number('questions_per_page', 'quizQuestionsPerPage', 1, 2147483647)}
       {number('time_limit_seconds', 'quizTimeLimitSeconds', 1, 2147483647, true)}
       {number('max_attempts', 'quizMaxAttempts', 1, 2147483647, true)}
       </div></div><div className={`${styles.settingsGroup} quizPopupToggleList`}>{toggle('shuffle_questions', 'quizShuffleQuestions')}{toggle('shuffle_options', 'quizShuffleOptions')}</div></section></fieldset>{initial && <section ref={readinessPanel} className={`${styles.settingsSection} ${styles.readiness}`}><h2>{t('qeReadiness')}</h2><p className={styles.note}>{t('qeReadinessHelp')}</p><button type="button" className={styles.button} disabled={busy} onClick={() => { if (busy) return; setIssues(null); void readinessAction.run(async () => { setIssues(await inspectQuiz(initial)); }, false); }}>
         {readinessAction.busy && <span className="uploadSpinner tiny" aria-hidden="true" />}<span role={readinessAction.busy ? 'status' : undefined}>{t(readinessAction.busy ? 'connectionChecking' : 'qeCheck')}</span>
       </button>
       {readinessAction.error && <p className={styles.error} role="alert">{readinessAction.error}</p>}
-      {!readinessAction.busy && issues && (issues.length ? <ul>{issues.map(key => <li className={styles.error} key={key}>{t(key)}</li>)}</ul> : <p className={styles.success}>{t('qeReady')}</p>)}
+      {!readinessAction.busy && issues && (issues.length ? <ul>{issues.map(key => <li className={styles.error} key={key}>{t(key)}</li>)}</ul> : <p className={`${styles.success} ${styles.readinessResult}`} role="status">{t('qeReady')}</p>)}
     </section>}</div><fieldset className={styles.settingsColumn} disabled={busy || !editable}><section className={styles.settingsSection}><h2>{t('qeFeedback')}</h2>
       <div className={styles.settingsGroup}><div className="quizPopupGrid">
         <Field label={t('quizScoring')} help={t('qeHelp_scoring_mode')}><Select label={t('quizScoring')} value={form.scoring_mode} values={[{ value: 'exact_match', label: t('quizScoringStrict') }, { value: 'partial_credit', label: t('quizScoringPartial') }]} onChange={value => change({ scoring_mode: value as QuizSettings['scoring_mode'] })} /></Field>
@@ -98,7 +102,7 @@ function Settings({ initial, onSaved, onDirty, onClose }: { initial?: Quiz; onSa
       </div><div className="quizPopupToggleList">{toggle('explanation_incorrect_only', 'qeIncorrectOnly')}</div></div>
       <div className={`${styles.settingsGroup} quizPopupToggleList`}>
         {toggle('allow_answer_changes_after_check', 'qeAnswerChanges')}{toggle('allow_attempt_review', 'qeReview')}{toggle('show_final_score', 'qeFinalScore')}
-        {toggle('has_certificate', 'quizHasCertificate')}
+        {!initial && toggle('has_certificate', 'quizHasCertificate')}
       </div></section></fieldset></div>
 
     </div>

@@ -12,7 +12,7 @@ export async function saveRequirement(write: Write, original: Requirement, isNew
   }
   // Keep the old rule until the replacement has been accepted by the server.
   await write('/quiz-requirements', 'POST', {
-    quiz_id: original.quiz_id, video_id: videoId, position: original.position, ...threshold,
+    quiz_id: original.quiz_id, video_id: videoId, position: original.position, is_active: original.is_active ?? true, ...threshold,
   });
   if (isNew) return;
   try {

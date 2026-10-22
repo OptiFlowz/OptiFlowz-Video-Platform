@@ -6,7 +6,7 @@ const ts = require('typescript');
 const React = require('react');
 const { JSDOM } = require('jsdom');
 
-test('rules edit inline, validate and retry values, and use a video-only picker with existing replacement writes', async t => {
+test('rules edit in a popup, validate, cancel and retry drafts, and preserve video replacement writes', async t => {
   const dom = new JSDOM('<div id="root"></div>', { url: 'https://test.local/quizzes' });
   const names = ['window', 'document', 'Element', 'HTMLElement', 'IS_REACT_ACT_ENVIRONMENT'];
   const previous = new Map(names.map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)]));
@@ -28,7 +28,7 @@ test('rules edit inline, validate and retry values, and use a video-only picker 
     '~/components/confirmPopup/confirmDialog': { ConfirmDialog: () => null },
     '~/components/confirmPopup/useConfirm': { useConfirm: () => ({ confirm: async () => allowRemove, dialogProps: {} }) },
     './CandidateList': { __esModule: true, default: () => null }, './QuestionEditor': { __esModule: true, default: () => null },
-    './EditorPopup': { __esModule: true, default: ({ open, children }) => open ? React.createElement('div', { role: 'dialog' }, children) : null, EditorActions: ({ children }) => React.createElement('div', null, children) },
+    './EditorPopup': { __esModule: true, default: ({ open, children, onAfterClose }) => { React.useEffect(() => { if (!open) onAfterClose?.(); }, [open]); return open ? React.createElement('div', { role: 'dialog' }, children) : null; }, EditorActions: ({ children }) => React.createElement('div', null, children) },
     './api': { request: async (route, method, body) => {
       writes.push([route, method, body]);
       if (rejectSave) throw new Error('Save failed');
@@ -65,40 +65,66 @@ test('rules edit inline, validate and retry values, and use a video-only picker 
     Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(input(), value);
     input().dispatchEvent(new window.Event('input', { bubbles: true }));
   });
-  const blur = async () => act(async () => input().blur());
-  const focus = async () => act(async () => input().focus());
+  const edit = () => document.querySelector('[aria-label="quizEditRule: Video"]');
+  const save = () => document.querySelector('[role="dialog"] button[type="submit"]');
+  const cancel = () => document.querySelector('[role="dialog"] .cancelBtn');
+  const mode = async value => act(async () => { const select = document.querySelector('select'); select.value = value; select.dispatchEvent(new window.Event('change', { bubbles: true })); });
   assert.equal(document.querySelector('[role="dialog"]'), null);
+  assert.equal(input(), null, 'threshold fields do not crowd the card');
+  await click(edit());
   assert.equal(input().value, '50');
-  await focus(); await setValue('101'); await blur();
+  await setValue('101'); await click(save());
   assert.equal(writes.length, 0, 'invalid percentage is not written');
-  await focus(); await setValue(''); await blur();
-  assert.equal(writes.length, 0, 'blank input is not converted to zero');
-  await focus(); await setValue('75.5'); await blur();
+  await setValue('');
+  assert.equal(save().disabled, true, 'blank input cannot be saved');
+  await setValue('75.5');
+  assert.equal(writes.length, 0, 'edits remain local until Save');
+  await click(cancel());
+  assert.equal(document.querySelector('[role="dialog"]'), null);
+  await click(edit());
+  assert.equal(input().value, '50', 'cancel discards the draft');
+  await setValue('75.5'); await click(save());
   assert.deepEqual(writes.at(-1), ['/quiz-requirements/quiz/video', 'PATCH', { min_watch_percentage: 75.5, min_watch_seconds: null }]);
-  assert.equal(dirty.at(-1), false);
-  await act(async () => { const select = document.querySelector('select'); select.value = 'seconds'; select.dispatchEvent(new window.Event('change', { bubbles: true })); });
-  assert.deepEqual(writes.at(-1)[2], { min_watch_percentage: null, min_watch_seconds: 1 });
-  await focus(); await setValue('30.5'); await blur();
-  assert.equal(writes.length, 2, 'seconds require integers');
+  assert.equal(document.querySelector('[role="dialog"]'), null);
+  await click(edit()); await mode('seconds');
+  assert.equal(writes.length, 1, 'changing type does not autosave a default');
+  await setValue('30.5'); await click(save());
+  assert.equal(writes.length, 1, 'seconds require integers');
+  await setValue('121'); await click(save());
+  assert.equal(writes.length, 1, 'seconds cannot exceed video duration');
   rejectSave = true;
-  await focus(); await setValue('30'); await blur();
+  await setValue('30'); await click(save());
   assert.equal(input().value, '30');
-  assert.equal(document.querySelector('[role="alert"]').textContent, 'Save failed');
-  assert.equal(dirty.at(-1), true);
+  assert.equal(document.querySelector('[role="dialog"] [role="alert"]').textContent, 'Save failed');
   rejectSave = false;
-  await focus(); await blur();
+  await click(save());
   assert.equal(rows[0].min_watch_seconds, 30);
+  assert.equal(document.querySelector('[role="dialog"]'), null);
+  const active = () => document.querySelector('.ruleActive input');
+  assert.equal(active().checked, true, 'legacy rules default to active');
+  rejectSave = true;
+  await click(active());
+  assert.equal(active().checked, true, 'failed activation writes keep the saved state');
+  assert.equal(document.querySelector('[role="alert"]').textContent, 'Save failed');
+  rejectSave = false;
+  await click(active());
+  assert.deepEqual(writes.at(-1), ['/quiz-requirements/quiz/video', 'PATCH', { is_active: false }]);
+  assert.equal(active().checked, false);
+  assert.equal(rows[0].min_watch_seconds, 30, 'activation preserves the threshold');
   await click(document.querySelector('.ruleChangeVideo'));
   assert.ok(document.querySelector('[role="dialog"]'));
   assert.equal(document.querySelector('[role="dialog"] input[type="number"]'), null, 'popup is only a video picker');
   await click(document.querySelector('[data-pick-video]'));
   assert.equal(document.querySelector('[role="dialog"]'), null);
   assert.deepEqual(writes.slice(-2), [
-    ['/quiz-requirements', 'POST', { quiz_id: 'quiz', video_id: 'replacement', position: 3, min_watch_percentage: null, min_watch_seconds: 30 }],
+    ['/quiz-requirements', 'POST', { quiz_id: 'quiz', video_id: 'replacement', position: 3, is_active: false, min_watch_percentage: null, min_watch_seconds: 30 }],
     ['/quiz-requirements/quiz/video', 'DELETE', undefined],
   ]);
   assert.equal(rows.length, 1);
   assert.equal(rows[0].video_id, 'replacement');
+  assert.equal(active().checked, false, 'replacement preserves inactive state');
+  await click(active());
+  assert.equal(active().checked, true, 'inactive rules can be reactivated');
   allowRemove = false;
   await click(document.querySelector('.danger'));
   assert.equal(rows.length, 1);
@@ -107,10 +133,13 @@ test('rules edit inline, validate and retry values, and use a video-only picker 
   assert.equal(rows.length, 0);
   await click(document.querySelector('.partAdd'));
   await click(document.querySelector('[data-pick-video]'));
-  assert.equal(rows[0].min_watch_percentage, 100, 'new rules start inline with the default threshold');
+  assert.equal(rows[0].min_watch_percentage, 100, 'new rules start with the default threshold');
   await act(async () => root.render(React.createElement(Requirements, { ...props, editable: false })));
   assert.equal(document.querySelector('.ruleChangeVideo'), null);
   assert.equal(document.querySelector('.danger'), null);
-  assert.equal(input().disabled, true);
-  assert.equal(document.querySelector('select').disabled, true);
+  assert.equal(input(), null);
+  assert.equal(document.querySelector('[aria-label^="quizEditRule:"]'), null);
+  assert.equal(active().disabled, true);
+  assert.equal(active().checked, true, 'new rules are active');
+  assert.equal(document.querySelector('select'), null);
 });

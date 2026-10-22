@@ -118,7 +118,7 @@ export default function QuizOverview() {
               return <div key={attempt.id} className="videoQuizAttemptCard">
                 <span className={`videoQuizStatusIcon ${status}`} aria-hidden="true">{inProgress ? PlaySVG : attempt.passed === true ? CheckSVG : attempt.passed === false ? CloseSVG : QuizSVG}</span>
                 <div className="videoQuizAttemptText"><strong>{t('quizAttemptNumber', { count: attempt.attempt_no })}</strong><time dateTime={date}>{new Date(date).toLocaleDateString(locale === 'sr' ? 'sr-Latn' : locale, { month: 'short', day: 'numeric', year: 'numeric' })}</time></div>
-                <div className="videoQuizAttemptScore"><strong>{inProgress ? <AttemptTimeLeft expiresAt={attempt.expires_at} /> : attempt.earned_points != null ? `${attempt.earned_points}/${attempt.max_points}` : attempt.score_percentage != null ? `${attempt.score_percentage}%` : '—'}</strong><span className={`videoQuizAttemptStatus ${status}`}>{t(inProgress ? 'quizInProgress' : attempt.passed === true ? 'quizPassedLabel' : attempt.passed === false ? 'quizNotPassedLabel' : statusLabels[attempt.status] ?? 'quizNotChecked')}</span></div>
+                <div className="videoQuizAttemptScore">{inProgress ? <AttemptProgress expiresAt={attempt.expires_at} /> : <><strong>{attempt.earned_points != null ? `${attempt.earned_points}/${attempt.max_points}` : attempt.score_percentage != null ? `${attempt.score_percentage}%` : '—'}</strong><span className={`videoQuizAttemptStatus ${status}`}>{t(attempt.passed === true ? 'quizPassedLabel' : attempt.passed === false ? 'quizNotPassedLabel' : statusLabels[attempt.status] ?? 'quizNotChecked')}</span></>}</div>
                 {(inProgress || ['submitted', 'timed_out'].includes(attempt.status)) && <button type="button" className="videoQuizInlineButton videoQuizAttemptViewButton" onClick={() => openAttempt(attempt.id)}>{t(inProgress ? 'quizContinue' : 'quizView')}{ArrowSVG}</button>}
               </div>;
             })}</div>}
@@ -131,7 +131,7 @@ export default function QuizOverview() {
   </div></main>;
 }
 
-function AttemptTimeLeft({ expiresAt }: { expiresAt: string | null }) {
+function AttemptProgress({ expiresAt }: { expiresAt: string | null }) {
   const { t } = useI18n();
   const [now, setNow] = useState(Date.now);
   const deadline = expiresAt ? Date.parse(expiresAt) : null;
@@ -145,5 +145,5 @@ function AttemptTimeLeft({ expiresAt }: { expiresAt: string | null }) {
     }, 1000);
     return () => window.clearInterval(timer);
   }, [deadline]);
-  return remaining === null ? <>{t('quizNoTimeLimit')}</> : <span role="timer">{t('quizTimeLeft')} <span className={styles.attemptTimeValue}>{Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, '0')}</span></span>;
+  return <><strong>{remaining === null ? t('quizNoTimeLimit') : <span role="timer">{t('quizTimeLeft')} <span className={styles.attemptTimeValue}>{Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, '0')}</span></span>}</strong><span className="videoQuizAttemptStatus in_progress">{t(remaining === 0 ? 'qeTimedOut' : 'quizInProgress')}</span></>;
 }

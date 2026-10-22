@@ -1,3 +1,6 @@
+/* Clip horizontal overflow without creating a scrolling ancestor for sticky quiz panels. */
+body:has(main.videoQuizPage.quizExperience) { overflow-x: clip; }
+
 /* Learner experience. All surfaces and states inherit each platform's theme. */
 .videoQuizPage.quizExperience {
   min-height: calc(100vh - 180px);
@@ -198,7 +201,7 @@
 .videoQuizPage.quizExperience .videoQuizUnlockNotice { font-size: 0.85rem; line-height: 1.6; }
 .videoQuizPage.quizExperience :is(.videoQuizPrimaryButton, .videoQuizGhostButton, .videoQuizDangerButton) { min-height: 46px; font-size: 0.85rem; border-radius: 12px; }
 .videoQuizPage.quizExperience .videoQuizPrimaryButton { background: var(--accentBlue); color: var(--borderWhite); }
-.videoQuizPage.quizExperience .videoQuizPrimaryButton:hover:not(:disabled) { background: color-mix(in srgb, var(--accentBlue) 60%, var(--accentBlue2)); }
+.videoQuizPage.quizExperience .videoQuizPrimaryButton:hover:not(:disabled) { background: color-mix(in srgb, var(--accentBlue) 80%, var(--background1)); }
 .videoQuizPage.quizExperience .videoQuizPrimaryButton svg path { stroke: currentColor; }
 .videoQuizPage.quizExperience .videoQuizStartActions { display: flex; margin: 0; }
 .videoQuizPage.quizExperience .videoQuizStartActions .videoQuizPrimaryButton { width: 100%; justify-content: space-between; }

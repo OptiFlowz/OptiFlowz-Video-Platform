@@ -1,57 +1,40 @@
-import { useEffect, useRef, useState } from 'react';
 import { formatDuration } from '~/functions';
 import { DeleteSVG } from '~/constants';
 import { useI18n } from '~/i18n';
-import { Field, Select, styles } from './shared';
-import { numberDraftValue } from './numberDraft';
+import { styles } from './shared';
 import type { Requirement } from './model';
 
 export type RuleThreshold = Pick<Requirement, 'min_watch_percentage' | 'min_watch_seconds'>;
-type Mode = 'percentage' | 'seconds';
-export default function RequirementCard({ row, editable, busy, onSave, onRemove, onChangeVideo, onDirty }: {
+export default function RequirementCard({ row, editable, busy, onEdit, onRemove, onChangeVideo, onActiveChange, selected, onSelect }: {
   row: Requirement; editable: boolean; busy: boolean;
-  onSave: (threshold: RuleThreshold) => Promise<boolean>;
+  selected: boolean; onSelect: (checked: boolean) => void;
+  onEdit: () => void;
   onRemove: () => void; onChangeVideo: (threshold: RuleThreshold) => void;
-  onDirty: (dirty: boolean) => void;
+  onActiveChange: (active: boolean) => Promise<boolean>;
 }) {
   const { t } = useI18n();
-  const savedMode: Mode = row.min_watch_percentage !== null ? 'percentage' : 'seconds';
-  const savedValue = Number(row.min_watch_percentage ?? row.min_watch_seconds);
-  const [mode, setMode] = useState<Mode>(savedMode), [value, setValue] = useState<number | ''>(savedValue);
-  const input = useRef<HTMLInputElement>(null), saving = useRef(false);
-  useEffect(() => { setMode(savedMode); setValue(savedValue); }, [savedMode, savedValue]);
-  const threshold = (nextMode: Mode, nextValue: number): RuleThreshold => ({ min_watch_percentage: nextMode === 'percentage' ? nextValue : null, min_watch_seconds: nextMode === 'seconds' ? nextValue : null });
-  const save = async (nextMode: Mode, nextValue: number | '') => {
-    if (!editable || busy || saving.current || nextValue === '' || (nextMode === savedMode && nextValue === savedValue)) return;
-    saving.current = true;
-    try { if (await onSave(threshold(nextMode, nextValue))) onDirty(false); }
-    finally { saving.current = false; }
-  };
   const title = row.video_card?.title || t('quizRequiredVideo');
   const image = row.video_card?.thumbnail_url || row.video_card?.mux_thumbnail_url;
+  const percentage = row.min_watch_percentage !== null;
   return <article className={`${styles.partCard} ${styles.ruleCard}`} aria-label={title}>
     <div className={styles.ruleIdentity}>
+      {editable && <input className={styles.candidateCheckbox} type="checkbox" aria-label={`${t('quizSelect')}: ${title}`} checked={selected} disabled={busy} onChange={event => onSelect(event.target.checked)} />}
       <div className={styles.ruleThumbnail}>
         {image ? <img src={image} alt="" /> : <span>{t('quizNoThumbnail')}</span>}
         {row.video_card?.duration_seconds != null && <span className={styles.ruleDuration}>{formatDuration(row.video_card.duration_seconds)}</span>}
       </div>
-      <div className={styles.ruleTitle}><p>{title}</p>{editable && <button type="button" className={styles.ruleChangeVideo} disabled={busy} onClick={() => {
-        if (value !== '' && input.current?.reportValidity()) onChangeVideo(threshold(mode, value));
-      }}>{t('qeChangeVideo')}</button>}</div>
+      <div className={styles.ruleTitle}>
+        <p>{title}</p>
+        <small className={styles.ruleSummary}>{t(percentage ? 'quizRequiredPercentage' : 'quizRequiredSeconds')}: {percentage ? `${row.min_watch_percentage}%` : row.min_watch_seconds}</small>
+        {editable && <button type="button" className={styles.ruleChangeVideo} disabled={busy} onClick={() => onChangeVideo({ min_watch_percentage: row.min_watch_percentage, min_watch_seconds: row.min_watch_seconds })}>{t('qeChangeVideo')}</button>}
+      </div>
     </div>
-    <div className={styles.ruleFields}>
-      <Field label={t('quizRuleType')} help={`${t('quizVideoWatchPercentageHelp')} ${t('quizVideoWatchSecondsHelp')}`}><Select label={`${t('quizRuleType')}: ${title}`} value={mode} disabled={!editable || busy}
-        values={[{ value: 'percentage', label: t('quizVideoWatchPercentage') }, { value: 'seconds', label: t('quizVideoWatchSeconds') }]}
-        onChange={next => { const nextMode = next as Mode, nextValue = nextMode === 'percentage' ? 100 : 1; setMode(nextMode); setValue(nextValue); onDirty(nextMode !== savedMode || nextValue !== savedValue); void save(nextMode, nextValue); }} /></Field>
-      <Field label={t(mode === 'percentage' ? 'quizRequiredPercentage' : 'quizRequiredSeconds')} help={t(mode === 'percentage' ? 'quizVideoWatchPercentageHelp' : 'quizVideoWatchSecondsHelp')}><input ref={input} aria-label={`${t(mode === 'percentage' ? 'quizRequiredPercentage' : 'quizRequiredSeconds')}: ${title}`} required type="number"
-        min={mode === 'percentage' ? 0.01 : 1} max={mode === 'percentage' ? 100 : row.video_card?.duration_seconds ?? 2147483647} step={mode === 'percentage' ? 0.01 : 1} value={value} disabled={!editable || busy}
-        onChange={event => { const next = numberDraftValue(event.target.value); setValue(next); onDirty(mode !== savedMode || next !== savedValue); }}
-        onBlur={event => { if (event.currentTarget.reportValidity()) void save(mode, value); }}
-        onKeyDown={event => {
-          if (event.key === 'Enter') { event.preventDefault(); event.currentTarget.blur(); }
-          if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); setMode(savedMode); setValue(savedValue); onDirty(false); }
-        }} /></Field>
+    <div className={styles.ruleControls}>
+      <label className={`${styles.check} ${styles.ruleActive}`}><input type="checkbox" aria-label={`${t('quizRuleActive')}: ${title}`} checked={row.is_active !== false} disabled={!editable || busy} onChange={event => { void onActiveChange(event.target.checked); }} /><span>{t('adminActive')}</span></label>
+      {editable && <>
+        <button type="button" className={styles.button} disabled={busy} aria-label={`${t('quizEditRule')}: ${title}`} onClick={onEdit}>{t('adminEdit')}</button>
+        <button type="button" className={`${styles.icon} ${styles.danger}`} disabled={busy} title={t('quizRemove')} aria-label={`${t('quizRemove')}: ${title}`} onClick={onRemove}>{DeleteSVG}</button>
+      </>}
     </div>
-    {editable && <button type="button" className={`${styles.icon} ${styles.danger}`} disabled={busy} title={t('quizRemove')} aria-label={`${t('quizRemove')}: ${title}`} onClick={onRemove}>{DeleteSVG}</button>}
   </article>;
 }

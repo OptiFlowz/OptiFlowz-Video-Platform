@@ -30,7 +30,7 @@ function server(fail = () => false) {
 test('changing video preserves position and selected thresholds without leaving an extra rule', async () => {
   const api = server();
   await saveRequirement(api.write, original, false, 'new', threshold, 'Incomplete');
-  assert.deepEqual([...api.rules.values()], [{ quiz_id: 'quiz', video_id: 'new', position: 4, ...threshold }]);
+  assert.deepEqual([...api.rules.values()], [{ quiz_id: 'quiz', video_id: 'new', position: 4, is_active: true, ...threshold }]);
   assert.deepEqual(api.calls.map(c => c.method), ['POST', 'DELETE']);
 });
 test('rejected replacement leaves the original untouched', async () => {
