@@ -4,6 +4,7 @@ export type CustomSelectOption = {
   value: string | number;
   label: string;
   disabled?: boolean;
+  hidden?: boolean;
 };
 
 type CustomSelectProps = {
@@ -27,7 +28,7 @@ const VIEWPORT_MARGIN = 12;
 
 function CustomSelect({
   value,
-  options,
+  options: allOptions,
   onChange,
   ariaLabel,
   id,
@@ -52,12 +53,13 @@ function CustomSelect({
   const generatedId = useId();
   const listboxId = `${generatedId}-listbox`;
   const stringValue = String(value);
+  const options = allOptions.filter((option) => !option.hidden);
   const selectedIndex = Math.max(
     0,
     options.findIndex((option) => String(option.value) === stringValue),
   );
   const firstEnabledIndex = Math.max(0, options.findIndex((option) => !option.disabled));
-  const selectedOption = options[selectedIndex];
+  const selectedOption = allOptions.find((option) => String(option.value) === stringValue) ?? options[selectedIndex];
 
   const prepareMenu = () => {
     const rect = rootRef.current?.getBoundingClientRect();

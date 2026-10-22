@@ -98,7 +98,7 @@ export function FieldHelp({ label, help }: { label: string; help: string }) {
 export function Field({ label, children, hint, help }: { label: string; children: ReactNode; hint?: string; help?: string }) {
   return <div className="formGroup">{help ? <div className={styles.fieldLabel}><label>{label}</label><FieldHelp label={label} help={help} /></div> : <label>{label}</label>}{children}{hint && <p className="formHint">{hint}</p>}</div>;
 }
-export function Select({ label, value, values, onChange, disabled = false, placement = 'auto' }: { label: string; value: string | number; values: { value: string | number; label: string; disabled?: boolean }[]; onChange: (value: string) => void; disabled?: boolean; placement?: 'auto' | 'top' | 'bottom' }) {
+export function Select({ label, value, values, onChange, disabled = false, placement = 'auto' }: { label: string; value: string | number; values: { value: string | number; label: string; disabled?: boolean; hidden?: boolean }[]; onChange: (value: string) => void; disabled?: boolean; placement?: 'auto' | 'top' | 'bottom' }) {
   return <CustomSelect ariaLabel={label} value={value} options={values} onChange={onChange} disabled={disabled} placement={placement} rootClassName={styles.select} />;
 }
 export function Save({ busy, disabled = false }: { busy: boolean; disabled?: boolean }) {

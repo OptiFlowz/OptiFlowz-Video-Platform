@@ -60,4 +60,29 @@ test('a downward select stays below its trigger and focuses options without scro
   await act(async () => options[1].click());
   assert.deepEqual(selected, ['multiple']);
   assert.equal(document.querySelector('.customSelectTrigger').getAttribute('aria-expanded'), 'false');
+
+  const categoryProps = {
+    ariaLabel: 'Question category', value: '',
+    options: [
+      { value: '', label: 'Select', disabled: true, hidden: true },
+      { value: 'used', label: 'Already used category', disabled: true },
+      { value: 'first', label: 'First category' },
+      { value: 'second', label: 'Second category' },
+    ],
+    onChange: value => selected.push(value),
+  };
+  await act(async () => root.render(React.createElement(Select, categoryProps)));
+  assert.equal(document.querySelector('.customSelectValue').textContent, 'Select', 'the empty field retains its prompt');
+  const categoryOptions = [...document.querySelectorAll('[role="option"]')];
+  assert.deepEqual(categoryOptions.map(option => option.textContent), ['Already used category', 'First category', 'Second category']);
+  assert.equal(categoryOptions[0].disabled, true, 'unavailable categories remain visible and disabled');
+  await act(async () => document.querySelector('.customSelectTrigger').click());
+  await act(async () => new Promise(resolve => window.requestAnimationFrame(resolve)));
+  assert.equal(document.activeElement, categoryOptions[1], 'opening skips the hidden placeholder and disabled category');
+  await act(async () => categoryOptions[1].dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true })));
+  assert.equal(document.activeElement, categoryOptions[2], 'keyboard navigation wraps among visible enabled options');
+  await act(async () => categoryOptions[2].dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true })));
+  assert.equal(selected.at(-1), 'second');
+  await act(async () => root.render(React.createElement(Select, { ...categoryProps, value: 'second' })));
+  assert.equal(document.querySelector('.customSelectValue').textContent, 'Second category');
 });

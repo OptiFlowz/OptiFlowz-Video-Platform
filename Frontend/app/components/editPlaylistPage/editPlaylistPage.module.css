@@ -47,8 +47,17 @@
 
 .pickerSearch { display: flex; flex-direction: column; gap: .75rem; margin-block: 1rem; }
 .pickerResults { display: flex; flex-direction: column; gap: .5rem; }
-.page :global(.playlistVideoSearchRow).pickerRow { flex-direction: row; align-items: center; background: var(--background2); border-radius: 12px; padding: .65rem; }
+.pickerRow:global(.playlistVideoSearchRow) { flex-direction: row; flex-wrap: nowrap; align-items: center; gap: 12px; background: var(--background2); border-radius: 12px; padding: .65rem; }
 .pickerMeta { display: flex; flex-direction: column; gap: .25rem; min-width: 0; flex: 1; }
 .pickerMeta strong { overflow-wrap: anywhere; font-size: .9rem; }
 .pickerMeta small { color: var(--text2); }
+.pickerRow > :global(.playlistVideoAddBtn) { flex-shrink: 0; margin-inline-start: 18px; }
 .pickerRow :global(.playlistVideoAddBtn) svg { width: 18px; height: 18px; }
+@media (max-width: 479px) {
+  .pickerRow:global(.playlistVideoSearchRow) { display: grid; grid-template-columns: auto minmax(0, 1fr); }
+  .pickerRow > :global(.playlistVideoAddBtn) { grid-column: 2; grid-row: 2; justify-self: end; margin-inline-start: 0; }
+}
+@media (max-width: 399px) {
+  .pickerRow:global(.playlistVideoSearchRow) { grid-template-columns: minmax(0, 1fr); }
+  .pickerRow > :global(.playlistVideoAddBtn) { grid-column: 1; grid-row: 3; }
+}

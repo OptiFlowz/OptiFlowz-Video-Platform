@@ -55,7 +55,7 @@ export default function QuizzesPage() {
   const popupTitle = resource === 'quizzes' ? t(editor === 'new' ? 'quizCreateTitle' : 'quizEditTitle') : resource === 'questions' ? t(editor === 'new' ? 'quizAddQuestion' : 'quizEditQuestion') : t(editor === 'new' ? 'qeCreateCategory' : 'qeEditCategory');
   return <main className={`myVideos managementPage ${styles.page} ${styles.management}`}><Sidebar /><div className="content libraryContent"><div className="holder libraryShell">
     {editorPage ? <EditorBusyContext.Provider value={setBusy}><EditorBusyStatusContext.Provider value={busy}>
-      <div className={styles.editorBreadcrumb}><button type="button" disabled={busy} onClick={() => void navigate(resource)}>{t(names[resource])}</button><span aria-hidden="true">/</span><span>{popupTitle}</span></div>
+      <div className={styles.editorBreadcrumb}><button type="button" className={styles.editorBreadcrumbLink} disabled={busy} onClick={() => void navigate(resource)}>{t(names[resource])}</button><span aria-hidden="true">/</span><span>{popupTitle}</span></div>
       {resource === 'categories' ? <CategoryEditor key={editor} id={editor!} presentation="page" onSaved={saved} onDirty={setDirty} onClose={() => void navigate('categories')} /> : <QuizEditor key={editor} id={editor!} section={params.get('section') ?? 'settings'} onSectionChange={section => void navigate('quizzes', editor!, section)} onSaved={saved} onDirty={setDirty} onClose={() => void navigate('quizzes')} />}
     </EditorBusyStatusContext.Provider></EditorBusyContext.Provider> : <>
       <div className={`libraryHeader ${styles.resourceHeader}`}>
