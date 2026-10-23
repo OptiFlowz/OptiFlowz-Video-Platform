@@ -86,18 +86,18 @@ export function ConfirmDialog({
         <h3 className="text-lg font-semibold">{title ?? t("adminConfirmTitle")}</h3>
         <p className="mt-2">{message ?? t("adminConfirmMessage")}</p>
 
-        <div className="mt-5 flex justify-end gap-2">
+        <div className="mt-5 flex justify-end gap-2 max-[400px]:flex-col">
           <button
             type="button"
             onClick={onNo}
-            className="button px-4 py-2 cursor-pointer rounded-full bg-(--background2) hover:bg-(--background3)"
+            className="button px-4 py-2 cursor-pointer rounded-full bg-(--background2) hover:bg-(--background3) max-[400px]:w-full"
           >
             {noText ?? t("adminNo")}
           </button>
           <button
             type="button"
             onClick={onYes}
-            className={`button px-4 py-2 cursor-pointer rounded-full ${intent === "primary" ? "bg-(--accentBlue) text-(--seeThroughtWhite)" : "bg-(--accentRed) text-(--text1)"}`}
+            className={`button px-4 py-2 cursor-pointer rounded-full max-[400px]:w-full ${intent === "primary" ? "bg-(--accentBlue) text-(--seeThroughtWhite)" : "bg-(--accentRed) text-(--text1)"}`}
           >
             {yesText ?? t("adminYes")}
           </button>

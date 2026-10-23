@@ -66,7 +66,7 @@ export default function PlaylistVideoPicker({ included, busy, addingId, onAdd, o
         const added = included.includes(video.id);
         return <div className={`playlistVideoSearchRow ${styles.pickerRow}`} key={video.id}>
           <img className="playlistVideoSearchThumb" src={getVideoThumbnail(video)} alt="" loading="lazy" />
-          <div className={styles.pickerMeta}><strong>{video.title}</strong><small>{t(video.visibility === 'private' ? 'adminPrivate' : 'adminPublic')}{video.uploader_name ? ` · ${video.uploader_name}` : ''}</small></div>
+          <div className={styles.pickerMeta}><strong className="playlistVideoTitleClamp" title={video.title}>{video.title}</strong><small>{t(video.visibility === 'private' ? 'adminPrivate' : 'adminPublic')}{video.uploader_name ? ` · ${video.uploader_name}` : ''}</small></div>
           <button type="button" className="saveCaptionsBtn playlistVideoAddBtn" disabled={busy || added} onClick={() => onAdd(video)} aria-label={`${t(added ? 'playlistVideoAdded' : 'addVideo')}: ${video.title}`}>
             {addingId === video.id ? <span className="uploadSpinner tiny" /> : added ? CheckSVG : AddSVG}
           </button>

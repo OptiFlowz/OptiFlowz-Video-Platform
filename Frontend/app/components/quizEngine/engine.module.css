@@ -370,6 +370,7 @@ main.management .listTable td.empty { padding: 2rem; text-align: center; }
 .editorPage :global(.quizPopupToggleRow) span { line-height: 1.4; }
 .editorPage :global(.quizPopupActions) { position: static; margin-top: 24px; padding: 0; background: transparent; flex-wrap: wrap; }
 .editorPage :global(.quizPopupActions) button, .editorPage :global(.quizPopupActions) a { flex: none; width: auto; padding: 12px 20px; font-size: .9rem; }
+.editorPage :global(.quizPopupActions) a { text-align: center; }
 .editorPage .readiness { margin-top: 24px; }
 .editorPage .partBody > :global(.formGroup) { max-width: 480px; }
 .editorPage .partCard { border: 0; }
@@ -849,6 +850,9 @@ main.management .listTable thead tr > th, main.management .listTable tbody tr > 
   main.management .listTable td[data-label]::before { content: attr(data-label); display: block; margin-bottom: 5px; color: var(--text2); font-size: .75rem; font-weight: 500; }
   main.management .listTable td.categoryCell { grid-column: 1 / -1; }
   main.management .listTable td:has(:global(.managementRowActions)):last-child { align-self: end; justify-self: end; }
+  main.management .listTable[data-resource='quizzes'] tbody tr { grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr)); align-items: start; }
+  main.management .listTable[data-resource='quizzes'] td:first-child:not(.empty) { grid-column: 1; grid-row: 1 / span 2; align-self: start; }
+  .listTable[data-resource='quizzes'] .listInfo :global(.managementRowActions) { flex-wrap: wrap; }
   .listIdentity { align-items: flex-start; gap: 10px; }
   .listIdentity .quizThumbnail { display: none; }
   main.management .listTable .rowTitle, .categoryQuestionText { font-size: .95rem; }
@@ -860,6 +864,14 @@ main.management .listTable thead tr > th, main.management .listTable tbody tr > 
   .ruleIdentity { align-items: flex-start; }
   .ruleThumbnail { width: 96px; flex-basis: 96px; }
   .page.editorPage :global(.quizPopupActions) { gap: 10px; }
+}
+@container quiz-management (max-width: 460px) {
+  main.management .listTable[data-resource='quizzes'] tbody tr { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  main.management .listTable[data-resource='quizzes'] td:first-child:not(.empty) { grid-column: 1 / -1; grid-row: auto; }
+}
+@media (max-width: 400px) {
+  .headerActions { flex-direction: column; align-items: stretch; }
+  .headerActions .button { width: 100%; flex: 0 0 auto; }
 }
 /* Dialogs keep their header/actions visible while only the body scrolls. */
 .popupPanel { container: quiz-dialog / inline-size; box-sizing: border-box; }
