@@ -786,9 +786,9 @@ main.management .categoryQuestionsTable .categoryRemove { color: var(--accentRed
 .attemptExplanation h3 { margin: 0 0 8px; font-size: 1rem; font-weight: 600; }
 .attemptExplanation a { color: var(--accentBlue2); text-decoration: underline; text-underline-offset: 3px; }
 
-.ruleThumbnail { position: relative; display: flex; align-items: center; justify-content: center; flex: 0 0 128px; width: 128px; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 12px; background: var(--background2); color: var(--text2); font-size: .75rem; text-align: center; }
+.ruleThumbnail { position: relative; display: flex; align-items: center; justify-content: center; flex: 0 0 152px; width: 152px; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 12px; background: var(--background2); color: var(--text2); font-size: .75rem; text-align: center; }
 .ruleThumbnail img { width: 100%; height: 100%; object-fit: cover; }
-.ruleDuration { position: absolute; inset-inline-end: 5px; bottom: 5px; padding: 2px 7px; border: 1px solid var(--border2); border-radius: 999px; background: var(--seethroughtBlack); color: var(--text1); font-size: .75rem; font-weight: 500; line-height: 1.4; white-space: nowrap; font-variant-numeric: tabular-nums; -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); pointer-events: none; }
+.ruleDuration { position: absolute; inset-inline-end: .55rem; bottom: .55rem; padding: .22rem .55rem; border: 1px solid var(--border2); border-radius: 999px; background: var(--seethroughtBlack); color: var(--text1); font-size: .75rem; font-weight: 500; line-height: 1.4; white-space: nowrap; font-variant-numeric: tabular-nums; -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); pointer-events: none; }
 @media (max-width: 600px) { .ruleThumbnail { flex-basis: 96px; width: 96px; } }
 
 /* Respond to the space left by the channel sidebar, not just the viewport. */

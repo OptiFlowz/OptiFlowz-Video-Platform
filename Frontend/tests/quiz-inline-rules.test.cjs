@@ -24,7 +24,7 @@ test('rules edit in a popup, validate, cancel and retry drafts, and preserve vid
   const mocks = {
     '~/functions': { formatDuration: seconds => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}` },
     '~/i18n': { useI18n: () => ({ t: key => key }) }, '~/constants': { AddSVG: '+', DeleteSVG: 'delete' },
-    '~/components/editPlaylistPage/PlaylistVideoPicker': { __esModule: true, default: ({ onAdd, busy }) => React.createElement('button', { 'data-pick-video': true, disabled: busy, onClick: () => onAdd({ id: 'replacement', title: 'Replacement', duration_seconds: 120 }) }, 'Pick video') },
+    '~/components/editPlaylistPage/PlaylistVideoPicker': { __esModule: true, default: ({ onAdd, busy, included }) => React.createElement(React.Fragment, null, ...['replacement', 'another'].map(id => React.createElement('button', { key: id, 'data-pick-video': id, disabled: busy || included.includes(id), onClick: () => onAdd({ id, title: id, duration_seconds: 120 }) }, 'Pick video'))) },
     '~/components/confirmPopup/confirmDialog': { ConfirmDialog: () => null },
     '~/components/confirmPopup/useConfirm': { useConfirm: () => ({ confirm: async () => allowRemove, dialogProps: {} }) },
     './CandidateList': { __esModule: true, default: () => null }, './QuestionEditor': { __esModule: true, default: () => null },
@@ -134,6 +134,14 @@ test('rules edit in a popup, validate, cancel and retry drafts, and preserve vid
   await click(document.querySelector('.partAdd'));
   await click(document.querySelector('[data-pick-video]'));
   assert.equal(rows[0].min_watch_percentage, 100, 'new rules start with the default threshold');
+  assert.ok(document.querySelector('[role="dialog"]'), 'adding a rule keeps the picker open');
+  assert.equal(document.querySelector('[data-pick-video="replacement"]').disabled, true, 'added videos cannot be added twice');
+  await click(document.querySelector('[data-pick-video="another"]'));
+  assert.deepEqual(rows.map(row => row.video_id), ['replacement', 'another'], 'another video can be added without reopening');
+  assert.equal(rows[1].position, rows[0].position + 1);
+  assert.ok(document.querySelector('[role="dialog"]'));
+  await click(document.querySelector('[role="dialog"] .cancelBtn'));
+  assert.equal(document.querySelector('[role="dialog"]'), null, 'Back still closes the picker');
   await act(async () => root.render(React.createElement(Requirements, { ...props, editable: false })));
   assert.equal(document.querySelector('.ruleChangeVideo'), null);
   assert.equal(document.querySelector('.danger'), null);

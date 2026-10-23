@@ -225,7 +225,7 @@ export function Requirements({ quiz, editable, onBack }: PartProps & { onDirty?:
     const original = picker.row ?? { quiz_id: quiz.id, video_id: video.id, position: Math.max(-1, ...(query.data ?? []).map(r => r.position)) + 1, ...picker.threshold };
     try {
       const saved = await mutate(async () => { await saveRequirement(request, original, !picker.row, video.id, picker.threshold, t('qeRuleReplacementIncomplete')); });
-      if (saved) setPicker(null);
+      if (saved && picker.row) setPicker(null);
     } finally { setAddingId(null); }
   };
   return <>
