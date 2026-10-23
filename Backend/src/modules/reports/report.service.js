@@ -2353,7 +2353,7 @@ export async function generateVideoAnalyticsPdfReport(rawOptions = {}) {
     const html = buildHtml(report, options);
 
     browser = await puppeteer.launch({
-      headless: 'new',
+      headless: true,
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
     });

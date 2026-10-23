@@ -9,7 +9,7 @@ import {
 } from '../src/modules/certificates/certificate-templates/helpers/certificate-templates.validation.js';
 import * as repository from '../src/modules/certificates/certificate-templates/repository/certificate-templates.repository.js';
 
-const body = { name: 'Certificate', html_template: '<h1>{{recipient_name}}</h1>' };
+const body = { name: 'Certificate', html_template: '<h1>{{user.full_name}}</h1>' };
 const userId = '12345678-1234-4234-8234-123456789abc';
 const id = '12345678-1234-4234-8234-123456789abd';
 
@@ -19,12 +19,14 @@ test('template schemas apply defaults and reject unknown, readonly, empty and in
   });
   for (const input of [undefined, null, {}, { ...body, name: ' ' }, { ...body, name: 'x'.repeat(256) },
     { ...body, html_template: ' \n ' }, { ...body, css_template: null }, { ...body, page_format: 'A3' },
-    { ...body, orientation: 'diagonal' }, { ...body, user_id: userId }, { ...body, created_at: 'today' }]) {
+    { ...body, orientation: 'diagonal' }, { ...body, user_id: userId }, { ...body, created_at: 'today' },
+    { ...body, is_system: true }, { ...body, is_default: true }, { ...body, user_id: null }]) {
     assert.equal(createCertificateTemplateSchema.safeParse(input).success, false);
   }
   assert.deepEqual(updateCertificateTemplateSchema.parse({ description: null, css_template: '' }), { description: null, css_template: '' });
   assert.deepEqual(updateCertificateTemplateSchema.parse({ name: ' New ' }), { name: 'New' });
-  for (const input of [{}, { user_id: userId }, { id }, { name: '' }, { html_template: null }, { page_format: null }]) {
+  for (const input of [{}, { user_id: userId }, { id }, { name: '' }, { html_template: null }, { page_format: null },
+    { name: 'New', is_system: false }, { name: 'New', is_default: true }, { user_id: null }]) {
     assert.equal(updateCertificateTemplateSchema.safeParse(input).success, false);
   }
 });
@@ -43,7 +45,7 @@ test('listing follows quiz pagination, sorting and strict query validation', () 
 
 test('accepted HTML and CSS are returned unchanged, including layout, print, fonts and inline styles', () => {
   const template = {
-    html_template: `<DIV class=' certificate  ' title=""><h1>{{recipient_name}} &amp; team</h1>
+    html_template: `<DIV class=' certificate  ' title=""><h1>{{user.full_name}} &amp; team</h1>
       <img src="https://assets.example.com/seal.png" alt="" width="120">
       <p style="display: flex; gap: 1rem; color: #123">Issued <b>today</b></p>
       <a href="#details">Details</a><table><tr><td colspan="2">Passed</td></tr></table></DIV>`,
@@ -109,18 +111,21 @@ test('repository binds ownership and filters, escapes LIKE wildcards and allowli
   await repository.listCertificateTemplates(database, userId, { name: '100%_\\', page_format: 'A4', orientation: 'portrait',
     limit: 2, offset: 4, sortBy: 'name; DROP TABLE users', sortOrder: 'DESC; DROP TABLE users' });
   assert.deepEqual(calls[0].params, [userId, '%100\\%\\_\\\\%', 'A4', 'portrait', 2, 4]);
-  assert.match(calls[0].sql, /WHERE user_id = \$1/);
+  assert.match(calls[0].sql, /WHERE \(user_id = \$1 OR is_system = true\) AND/);
   assert.match(calls[0].sql, /ORDER BY created_at ASC, id ASC/);
   assert.doesNotMatch(calls[0].sql, /DROP TABLE/);
   await repository.getCertificateTemplate(database, id, userId);
   await repository.updateCertificateTemplate(database, id, userId, { css_template: '', user_id: 'spoof' });
   await repository.deleteCertificateTemplate(database, id, userId);
-  for (const call of calls.slice(1)) {
-    assert.match(call.sql, /WHERE id = \$1 AND user_id = \$2/);
+  assert.match(calls[1].sql, /WHERE id = \$1 AND \(user_id = \$2 OR is_system = true\)/);
+  for (const call of calls.slice(2)) {
+    assert.match(call.sql, /WHERE id = \$1 AND user_id = \$2 AND is_system = false/);
     assert.deepEqual(call.params.slice(0, 2), [id, userId]);
   }
   assert.deepEqual(calls[2].params, [id, userId, '']);
   assert.match(calls[2].sql, /updated_at = now\(\)/);
+  await repository.createCertificateTemplate(database, userId, { ...createCertificateTemplateSchema.parse(body), is_system: true, is_default: true });
+  assert.match(calls[4].sql, /VALUES \(\$1, false, false,/);
 });
 
 const queries = [];

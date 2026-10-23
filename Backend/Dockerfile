@@ -20,6 +20,7 @@ FROM base
 # >>> DODATO: Chromium + fontovi + certs (da PDF render bude OK)
 RUN apt-get update -qq && apt-get install --no-install-recommends -y \
   chromium \
+  chromium-sandbox \
   ca-certificates \
   fonts-liberation \
   fonts-noto-color-emoji \
@@ -32,6 +33,10 @@ ENV PUPPETEER_SKIP_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 COPY --from=build /app /app
+
+# Chromium's sandbox requires a non-root runtime user for certificate previews.
+RUN mkdir -p /app/logs && chown node:node /app/logs
+USER node
 
 VOLUME ["/app/logs"]
 EXPOSE 4000
