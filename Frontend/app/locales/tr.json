@@ -1767,5 +1767,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong>, video barındırma, dağıtım, oynatma ve ilgili teknik video hizmetleri için;",
   "termsOfUse.ip.li1": "Platform ve içeriği (videolar, ses, metin, grafikler, markalama, yazılım ve tasarım) <value0/> veya lisans verenlerine aittir ve fikri mülkiyet yasalarıyla korunmaktadır.",
   "termsOfUse.ip.li3": "Açıkça verilmeyen tüm haklar <value0/> ve lisans verenlerine aittir.",
-  "termsOfUse.usercontent.li2": "<value0/>'ye, Kullanıcı İçeriğinizi yalnızca Platformu işletmek, sürdürmek ve geliştirmek (ve denetleme, güvenlik ve yasal uyumluluk) için gerekli olduğu ölçüde barındırmak, depolamak, çoğaltmak, görüntülemek ve dağıtmak üzere dünya çapında, münhasır olmayan, telifsiz bir lisans veriyorsunuz."
+  "termsOfUse.usercontent.li2": "<value0/>'ye, Kullanıcı İçeriğinizi yalnızca Platformu işletmek, sürdürmek ve geliştirmek (ve denetleme, güvenlik ve yasal uyumluluk) için gerekli olduğu ölçüde barındırmak, depolamak, çoğaltmak, görüntülemek ve dağıtmak üzere dünya çapında, münhasır olmayan, telifsiz bir lisans veriyorsunuz.",
+  "quizCertificateLibrary": "Sertifika şablonları",
+  "quizCertificateLibraryHelp": "Yerleşik tasarımları önizleyin veya kendi şablonlarınızı oluşturup düzenleyin.",
+  "quizCertificateSetupHelp": "Bu sınav için sertifika kullanılabilirliğini ayarlayın. Tasarımları Sertifika şablonlarında yönetin; şablon atama ve sertifika düzenleme daha sonra kullanıma sunulacak.",
+  "quizCertificateDefault": "Varsayılan",
+  "quizCertificateSystem": "Yerleşik",
+  "quizCertificateCopy": "Kopya oluştur",
+  "quizCertificateReadOnly": "Yerleşik şablonlar salt okunurdur. Tasarımı özelleştirmek için bir kopya oluşturun.",
+  "quizCertificatePlaceholders": "Kullanılabilir alanlar",
+  "quizCertificatePreviewHelp": "Önizlemede örnek veriler kullanılır. Harici resimler ve yazı tipleri yüklenmez.",
+  "quizCertificateSavePreview": "Değişiklikleri önizlemek için şablonu kaydedin."
 }

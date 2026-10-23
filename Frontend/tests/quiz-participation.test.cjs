@@ -204,7 +204,7 @@ test('quiz table opens the participant route with Play before Edit and respects 
     '~/components/myVideosPage/sidebar/sidebar': { default: empty }, '~/components/library/pagination': { default: empty },
     '~/components/library/ProfileTabs': { default: ({ children }) => children }, '~/components/library/librarySortButton': { default: () => null },
     '~/components/confirmPopup/confirmDialog': { ConfirmDialog: empty }, '~/components/confirmPopup/useConfirm': { useConfirm: () => ({ confirm: async () => true, dialogProps: {} }) },
-    './QuestionTransfer': { default: empty }, './QuestionEditor': { default: empty }, './CategoryEditor': { default: empty }, './QuizEditor': { default: empty }, './QuizStatus': { default: empty },
+    './CertificateTemplates': { default: empty }, './QuestionTransfer': { default: empty }, './QuestionEditor': { default: empty }, './CategoryEditor': { default: empty }, './QuizEditor': { default: empty }, './QuizStatus': { default: empty },
     './EditorPopup': { default: empty, EditorBusyContext: React.createContext(null), EditorBusyStatusContext: React.createContext(false) },
     './api': { engineKey: ['quiz-engine'] },
   };

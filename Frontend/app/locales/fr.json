@@ -1767,5 +1767,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong>, pour l'hébergement, la diffusion, la lecture et les services vidéo techniques associés ;",
   "termsOfUse.ip.li1": "La Plateforme et son contenu (vidéos, audio, textes, graphiques, marque, logiciels et conception) sont la propriété de <value0/> ou de ses concédants de licence et sont protégés par les lois sur la propriété intellectuelle.",
   "termsOfUse.ip.li3": "Tous les droits non expressément accordés sont réservés par <value0/> et ses concédants de licence.",
-  "termsOfUse.usercontent.li2": "Vous accordez à <value0/> une licence mondiale, non exclusive et libre de droits pour héberger, stocker, reproduire, afficher et distribuer votre contenu utilisateur uniquement dans la mesure nécessaire au fonctionnement, à la maintenance et à l'amélioration de la plateforme (et à des fins de modération, de sécurité et de conformité légale)."
+  "termsOfUse.usercontent.li2": "Vous accordez à <value0/> une licence mondiale, non exclusive et libre de droits pour héberger, stocker, reproduire, afficher et distribuer votre contenu utilisateur uniquement dans la mesure nécessaire au fonctionnement, à la maintenance et à l'amélioration de la plateforme (et à des fins de modération, de sécurité et de conformité légale).",
+  "quizCertificateLibrary": "Modèles de certificats",
+  "quizCertificateLibraryHelp": "Prévisualisez les modèles intégrés ou créez et modifiez vos propres modèles.",
+  "quizCertificateSetupHelp": "Configurez la disponibilité du certificat pour ce quiz. Gérez les modèles dans Modèles de certificats ; l'attribution et la délivrance seront disponibles ultérieurement.",
+  "quizCertificateDefault": "Par défaut",
+  "quizCertificateSystem": "Intégré",
+  "quizCertificateCopy": "Créer une copie",
+  "quizCertificateReadOnly": "Les modèles intégrés sont en lecture seule. Créez une copie pour personnaliser le modèle.",
+  "quizCertificatePlaceholders": "Champs disponibles",
+  "quizCertificatePreviewHelp": "L'aperçu utilise des données d'exemple. Les images et polices externes ne sont pas chargées.",
+  "quizCertificateSavePreview": "Enregistrez le modèle pour prévisualiser vos modifications."
 }

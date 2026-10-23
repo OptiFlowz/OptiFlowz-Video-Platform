@@ -1767,5 +1767,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong>, pentru găzduire video, livrare, redare și servicii video tehnice conexe;",
   "termsOfUse.ip.li1": "Platforma și conținutul acesteia (videoclipuri, audio, text, grafică, branding, software și design) sunt deținute de <value0/> sau de licențiatorii săi și sunt protejate de legile privind proprietatea intelectuală.",
   "termsOfUse.ip.li3": "Orice drepturi care nu sunt acordate în mod expres sunt rezervate de <value0/> și de licențiatorii săi.",
-  "termsOfUse.usercontent.li2": "Acordați <value0/> o licență mondială, neexclusivă, fără drepturi de autor pentru a găzdui, stoca, reproduce, afișa și distribui Conținutul dvs. de utilizator numai după cum este necesar pentru a opera, întreține și îmbunătăți Platforma (și pentru moderare, securitate și conformare legală)."
+  "termsOfUse.usercontent.li2": "Acordați <value0/> o licență mondială, neexclusivă, fără drepturi de autor pentru a găzdui, stoca, reproduce, afișa și distribui Conținutul dvs. de utilizator numai după cum este necesar pentru a opera, întreține și îmbunătăți Platforma (și pentru moderare, securitate și conformare legală).",
+  "quizCertificateLibrary": "Șabloane de certificate",
+  "quizCertificateLibraryHelp": "Previzualizați modelele integrate sau creați și editați propriile șabloane.",
+  "quizCertificateSetupHelp": "Configurați disponibilitatea certificatului pentru acest test. Gestionați modelele în Șabloane de certificate; atribuirea și emiterea vor fi disponibile ulterior.",
+  "quizCertificateDefault": "Implicit",
+  "quizCertificateSystem": "Integrat",
+  "quizCertificateCopy": "Creează o copie",
+  "quizCertificateReadOnly": "Șabloanele integrate pot fi doar citite. Creați o copie pentru a personaliza modelul.",
+  "quizCertificatePlaceholders": "Câmpuri disponibile",
+  "quizCertificatePreviewHelp": "Previzualizarea folosește date de exemplu. Imaginile și fonturile externe nu sunt încărcate.",
+  "quizCertificateSavePreview": "Salvați șablonul pentru a previzualiza modificările."
 }

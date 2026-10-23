@@ -1767,5 +1767,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong>, voor videohosting, levering, afspelen en gerelateerde technische videodiensten;",
   "termsOfUse.ip.li1": "Het Platform en de inhoud ervan (video's, audio, tekst, afbeeldingen, branding, software en ontwerp) zijn eigendom van <value0/> of zijn licentiegevers en worden beschermd door wetten op intellectueel eigendom.",
   "termsOfUse.ip.li3": "Alle rechten die niet uitdrukkelijk worden verleend, zijn voorbehouden aan <value0/> en zijn licentiegevers.",
-  "termsOfUse.usercontent.li2": "U verleent <value0/> een wereldwijde, niet-exclusieve, royaltyvrije licentie om uw Gebruikersinhoud alleen te hosten, op te slaan, te reproduceren, weer te geven en te distribueren als dat nodig is om het Platform te exploiteren, onderhouden en verbeteren (en voor moderatie, veiligheid en wettelijke naleving)."
+  "termsOfUse.usercontent.li2": "U verleent <value0/> een wereldwijde, niet-exclusieve, royaltyvrije licentie om uw Gebruikersinhoud alleen te hosten, op te slaan, te reproduceren, weer te geven en te distribueren als dat nodig is om het Platform te exploiteren, onderhouden en verbeteren (en voor moderatie, veiligheid en wettelijke naleving).",
+  "quizCertificateLibrary": "Certificaatsjablonen",
+  "quizCertificateLibraryHelp": "Bekijk ingebouwde ontwerpen of maak en bewerk je eigen sjablonen.",
+  "quizCertificateSetupHelp": "Stel de beschikbaarheid van het certificaat voor deze quiz in. Beheer ontwerpen bij Certificaatsjablonen; koppelen en uitgeven worden later beschikbaar.",
+  "quizCertificateDefault": "Standaard",
+  "quizCertificateSystem": "Ingebouwd",
+  "quizCertificateCopy": "Kopie maken",
+  "quizCertificateReadOnly": "Ingebouwde sjablonen zijn alleen-lezen. Maak een kopie om het ontwerp aan te passen.",
+  "quizCertificatePlaceholders": "Beschikbare velden",
+  "quizCertificatePreviewHelp": "Het voorbeeld gebruikt testgegevens. Externe afbeeldingen en lettertypen worden niet geladen.",
+  "quizCertificateSavePreview": "Sla het sjabloon op om de wijzigingen te bekijken."
 }

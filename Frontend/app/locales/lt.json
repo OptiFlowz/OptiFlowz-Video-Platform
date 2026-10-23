@@ -1792,5 +1792,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong>, skirtas vaizdo įrašų prieglobai, pristatymui, atkūrimui ir susijusioms techninėms vaizdo paslaugoms;",
   "termsOfUse.ip.li1": "Platforma ir jos turinys (vaizdo įrašai, garsas, tekstas, grafika, prekės ženklas, programinė įranga ir dizainas) priklauso <value0/> arba jos licencijų išdavėjams ir yra saugomi intelektinės nuosavybės įstatymų.",
   "termsOfUse.ip.li3": "Visos teisės, kurios nėra aiškiai suteiktos, pasilieka <value0/> ir jos licencijų išdavėjai.",
-  "termsOfUse.usercontent.li2": "Jūs suteikiate <value0/> pasaulinę, neišskirtinę, nemokamą licenciją priglobti, saugoti, atgaminti, rodyti ir platinti savo Vartotojo turinį tik tiek, kiek tai būtina Platformai valdyti, prižiūrėti ir tobulinti (ir dėl moderavimo, saugumo bei teisinių reikalavimų)."
+  "termsOfUse.usercontent.li2": "Jūs suteikiate <value0/> pasaulinę, neišskirtinę, nemokamą licenciją priglobti, saugoti, atgaminti, rodyti ir platinti savo Vartotojo turinį tik tiek, kiek tai būtina Platformai valdyti, prižiūrėti ir tobulinti (ir dėl moderavimo, saugumo bei teisinių reikalavimų).",
+  "quizCertificateLibrary": "Sertifikatų šablonai",
+  "quizCertificateLibraryHelp": "Peržiūrėkite integruotus dizainus arba kurkite ir redaguokite savo šablonus.",
+  "quizCertificateSetupHelp": "Nustatykite šio testo sertifikato prieinamumą. Dizainus tvarkykite Sertifikatų šablonuose; šablonų priskyrimas ir sertifikatų išdavimas bus pasiekiami vėliau.",
+  "quizCertificateDefault": "Numatytasis",
+  "quizCertificateSystem": "Integruotas",
+  "quizCertificateCopy": "Sukurti kopiją",
+  "quizCertificateReadOnly": "Integruoti šablonai yra tik skaitomi. Norėdami keisti dizainą, sukurkite kopiją.",
+  "quizCertificatePlaceholders": "Galimi laukai",
+  "quizCertificatePreviewHelp": "Peržiūroje naudojami pavyzdiniai duomenys. Išoriniai vaizdai ir šriftai neįkeliami.",
+  "quizCertificateSavePreview": "Išsaugokite šabloną, kad peržiūrėtumėte pakeitimus."
 }

@@ -1792,5 +1792,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong>, for videohosting, levering, avspilling og relaterte tekniske videotjenester;",
   "termsOfUse.ip.li1": "Plattformen og dens innhold (videoer, lyd, tekst, grafikk, merkevarebygging, programvare og design) eies av <value0/> eller dets lisensgivere og er beskyttet av lover om immaterielle rettigheter.",
   "termsOfUse.ip.li3": "Alle rettigheter som ikke uttrykkelig er gitt er forbeholdt <value0/> og dets lisensgivere.",
-  "termsOfUse.usercontent.li2": "Du gir <value0/> en verdensomspennende, ikke-eksklusiv, royaltyfri lisens til å være vert for, lagre, reprodusere, vise og distribuere brukerinnholdet ditt kun etter behov for å drive, vedlikeholde og forbedre plattformen (og for moderering, sikkerhet og lovlig overholdelse)."
+  "termsOfUse.usercontent.li2": "Du gir <value0/> en verdensomspennende, ikke-eksklusiv, royaltyfri lisens til å være vert for, lagre, reprodusere, vise og distribuere brukerinnholdet ditt kun etter behov for å drive, vedlikeholde og forbedre plattformen (og for moderering, sikkerhet og lovlig overholdelse).",
+  "quizCertificateLibrary": "Sertifikatmaler",
+  "quizCertificateLibraryHelp": "Forhåndsvis innebygde design, eller opprett og rediger dine egne maler.",
+  "quizCertificateSetupHelp": "Angi om denne quizen skal tilby et sertifikat. Administrer design under Sertifikatmaler; tilknytning og utstedelse blir tilgjengelig senere.",
+  "quizCertificateDefault": "Standard",
+  "quizCertificateSystem": "Innebygd",
+  "quizCertificateCopy": "Opprett kopi",
+  "quizCertificateReadOnly": "Innebygde maler er skrivebeskyttet. Opprett en kopi for å tilpasse designet.",
+  "quizCertificatePlaceholders": "Tilgjengelige felt",
+  "quizCertificatePreviewHelp": "Forhåndsvisningen bruker eksempeldata. Eksterne bilder og skrifttyper lastes ikke inn.",
+  "quizCertificateSavePreview": "Lagre malen for å forhåndsvise endringene."
 }

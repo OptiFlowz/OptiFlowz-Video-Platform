@@ -1784,5 +1784,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong>, za video hosting, isporuku, reprodukciju i srodne tehničke video usluge;",
   "termsOfUse.ip.li1": "Platforma i njen sadržaj (video, audio, tekst, grafika, brendiranje, softver i dizajn) su u vlasništvu <value0/> ili njenih davalaca licence i zaštićeni su zakonima o intelektualnoj svojini.",
   "termsOfUse.ip.li3": "Sva prava koja nisu izričito data su rezervisana od strane <value0/> i njenih davaoca licence.",
-  "termsOfUse.usercontent.li2": "Dajete <value0/> globalnu, neekskluzivnu, besplatnu licencu za hostovanje, skladištenje, reprodukciju, prikazivanje i distribuciju vašeg korisničkog sadržaja samo ako je neophodno za rad, održavanje i poboljšanje Platforme (i za moderiranje, bezbednost i usklađenost sa zakonom)."
+  "termsOfUse.usercontent.li2": "Dajete <value0/> globalnu, neekskluzivnu, besplatnu licencu za hostovanje, skladištenje, reprodukciju, prikazivanje i distribuciju vašeg korisničkog sadržaja samo ako je neophodno za rad, održavanje i poboljšanje Platforme (i za moderiranje, bezbednost i usklađenost sa zakonom).",
+  "quizCertificateLibrary": "Šabloni sertifikata",
+  "quizCertificateLibraryHelp": "Pregledajte ugrađene dizajne ili kreirajte i uređujte svoje šablone sertifikata.",
+  "quizCertificateSetupHelp": "Podesite dostupnost sertifikata za ovaj kviz. Dizajnima i pregledima upravljajte u Šablonima sertifikata; dodeljivanje šablona i izdavanje sertifikata biće dostupno kasnije.",
+  "quizCertificateDefault": "Podrazumevani",
+  "quizCertificateSystem": "Ugrađeni",
+  "quizCertificateCopy": "Napravi kopiju",
+  "quizCertificateReadOnly": "Ugrađeni šabloni se ne mogu menjati. Napravite kopiju da biste prilagodili ovaj dizajn.",
+  "quizCertificatePlaceholders": "Dostupna polja",
+  "quizCertificatePreviewHelp": "Pregled koristi primere podataka. Spoljne slike i fontovi se ne učitavaju.",
+  "quizCertificateSavePreview": "Sačuvajte šablon da biste pregledali izmene."
 }

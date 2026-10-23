@@ -1872,5 +1872,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong> pre hosťovanie videa, doručovanie, prehrávanie a súvisiace technické video služby;",
   "termsOfUse.ip.li1": "Platformu a jej obsah (videá, zvuk, text, grafiku, značku, softvér a dizajn) vlastní <value0/> alebo jej poskytovatelia licencií a sú chránené zákonmi o duševnom vlastníctve.",
   "termsOfUse.ip.li3": "Akékoľvek práva, ktoré nie sú výslovne udelené, si vyhradzuje <value0/> a jej poskytovatelia licencií.",
-  "termsOfUse.usercontent.li2": "<value0/> udeľujete celosvetovú, nevýhradnú, bezplatnú licenciu na hosťovanie, ukladanie, reprodukovanie, zobrazovanie a distribúciu vášho používateľského obsahu iba v prípade potreby na prevádzku, údržbu a zlepšovanie platformy (a na moderovanie, bezpečnosť a dodržiavanie právnych predpisov)."
+  "termsOfUse.usercontent.li2": "<value0/> udeľujete celosvetovú, nevýhradnú, bezplatnú licenciu na hosťovanie, ukladanie, reprodukovanie, zobrazovanie a distribúciu vášho používateľského obsahu iba v prípade potreby na prevádzku, údržbu a zlepšovanie platformy (a na moderovanie, bezpečnosť a dodržiavanie právnych predpisov).",
+  "quizCertificateLibrary": "Šablóny certifikátov",
+  "quizCertificateLibraryHelp": "Pozrite si vstavané návrhy alebo vytvárajte a upravujte vlastné šablóny.",
+  "quizCertificateSetupHelp": "Nastavte dostupnosť certifikátu pre tento kvíz. Návrhy spravujte v Šablónach certifikátov; priradenie a vydávanie budú dostupné neskôr.",
+  "quizCertificateDefault": "Predvolená",
+  "quizCertificateSystem": "Vstavaná",
+  "quizCertificateCopy": "Vytvoriť kópiu",
+  "quizCertificateReadOnly": "Vstavané šablóny sú iba na čítanie. Na prispôsobenie návrhu vytvorte kópiu.",
+  "quizCertificatePlaceholders": "Dostupné polia",
+  "quizCertificatePreviewHelp": "Náhľad používa ukážkové údaje. Externé obrázky a písma sa nenačítavajú.",
+  "quizCertificateSavePreview": "Uložte šablónu a zobrazte zmeny v náhľade."
 }

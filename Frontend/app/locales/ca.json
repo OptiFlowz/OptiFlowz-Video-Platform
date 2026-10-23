@@ -1792,5 +1792,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong>, per a l'allotjament, lliurament, reproducció i serveis tècnics de vídeo relacionats;",
   "termsOfUse.ip.li1": "La Plataforma i el seu contingut (vídeos, àudio, text, gràfics, marca, programari i disseny) són propietat de <value0/> o dels seus llicenciants i estan protegits per les lleis de propietat intel·lectual.",
   "termsOfUse.ip.li3": "Qualsevol dret no concedit expressament està reservat per <value0/> i els seus llicenciants.",
-  "termsOfUse.usercontent.li2": "Atorgueu a <value0/> una llicència mundial, no exclusiva i lliure de drets d'autor per allotjar, emmagatzemar, reproduir, mostrar i distribuir el vostre Contingut d'usuari només quan sigui necessari per operar, mantenir i millorar la Plataforma (i per a la moderació, la seguretat i el compliment legal)."
+  "termsOfUse.usercontent.li2": "Atorgueu a <value0/> una llicència mundial, no exclusiva i lliure de drets d'autor per allotjar, emmagatzemar, reproduir, mostrar i distribuir el vostre Contingut d'usuari només quan sigui necessari per operar, mantenir i millorar la Plataforma (i per a la moderació, la seguretat i el compliment legal).",
+  "quizCertificateLibrary": "Plantilles de certificats",
+  "quizCertificateLibraryHelp": "Previsualitzeu els dissenys integrats o creeu i editeu les vostres plantilles.",
+  "quizCertificateSetupHelp": "Configureu el certificat d'aquest qüestionari. Gestioneu els dissenys a Plantilles de certificats; l'assignació i l'emissió estaran disponibles més endavant.",
+  "quizCertificateDefault": "Per defecte",
+  "quizCertificateSystem": "Integrada",
+  "quizCertificateCopy": "Crea una còpia",
+  "quizCertificateReadOnly": "Les plantilles integrades són de només lectura. Creeu una còpia per personalitzar el disseny.",
+  "quizCertificatePlaceholders": "Camps disponibles",
+  "quizCertificatePreviewHelp": "La previsualització utilitza dades d'exemple. No es carreguen imatges ni fonts externes.",
+  "quizCertificateSavePreview": "Deseu la plantilla per previsualitzar els canvis."
 }

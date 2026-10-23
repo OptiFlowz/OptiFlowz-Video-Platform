@@ -1792,5 +1792,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong>, para sa pagho-host ng video, paghahatid, pag-playback, at mga kaugnay na serbisyong teknikal na video;",
   "termsOfUse.ip.li1": "Ang Platform at ang nilalaman nito (mga video, audio, teksto, graphics, pagba-brand, software, at disenyo) ay pagmamay-ari ng <value0/> o mga tagapaglisensya nito at pinoprotektahan ng mga batas sa intelektwal na ari-arian.",
   "termsOfUse.ip.li3": "Ang anumang mga karapatang hindi hayagang ipinagkaloob ay inilalaan ng <value0/> at ng mga tagapaglisensya nito.",
-  "termsOfUse.usercontent.li2": "Nagbibigay ka ng <value0/> ng pandaigdigang, hindi eksklusibo, walang royalty na lisensya upang mag-host, mag-imbak, magparami, magpakita, at ipamahagi ang iyong Nilalaman ng User kung kinakailangan lamang upang mapatakbo, mapanatili, at mapahusay ang Platform (at para sa pagmo-moderate, seguridad, at pagsunod sa batas)."
+  "termsOfUse.usercontent.li2": "Nagbibigay ka ng <value0/> ng pandaigdigang, hindi eksklusibo, walang royalty na lisensya upang mag-host, mag-imbak, magparami, magpakita, at ipamahagi ang iyong Nilalaman ng User kung kinakailangan lamang upang mapatakbo, mapanatili, at mapahusay ang Platform (at para sa pagmo-moderate, seguridad, at pagsunod sa batas).",
+  "quizCertificateLibrary": "Mga template ng sertipiko",
+  "quizCertificateLibraryHelp": "Tingnan ang mga built-in na disenyo o gumawa at mag-edit ng sarili mong mga template.",
+  "quizCertificateSetupHelp": "Itakda ang pagkakaroon ng sertipiko para sa pagsusulit na ito. Pamahalaan ang mga disenyo sa Mga template ng sertipiko; magiging available sa susunod ang pag-uugnay at pag-isyu.",
+  "quizCertificateDefault": "Default",
+  "quizCertificateSystem": "Built-in",
+  "quizCertificateCopy": "Gumawa ng kopya",
+  "quizCertificateReadOnly": "Hindi nae-edit ang mga built-in na template. Gumawa ng kopya para baguhin ang disenyo.",
+  "quizCertificatePlaceholders": "Mga available na field",
+  "quizCertificatePreviewHelp": "Sample na datos ang gamit sa preview. Hindi nilo-load ang mga panlabas na larawan at font.",
+  "quizCertificateSavePreview": "I-save ang template para makita ang mga pagbabago sa preview."
 }

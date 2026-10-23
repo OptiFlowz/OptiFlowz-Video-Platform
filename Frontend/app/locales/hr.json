@@ -1767,5 +1767,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong>, za video hosting, isporuku, reprodukciju i srodne tehničke video usluge;",
   "termsOfUse.ip.li1": "Platforma i njezin sadržaj (video zapisi, audio zapisi, tekst, grafika, brendiranje, softver i dizajn) u vlasništvu su <value0/> ili njegovih davatelja licence i zaštićeni su zakonima o intelektualnom vlasništvu.",
   "termsOfUse.ip.li3": "Sva prava koja nisu izričito dodijeljena zadržana su od strane <value0/> i njegovih davatelja licence.",
-  "termsOfUse.usercontent.li2": "Dodjeljujete <value0/> svjetsku, neekskluzivnu, besplatnu licencu za hostiranje, pohranjivanje, reprodukciju, prikaz i distribuciju vašeg korisničkog sadržaja samo ako je potrebno za rad, održavanje i poboljšanje Platforme (i za moderiranje, sigurnost i zakonsku usklađenost)."
+  "termsOfUse.usercontent.li2": "Dodjeljujete <value0/> svjetsku, neekskluzivnu, besplatnu licencu za hostiranje, pohranjivanje, reprodukciju, prikaz i distribuciju vašeg korisničkog sadržaja samo ako je potrebno za rad, održavanje i poboljšanje Platforme (i za moderiranje, sigurnost i zakonsku usklađenost).",
+  "quizCertificateLibrary": "Predlošci certifikata",
+  "quizCertificateLibraryHelp": "Pregledajte ugrađene dizajne ili izradite i uređujte vlastite predloške.",
+  "quizCertificateSetupHelp": "Postavite dostupnost certifikata za ovaj kviz. Dizajnima upravljajte u Predlošcima certifikata; dodjela predloška i izdavanje bit će dostupni kasnije.",
+  "quizCertificateDefault": "Zadani",
+  "quizCertificateSystem": "Ugrađeni",
+  "quizCertificateCopy": "Izradi kopiju",
+  "quizCertificateReadOnly": "Ugrađeni predlošci ne mogu se mijenjati. Izradite kopiju kako biste prilagodili dizajn.",
+  "quizCertificatePlaceholders": "Dostupna polja",
+  "quizCertificatePreviewHelp": "Pretpregled koristi ogledne podatke. Vanjske slike i fontovi ne učitavaju se.",
+  "quizCertificateSavePreview": "Spremite predložak za pretpregled promjena."
 }

@@ -1792,5 +1792,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong>, kwa upangishaji video, uwasilishaji, uchezaji, na huduma zinazohusiana za kiufundi za video;",
   "termsOfUse.ip.li1": "Jukwaa na maudhui yake (video, sauti, maandishi, michoro, chapa, programu, na muundo) vinamilikiwa na <value0/> au watoa leseni wake na zinalindwa na sheria za uvumbuzi.",
   "termsOfUse.ip.li3": "Haki zozote ambazo hazijatolewa waziwazi zimehifadhiwa na <value0/> na watoa leseni wake.",
-  "termsOfUse.usercontent.li2": "Unaipa <value0/> leseni ya ulimwenguni pote, isiyo ya kipekee, isiyo na mrahaba ya kupangisha, kuhifadhi, kutoa tena, kuonyesha na kusambaza Maudhui yako ya Mtumiaji inapohitajika ili kuendesha, kudumisha na kuboresha Jukwaa (na kwa udhibiti, usalama na utii wa sheria)."
+  "termsOfUse.usercontent.li2": "Unaipa <value0/> leseni ya ulimwenguni pote, isiyo ya kipekee, isiyo na mrahaba ya kupangisha, kuhifadhi, kutoa tena, kuonyesha na kusambaza Maudhui yako ya Mtumiaji inapohitajika ili kuendesha, kudumisha na kuboresha Jukwaa (na kwa udhibiti, usalama na utii wa sheria).",
+  "quizCertificateLibrary": "Violezo vya vyeti",
+  "quizCertificateLibraryHelp": "Hakiki miundo iliyojumuishwa au unda na uhariri violezo vyako.",
+  "quizCertificateSetupHelp": "Weka upatikanaji wa cheti kwa jaribio hili. Dhibiti miundo katika Violezo vya vyeti; kuunganisha kiolezo na kutoa vyeti kutapatikana baadaye.",
+  "quizCertificateDefault": "Chaguo-msingi",
+  "quizCertificateSystem": "Kilichojumuishwa",
+  "quizCertificateCopy": "Unda nakala",
+  "quizCertificateReadOnly": "Violezo vilivyojumuishwa ni vya kusoma tu. Unda nakala ili kubadilisha muundo.",
+  "quizCertificatePlaceholders": "Sehemu zinazopatikana",
+  "quizCertificatePreviewHelp": "Hakiki hutumia data ya mfano. Picha na fonti za nje hazipakuliwi.",
+  "quizCertificateSavePreview": "Hifadhi kiolezo ili kuhakiki mabadiliko."
 }

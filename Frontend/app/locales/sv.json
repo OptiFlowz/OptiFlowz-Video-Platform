@@ -1792,5 +1792,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong>, för videohosting, leverans, uppspelning och relaterade tekniska videotjänster;",
   "termsOfUse.ip.li1": "Plattformen och dess innehåll (videor, ljud, text, grafik, varumärke, programvara och design) ägs av <value0/> eller dess licensgivare och skyddas av lagar om immateriella rättigheter.",
   "termsOfUse.ip.li3": "Alla rättigheter som inte uttryckligen beviljas är reserverade av <value0/> och dess licensgivare.",
-  "termsOfUse.usercontent.li2": "Du beviljar <value0/> en världsomspännande, icke-exklusiv, royaltyfri licens att vara värd för, lagra, reproducera, visa och distribuera ditt användarinnehåll endast när det är nödvändigt för att driva, underhålla och förbättra plattformen (och för moderering, säkerhet och laglig efterlevnad)."
+  "termsOfUse.usercontent.li2": "Du beviljar <value0/> en världsomspännande, icke-exklusiv, royaltyfri licens att vara värd för, lagra, reproducera, visa och distribuera ditt användarinnehåll endast när det är nödvändigt för att driva, underhålla och förbättra plattformen (och för moderering, säkerhet och laglig efterlevnad).",
+  "quizCertificateLibrary": "Certifikatmallar",
+  "quizCertificateLibraryHelp": "Förhandsgranska inbyggda designer eller skapa och redigera egna mallar.",
+  "quizCertificateSetupHelp": "Ange om detta quiz ska erbjuda ett certifikat. Hantera designer under Certifikatmallar; koppling och utfärdande blir tillgängliga senare.",
+  "quizCertificateDefault": "Standard",
+  "quizCertificateSystem": "Inbyggd",
+  "quizCertificateCopy": "Skapa kopia",
+  "quizCertificateReadOnly": "Inbyggda mallar är skrivskyddade. Skapa en kopia för att anpassa designen.",
+  "quizCertificatePlaceholders": "Tillgängliga fält",
+  "quizCertificatePreviewHelp": "Förhandsgranskningen använder exempeldata. Externa bilder och teckensnitt läses inte in.",
+  "quizCertificateSavePreview": "Spara mallen för att förhandsgranska ändringarna."
 }

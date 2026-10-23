@@ -1792,5 +1792,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong>: ビデオのホスティング、配信、再生、および関連する技術的なビデオ サービス用。",
   "termsOfUse.ip.li1": "プラットフォームとそのコンテンツ (ビデオ、オーディオ、テキスト、グラフィック、ブランディング、ソフトウェア、デザイン) は <value0/> またはそのライセンサーによって所有されており、知的財産法によって保護されています。",
   "termsOfUse.ip.li3": "明示的に付与されていない権利はすべて、<value0/> とそのライセンサーによって留保されます。",
-  "termsOfUse.usercontent.li2": "お客様は、プラットフォームの運用、保守、改善 (およびモデレーション、セキュリティ、および法令順守) に必要な場合にのみ、ユーザー コンテンツをホスト、保存、複製、表示、配布するための世界規模の非独占的ロイヤリティフリー ライセンスを <value0/> に付与します。"
+  "termsOfUse.usercontent.li2": "お客様は、プラットフォームの運用、保守、改善 (およびモデレーション、セキュリティ、および法令順守) に必要な場合にのみ、ユーザー コンテンツをホスト、保存、複製、表示、配布するための世界規模の非独占的ロイヤリティフリー ライセンスを <value0/> に付与します。",
+  "quizCertificateLibrary": "証明書テンプレート",
+  "quizCertificateLibraryHelp": "組み込みデザインをプレビューしたり、独自のテンプレートを作成・編集したりできます。",
+  "quizCertificateSetupHelp": "このクイズの証明書の有無を設定します。デザインは証明書テンプレートで管理できます。テンプレートの割り当てと証明書の発行は今後対応予定です。",
+  "quizCertificateDefault": "デフォルト",
+  "quizCertificateSystem": "組み込み",
+  "quizCertificateCopy": "コピーを作成",
+  "quizCertificateReadOnly": "組み込みテンプレートは読み取り専用です。デザインを変更するにはコピーを作成してください。",
+  "quizCertificatePlaceholders": "使用可能なフィールド",
+  "quizCertificatePreviewHelp": "プレビューにはサンプルデータを使用します。外部の画像やフォントは読み込まれません。",
+  "quizCertificateSavePreview": "変更をプレビューするにはテンプレートを保存してください。"
 }

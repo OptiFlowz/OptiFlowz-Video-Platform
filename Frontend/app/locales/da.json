@@ -1792,5 +1792,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong>, til videohosting, levering, afspilning og relaterede tekniske videotjenester;",
   "termsOfUse.ip.li1": "Platformen og dens indhold (videoer, lyd, tekst, grafik, branding, software og design) ejes af <value0/> eller dets licensgivere og er beskyttet af love om intellektuel ejendom.",
   "termsOfUse.ip.li3": "Alle rettigheder, der ikke udtrykkeligt er givet, er forbeholdt <value0/> og dets licensgivere.",
-  "termsOfUse.usercontent.li2": "Du giver <value0/> en verdensomspændende, ikke-eksklusiv, royaltyfri licens til kun at hoste, gemme, reproducere, vise og distribuere dit Brugerindhold, hvis det er nødvendigt for at drive, vedligeholde og forbedre platformen (og for moderation, sikkerhed og lovoverholdelse)."
+  "termsOfUse.usercontent.li2": "Du giver <value0/> en verdensomspændende, ikke-eksklusiv, royaltyfri licens til kun at hoste, gemme, reproducere, vise og distribuere dit Brugerindhold, hvis det er nødvendigt for at drive, vedligeholde og forbedre platformen (og for moderation, sikkerhed og lovoverholdelse).",
+  "quizCertificateLibrary": "Certifikatskabeloner",
+  "quizCertificateLibraryHelp": "Se de indbyggede designs, eller opret og rediger dine egne skabeloner.",
+  "quizCertificateSetupHelp": "Indstil certifikatets tilgængelighed for denne quiz. Administrer designs i Certifikatskabeloner; tilknytning og udstedelse bliver tilgængelige senere.",
+  "quizCertificateDefault": "Standard",
+  "quizCertificateSystem": "Indbygget",
+  "quizCertificateCopy": "Opret kopi",
+  "quizCertificateReadOnly": "Indbyggede skabeloner er skrivebeskyttede. Opret en kopi for at tilpasse designet.",
+  "quizCertificatePlaceholders": "Tilgængelige felter",
+  "quizCertificatePreviewHelp": "Forhåndsvisningen bruger eksempeldata. Eksterne billeder og skrifttyper indlæses ikke.",
+  "quizCertificateSavePreview": "Gem skabelonen for at se ændringerne."
 }

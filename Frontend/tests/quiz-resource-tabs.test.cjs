@@ -36,6 +36,7 @@ test('resource tabs keep their DOM, focus and scroll position while lists reset;
     './api': { engineKey: ['quiz-engine'] },
     './QuestionTransfer': { __esModule: true, default: ({ mode, onClose }) => React.createElement('button', { 'data-transfer': mode, onClick: onClose }, 'Close transfer') },
     './QuestionEditor': { __esModule: true, default: noop }, './CategoryEditor': { __esModule: true, default: noop },
+    './CertificateTemplates': { __esModule: true, default: ({ id, onEdit }) => React.createElement('section', { 'data-certificate-library': true }, id ? 'Modern' : React.createElement('button', { onClick: () => onEdit('modern') }, 'Open template')) },
     './QuizEditor': { __esModule: true, default: noop }, './QuizStatus': { __esModule: true, default: noop },
     './EditorPopup': { __esModule: true, default: noop, EditorBusyContext: React.createContext(null), EditorBusyStatusContext: React.createContext(false) },
   };
@@ -56,7 +57,7 @@ test('resource tabs keep their DOM, focus and scroll position while lists reset;
   await act(async () => root.render(React.createElement(App)));
   const tabs = [...document.querySelectorAll('[role="tab"]')], strip = document.querySelector('[role="tablist"]');
   strip.scrollLeft = 40;
-  for (const index of [1, 2, 0]) {
+  for (const index of [1, 2, 3, 0]) {
     await act(async () => { tabs[index].focus(); tabs[index].click(); });
     assert.equal(document.querySelector('[role="tablist"]'), strip);
     assert.equal(document.activeElement, tabs[index]);
@@ -64,15 +65,22 @@ test('resource tabs keep their DOM, focus and scroll position while lists reset;
     assert.equal(tabs[index].getAttribute('aria-selected'), 'true');
     assert.equal(document.querySelector('h1').textContent, tabs[index].textContent);
   }
-  await act(async () => tabs[1].click());
+  await act(async () => tabs[3].click());
+  await act(async () => [...document.querySelectorAll('button')].find(button => button.textContent === 'Open template').click());
+  assert.equal(document.querySelector('[role="tablist"]'), null, 'template detail replaces the main tabulation');
+  const breadcrumb = document.querySelector('.editorBreadcrumb');
+  assert.match(breadcrumb.textContent, /navQuizzes.*quizCertificateLibrary.*quizCertificateEdit/);
+  await act(async () => breadcrumb.querySelectorAll('button')[1].click());
+  assert.ok(document.querySelector('[role="tablist"]'), 'breadcrumb returns to template library');
+  await act(async () => document.querySelectorAll('[role="tab"]')[1].click());
   const search = document.querySelector('input[type="search"]');
   await act(async () => {
     Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(search, 'test');
     search.dispatchEvent(new window.Event('input', { bubbles: true }));
   });
-  await act(async () => tabs[2].click());
+  await act(async () => document.querySelectorAll('[role="tab"]')[2].click());
   assert.equal(document.querySelector('input[type="search"]').value, '', 'resource filters reset independently of persistent tabs');
-  await act(async () => tabs[1].click());
+  await act(async () => document.querySelectorAll('[role="tab"]')[1].click());
   for (const mode of ['import', 'export']) {
     await act(async () => document.querySelectorAll('.headerActions button')[mode === 'import' ? 0 : 1].click());
     assert.equal(document.querySelector('[data-transfer]').dataset.transfer, mode);

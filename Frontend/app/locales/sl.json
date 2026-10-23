@@ -1767,5 +1767,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong>, za video gostovanje, dostavo, predvajanje in povezane tehnične video storitve;",
   "termsOfUse.ip.li1": "Platforma in njena vsebina (videoposnetki, zvok, besedilo, grafika, blagovna znamka, programska oprema in oblikovanje) so v lasti <value0/> ali njegovih dajalcev licence in so zaščiteni z zakoni o intelektualni lastnini.",
   "termsOfUse.ip.li3": "Vse pravice, ki niso izrecno podeljene, si pridržujejo <value0/> in njegovi dajalci licence.",
-  "termsOfUse.usercontent.li2": "<value0/> podeljujete svetovno, neizključno, brezplačno licenco za gostovanje, shranjevanje, reprodukcijo, prikazovanje in distribucijo vaše uporabniške vsebine le, kot je potrebno za delovanje, vzdrževanje in izboljšanje platforme (ter za moderiranje, varnost in skladnost z zakonodajo)."
+  "termsOfUse.usercontent.li2": "<value0/> podeljujete svetovno, neizključno, brezplačno licenco za gostovanje, shranjevanje, reprodukcijo, prikazovanje in distribucijo vaše uporabniške vsebine le, kot je potrebno za delovanje, vzdrževanje in izboljšanje platforme (ter za moderiranje, varnost in skladnost z zakonodajo).",
+  "quizCertificateLibrary": "Predloge potrdil",
+  "quizCertificateLibraryHelp": "Oglejte si vgrajene zasnove ali ustvarite in uredite svoje predloge.",
+  "quizCertificateSetupHelp": "Nastavite razpoložljivost potrdila za ta kviz. Zasnove upravljajte v Predlogah potrdil; dodeljevanje in izdajanje bosta na voljo pozneje.",
+  "quizCertificateDefault": "Privzeta",
+  "quizCertificateSystem": "Vgrajena",
+  "quizCertificateCopy": "Ustvari kopijo",
+  "quizCertificateReadOnly": "Vgrajene predloge so samo za branje. Ustvarite kopijo za prilagoditev zasnove.",
+  "quizCertificatePlaceholders": "Razpoložljiva polja",
+  "quizCertificatePreviewHelp": "Predogled uporablja vzorčne podatke. Zunanje slike in pisave se ne naložijo.",
+  "quizCertificateSavePreview": "Shranite predlogo za predogled sprememb."
 }

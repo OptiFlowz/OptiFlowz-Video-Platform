@@ -1872,5 +1872,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong>, videótároláshoz, szállításhoz, lejátszáshoz és kapcsolódó technikai videószolgáltatásokhoz;",
   "termsOfUse.ip.li1": "A Platform és annak tartalma (videók, hangok, szövegek, grafikák, márkajelzések, szoftverek és dizájn) a <value0/> vagy licencadói tulajdona, és szellemi tulajdonjogok védik.",
   "termsOfUse.ip.li3": "A kifejezetten nem biztosított jogokat a <value0/> és licencadói fenntartják.",
-  "termsOfUse.usercontent.li2": "A <value0/> világméretű, nem kizárólagos, jogdíjmentes licencet kizárólag a Platform működtetéséhez, karbantartásához és fejlesztéséhez (és a moderáláshoz, a biztonsághoz és a jogi megfeleléshez) szükséges mértékben biztosít felhasználói tartalmainak tárolására, tárolására, reprodukálására, megjelenítésére és terjesztésére."
+  "termsOfUse.usercontent.li2": "A <value0/> világméretű, nem kizárólagos, jogdíjmentes licencet kizárólag a Platform működtetéséhez, karbantartásához és fejlesztéséhez (és a moderáláshoz, a biztonsághoz és a jogi megfeleléshez) szükséges mértékben biztosít felhasználói tartalmainak tárolására, tárolására, reprodukálására, megjelenítésére és terjesztésére.",
+  "quizCertificateLibrary": "Tanúsítványsablonok",
+  "quizCertificateLibraryHelp": "Tekintse meg a beépített mintákat, vagy hozzon létre és szerkesszen saját sablonokat.",
+  "quizCertificateSetupHelp": "Állítsa be a kvíz tanúsítványának elérhetőségét. A mintákat a Tanúsítványsablonok között kezelheti; a hozzárendelés és a kiállítás később lesz elérhető.",
+  "quizCertificateDefault": "Alapértelmezett",
+  "quizCertificateSystem": "Beépített",
+  "quizCertificateCopy": "Másolat létrehozása",
+  "quizCertificateReadOnly": "A beépített sablonok nem szerkeszthetők. A testreszabáshoz hozzon létre másolatot.",
+  "quizCertificatePlaceholders": "Elérhető mezők",
+  "quizCertificatePreviewHelp": "Az előnézet mintaadatokat használ. Külső képek és betűtípusok nem töltődnek be.",
+  "quizCertificateSavePreview": "Mentse a sablont a módosítások előnézetéhez."
 }

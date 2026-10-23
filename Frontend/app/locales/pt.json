@@ -1767,5 +1767,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong>, para hospedagem, entrega, reprodução de vídeo e serviços técnicos de vídeo relacionados;",
   "termsOfUse.ip.li1": "A Plataforma e seu conteúdo (vídeos, áudio, texto, gráficos, marca, software e design) são propriedade de <value0/> ou de seus licenciadores e são protegidos por leis de propriedade intelectual.",
   "termsOfUse.ip.li3": "Quaisquer direitos não concedidos expressamente são reservados por <value0/> e seus licenciadores.",
-  "termsOfUse.usercontent.li2": "Você concede a <value0/> uma licença mundial, não exclusiva e isenta de royalties para hospedar, armazenar, reproduzir, exibir e distribuir seu Conteúdo do Usuário apenas conforme necessário para operar, manter e melhorar a Plataforma (e para moderação, segurança e conformidade legal)."
+  "termsOfUse.usercontent.li2": "Você concede a <value0/> uma licença mundial, não exclusiva e isenta de royalties para hospedar, armazenar, reproduzir, exibir e distribuir seu Conteúdo do Usuário apenas conforme necessário para operar, manter e melhorar a Plataforma (e para moderação, segurança e conformidade legal).",
+  "quizCertificateLibrary": "Modelos de certificados",
+  "quizCertificateLibraryHelp": "Pré-visualize os designs integrados ou crie e edite os seus próprios modelos.",
+  "quizCertificateSetupHelp": "Configure a disponibilidade do certificado para este questionário. Faça a gestão dos designs em Modelos de certificados; a atribuição e a emissão estarão disponíveis mais tarde.",
+  "quizCertificateDefault": "Predefinido",
+  "quizCertificateSystem": "Integrado",
+  "quizCertificateCopy": "Criar cópia",
+  "quizCertificateReadOnly": "Os modelos integrados são apenas de leitura. Crie uma cópia para personalizar o design.",
+  "quizCertificatePlaceholders": "Campos disponíveis",
+  "quizCertificatePreviewHelp": "A pré-visualização utiliza dados de exemplo. Imagens e tipos de letra externos não são carregados.",
+  "quizCertificateSavePreview": "Guarde o modelo para pré-visualizar as alterações."
 }

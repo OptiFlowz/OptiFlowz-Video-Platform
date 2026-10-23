@@ -1872,5 +1872,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong>, për mbajtjen e videove, shpërndarjen, riprodhimin dhe shërbimet teknike të lidhura me video;",
   "termsOfUse.ip.li1": "Platforma dhe përmbajtja e saj (video, audio, tekst, grafikë, markë, softuer dhe dizajn) janë në pronësi të <value0/> ose licencuesve të saj dhe mbrohen nga ligjet e pronësisë intelektuale.",
   "termsOfUse.ip.li3": "Çdo e drejtë që nuk jepet shprehimisht është e rezervuar nga <value0/> dhe licencuesit e saj.",
-  "termsOfUse.usercontent.li2": "Ju i jepni <value0/> një licencë mbarëbotërore, jo-ekskluzive, pa honorare për të pritur, ruajtur, riprodhuar, shfaqur dhe shpërndarë përmbajtjen tuaj të përdoruesit vetëm sipas nevojës për të operuar, mirëmbajtur dhe përmirësuar Platformën (dhe për moderim, siguri dhe pajtueshmëri ligjore)."
+  "termsOfUse.usercontent.li2": "Ju i jepni <value0/> një licencë mbarëbotërore, jo-ekskluzive, pa honorare për të pritur, ruajtur, riprodhuar, shfaqur dhe shpërndarë përmbajtjen tuaj të përdoruesit vetëm sipas nevojës për të operuar, mirëmbajtur dhe përmirësuar Platformën (dhe për moderim, siguri dhe pajtueshmëri ligjore).",
+  "quizCertificateLibrary": "Shabllonet e certifikatave",
+  "quizCertificateLibraryHelp": "Shikoni dizajnet e integruara ose krijoni dhe redaktoni shabllonet tuaja.",
+  "quizCertificateSetupHelp": "Caktoni disponueshmërinë e certifikatës për këtë kuiz. Menaxhoni dizajnet te Shabllonet e certifikatave; lidhja dhe lëshimi do të jenë të disponueshëm më vonë.",
+  "quizCertificateDefault": "I parazgjedhur",
+  "quizCertificateSystem": "I integruar",
+  "quizCertificateCopy": "Krijo kopje",
+  "quizCertificateReadOnly": "Shabllonet e integruara janë vetëm për lexim. Krijoni një kopje për të përshtatur dizajnin.",
+  "quizCertificatePlaceholders": "Fushat e disponueshme",
+  "quizCertificatePreviewHelp": "Pamja paraprake përdor të dhëna shembull. Imazhet dhe fontet e jashtme nuk ngarkohen.",
+  "quizCertificateSavePreview": "Ruajeni shabllonin për të parë ndryshimet."
 }

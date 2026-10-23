@@ -1792,5 +1792,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong>, dành cho việc lưu trữ, phân phối, phát lại video và các dịch vụ video kỹ thuật liên quan;",
   "termsOfUse.ip.li1": "Nền tảng và nội dung của Nền tảng (video, âm thanh, văn bản, đồ họa, thương hiệu, phần mềm và thiết kế) thuộc sở hữu của <value0/> hoặc người cấp phép của nó và được bảo vệ bởi luật sở hữu trí tuệ.",
   "termsOfUse.ip.li3": "Mọi quyền không được cấp rõ ràng đều được bảo lưu bởi <value0/> và người cấp phép của nó.",
-  "termsOfUse.usercontent.li2": "Bạn chỉ cấp cho <value0/> giấy phép toàn cầu, không độc quyền, miễn phí bản quyền để lưu trữ, lưu trữ, tái tạo, hiển thị và phân phối Nội dung người dùng của mình khi cần thiết để vận hành, duy trì và cải thiện Nền tảng (và để kiểm duyệt, bảo mật và tuân thủ pháp luật)."
+  "termsOfUse.usercontent.li2": "Bạn chỉ cấp cho <value0/> giấy phép toàn cầu, không độc quyền, miễn phí bản quyền để lưu trữ, lưu trữ, tái tạo, hiển thị và phân phối Nội dung người dùng của mình khi cần thiết để vận hành, duy trì và cải thiện Nền tảng (và để kiểm duyệt, bảo mật và tuân thủ pháp luật).",
+  "quizCertificateLibrary": "Mẫu chứng chỉ",
+  "quizCertificateLibraryHelp": "Xem trước các thiết kế có sẵn hoặc tạo và chỉnh sửa mẫu của riêng bạn.",
+  "quizCertificateSetupHelp": "Thiết lập việc cấp chứng chỉ cho bài kiểm tra này. Quản lý thiết kế trong Mẫu chứng chỉ; việc gán mẫu và cấp chứng chỉ sẽ có sau.",
+  "quizCertificateDefault": "Mặc định",
+  "quizCertificateSystem": "Có sẵn",
+  "quizCertificateCopy": "Tạo bản sao",
+  "quizCertificateReadOnly": "Mẫu có sẵn chỉ cho phép đọc. Tạo bản sao để tùy chỉnh thiết kế.",
+  "quizCertificatePlaceholders": "Các trường có sẵn",
+  "quizCertificatePreviewHelp": "Bản xem trước sử dụng dữ liệu mẫu. Hình ảnh và phông chữ bên ngoài không được tải.",
+  "quizCertificateSavePreview": "Lưu mẫu để xem trước các thay đổi."
 }

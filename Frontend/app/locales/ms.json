@@ -1792,5 +1792,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong>, untuk pengehosan video, penghantaran, main balik dan perkhidmatan video teknikal yang berkaitan;",
   "termsOfUse.ip.li1": "Platform dan kandungannya (video, audio, teks, grafik, penjenamaan, perisian dan reka bentuk) dimiliki oleh <value0/> atau pemberi lesennya dan dilindungi oleh undang-undang harta intelek.",
   "termsOfUse.ip.li3": "Sebarang hak yang tidak diberikan secara nyata adalah terpelihara oleh <value0/> dan pemberi lesennya.",
-  "termsOfUse.usercontent.li2": "Anda memberikan <value0/> lesen di seluruh dunia, bukan eksklusif, bebas royalti untuk mengehoskan, menyimpan, menghasilkan semula, memaparkan dan mengedarkan Kandungan Pengguna anda hanya apabila perlu untuk mengendalikan, menyelenggara dan menambah baik Platform (dan untuk penyederhanaan, keselamatan dan pematuhan undang-undang)."
+  "termsOfUse.usercontent.li2": "Anda memberikan <value0/> lesen di seluruh dunia, bukan eksklusif, bebas royalti untuk mengehoskan, menyimpan, menghasilkan semula, memaparkan dan mengedarkan Kandungan Pengguna anda hanya apabila perlu untuk mengendalikan, menyelenggara dan menambah baik Platform (dan untuk penyederhanaan, keselamatan dan pematuhan undang-undang).",
+  "quizCertificateLibrary": "Templat sijil",
+  "quizCertificateLibraryHelp": "Pratonton reka bentuk terbina dalam atau cipta dan sunting templat anda sendiri.",
+  "quizCertificateSetupHelp": "Tetapkan ketersediaan sijil untuk kuiz ini. Urus reka bentuk dalam Templat sijil; pemautan templat dan pengeluaran sijil akan tersedia kemudian.",
+  "quizCertificateDefault": "Lalai",
+  "quizCertificateSystem": "Terbina dalam",
+  "quizCertificateCopy": "Cipta salinan",
+  "quizCertificateReadOnly": "Templat terbina dalam hanya boleh dibaca. Cipta salinan untuk menyesuaikan reka bentuk.",
+  "quizCertificatePlaceholders": "Medan tersedia",
+  "quizCertificatePreviewHelp": "Pratonton menggunakan data contoh. Imej dan fon luaran tidak dimuatkan.",
+  "quizCertificateSavePreview": "Simpan templat untuk pratonton perubahan."
 }

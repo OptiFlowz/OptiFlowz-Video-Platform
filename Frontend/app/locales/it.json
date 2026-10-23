@@ -1767,5 +1767,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong>, per l'hosting, la consegna, la riproduzione di video e i relativi servizi video tecnici;",
   "termsOfUse.ip.li1": "La Piattaforma e i suoi contenuti (video, audio, testo, grafica, marchio, software e design) sono di proprietà di <value0/> o dei suoi concessori di licenza e sono protetti dalle leggi sulla proprietà intellettuale.",
   "termsOfUse.ip.li3": "Tutti i diritti non espressamente concessi sono riservati da <value0/> e dai suoi concessori di licenza.",
-  "termsOfUse.usercontent.li2": "Concedi a <value0/> una licenza mondiale, non esclusiva ed esente da royalty per ospitare, archiviare, riprodurre, visualizzare e distribuire i tuoi Contenuti utente solo nella misura necessaria per far funzionare, mantenere e migliorare la Piattaforma (e per moderazione, sicurezza e conformità legale)."
+  "termsOfUse.usercontent.li2": "Concedi a <value0/> una licenza mondiale, non esclusiva ed esente da royalty per ospitare, archiviare, riprodurre, visualizzare e distribuire i tuoi Contenuti utente solo nella misura necessaria per far funzionare, mantenere e migliorare la Piattaforma (e per moderazione, sicurezza e conformità legale).",
+  "quizCertificateLibrary": "Modelli di certificato",
+  "quizCertificateLibraryHelp": "Visualizza i modelli integrati o crea e modifica i tuoi modelli.",
+  "quizCertificateSetupHelp": "Configura la disponibilità del certificato per questo quiz. Gestisci i modelli in Modelli di certificato; l'assegnazione e il rilascio saranno disponibili in seguito.",
+  "quizCertificateDefault": "Predefinito",
+  "quizCertificateSystem": "Integrato",
+  "quizCertificateCopy": "Crea copia",
+  "quizCertificateReadOnly": "I modelli integrati sono di sola lettura. Crea una copia per personalizzare il design.",
+  "quizCertificatePlaceholders": "Campi disponibili",
+  "quizCertificatePreviewHelp": "L'anteprima usa dati di esempio. Immagini e caratteri esterni non vengono caricati.",
+  "quizCertificateSavePreview": "Salva il modello per visualizzare le modifiche in anteprima."
 }

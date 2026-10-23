@@ -22,6 +22,7 @@ import QuestionEditor from './QuestionEditor';
 import CategoryEditor from './CategoryEditor';
 import QuizEditor from './QuizEditor';
 import QuizStatus from './QuizStatus';
+import CertificateTemplates from './CertificateTemplates';
 import EditorPopup, { EditorBusyContext, EditorBusyStatusContext } from './EditorPopup';
 const questionIcons = { single_choice: SingleChoiceQuestionSVG, multiple_choice: MultipleChoiceQuestionSVG, matching: MatchingQuestionSVG };
 const names = { quizzes: 'navQuizzes', questions: 'qeBank', categories: 'qeCategories' };
@@ -30,6 +31,7 @@ export default function QuizzesPage() {
   const { t } = useI18n(), [params] = useSearchParams(), navigateTo = useNavigate();
   const setParams = (values: Record<string, string>) => navigateTo(`/quizzes?${new URLSearchParams(values)}`, { preventScrollReset: values.tab === 'questions' || !!params.get('edit') && values.edit === params.get('edit') });
   const requested = (params.get('tab') === 'groups' ? 'categories' : params.get('tab')) as Resource | null;
+  const certificatesTab = params.get('tab') === 'certificates';
   const auth = useAccess('quizzes');
   const allowed = (Object.keys(names) as Resource[]).filter(resource => ['create', 'read_own', 'read_any'].some(action => auth.can(resourcePermission(resource, action))));
   const resource: Resource = requested && allowed.includes(requested) ? requested : allowed[0] ?? 'quizzes';
@@ -42,7 +44,7 @@ export default function QuizzesPage() {
     const handler = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
     window.addEventListener('beforeunload', handler); return () => window.removeEventListener('beforeunload', handler);
   }, [dirty]);
-  const navigate = async (tab: Resource, id?: string, section?: string, category?: string, scope?: OwnershipFilter) => {
+  const navigate = async (tab: Resource | 'certificates', id?: string, section?: string, category?: string, scope?: OwnershipFilter) => {
     if (busy) return;
     if (dirty && !await confirm({ title: t('qeUnsaved'), message: t('qeDiscard'), yesText: t('qeDiscardAction'), noText: t('adminCancel') })) return;
     setDirty(false); setHeaderTransfer(null); setParams({ tab, scope: scope ?? params.get('scope') ?? 'mine', ...(id ? { edit: id } : {}), ...(section ? { section } : {}), ...(category ? { category } : {}) });
@@ -51,25 +53,34 @@ export default function QuizzesPage() {
     setDirty(false);
     if (editor === 'new') setParams({ tab: resource, scope: params.get('scope') ?? 'mine', ...(access.read ? { edit: id } : {}) });
   };
-  const editorPage = (resource === 'quizzes' || resource === 'categories') && !!editor;
+  const editorPage = !certificatesTab && (resource === 'quizzes' || resource === 'categories') && !!editor;
   const popupTitle = resource === 'quizzes' ? t(editor === 'new' ? 'quizCreateTitle' : 'quizEditTitle') : resource === 'questions' ? t(editor === 'new' ? 'quizAddQuestion' : 'quizEditQuestion') : t(editor === 'new' ? 'qeCreateCategory' : 'qeEditCategory');
   return <main className={`myVideos managementPage ${styles.page} ${styles.management}`}><Sidebar /><div className="content libraryContent"><div className="holder libraryShell">
-    {editorPage ? <EditorBusyContext.Provider value={setBusy}><EditorBusyStatusContext.Provider value={busy}>
+    {certificatesTab && editor ? <>
+      <nav className={styles.editorBreadcrumb} aria-label={t('quizCertificateLibrary')}>
+        <button type="button" className={styles.editorBreadcrumbLink} disabled={busy} onClick={() => void navigate('quizzes')}>{t('navQuizzes')}</button><span aria-hidden="true">/</span>
+        <button type="button" className={styles.editorBreadcrumbLink} disabled={busy} onClick={() => void navigate('certificates')}>{t('quizCertificateLibrary')}</button><span aria-hidden="true">/</span>
+        <span>{t(editor === 'new' ? 'quizCertificateCreate' : 'quizCertificateEdit')}</span>
+      </nav>
+      <CertificateTemplates id={editor} onDirty={setDirty} onBusy={setBusy} onEdit={id => void navigate('certificates', id)} onSaved={id => { setDirty(false); setParams({ tab: 'certificates', ...(id ? { edit: id } : {}) }); }} />
+    </> : editorPage ? <EditorBusyContext.Provider value={setBusy}><EditorBusyStatusContext.Provider value={busy}>
       <div className={styles.editorBreadcrumb}><button type="button" className={styles.editorBreadcrumbLink} disabled={busy} onClick={() => void navigate(resource)}>{t(names[resource])}</button><span aria-hidden="true">/</span><span>{popupTitle}</span></div>
       {resource === 'categories' ? <CategoryEditor key={editor} id={editor!} presentation="page" onSaved={saved} onDirty={setDirty} onClose={() => void navigate('categories')} /> : <QuizEditor key={editor} id={editor!} section={params.get('section') ?? 'settings'} onSectionChange={section => void navigate('quizzes', editor!, section)} onSaved={saved} onDirty={setDirty} onClose={() => void navigate('quizzes')} />}
     </EditorBusyStatusContext.Provider></EditorBusyContext.Provider> : <>
       <div className={`libraryHeader ${styles.resourceHeader}`}>
-        <div className="libraryHeading"><h1>{t(names[resource])}</h1><p>{t('qeIntro')}</p></div>
-        {resource === 'questions' && <div className={styles.headerActions}>
+        <div className="libraryHeading"><h1>{t(certificatesTab ? 'quizCertificateLibrary' : names[resource])}</h1><p>{t(certificatesTab ? 'quizCertificateLibraryHelp' : 'qeIntro')}</p></div>
+        {!certificatesTab && resource === 'questions' && <div className={styles.headerActions}>
           {access.create && <button type="button" className={styles.button} onClick={() => setHeaderTransfer('import')}>{t('qeImportQuestions')}</button>}
           {access.read && <button type="button" className={styles.button} onClick={() => setHeaderTransfer('export')}>{t('qeExportQuestions')}</button>}
         </div>}
       </div>
-      <ProfileTabs className={styles.resourceTabs} label={t('navQuizzes')}>{allowed.map(tab => <button type="button" role="tab" key={tab} aria-selected={resource === tab} onClick={() => { if (resource !== tab) void navigate(tab); }}>{t(names[tab])}</button>)}</ProfileTabs>
+      <ProfileTabs className={styles.resourceTabs} label={t('navQuizzes')}>{allowed.map(tab => <button type="button" role="tab" key={tab} disabled={busy} aria-selected={!certificatesTab && resource === tab} onClick={() => { if (certificatesTab || resource !== tab) void navigate(tab); }}>{t(names[tab])}</button>)}<button type="button" role="tab" disabled={busy} aria-selected={certificatesTab} onClick={() => { if (!certificatesTab) void navigate('certificates'); }}>{t('quizCertificateLibrary')}</button></ProfileTabs>
+      {certificatesTab ? <CertificateTemplates id={editor} onDirty={setDirty} onBusy={setBusy} onEdit={id => void navigate('certificates', id)} onSaved={id => { setDirty(false); setParams({ tab: 'certificates', ...(id ? { edit: id } : {}) }); }} /> : <>
       <ResourceList headerTransfer={headerTransfer} onCloseTransfer={() => setHeaderTransfer(null)} key={`${resource}:${params.get('category') ?? ''}`} resource={resource} initialCategory={params.get('category') ?? ''} ownership={params.get('scope') ?? 'mine'} onOwnershipChange={scope => setParams({ tab: resource, scope })} onBrowseCategory={(category, ownerId) => void navigate('questions', undefined, undefined, category, ownerId === access.user?.id ? 'mine' : 'others')} onEdit={id => void navigate(resource, id)} />
       <EditorPopup wide={resource === 'questions'} open={!!editor} title={popupTitle} onClose={() => void navigate(resource)}>
         {editor && (resource === 'questions' ? <QuestionEditor key={editor} id={editor} onSaved={saved} onDirty={setDirty} onClose={() => void navigate(resource)} /> : <CategoryEditor key={editor} id={editor} onSaved={saved} onDirty={setDirty} />)}
       </EditorPopup>
+      </>}
     </>}
     <ConfirmDialog {...dialogProps} />
   </div></div></main>;

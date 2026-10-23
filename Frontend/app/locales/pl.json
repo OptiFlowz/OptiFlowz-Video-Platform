@@ -1767,5 +1767,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong> w zakresie hostingu, dostarczania, odtwarzania i powiązanych technicznych usług wideo;",
   "termsOfUse.ip.li1": "Platforma i jej zawartość (wideo, dźwięk, tekst, grafika, branding, oprogramowanie i projekty) są własnością firmy <value0/> lub jej licencjodawców i są chronione przepisami prawa własności intelektualnej.",
   "termsOfUse.ip.li3": "Wszelkie prawa, które nie zostały wyraźnie przyznane, są zastrzeżone przez firmę <value0/> i jej licencjodawców.",
-  "termsOfUse.usercontent.li2": "Udzielasz <value0/> ogólnoświatowej, niewyłącznej, bezpłatnej licencji na hostowanie, przechowywanie, reprodukcję, wyświetlanie i rozpowszechnianie Treści użytkownika tylko w zakresie niezbędnym do obsługi, konserwacji i ulepszania Platformy (oraz w celu moderacji, bezpieczeństwa i zgodności z prawem)."
+  "termsOfUse.usercontent.li2": "Udzielasz <value0/> ogólnoświatowej, niewyłącznej, bezpłatnej licencji na hostowanie, przechowywanie, reprodukcję, wyświetlanie i rozpowszechnianie Treści użytkownika tylko w zakresie niezbędnym do obsługi, konserwacji i ulepszania Platformy (oraz w celu moderacji, bezpieczeństwa i zgodności z prawem).",
+  "quizCertificateLibrary": "Szablony certyfikatów",
+  "quizCertificateLibraryHelp": "Wyświetl wbudowane projekty lub twórz i edytuj własne szablony.",
+  "quizCertificateSetupHelp": "Ustaw dostępność certyfikatu dla tego quizu. Projektami zarządzaj w Szablonach certyfikatów; przypisywanie i wydawanie będą dostępne później.",
+  "quizCertificateDefault": "Domyślny",
+  "quizCertificateSystem": "Wbudowany",
+  "quizCertificateCopy": "Utwórz kopię",
+  "quizCertificateReadOnly": "Wbudowane szablony są tylko do odczytu. Utwórz kopię, aby dostosować projekt.",
+  "quizCertificatePlaceholders": "Dostępne pola",
+  "quizCertificatePreviewHelp": "Podgląd używa przykładowych danych. Zewnętrzne obrazy i czcionki nie są ładowane.",
+  "quizCertificateSavePreview": "Zapisz szablon, aby zobaczyć zmiany w podglądzie."
 }

@@ -1797,5 +1797,15 @@
   "maintenanceWaiting": "The app is waiting for the server to respond before loading the rest of the experience.",
   "maintenanceCannotReach": "The server cannot be reached right now. Please try again later.",
   "maintenanceChecking": "Checking…",
-  "maintenanceRetry": "Try again"
+  "maintenanceRetry": "Try again",
+  "quizCertificateLibrary": "Certificate templates",
+  "quizCertificateLibraryHelp": "Preview built-in designs or create and edit your own certificate templates.",
+  "quizCertificateSetupHelp": "Configure certificate availability for this quiz. Manage designs and previews in Certificate templates; assigning a template and issuing certificates will be available later.",
+  "quizCertificateDefault": "Default",
+  "quizCertificateSystem": "Built-in",
+  "quizCertificateCopy": "Create copy",
+  "quizCertificateReadOnly": "Built-in templates are read-only. Create a copy to customize this design.",
+  "quizCertificatePlaceholders": "Available fields",
+  "quizCertificatePreviewHelp": "The preview uses sample data. External images and fonts are not loaded.",
+  "quizCertificateSavePreview": "Save the template to preview your changes."
 }

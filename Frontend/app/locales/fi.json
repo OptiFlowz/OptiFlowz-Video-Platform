@@ -1792,5 +1792,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong> videoiden isännöintiin, toimitukseen, toistoon ja niihin liittyviin teknisiin videopalveluihin;",
   "termsOfUse.ip.li1": "Alustan ja sen sisällön (videot, ääni, teksti, grafiikka, brändäys, ohjelmisto ja suunnittelu) omistaa <value0/> tai sen lisenssinantajat, ja niitä suojaavat immateriaalioikeudet.",
   "termsOfUse.ip.li3": "Kaikki oikeudet, joita ei ole nimenomaisesti myönnetty, pidättävät <value0/> ja sen lisenssinantajat.",
-  "termsOfUse.usercontent.li2": "Myönnät <value0/> maailmanlaajuisen, ei-yksinomaisen, rojaltivapaan lisenssin isännöidä, tallentaa, kopioida, näyttää ja jakaa Käyttäjäsisältöäsi vain, jos se on tarpeen alustan käyttämiseksi, ylläpitämiseksi ja parantamiseksi (ja moderoinnin, turvallisuuden ja lainmukaisuuden vuoksi)."
+  "termsOfUse.usercontent.li2": "Myönnät <value0/> maailmanlaajuisen, ei-yksinomaisen, rojaltivapaan lisenssin isännöidä, tallentaa, kopioida, näyttää ja jakaa Käyttäjäsisältöäsi vain, jos se on tarpeen alustan käyttämiseksi, ylläpitämiseksi ja parantamiseksi (ja moderoinnin, turvallisuuden ja lainmukaisuuden vuoksi).",
+  "quizCertificateLibrary": "Todistuspohjat",
+  "quizCertificateLibraryHelp": "Esikatsele valmiita malleja tai luo ja muokkaa omia todistuspohjiasi.",
+  "quizCertificateSetupHelp": "Määritä tämän testin todistuksen saatavuus. Hallitse malleja Todistuspohjat-osiossa; pohjan liittäminen ja todistusten myöntäminen tulevat saataville myöhemmin.",
+  "quizCertificateDefault": "Oletus",
+  "quizCertificateSystem": "Valmis",
+  "quizCertificateCopy": "Luo kopio",
+  "quizCertificateReadOnly": "Valmiita pohjia ei voi muokata. Luo kopio mukauttaaksesi mallia.",
+  "quizCertificatePlaceholders": "Käytettävissä olevat kentät",
+  "quizCertificatePreviewHelp": "Esikatselu käyttää esimerkkitietoja. Ulkoisia kuvia ja fontteja ei ladata.",
+  "quizCertificateSavePreview": "Tallenna pohja esikatsellaksesi muutokset."
 }

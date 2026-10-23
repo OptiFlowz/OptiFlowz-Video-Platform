@@ -1767,5 +1767,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong>, für Video-Hosting, Bereitstellung, Wiedergabe und zugehörige technische Videodienste;",
   "termsOfUse.ip.li1": "Die Plattform und ihre Inhalte (Videos, Audio, Text, Grafiken, Branding, Software und Design) sind Eigentum von <value0/> oder seinen Lizenzgebern und sind durch Gesetze zum Schutz des geistigen Eigentums geschützt.",
   "termsOfUse.ip.li3": "Alle nicht ausdrücklich gewährten Rechte bleiben <value0/> und seinen Lizenzgebern vorbehalten.",
-  "termsOfUse.usercontent.li2": "Sie gewähren <value0/> eine weltweite, nicht ausschließliche, gebührenfreie Lizenz zum Hosten, Speichern, Reproduzieren, Anzeigen und Verteilen Ihrer Benutzerinhalte, nur soweit dies für den Betrieb, die Wartung und die Verbesserung der Plattform (und für Moderation, Sicherheit und Einhaltung gesetzlicher Vorschriften) erforderlich ist."
+  "termsOfUse.usercontent.li2": "Sie gewähren <value0/> eine weltweite, nicht ausschließliche, gebührenfreie Lizenz zum Hosten, Speichern, Reproduzieren, Anzeigen und Verteilen Ihrer Benutzerinhalte, nur soweit dies für den Betrieb, die Wartung und die Verbesserung der Plattform (und für Moderation, Sicherheit und Einhaltung gesetzlicher Vorschriften) erforderlich ist.",
+  "quizCertificateLibrary": "Zertifikatvorlagen",
+  "quizCertificateLibraryHelp": "Sehen Sie integrierte Designs an oder erstellen und bearbeiten Sie eigene Vorlagen.",
+  "quizCertificateSetupHelp": "Legen Sie fest, ob dieses Quiz ein Zertifikat anbietet. Designs verwalten Sie unter Zertifikatvorlagen; Zuordnung und Ausstellung werden später verfügbar sein.",
+  "quizCertificateDefault": "Standard",
+  "quizCertificateSystem": "Integriert",
+  "quizCertificateCopy": "Kopie erstellen",
+  "quizCertificateReadOnly": "Integrierte Vorlagen sind schreibgeschützt. Erstellen Sie eine Kopie, um das Design anzupassen.",
+  "quizCertificatePlaceholders": "Verfügbare Felder",
+  "quizCertificatePreviewHelp": "Die Vorschau verwendet Beispieldaten. Externe Bilder und Schriftarten werden nicht geladen.",
+  "quizCertificateSavePreview": "Speichern Sie die Vorlage, um Ihre Änderungen anzusehen."
 }

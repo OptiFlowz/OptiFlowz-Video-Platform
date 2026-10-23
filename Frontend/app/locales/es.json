@@ -1782,5 +1782,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong>, para alojamiento, entrega, reproducción y servicios técnicos de vídeo relacionados;",
   "termsOfUse.ip.li1": "La Plataforma y su contenido (videos, audio, texto, gráficos, marcas, software y diseño) son propiedad de <value0/> o sus licenciantes y están protegidos por las leyes de propiedad intelectual.",
   "termsOfUse.ip.li3": "Cualquier derecho no otorgado expresamente está reservado por <value0/> y sus licenciantes.",
-  "termsOfUse.usercontent.li2": "Usted otorga a <value0/> una licencia mundial, no exclusiva y libre de regalías para alojar, almacenar, reproducir, mostrar y distribuir su Contenido de usuario solo según sea necesario para operar, mantener y mejorar la Plataforma (y para moderación, seguridad y cumplimiento legal)."
+  "termsOfUse.usercontent.li2": "Usted otorga a <value0/> una licencia mundial, no exclusiva y libre de regalías para alojar, almacenar, reproducir, mostrar y distribuir su Contenido de usuario solo según sea necesario para operar, mantener y mejorar la Plataforma (y para moderación, seguridad y cumplimiento legal).",
+  "quizCertificateLibrary": "Plantillas de certificados",
+  "quizCertificateLibraryHelp": "Previsualiza los diseños integrados o crea y edita tus propias plantillas.",
+  "quizCertificateSetupHelp": "Configura la disponibilidad del certificado para este cuestionario. Gestiona los diseños en Plantillas de certificados; la asignación y la emisión estarán disponibles más adelante.",
+  "quizCertificateDefault": "Predeterminada",
+  "quizCertificateSystem": "Integrada",
+  "quizCertificateCopy": "Crear copia",
+  "quizCertificateReadOnly": "Las plantillas integradas son de solo lectura. Crea una copia para personalizar el diseño.",
+  "quizCertificatePlaceholders": "Campos disponibles",
+  "quizCertificatePreviewHelp": "La vista previa utiliza datos de ejemplo. No se cargan imágenes ni fuentes externas.",
+  "quizCertificateSavePreview": "Guarda la plantilla para previsualizar los cambios."
 }

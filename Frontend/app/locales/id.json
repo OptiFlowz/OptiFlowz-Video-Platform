@@ -1792,5 +1792,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong>, untuk hosting video, pengiriman, pemutaran, dan layanan video teknis terkait;",
   "termsOfUse.ip.li1": "Platform dan kontennya (video, audio, teks, grafik, branding, perangkat lunak, dan desain) dimiliki oleh <value0/> atau pemberi lisensinya dan dilindungi oleh undang-undang kekayaan intelektual.",
   "termsOfUse.ip.li3": "Hak apa pun yang tidak diberikan secara tersurat dimiliki oleh <value0/> dan pemberi lisensinya.",
-  "termsOfUse.usercontent.li2": "Anda memberikan <value0/> lisensi yang berlaku di seluruh dunia, non-eksklusif, dan bebas royalti untuk menghosting, menyimpan, mereproduksi, menampilkan, dan mendistribusikan Konten Pengguna Anda hanya jika diperlukan untuk mengoperasikan, memelihara, dan meningkatkan Platform (dan untuk moderasi, keamanan, dan kepatuhan hukum)."
+  "termsOfUse.usercontent.li2": "Anda memberikan <value0/> lisensi yang berlaku di seluruh dunia, non-eksklusif, dan bebas royalti untuk menghosting, menyimpan, mereproduksi, menampilkan, dan mendistribusikan Konten Pengguna Anda hanya jika diperlukan untuk mengoperasikan, memelihara, dan meningkatkan Platform (dan untuk moderasi, keamanan, dan kepatuhan hukum).",
+  "quizCertificateLibrary": "Templat sertifikat",
+  "quizCertificateLibraryHelp": "Pratinjau desain bawaan atau buat dan edit templat sertifikat Anda sendiri.",
+  "quizCertificateSetupHelp": "Atur ketersediaan sertifikat untuk kuis ini. Kelola desain di Templat sertifikat; penautan templat dan penerbitan sertifikat akan tersedia nanti.",
+  "quizCertificateDefault": "Default",
+  "quizCertificateSystem": "Bawaan",
+  "quizCertificateCopy": "Buat salinan",
+  "quizCertificateReadOnly": "Templat bawaan hanya dapat dibaca. Buat salinan untuk menyesuaikan desain.",
+  "quizCertificatePlaceholders": "Kolom tersedia",
+  "quizCertificatePreviewHelp": "Pratinjau menggunakan data contoh. Gambar dan font eksternal tidak dimuat.",
+  "quizCertificateSavePreview": "Simpan templat untuk melihat perubahan."
 }

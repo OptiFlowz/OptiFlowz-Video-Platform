@@ -1792,5 +1792,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong>，用于视频托管、传输、播放以及相关技术视频服务；",
   "termsOfUse.ip.li1": "本平台及其内容（视频、音频、文本、图形、品牌、软件和设计）归<value0/>或其许可方所有，并受知识产权法保护。",
   "termsOfUse.ip.li3": "任何未明确授予的权利均由 <value0/> 及其许可方保留。",
-  "termsOfUse.usercontent.li2": "您授予 <value0/> 全球范围内的、非独占的、免版税的许可，以仅在运营、维护和改进平台（以及出于审核、安全和法律合规性）的需要时托管、存储、复制、展示和分发您的用户内容。"
+  "termsOfUse.usercontent.li2": "您授予 <value0/> 全球范围内的、非独占的、免版税的许可，以仅在运营、维护和改进平台（以及出于审核、安全和法律合规性）的需要时托管、存储、复制、展示和分发您的用户内容。",
+  "quizCertificateLibrary": "证书模板",
+  "quizCertificateLibraryHelp": "预览内置设计，或创建和编辑自己的证书模板。",
+  "quizCertificateSetupHelp": "设置此测验是否提供证书。在证书模板中管理设计；分配模板和颁发证书的功能将于日后提供。",
+  "quizCertificateDefault": "默认",
+  "quizCertificateSystem": "内置",
+  "quizCertificateCopy": "创建副本",
+  "quizCertificateReadOnly": "内置模板为只读。请创建副本以自定义设计。",
+  "quizCertificatePlaceholders": "可用字段",
+  "quizCertificatePreviewHelp": "预览使用示例数据，不会加载外部图片和字体。",
+  "quizCertificateSavePreview": "保存模板以预览更改。"
 }

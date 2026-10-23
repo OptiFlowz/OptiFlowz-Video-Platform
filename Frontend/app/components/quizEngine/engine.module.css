@@ -1042,3 +1042,68 @@ main.management .listTable thead tr > th, main.management .listTable tbody tr > 
 .certificateList h3, .certificateList p { overflow-wrap: anywhere; }
 .certificateFields { display: grid; gap: 16px; min-width: 0; }
 .page textarea.certificateCode { font-family: monospace; font-size: .9rem; line-height: 1.5; min-height: 160px; resize: vertical; }
+
+/* Certificate library and saved-template PDF editor. */
+.certificateFilter { display: flex; align-items: center; gap: 10px; background: var(--background2); border: 1px solid var(--border1); border-radius: 14px; padding: 0 14px; flex: 1; max-width: 560px; min-width: 180px; }
+.certificateFilter svg { flex: 0 0 20px; width: 20px; height: 20px; }
+.page .certificateFilter input { border: 0; background: transparent; width: 100%; min-width: 0; padding: 14px 0; }
+.certificateGallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 16px; }
+.certificateCard { position: relative; display: flex; flex-direction: column; overflow: hidden; min-width: 0; padding: 0; text-align: start; border: 1px solid var(--border1); border-radius: 22px; background: var(--background2); color: var(--text1); cursor: pointer; transition: background-color .18s ease, border-color .18s ease; }
+.certificateCard:hover { background: var(--background3); border-color: var(--accentBlue2); }
+.certificateCard:focus-within { outline: 2px solid var(--accentBlue2); outline-offset: 3px; }
+.certificateCardTop { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.certificateCard h2 { margin: 0; font-size: 1.2rem; }
+.certificateCard p { margin: 0; color: var(--text2); font-size: .95rem; line-height: 1.5; }
+.certificateCard h2, .certificateCard p { overflow-wrap: anywhere; }
+.certificateCardBottom { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: auto; font-size: .85rem; color: var(--text2); }
+.certificateCardBottom > :last-child { color: var(--accentBlue2); }
+.certificateWorkspace { display: grid; grid-template-columns: minmax(280px, .85fr) minmax(0, 1.15fr); gap: 24px; align-items: start; }
+.certificateForm { min-width: 0; padding: 24px; border-radius: 24px; background: var(--background2); }
+.certificateFields { padding: 0; margin: 0; border: 0; }
+.certificateFields :global(.quizPopupGrid) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.certificatePreview { position: sticky; top: calc(var(--headerHeight, 90px) + 20px); min-width: 0; border-radius: 24px; background: var(--background2); padding: 20px; }
+.certificatePreview h2 { margin: 0; font-size: 1.1rem; }
+.certificatePreview .toolbar { margin-bottom: 12px; }
+.certificatePreview p { margin: 10px 0; }
+.certificatePdf { display: block; width: 100%; height: auto; margin-top: 16px; border: 1px solid var(--border1); border-radius: 12px; background: var(--background1); }
+.certificatePreviewEmpty { display: grid; place-items: center; padding: 28px; margin-top: 16px; min-height: 300px; background: var(--background1); color: var(--text2); text-align: center; border-radius: 12px; }
+.certificatePlaceholderHelp { margin-top: 20px; font-size: .9rem; color: var(--text2); }
+.certificatePlaceholderHelp summary { cursor: pointer; color: var(--text1); }
+.certificatePlaceholderHelp ul { display: grid; gap: 6px; padding-inline-start: 20px; }
+.certificatePlaceholderHelp code { overflow-wrap: anywhere; }
+.page .certificateToggle { margin: 0; background: var(--background2); }
+@media (max-width: 1100px) { .certificateWorkspace { grid-template-columns: 1fr; } .certificatePreview { position: static; } }
+@media (max-width: 600px) { .certificateForm, .certificatePreview { padding: 18px; } .certificateFields :global(.quizPopupGrid) { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .certificateCard { transition: none; } }
+
+.page .certificateFields :global(.formGroup) { display: flex; flex-direction: column; gap: 8px; margin: 0; min-width: 0; }
+.page .certificateFields input, .page .certificateFields textarea, .page .certificateFields :global(.customSelectTrigger) { width: 100%; padding: 12px 14px; border: 0; border-radius: 12px; background: color-mix(in srgb, var(--background2) 94%, var(--text1)); color: var(--text1); font: inherit; }
+.page .certificateFields .select { width: 100%; min-width: 0; }
+.page .certificateFields textarea.certificateCode { font-family: monospace; font-size: .85rem; line-height: 1.5; }
+.certificateCard .badge { background: var(--background3); }
+
+.certificatePaper { position: relative; width: 100%; overflow: hidden; border-radius: 12px; background: var(--background1); }
+.certificatePaper iframe { position: absolute; top: 0; left: 0; border: 0; transform-origin: top left; }
+.certificatePreviewTabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border1); margin-top: 16px; margin-bottom: 12px; }
+.certificatePreviewTabs button { padding: 10px 14px; background: transparent; border: 0; border-bottom: 3px solid transparent; color: var(--text2); cursor: pointer; }
+.certificatePreviewTabs button[aria-selected='true'] { color: var(--accentBlue2); border-bottom-color: var(--accentBlue2); }
+.certificatePreview .certificatePreviewHint { font-size: .85rem; line-height: 1.5; color: var(--text2); margin: 0 0 16px; }
+.certificatePreview .certificatePdf { margin: 0 0 12px; }
+.certificateTab > .toolbar { margin: 0; }
+.certificateTab > .toolbar .actions { margin: 0; }
+.certificateTab > .sectionHelp { margin: 0; }
+
+.certificateThumbnail { position: absolute; right: -66px; top: 50%; display: flex; align-items: center; justify-content: flex-start; width: 164px; height: 164px; overflow: hidden; border: 1px solid var(--border1); border-radius: 22px; background: var(--background1); box-shadow: 0 8px 24px var(--seethroughtBlack); transform: translateY(-50%) rotate(-9deg); transition: transform 220ms ease; pointer-events: none; }
+.certificateThumbnail .certificatePaper { flex-shrink: 0; border-radius: 0; }
+.certificateThumbnail iframe { pointer-events: none; }
+.certificateCardBody { display: flex; flex: 1; flex-direction: column; gap: 12px; min-height: 196px; padding: 20px 120px 20px 20px; }
+.certificateCardBottom { padding-top: 8px; align-items: center; }
+.page .certificateCardAction { --quizControlHover: transparent; padding: 0; border: 0; border-radius: 0; background: none; color: var(--accentBlue2); font: inherit; cursor: pointer; }
+.certificateCardAction::after { content: ""; position: absolute; inset: 0; }
+.page .certificateCardAction:hover { background: none; }
+.certificateCardAction:focus-visible { outline: none; }
+
+@media (max-width: 380px) { .certificateThumbnail { width: 140px; height: 140px; right: -64px; } .certificateCardBody { padding: 18px 96px 18px 16px; } }
+
+.certificateCard:is(:hover, :focus-within) .certificateThumbnail { transform: translate(-6px, -50%) rotate(-5deg); }
+@media (prefers-reduced-motion: reduce) { .certificateThumbnail { transition: none; } .certificateCard:is(:hover, :focus-within) .certificateThumbnail { transform: translateY(-50%) rotate(-9deg); } }

@@ -1872,5 +1872,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong>, pro hostování videa, doručování, přehrávání a související technické video služby;",
   "termsOfUse.ip.li1": "Platformu a její obsah (videa, zvuk, text, grafiku, branding, software a design) vlastní <value0/> nebo její poskytovatelé licencí a jsou chráněny zákony o duševním vlastnictví.",
   "termsOfUse.ip.li3": "Jakákoli práva, která nejsou výslovně udělena, si vyhrazuje <value0/> a její poskytovatelé licencí.",
-  "termsOfUse.usercontent.li2": "<value0/> udělujete celosvětovou, nevýhradní, bezplatnou licenci k hostování, ukládání, reprodukování, zobrazování a distribuci vašeho uživatelského obsahu pouze v případě, že je to nezbytné pro provoz, údržbu a zlepšování platformy (a pro moderování, zabezpečení a dodržování právních předpisů)."
+  "termsOfUse.usercontent.li2": "<value0/> udělujete celosvětovou, nevýhradní, bezplatnou licenci k hostování, ukládání, reprodukování, zobrazování a distribuci vašeho uživatelského obsahu pouze v případě, že je to nezbytné pro provoz, údržbu a zlepšování platformy (a pro moderování, zabezpečení a dodržování právních předpisů).",
+  "quizCertificateLibrary": "Šablony certifikátů",
+  "quizCertificateLibraryHelp": "Prohlédněte si vestavěné návrhy nebo vytvářejte a upravujte vlastní šablony.",
+  "quizCertificateSetupHelp": "Nastavte dostupnost certifikátu pro tento kvíz. Návrhy spravujte v Šablonách certifikátů; přiřazení a vydávání budou dostupné později.",
+  "quizCertificateDefault": "Výchozí",
+  "quizCertificateSystem": "Vestavěná",
+  "quizCertificateCopy": "Vytvořit kopii",
+  "quizCertificateReadOnly": "Vestavěné šablony jsou pouze pro čtení. Pro úpravu návrhu vytvořte kopii.",
+  "quizCertificatePlaceholders": "Dostupná pole",
+  "quizCertificatePreviewHelp": "Náhled používá ukázková data. Externí obrázky a písma se nenačítají.",
+  "quizCertificateSavePreview": "Uložte šablonu pro zobrazení změn v náhledu."
 }

@@ -1792,5 +1792,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong> video mitināšanai, piegādei, atskaņošanai un saistītiem tehniskajiem video pakalpojumiem;",
   "termsOfUse.ip.li1": "Platforma un tās saturs (video, audio, teksts, grafika, zīmols, programmatūra un dizains) pieder <value0/> vai tā licences devējiem, un tos aizsargā intelektuālā īpašuma likumi.",
   "termsOfUse.ip.li3": "Visas tiesības, kas nav skaidri piešķirtas, patur <value0/> un tā licences devēji.",
-  "termsOfUse.usercontent.li2": "Jūs piešķirat <value0/> vispasaules, neekskluzīvu, bez autoratlīdzības licenci, lai mitinātu, uzglabātu, reproducētu, parādītu un izplatītu savu Lietotāja saturu tikai tiktāl, cik tas ir nepieciešams platformas darbībai, uzturēšanai un uzlabošanai (un moderēšanai, drošībai un tiesiskajai atbilstībai)."
+  "termsOfUse.usercontent.li2": "Jūs piešķirat <value0/> vispasaules, neekskluzīvu, bez autoratlīdzības licenci, lai mitinātu, uzglabātu, reproducētu, parādītu un izplatītu savu Lietotāja saturu tikai tiktāl, cik tas ir nepieciešams platformas darbībai, uzturēšanai un uzlabošanai (un moderēšanai, drošībai un tiesiskajai atbilstībai).",
+  "quizCertificateLibrary": "Sertifikātu veidnes",
+  "quizCertificateLibraryHelp": "Priekšskatiet iebūvētos dizainus vai veidojiet un rediģējiet savas veidnes.",
+  "quizCertificateSetupHelp": "Iestatiet sertifikāta pieejamību šim testam. Pārvaldiet dizainus sadaļā Sertifikātu veidnes; veidņu piesaiste un sertifikātu izsniegšana būs pieejama vēlāk.",
+  "quizCertificateDefault": "Noklusējuma",
+  "quizCertificateSystem": "Iebūvēta",
+  "quizCertificateCopy": "Izveidot kopiju",
+  "quizCertificateReadOnly": "Iebūvētās veidnes ir tikai lasāmas. Lai pielāgotu dizainu, izveidojiet kopiju.",
+  "quizCertificatePlaceholders": "Pieejamie lauki",
+  "quizCertificatePreviewHelp": "Priekšskatījumā izmantoti parauga dati. Ārējie attēli un fonti netiek ielādēti.",
+  "quizCertificateSavePreview": "Saglabājiet veidni, lai priekšskatītu izmaiņas."
 }

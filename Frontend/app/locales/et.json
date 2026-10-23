@@ -1792,5 +1792,15 @@
   "privacyPolicy.sharing.li1": "<strong><value0/></strong> video hostimise, edastamise, taasesituse ja seotud tehniliste videoteenuste jaoks;",
   "termsOfUse.ip.li1": "Platvorm ja selle sisu (videod, heli, tekst, graafika, bränd, tarkvara ja kujundus) kuuluvad <value0/> või selle litsentsiandjatele ning on kaitstud intellektuaalomandi seadustega.",
   "termsOfUse.ip.li3": "Kõik õigused, mida pole selgesõnaliselt antud, reserveerivad <value0/> ja selle litsentsiandjad.",
-  "termsOfUse.usercontent.li2": "Annate <value0/> ülemaailmse, mitteeksklusiivse, kasutustasuta litsentsi oma kasutajasisu hostimiseks, salvestamiseks, reprodutseerimiseks, kuvamiseks ja levitamiseks ainult nii, nagu see on vajalik platvormi käitamiseks, hooldamiseks ja täiustamiseks (ning modereerimiseks, turvalisuseks ja seaduste järgimiseks)."
+  "termsOfUse.usercontent.li2": "Annate <value0/> ülemaailmse, mitteeksklusiivse, kasutustasuta litsentsi oma kasutajasisu hostimiseks, salvestamiseks, reprodutseerimiseks, kuvamiseks ja levitamiseks ainult nii, nagu see on vajalik platvormi käitamiseks, hooldamiseks ja täiustamiseks (ning modereerimiseks, turvalisuseks ja seaduste järgimiseks).",
+  "quizCertificateLibrary": "Sertifikaadimallid",
+  "quizCertificateLibraryHelp": "Vaata sisseehitatud kujundusi või loo ja muuda oma malle.",
+  "quizCertificateSetupHelp": "Määra selle viktoriini sertifikaadi saadavus. Halda kujundusi jaotises Sertifikaadimallid; mallide sidumine ja sertifikaatide väljastamine lisanduvad hiljem.",
+  "quizCertificateDefault": "Vaikimisi",
+  "quizCertificateSystem": "Sisseehitatud",
+  "quizCertificateCopy": "Loo koopia",
+  "quizCertificateReadOnly": "Sisseehitatud mallid on kirjutuskaitstud. Kujunduse muutmiseks loo koopia.",
+  "quizCertificatePlaceholders": "Saadaolevad väljad",
+  "quizCertificatePreviewHelp": "Eelvaade kasutab näidisandmeid. Väliseid pilte ja fonte ei laadita.",
+  "quizCertificateSavePreview": "Muudatuste eelvaateks salvesta mall."
 }
