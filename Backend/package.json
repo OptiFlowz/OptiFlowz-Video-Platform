@@ -1,6 +1,7 @@
 {
   "name": "optiflowz-video-platform-backend",
   "version": "1.0.0",
+  "packageManager": "npm@11.13.0",
   "main": "src/server.js",
   "type": "module",
   "scripts": {

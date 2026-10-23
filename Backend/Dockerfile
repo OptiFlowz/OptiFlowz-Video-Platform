@@ -2,6 +2,10 @@
 ARG NODE_VERSION=22.22.3
 FROM node:${NODE_VERSION}-slim AS base
 
+# Match the npm version used for the lockfile; npm 10 resolves optional peers differently.
+ARG NPM_VERSION=11.13.0
+RUN npm install --global npm@${NPM_VERSION}
+
 WORKDIR /app
 
 # 2) Build sloj
