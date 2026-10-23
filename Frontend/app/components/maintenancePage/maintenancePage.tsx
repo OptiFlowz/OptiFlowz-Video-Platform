@@ -1,3 +1,5 @@
+import { useI18n } from "~/i18n";
+
 const maintenanceAnimation = `
 <svg width="660" height="280" viewBox="60 90 660 280" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -125,18 +127,19 @@ type MaintenancePageProps = {
 };
 
 export default function MaintenancePage({ isChecking, onRetry }: MaintenancePageProps) {
+  const { t } = useI18n();
   return (
     <main className="maintenance-shell">
       <section className="maintenance-card">
         <div className="maintenance-copy">
           <span className="maintenance-badge">
-            {isChecking ? "Checking server status" : "Maintenance mode"}
+            {isChecking ? t("maintenanceCheckingStatus") : t("maintenanceMode")}
           </span>
-          <h1>{isChecking ? "Connecting to the server..." : "We are temporarily unavailable."}</h1>
+          <h1>{isChecking ? t("maintenanceConnecting") : t("maintenanceUnavailable")}</h1>
           <p>
             {isChecking
-              ? "The app is waiting for the server to respond before loading the rest of the experience."
-              : "The server cannot be reached right now. Please try again later."}
+              ? t("maintenanceWaiting")
+              : t("maintenanceCannotReach")}
           </p>
           <button
             type="button"
@@ -144,7 +147,7 @@ export default function MaintenancePage({ isChecking, onRetry }: MaintenancePage
             onClick={onRetry}
             disabled={isChecking}
           >
-            {isChecking ? "Checking..." : "Try again"}
+            {isChecking ? t("maintenanceChecking") : t("maintenanceRetry")}
           </button>
         </div>
         <div

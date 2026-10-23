@@ -1,3 +1,4 @@
+import { useI18n } from "~/i18n";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 type Props = {
@@ -7,6 +8,7 @@ type Props = {
 };
 
 function Slider({props}: {props: Props}){
+    const { t } = useI18n();
     const sliderHolderRef = useRef<HTMLDivElement>(null);
     const autoSlideRef = useRef<ReturnType<typeof setInterval>>(null);
     const [selectedIndex, setSelectedIndex] = useState(0);
@@ -139,10 +141,10 @@ function Slider({props}: {props: Props}){
 
     const imagesElement = useMemo(() => {
         const normalArray =  props.images.map((imageURL, index) => (
-            <img key={`sliderImage${index}`} className={`photo-large photo-large${index} ${index === 0 ? "selected" : ''}`} src={imageURL} alt="Hero Image Large" />
+            <img key={`sliderImage${index}`} className={`photo-large photo-large${index} ${index === 0 ? "selected" : ''}`} src={imageURL} alt="" />
         ));
         normalArray.push(
-            <img key={`sliderImage${3}`} className={`photo-large photo-large${3}`} src={props.images[0]} alt="Hero Image Large" />
+            <img key={`sliderImage${3}`} className={`photo-large photo-large${3}`} src={props.images[0]} alt="" />
         )
 
         return normalArray;
@@ -155,7 +157,7 @@ function Slider({props}: {props: Props}){
             <div className="image-grid">
                 {imagesElement}
             </div>
-            <div className="heroSlideControls" aria-label="Hero slides">
+            <div className="heroSlideControls" aria-label={t("heroSlides")}>
                 {props.images.map((_, index) => (
                     <button
                         key={`heroSlideControl${index}`}

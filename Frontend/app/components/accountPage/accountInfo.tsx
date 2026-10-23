@@ -63,7 +63,7 @@ function AccountInfo(){
             <img
                 className="profilePhoto"
                 src={userData?.user && (userData.user?.image_url || DefaultProfile)}
-                alt="Profile"
+                alt={t("profilePhotoAlt")}
                 decoding="async"
                 onError={e => {
                     e.currentTarget.src = DefaultProfile;

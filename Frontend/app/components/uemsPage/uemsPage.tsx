@@ -1,3 +1,4 @@
+import { useI18n } from "~/i18n";
 import HeroLarge from "../../../assets/Slider1.webp";
 import HeroMedium from "../../../assets/Slider2.webp";
 import HeroSmall from "../../../assets/Slider3.webp";
@@ -13,34 +14,34 @@ function getReadingLinkType(label: string): string {
     const normalized = label.toLowerCase();
 
     if (normalized.includes("textbook") || normalized.includes("handbook")) {
-        return "Textbook";
+        return "uemsTypeTextbook";
     }
 
     if (normalized.includes("manual")) {
-        return "Manual";
+        return "uemsTypeManual";
     }
 
     if (normalized.includes("guideline") || normalized.includes("recommendation")) {
-        return "Guideline";
+        return "uemsTypeGuideline";
     }
 
     if (normalized.includes("consensus")) {
-        return "Consensus";
+        return "uemsTypeConsensus";
     }
 
     if (normalized.includes("review") || normalized.includes("meta-analysis")) {
-        return "Review";
+        return "uemsTypeReview";
     }
 
     if (normalized.includes("chapter") || normalized.includes("principles of")) {
-        return "Book chapter";
+        return "uemsTypeBookchapter";
     }
 
     if (normalized.includes("statpearls")) {
-        return "Reference";
+        return "uemsTypeReference";
     }
 
-    return "Article";
+    return "uemsTypeArticle";
 }
 
 type ReadingList = {
@@ -54,8 +55,8 @@ type ReadingList = {
 const readingLists: ReadingList[] = [
     {
         id: "uemsMis",
-        navLabel: "UEMS MIS Reading List",
-        title: "UEMS MIS Reading List",
+        navLabel: "uemsMisTitle",
+        title: "uemsMisTitle",
         pdfHref: "https://optiflowzstorage.com/Reading%20List%20UEMS%20MIS.docx.pdf",
         links: [
             { label: "EAES recommendations for recovery plan in minimally invasive surgery amid COVID-19", href: "https://pubmed.ncbi.nlm.nih.gov/33170335/" },
@@ -75,8 +76,8 @@ const readingLists: ReadingList[] = [
     },
     {
         id: "uemsRas",
-        navLabel: "UEMS RAS Reading List",
-        title: "UEMS RAS Reading List",
+        navLabel: "uemsRasTitle",
+        title: "uemsRasTitle",
         pdfHref: "https://optiflowzstorage.com/Reading%20List%20UEMS%20Robotics.docx.pdf",
         links: [
             { label: "Da Vinci Xi system user manual", href: "https://www.lmc-clients.com/intuitive/2023/Resources/StaffingGuide/1007573-09-USrD-Xi-ORstaff-InServiceGuide-OS4v9.pdf" },
@@ -93,6 +94,7 @@ const readingLists: ReadingList[] = [
 ];
 
 function UemsReadingList() {
+    const { t, locale } = useI18n();
     const paragraphRef = useRef<HTMLDivElement>(null);
 
     useLayoutEffect(() => {
@@ -109,29 +111,29 @@ function UemsReadingList() {
         paragraphRef.current.querySelectorAll("p").forEach((p) => {
             p.style.width = `${maxWidth}px`;
         });
-    }, []);
+    }, [locale]);
 
     return <>
         <main className="homePage py-10">
             <div className="hero">
                 <span className="titles">
-                    <h2 className="relative w-fit font-bold text-(--text1) text-5xl max-[1300px]:text-[2.2rem] max-[1160px]:text-[2rem] max-[800px]:text-[2rem] max-[500px]:text-2xl">UEMS<br />Reading List</h2>
+                    <h2 className="relative w-fit font-bold text-(--text1) text-5xl max-[1300px]:text-[2.2rem] max-[1160px]:text-[2rem] max-[800px]:text-[2rem] max-[500px]:text-2xl">UEMS<br />{t("uemsReadingListTitle")}</h2>
 
                     <div ref={paragraphRef} className="paragraphHolder">
                         <p className="paragraph paragraph0 selected mt-5 mb-7.5 max-[800px]:mb-0 font-medium text-lg max-[1300px]:text-[1rem] max-[1160px]:text-[0.85rem] max-[500px]:mt-3 max-[450px]:text-[.85rem] text-(--text1)">
-                            Direct links to the UEMS MIS and robotics reading materials.
+                            {t("uemsReadingIntro")}
                         </p>
 
                         <p className="paragraph paragraph1 mt-5 mb-7.5 max-[800px]:mb-0 font-medium text-lg max-[1300px]:text-[1rem] max-[1160px]:text-[0.85rem] max-[500px]:mt-3 max-[450px]:text-[.85rem] text-(--text1)">
-                            Open a paper directly or use the PDF link for the original full list.
+                            {t("uemsReadingInstructions")}
                         </p>
 
                         <p className="paragraph paragraph2 mt-5 mb-7.5 max-[800px]:mb-0 font-medium text-lg max-[1300px]:text-[1rem] max-[1160px]:text-[0.85rem] max-[500px]:mt-3 max-[450px]:text-[.85rem] text-(--text1)">
-                            Nothing extra on the page beyond the reading links themselves.
+                            {t("uemsReadingSimple")}
                         </p>
                         
                         <p className="paragraph paragraph3 selected mt-5 mb-7.5 max-[800px]:mb-0 font-medium text-lg max-[1300px]:text-[1rem] max-[1160px]:text-[0.85rem] max-[500px]:mt-3 max-[450px]:text-[.85rem] text-(--text1)">
-                            Direct links to the UEMS MIS and robotics reading materials.
+                            {t("uemsReadingIntro")}
                         </p>
                     </div>
                 </span>
@@ -151,7 +153,7 @@ function UemsReadingList() {
 
                 <section className="topNav">
                     {readingLists.map((list) => (
-                        <a key={list.id} href={`#${list.id}`}>{list.navLabel}</a>
+                        <a key={list.id} href={`#${list.id}`}>{t(list.navLabel)}</a>
                     ))}
                 </section>
 
@@ -159,7 +161,7 @@ function UemsReadingList() {
                     {readingLists.map((list) => (
                         <section key={list.id} id={list.id} className="uemsListSection">
                             <div className="uemsListHeader">
-                                <h3>{list.title}</h3>
+                                <h3>{t(list.title)}</h3>
                                 {/* <a className="pdfLink" href={list.pdfHref} target="_blank" rel="noreferrer">
                                     Open PDF with full links
                                 </a> */}
@@ -171,7 +173,7 @@ function UemsReadingList() {
                                         <span>{index + 1}.</span>
                                         <div>
                                             <p>{link.label}</p>
-                                            <small>{getReadingLinkType(link.label)}</small>
+                                            <small>{t(getReadingLinkType(link.label))}</small>
                                         </div>
                                     </a>
                                 ))}

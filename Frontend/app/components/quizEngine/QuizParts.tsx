@@ -34,10 +34,9 @@ function PartCard({ title, meta, children, image, video = false, editable, busy,
   return <article className={`${styles.partCard} ${styles.selectablePartCard}`} >
     {editable && <input className={styles.candidateCheckbox} type="checkbox" aria-label={`${t('quizSelect')}: ${title}`} checked={selected} disabled={busy} onChange={event => onSelect(event.target.checked)} />}
     <div className={styles.selectedPartContent}>
-    <div className={styles.partMeta}>{meta}</div>
     <div className={styles.partCardBody}><div className={styles.partIdentity}>
       {video && (image ? <img src={image} alt="" className={styles.partThumbnail} /> : <div className={styles.partThumbnail}>{t('quizNoThumbnail')}</div>)}
-      <div className={styles.partText}><p>{title}</p>{children}</div>
+      <div className={styles.partText}><div className={styles.partMeta}>{meta}</div><p>{title}</p>{children}</div>
     </div>{editable && <div className={styles.partActions}>
       <button type="button" disabled={busy} onClick={onEdit}>{t('adminEdit')}</button>
       <button type="button" className={styles.partRemove} disabled={busy} onClick={onRemove}>{t('quizRemove')}</button>

@@ -9,7 +9,7 @@ function ChairPopup({props, open, type, onClose}: {props: VideoT, open: boolean,
 
     const personArray = props?.people?.filter((person) => person?.type == type)?.map((item, index) => (
         <Link to={`/person/${encodeURIComponent(item.id)}`} onClick={onClose} key={`person${index}`} className="chairItem">
-            <img src={item?.image_url} alt="Profile" />
+            <img src={item?.image_url} alt={t("profilePhotoAlt")} />
             <span>
                 <h3>{item?.name}</h3>
                 <p className="weakText text-sm">{t("appearsOnVideos", { count: item?.total_video_count ?? 0 })}</p>

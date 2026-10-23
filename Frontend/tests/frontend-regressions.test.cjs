@@ -1147,6 +1147,7 @@ test('a player mounted after video loading survives pending layout measurements 
     return { top: 100, left: 50, width: measured ? 800 : 0, height: measured ? 450 : 0 };
   };
   const load = modules({
+    '~/i18n': i18n,
     'next/navigation': { usePathname: () => pathname, useRouter: () => ({ push: () => {} }) },
     '~/components/playPage/playerCollection/muxPlayer': { default: ({ videoId }) => React.createElement('div', { 'data-media': videoId }) },
     './useFloatingMiniPlayer': { useFloatingMiniPlayer: () => ({ miniPlayerRef: React.useRef(null), safeAreaRef: React.useRef(null), isPositionReady: true }) },

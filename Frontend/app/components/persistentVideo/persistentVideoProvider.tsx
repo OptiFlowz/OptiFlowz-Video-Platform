@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "~/i18n";
+
 import { usePathname, useRouter } from "next/navigation";
 import {
   lazy,
@@ -62,6 +64,7 @@ export function usePersistentVideo() {
 }
 
 export default function PersistentVideoProvider({ children }: { children: ReactNode }) {
+  const { t } = useI18n();
   const pathname = usePathname();
   const router = useRouter();
   const [session, setSession] = useState<PlayerSession | null>(null);
@@ -350,8 +353,8 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
                 type="button"
                 className="persistent-video-player__action persistent-video-player__desktop-expand"
                 onClick={expandMiniPlayer}
-                aria-label="Open full video"
-                title="Open full video"
+                aria-label={t("miniPlayerOpenVideo")}
+                title={t("miniPlayerOpenVideo")}
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M21 16v5h-5" />
@@ -361,8 +364,8 @@ export default function PersistentVideoProvider({ children }: { children: ReactN
                 type="button"
                 className="persistent-video-player__action"
                 onClick={closeMiniPlayer}
-                aria-label="Close mini player"
-                title="Close mini player"
+                aria-label={t("miniPlayerClose")}
+                title={t("miniPlayerClose")}
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="m6 6 12 12M18 6 6 18" />

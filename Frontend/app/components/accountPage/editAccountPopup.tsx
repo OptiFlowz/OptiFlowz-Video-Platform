@@ -242,7 +242,7 @@ function EditAccountPopup({ open, onClose }: { open: boolean; onClose: () => voi
                     ? DefaultProfile
                     : previewUrl || userData?.user?.image_url || DefaultProfile
                 }
-                alt="Profile pic"
+                alt={t("profilePhotoAlt")}
                 onError={e => {
                     e.currentTarget.src = DefaultProfile;
                 }}

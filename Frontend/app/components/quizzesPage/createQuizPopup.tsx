@@ -1,3 +1,4 @@
+import DurationInput from '~/components/library/DurationInput';
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useI18n } from "~/i18n";
@@ -263,18 +264,10 @@ function CreateQuizPopup({
 
             <div className="quizPopupGrid">
               <div className="formGroup">
-                <label htmlFor="quizTimeLimit">{t("quizTimeLimitSeconds")}</label>
-                <input
-                  id="quizTimeLimit"
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={timeLimitSeconds}
-                  onChange={(event) => setTimeLimitSeconds(event.target.value)}
-                  disabled={isSubmitting}
-                  className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
-                />
-                <p className="quizPopupHint">{t("quizNoTimeLimitHint")}</p>
+                <label htmlFor="quizTimeLimit">{t("quizTimeLimitLabel")}</label>
+                <DurationInput id="quizTimeLimit" label={t("quizTimeLimitLabel")} value={Number(timeLimitSeconds) || null}
+                  onChange={value => setTimeLimitSeconds(String(value ?? 0))} disabled={isSubmitting} />
+                <p className="quizPopupHint">{t("durationUnlimitedHelp")}</p>
               </div>
 
               <div className="formGroup">

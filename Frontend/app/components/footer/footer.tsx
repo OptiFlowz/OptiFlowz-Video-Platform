@@ -82,7 +82,7 @@ function Footer() {
 
             <span className="footerCopyright">
                 <p className="inline text-(--accentBlue2) italic">{t("footerCopyright")}</p>
-                &nbsp;-&nbsp;Copyright © {new Date().getFullYear()}&nbsp;-&nbsp;All rights reserved
+                &nbsp;-&nbsp;{t("footerRights", { year: new Date().getFullYear() })}
             </span>
         </footer>
     );

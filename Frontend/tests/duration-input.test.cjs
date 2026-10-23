@@ -1,0 +1,42 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const ts = require('typescript');
+const React = require('react');
+const { JSDOM } = require('jsdom');
+
+test('duration segments round-trip seconds, support keyboard editing, clear to unlimited and preserve loaded values', async t => {
+  const dom = new JSDOM('<div id="root"></div>');
+  const names = ['window', 'document', 'HTMLElement', 'IS_REACT_ACT_ENVIRONMENT'];
+  const previous = new Map(names.map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)]));
+  Object.assign(globalThis, { window: dom.window, document: dom.window.document, HTMLElement: dom.window.HTMLElement, IS_REACT_ACT_ENVIRONMENT: true });
+  const { act } = React, { createRoot } = require('react-dom/client');
+  const root = createRoot(document.getElementById('root'));
+  t.after(async () => { await act(async () => root.unmount()); dom.window.close(); for (const [name, descriptor] of previous) { if (descriptor) Object.defineProperty(globalThis, name, descriptor); else delete globalThis[name]; } });
+  const code = ts.transpileModule(fs.readFileSync('app/components/library/DurationInput.tsx', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
+  const mod = { exports: {} };
+  new Function('require', 'module', 'exports', code)(name => name === '~/i18n' ? { useI18n: () => ({ t: key => key }) } : name.endsWith('.css') ? { __esModule: true, default: {} } : require(name), mod, mod.exports);
+  const DurationInput = mod.exports.default;
+  let setValue, value, disabled = false;
+  const changes = [];
+  function Harness() { const [seconds, setSeconds] = React.useState(3661); value = seconds; setValue = setSeconds; return React.createElement(DurationInput, { value: seconds, label: 'Time limit', disabled, onChange: next => { changes.push(next); setSeconds(next); } }); }
+  await act(async () => root.render(React.createElement(Harness)));
+  const fields = () => [...document.querySelectorAll('input')];
+  assert.deepEqual(fields().map(el => el.value), ['01', '01', '01']);
+  assert.equal(changes.length, 0);
+  const enter = async (index, text) => act(async () => { const el = fields()[index]; Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(el, text); el.dispatchEvent(new window.Event('input', { bubbles: true })); });
+  await enter(1, '30'); assert.equal(value, 5401);
+  await enter(2, '99'); assert.equal(value, 5459); assert.equal(fields()[2].value, '59');
+  await enter(0, '-1'); assert.equal(value, 5459);
+  await enter(0, '123'); assert.equal(value, 5459);
+  await act(async () => fields()[2].dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true })));
+  assert.equal(value, 5458);
+  await enter(0, ''); await enter(1, ''); await enter(2, ''); assert.equal(value, null);
+  await act(async () => fields()[0].dispatchEvent(new window.FocusEvent('focusout', { bubbles: true })));
+  assert.deepEqual(fields().map(el => el.value), ['00', '00', '00']);
+  await act(async () => setValue(900)); assert.deepEqual(fields().map(el => el.value), ['00', '15', '00']);
+  await enter(0, '99'); await enter(1, '59'); await enter(2, '59'); assert.equal(value, 359999);
+  const beforeLoad = changes.length;
+  await act(async () => setValue(360001)); assert.deepEqual(fields().map(el => el.value), ['100', '00', '01']); assert.equal(changes.length, beforeLoad, 'existing long limits must not be silently truncated');
+  disabled = true; await act(async () => root.render(React.createElement(Harness))); assert.ok(fields().every(el => el.disabled));
+});

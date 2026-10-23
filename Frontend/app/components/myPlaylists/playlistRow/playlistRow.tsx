@@ -287,7 +287,7 @@ function PlaylistRow({
           />
           <span className="videoInfo">
             <div className="relative">
-              <img src={props?.thumbnail_url || DefaultThumbnail} alt="Thumbnail" loading="lazy" decoding="async" />
+              <img src={props?.thumbnail_url || DefaultThumbnail} alt={t("thumbnail")} loading="lazy" decoding="async" />
             </div>
             <span className="flex flex-col gap-0.5 rounded-none!">
               <h3>{props?.title}</h3>
@@ -341,7 +341,7 @@ function PlaylistRow({
                 <div className="flex items-center gap-3 px-4 pb-3 border-b border-(--border1)">
                   <img
                     src={props?.thumbnail_url || DefaultThumbnail}
-                    alt="Thumbnail"
+                    alt={t("thumbnail")}
                     className="h-12 w-20 rounded-lg object-cover"
                   />
                   <p className="text-sm font-medium line-clamp-2 flex-1">

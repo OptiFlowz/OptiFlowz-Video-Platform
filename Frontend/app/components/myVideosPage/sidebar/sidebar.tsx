@@ -24,7 +24,7 @@ function Sidebar() {
         <aside className="videoAside adminSidebarDock">
             <div className="videoAsideSticky">
                 <div className="background">
-                    <img className="w-full h-full" src={backgroundImage} alt="Background" />
+                    <img className="w-full h-full" src={backgroundImage} alt="" />
                 </div>
                 <section>
                     {channelPath ? <>

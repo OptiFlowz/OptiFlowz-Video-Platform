@@ -342,7 +342,7 @@ function VideoInfo({
                 <h2 className="text-lg font-semibold mr-2 max-[500px]:text-sm">{t("channelLabel")}:</h2>
 
                 <span>
-                    <img src={props?.uploader_image} alt="Profile" />
+                    <img src={props?.uploader_image} alt={t("profilePhotoAlt")} />
                     <p className="weakText max-[500px]:text-sm">{props?.uploader_name}</p>
                 </span>
             </Link>
@@ -356,7 +356,7 @@ function VideoInfo({
                     {props?.people
                         ?.filter((person) => person?.type == 0)
                         ?.map((person, index) => 
-                        <img key={index} src={person?.image_url} alt="Profile" />
+                        <img key={index} src={person?.image_url} alt={t("profilePhotoAlt")} />
                     )}
                     <p className="weakText max-[500px]:text-sm">{`${props?.people?.filter((person) => person?.type == 0)?.map(person => person.name).join(", ") || t("noChairs")}`}</p>
                 </span>
@@ -371,7 +371,7 @@ function VideoInfo({
                     {props?.people
                         ?.filter((person) => person?.type == 1)
                         ?.map((person, index) => 
-                        <img key={index} src={person?.image_url} alt="Profile" />
+                        <img key={index} src={person?.image_url} alt={t("profilePhotoAlt")} />
                     )}
                     <p className="weakText max-[500px]:text-sm">{`${props?.people?.filter((person) => person?.type == 1)?.map(person => person.name).join(", ") || t("noSpeakers")}`}</p>
                 </span>

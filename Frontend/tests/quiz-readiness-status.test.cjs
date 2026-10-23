@@ -47,6 +47,7 @@ test('readiness progress and errors stay in the readiness section while saves an
   const quiz = { ...model.defaultSettings, id: 'quiz', user_id: 'owner', title: 'Test', question_count: 1, allow_answer_changes_after_check: false };
   let resolveCheck, rejectCheck, resolveSave, checks = 0, savedBody;
   const { default: QuizEditor } = load('QuizEditor.tsx', {
+    '~/components/library/DurationInput': load('../library/DurationInput.tsx', { '~/i18n': i18n, './durationInput.module.css': styles }),
     '~/i18n': i18n, 'react-router': { Link: () => null },
     '~/components/library/ProfileTabs': { __esModule: true, default: ({ children }) => React.createElement('div', null, children) },
     './shared': { ...shared, styles: styles.default, useDetail: () => ({ data: { quiz } }), useAccess: () => ({ update: true, create: true, can: () => true }),
@@ -95,6 +96,11 @@ test('readiness progress and errors stay in the readiness section while saves an
     Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(pageSize, '3');
     pageSize.dispatchEvent(new window.Event('input', { bubbles: true }));
   });
+  const durationMinutes = document.querySelector('input[aria-label="Time limit: Minutes"]');
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(durationMinutes, '15');
+    durationMinutes.dispatchEvent(new window.Event('input', { bubbles: true }));
+  });
   const title = document.querySelector('input[aria-label="Title"]');
   await act(async () => {
     Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(title, 'Changed');
@@ -103,6 +109,7 @@ test('readiness progress and errors stay in the readiness section while saves an
   await act(async () => save.click());
   assert.equal(heading.querySelector('[role="status"]'), null);
   assert.equal(save.textContent, messages.saving);
+  assert.equal(savedBody.time_limit_seconds, 900, 'segmented duration is saved in seconds');
   assert.equal(savedBody.questions_per_page, 3);
   assert.equal(typeof savedBody.questions_per_page, 'number');
   assert.equal(heading.querySelector('.uploadSpinner'), null);

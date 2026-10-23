@@ -1,0 +1,5 @@
+.control { display: flex; align-items: center; gap: 6px; width: 100%; min-width: 0; min-height: 48px; box-sizing: border-box; padding: 8px 12px; border: 0; border-radius: 12px; background: var(--background2); color: var(--text1); }
+.control.control input.segment.segment[type='text'][role='spinbutton'] { flex: 1 1 0; width: 0; min-width: 0; max-width: none; height: 32px; min-height: 0; padding: 0; margin: 0; border: 0; border-radius: 6px; background: transparent; color: inherit; font: inherit; font-variant-numeric: tabular-nums; text-align: center; line-height: 1.5; }
+.control.control input.segment.segment[type='text'][role='spinbutton']:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: 0; }
+.control.control input.segment.segment[type='text'][role='spinbutton']:disabled { cursor: not-allowed; opacity: .5; }
+.separator { flex: none; color: var(--text2); user-select: none; }

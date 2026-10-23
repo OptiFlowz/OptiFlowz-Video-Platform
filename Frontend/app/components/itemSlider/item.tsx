@@ -1,3 +1,4 @@
+import { useI18n } from "~/i18n";
 import LiveStatus from '../live/LiveStatus';
 import DefaultThumbnail from "../../../assets/DefaultThumbnail.webp";
 import { getVideoThumbnail } from "~/components/shared/videoMedia";
@@ -10,6 +11,7 @@ import { CurrentNavContext } from "~/context";
 import { useDelayedHoverPreview } from "~/components/shared/useDelayedHoverPreview";
 
 function Item({props, playlistIndex, playlistId, href, live}: {props: Omit<PlaylistVideoT, "people"> & { people: { name: string }[] }, playlistIndex?: number, playlistId?: string, href?: string, live?: { status: import("../live/api").LiveStatus; scheduled_at?: string | null }}){
+    const { t } = useI18n();
     const requestedThumbnail = getVideoThumbnail(props) || DefaultThumbnail;
     const [failedThumbnail, setFailedThumbnail] = useState<string>();
     const newThumbnailUrl = failedThumbnail === requestedThumbnail ? DefaultThumbnail : requestedThumbnail;
@@ -46,7 +48,7 @@ function Item({props, playlistIndex, playlistId, href, live}: {props: Omit<Playl
                     <img
                         className={previewActive ? "z-[-1] absolute top-0 left-0" : "z-[-1] absolute top-0 left-0 opacity-0"}
                         src={animGifUrl}
-                        alt="Thumbnail preview"
+                        alt={t("thumbnailPreview")}
                         loading="eager"
                         decoding="async"
                         onLoad={() => setLoadedPreview(animGifUrl)}
@@ -56,7 +58,7 @@ function Item({props, playlistIndex, playlistId, href, live}: {props: Omit<Playl
                 <img
                     className={`thumbnail ${isLoading ? "z-0 relative opacity-0" : `relative ${animGifUrl && loadedPreview === animGifUrl && previewActive ? "z-0 opacity-0 transition-opacity! duration-200! ease" : isHovered ? "z-1 opacity-100 darken" : "z-1 -100"}`}`}
                     src={newThumbnailUrl}
-                    alt="Thumbnail"
+                    alt={t("thumbnail")}
                     loading="lazy"
                     decoding="async"
                     ref={image => { if (image?.complete && image.naturalWidth > 0) setLoadedThumbnail(newThumbnailUrl); }}

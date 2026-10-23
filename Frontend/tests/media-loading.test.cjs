@@ -28,7 +28,7 @@ function setup(t) {
     '~/components/contentInfo': { __esModule: true, default: () => null },
     '~/functions': { formatDuration: () => '1:00' },
     '~/context': { CurrentNavContext: React.createContext({ setCurrentNav() {} }) },
-    '~/i18n': { useI18n: () => ({ t: key => key }) },
+    '~/i18n': { useI18n: () => ({ t: key => require('../app/locales/en.json')[key] ?? key }) },
     'next/image': { __esModule: true, default: ({ fill, ...props }) => React.createElement('img', props) },
   };
   function load(relative) {

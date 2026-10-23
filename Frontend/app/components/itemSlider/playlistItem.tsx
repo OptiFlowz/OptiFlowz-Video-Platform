@@ -31,7 +31,7 @@ function PlaylistItem({props, featured}: {props: VideoPlaylistT, featured?:boole
                 <img
                     className={`z-0 relative ${isLoading ? "opacity-0" : "opacity-100"}`}
                     src={newThumbnailUrl}
-                    alt="Thumbnail"
+                    alt={t("thumbnail")}
                     loading="lazy"
                     decoding="async"
                     ref={image => { if (image?.complete && image.naturalWidth > 0) setLoadedThumbnail(newThumbnailUrl); }}

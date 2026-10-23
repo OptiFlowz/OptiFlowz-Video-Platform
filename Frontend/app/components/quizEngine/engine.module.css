@@ -206,7 +206,7 @@ main.management .listTable td.empty { padding: 2rem; text-align: center; }
 .candidateOverlay .candidateCard { box-shadow: 0 12px 32px var(--seethroughtBlack); background: var(--background4); }
 .partMeta { color: var(--text2); font-size: .875rem; line-height: 1.5; }
 .partCardBody { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.partMeta + .partCardBody { margin-top: 12px; }
+.partText > .partMeta { margin-bottom: 4px; }
 .partIdentity { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
 .partText { min-width: 0; flex: 1; overflow-wrap: anywhere; }
 .partText p { margin: 0; font-size: 1rem; font-weight: 500; line-height: 1.4; }

@@ -299,7 +299,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
           />
           <span className="videoInfo">
             <div className="relative">
-              <img src={getVideoThumbnail(props)} alt="Thumbnail" loading="lazy" decoding="async" />
+              <img src={getVideoThumbnail(props)} alt={t("thumbnail")} loading="lazy" decoding="async" />
               <p className="duration">
                 {formatDuration(props?.duration_seconds)}
               </p>
@@ -366,7 +366,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                 <div className="flex items-center gap-3 px-4 pb-3 border-b border-(--border1)">
                   <img
                     src={getVideoThumbnail(props)}
-                    alt="Thumbnail"
+                    alt={t("thumbnail")}
                     className="h-12 w-20 rounded-lg object-cover"
                   />
                   <p className="text-sm font-medium line-clamp-2 flex-1">
@@ -462,7 +462,7 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                       <div className="h-1 w-10 rounded-full bg-(--border1)" />
                     </div>
                     <div className="px-4 pb-2">
-                      <h3 className="text-base font-semibold">Change visibility</h3>
+                      <h3 className="text-base font-semibold">{t("adminChangeVisibility")}</h3>
                     </div>
 
                     <div className="flex flex-col gap-2 px-4 py-2">
@@ -499,14 +499,14 @@ function VideoRow({ props }: { props: VideoT & {setSelectedVideos: React.Dispatc
                         onClick={cancelVisibility}
                         className="flex-1 rounded-full border border-(--border1) bg-(--background2) py-3 font-medium hover:bg-(--background3) transition-colors cursor-pointer"
                       >
-                        Cancel
+                        {t("cancel")}
                       </button>
                       <button
                         type="button"
                         onClick={saveVisibility}
                         className="flex-1 rounded-full text-(--text1) bg-(--accentBlue) hover:bg-(--accentBlue2) py-3 font-medium transition-colors cursor-pointer"
                       >
-                        Save
+                        {t("save")}
                       </button>
                     </div>
                   </div>

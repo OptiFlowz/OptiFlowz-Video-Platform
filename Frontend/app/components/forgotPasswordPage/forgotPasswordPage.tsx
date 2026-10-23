@@ -236,7 +236,7 @@ function ForgotPasswordPage() {
         <main className="login max-w-full!">
             <div>
                 <div className="background">
-                    <img className="w-full h-full" src={LOGIN_BACKGROUND_IMAGE} alt="Background" />
+                    <img className="w-full h-full" src={LOGIN_BACKGROUND_IMAGE} alt="" />
                 </div>
                 
                 <Link to="/" className="mb-10 logoDiv flex gap-5 items-center cursor-pointer hover:opacity-80 transition-opacity">

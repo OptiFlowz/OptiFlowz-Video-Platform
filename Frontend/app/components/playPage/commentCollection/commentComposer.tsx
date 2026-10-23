@@ -65,7 +65,7 @@ function CommentComposer({
     <div className="comment-input bg-(--background2) rounded-xl px-3 py-3 flex w-full gap-3 items-start">
       <img
         src={userProfileImage}
-        alt="Profile"
+        alt={t("profilePhotoAlt")}
         className="w-9 h-9 rounded-full object-cover border-2! border-(--borderWhite)! border-solid! mt-0.5 shrink-0"
       />
 

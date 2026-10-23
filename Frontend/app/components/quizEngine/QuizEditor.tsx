@@ -1,3 +1,4 @@
+import DurationInput from '~/components/library/DurationInput';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { useI18n } from '~/i18n';
@@ -80,7 +81,7 @@ function Settings({ initial, onSaved, onDirty, onClose }: { initial?: Quiz; onSa
       </div><div className={styles.settingsGroup}><div className="quizPopupGrid"><Field label={t('adminTableStatus')} help={t('qeHelp_status')}><Select label={t('adminTableStatus')} value={form.status} values={['draft', 'published', 'archived'].map(value => ({ value, label: t(`qe${value[0].toUpperCase()}${value.slice(1)}`), disabled: !initial && value === 'published' }))} onChange={value => change({ status: value as QuizSettings['status'] })} /></Field>
       <Field label={t('quizQuestionCount')} help={t('qeDerivedCountHelp')}><output className={styles.derivedCount}>{initial?.question_count ?? 0}</output></Field>
       {number('questions_per_page', 'quizQuestionsPerPage', 1, 2147483647)}
-      {number('time_limit_seconds', 'quizTimeLimitSeconds', 1, 2147483647, true)}
+      <Field label={t('quizTimeLimitLabel')} help={t('durationUnlimitedHelp')}><DurationInput label={t('quizTimeLimitLabel')} value={form.time_limit_seconds === null ? null : Number(form.time_limit_seconds)} onChange={value => change({ time_limit_seconds: value })} /></Field>
       {number('max_attempts', 'quizMaxAttempts', 1, 2147483647, true)}
       </div></div><div className={`${styles.settingsGroup} quizPopupToggleList`}>{toggle('shuffle_questions', 'quizShuffleQuestions')}{toggle('shuffle_options', 'quizShuffleOptions')}</div></section></fieldset>{initial && <section ref={readinessPanel} className={`${styles.settingsSection} ${styles.readiness}`}><h2>{t('qeReadiness')}</h2><p className={styles.note}>{t('qeReadinessHelp')}</p><button type="button" className={styles.button} disabled={busy} onClick={() => { if (busy) return; setIssues(null); void readinessAction.run(async () => { setIssues(await inspectQuiz(initial)); }, false); }}>
         {readinessAction.busy && <span className="uploadSpinner tiny" aria-hidden="true" />}<span role={readinessAction.busy ? 'status' : undefined}>{t(readinessAction.busy ? 'connectionChecking' : 'qeCheck')}</span>

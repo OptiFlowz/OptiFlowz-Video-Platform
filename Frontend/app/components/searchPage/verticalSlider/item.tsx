@@ -1,3 +1,4 @@
+import { useI18n } from "~/i18n";
 import { memo, useState } from "react";
 import type { VPreviewProps } from "~/types";
 import ContentInfo from "~/components/contentInfo";
@@ -6,6 +7,7 @@ import { formatDuration } from "~/functions";
 import { useDelayedHoverPreview } from "~/components/shared/useDelayedHoverPreview";
 
 function Item({props}: {props: VPreviewProps}){
+    const { t } = useI18n();
     const {id, duration, ...info} = props;
 
     const newThumbnailUrl = props.thumbnail;
@@ -19,8 +21,8 @@ function Item({props}: {props: VPreviewProps}){
     return (
         <Link to={`/video/${id || 0}`} className="item" onMouseEnter={startPreview} onFocus={startPreview} onBlur={cancelPreview} onMouseLeave={cancelPreview}>
             <div className="thumbnail">
-                {animGifUrl && <img className={previewActive ? "z-[-1] absolute top-0 left-0" : "z-0 absolute top-0 left-0 opacity-0"} src={animGifUrl} alt="Thumbnail preview" loading="eager" decoding="async" onLoad={() => setLoadedPreview(animGifUrl)} onError={() => setLoadedPreview(undefined)} />}
-                <img className={showPreview ? "z-0 relative opacity-0" : "z-1 relative opacity-100"} src={newThumbnailUrl} alt="Thumbnail" loading="lazy" decoding="async" />
+                {animGifUrl && <img className={previewActive ? "z-[-1] absolute top-0 left-0" : "z-0 absolute top-0 left-0 opacity-0"} src={animGifUrl} alt={t("thumbnailPreview")} loading="eager" decoding="async" onLoad={() => setLoadedPreview(animGifUrl)} onError={() => setLoadedPreview(undefined)} />}
+                <img className={showPreview ? "z-0 relative opacity-0" : "z-1 relative opacity-100"} src={newThumbnailUrl} alt={t("thumbnail")} loading="lazy" decoding="async" />
                 <span className={"duration z-1" + (isWatched ? " watched" : "")}>{formatDuration(Number(duration))}</span>
                 
                 {isWatched ? <span className="bottomShadow z-1 relative"></span> : ""}
