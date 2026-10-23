@@ -130,9 +130,14 @@ test('repository binds ownership and filters, escapes LIKE wildcards and allowli
 
 const queries = [];
 let result = { rows: [] };
+const moderationGrant = { id: '1', key: 'certificates.moderate', has_allow: true, has_deny: false };
+let permissionRows = [moderationGrant];
+let roleRows = [];
 mock.module(new URL('../src/database/index.js', import.meta.url).href, {
   namedExports: { writePool: { async query(sql, params) {
     if (sql.includes('FROM users')) return { rows: [{ id: userId, status: 'active', authz_version: 1 }] };
+    if (sql.includes('JOIN role_permissions')) return { rows: permissionRows };
+    if (sql.includes('FROM user_roles')) return { rows: roleRows };
     queries.push({ sql, params });
     return result;
   } } },
@@ -158,7 +163,8 @@ test('handlers reject unauthenticated, invalid and unsafe requests before queryi
   assert.equal(queries.length, 0);
 });
 
-test('HTTP CRUD uses auth, quiz-style envelopes, validation and owner-scoped queries', async t => {
+test('HTTP routes enforce Certificate Moderation, auth, validation and owner-scoped queries', async t => {
+  t.after(() => { permissionRows = [moderationGrant]; roleRows = []; });
   const previousSecret = process.env.JWT_SECRET;
   process.env.JWT_SECRET = 'certificate-template-test-secret';
   t.after(() => { if (previousSecret === undefined) delete process.env.JWT_SECRET; else process.env.JWT_SECRET = previousSecret; });
@@ -177,14 +183,33 @@ test('HTTP CRUD uses auth, quiz-style envelopes, validation and owner-scoped que
     }, body: data === undefined ? undefined : JSON.stringify(data) });
     return { status: response.status, data: await response.json() };
   }
-  for (const [method, path, data] of [['GET', ''], ['POST', '', body], ['GET', `/${id}`], ['PATCH', `/${id}`, { name: 'New' }], ['DELETE', `/${id}`]]) {
+  const protectedRoutes = [['GET', ''], ['POST', '', body], ['GET', `/${id}`],
+    ['PATCH', `/${id}`, { name: 'New' }], ['DELETE', `/${id}`], ['POST', `/${id}/preview/pdf`]];
+  for (const [method, path, data] of protectedRoutes) {
     assert.equal((await request(method, path, data, false)).status, 401);
   }
+  for (const grants of [[], [{ ...moderationGrant, key: 'quizzes.create' }], [{ ...moderationGrant, has_deny: true }]]) {
+    permissionRows = grants;
+    const before = queries.length;
+    for (const [method, path, data] of protectedRoutes) {
+      assert.deepEqual(await request(method, path, data), {
+        status: 403,
+        data: { message: 'Insufficient permissions', requiredPermission: 'certificates.moderate' },
+      });
+    }
+    assert.equal(queries.length, before, 'denied requests must not query or mutate templates');
+  }
+  permissionRows = [moderationGrant];
   const template = { id, user_id: userId, ...createCertificateTemplateSchema.parse(body) };
   result = { rows: [template] };
   assert.deepEqual(await request('POST', '', body), { status: 201, data: { success: true, template } });
   assert.equal(queries.at(-1).params[0], userId);
   assert.deepEqual(await request('GET', `/${id}`), { status: 200, data: { success: true, template } });
+  roleRows = [{ id: 'owner', name: 'Owner', position: 0, is_owner: true }];
+  permissionRows = [{ ...moderationGrant, has_deny: true }];
+  assert.equal((await request('GET', `/${id}`)).status, 200, 'Owner retains the existing permission bypass');
+  roleRows = [];
+  permissionRows = [moderationGrant];
   result = { rows: [{ ...template, name: 'Updated' }] };
   const updated = await request('PATCH', `/${id}`, { name: 'Updated' });
   assert.equal(updated.status, 200);

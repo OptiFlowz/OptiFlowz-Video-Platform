@@ -44,6 +44,8 @@ export const Permissions = Object.freeze({
   COLLECTIONS_DELETE_OWN: 'collections.delete_own',
   COLLECTIONS_DELETE_ANY: 'collections.delete_any',
 
+  CERTIFICATES_MODERATE: 'certificates.moderate',
+
   QUIZZES_CREATE: 'quizzes.create',
   QUIZZES_READ_OWN: 'quizzes.read_own',
   QUIZZES_READ_ANY: 'quizzes.read_any',

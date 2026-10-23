@@ -1,11 +1,13 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import { requireAuth } from '../../../middleware/auth.js';
+import { requirePermission } from '../../authorization/authorization.middleware.js';
+import { Permissions } from '../../authorization/permission.constants.js';
 import * as certificateTemplatesController from './certificate-templates.controller.js';
 
 const router = express.Router();
 
-router.use(requireAuth);
+router.use(requireAuth, requirePermission(Permissions.CERTIFICATES_MODERATE));
 router.post('/:id/preview/pdf', rateLimit({
   windowMs: 60_000,
   limit: 10,

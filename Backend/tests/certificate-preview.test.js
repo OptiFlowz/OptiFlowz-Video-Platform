@@ -79,9 +79,13 @@ let stored = template;
 let rendered = [];
 const queries = [];
 let renderError;
+let canModerate = true;
 mock.module(new URL('../src/database/index.js', import.meta.url).href, {
   namedExports: { writePool: { async query(sql, params) {
     if (sql.includes('FROM users')) return { rows: [{ id: params[0], status: 'active', authz_version: 1 }] };
+    if (sql.includes('JOIN role_permissions')) return { rows: canModerate
+      ? [{ id: '1', key: 'certificates.moderate', has_allow: true, has_deny: false }] : [] };
+    if (sql.includes('FROM user_roles')) return { rows: [] };
     queries.push({ sql, params });
     assert.match(sql, /SELECT .* FROM public\.certificate_templates WHERE id = \$1 AND \(user_id = \$2 OR is_system = true\)/s);
     return { rows: stored && params[0] === stored.id && (params[1] === stored.user_id || stored.is_system === true) ? [stored] : [] };
@@ -113,6 +117,16 @@ test('preview HTTP route authenticates, checks ownership, revalidates stored con
     body: body && JSON.stringify(body),
   });
   assert.equal((await request(null)).status, 401);
+  canModerate = false;
+  t.after(() => { canModerate = true; });
+  for (let attempt = 0; attempt < 11; attempt++) {
+    const denied = await request();
+    assert.equal(denied.status, 403);
+    assert.equal((await denied.json()).requiredPermission, 'certificates.moderate');
+  }
+  assert.equal(queries.length, 0, 'permission is checked before reading the template');
+  assert.equal(rendered.length, 0, 'permission is checked before rendering');
+  canModerate = true;
   assert.equal((await request(userId, 'bad')).status, 400);
   assert.equal((await request(otherUserId)).status, 404);
   assert.equal((await request(userId, otherUserId)).status, 404);

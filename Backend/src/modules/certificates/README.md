@@ -1,6 +1,8 @@
 # Certificate templates
 
-Base path: `/api/certificates/certificate-templates`. Every route requires an active user's Bearer access token. Reads include the user's private templates and all system templates. Other users' private templates remain inaccessible; clients cannot supply an owner or change system/default flags.
+Base path: `/api/certificates/certificate-templates`. Every route requires an active user's Bearer access token and the `certificates.moderate` permission (**Certificate Moderation**, group **Certificates**), including list/detail reads and PDF previews. Missing authentication returns `401`; missing or denied permission returns `403` with `requiredPermission: "certificates.moderate"`. Reads include the user's private templates and all system templates. Other users' private templates remain inaccessible; clients cannot supply an owner or change system/default flags.
+
+Migration `1792713600003_add-certificate-moderation-permission.sql` grants this permission to Administrator, Uploader and Owner roles. Other roles can receive it through the existing role-management API. The existing Owner permission bypass applies. The permission does not bypass template ownership or allow changes to system templates.
 
 | Method | Path | Result |
 | --- | --- | --- |
@@ -17,7 +19,7 @@ Migration `1792713600000_add-system-certificate-templates.sql` adds `is_system` 
 
 The migration inserts **Classic**, the supplied blue geometric certificate design, in **Letter / landscape** format with `is_system: true`, `is_default: true`, and ID `b2a08625-4827-4e8a-9cde-d22f30b929ce`. Existing templates keep their owners and become private/non-default. Additional non-default system templates can be added by future migrations without a separate CRUD API. Changing the global default requires clearing the old flag and setting the new flag in the same database transaction.
 
-List, detail and preview routes expose system templates to every authenticated user. List filters and pagination apply to the combined accessible set, using the existing sorting rules. Responses include `is_system` and `is_default` so clients can identify the global default and disable editing controls. POST always creates a private/non-default template. PATCH and DELETE operate only on the current user's private templates; attempting either on a system template returns `404`. Supplying `user_id`, `is_system` or `is_default` in a create/update request returns `400`.
+List, detail and preview routes expose system templates to users with Certificate Moderation permission. List filters and pagination apply to the combined accessible set, using the existing sorting rules. Responses include `is_system` and `is_default` so clients can identify the global default and disable editing controls. POST always creates a private/non-default template. PATCH and DELETE operate only on the current user's private templates; attempting either on a system template returns `404`. Supplying `user_id`, `is_system` or `is_default` in a create/update request returns `400`.
 
 Rollback removes system templates before restoring the original owner-required schema, and preserves private templates.
 

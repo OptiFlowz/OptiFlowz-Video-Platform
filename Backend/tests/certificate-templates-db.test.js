@@ -6,6 +6,61 @@ import pg from 'pg';
 import * as repository from '../src/modules/certificates/certificate-templates/repository/certificate-templates.repository.js';
 import { createCertificateTemplateSchema } from '../src/modules/certificates/certificate-templates/helpers/certificate-templates.validation.js';
 
+test('Certificate Moderation migration grants administrators, uploaders and owners, preserves overrides and rolls back cleanly', {
+  skip: !process.env.TEST_DATABASE_URL,
+}, async t => {
+  const client = new pg.Client({ connectionString: process.env.TEST_DATABASE_URL, connectionTimeoutMillis: 5000, statement_timeout: 10000 });
+  await client.connect();
+  t.after(() => client.end());
+  await client.query(`
+    SET search_path TO pg_temp;
+    CREATE TEMP TABLE permissions (
+      id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY, key text NOT NULL UNIQUE,
+      description text NOT NULL, group_name text NOT NULL, resource_type text, risk_level text NOT NULL
+    );
+    CREATE TEMP TABLE roles (
+      id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY, name text UNIQUE, is_owner boolean DEFAULT false
+    );
+    CREATE TEMP TABLE role_permissions (
+      role_id bigint REFERENCES roles(id) ON DELETE CASCADE,
+      permission_id bigint REFERENCES permissions(id) ON DELETE CASCADE,
+      effect text NOT NULL CHECK (effect IN ('allow', 'deny')), PRIMARY KEY (role_id, permission_id)
+    );
+    INSERT INTO roles (name, is_owner) VALUES
+      ('Viewer', false), ('Uploader', false), ('Administrator', false), ('Owner', true), ('Custom', false);
+    INSERT INTO permissions (key, description, group_name, risk_level)
+      VALUES ('unrelated.permission', 'Unrelated permission', 'Other', 'normal');
+    INSERT INTO role_permissions SELECT r.id, p.id, 'allow' FROM roles r CROSS JOIN permissions p;
+  `);
+  const migration = await readFile(new URL('../src/database/migrations/1792713600003_add-certificate-moderation-permission.sql', import.meta.url), 'utf8');
+  const [up, down] = migration.split('-- Down Migration');
+  await client.query(up);
+  await client.query(up);
+  const permission = (await client.query("SELECT * FROM permissions WHERE key = 'certificates.moderate'")).rows[0];
+  assert.equal(permission.description, 'Certificate Moderation');
+  assert.equal(permission.group_name, 'Certificates');
+  assert.equal(permission.resource_type, 'certificate_template');
+  assert.equal(permission.risk_level, 'sensitive');
+  const grantsSql = `SELECT r.name, rp.effect FROM role_permissions rp JOIN roles r ON r.id = rp.role_id
+    WHERE rp.permission_id = $1 ORDER BY r.name`;
+  assert.deepEqual((await client.query(grantsSql, [permission.id])).rows, [
+    { name: 'Administrator', effect: 'allow' }, { name: 'Owner', effect: 'allow' },
+    { name: 'Uploader', effect: 'allow' },
+  ]);
+  await client.query(`UPDATE role_permissions SET effect = 'deny'
+    WHERE permission_id = $1 AND role_id = (SELECT id FROM roles WHERE name = 'Administrator')`, [permission.id]);
+  await client.query(`INSERT INTO role_permissions SELECT id, $1, 'allow' FROM roles WHERE name = 'Custom'`, [permission.id]);
+  await client.query(up);
+  assert.deepEqual((await client.query(grantsSql, [permission.id])).rows, [
+    { name: 'Administrator', effect: 'deny' }, { name: 'Custom', effect: 'allow' }, { name: 'Owner', effect: 'allow' },
+    { name: 'Uploader', effect: 'allow' },
+  ]);
+  await client.query(down);
+  assert.deepEqual((await client.query('SELECT key FROM permissions')).rows, [{ key: 'unrelated.permission' }]);
+  assert.equal((await client.query(grantsSql, [permission.id])).rows.length, 0);
+  assert.equal((await client.query('SELECT * FROM role_permissions')).rows.length, 5);
+});
+
 test('certificate template migration and repository enforce ownership, filters, pagination, updates and cascade deletion', {
   skip: !process.env.TEST_DATABASE_URL,
 }, async t => {
