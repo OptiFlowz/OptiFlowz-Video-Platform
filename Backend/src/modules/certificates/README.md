@@ -116,7 +116,7 @@ Per preview: up to 4 Google stylesheets (64 KiB each), 32 remote font sources, 1
 
 `POST /api/certificates/certificate-templates/:id/preview/pdf` requires the same Bearer token as CRUD and selects either a system template or the user's own private template. A missing template or another user's private template returns `404`. The request body is not used: source, format and orientation come from the database, and placeholder values are fixed server-side. No template is changed, no certificate record is created, and no PDF is written to the database, storage, or an output file.
 
-Supported placeholders use `{{key}}` (optional surrounding whitespace), only in HTML text:
+Supported text placeholders use `{{key}}` (optional surrounding whitespace), only in HTML text:
 
 | Placeholder | Preview value |
 | --- | --- |
@@ -128,11 +128,25 @@ Supported placeholders use `{{key}}` (optional surrounding whitespace), only in 
 | `certificate.number` | CERT-2026-000001 |
 | `certificate.issued_at` | October 23, 2026 |
 
-Unknown names, expressions, malformed/triple braces and placeholders in attributes or CSS return `422`. This policy also applies to create/PATCH; older stored templates with unsupported placeholders must be updated before previewing. Values are HTML-escaped. The render-only fragment is normalized and balanced before inserting it into `<div class="certificate">`, preventing stray closing tags from escaping the wrapper. The stored HTML remains unchanged.
+The additional `{{certificate.qr_code_data_uri}}` placeholder is allowed **only as the entire `src` value of an HTML `<img>`**. It is rejected in text, SVG, other attributes, CSS, and URLs with a prefix/suffix. For example:
+
+```html
+<img src="{{certificate.qr_code_data_uri}}" class="qr-code" alt="QR verifikacija" />
+```
+
+```css
+.qr-code { position: absolute; right: 24px; bottom: 32px; width: 96px; height: 96px; }
+```
+
+Set `FRONTEND_BASE_URL=https://videoplatform.optiflowz.com` on the backend. QR preview encodes `https://videoplatform.optiflowz.com/certificates/verify/preview` (a test verification URL, not an issued certificate). A path prefix in the configured base URL is retained; query/fragment are removed. This change does not create a frontend verification page. Missing/invalid configuration returns `500` only for previews containing the QR placeholder.
+
+`helpers/certificateQrCode.js` exports the reusable `generateCertificateQrCode(verificationUrl)` function for preview and future issuance. It uses the existing Node.js `qrcode` package to generate a 512×512 PNG Base64 Data URI with error correction M and a four-module quiet zone. The preview replaces all QR occurrences with one generated image after validating the template; CSS controls its displayed position and dimensions. There is no network request to the verification URL and no change to the original `html_template` in the database. User-authored PNG data URLs remain subject to the existing resource restrictions.
+
+Unknown names, expressions, malformed/triple braces and placeholders in other attributes or CSS return `422`. This policy also applies to create/PATCH; older stored templates with unsupported placeholders must be updated before previewing. Text values are HTML-escaped. The render-only fragment is normalized and balanced before inserting it into `<div class="certificate">`, preventing stray closing tags from escaping the wrapper. The stored HTML remains unchanged.
 
 `postcss-prefix-selector` scopes each CSS rule's subject to the wrapper or its descendants, including rules inside media/supports blocks. The renderer supplies page dimensions from `page_format` and `orientation`, prints backgrounds and uses zero margins. Preview is one page; content beyond the fixed certificate canvas is clipped. User CSS cannot select elements outside the wrapper. `@page`/`@font-face` remain document-level at-rules inside the isolated document; PDF format is controlled by Playwright's format/orientation options rather than CSS page sizing.
 
-Each preview launches a fresh Playwright Chromium browser with `chromiumSandbox: true` and a fresh context. Page JavaScript, service workers and downloads are disabled. The context is offline; all browser requests are blocked except synthetic font URLs fulfilled by the font loader. WebSockets are blocked. CSP permits inline styles, embedded SVG images and embedded/intercepted fonts. Chromium inherits only a small environment allowlist, excluding API secrets. Resource requests are aborted and the browser process tree is killed on completion, error, deadline or client disconnect.
+Each preview launches a fresh Playwright Chromium browser with `chromiumSandbox: true` and a fresh context. Page JavaScript, service workers and downloads are disabled. The context is offline; all browser requests are blocked except synthetic font URLs fulfilled by the font loader. WebSockets are blocked. CSP permits inline styles, embedded SVG images, generated QR PNGs and embedded/intercepted fonts. Chromium inherits only a small environment allowlist, excluding API secrets. Resource requests are aborted and the browser process tree is killed on completion, error, deadline or client disconnect.
 
 Resource budgets per API process: one active render (no queue), 20-second total render deadline, 10-second launch timeout, 3 MiB generated-document limit, 5 MiB output limit and one PDF page. Each user is limited to 10 preview requests per minute. Chromium also receives a renderer-process limit and a 128 MiB V8 heap setting; these are not hard limits on Chromium's total native memory. Deployment memory/CPU limits remain necessary (the existing Fly app VM is limited to 1 GiB and one CPU).
 

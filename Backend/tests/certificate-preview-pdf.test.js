@@ -7,6 +7,7 @@ import { test } from 'node:test';
 import { chromium } from 'playwright';
 import { buildPreviewDocument } from '../src/modules/certificates/certificate-templates/helpers/previewDocument.js';
 import { renderCertificatePdf } from '../src/modules/certificates/certificate-templates/services/renderCertificatePdf.js';
+import { fillCertificateQrCode } from '../src/modules/certificates/helpers/certificateQrCode.js';
 import { loadDefaultCertificateTemplate, loadMinimalCertificateTemplate, loadModernCertificateTemplate } from './helpers/default-certificate-template.js';
 
 const executablePath = process.env.CERTIFICATE_CHROMIUM_EXECUTABLE_PATH || process.env.PUPPETEER_EXECUTABLE_PATH || chromium.executablePath();
@@ -16,6 +17,28 @@ const template = {
   css_template: '.certificate {display:grid;place-items:center;background:rgb(240,240,250)} h1 {color:navy}',
   page_format: 'A4', orientation: 'landscape',
 };
+
+test('QR PNG renders in PDF and respects template CSS position and dimensions', { skip: !browserAvailable }, async () => {
+  const document = buildPreviewDocument({ ...template,
+    html_template: '<img src="{{certificate.qr_code_data_uri}}" class="qr-code" alt="QR verifikacija">',
+    css_template: '.qr-code {position:absolute; left:37px; top:53px; width:96px; height:96px}',
+  });
+  document.html = await fillCertificateQrCode(document.html, 'https://videoplatform.optiflowz.com/certificates/verify/preview');
+  const pdf = await renderCertificatePdf(document);
+  assert.equal(pdf.subarray(0, 5).toString(), '%PDF-');
+  assert.match(pdf.toString('latin1'), /\/Subtype\s*\/Image/);
+  const browser = await chromium.launch({ executablePath, headless: true, chromiumSandbox: true });
+  try {
+    const page = await browser.newPage({ javaScriptEnabled: false });
+    await page.setContent(document.html);
+    const details = await page.evaluate(() => {
+      const image = document.querySelector('.qr-code');
+      const rect = image.getBoundingClientRect();
+      return { loaded: image.complete, naturalWidth: image.naturalWidth, x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+    });
+    assert.deepEqual(details, { loaded: true, naturalWidth: 512, x: 37, y: 53, width: 96, height: 96 });
+  } finally { await browser.close(); }
+});
 
 test('embedded custom fonts and SVG geometry render in Chromium and the generated PDF', { skip: !browserAvailable }, async () => {
   // Reuse the real font shipped with our browser-test dependency; no network or system-font assumption.

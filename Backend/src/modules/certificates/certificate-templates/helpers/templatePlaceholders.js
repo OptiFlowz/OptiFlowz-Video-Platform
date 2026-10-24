@@ -11,12 +11,15 @@ export const PREVIEW_DATA = Object.freeze({
 });
 
 const placeholderPattern = /\{\{\s*([a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*)\s*\}\}/g;
+export const QR_CODE_KEY = 'certificate.qr_code_data_uri';
+export const isQrCodePlaceholder = value => value === value.trim()
+  && /^\{\{\s*certificate\.qr_code_data_uri\s*\}\}$/.test(value);
 
 function invalid(message, field = 'html_template') {
   throw new HttpError(422, { message: `${field}: ${message}`, field });
 }
 
-export function validatePlaceholders(source, field = 'html_template') {
+export function validatePlaceholders(source, field = 'html_template', allowQrSource = false) {
   if (field === 'css_template') {
     if (/\{\{/.test(source)) invalid('Placeholders are only allowed in HTML text', field);
     // Adjacent closing braces are normal in compact nested CSS, not placeholder delimiters.
@@ -24,6 +27,10 @@ export function validatePlaceholders(source, field = 'html_template') {
   }
   if (/\{\{\{|\}\}\}/.test(source)) invalid('Triple-brace placeholders are not allowed', field);
   const remaining = source.replace(placeholderPattern, (_match, key) => {
+    if (key === QR_CODE_KEY) {
+      if (!allowQrSource) invalid('QR code placeholder is only allowed as the entire src of an HTML img element', field);
+      return '';
+    }
     if (!Object.hasOwn(PREVIEW_DATA, key)) invalid(`Unknown placeholder "${key}"`, field);
     return '';
   });
@@ -41,6 +48,7 @@ export function escapeHtml(value) {
 }
 
 export function fillPreviewPlaceholders(html) {
-  validatePlaceholders(html);
-  return html.replace(placeholderPattern, (_match, key) => escapeHtml(PREVIEW_DATA[key]));
+  // The caller has already validated each placeholder's HTML context.
+  validatePlaceholders(html, 'html_template', true);
+  return html.replace(placeholderPattern, (match, key) => key === QR_CODE_KEY ? match : escapeHtml(PREVIEW_DATA[key]));
 }

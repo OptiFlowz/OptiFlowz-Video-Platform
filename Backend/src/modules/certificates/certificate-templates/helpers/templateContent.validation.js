@@ -3,7 +3,7 @@ import postcss from 'postcss';
 import valueParser from 'postcss-value-parser';
 import { SaxesParser } from 'saxes';
 import { HttpError } from '../../../../common/httpError.js';
-import { validatePlaceholders, rejectAttributePlaceholders } from './templatePlaceholders.js';
+import { validatePlaceholders, rejectAttributePlaceholders, isQrCodePlaceholder } from './templatePlaceholders.js';
 import { decodeCssEscapes, decodeBase64, httpsResourceUrl, googleFontStylesheet, fontImportUrl, validateEmbeddedFont } from './certificateResources.js';
 
 export const MAX_TEMPLATE_BYTES = 1024 * 1024;
@@ -243,6 +243,7 @@ function validateHtml(html, onFontStylesheet) {
       if (tag === 'link') validateFontLink(attrs, field);
       originalAttributes.set(attrs, { ...attrs });
       for (const [attribute, value] of Object.entries(attrs)) {
+        if (tag === 'img' && attribute === 'src' && isQrCodePlaceholder(value)) continue;
         rejectAttributePlaceholders(value);
         if (!attributes['*'].includes(attribute) && !(attributes[tag] || []).includes(attribute)) {
           fail(field, `Attribute "${attribute}" is not allowed on <${tag}>`);
@@ -273,7 +274,11 @@ function validateHtml(html, onFontStylesheet) {
     },
   };
   const normalizedHtml = sanitizeHtml(html, options);
-  validatePlaceholders(normalizedHtml);
+  // Entity-encoded braces can arrive in separate textFilter chunks. Check the joined,
+  // canonical HTML too, masking only img src values already accepted above.
+  validatePlaceholders(normalizedHtml.replace(
+    /(<img\b[^>]*\ssrc=")\{\{\s*certificate\.qr_code_data_uri\s*\}\}("[^>]*>)/g, '$1$2',
+  ));
   // An unfinished tag, attribute, or comment must not absorb markup appended by a renderer.
   const boundary = 'certificate-validation-boundary';
   let reachedBoundary = false;
@@ -297,7 +302,11 @@ export function validateTemplateContent(template) {
   if (template.html_template !== undefined) {
     if (typeof template.html_template !== 'string' || !template.html_template.trim()) fail('html_template', 'HTML template must not be empty');
     if (Buffer.byteLength(template.html_template) > MAX_TEMPLATE_BYTES) fail('html_template', 'HTML exceeds the 1 MiB limit');
-    validatePlaceholders(template.html_template);
+    validatePlaceholders(template.html_template, 'html_template', true);
+    // Comments and declarations are discarded by the sanitizer, not valid QR contexts.
+    for (const ignored of template.html_template.match(/<!(?:--[\s\S]*?(?:-->|$)|[^>]*>)|<\?[^>]*>/g) || []) {
+      validatePlaceholders(ignored);
+    }
     validateHtml(template.html_template);
   }
   if (template.css_template !== undefined) {

@@ -131,6 +131,14 @@ test('preview HTTP route authenticates, checks ownership, revalidates stored con
   assert.equal((await request(otherUserId)).status, 404);
   assert.equal((await request(userId, otherUserId)).status, 404);
   assert.equal(rendered.length, 0);
+  const previousBaseUrl = process.env.FRONTEND_BASE_URL;
+  process.env.FRONTEND_BASE_URL = 'https://videoplatform.optiflowz.com';
+  t.after(() => {
+    if (previousBaseUrl === undefined) delete process.env.FRONTEND_BASE_URL;
+    else process.env.FRONTEND_BASE_URL = previousBaseUrl;
+  });
+  stored = { ...template, html_template: `${template.html_template}<img src="{{certificate.qr_code_data_uri}}" class="qr-code">` };
+  const originalStored = structuredClone(stored);
   const response = await request(userId, id, { html_template: '<script>x</script>', 'user.full_name': 'Override' });
   assert.equal(response.status, 200);
   assert.match(response.headers.get('content-type'), /^application\/pdf/);
@@ -139,6 +147,9 @@ test('preview HTTP route authenticates, checks ownership, revalidates stored con
   assert.equal(await response.text(), '%PDF-1.7\npreview-test');
   assert.match(rendered[0].document.html, /John Anderson/);
   assert.doesNotMatch(rendered[0].document.html, /Override/);
+  assert.match(rendered[0].document.html, /<img src="data:image\/png;base64,/);
+  assert.doesNotMatch(rendered[0].document.html, /\{\{/);
+  assert.deepEqual(stored, originalStored);
   assert.ok(rendered[0].options.signal instanceof AbortSignal);
   for (const invalid of [{ html_template: '<script>alert(1)</script>' }, { css_template: '@import "https://example.com";' },
     { html_template: '<p>{{user.secret}}</p>' }, { orientation: 'diagonal' }]) {
