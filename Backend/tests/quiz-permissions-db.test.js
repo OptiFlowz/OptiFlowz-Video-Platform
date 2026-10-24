@@ -119,6 +119,57 @@ test('quiz authorization uses real role grants, denies and Owner bypass on all m
     }
   }
   await t.test('Administrator any permissions manage foreign resources and preserve their owners',()=>manageForeign(admin));
+  await t.test('foreign quiz editors select their own or system templates and preserve assignment in attempts', async () => {
+    const templates = new Map();
+    for (const user of [admin, owner, uploader, viewer]) {
+      const { rows } = await client.query(`INSERT INTO pg_temp.certificate_templates(user_id,name,html_template)
+        VALUES ($1,'Private','<p>{{user.full_name}}</p>') RETURNING id`, [user]);
+      templates.set(user, rows[0].id);
+    }
+    const system = (await client.query('SELECT id FROM pg_temp.certificate_templates WHERE is_system=true LIMIT 1')).rows[0].id;
+    for (const actor of [admin, owner]) {
+      const x = await fixture();
+      const patch = (user, body) => request(user, 'PATCH', `/${x.quiz}`, body);
+      for (const templateId of [system, templates.get(actor)]) {
+        const result = await patch(actor, { certificate_template_id: templateId });
+        assert.equal(result.status, 200);
+        assert.equal(result.quiz.user_id, uploader);
+        assert.equal(result.quiz.certificate_template_id, templateId);
+      }
+      // Neither administrative edit access nor quiz ownership grants access to another user's private template.
+      for (const templateId of [templates.get(uploader), templates.get(viewer), randomUUID()]) {
+        assert.equal((await patch(actor, { certificate_template_id: templateId })).status, 422);
+      }
+      assert.equal((await patch(uploader, { certificate_template_id: templates.get(actor) })).status, 422);
+      assert.equal((await patch(viewer, { certificate_template_id: templates.get(viewer) })).status, 403);
+      assert.equal((await patch(actor, { certificate_template_id: 'invalid' })).status, 400);
+      // The quiz owner can edit other fields without being able to select the assigned private template.
+      const renamed = await patch(uploader, { title: 'Selection preserved' });
+      assert.equal(renamed.status, 200);
+      assert.equal(renamed.quiz.certificate_template_id, templates.get(actor));
+      assert.equal(renamed.quiz.user_id, uploader);
+
+      await client.query('INSERT INTO pg_temp.quiz_questions(quiz_id,question_id) VALUES ($1,$2)', [x.quiz, x.question]);
+      assert.equal((await request(viewer, 'POST', `/${x.quiz}/attempts`)).status, 201);
+      const attempt = (await client.query('SELECT settings_snapshot FROM pg_temp.quiz_attempts WHERE quiz_id=$1', [x.quiz])).rows[0];
+      assert.equal(attempt.settings_snapshot.certificate_template_id, templates.get(actor));
+      const { getCertificateTemplate } = await import('../src/modules/certificates/certificate-templates/repository/certificate-templates.repository.js');
+      assert.equal(await getCertificateTemplate({ query }, templates.get(actor), uploader), null);
+      assert.equal(await getCertificateTemplate({ query }, templates.get(actor), viewer), null);
+      const template = await getCertificateTemplate({ query }, templates.get(actor), actor);
+      const { buildPreviewDocument } = await import('../src/modules/certificates/certificate-templates/helpers/previewDocument.js');
+      assert.match(buildPreviewDocument(template).html, /John Anderson/);
+
+      const cleared = await patch(uploader, { certificate_template_id: null });
+      assert.equal(cleared.status, 200);
+      assert.equal(cleared.quiz.certificate_template_id, null);
+      assert.equal(cleared.quiz.user_id, uploader);
+      assert.equal((await request(viewer, 'POST', `/${x.quiz}/attempts`)).status, 200);
+      const resumed = (await client.query('SELECT settings_snapshot FROM pg_temp.quiz_attempts WHERE quiz_id=$1', [x.quiz])).rows[0];
+      assert.equal(resumed.settings_snapshot.certificate_template_id, templates.get(actor));
+    }
+    assert.equal((await request(uploader, 'PATCH', `/${v.quiz}`, { certificate_template_id: templates.get(uploader) })).status, 404);
+  });
   await t.test('Owner has full access even when a second role explicitly denies every quiz permission',async()=>{
     const {rows}=await client.query("INSERT INTO roles(name) VALUES ('Deny all') RETURNING id");
     await client.query("INSERT INTO role_permissions SELECT $1,id,'deny' FROM permissions",[rows[0].id]);
