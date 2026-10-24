@@ -4,8 +4,8 @@ import { useI18n } from '~/i18n';
 import { fromHSV, hexColor, toHSV, type RGBA } from './colors';
 import styles from './editor.module.css';
 
-type Props = { label: string; color: RGBA; anchor: DOMRect; onChange: (color: RGBA) => void; onClose: () => void };
-export default function ColorPicker({ label, color, anchor, onChange, onClose }: Props) {
+type Props = { label: string; color: RGBA; anchor: DOMRect; onChange: (color: RGBA) => void; onClose: () => void; allowAlpha?: boolean };
+export default function ColorPicker({ label, color, anchor, onChange, onClose, allowAlpha = true }: Props) {
   const { t } = useI18n();
   const [hsv, setHSV] = useState(() => toHSV(color)), [alpha, setAlpha] = useState(color.a);
   const [hex, setHex] = useState(() => hexColor(color).slice(1).toUpperCase());
@@ -69,7 +69,7 @@ export default function ColorPicker({ label, color, anchor, onChange, onClose }:
         if (/^[\da-f]{3}$/i.test(hex)) { const expanded = hex.split('').map(c => c+c).join(''); const rgb = { r: parseInt(expanded.slice(0,2),16), g: parseInt(expanded.slice(2,4),16), b: parseInt(expanded.slice(4,6),16), a: alpha }; update(toHSV(rgb)); }
         else setHex(hexColor(fromHSV(hsv.h,hsv.s,hsv.v)).slice(1).toUpperCase());
       }} /></label>
-      <label className={styles.alpha}><input aria-label="Alpha (%)" type="number" min={0} max={100} value={Math.round(alpha*100)} onChange={event => update(hsv, Math.max(0,Math.min(100,Number(event.target.value)))/100)} /><span>%</span></label>
+      {allowAlpha && <label className={styles.alpha}><input aria-label="Alpha (%)" type="number" min={0} max={100} value={Math.round(alpha*100)} onChange={event => update(hsv, Math.max(0,Math.min(100,Number(event.target.value)))/100)} /><span>%</span></label>}
     </div>
     <div className={styles.accessibleSliders}>
       <input aria-label="S" type="range" min={0} max={100} value={hsv.s*100} onChange={event => update({ ...hsv,s:Number(event.target.value)/100 })} />

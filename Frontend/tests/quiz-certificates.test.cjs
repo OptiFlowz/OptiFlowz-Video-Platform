@@ -29,6 +29,7 @@ test('certificate library orders defaults, protects system designs, edits privat
   const styles = new Proxy({}, { get: (_, key) => String(key) });
   const tick = () => act(() => new Promise(resolve => setTimeout(resolve, 20)));
   const mocks = {
+    './QrStyler': { __esModule: true, default: () => null },
     '../cssColorEditor/CssColorEditor': { __esModule: true, default: ({ label, value, onChange, disabled }) => React.createElement('textarea', { 'aria-label': label, value, disabled, onChange: event => onChange(event.target.value) }) },
     '~/i18n': { useI18n: () => ({ t: (key, values = {}) => String(messages[key] ?? key).replace(/\{\{param\.(\w+)\}\}/g, (_, name) => values[name] ?? '') }) },
     '~/functions': { getToken: () => 'token' }, '~/env': { env: { apiBaseUrl: 'https://test.local' } }, 'react-router': { useNavigate: () => () => {} }, '~/constants': { AddSVG: '+', DeleteSVG: React.createElement('svg', { 'data-icon': 'delete' }) },

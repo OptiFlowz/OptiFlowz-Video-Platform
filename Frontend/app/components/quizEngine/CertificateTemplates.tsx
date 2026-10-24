@@ -12,9 +12,12 @@ import { allCertificateTemplates, certificateRequest, emptyTemplate, previewCert
 
 import CodeEditor from '../cssColorEditor/CssColorEditor';
 import { certificateHtmlDocument, certificatePaper } from './certificatePreview';
+import { certificateQrImages } from './certificateQrStyles';
+import QrStyler from './QrStyler';
 
 type Props = { id: string | null; onEdit: (id?: string) => void; onSaved: (id: string) => void; onDirty: (dirty: boolean) => void; onBusy: (busy: boolean) => void };
-const placeholders = ['user.full_name', 'quiz.title', 'result.score_percentage', 'result.earned_points', 'result.max_points', 'certificate.number', 'certificate.issued_at'];
+const placeholders = ['user.full_name', 'quiz.title', 'result.score_percentage', 'result.earned_points', 'result.max_points', 'certificate.number', 'certificate.issued_at', 'certificate.qr_code_data_uri']
+  .map(value => `{{${value}}}`);
 
 export default function CertificateTemplates(props: Props) {
   const { t } = useI18n(), token = getToken();
@@ -76,7 +79,7 @@ export function TemplateForm({ id, initial, onEdit, onSaved, onDirty, onBusy }: 
   }, [copiedField]);
   const copyField = async (value: string) => {
     try {
-      await navigator.clipboard.writeText(`{{${value}}}`);
+      await navigator.clipboard.writeText(value);
       setCopiedField(value);
     } catch { action.setError(t('quizError')); }
   };
@@ -119,10 +122,13 @@ export function TemplateForm({ id, initial, onEdit, onSaved, onDirty, onBusy }: 
           <Field label={t('quizCertificateHTML')}><CodeEditor language="html" label={t('quizCertificateHTML')} disabled={readOnly || action.busy} value={form.html_template} onChange={html_template => change({ html_template })} /></Field>
           <Field label={t('quizCertificateCSS')}><CodeEditor label={t('quizCertificateCSS')} disabled={readOnly || action.busy} value={form.css_template} onChange={css_template => change({ css_template })} /></Field>
         </fieldset>
-        <details className={styles.certificatePlaceholderHelp}><summary>{t('quizCertificatePlaceholders')}</summary><ul>{placeholders.map(value => <li key={value}><code>{`{{${value}}}`}</code><button type="button" className={styles.certificateFieldCopy} title={t(copiedField === value ? 'liveCopied' : 'copy')} aria-label={`${t(copiedField === value ? 'liveCopied' : 'copy')}: {{${value}}}`} onClick={() => void copyField(value)}>{copiedField === value ? CheckSVG : CopySVG}</button></li>)}</ul></details>
+        <details className={styles.certificatePlaceholderHelp}><summary>{t('quizCertificatePlaceholders')}</summary><ul>{placeholders.map(value => <li key={value}><code>{value}</code><button type="button" className={styles.certificateFieldCopy} title={t(copiedField === value ? 'liveCopied' : 'copy')} aria-label={`${t(copiedField === value ? 'liveCopied' : 'copy')}: ${value}`} onClick={() => void copyField(value)}>{copiedField === value ? CheckSVG : CopySVG}</button></li>)}</ul></details>
         {!readOnly && <div className={styles.actions}><button type="submit" className={`${styles.button} ${styles.primary}`} disabled={action.busy || !valid || (id !== 'new' && !dirty)}>{t(action.busy ? 'saving' : 'saveChanges')}</button></div>}
       </form>
-      <CertificatePreview id={id} revision={revision} dirty={dirty} template={form} savedTemplate={JSON.parse(baseline)} />
+      <div className={styles.certificatePreviewColumn}>
+        <CertificatePreview id={id} revision={revision} dirty={dirty} template={form} savedTemplate={JSON.parse(baseline)} />
+        <QrStyler />
+      </div>
     </div>
     <ConfirmDialog {...dialogProps} />
   </div>;
@@ -152,17 +158,29 @@ function CertificateHtmlPreview({ template, thumbnail = false }: { template: Cer
   const { t } = useI18n();
   const container = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
+  const [qrState, setQrState] = useState<{ html: string; images: Record<string, string>; error: string }>({ html: '', images: {}, error: '' });
+  useEffect(() => {
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void certificateQrImages(template.html_template).then(images => {
+        if (!cancelled) setQrState({ html: template.html_template, images, error: '' });
+      }).catch(error => {
+        if (!cancelled) setQrState({ html: template.html_template, images: {}, error: error instanceof Error ? error.message : String(error) });
+      });
+    }, 180);
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [template.html_template]);
   const paper = certificatePaper(template);
-  const document = useMemo(() => certificateHtmlDocument(template), [template.html_template, template.css_template, template.page_format, template.orientation]);
+  const document = useMemo(() => certificateHtmlDocument(template, qrState.html === template.html_template ? qrState.images : {}), [template.html_template, template.css_template, template.page_format, template.orientation, qrState]);
   useEffect(() => {
     const element = container.current; if (!element) return;
     const update = () => setWidth(element.clientWidth);
     update(); const observer = new ResizeObserver(update); observer.observe(element);
     return () => observer.disconnect();
   }, []);
-  return <div ref={container} className={styles.certificatePaper} style={{ aspectRatio: `${paper.width} / ${paper.height}`, ...(thumbnail ? { width: `${Math.max(1, paper.width / paper.height) * 100}%` } : {}) }}>
+  return <>{!thumbnail && qrState.html === template.html_template && <Notice error={qrState.error} />}<div ref={container} className={styles.certificatePaper} style={{ aspectRatio: `${paper.width} / ${paper.height}`, ...(thumbnail ? { width: `${Math.max(1, paper.width / paper.height) * 100}%` } : {}) }}>
     <iframe loading={thumbnail ? "lazy" : "eager"} tabIndex={thumbnail ? -1 : undefined} title={`HTML ${t('postPreview')}`} sandbox="" referrerPolicy="no-referrer" srcDoc={document} style={{ width: paper.width, height: paper.height, transform: `scale(${width / paper.width})` }} />
-  </div>;
+  </div></>;
 }
 
 function CertificatePdfPreview({ id, revision, template }: { id: string; revision: number; template: CertificateTemplateInput }) {

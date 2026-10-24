@@ -1065,9 +1065,9 @@ main.management .listTable thead tr > th, main.management .listTable tbody tr > 
 .certificatePreview p { margin: 10px 0; }
 .certificatePdf { display: block; width: 100%; height: auto; margin-top: 16px; border: 1px solid var(--border1); border-radius: 12px; background: var(--background1); }
 .certificatePreviewEmpty { display: grid; place-items: center; padding: 28px; margin-top: 16px; min-height: 300px; background: var(--background1); color: var(--text2); text-align: center; border-radius: 12px; }
-.certificatePlaceholderHelp { margin-top: 20px; font-size: .9rem; color: var(--text2); }
-.certificatePlaceholderHelp summary { cursor: pointer; color: var(--text1); padding: 10px 0; font-weight: 600; line-height: 1.5; }
-.certificatePlaceholderHelp summary::marker { color: var(--text2); }
+.certificatePlaceholderHelp { margin: 0; font-size: .9rem; color: var(--text2); }
+.certificatePlaceholderHelp summary { cursor: pointer; color: var(--accentBlue2); padding: 0; font-size: 1rem; font-weight: 600; line-height: 1.5; }
+.certificatePlaceholderHelp summary::marker { color: var(--accentBlue2); }
 .certificatePlaceholderHelp ul { display: grid; gap: 10px; padding: 0; margin: 12px 0 0; list-style: none; }
 .certificatePlaceholderHelp li { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 12px 16px; border-radius: 10px; background: color-mix(in srgb, var(--background2) 94%, var(--text1)); line-height: 1.6; }
 .certificatePlaceholderHelp code { display: block; flex: 1; min-width: 0; color: var(--text1); font-size: .85rem; overflow-wrap: anywhere; user-select: all; }
@@ -1111,3 +1111,53 @@ main.management .listTable thead tr > th, main.management .listTable tbody tr > 
 .page .certificateFieldCopy { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 32px; width: 32px; height: 32px; padding: 6px; border: 0; border-radius: 8px; background: none; color: var(--text2); cursor: pointer; }
 .page .certificateFieldCopy svg { width: 20px; height: 20px; }
 .page .certificateFieldCopy:is(:hover, :focus-visible) { color: var(--accentBlue2); }
+
+.certificatePreviewColumn { display: grid; gap: 24px; min-width: 0; }
+.certificatePreviewColumn .certificatePreview { position: static; }
+.qrStyler { container: qr-styler / inline-size; padding: 20px; border-radius: 24px; background: var(--background2); min-width: 0; }
+.qrStyler h2 { display: inline; margin: 0; color: var(--text1); font-size: 1.1rem; font-weight: 600; line-height: 1.5; }
+.qrStyler summary { color: var(--accentBlue2); font-size: .95rem; font-weight: 600; cursor: pointer; }
+.qrStyler summary::marker { color: var(--accentBlue2); }
+.qrStyler > summary, .qrStyler > summary::marker { color: var(--text1); }
+.qrStylerContent { display: grid; gap: 16px; padding-top: 16px; min-width: 0; }
+.qrStylerTop { display: grid; grid-template-columns: 164px minmax(0, 1fr); align-items: center; gap: 24px; }
+.qrShapes { grid-column: 2; grid-row: 1; display: grid; gap: 12px; min-width: 0; }
+.page .qrStyler .qrShapes > :global(.formGroup) { display: grid; grid-template-columns: 90px minmax(0, 1fr); align-items: center; }
+.qrStylerPreview { display: grid; place-items: center; grid-column: 1; grid-row: 1; width: 164px; height: 164px; border-radius: 12px; background: var(--background2); overflow: hidden; }
+.qrStylerPreview img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.qrStylerPreview[aria-busy=true] img { opacity: .5; }
+.qrControls, .qrAdvancedContent { display: grid; gap: 20px; min-width: 0; padding: 0; margin: 0; border: 0; }
+.qrAdvancedContent { padding-top: 16px; }
+.qrGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.page .qrStyler :global(.formGroup) { display: flex; flex-direction: column; gap: 8px; margin: 0; min-width: 0; }
+.page .qrStyler :global(.formGroup) > label { margin: 0; color: var(--accentBlue2); font-size: 1rem; font-weight: 600; }
+.page .qrStyler .select { width: 100%; min-width: 0; }
+.page .qrStyler .qrShapes :global(.formGroup) > label { width: 100%; justify-content: flex-end; text-align: right; }
+.page .qrStyler :global(.customSelectTrigger), .page .qrStyler input { width: 100%; min-width: 0; min-height: 44px; padding: 10px 12px; border: 0; border-radius: 10px; background: color-mix(in srgb, var(--background2) 94%, var(--text1)); color: var(--text1); font: inherit; }
+.page .qrStyler .qrShapes :global(.customSelectTrigger) { min-height: 38px; padding: 8px 10px; font-size: .9rem; line-height: 22px; }
+.qrPalette { display: grid; gap: 8px; min-width: 0; }
+.page .qrPalette > :global(.formGroup) { display: grid; grid-template-columns: minmax(0, 1fr) 140px; align-items: center; }
+.qrPaletteColors { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.qrAngle { display: flex; align-items: center; flex: 0 0 72px; position: relative; }
+.page .qrAngle input { padding-right: 22px; appearance: textfield; -moz-appearance: textfield; }
+.qrAngle input::-webkit-inner-spin-button, .qrAngle input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.qrAngle span { position: absolute; right: 10px; color: var(--text2); pointer-events: none; }
+.qrColor { flex: 1 1 100px; min-width: 0; }
+.page .qrColor button { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 10px; border: 0; border-radius: 10px; background: color-mix(in srgb, var(--background2) 94%, var(--text1)); color: var(--text1); cursor: pointer; }
+.qrColor span { flex: 0 0 20px; width: 20px; height: 20px; border-radius: 5px; border: 1px solid var(--border1); background: var(--qr-swatch); }
+.qrColor code { font-size: .8rem; text-align: start; }
+.qrCodeHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--accentBlue2); font-size: 1rem; font-weight: 600; }
+.qrCodeHeading svg { width: 18px; height: 18px; }
+.qrError { margin: 0; color: var(--text2); line-height: 1.5; overflow-wrap: anywhere; }
+@container qr-styler (max-width: 480px) {
+  .qrStylerTop { grid-template-columns: 128px minmax(0, 1fr); gap: 16px; }
+  .qrStylerPreview { width: 128px; height: 128px; }
+  .page .qrStyler .qrShapes > :global(.formGroup) { display: flex; }
+}
+@container qr-styler (max-width: 330px) {
+  .qrStylerTop { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .qrStylerPreview { grid-row: 1; justify-self: center; }
+  .qrShapes { grid-column: 1; grid-row: 2; }
+  .page .qrPalette > :global(.formGroup) { grid-template-columns: minmax(0, 1fr); }
+  .qrGrid { grid-template-columns: minmax(0, 1fr); }
+}
