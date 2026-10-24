@@ -1882,5 +1882,6 @@
   "quizCertificateReadOnly": "Вградените шаблони са само за четене. Създайте копие, за да промените дизайна.",
   "quizCertificatePlaceholders": "Налични полета",
   "quizCertificatePreviewHelp": "Прегледът използва примерни данни. Външни изображения и шрифтове не се зареждат.",
-  "quizCertificateSavePreview": "Запазете шаблона, за да прегледате промените."
+  "quizCertificateSavePreview": "Запазете шаблона, за да прегледате промените.",
+  "copy": "Копиране"
 }

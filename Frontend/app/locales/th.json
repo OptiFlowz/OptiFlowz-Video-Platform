@@ -1802,5 +1802,6 @@
   "quizCertificateReadOnly": "เทมเพลตที่มีให้ในระบบอ่านได้อย่างเดียว สร้างสำเนาเพื่อปรับแต่งดีไซน์",
   "quizCertificatePlaceholders": "ช่องข้อมูลที่ใช้ได้",
   "quizCertificatePreviewHelp": "ตัวอย่างใช้ข้อมูลสมมติ ระบบจะไม่โหลดรูปภาพและแบบอักษรภายนอก",
-  "quizCertificateSavePreview": "บันทึกเทมเพลตเพื่อดูตัวอย่างการเปลี่ยนแปลง"
+  "quizCertificateSavePreview": "บันทึกเทมเพลตเพื่อดูตัวอย่างการเปลี่ยนแปลง",
+  "copy": "คัดลอก"
 }

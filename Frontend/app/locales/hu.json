@@ -1882,5 +1882,6 @@
   "quizCertificateReadOnly": "A beépített sablonok nem szerkeszthetők. A testreszabáshoz hozzon létre másolatot.",
   "quizCertificatePlaceholders": "Elérhető mezők",
   "quizCertificatePreviewHelp": "Az előnézet mintaadatokat használ. Külső képek és betűtípusok nem töltődnek be.",
-  "quizCertificateSavePreview": "Mentse a sablont a módosítások előnézetéhez."
+  "quizCertificateSavePreview": "Mentse a sablont a módosítások előnézetéhez.",
+  "copy": "Másolás"
 }

@@ -1802,5 +1802,6 @@
   "quizCertificateReadOnly": "Les plantilles integrades són de només lectura. Creeu una còpia per personalitzar el disseny.",
   "quizCertificatePlaceholders": "Camps disponibles",
   "quizCertificatePreviewHelp": "La previsualització utilitza dades d'exemple. No es carreguen imatges ni fonts externes.",
-  "quizCertificateSavePreview": "Deseu la plantilla per previsualitzar els canvis."
+  "quizCertificateSavePreview": "Deseu la plantilla per previsualitzar els canvis.",
+  "copy": "Copia"
 }

@@ -1777,5 +1777,6 @@
   "quizCertificateReadOnly": "Șabloanele integrate pot fi doar citite. Creați o copie pentru a personaliza modelul.",
   "quizCertificatePlaceholders": "Câmpuri disponibile",
   "quizCertificatePreviewHelp": "Previzualizarea folosește date de exemplu. Imaginile și fonturile externe nu sunt încărcate.",
-  "quizCertificateSavePreview": "Salvați șablonul pentru a previzualiza modificările."
+  "quizCertificateSavePreview": "Salvați șablonul pentru a previzualiza modificările.",
+  "copy": "Copiază"
 }

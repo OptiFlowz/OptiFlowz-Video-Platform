@@ -1802,5 +1802,6 @@
   "quizCertificateReadOnly": "Iebūvētās veidnes ir tikai lasāmas. Lai pielāgotu dizainu, izveidojiet kopiju.",
   "quizCertificatePlaceholders": "Pieejamie lauki",
   "quizCertificatePreviewHelp": "Priekšskatījumā izmantoti parauga dati. Ārējie attēli un fonti netiek ielādēti.",
-  "quizCertificateSavePreview": "Saglabājiet veidni, lai priekšskatītu izmaiņas."
+  "quizCertificateSavePreview": "Saglabājiet veidni, lai priekšskatītu izmaiņas.",
+  "copy": "Kopēt"
 }

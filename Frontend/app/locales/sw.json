@@ -1802,5 +1802,6 @@
   "quizCertificateReadOnly": "Violezo vilivyojumuishwa ni vya kusoma tu. Unda nakala ili kubadilisha muundo.",
   "quizCertificatePlaceholders": "Sehemu zinazopatikana",
   "quizCertificatePreviewHelp": "Hakiki hutumia data ya mfano. Picha na fonti za nje hazipakuliwi.",
-  "quizCertificateSavePreview": "Hifadhi kiolezo ili kuhakiki mabadiliko."
+  "quizCertificateSavePreview": "Hifadhi kiolezo ili kuhakiki mabadiliko.",
+  "copy": "Nakili"
 }

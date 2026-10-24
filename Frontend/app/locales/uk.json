@@ -1882,5 +1882,6 @@
   "quizCertificateReadOnly": "Вбудовані шаблони доступні лише для читання. Створіть копію, щоб змінити дизайн.",
   "quizCertificatePlaceholders": "Доступні поля",
   "quizCertificatePreviewHelp": "Попередній перегляд використовує зразкові дані. Зовнішні зображення та шрифти не завантажуються.",
-  "quizCertificateSavePreview": "Збережіть шаблон, щоб переглянути зміни."
+  "quizCertificateSavePreview": "Збережіть шаблон, щоб переглянути зміни.",
+  "copy": "Копіювати"
 }

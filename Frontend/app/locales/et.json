@@ -1802,5 +1802,6 @@
   "quizCertificateReadOnly": "Sisseehitatud mallid on kirjutuskaitstud. Kujunduse muutmiseks loo koopia.",
   "quizCertificatePlaceholders": "Saadaolevad väljad",
   "quizCertificatePreviewHelp": "Eelvaade kasutab näidisandmeid. Väliseid pilte ja fonte ei laadita.",
-  "quizCertificateSavePreview": "Muudatuste eelvaateks salvesta mall."
+  "quizCertificateSavePreview": "Muudatuste eelvaateks salvesta mall.",
+  "copy": "Kopeeri"
 }

@@ -1777,5 +1777,6 @@
   "quizCertificateReadOnly": "बिल्ट-इन टेम्पलेट बदले नहीं जा सकते। डिज़ाइन बदलने के लिए कॉपी बनाएँ।",
   "quizCertificatePlaceholders": "उपलब्ध फ़ील्ड",
   "quizCertificatePreviewHelp": "पूर्वावलोकन में उदाहरण डेटा इस्तेमाल होता है। बाहरी चित्र और फ़ॉन्ट लोड नहीं होते।",
-  "quizCertificateSavePreview": "बदलावों का पूर्वावलोकन देखने के लिए टेम्पलेट सहेजें।"
+  "quizCertificateSavePreview": "बदलावों का पूर्वावलोकन देखने के लिए टेम्पलेट सहेजें।",
+  "copy": "कॉपी करें"
 }

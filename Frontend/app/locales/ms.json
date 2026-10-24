@@ -1802,5 +1802,6 @@
   "quizCertificateReadOnly": "Templat terbina dalam hanya boleh dibaca. Cipta salinan untuk menyesuaikan reka bentuk.",
   "quizCertificatePlaceholders": "Medan tersedia",
   "quizCertificatePreviewHelp": "Pratonton menggunakan data contoh. Imej dan fon luaran tidak dimuatkan.",
-  "quizCertificateSavePreview": "Simpan templat untuk pratonton perubahan."
+  "quizCertificateSavePreview": "Simpan templat untuk pratonton perubahan.",
+  "copy": "Salin"
 }

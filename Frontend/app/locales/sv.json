@@ -1802,5 +1802,6 @@
   "quizCertificateReadOnly": "Inbyggda mallar är skrivskyddade. Skapa en kopia för att anpassa designen.",
   "quizCertificatePlaceholders": "Tillgängliga fält",
   "quizCertificatePreviewHelp": "Förhandsgranskningen använder exempeldata. Externa bilder och teckensnitt läses inte in.",
-  "quizCertificateSavePreview": "Spara mallen för att förhandsgranska ändringarna."
+  "quizCertificateSavePreview": "Spara mallen för att förhandsgranska ändringarna.",
+  "copy": "Kopiera"
 }

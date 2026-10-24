@@ -1802,5 +1802,6 @@
   "quizCertificateReadOnly": "Mẫu có sẵn chỉ cho phép đọc. Tạo bản sao để tùy chỉnh thiết kế.",
   "quizCertificatePlaceholders": "Các trường có sẵn",
   "quizCertificatePreviewHelp": "Bản xem trước sử dụng dữ liệu mẫu. Hình ảnh và phông chữ bên ngoài không được tải.",
-  "quizCertificateSavePreview": "Lưu mẫu để xem trước các thay đổi."
+  "quizCertificateSavePreview": "Lưu mẫu để xem trước các thay đổi.",
+  "copy": "Sao chép"
 }

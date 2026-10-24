@@ -1802,5 +1802,6 @@
   "quizCertificateReadOnly": "Hindi nae-edit ang mga built-in na template. Gumawa ng kopya para baguhin ang disenyo.",
   "quizCertificatePlaceholders": "Mga available na field",
   "quizCertificatePreviewHelp": "Sample na datos ang gamit sa preview. Hindi nilo-load ang mga panlabas na larawan at font.",
-  "quizCertificateSavePreview": "I-save ang template para makita ang mga pagbabago sa preview."
+  "quizCertificateSavePreview": "I-save ang template para makita ang mga pagbabago sa preview.",
+  "copy": "Kopyahin"
 }

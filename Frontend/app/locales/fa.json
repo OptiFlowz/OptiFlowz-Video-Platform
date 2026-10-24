@@ -1802,5 +1802,6 @@
   "quizCertificateReadOnly": "قالب‌های آماده فقط خواندنی هستند. برای تغییر طرح، یک نسخه ایجاد کنید.",
   "quizCertificatePlaceholders": "فیلدهای موجود",
   "quizCertificatePreviewHelp": "پیش‌نمایش از داده‌های نمونه استفاده می‌کند. تصاویر و قلم‌های خارجی بارگیری نمی‌شوند.",
-  "quizCertificateSavePreview": "برای پیش‌نمایش تغییرات، قالب را ذخیره کنید."
+  "quizCertificateSavePreview": "برای پیش‌نمایش تغییرات، قالب را ذخیره کنید.",
+  "copy": "کپی"
 }

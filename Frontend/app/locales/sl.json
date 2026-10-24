@@ -1777,5 +1777,6 @@
   "quizCertificateReadOnly": "Vgrajene predloge so samo za branje. Ustvarite kopijo za prilagoditev zasnove.",
   "quizCertificatePlaceholders": "Razpoložljiva polja",
   "quizCertificatePreviewHelp": "Predogled uporablja vzorčne podatke. Zunanje slike in pisave se ne naložijo.",
-  "quizCertificateSavePreview": "Shranite predlogo za predogled sprememb."
+  "quizCertificateSavePreview": "Shranite predlogo za predogled sprememb.",
+  "copy": "Kopiraj"
 }

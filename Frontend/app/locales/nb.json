@@ -1802,5 +1802,6 @@
   "quizCertificateReadOnly": "Innebygde maler er skrivebeskyttet. Opprett en kopi for å tilpasse designet.",
   "quizCertificatePlaceholders": "Tilgjengelige felt",
   "quizCertificatePreviewHelp": "Forhåndsvisningen bruker eksempeldata. Eksterne bilder og skrifttyper lastes ikke inn.",
-  "quizCertificateSavePreview": "Lagre malen for å forhåndsvise endringene."
+  "quizCertificateSavePreview": "Lagre malen for å forhåndsvise endringene.",
+  "copy": "Kopier"
 }

@@ -1802,5 +1802,6 @@
   "quizCertificateReadOnly": "Integruoti šablonai yra tik skaitomi. Norėdami keisti dizainą, sukurkite kopiją.",
   "quizCertificatePlaceholders": "Galimi laukai",
   "quizCertificatePreviewHelp": "Peržiūroje naudojami pavyzdiniai duomenys. Išoriniai vaizdai ir šriftai neįkeliami.",
-  "quizCertificateSavePreview": "Išsaugokite šabloną, kad peržiūrėtumėte pakeitimus."
+  "quizCertificateSavePreview": "Išsaugokite šabloną, kad peržiūrėtumėte pakeitimus.",
+  "copy": "Kopijuoti"
 }

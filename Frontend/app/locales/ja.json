@@ -1802,5 +1802,6 @@
   "quizCertificateReadOnly": "組み込みテンプレートは読み取り専用です。デザインを変更するにはコピーを作成してください。",
   "quizCertificatePlaceholders": "使用可能なフィールド",
   "quizCertificatePreviewHelp": "プレビューにはサンプルデータを使用します。外部の画像やフォントは読み込まれません。",
-  "quizCertificateSavePreview": "変更をプレビューするにはテンプレートを保存してください。"
+  "quizCertificateSavePreview": "変更をプレビューするにはテンプレートを保存してください。",
+  "copy": "コピー"
 }

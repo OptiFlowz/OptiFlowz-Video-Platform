@@ -1777,5 +1777,6 @@
   "quizCertificateReadOnly": "Wbudowane szablony są tylko do odczytu. Utwórz kopię, aby dostosować projekt.",
   "quizCertificatePlaceholders": "Dostępne pola",
   "quizCertificatePreviewHelp": "Podgląd używa przykładowych danych. Zewnętrzne obrazy i czcionki nie są ładowane.",
-  "quizCertificateSavePreview": "Zapisz szablon, aby zobaczyć zmiany w podglądzie."
+  "quizCertificateSavePreview": "Zapisz szablon, aby zobaczyć zmiany w podglądzie.",
+  "copy": "Kopiuj"
 }

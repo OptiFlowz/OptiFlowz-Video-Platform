@@ -1777,5 +1777,6 @@
   "quizCertificateReadOnly": "Les modèles intégrés sont en lecture seule. Créez une copie pour personnaliser le modèle.",
   "quizCertificatePlaceholders": "Champs disponibles",
   "quizCertificatePreviewHelp": "L'aperçu utilise des données d'exemple. Les images et polices externes ne sont pas chargées.",
-  "quizCertificateSavePreview": "Enregistrez le modèle pour prévisualiser vos modifications."
+  "quizCertificateSavePreview": "Enregistrez le modèle pour prévisualiser vos modifications.",
+  "copy": "Copier"
 }

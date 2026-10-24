@@ -1802,5 +1802,6 @@
   "quizCertificateReadOnly": "Templat bawaan hanya dapat dibaca. Buat salinan untuk menyesuaikan desain.",
   "quizCertificatePlaceholders": "Kolom tersedia",
   "quizCertificatePreviewHelp": "Pratinjau menggunakan data contoh. Gambar dan font eksternal tidak dimuat.",
-  "quizCertificateSavePreview": "Simpan templat untuk melihat perubahan."
+  "quizCertificateSavePreview": "Simpan templat untuk melihat perubahan.",
+  "copy": "Salin"
 }

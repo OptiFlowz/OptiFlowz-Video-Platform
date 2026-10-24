@@ -1814,5 +1814,6 @@
   "quizCertificateReadOnly": "Ugrađeni predlošci se ne mogu mijenjati. Kreirajte kopiju da prilagodite dizajn.",
   "quizCertificatePlaceholders": "Dostupna polja",
   "quizCertificatePreviewHelp": "Pregled koristi primjere podataka. Vanjske slike i fontovi se ne učitavaju.",
-  "quizCertificateSavePreview": "Sačuvajte predložak da pregledate izmjene."
+  "quizCertificateSavePreview": "Sačuvajte predložak da pregledate izmjene.",
+  "copy": "Kopiraj"
 }

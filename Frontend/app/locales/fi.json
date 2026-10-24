@@ -1802,5 +1802,6 @@
   "quizCertificateReadOnly": "Valmiita pohjia ei voi muokata. Luo kopio mukauttaaksesi mallia.",
   "quizCertificatePlaceholders": "Käytettävissä olevat kentät",
   "quizCertificatePreviewHelp": "Esikatselu käyttää esimerkkitietoja. Ulkoisia kuvia ja fontteja ei ladata.",
-  "quizCertificateSavePreview": "Tallenna pohja esikatsellaksesi muutokset."
+  "quizCertificateSavePreview": "Tallenna pohja esikatsellaksesi muutokset.",
+  "copy": "Kopioi"
 }

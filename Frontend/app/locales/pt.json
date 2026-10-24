@@ -1777,5 +1777,6 @@
   "quizCertificateReadOnly": "Os modelos integrados são apenas de leitura. Crie uma cópia para personalizar o design.",
   "quizCertificatePlaceholders": "Campos disponíveis",
   "quizCertificatePreviewHelp": "A pré-visualização utiliza dados de exemplo. Imagens e tipos de letra externos não são carregados.",
-  "quizCertificateSavePreview": "Guarde o modelo para pré-visualizar as alterações."
+  "quizCertificateSavePreview": "Guarde o modelo para pré-visualizar as alterações.",
+  "copy": "Copiar"
 }

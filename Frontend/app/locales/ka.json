@@ -1802,5 +1802,6 @@
   "quizCertificateReadOnly": "ჩაშენებული შაბლონები მხოლოდ წასაკითხია. დიზაინის შესაცვლელად შექმენით ასლი.",
   "quizCertificatePlaceholders": "ხელმისაწვდომი ველები",
   "quizCertificatePreviewHelp": "წინასწარი ნახვა იყენებს სანიმუშო მონაცემებს. გარე სურათები და შრიფტები არ იტვირთება.",
-  "quizCertificateSavePreview": "ცვლილებების სანახავად შეინახეთ შაბლონი."
+  "quizCertificateSavePreview": "ცვლილებების სანახავად შეინახეთ შაბლონი.",
+  "copy": "კოპირება"
 }

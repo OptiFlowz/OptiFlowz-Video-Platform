@@ -1777,5 +1777,6 @@
   "quizCertificateReadOnly": "Ingebouwde sjablonen zijn alleen-lezen. Maak een kopie om het ontwerp aan te passen.",
   "quizCertificatePlaceholders": "Beschikbare velden",
   "quizCertificatePreviewHelp": "Het voorbeeld gebruikt testgegevens. Externe afbeeldingen en lettertypen worden niet geladen.",
-  "quizCertificateSavePreview": "Sla het sjabloon op om de wijzigingen te bekijken."
+  "quizCertificateSavePreview": "Sla het sjabloon op om de wijzigingen te bekijken.",
+  "copy": "Kopiëren"
 }

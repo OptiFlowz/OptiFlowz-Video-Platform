@@ -1802,5 +1802,6 @@
   "quizCertificateReadOnly": "Innbyggð sniðmát eru skrifvarin. Búðu til afrit til að breyta hönnuninni.",
   "quizCertificatePlaceholders": "Tiltækir reitir",
   "quizCertificatePreviewHelp": "Forskoðun notar sýnigögn. Ytri myndir og letur eru ekki hlaðin.",
-  "quizCertificateSavePreview": "Vistaðu sniðmátið til að forskoða breytingarnar."
+  "quizCertificateSavePreview": "Vistaðu sniðmátið til að forskoða breytingarnar.",
+  "copy": "Afrita"
 }

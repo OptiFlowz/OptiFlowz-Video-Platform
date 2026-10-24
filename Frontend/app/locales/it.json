@@ -1777,5 +1777,6 @@
   "quizCertificateReadOnly": "I modelli integrati sono di sola lettura. Crea una copia per personalizzare il design.",
   "quizCertificatePlaceholders": "Campi disponibili",
   "quizCertificatePreviewHelp": "L'anteprima usa dati di esempio. Immagini e caratteri esterni non vengono caricati.",
-  "quizCertificateSavePreview": "Salva il modello per visualizzare le modifiche in anteprima."
+  "quizCertificateSavePreview": "Salva il modello per visualizzare le modifiche in anteprima.",
+  "copy": "Copia"
 }

@@ -1802,5 +1802,6 @@
   "quizCertificateReadOnly": "内置模板为只读。请创建副本以自定义设计。",
   "quizCertificatePlaceholders": "可用字段",
   "quizCertificatePreviewHelp": "预览使用示例数据，不会加载外部图片和字体。",
-  "quizCertificateSavePreview": "保存模板以预览更改。"
+  "quizCertificateSavePreview": "保存模板以预览更改。",
+  "copy": "复制"
 }

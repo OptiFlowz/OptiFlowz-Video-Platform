@@ -1777,5 +1777,6 @@
   "quizCertificateReadOnly": "Integrierte Vorlagen sind schreibgeschützt. Erstellen Sie eine Kopie, um das Design anzupassen.",
   "quizCertificatePlaceholders": "Verfügbare Felder",
   "quizCertificatePreviewHelp": "Die Vorschau verwendet Beispieldaten. Externe Bilder und Schriftarten werden nicht geladen.",
-  "quizCertificateSavePreview": "Speichern Sie die Vorlage, um Ihre Änderungen anzusehen."
+  "quizCertificateSavePreview": "Speichern Sie die Vorlage, um Ihre Änderungen anzusehen.",
+  "copy": "Kopieren"
 }

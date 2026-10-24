@@ -1882,5 +1882,6 @@
   "quizCertificateReadOnly": "Vstavané šablóny sú iba na čítanie. Na prispôsobenie návrhu vytvorte kópiu.",
   "quizCertificatePlaceholders": "Dostupné polia",
   "quizCertificatePreviewHelp": "Náhľad používa ukážkové údaje. Externé obrázky a písma sa nenačítavajú.",
-  "quizCertificateSavePreview": "Uložte šablónu a zobrazte zmeny v náhľade."
+  "quizCertificateSavePreview": "Uložte šablónu a zobrazte zmeny v náhľade.",
+  "copy": "Kopírovať"
 }

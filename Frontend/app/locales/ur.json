@@ -1802,5 +1802,6 @@
   "quizCertificateReadOnly": "شامل شدہ ٹیمپلیٹس صرف پڑھنے کے لیے ہیں۔ ڈیزائن بدلنے کے لیے نقل بنائیں۔",
   "quizCertificatePlaceholders": "دستیاب فیلڈز",
   "quizCertificatePreviewHelp": "پیش منظر میں نمونہ ڈیٹا استعمال ہوتا ہے۔ بیرونی تصاویر اور فونٹس لوڈ نہیں ہوتے۔",
-  "quizCertificateSavePreview": "تبدیلیوں کا پیش منظر دیکھنے کے لیے ٹیمپلیٹ محفوظ کریں۔"
+  "quizCertificateSavePreview": "تبدیلیوں کا پیش منظر دیکھنے کے لیے ٹیمپلیٹ محفوظ کریں۔",
+  "copy": "کاپی کریں"
 }

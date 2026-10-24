@@ -1777,5 +1777,6 @@
   "quizCertificateReadOnly": "Yerleşik şablonlar salt okunurdur. Tasarımı özelleştirmek için bir kopya oluşturun.",
   "quizCertificatePlaceholders": "Kullanılabilir alanlar",
   "quizCertificatePreviewHelp": "Önizlemede örnek veriler kullanılır. Harici resimler ve yazı tipleri yüklenmez.",
-  "quizCertificateSavePreview": "Değişiklikleri önizlemek için şablonu kaydedin."
+  "quizCertificateSavePreview": "Değişiklikleri önizlemek için şablonu kaydedin.",
+  "copy": "Kopyala"
 }

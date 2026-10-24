@@ -1802,5 +1802,6 @@
   "quizCertificateReadOnly": "התבניות המובנות הן לקריאה בלבד. צור עותק כדי להתאים את העיצוב.",
   "quizCertificatePlaceholders": "שדות זמינים",
   "quizCertificatePreviewHelp": "התצוגה המקדימה משתמשת בנתונים לדוגמה. תמונות וגופנים חיצוניים אינם נטענים.",
-  "quizCertificateSavePreview": "שמור את התבנית כדי לצפות בשינויים."
+  "quizCertificateSavePreview": "שמור את התבנית כדי לצפות בשינויים.",
+  "copy": "העתקה"
 }

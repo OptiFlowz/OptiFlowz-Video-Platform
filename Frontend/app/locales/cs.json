@@ -1882,5 +1882,6 @@
   "quizCertificateReadOnly": "Vestavěné šablony jsou pouze pro čtení. Pro úpravu návrhu vytvořte kopii.",
   "quizCertificatePlaceholders": "Dostupná pole",
   "quizCertificatePreviewHelp": "Náhled používá ukázková data. Externí obrázky a písma se nenačítají.",
-  "quizCertificateSavePreview": "Uložte šablonu pro zobrazení změn v náhledu."
+  "quizCertificateSavePreview": "Uložte šablonu pro zobrazení změn v náhledu.",
+  "copy": "Kopírovat"
 }

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useI18n } from '~/i18n';
 import { getToken } from '~/functions';
-import { AddSVG, SearchSVG } from '~/constants';
+import { AddSVG, SearchSVG, CopySVG, CheckSVG } from '~/constants';
 import Pagination from '~/components/library/pagination';
 import { ConfirmDialog } from '~/components/confirmPopup/confirmDialog';
 import { useConfirm } from '~/components/confirmPopup/useConfirm';
@@ -57,6 +57,18 @@ export function TemplateForm({ id, initial, onEdit, onSaved, onDirty, onBusy }: 
   const { t } = useI18n(), action = useAction(), { confirm, dialogProps } = useConfirm();
   const [form, setForm] = useState(() => templateInput(initial)), [baseline, setBaseline] = useState(() => JSON.stringify(templateInput(initial)));
   const [revision, setRevision] = useState(0);
+  const [copiedField, setCopiedField] = useState('');
+  useEffect(() => {
+    if (!copiedField) return;
+    const timer = window.setTimeout(() => setCopiedField(''), 2000);
+    return () => window.clearTimeout(timer);
+  }, [copiedField]);
+  const copyField = async (value: string) => {
+    try {
+      await navigator.clipboard.writeText(`{{${value}}}`);
+      setCopiedField(value);
+    } catch { action.setError(t('quizError')); }
+  };
   const readOnly = 'is_system' in initial && initial.is_system;
   const dirty = JSON.stringify(templateInput(form)) !== baseline;
   useEffect(() => { onDirty(dirty); }, [dirty, onDirty]);
@@ -96,7 +108,7 @@ export function TemplateForm({ id, initial, onEdit, onSaved, onDirty, onBusy }: 
           <Field label={t('quizCertificateHTML')}><CodeEditor language="html" label={t('quizCertificateHTML')} disabled={readOnly || action.busy} value={form.html_template} onChange={html_template => change({ html_template })} /></Field>
           <Field label={t('quizCertificateCSS')}><CodeEditor label={t('quizCertificateCSS')} disabled={readOnly || action.busy} value={form.css_template} onChange={css_template => change({ css_template })} /></Field>
         </fieldset>
-        <details className={styles.certificatePlaceholderHelp}><summary>{t('quizCertificatePlaceholders')}</summary><p className={styles.note}>{t('quizCertificatePreviewHelp')}</p><ul>{placeholders.map(value => <li key={value}><code>{`{{${value}}}`}</code></li>)}</ul></details>
+        <details className={styles.certificatePlaceholderHelp}><summary>{t('quizCertificatePlaceholders')}</summary><ul>{placeholders.map(value => <li key={value}><code>{`{{${value}}}`}</code><button type="button" className={styles.certificateFieldCopy} title={t(copiedField === value ? 'liveCopied' : 'copy')} aria-label={`${t(copiedField === value ? 'liveCopied' : 'copy')}: {{${value}}}`} onClick={() => void copyField(value)}>{copiedField === value ? CheckSVG : CopySVG}</button></li>)}</ul></details>
         {!readOnly && <div className={styles.actions}><button type="submit" className={`${styles.button} ${styles.primary}`} disabled={action.busy || !valid || (id !== 'new' && !dirty)}>{t(action.busy ? 'saving' : 'saveChanges')}</button></div>}
       </form>
       <CertificatePreview id={id} revision={revision} dirty={dirty} template={form} savedTemplate={JSON.parse(baseline)} />
@@ -119,9 +131,9 @@ export function CertificatePreview({ id, revision, dirty, template, savedTemplat
         }
       }} tabIndex={mode === value ? 0 : -1}>{value.toUpperCase()} {t('postPreview')}</button>)}
     </div>
-    <p className={styles.certificatePreviewHint}>{t('quizCertificatePreviewHelp')}</p>
+    {(dirty || id === 'new') && <p className={styles.certificatePreviewHint}>PDF: {t('quizCertificateSavePreview')}</p>}
     <div hidden={mode !== 'html'} role="tabpanel" aria-label={`HTML ${t('postPreview')}`}><CertificateHtmlPreview template={template} /></div>
-    {pdfRequested && <div hidden={mode !== 'pdf'} role="tabpanel" aria-label={`PDF ${t('postPreview')}`}><CertificatePdfPreview id={id} revision={revision} dirty={dirty} template={savedTemplate} /></div>}
+    {pdfRequested && <div hidden={mode !== 'pdf'} role="tabpanel" aria-label={`PDF ${t('postPreview')}`}><CertificatePdfPreview id={id} revision={revision} template={savedTemplate} /></div>}
   </aside>;
 }
 
@@ -142,7 +154,7 @@ function CertificateHtmlPreview({ template, thumbnail = false }: { template: Cer
   </div>;
 }
 
-function CertificatePdfPreview({ id, revision, dirty, template }: { id: string; revision: number; dirty: boolean; template: CertificateTemplateInput }) {
+function CertificatePdfPreview({ id, revision, template }: { id: string; revision: number; template: CertificateTemplateInput }) {
   const { t } = useI18n();
   const [url, setUrl] = useState(''), [error, setError] = useState(''), [loading, setLoading] = useState(false), [retry, setRetry] = useState(0);
   useEffect(() => {
@@ -161,7 +173,6 @@ function CertificatePdfPreview({ id, revision, dirty, template }: { id: string; 
   }, [id, revision, retry]);
   const paper = certificatePaper(template);
   return <>
-    {(dirty || id === 'new') && <p className={styles.certificatePreviewHint}>{t('quizCertificateSavePreview')}</p>}
     {loading && <p role="status">{t('quizLoadingQuiz')}</p>}
     {error && <div role="alert"><p className={styles.error}>{error}</p><button type="button" className={styles.button} onClick={() => setRetry(value => value + 1)}>{t('usersRetry')}</button></div>}
     {url && <><iframe className={styles.certificatePdf} style={{ aspectRatio: `${paper.width} / ${paper.height}` }} title={`PDF ${t('postPreview')}`} src={`${url}#toolbar=0&navpanes=0&view=Fit`} /><a className={styles.button} href={url} target="_blank" rel="noopener noreferrer">{t('adminOpen')}</a></>}

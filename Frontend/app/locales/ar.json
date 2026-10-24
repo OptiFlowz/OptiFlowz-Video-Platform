@@ -1777,5 +1777,6 @@
   "quizCertificateReadOnly": "القوالب المدمجة للقراءة فقط. أنشئ نسخة لتخصيص التصميم.",
   "quizCertificatePlaceholders": "الحقول المتاحة",
   "quizCertificatePreviewHelp": "تستخدم المعاينة بيانات تجريبية. لا تُحمّل الصور والخطوط الخارجية.",
-  "quizCertificateSavePreview": "احفظ القالب لمعاينة التغييرات."
+  "quizCertificateSavePreview": "احفظ القالب لمعاينة التغييرات.",
+  "copy": "نسخ"
 }

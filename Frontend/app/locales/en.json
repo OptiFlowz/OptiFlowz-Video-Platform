@@ -1807,5 +1807,6 @@
   "quizCertificateReadOnly": "Built-in templates are read-only. Create a copy to customize this design.",
   "quizCertificatePlaceholders": "Available fields",
   "quizCertificatePreviewHelp": "The preview uses sample data. External images and fonts are not loaded.",
-  "quizCertificateSavePreview": "Save the template to preview your changes."
+  "quizCertificateSavePreview": "Save the template to preview your changes.",
+  "copy": "Copy"
 }

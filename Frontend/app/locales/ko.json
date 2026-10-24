@@ -1802,5 +1802,6 @@
   "quizCertificateReadOnly": "내장 템플릿은 읽기 전용입니다. 디자인을 수정하려면 사본을 만드세요.",
   "quizCertificatePlaceholders": "사용 가능한 필드",
   "quizCertificatePreviewHelp": "미리보기에는 샘플 데이터가 사용됩니다. 외부 이미지와 글꼴은 로드되지 않습니다.",
-  "quizCertificateSavePreview": "변경 사항을 미리 보려면 템플릿을 저장하세요."
+  "quizCertificateSavePreview": "변경 사항을 미리 보려면 템플릿을 저장하세요.",
+  "copy": "복사"
 }

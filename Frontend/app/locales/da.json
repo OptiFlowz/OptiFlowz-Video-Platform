@@ -1802,5 +1802,6 @@
   "quizCertificateReadOnly": "Indbyggede skabeloner er skrivebeskyttede. Opret en kopi for at tilpasse designet.",
   "quizCertificatePlaceholders": "Tilgængelige felter",
   "quizCertificatePreviewHelp": "Forhåndsvisningen bruger eksempeldata. Eksterne billeder og skrifttyper indlæses ikke.",
-  "quizCertificateSavePreview": "Gem skabelonen for at se ændringerne."
+  "quizCertificateSavePreview": "Gem skabelonen for at se ændringerne.",
+  "copy": "Kopiér"
 }

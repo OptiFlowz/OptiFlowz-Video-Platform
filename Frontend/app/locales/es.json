@@ -1792,5 +1792,6 @@
   "quizCertificateReadOnly": "Las plantillas integradas son de solo lectura. Crea una copia para personalizar el diseño.",
   "quizCertificatePlaceholders": "Campos disponibles",
   "quizCertificatePreviewHelp": "La vista previa utiliza datos de ejemplo. No se cargan imágenes ni fuentes externas.",
-  "quizCertificateSavePreview": "Guarda la plantilla para previsualizar los cambios."
+  "quizCertificateSavePreview": "Guarda la plantilla para previsualizar los cambios.",
+  "copy": "Copiar"
 }

@@ -1802,5 +1802,6 @@
   "quizCertificateReadOnly": "বিল্ট-ইন টেমপ্লেট পরিবর্তন করা যায় না। নকশা পরিবর্তন করতে একটি কপি তৈরি করুন।",
   "quizCertificatePlaceholders": "উপলব্ধ ক্ষেত্র",
   "quizCertificatePreviewHelp": "পূর্বরূপে নমুনা তথ্য ব্যবহৃত হয়। বাইরের ছবি ও ফন্ট লোড হয় না।",
-  "quizCertificateSavePreview": "পরিবর্তনের পূর্বরূপ দেখতে টেমপ্লেট সংরক্ষণ করুন।"
+  "quizCertificateSavePreview": "পরিবর্তনের পূর্বরূপ দেখতে টেমপ্লেট সংরক্ষণ করুন।",
+  "copy": "কপি করুন"
 }
