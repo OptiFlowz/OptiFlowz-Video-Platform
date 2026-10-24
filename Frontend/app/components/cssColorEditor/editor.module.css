@@ -14,7 +14,7 @@
   --codeInvalid: color-mix(in srgb, var(--accentRed3) 60%, var(--text1));
 }
 
-.editor { min-width: 0; overflow: hidden; border-radius: 12px; background: color-mix(in srgb, var(--background2) 94%, var(--text1)); color: var(--text1); }
+.editor { min-width: 0; overflow: hidden; border-radius: 12px; background: var(--background2); color: var(--text1); }
 .editor :global(.cm-editor) { font-size: .85rem; }
 .editor :global(.cm-editor .cm-gutters) { background: transparent; color: var(--text2); border: 0; }
 .editor :global(.cm-lineNumbers .cm-gutterElement) { padding-inline: 8px; }

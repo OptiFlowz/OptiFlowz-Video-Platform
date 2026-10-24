@@ -197,6 +197,7 @@ main.videoAnalyticsPage .videoAnalyticsMeta span{
 }
 
 main.videoAnalyticsPage .videoAnalyticsSelect{
+  background-color: var(--background2);
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -241,7 +242,7 @@ main.videoAnalyticsPage .videoAnalyticsDateField{
   padding: 0.42rem 0.75rem;
   border: 1px solid var(--border1);
   border-radius: 999px;
-  background-color: var(--background3);
+  background-color: var(--background2);
   color: var(--text1);
   font-weight: 500;
 }

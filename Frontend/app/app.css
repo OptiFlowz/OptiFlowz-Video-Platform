@@ -174,9 +174,9 @@ main.uemsPage {
   border: 1px solid var(--border1) !important;
 }
 
-body.quiz-attempt-in-progress #optiflowz-chat,
-body.quiz-attempt-in-progress #optiflowz-chat-open,
-body.quiz-attempt-in-progress .optiflowz-chat-wrapper {
+body:is(.quiz-attempt-in-progress, .quiz-chat-blocked) #optiflowz-chat,
+body:is(.quiz-attempt-in-progress, .quiz-chat-blocked) #optiflowz-chat-open,
+body:is(.quiz-attempt-in-progress, .quiz-chat-blocked) .optiflowz-chat-wrapper {
   display: none !important;
   pointer-events: none !important;
 }
@@ -1075,7 +1075,7 @@ header .primaryNavigation .primaryNavigationBrand::before {
 	border: 1px solid transparent;
 	padding: 0.65rem 0.7rem 0.65rem 0.8rem;
 	border-radius: 12px;
-	background: var(--background1);
+	background: var(--background2);
 	color: inherit;
 	text-align: left;
 	cursor: pointer;
@@ -1342,7 +1342,7 @@ header .primaryNavigation .primaryNavigationBrand::before {
 .customLanguageSelect--settings .customLanguageTrigger {
 	padding: 0.85rem;
 	border-radius: 12px;
-	background: var(--background1);
+	background: var(--background2);
 	font-size: 0.95rem;
 }
 
@@ -3653,12 +3653,12 @@ mux-player::part(menu-item) {
 }
 
 .comment-input:has(textarea:hover){
-  background-color: var(--background15);
+  background-color: var(--background2);
 }
 
 .comment-input:focus-within{
   border: 2px solid var(--accentBlue);
-  background-color: var(--background15);
+  background-color: var(--background2);
 }
 
 .comment-actions{
@@ -6320,7 +6320,7 @@ main.textFilledMain section {
 }
 
 .languageSelect {
-  background-color: var(--background1);
+  background-color: var(--background2);
   padding: 0.5rem 0.75rem;
   border-radius: 16px;
   font-size: 0.875rem;
@@ -6339,7 +6339,7 @@ main.textFilledMain section {
 }
 
 .visibilitySelect {
-  background-color: var(--background1);
+  background-color: var(--background2);
   padding: 0.5rem 0.75rem;
   border-radius: 999px;
   font-size: 0.875rem;
@@ -6527,7 +6527,7 @@ input.disabled,
 .languageSelect.disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  background-color: var(--background3);
+  background-color: var(--background2);
 }
 
 .uploadedBanner {
@@ -10887,7 +10887,7 @@ main.homePage .heroSlideControls button.selected {
 .platformField input:focus,
 .platformField textarea:focus{
   border-color: var(--accentBlue);
-  background: var(--background3);
+  background: var(--background2);
 }
 
 .appearanceCard{

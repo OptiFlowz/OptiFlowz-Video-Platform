@@ -38,9 +38,9 @@ export default function CertificateTemplates(props: Props) {
   };
   if (props.id) return <TemplateDetail key={props.id} {...props} id={props.id} />;
   return <section className={styles.certificateTab}>
-    <div className={styles.toolbar}>
-      <div className={styles.certificateFilter}>{SearchSVG}<input type="search" aria-label={t('quizCertificateSearch')} placeholder={t('quizCertificateSearch')} maxLength={255} value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} /></div>
-      <button type="button" className={styles.button} disabled={action.busy} onClick={() => props.onEdit('new')}>{AddSVG}{t('quizCertificateCreate')}</button>
+    <div className={`managementToolbar ${styles.listToolbar}`}>
+      <div className="filter">{SearchSVG}<input type="search" aria-label={t('quizCertificateSearch')} placeholder={t('quizCertificateSearch')} maxLength={255} value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} /></div>
+      <button type="button" className={`${styles.button} ${styles.certificateCreate}`} disabled={action.busy} onClick={() => props.onEdit('new')}>{AddSVG}{t('quizCertificateCreate')}</button>
     </div>
     <Notice {...action} />
     <LoadState query={templates} />
@@ -121,7 +121,7 @@ export function TemplateForm({ id, initial, onEdit, onSaved, onDirty, onBusy }: 
           <Field label={t('quizCertificateCSS')}><CodeEditor label={t('quizCertificateCSS')} disabled={readOnly || action.busy} value={form.css_template} onChange={css_template => change({ css_template })} /></Field>
         </fieldset>
         <details className={styles.certificatePlaceholderHelp}><summary>{t('quizCertificatePlaceholders')}</summary><ul>{placeholders.map(value => <li key={value}><code>{value}</code><button type="button" className={styles.certificateFieldCopy} title={t(copiedField === value ? 'liveCopied' : 'copy')} aria-label={`${t(copiedField === value ? 'liveCopied' : 'copy')}: ${value}`} onClick={() => void copyField(value)}>{copiedField === value ? CheckSVG : CopySVG}</button></li>)}</ul></details>
-        {!readOnly && <div className={styles.actions}><button type="submit" className={`${styles.button} ${styles.primary}`} disabled={action.busy || !valid || (id !== 'new' && !dirty)}>{t(action.busy ? 'saving' : 'saveChanges')}</button></div>}
+        {!readOnly && <div className={styles.actions}><button type="submit" className={`${styles.button} ${styles.primary} ${styles.savePrimary}`} disabled={action.busy || !valid || (id !== 'new' && !dirty)}>{t(action.busy ? 'saving' : 'saveChanges')}</button></div>}
       </form>
       <div className={styles.certificatePreviewColumn}>
         <CertificatePreview id={id} revision={revision} dirty={dirty} template={form} savedTemplate={JSON.parse(baseline)} />
