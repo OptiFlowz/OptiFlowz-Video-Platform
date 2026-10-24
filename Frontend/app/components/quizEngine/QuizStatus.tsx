@@ -7,9 +7,10 @@ import { inspectQuiz } from './inspectQuiz';
 import type { Quiz } from './model';
 import { useAccess, styles } from './shared';
 
-export default function QuizStatus({ quiz, disabled }: {
+export default function QuizStatus({ quiz, disabled, className }: {
   quiz: Pick<Quiz, 'id' | 'user_id' | 'title' | 'status'>;
   disabled?: boolean;
+  className?: string;
 }) {
   const { t } = useI18n();
   const access = useAccess('quizzes', quiz);
@@ -18,7 +19,7 @@ export default function QuizStatus({ quiz, disabled }: {
     value={quiz.status}
     title={quiz.title}
     disabled={disabled || !access.update}
-    className={`visibility ${quiz.status === 'published' ? 'public' : styles.unpublishedStatus}`}
+    className={className ?? `visibility ${quiz.status === 'published' ? 'public' : styles.unpublishedStatus}`}
     options={[
       { value: 'draft', label: t('qeDraft'), icon: EditSVG },
       { value: 'published', label: t('qePublished'), icon: ActiveSVG },

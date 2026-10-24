@@ -10,6 +10,7 @@ import { inspectQuiz } from './inspectQuiz';
 import { Candidates, Sources, Requirements } from './QuizParts';
 import { EditorActions, EditorBusyStatusContext } from './EditorPopup';
 import QuizCertificate from './QuizCertificate';
+import QuizStatus from './QuizStatus';
 import { numberDraftValue, type NumberDraft } from './numberDraft';
 
 const editorTabs = { settings: 'qeSettings', questions: 'quizQuestionsButton', sources: 'quizSourcesButton', rules: 'quizRulesButton', certificate: 'quizCertificateTab' };
@@ -21,7 +22,7 @@ export default function QuizEditor({ id, section, onSectionChange, onSaved, onDi
   const access = useAccess('quizzes', detail.data?.quiz), quiz = detail.data?.quiz;
   const tab = id === 'new' || !Object.hasOwn(editorTabs, section) ? 'settings' : section as keyof typeof editorTabs;
   return <div className={`${styles.page} ${styles.editorPage}`}>
-    <div className="libraryHeader"><div className="libraryHeading"><h1>{quiz?.title || t(id === 'new' ? 'quizCreateTitle' : 'quizEditTitle')}</h1><p>{t(id === 'new' ? 'qePublishAfterCreate' : 'qeIntro')}</p></div>{quiz && <span className={`managementStatus ${quiz.status === 'published' ? 'active' : ''}`}>{t(`qe${quiz.status[0].toUpperCase()}${quiz.status.slice(1)}`)}</span>}</div>
+    <div className="libraryHeader"><div className="libraryHeading"><h1>{quiz?.title || t(id === 'new' ? 'quizCreateTitle' : 'quizEditTitle')}</h1><p>{t(id === 'new' ? 'qePublishAfterCreate' : 'qeIntro')}</p></div>{quiz && <QuizStatus quiz={quiz} disabled={busy} className={`managementStatus ${quiz.status === 'published' ? 'active' : ''}`} />}</div>
     <ProfileTabs className={styles.resourceTabs} label={t('qeSettings')}>{Object.entries(editorTabs).map(([key, label]) => <button type="button" role="tab" key={key} id={`quiz-tab-${key}`} aria-selected={tab === key} aria-controls="quiz-editor-panel" disabled={busy || (key !== 'settings' && !quiz)} onClick={() => { if (tab !== key) onSectionChange(key); }}>{t(label)}</button>)}</ProfileTabs>
     <div id="quiz-editor-panel" role="tabpanel" aria-labelledby={`quiz-tab-${tab}`} className={styles.editorBody}>
       {id !== 'new' && !detail.data ? <LoadState query={detail} variant="form" /> : <>
@@ -39,6 +40,16 @@ function Settings({ initial, onSaved, onDirty, onClose }: { initial?: Quiz; onSa
   const { t } = useI18n(), access = useAccess('quizzes', initial);
   const [form, setForm] = useState<NumberDraft<QuizSettings>>(() => initial ? settingsOf(initial) : { ...defaultSettings });
   const [baseline, setBaseline] = useState(JSON.stringify(form)), [issues, setIssues] = useState<string[] | null>(null);
+  const persistedStatus = useRef(initial?.status);
+  useEffect(() => {
+    if (!initial || persistedStatus.current === initial.status) return;
+    persistedStatus.current = initial.status;
+    // A status-only save must not discard other settings the user is editing.
+    const next = { ...form, status: initial.status };
+    const nextBaseline = JSON.stringify({ ...JSON.parse(baseline), status: initial.status });
+    setForm(next); setBaseline(nextBaseline);
+    onDirty(JSON.stringify(next) !== nextBaseline);
+  }, [initial?.status, form, baseline, onDirty]);
   const readinessPanel = useRef<HTMLElement>(null);
   const scrollToBottom = () => readinessPanel.current?.scrollIntoView({ block: 'nearest', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
   const action = useAction(), readinessAction = useAction(), editable = initial ? access.update : access.create;

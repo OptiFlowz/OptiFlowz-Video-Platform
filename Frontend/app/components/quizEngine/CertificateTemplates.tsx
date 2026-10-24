@@ -7,6 +7,7 @@ import Pagination from '~/components/library/pagination';
 import { ConfirmDialog } from '~/components/confirmPopup/confirmDialog';
 import { useConfirm } from '~/components/confirmPopup/useConfirm';
 import { engineKey } from './api';
+import type { OwnershipFilter } from './resourceFilter';
 import { Field, Select, Notice, LoadState, useAction, styles } from './shared';
 import { allCertificateTemplates, certificateRequest, emptyTemplate, previewCertificate, templateInput, type CertificateTemplate, type CertificateTemplateInput } from './certificateApi';
 
@@ -16,7 +17,7 @@ import { certificateQrImages } from './certificateQrStyles';
 import QrStyler from './QrStyler';
 import CertificatePreviewLoading from './CertificatePreviewLoading';
 
-type Props = { id: string | null; onEdit: (id?: string) => void; onSaved: (id: string) => void; onDirty: (dirty: boolean) => void; onBusy: (busy: boolean) => void };
+type Props = { ownership?: string; onOwnershipChange?: (scope: OwnershipFilter) => void; id: string | null; onEdit: (id?: string) => void; onSaved: (id: string) => void; onDirty: (dirty: boolean) => void; onBusy: (busy: boolean) => void };
 const placeholders = ['user.full_name', 'quiz.title', 'result.score_percentage', 'result.earned_points', 'result.max_points', 'certificate.number', 'certificate.issued_at', 'certificate.qr_code_data_uri']
   .map(value => `{{${value}}}`);
 
@@ -26,7 +27,11 @@ export default function CertificateTemplates(props: Props) {
   const [search, setSearch] = useState(''), [page, setPage] = useState(1), [limit, setLimit] = useState(20);
   const templates = useQuery({ queryKey: [...engineKey, token, 'certificate-templates'], enabled: !!token && !props.id,
     queryFn: ({ signal }) => allCertificateTemplates(signal), retry: false });
-  const rows = (templates.data ?? []).filter(row => row.name.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()));
+  const scope = props.ownership === 'mine' || props.ownership === 'others' ? props.ownership : 'all';
+  // The accessible set contains the current user's private templates and system templates.
+  const rows = (templates.data ?? []).filter(row => (scope === 'all' || (scope === 'mine' ? !row.is_system : row.is_system))
+    && row.name.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()));
+  useEffect(() => { setPage(1); }, [scope]);
   const totalPages = Math.max(1, Math.ceil(rows.length / limit));
   useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
   const remove = async (template: CertificateTemplate) => {
@@ -40,7 +45,10 @@ export default function CertificateTemplates(props: Props) {
   return <section className={styles.certificateTab}>
     <div className={`managementToolbar ${styles.listToolbar}`}>
       <div className="filter">{SearchSVG}<input type="search" aria-label={t('quizCertificateSearch')} placeholder={t('quizCertificateSearch')} maxLength={255} value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} /></div>
-      <button type="button" className={`${styles.button} ${styles.certificateCreate}`} disabled={action.busy} onClick={() => props.onEdit('new')}>{AddSVG}{t('quizCertificateCreate')}</button>
+      <div className={styles.listFilters}>
+        <Select label={t('systemRoleOwner')} value={scope} disabled={action.busy} values={[{ value: 'mine', label: t('qeOnlyMine') }, { value: 'others', label: t('qeFromOthers') }, { value: 'all', label: t('qeAllOwners') }]} onChange={value => { setPage(1); props.onOwnershipChange?.(value as OwnershipFilter); }} />
+        <button type="button" className={`${styles.button} ${styles.certificateCreate}`} disabled={action.busy} onClick={() => props.onEdit('new')}>{AddSVG}{t('quizCertificateCreate')}</button>
+      </div>
     </div>
     <Notice {...action} />
     <LoadState query={templates} />

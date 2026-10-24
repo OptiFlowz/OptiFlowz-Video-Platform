@@ -91,7 +91,7 @@ test('certificate library orders defaults, protects system designs, edits privat
   const View = load('app/components/quizEngine/CertificateTemplates.tsx').default;
   let edit, saved;
   const onDirty = value => dirty.push(value), onBusy = () => {};
-  const render = async (id = null) => { await act(async () => root.render(React.createElement(QueryClientProvider, { client }, React.createElement(View, { id, onDirty, onBusy, onEdit: value => { edit = value; }, onSaved: value => { saved = value; } })))); await tick(); };
+  const render = async (id = null, ownership = 'all') => { await act(async () => root.render(React.createElement(QueryClientProvider, { client }, React.createElement(View, { id, ownership, onOwnershipChange: value => render(null, value), onDirty, onBusy, onEdit: value => { edit = value; }, onSaved: value => { saved = value; } })))); await tick(); };
   const click = async text => { const button = [...document.querySelectorAll('button')].find(b => b.textContent === text); assert.ok(button, text); assert.equal(button.disabled, false, text); await act(async () => button.click()); await tick(); };
   const fill = async (label, value) => { const input = document.querySelector(`[aria-label="${label}"]`); assert.ok(input, label); await act(async () => { Object.getOwnPropertyDescriptor(input.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype, 'value').set.call(input, value); input.dispatchEvent(new window.Event('input', { bubbles: true })); }); };
   const submit = async () => { await act(async () => document.querySelector('form').dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true }))); await tick(); };
@@ -113,6 +113,18 @@ test('certificate library orders defaults, protects system designs, edits privat
   assert.equal(document.querySelector('.certificateCardDelete').textContent, '', 'Delete is an icon-only action');
   await click('Edit');
   assert.equal(edit, 'classic', 'card action opens its template');
+
+  await render(null, 'mine');
+  assert.deepEqual([...document.querySelectorAll('.certificateCard h2')].map(node => node.textContent), ['A private design'], 'Only mine excludes built-in templates');
+  await render(null, 'others');
+  assert.deepEqual([...document.querySelectorAll('.certificateCard h2')].map(node => node.textContent), ['Classic', 'Minimal', 'Modern'], 'From others shows accessible built-in templates');
+  await fill('Search templates', 'Minimal');
+  assert.deepEqual([...document.querySelectorAll('.certificateCard h2')].map(node => node.textContent), ['Minimal'], 'search combines with scope');
+  await render(null, 'mine');
+  assert.equal(document.querySelectorAll('.certificateCard').length, 0, 'scope does not ignore the search');
+  await fill('Search templates', '');
+  await render(null, 'all');
+  assert.equal(document.querySelectorAll('.certificateCard').length, 4, 'All restores the full accessible set');
 
   await fill('Search templates', 'Modern');
   assert.equal(document.querySelectorAll('.certificateCard').length, 1);
