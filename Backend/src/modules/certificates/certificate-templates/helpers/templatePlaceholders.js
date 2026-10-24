@@ -1,4 +1,6 @@
 import { HttpError } from '../../../../common/httpError.js';
+import { isQrCodeKey, parseCertificateQrOptions } from '../../helpers/certificateQrOptions.js';
+export { isQrCodePlaceholder } from '../../helpers/certificateQrOptions.js';
 
 export const PREVIEW_DATA = Object.freeze({
   'user.full_name': 'John Anderson',
@@ -10,10 +12,7 @@ export const PREVIEW_DATA = Object.freeze({
   'certificate.issued_at': 'October 23, 2026',
 });
 
-const placeholderPattern = /\{\{\s*([a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*)\s*\}\}/g;
-export const QR_CODE_KEY = 'certificate.qr_code_data_uri';
-export const isQrCodePlaceholder = value => value === value.trim()
-  && /^\{\{\s*certificate\.qr_code_data_uri\s*\}\}$/.test(value);
+const placeholderPattern = /\{\{\s*([a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_-]*)*)\s*\}\}/gi;
 
 function invalid(message, field = 'html_template') {
   throw new HttpError(422, { message: `${field}: ${message}`, field });
@@ -27,8 +26,9 @@ export function validatePlaceholders(source, field = 'html_template', allowQrSou
   }
   if (/\{\{\{|\}\}\}/.test(source)) invalid('Triple-brace placeholders are not allowed', field);
   const remaining = source.replace(placeholderPattern, (_match, key) => {
-    if (key === QR_CODE_KEY) {
+    if (isQrCodeKey(key)) {
       if (!allowQrSource) invalid('QR code placeholder is only allowed as the entire src of an HTML img element', field);
+      parseCertificateQrOptions(key);
       return '';
     }
     if (!Object.hasOwn(PREVIEW_DATA, key)) invalid(`Unknown placeholder "${key}"`, field);
@@ -50,5 +50,5 @@ export function escapeHtml(value) {
 export function fillPreviewPlaceholders(html) {
   // The caller has already validated each placeholder's HTML context.
   validatePlaceholders(html, 'html_template', true);
-  return html.replace(placeholderPattern, (match, key) => key === QR_CODE_KEY ? match : escapeHtml(PREVIEW_DATA[key]));
+  return html.replace(placeholderPattern, (match, key) => isQrCodeKey(key) ? match : escapeHtml(PREVIEW_DATA[key]));
 }

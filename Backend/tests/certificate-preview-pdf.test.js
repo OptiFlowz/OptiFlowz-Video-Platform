@@ -20,7 +20,7 @@ const template = {
 
 test('QR PNG renders in PDF and respects template CSS position and dimensions', { skip: !browserAvailable }, async () => {
   const document = buildPreviewDocument({ ...template,
-    html_template: '<img src="{{certificate.qr_code_data_uri}}" class="qr-code" alt="QR verifikacija">',
+    html_template: '<img src="{{certificate.qr_code_data_uri.size_200.color_ff6937.dots_rounded.background_ffffff}}" class="qr-code" alt="QR verifikacija">',
     css_template: '.qr-code {position:absolute; left:37px; top:53px; width:96px; height:96px}',
   });
   document.html = await fillCertificateQrCode(document.html, 'https://videoplatform.optiflowz.com/certificates/verify/preview');
@@ -36,7 +36,7 @@ test('QR PNG renders in PDF and respects template CSS position and dimensions', 
       const rect = image.getBoundingClientRect();
       return { loaded: image.complete, naturalWidth: image.naturalWidth, x: rect.x, y: rect.y, width: rect.width, height: rect.height };
     });
-    assert.deepEqual(details, { loaded: true, naturalWidth: 512, x: 37, y: 53, width: 96, height: 96 });
+    assert.deepEqual(details, { loaded: true, naturalWidth: 200, x: 37, y: 53, width: 96, height: 96 });
   } finally { await browser.close(); }
 });
 

@@ -140,7 +140,39 @@ The additional `{{certificate.qr_code_data_uri}}` placeholder is allowed **only 
 
 Set `FRONTEND_BASE_URL=https://videoplatform.optiflowz.com` on the backend. QR preview encodes `https://videoplatform.optiflowz.com/certificates/verify/preview` (a test verification URL, not an issued certificate). A path prefix in the configured base URL is retained; query/fragment are removed. This change does not create a frontend verification page. Missing/invalid configuration returns `500` only for previews containing the QR placeholder.
 
-`helpers/certificateQrCode.js` exports the reusable `generateCertificateQrCode(verificationUrl)` function for preview and future issuance. It uses the existing Node.js `qrcode` package to generate a 512×512 PNG Base64 Data URI with error correction M and a four-module quiet zone. The preview replaces all QR occurrences with one generated image after validating the template; CSS controls its displayed position and dimensions. There is no network request to the verification URL and no change to the original `html_template` in the database. User-authored PNG data URLs remain subject to the existing resource restrictions.
+QR styling parameters can be appended with dots as separators. The original parameter-free placeholder remains supported:
+
+```html
+<img src="{{certificate.qr_code_data_uri.size_200.color_ff6937.dots_rounded.background_ffffff}}" class="qr-code" alt="QR verifikacija" />
+<img src="{{certificate.qr_code_data_uri.size_300.dots_classy-rounded.corners_extra-rounded.cornerdots_dot.gradient_linear_002244_663300_45.ecc_H}}" class="qr-code" alt="QR verifikacija" />
+```
+
+Each parameter uses `name_value`. Order does not matter; names are lowercase, hex colors may use either case. Whitespace is allowed around the complete placeholder key, not between parameters. All styling remains subject to the `img src` context restriction above.
+
+| Parameter | Accepted values / default | Library mapping |
+| --- | --- | --- |
+| `size_200` | Integer 128–1024; default 512 | `width` and `height` in pixels |
+| `color_ff6937` | Six hex digits, no `#`; default `000000` | `dotsOptions.color` |
+| `background_ffffff` | Six hex digits; default `ffffff` | `backgroundOptions.color` |
+| `dots_rounded` | `square`, `dots`, `rounded`, `extra-rounded`, `classy`, `classy-rounded`; default `square` | `dotsOptions.type` |
+| `corners_extra-rounded` | Dot styles above plus `dot`; default `square` | `cornersSquareOptions.type` |
+| `cornerdots_dot` | Dot styles above plus `dot`; default `square` | `cornersDotOptions.type` |
+| `cornercolor_102030` | Six hex digits; inherits dots color/gradient by default | `cornersSquareOptions.color` |
+| `cornerdotcolor_203040` | Six hex digits; inherits dots color/gradient by default | `cornersDotOptions.color` |
+| `gradient_linear_002244_663300_45` | `linear` or `radial`, two hex colors, optional integer angle 0–360 degrees (default 0) | `dotsOptions.gradient` |
+| `backgroundgradient_linear_eeeeee_ffffff` | Same gradient syntax | `backgroundOptions.gradient` |
+| `cornergradient_radial_001122_334455` | Same gradient syntax | `cornersSquareOptions.gradient` |
+| `cornerdotgradient_linear_110022_442266_90` | Same gradient syntax | `cornersDotOptions.gradient` |
+| `margin_4` | Integer 4–16 **QR modules**; default 4 | `margin`, converted to pixels for the actual encoded URL |
+| `ecc_H` | `M`, `Q`, `H` (case insensitive); default `Q` | `qrOptions.errorCorrectionLevel` |
+
+Gradients use stops at 0 and 1; degrees are converted to radians. A solid color and gradient for the same component cannot be combined. Unknown or duplicate options, invalid values, transparent/inverted colors, and insufficient contrast return `422` during create/PATCH/preview validation. The darkest background color must have at least 2:1 contrast against every foreground/corner color. Arbitrary library configuration, logos, external image URLs, output-format changes, and data overrides are not accepted as parameters.
+
+`helpers/certificateQrCode.js` exports `generateCertificateQrCode(verificationUrl, key?)` for preview and future issuance; `key` is the full key without braces. `helpers/certificateQrOptions.js` provides the shared allowlisted parser. The generator uses `qr-code-styling` with an isolated JSDOM for SVG, then the existing `sharp` dependency for PNG. No `canvas` installation or Docker system-library change is required. The output remains a PNG Base64 Data URI. The original `qrcode` dependency is retained for the separate authentication/2FA flow.
+
+The quiet zone is at least four modules, and the chosen size must fit at least three pixels per module for the actual URL; otherwise rendering returns `422`. Every generated PNG is decoded with `jsqr` and must reproduce the exact verification URL before it can enter the PDF. This checks the generated image; CSS resizing, printing quality, and scanner conditions still affect real-world readability. CSS continues to control displayed position and dimensions.
+
+Each render supports up to eight distinct QR configurations, caches equivalent configurations within that render, and enforces the existing 3 MiB document budget after substitution. JSDOM windows are closed after generation. The verification URL is not fetched, and the original `html_template` in the database is never changed. User-authored PNG data URLs remain subject to the existing resource restrictions.
 
 Unknown names, expressions, malformed/triple braces and placeholders in other attributes or CSS return `422`. This policy also applies to create/PATCH; older stored templates with unsupported placeholders must be updated before previewing. Text values are HTML-escaped. The render-only fragment is normalized and balanced before inserting it into `<div class="certificate">`, preventing stray closing tags from escaping the wrapper. The stored HTML remains unchanged.
 

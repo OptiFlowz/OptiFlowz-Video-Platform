@@ -277,7 +277,8 @@ function validateHtml(html, onFontStylesheet) {
   // Entity-encoded braces can arrive in separate textFilter chunks. Check the joined,
   // canonical HTML too, masking only img src values already accepted above.
   validatePlaceholders(normalizedHtml.replace(
-    /(<img\b[^>]*\ssrc=")\{\{\s*certificate\.qr_code_data_uri\s*\}\}("[^>]*>)/g, '$1$2',
+    /(<img\b[^>]*\ssrc=")([^"]*)("[^>]*>)/g,
+    (match, before, value, after) => isQrCodePlaceholder(value) ? before + after : match,
   ));
   // An unfinished tag, attribute, or comment must not absorb markup appended by a renderer.
   const boundary = 'certificate-validation-boundary';

@@ -137,7 +137,7 @@ test('preview HTTP route authenticates, checks ownership, revalidates stored con
     if (previousBaseUrl === undefined) delete process.env.FRONTEND_BASE_URL;
     else process.env.FRONTEND_BASE_URL = previousBaseUrl;
   });
-  stored = { ...template, html_template: `${template.html_template}<img src="{{certificate.qr_code_data_uri}}" class="qr-code">` };
+  stored = { ...template, html_template: `${template.html_template}<img src="{{certificate.qr_code_data_uri.size_200.color_ff6937.dots_rounded.background_ffffff}}" class="qr-code">` };
   const originalStored = structuredClone(stored);
   const response = await request(userId, id, { html_template: '<script>x</script>', 'user.full_name': 'Override' });
   assert.equal(response.status, 200);
