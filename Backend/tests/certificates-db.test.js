@@ -98,6 +98,67 @@ test('certificate issuance schema generates unique numbers, preserves snapshots 
     assert.equal((await client.query(insertSql, values)).rows[0].certificate_template_id, null);
   });
 
+  const [annualUp, annualDown] = (await readFile(new URL('../src/database/migrations/1792926000002_certificate-number-per-year.sql', import.meta.url), 'utf8'))
+    .replaceAll('public.', `${schema}.`).split('-- Down Migration');
+  const yearlyFunction = annualUp.slice(annualUp.indexOf('CREATE OR REPLACE FUNCTION'));
+  // Simulate the database clock only in this isolated schema's function so the
+  // real production SQL is exercised on both sides of a UTC year boundary.
+  const atUtcTime = timestamp => client.query(yearlyFunction.replace("NOW() AT TIME ZONE 'UTC'", `TIMESTAMP '${timestamp}'`));
+  const nextNumber = async (database = client) => (await database.query(`SELECT ${schema}.generate_certificate_number() AS number`)).rows[0].number;
+  const valuesWithoutTemplate = id => { const values = args(id); values[3] = null; return values; };
+
+  await t.test('annual migration preserves certificates and continues above existing numbers including revoked ones', async () => {
+    const year = (await client.query("SELECT to_char(now() AT TIME ZONE 'UTC', 'YYYY') AS year")).rows[0].year;
+    const values = valuesWithoutTemplate(await attempt());
+    const manual = (await client.query(insertSql, values)).rows[0];
+    await client.query(`UPDATE ${schema}.certificates SET certificate_number=$1,status='revoked',revoked_at=now() WHERE id=$2`,
+      [`CERT-${year}-2000000`, manual.id]);
+    const before = (await client.query(`SELECT * FROM ${schema}.certificates ORDER BY id`)).rows;
+    await client.query(annualUp);
+    assert.deepEqual((await client.query(`SELECT * FROM ${schema}.certificates ORDER BY id`)).rows, before);
+    assert.equal((await client.query(insertSql, valuesWithoutTemplate(await attempt()))).rows[0].certificate_number, `CERT-${year}-2000001`);
+  });
+
+  await t.test('UTC New Year starts at one under concurrent issuance, with independent counters for older transactions', async () => {
+    await atUtcTime('2098-12-31 23:59:59');
+    assert.equal(await nextNumber(), 'CERT-2098-000001');
+    assert.equal(await nextNumber(), 'CERT-2098-000002');
+    await atUtcTime('2099-01-01 00:00:00');
+    const ids = [];
+    for (let index = 0; index < 12; index++) ids.push(await attempt());
+    const numbers = await Promise.all(ids.map(id => pool.query(insertSql, valuesWithoutTemplate(id))
+      .then(result => result.rows[0].certificate_number)));
+    assert.deepEqual(numbers.sort(), Array.from({ length: 12 }, (_, i) => `CERT-2099-${String(i + 1).padStart(6, '0')}`));
+    await atUtcTime('2098-12-31 23:59:59');
+    assert.equal(await nextNumber(), 'CERT-2098-000003');
+    await atUtcTime('2099-01-01 00:00:01');
+    assert.equal(await nextNumber(), 'CERT-2099-000013');
+    await client.query(yearlyFunction);
+  });
+
+  await t.test('yearly increments are transactional and expand beyond six digits', async () => {
+    await atUtcTime('2099-06-01 12:00:00');
+    await client.query(`UPDATE ${schema}.certificate_number_counters SET last_number=999999 WHERE year=2099`);
+    const values = valuesWithoutTemplate(await attempt());
+    await client.query('BEGIN');
+    assert.equal((await client.query(insertSql, values)).rows[0].certificate_number, 'CERT-2099-1000000');
+    await client.query('ROLLBACK');
+    assert.equal((await client.query(insertSql, values)).rows[0].certificate_number, 'CERT-2099-1000000');
+    assert.equal(await nextNumber(), 'CERT-2099-1000001');
+    await client.query(yearlyFunction);
+  });
+
+  await t.test('annual migration rollback restores a safe global sequence and can be applied again', async () => {
+    const before = (await client.query(`SELECT * FROM ${schema}.certificates ORDER BY id`)).rows;
+    await client.query(annualDown);
+    assert.equal((await client.query(`SELECT to_regclass('${schema}.certificate_number_counters') AS counters`)).rows[0].counters, null);
+    assert.deepEqual((await client.query(`SELECT * FROM ${schema}.certificates ORDER BY id`)).rows, before);
+    assert.match((await client.query(insertSql, valuesWithoutTemplate(await attempt()))).rows[0].certificate_number, /-2000002$/);
+    await client.query(annualUp);
+    assert.match((await client.query(insertSql, valuesWithoutTemplate(await attempt()))).rows[0].certificate_number, /-2000003$/);
+    await client.query(annualDown);
+  });
+
   await client.query(down);
   const removed = (await client.query(`SELECT to_regclass('${schema}.certificates') AS certificates,
     to_regclass('${schema}.certificates_number_seq') AS sequence,
