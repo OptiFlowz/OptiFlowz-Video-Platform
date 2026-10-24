@@ -979,6 +979,8 @@
   "quizYourLastAttempts": "Tavi pēdējie mēģinājumi",
   "quizNoTimeLimit": "Nav laika ierobežojuma",
   "quizRequirementComplete": "Pabeigts",
+  "quizCompletedRequirements": "Izpildītās prasības",
+  "quizRequirementFulfilled": "Skatīšanās prasība ({{param.required}}) izpildīta",
   "quizViewCertificate": "Skatīt sertifikātu",
   "quizViewCertificates": "Skatīt Manus sertifikātus",
   "quizAttemptsLeft": "Atlikuši {{param.count}} mēģinājumi",

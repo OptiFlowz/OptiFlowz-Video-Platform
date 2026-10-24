@@ -979,6 +979,8 @@
   "quizYourLastAttempts": "Dine sidste forsøg",
   "quizNoTimeLimit": "Ingen tidsbegrænsning",
   "quizRequirementComplete": "Komplet",
+  "quizCompletedRequirements": "Opfyldte krav",
+  "quizRequirementFulfilled": "Visningskrav ({{param.required}}) opfyldt",
   "quizViewCertificate": "Se certifikat",
   "quizViewCertificates": "Se Mine certifikater",
   "quizAttemptsLeft": "{{param.count}} forsøg tilbage",

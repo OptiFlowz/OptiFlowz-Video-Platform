@@ -1059,6 +1059,8 @@
   "quizYourLastAttempts": "Вашите последни опити",
   "quizNoTimeLimit": "Без ограничение във времето",
   "quizRequirementComplete": "Завършен",
+  "quizCompletedRequirements": "Изпълнени изисквания",
+  "quizRequirementFulfilled": "Изискването за гледане ({{param.required}}) е изпълнено",
   "quizViewCertificate": "Вижте сертификата",
   "quizViewCertificates": "Преглед на моите сертификати",
   "quizAttemptsLeft": "Остават {{param.count}} опита",

@@ -978,6 +978,8 @@
   "quizYourLastAttempts": "Ang iyong mga huling pagtatangka",
   "quizNoTimeLimit": "Walang limitasyon sa oras",
   "quizRequirementComplete": "Kumpleto",
+  "quizCompletedRequirements": "Mga natugunang kinakailangan",
+  "quizRequirementFulfilled": "Natugunan ang kinakailangang panonood ({{param.required}})",
   "quizViewCertificate": "Tingnan ang sertipiko",
   "quizViewCertificates": "Tingnan ang Aking Mga Sertipiko",
   "quizAttemptsLeft": "{{param.count}} mga pagsubok na natitira",

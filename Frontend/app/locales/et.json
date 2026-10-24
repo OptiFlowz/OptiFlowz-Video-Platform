@@ -979,6 +979,8 @@
   "quizYourLastAttempts": "Sinu viimased katsed",
   "quizNoTimeLimit": "Ajapiiranguta",
   "quizRequirementComplete": "Täielik",
+  "quizCompletedRequirements": "Täidetud nõuded",
+  "quizRequirementFulfilled": "Vaatamisnõue ({{param.required}}) on täidetud",
   "quizViewCertificate": "Vaata sertifikaati",
   "quizViewCertificates": "Vaadake minu sertifikaate",
   "quizAttemptsLeft": "{{param.count}} katset jäänud",

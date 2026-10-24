@@ -1059,6 +1059,8 @@
   "quizYourLastAttempts": "Az utolsó próbálkozásaid",
   "quizNoTimeLimit": "Nincs időkorlát",
   "quizRequirementComplete": "Teljes",
+  "quizCompletedRequirements": "Teljesített követelmények",
+  "quizRequirementFulfilled": "Megtekintési követelmény ({{param.required}}) teljesítve",
   "quizViewCertificate": "Tanúsítvány megtekintése",
   "quizViewCertificates": "Tanúsítványaim megtekintése",
   "quizAttemptsLeft": "{{param.count}} próbálkozás maradt",

@@ -979,6 +979,8 @@
   "quizYourLastAttempts": "Síðustu tilraunir þínar",
   "quizNoTimeLimit": "Engin tímamörk",
   "quizRequirementComplete": "Heill",
+  "quizCompletedRequirements": "Uppfylltar kröfur",
+  "quizRequirementFulfilled": "Áhorfskrafa ({{param.required}}) uppfyllt",
   "quizViewCertificate": "Skoða vottorð",
   "quizViewCertificates": "Skoðaðu skírteinin mín",
   "quizAttemptsLeft": "{{param.count}} tilraunir eftir",

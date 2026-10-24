@@ -978,6 +978,8 @@
   "quizYourLastAttempts": "Percubaan terakhir anda",
   "quizNoTimeLimit": "Tiada had masa",
   "quizRequirementComplete": "lengkap",
+  "quizCompletedRequirements": "Syarat yang dipenuhi",
+  "quizRequirementFulfilled": "Syarat tontonan ({{param.required}}) telah dipenuhi",
   "quizViewCertificate": "Lihat sijil",
   "quizViewCertificates": "Lihat Sijil Saya",
   "quizAttemptsLeft": "Percubaan {{param.count}} ditinggalkan",

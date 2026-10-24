@@ -17,7 +17,7 @@ const fixtures = () => [
   { ...base, question_no: 2, question_id: 'q2', type: 'multiple_choice', content: 'Multiple answers', options: [{ option_no: 2, content: 'Alpha', position: 1 }, { option_no: 5, content: 'Beta', position: 2 }] },
   { ...base, question_no: 3, question_id: 'q3', type: 'matching', content: 'Match answers', matching_items: [{ item_no: 8, content: 'Left', position: 1 }, { item_no: 3, content: 'Other left', position: 2 }], matching_options: [{ option_no: 6, content: 'Right', position: 1 }] },
 ];
-async function mount(t, { resume = false, eligible = true, expired = false, hidden = false, saved = false, history = [], read = true, requirements = [], visibility = 'after_check', passed = false, correct = true, allowChanges = false, explanation = '', expiresAt = null, review = false, reviewRows, reviewError = false, directResult, perPage, quizPerPage = 1, beforeWrite, confirmResult } = {}) {
+async function mount(t, { resume = false, eligible = true, expired = false, hidden = false, saved = false, history = [], read = true, requirements = [], visibility = 'after_check', passed = false, correct = true, allowChanges = false, explanation = '', expiresAt = null, review = false, reviewRows, reviewError = false, directResult, perPage, quizPerPage = 1, timeLimit = 900, beforeWrite, confirmResult } = {}) {
   const dom = new JSDOM('<div id="root"></div>', { url: 'http://localhost/quiz/quiz-1', pretendToBeVisual: true });
   const names = ['window', 'document', 'navigator', 'HTMLElement', 'IS_REACT_ACT_ENVIRONMENT', 'IntersectionObserver'];
   const prior = new Map(names.map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)]));
@@ -32,7 +32,7 @@ async function mount(t, { resume = false, eligible = true, expired = false, hidd
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
   const fetchFn = async ({ route, options }) => {
     requests.push({ route, method: options.method, body: options.body && JSON.parse(options.body) });
-    if (route === 'api/quizzes/quiz-1') return { quiz: { title: 'Knowledge quiz', questions_per_page: quizPerPage, question_count: 3, time_limit_seconds: 900, passing_score_percentage: 50, certificate_template_id: 'classic' } };
+    if (route === 'api/quizzes/quiz-1') return { quiz: { title: 'Knowledge quiz', questions_per_page: quizPerPage, question_count: 3, time_limit_seconds: timeLimit, passing_score_percentage: 50, certificate_template_id: 'classic' } };
     if (route.endsWith('/eligibility')) return { can_start: !started && eligible, can_resume: started && !submitted, active_attempt_id: started && !submitted ? 'a1' : null, attempts_remaining: resume ? 0 : 1, reason: eligible ? null : 'requirements_not_met' };
     if (route.endsWith('/progress')) return { requirements_met: eligible, requirements };
     if (route.endsWith('/attempts') && options.method === 'POST') { started = true; return { id: 'a1', settings: { correctness_visibility: visibility, allow_attempt_review: review, questions_per_page: perPage } }; }
@@ -95,7 +95,9 @@ async function mount(t, { resume = false, eligible = true, expired = false, hidd
     new Function('require', 'module', 'exports', code)(name => mocks[name] ? { __esModule: true, ...mocks[name] } : name.endsWith('.css') ? { __esModule: true, default: styles } : name.startsWith('~/') ? load(path.resolve('app', name.slice(2))) : name.startsWith('.') ? load(path.resolve(path.dirname(file), name)) : require(name), mod, mod.exports);
     return mod.exports;
   }
-  mocks['~/functions'].formatDescription = load(path.resolve('app/functions.tsx')).formatDescription;
+  const formatters = load(path.resolve('app/functions.tsx'));
+  mocks['~/functions'].formatDescription = formatters.formatDescription;
+  mocks['~/functions'].formatDuration = formatters.formatDuration;
   const View = load(path.resolve('app/components/quizEngine/QuizOverview.tsx')).default;
   function App() {
     const [, render] = React.useState(0);
@@ -281,6 +283,51 @@ test('watch requirements show localized time units and percentages with quiz met
   assert.ok(!document.body.textContent.includes('undefined'));
   assert.equal(document.querySelectorAll('.overviewRequirement').length, 2);
   assert.equal(document.querySelector('.videoQuizAttemptList'), null);
+});
+
+test('overview keeps a sub-minute limit exact and breaks watch durations into readable units', async t => {
+  await mount(t, { timeLimit: 30, requirements: [
+    { video_id: 'video-time', min_watch_percentage: null, total_watch_seconds: 4463, required_watch_seconds: 100, completion_percentage: 100, is_met: false },
+  ] });
+  assert.equal(document.querySelectorAll('.videoQuizFacts dd')[1].textContent, '30 seconds');
+  assert.match(document.body.textContent, /1 hour, 14 minutes, and 23 seconds watched of 1 minute and 40 seconds required/);
+});
+
+test('requirements put pending videos first and collapse concise completed rows with durations', async t => {
+  await mount(t, { requirements: [
+    { video_id: 'done-time', total_watch_seconds: 4925, required_watch_seconds: 600, is_met: true, video_card: { title: 'Done time', thumbnail_url: '/time.png', duration_seconds: 3645 } },
+    { video_id: 'pending', total_watch_seconds: 460, required_watch_seconds: 600, completion_percentage: 77, is_met: false, video_card: { title: 'Pending video', thumbnail_url: '/pending.png', duration_seconds: 3313 } },
+    { video_id: 'done-percent', min_watch_percentage: 80, watched_percentage: 100, is_met: true, video_card: { title: 'Done percent', duration_seconds: 90 } },
+  ] });
+  const section = document.querySelector('.overviewRequirements');
+  const details = section.querySelector('details');
+  assert.equal(details.open, false);
+  assert.match(details.querySelector('summary').textContent, /Completed requirements.*2/);
+  assert.deepEqual([...section.querySelectorAll('.overviewRequirement strong')].map(el => el.textContent), ['Pending video', 'Done time', 'Done percent']);
+  assert.match(section.querySelector(':scope > .overviewRequirementList').textContent, /7 minutes and 40 seconds watched of 10 minutes required/);
+  assert.match(details.textContent, /Requirement \(watch 10 minutes\) complete/);
+  assert.match(details.textContent, /Requirement \(watch 80%\) complete/);
+  assert.ok(!details.textContent.includes('watched of'));
+  assert.equal(details.querySelectorAll('progress, a').length, 0);
+  assert.equal(section.querySelectorAll('progress').length, 1);
+  assert.deepEqual([...section.querySelectorAll('.ruleDuration')].map(el => el.textContent), ['55:13', '1:00:45', '01:30']);
+  await act(async () => details.querySelector('summary').click());
+  assert.equal(details.open, true);
+  await act(async () => details.querySelector('summary').click());
+  assert.equal(details.open, false);
+});
+
+test('all-completed requirements stay collapsed without an empty pending group', async t => {
+  await mount(t, { requirements: [{ video_id: 'done', min_watch_seconds: 100, is_met: true }] });
+  const section = document.querySelector('.overviewRequirements');
+  assert.equal(section.querySelector(':scope > .overviewRequirementList'), null);
+  assert.equal(section.querySelector('details').open, false);
+  assert.match(section.textContent, /Requirement \(watch 1 minute and 40 seconds\) complete/);
+});
+
+test('overview retains no-time-limit label for an unlimited quiz', async t => {
+  await mount(t, { timeLimit: null });
+  assert.equal(document.querySelectorAll('.videoQuizFacts dd')[1].textContent, 'No time limit');
 });
 
 for (const visibility of ['after_finish', 'never']) test(`no Check answer for ${visibility}, navigation still saves`, async t => {

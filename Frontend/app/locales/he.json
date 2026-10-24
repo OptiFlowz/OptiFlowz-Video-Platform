@@ -979,6 +979,8 @@
   "quizYourLastAttempts": "הניסיונות האחרונים שלך",
   "quizNoTimeLimit": "אין הגבלת זמן",
   "quizRequirementComplete": "שלם",
+  "quizCompletedRequirements": "דרישות שהושלמו",
+  "quizRequirementFulfilled": "דרישת הצפייה ({{param.required}}) הושלמה",
   "quizViewCertificate": "צפה בתעודה",
   "quizViewCertificates": "הצג את התעודות שלי",
   "quizAttemptsLeft": "נותרו {{param.count}} ניסיונות",

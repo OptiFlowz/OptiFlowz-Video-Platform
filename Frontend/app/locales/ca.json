@@ -978,6 +978,8 @@
   "quizYourLastAttempts": "Els teus últims intents",
   "quizNoTimeLimit": "Sense límit de temps",
   "quizRequirementComplete": "Completa",
+  "quizCompletedRequirements": "Requisits completats",
+  "quizRequirementFulfilled": "Requisit de visualització ({{param.required}}) completat",
   "quizViewCertificate": "Veure certificat",
   "quizViewCertificates": "Veure els meus certificats",
   "quizAttemptsLeft": "{{param.count}} queden intents",

@@ -979,6 +979,8 @@
   "quizYourLastAttempts": "Những nỗ lực cuối cùng của bạn",
   "quizNoTimeLimit": "Không giới hạn thời gian",
   "quizRequirementComplete": "Hoàn thành",
+  "quizCompletedRequirements": "Các yêu cầu đã hoàn thành",
+  "quizRequirementFulfilled": "Đã hoàn thành yêu cầu xem ({{param.required}})",
   "quizViewCertificate": "Xem chứng chỉ",
   "quizViewCertificates": "Xem chứng chỉ của tôi",
   "quizAttemptsLeft": "Còn lại {{param.count}} lần thử",

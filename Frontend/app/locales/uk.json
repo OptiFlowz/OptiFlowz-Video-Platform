@@ -1059,6 +1059,8 @@
   "quizYourLastAttempts": "Ваші останні спроби",
   "quizNoTimeLimit": "Без обмеження часу",
   "quizRequirementComplete": "Повний",
+  "quizCompletedRequirements": "Виконані вимоги",
+  "quizRequirementFulfilled": "Вимогу щодо перегляду ({{param.required}}) виконано",
   "quizViewCertificate": "Переглянути сертифікат",
   "quizViewCertificates": "Переглянути мої сертифікати",
   "quizAttemptsLeft": "Залишилося спроб: {{param.count}}",

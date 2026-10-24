@@ -979,6 +979,8 @@
   "quizYourLastAttempts": "마지막 시도",
   "quizNoTimeLimit": "시간 제한 없음",
   "quizRequirementComplete": "완료",
+  "quizCompletedRequirements": "충족된 요건",
+  "quizRequirementFulfilled": "시청 요건({{param.required}}) 충족",
   "quizViewCertificate": "인증서 보기",
   "quizViewCertificates": "내 인증서 보기",
   "quizAttemptsLeft": "{{param.count}}회 시도 남음",

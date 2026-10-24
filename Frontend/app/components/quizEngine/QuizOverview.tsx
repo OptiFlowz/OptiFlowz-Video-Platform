@@ -6,7 +6,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useI18n } from '~/i18n';
-import { getToken } from '~/functions';
+import { formatDurationWords } from '~/locales/formatDuration';
+import { formatDuration, getToken } from '~/functions';
 import InfiniteScroll from '~/components/library/infiniteScroll';
 import { nextResultsPage, uniqueResults } from '~/components/library/infiniteResults';
 import { engineKey, list, request } from './api';
@@ -20,6 +21,41 @@ type Eligibility = { can_start: boolean; can_resume: boolean; reason: string | n
 type Attempt = { settings?: AttemptSettings; id: string; attempt_no: number; status: string; started_at: string; expires_at: string | null; finished_at: string | null; max_points: number; earned_points: number | null; score_percentage: number | null; passed: boolean | null };
 const statusLabels: Record<string, string> = { in_progress: 'quizInProgress', submitted: 'quizComplete', timed_out: 'qeTimedOut', cancelled: 'qeCancelled' };
 const historyLimit = 8;
+
+function OverviewRequirements({ requirements }: { requirements: Requirement[] }) {
+  const { t, locale } = useI18n();
+  const pending = requirements.filter(row => !row.is_met);
+  const completed = requirements.filter(row => row.is_met);
+  const renderRequirement = (row: Requirement) => {
+    const title = row.video_card?.title || t('quizRequiredVideo');
+    const image = row.video_card?.thumbnail_url || row.video_card?.mux_thumbnail_url;
+    const duration = row.video_card?.duration_seconds;
+    const required = row.min_watch_percentage != null
+      ? `${new Intl.NumberFormat(locale).format(row.min_watch_percentage)}%`
+      : formatDurationWords(row.required_watch_seconds ?? row.min_watch_seconds ?? 0, locale);
+    return <div key={row.video_id} className={styles.overviewRequirement}>
+      {row.video_card && <div className={styles.overviewRequirementImage}>
+        {image ? <img src={image} alt="" /> : <span>{t('quizNoThumbnail')}</span>}
+        {duration != null && Number.isFinite(duration) && duration >= 0 && <span className={styles.ruleDuration}>{formatDuration(Math.floor(duration))}</span>}
+      </div>}
+      <div className={styles.overviewRequirementContent}><strong>{title}</strong>
+        {row.is_met ? <p><span className={styles.overviewRequirementDone}>{CheckSVG}{t('quizRequirementFulfilled', { required })}</span></p> : <>
+          <p>{row.min_watch_percentage != null ? t('quizRequirementPercentProgress', { watched: row.watched_percentage ?? 0, required: row.min_watch_percentage }) : t('quizRequirementTimeProgress', { watched: formatDurationWords(row.total_watch_seconds ?? 0, locale), required })}</p>
+          {row.completion_percentage != null && <progress className={styles.overviewRequirementProgress} value={row.completion_percentage} max={100} aria-label={title} />}
+        </>}
+      </div>
+      {!row.is_met && row.video_card && <Link className="videoQuizInlineButton videoQuizAttemptViewButton" to={`/video/${row.video_id}`}>{t('quizWatch')}{ArrowSVG}</Link>}
+    </div>;
+  };
+  return <section className={styles.overviewRequirements} aria-labelledby="quiz-requirements-title">
+    <h3 id="quiz-requirements-title">{t('quizRequirements')}</h3>
+    {!!pending.length && <div className={styles.overviewRequirementList}>{pending.map(renderRequirement)}</div>}
+    {!!completed.length && <details className={styles.overviewCompletedRequirements}>
+      <summary>{t('quizCompletedRequirements')} <span>({completed.length})</span></summary>
+      <div className={styles.overviewRequirementList}>{completed.map(renderRequirement)}</div>
+    </details>}
+  </section>;
+}
 
 export default function QuizOverview() {
   const { quizId = '' } = useParams(), { t, locale } = useI18n(), { user, can, read } = useAccess('quizzes');
@@ -60,11 +96,7 @@ export default function QuizOverview() {
     finally { startLock.current = false; setStarting(false); }
   };
   const timeLimit = quiz?.time_limit_seconds;
-  const minutes = timeLimit ? Math.max(1, Math.round(timeLimit / 60)) : 0;
-  const hours = Math.floor(minutes / 60), remainder = minutes % 60;
-  const timeLabel = timeLimit === undefined ? '—' : !timeLimit ? t('quizNoTimeLimit') : hours > 0
-    ? `${t(hours === 1 ? 'quizHour' : 'quizHours', { count: hours })}${remainder ? ` ${t('quizMinutesShort', { count: remainder })}` : ''}`
-    : t(minutes === 1 ? 'quizMinute' : 'quizMinutes', { count: minutes });
+  const timeLabel = timeLimit === undefined ? '—' : !timeLimit ? t('quizNoTimeLimit') : formatDurationWords(timeLimit, locale);
   const canResume = !!eligibility.data?.can_resume;
 
   return <main className="videoQuizPage quizExperience"><div className="videoQuizPageContent introStage">
@@ -92,20 +124,7 @@ export default function QuizOverview() {
         <div className={styles.overviewMain}>
           {quiz?.description && <section className="videoQuizDescription"><p>{quiz.description}</p></section>}
           <LoadState query={progress} />
-          {!!progress.data?.requirements.length && <section className={styles.overviewRequirements} aria-labelledby="quiz-requirements-title">
-            <h3 id="quiz-requirements-title">{t('quizRequirements')}</h3>
-            <div className={styles.overviewRequirementList}>{progress.data.requirements.map(row => {
-              const seconds = (value: number) => new Intl.NumberFormat(locale === 'sr' ? 'sr-Latn' : locale, { style: 'unit', unit: 'second', unitDisplay: 'long', maximumFractionDigits: 0 }).format(value);
-              return <div key={row.video_id} className={styles.overviewRequirement}>
-                {row.video_card && (row.video_card.thumbnail_url || row.video_card.mux_thumbnail_url) && <img className={styles.overviewRequirementImage} src={row.video_card.thumbnail_url || row.video_card.mux_thumbnail_url || ''} alt="" />}
-                <div className={styles.overviewRequirementContent}><strong>{row.video_card?.title || t('quizRequiredVideo')}</strong>
-                  <p>{row.min_watch_percentage != null ? t('quizRequirementPercentProgress', { watched: row.watched_percentage ?? 0, required: row.min_watch_percentage }) : t('quizRequirementTimeProgress', { watched: seconds(row.total_watch_seconds ?? 0), required: seconds(row.required_watch_seconds ?? row.min_watch_seconds ?? 0) })}</p>
-                  {row.completion_percentage != null && <progress className={styles.overviewRequirementProgress} value={row.completion_percentage} max={100} aria-label={row.video_card?.title || t('quizWatchRequirement')} />}
-                </div>
-                {row.is_met ? <span className={styles.overviewRequirementComplete}>{CheckSVG}{t('quizRequirementComplete')}</span> : row.video_card && <Link className="videoQuizInlineButton videoQuizAttemptViewButton" to={`/video/${row.video_id}`}>{t('quizWatch')}{ArrowSVG}</Link>}
-              </div>;
-            })}</div>
-          </section>}
+          {!!progress.data?.requirements.length && <OverviewRequirements key={quizId} requirements={progress.data.requirements} />}
           <section className="videoQuizHistory" aria-labelledby="quiz-history-title">
             <div className="videoQuizSectionTitle"><span><h3 id="quiz-history-title">{t('quizYourLastAttempts')}</h3><p>{t('quizHistoryHint')}</p></span>
               {can('quizzes.certificates') && quiz?.certificate_template_id && history.some(attempt => attempt.passed) && <Link to="/account" className="viewQuizCertificate">{t('quizViewCertificates')}</Link>}

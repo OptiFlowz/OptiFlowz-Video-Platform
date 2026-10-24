@@ -600,7 +600,16 @@ main.management .categoryQuestionsTable .categoryRemove { color: var(--accentRed
 .overviewRequirement { display: flex; align-items: center; gap: 16px; padding: 0 0 20px; border-bottom: 1px solid var(--border1); }
 .overviewRequirement > a { text-decoration: none; }
 .overviewRequirement:last-child { padding-bottom: 0; border-bottom: 0; }
-.overviewRequirementImage { width: 112px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px; flex-shrink: 0; }
+.overviewRequirementImage { position: relative; display: grid; place-items: center; width: 112px; aspect-ratio: 16 / 9; border-radius: 10px; flex-shrink: 0; overflow: hidden; background: var(--background2); color: var(--text2); font-size: .7rem; text-align: center; }
+.overviewRequirementImage img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.overviewRequirementImage .ruleDuration { bottom: 4px; inset-inline-end: 4px; padding: 2px 5px; font-size: .65rem; }
+.overviewRequirementDone { display: inline-flex; align-items: center; gap: 6px; color: var(--accentGreen2); }
+.overviewRequirementDone svg { width: 16px; height: 16px; flex-shrink: 0; }
+.overviewCompletedRequirements { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border1); }
+.overviewCompletedRequirements summary { cursor: pointer; color: var(--text1); font-size: .9rem; font-weight: 600; }
+.overviewCompletedRequirements summary span { color: var(--text2); font-variant-numeric: tabular-nums; }
+.overviewCompletedRequirements summary:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: 4px; border-radius: 4px; }
+.overviewCompletedRequirements[open] > .overviewRequirementList { margin-top: 20px; }
 .overviewRequirementContent { flex: 1; min-width: 0; }
 .overviewRequirementContent strong { display: block; font-size: .9rem; line-height: 1.45; overflow-wrap: anywhere; }
 .overviewRequirementContent p { margin: 6px 0 10px; font-size: .8rem; line-height: 1.5; color: var(--text2); }

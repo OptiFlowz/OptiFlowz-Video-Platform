@@ -979,6 +979,8 @@
   "quizYourLastAttempts": "Upaya terakhir Anda",
   "quizNoTimeLimit": "Tidak ada batasan waktu",
   "quizRequirementComplete": "Lengkap",
+  "quizCompletedRequirements": "Persyaratan yang terpenuhi",
+  "quizRequirementFulfilled": "Persyaratan menonton ({{param.required}}) terpenuhi",
   "quizViewCertificate": "Lihat sertifikat",
   "quizViewCertificates": "Lihat Sertifikat Saya",
   "quizAttemptsLeft": "{{param.count}} upaya tersisa",

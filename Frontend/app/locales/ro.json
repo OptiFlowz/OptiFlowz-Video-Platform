@@ -954,6 +954,8 @@
   "quizYourLastAttempts": "Ultimele tale încercări",
   "quizNoTimeLimit": "Fără limită de timp",
   "quizRequirementComplete": "Complet",
+  "quizCompletedRequirements": "Cerințe îndeplinite",
+  "quizRequirementFulfilled": "Cerința de vizionare ({{param.required}}) îndeplinită",
   "quizViewCertificate": "Vedeți certificatul",
   "quizViewCertificates": "Vizualizați certificatele mele",
   "quizAttemptsLeft": "{{param.count}} încercări rămase",

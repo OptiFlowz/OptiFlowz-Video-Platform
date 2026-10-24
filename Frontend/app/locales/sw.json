@@ -978,6 +978,8 @@
   "quizYourLastAttempts": "Majaribio yako ya mwisho",
   "quizNoTimeLimit": "Hakuna kikomo cha wakati",
   "quizRequirementComplete": "Kamilisha",
+  "quizCompletedRequirements": "Masharti yaliyotimizwa",
+  "quizRequirementFulfilled": "Sharti la kutazama ({{param.required}}) limetimizwa",
   "quizViewCertificate": "Tazama cheti",
   "quizViewCertificates": "Tazama Vyeti Vyangu",
   "quizAttemptsLeft": "Majaribio ya {{param.count}} yamesalia",

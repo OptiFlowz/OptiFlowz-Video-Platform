@@ -978,6 +978,8 @@
   "quizYourLastAttempts": "آپ کی آخری کوششیں",
   "quizNoTimeLimit": "وقت کی کوئی حد نہیں۔",
   "quizRequirementComplete": "مکمل",
+  "quizCompletedRequirements": "پوری کی گئی شرائط",
+  "quizRequirementFulfilled": "دیکھنے کی شرط ({{param.required}}) پوری ہو گئی",
   "quizViewCertificate": "سرٹیفکیٹ دیکھیں",
   "quizViewCertificates": "میرے سرٹیفکیٹس دیکھیں",
   "quizAttemptsLeft": "{{param.count}} کوششیں باقی ہیں۔",

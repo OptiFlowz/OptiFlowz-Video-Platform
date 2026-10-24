@@ -978,6 +978,8 @@
   "quizYourLastAttempts": "আপনার শেষ প্রচেষ্টা",
   "quizNoTimeLimit": "সময়সীমা নেই",
   "quizRequirementComplete": "সম্পূর্ণ",
+  "quizCompletedRequirements": "পূরণ করা শর্তাবলি",
+  "quizRequirementFulfilled": "দেখার শর্ত ({{param.required}}) পূরণ হয়েছে",
   "quizViewCertificate": "সার্টিফিকেট দেখুন",
   "quizViewCertificates": "আমার সার্টিফিকেট দেখুন",
   "quizAttemptsLeft": "{{param.count}} প্রচেষ্টা বাকি আছে",
