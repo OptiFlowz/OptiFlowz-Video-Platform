@@ -978,6 +978,8 @@
   "quizYourLastAttempts": "Ձեր վերջին փորձերը",
   "quizNoTimeLimit": "Ժամանակի սահմանափակում չկա",
   "quizRequirementComplete": "Ամբողջական",
+  "quizCompletedRequirements": "Կատարված պահանջներ",
+  "quizRequirementFulfilled": "Դիտման պահանջը ({{param.required}}) կատարված է",
   "quizViewCertificate": "Դիտել վկայականը",
   "quizViewCertificates": "Դիտեք Իմ վկայականները",
   "quizAttemptsLeft": "{{param.count}} փորձերը հեռացան",

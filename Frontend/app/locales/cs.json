@@ -1059,6 +1059,8 @@
   "quizYourLastAttempts": "Vaše poslední pokusy",
   "quizNoTimeLimit": "Bez časového omezení",
   "quizRequirementComplete": "Dokončeno",
+  "quizCompletedRequirements": "Splněné požadavky",
+  "quizRequirementFulfilled": "Požadavek na sledování ({{param.required}}) splněn",
   "quizViewCertificate": "Zobrazit certifikát",
   "quizViewCertificates": "Zobrazit Moje certifikáty",
   "quizAttemptsLeft": "Zbývá {{param.count}} pokusů",

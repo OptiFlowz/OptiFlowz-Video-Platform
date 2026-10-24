@@ -979,6 +979,8 @@
   "quizYourLastAttempts": "آخرین تلاش های شما",
   "quizNoTimeLimit": "بدون محدودیت زمانی",
   "quizRequirementComplete": "کامل",
+  "quizCompletedRequirements": "شرایط تکمیل‌شده",
+  "quizRequirementFulfilled": "شرط تماشا ({{param.required}}) برآورده شد",
   "quizViewCertificate": "مشاهده گواهی",
   "quizViewCertificates": "مشاهده گواهی های من",
   "quizAttemptsLeft": "{{param.count}} تلاش باقی مانده است",

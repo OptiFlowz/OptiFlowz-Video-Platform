@@ -60,7 +60,7 @@
 .timeInput { display: flex; flex: 1 1 8rem; min-width: 0; flex-direction: column; gap: .4rem; }
 :global(main.uploadMain) .editor .timeInput span,
 :global(main.uploadMain) .editor .length > span { font-size: .85rem; color: var(--text2); }
-.timeInput input { width: 100%; padding: .7rem .8rem; border: 1px solid var(--border1); border-radius: .6rem; background: var(--background1); color: var(--text1); font: inherit; font-variant-numeric: tabular-nums; }
+.timeInput input { width: 100%; padding: .7rem .8rem; border: 1px solid var(--border1); border-radius: .6rem; background: var(--background2); color: var(--text1); font: inherit; font-variant-numeric: tabular-nums; }
 .length { flex: 1 1 8rem; display: flex; flex-direction: column; gap: .4rem; padding-bottom: .7rem; font-variant-numeric: tabular-nums; }
 .trimPanel > .actions { margin-top: 1rem; }
 .error { color: var(--accentRed); margin-top: .75rem; }

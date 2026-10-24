@@ -978,6 +978,8 @@
   "quizYourLastAttempts": "உங்கள் கடைசி முயற்சிகள்",
   "quizNoTimeLimit": "கால வரம்பு இல்லை",
   "quizRequirementComplete": "நிறைவு",
+  "quizCompletedRequirements": "பூர்த்தி செய்யப்பட்ட நிபந்தனைகள்",
+  "quizRequirementFulfilled": "பார்க்க வேண்டிய நிபந்தனை ({{param.required}}) பூர்த்தியானது",
   "quizViewCertificate": "சான்றிதழைப் பார்க்கவும்",
   "quizViewCertificates": "எனது சான்றிதழ்களைப் பார்க்கவும்",
   "quizAttemptsLeft": "{{param.count}} முயற்சிகள் மீதமுள்ளன",

@@ -954,6 +954,8 @@
   "quizYourLastAttempts": "Son denemeleriniz",
   "quizNoTimeLimit": "Zaman sınırı yok",
   "quizRequirementComplete": "Tamamlandı",
+  "quizCompletedRequirements": "Tamamlanan gereklilikler",
+  "quizRequirementFulfilled": "İzleme gerekliliği ({{param.required}}) tamamlandı",
   "quizViewCertificate": "Sertifikayı görüntüle",
   "quizViewCertificates": "Sertifikalarımı Görüntüle",
   "quizAttemptsLeft": "{{param.count}} deneme sayısı kaldı",

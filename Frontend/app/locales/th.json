@@ -979,6 +979,8 @@
   "quizYourLastAttempts": "ความพยายามครั้งสุดท้ายของคุณ",
   "quizNoTimeLimit": "ไม่จำกัดเวลา",
   "quizRequirementComplete": "เสร็จสมบูรณ์",
+  "quizCompletedRequirements": "ข้อกำหนดที่ทำครบแล้ว",
+  "quizRequirementFulfilled": "ทำตามข้อกำหนดการรับชม ({{param.required}}) ครบแล้ว",
   "quizViewCertificate": "ดูใบรับรอง",
   "quizViewCertificates": "ดูใบรับรองของฉัน",
   "quizAttemptsLeft": "เหลือความพยายามอีก {{param.count}} ครั้ง",

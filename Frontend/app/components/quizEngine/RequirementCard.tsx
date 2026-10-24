@@ -1,5 +1,5 @@
 import { formatDuration } from '~/functions';
-import { DeleteSVG } from '~/constants';
+import { DeleteSVG, EditSVG } from '~/constants';
 import { useI18n } from '~/i18n';
 import { styles } from './shared';
 import type { Requirement } from './model';
@@ -32,7 +32,7 @@ export default function RequirementCard({ row, editable, busy, onEdit, onRemove,
     <div className={styles.ruleControls}>
       <label className={`${styles.check} ${styles.ruleActive}`}><input type="checkbox" aria-label={`${t('quizRuleActive')}: ${title}`} checked={row.is_active !== false} disabled={!editable || busy} onChange={event => { void onActiveChange(event.target.checked); }} /><span>{t('adminActive')}</span></label>
       {editable && <>
-        <button type="button" className={styles.button} disabled={busy} aria-label={`${t('quizEditRule')}: ${title}`} onClick={onEdit}>{t('adminEdit')}</button>
+        <button type="button" className={styles.icon} disabled={busy} title={t('adminEdit')} aria-label={`${t('quizEditRule')}: ${title}`} onClick={onEdit}>{EditSVG}</button>
         <button type="button" className={`${styles.icon} ${styles.danger}`} disabled={busy} title={t('quizRemove')} aria-label={`${t('quizRemove')}: ${title}`} onClick={onRemove}>{DeleteSVG}</button>
       </>}
     </div>

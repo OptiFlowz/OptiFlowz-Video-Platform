@@ -1059,6 +1059,8 @@
   "quizYourLastAttempts": "Ваши последние попытки",
   "quizNoTimeLimit": "Нет ограничения по времени",
   "quizRequirementComplete": "Завершить",
+  "quizCompletedRequirements": "Выполненные требования",
+  "quizRequirementFulfilled": "Требование к просмотру ({{param.required}}) выполнено",
   "quizViewCertificate": "Посмотреть сертификат",
   "quizViewCertificates": "Посмотреть мои сертификаты",
   "quizAttemptsLeft": "Осталось {{param.count}} попыток",

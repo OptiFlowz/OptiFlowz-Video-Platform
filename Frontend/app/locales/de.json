@@ -954,6 +954,8 @@
   "quizYourLastAttempts": "Ihre letzten Versuche",
   "quizNoTimeLimit": "Kein Zeitlimit",
   "quizRequirementComplete": "Abgeschlossen",
+  "quizCompletedRequirements": "Erfüllte Voraussetzungen",
+  "quizRequirementFulfilled": "Ansehvoraussetzung ({{param.required}}) erfüllt",
   "quizViewCertificate": "Zertifikat anzeigen",
   "quizViewCertificates": "Meine Zertifikate anzeigen",
   "quizAttemptsLeft": "{{param.count}} Versuche übrig",

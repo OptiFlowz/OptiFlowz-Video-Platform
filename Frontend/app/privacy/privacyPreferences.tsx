@@ -1,6 +1,8 @@
 "use client";
 
 import Script from "next/script";
+import { usePathname } from "next/navigation";
+import { useQuizChatRestriction } from "~/hooks/useQuizChatRestriction";
 import { usePopupPresence } from "~/hooks/usePopupPresence";
 import {
   createContext,
@@ -70,6 +72,7 @@ function readStoredPreferences(): StoredPrivacyPreferences | null {
 
 export function PrivacyPreferencesProvider({ children }: { children: React.ReactNode }) {
   const { t } = useI18n();
+  const chatBlocked = useQuizChatRestriction(usePathname());
   const [preferences, setPreferences] = useState<PrivacyPreferences>(defaultPreferences);
   const [hasDecision, setHasDecision] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -131,7 +134,7 @@ export function PrivacyPreferencesProvider({ children }: { children: React.React
     <PrivacyPreferencesContext.Provider value={contextValue}>
       {children}
 
-      <Script
+      {!chatBlocked && <Script
         id="optiflowz-ai-widget-script"
         src="https://ai-chatbot-platform.fly.dev/widget/index.js"
         strategy="afterInteractive"
@@ -144,7 +147,7 @@ export function PrivacyPreferencesProvider({ children }: { children: React.React
         data-questions={`["I'd like to report a problem","Tell me more about ${BRAND_NAME} Video Platform"]`}
         data-chat-desktop-width="410px"
         data-chat-desktop-height="550px"
-      />
+      />}
 
       {isHydrated && !hasDecision && (
         <section className="privacyBanner" aria-label={t("privacyBannerTitle")}>

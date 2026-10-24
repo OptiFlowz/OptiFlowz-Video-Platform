@@ -312,7 +312,7 @@ function SetupWizardPage() {
                                 <textarea
                                     ref={bio}
                                     id="registrationBio"
-                                    className="mt-2 w-full bg-(--background3) rounded-[15px] p-4 text-[.95rem] min-h-37.5 resize-none focus:outline-none focus:ring-2 focus:ring-(--accentBlue)"
+                                    className="mt-2 w-full bg-(--background2) rounded-[15px] p-4 text-[.95rem] min-h-37.5 resize-none focus:outline-none focus:ring-2 focus:ring-(--accentBlue)"
                                     placeholder={t("bioPlaceholder")}
                                     maxLength={300}
                                 />

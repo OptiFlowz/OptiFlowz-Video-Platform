@@ -200,7 +200,7 @@ main.management .listTable td.empty { padding: 2rem; text-align: center; }
 .candidateActions .partRemove { align-self: flex-end; }
 .candidatePoints { display: flex; align-items: center; gap: 4px; color: var(--text2); font-size: .75rem; cursor: auto; }
 .candidatePoints input,
-.popupPanel.page[role='dialog'] .candidatePoints input { width: 92px; min-height: 36px; padding: 6px 10px; border: 1px solid transparent; border-radius: 10px; background: var(--background1); color: var(--text1); font: inherit; font-size: .875rem; }
+.popupPanel.page[role='dialog'] .candidatePoints input { width: 92px; min-height: 36px; padding: 6px 10px; border: 1px solid transparent; border-radius: 10px; background: var(--background2); color: var(--text1); font: inherit; font-size: .875rem; }
 .candidateDragging .candidateCard { opacity: .25; }
 .candidateOverlay { pointer-events: none; }
 .candidateOverlay .candidateCard { box-shadow: 0 12px 32px var(--seethroughtBlack); background: var(--background4); }
@@ -600,7 +600,16 @@ main.management .categoryQuestionsTable .categoryRemove { color: var(--accentRed
 .overviewRequirement { display: flex; align-items: center; gap: 16px; padding: 0 0 20px; border-bottom: 1px solid var(--border1); }
 .overviewRequirement > a { text-decoration: none; }
 .overviewRequirement:last-child { padding-bottom: 0; border-bottom: 0; }
-.overviewRequirementImage { width: 112px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px; flex-shrink: 0; }
+.overviewRequirementImage { position: relative; display: grid; place-items: center; width: 112px; aspect-ratio: 16 / 9; border-radius: 10px; flex-shrink: 0; overflow: hidden; background: var(--background2); color: var(--text2); font-size: .7rem; text-align: center; }
+.overviewRequirementImage img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.overviewRequirementImage .ruleDuration { bottom: 4px; inset-inline-end: 4px; padding: 2px 5px; font-size: .65rem; }
+.overviewRequirementDone { display: inline-flex; align-items: center; gap: 6px; color: var(--accentGreen2); }
+.overviewRequirementDone svg { width: 16px; height: 16px; flex-shrink: 0; }
+.overviewCompletedRequirements { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border1); }
+.overviewCompletedRequirements summary { cursor: pointer; color: var(--text1); font-size: .9rem; font-weight: 600; }
+.overviewCompletedRequirements summary span { color: var(--text2); font-variant-numeric: tabular-nums; }
+.overviewCompletedRequirements summary:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: 4px; border-radius: 4px; }
+.overviewCompletedRequirements[open] > .overviewRequirementList { margin-top: 20px; }
 .overviewRequirementContent { flex: 1; min-width: 0; }
 .overviewRequirementContent strong { display: block; font-size: .9rem; line-height: 1.45; overflow-wrap: anywhere; }
 .overviewRequirementContent p { margin: 6px 0 10px; font-size: .8rem; line-height: 1.5; color: var(--text2); }
@@ -995,6 +1004,10 @@ main.management .listTable thead tr > th, main.management .listTable tbody tr > 
   filter: none;
   background: var(--quizControlHover, var(--quizButtonHover));
 }
+/* Form controls keep the same theme surface on hover. */
+.page :global(.customSelectTrigger), .page .qrColor button { --quizControlHover: var(--background2); }
+/* Enabled save actions remain primary above the neutral editor control styles. */
+:is(.page, .page.editorPage, .page.popupPanel[role='dialog']) button:is(.savePrimary, :global(.saveCaptionsBtn)):not(:disabled):not([aria-disabled='true']) { background: var(--accentBlue); color: var(--borderWhite); }
 /* Keep each button's semantic color through the same hover transition. */
 .page .primary, .page :global(.saveCaptionsBtn) { --quizControlHover: var(--quizPrimaryHover); }
 .page :global(.saveCaptionsBtn):not(:disabled):hover,
@@ -1041,6 +1054,7 @@ main.management .listTable thead tr > th, main.management .listTable tbody tr > 
 
 .certificateTab { display: grid; gap: 24px; min-width: 0; }
 .certificateTab > section { min-width: 0; }
+.certificateCreate { height: 46px; flex-shrink: 0; justify-content: center; font-size: .95rem; white-space: nowrap; }
 .certificateTab .actions { margin-top: 16px; }
 .certificateSearch { width: 100%; margin-bottom: 16px; }
 .certificateList { display: grid; gap: 12px; margin-bottom: 20px; }
@@ -1074,14 +1088,14 @@ main.management .listTable thead tr > th, main.management .listTable tbody tr > 
 .certificatePlaceholderHelp summary { cursor: pointer; color: var(--accentBlue2); padding: 0; font-size: 1rem; font-weight: 600; line-height: 1.5; }
 .certificatePlaceholderHelp summary::marker { color: var(--accentBlue2); }
 .certificatePlaceholderHelp ul { display: grid; gap: 10px; padding: 0; margin: 12px 0 0; list-style: none; }
-.certificatePlaceholderHelp li { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 12px 16px; border-radius: 10px; background: color-mix(in srgb, var(--background2) 94%, var(--text1)); line-height: 1.6; }
+.certificatePlaceholderHelp li { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 12px 16px; border-radius: 10px; background: var(--background2); line-height: 1.6; }
 .certificatePlaceholderHelp code { display: block; flex: 1; min-width: 0; color: var(--text1); font-size: .85rem; overflow-wrap: anywhere; user-select: all; }
 @media (max-width: 1100px) { .certificateWorkspace { grid-template-columns: 1fr; } .certificatePreview { position: static; } }
 @media (max-width: 600px) { .certificateForm, .certificatePreview { padding: 18px; } .certificateFields :global(.quizPopupGrid) { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .certificateCard { transition: none; } }
 
 .page .certificateFields :global(.formGroup) { display: flex; flex-direction: column; gap: 8px; margin: 0; min-width: 0; }
-.page .certificateFields input, .page .certificateFields textarea, .page .certificateFields :global(.customSelectTrigger) { width: 100%; padding: 12px 14px; border: 0; border-radius: 12px; background: color-mix(in srgb, var(--background2) 94%, var(--text1)); color: var(--text1); font: inherit; }
+.page .certificateFields input, .page .certificateFields textarea, .page .certificateFields :global(.customSelectTrigger) { width: 100%; padding: 12px 14px; border: 0; border-radius: 12px; background: var(--background2); color: var(--text1); font: inherit; }
 .page .certificateFields .select { width: 100%; min-width: 0; }
 .page .certificateFields textarea.certificateCode { font-family: monospace; font-size: .85rem; line-height: 1.5; }
 .certificateCard .badge { background: var(--background3); }
@@ -1137,7 +1151,7 @@ main.management .listTable thead tr > th, main.management .listTable tbody tr > 
 .page .qrStyler :global(.formGroup) > label { margin: 0; color: var(--accentBlue2); font-size: 1rem; font-weight: 600; }
 .page .qrStyler .select { width: 100%; min-width: 0; }
 .page .qrStyler .qrShapes :global(.formGroup) > label { width: 100%; justify-content: flex-end; text-align: right; }
-.page .qrStyler :global(.customSelectTrigger), .page .qrStyler input { width: 100%; min-width: 0; min-height: 44px; padding: 10px 12px; border: 0; border-radius: 10px; background: color-mix(in srgb, var(--background2) 94%, var(--text1)); color: var(--text1); font: inherit; }
+.page .qrStyler :global(.customSelectTrigger), .page .qrStyler input { width: 100%; min-width: 0; min-height: 44px; padding: 10px 12px; border: 0; border-radius: 10px; background: var(--background2); color: var(--text1); font: inherit; }
 .page .qrStyler .qrShapes :global(.customSelectTrigger) { min-height: 38px; padding: 8px 10px; font-size: .9rem; line-height: 22px; }
 .qrPalette { display: grid; gap: 8px; min-width: 0; }
 .page .qrPalette > :global(.formGroup) { display: grid; grid-template-columns: minmax(0, 1fr) 140px; align-items: center; }
@@ -1147,7 +1161,7 @@ main.management .listTable thead tr > th, main.management .listTable tbody tr > 
 .qrAngle input::-webkit-inner-spin-button, .qrAngle input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 .qrAngle span { position: absolute; right: 10px; color: var(--text2); pointer-events: none; }
 .qrColor { flex: 1 1 100px; min-width: 0; }
-.page .qrColor button { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 10px; border: 0; border-radius: 10px; background: color-mix(in srgb, var(--background2) 94%, var(--text1)); color: var(--text1); cursor: pointer; }
+.page .qrColor button { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 10px; border: 0; border-radius: 10px; background: var(--background2); color: var(--text1); cursor: pointer; }
 .qrColor span { flex: 0 0 20px; width: 20px; height: 20px; border-radius: 5px; border: 1px solid var(--border1); background: var(--qr-swatch); }
 .qrColor code { font-size: .8rem; text-align: start; }
 .qrCodeHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--accentBlue2); font-size: 1rem; font-weight: 600; }

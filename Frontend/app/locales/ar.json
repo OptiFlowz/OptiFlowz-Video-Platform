@@ -954,6 +954,8 @@
   "quizYourLastAttempts": "محاولاتك الأخيرة",
   "quizNoTimeLimit": "لا يوجد حد زمني",
   "quizRequirementComplete": "كامل",
+  "quizCompletedRequirements": "المتطلبات المكتملة",
+  "quizRequirementFulfilled": "تم استيفاء متطلب المشاهدة ({{param.required}})",
   "quizViewCertificate": "عرض الشهادة",
   "quizViewCertificates": "عرض شهاداتي",
   "quizAttemptsLeft": "محاولات {{param.count}} متبقية",

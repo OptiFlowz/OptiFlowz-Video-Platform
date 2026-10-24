@@ -11,6 +11,7 @@ import { fetchFn } from "~/API";
 import { ArrowSVG, CheckSVG, CloseSVG, HistorySVG, IconChevron, LockSVG, QuizSVG } from "~/constants";
 import { appendFromQuizParam, formatDescription, getToken, QUIZ_RETURN_PATH_STORAGE_KEY } from "~/functions";
 import { useI18n } from "~/i18n";
+import { formatDurationWords } from "~/locales/formatDuration";
 import InfiniteScroll from "~/components/library/infiniteScroll";
 import CustomSelect from "~/components/customSelect/customSelect";
 
@@ -239,19 +240,8 @@ function formatTime(secondsLeft: number) {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
-function formatQuizTimeLimitLabel(seconds: number, t: TranslateFn) {
-  if (seconds <= 0) return t("quizNoTimeLimit");
-
-  const totalMinutes = Math.max(1, Math.round(Math.max(0, seconds) / 60));
-  const hours = Math.floor(totalMinutes / 60);
-  const remainingMinutes = totalMinutes % 60;
-
-  if (hours > 0) {
-    const hourLabel = t(hours === 1 ? "quizHour" : "quizHours", { count: hours });
-    return remainingMinutes > 0 ? `${hourLabel} ${t("quizMinutesShort", { count: remainingMinutes })}` : hourLabel;
-  }
-
-  return t(totalMinutes === 1 ? "quizMinute" : "quizMinutes", { count: totalMinutes });
+function formatQuizTimeLimitLabel(seconds: number, t: TranslateFn, locale: string) {
+  return seconds <= 0 ? t("quizNoTimeLimit") : formatDurationWords(seconds, locale);
 }
 
 function formatDurationLabel(value: QuizRequirementVideo["duration_seconds"]) {
@@ -269,7 +259,7 @@ function formatDurationLabel(value: QuizRequirementVideo["duration_seconds"]) {
   return `${minutes}:${String(remainder).padStart(2, "0")}`;
 }
 
-function getRequirementProgressText(video: QuizRequirementVideo, t: TranslateFn) {
+function getRequirementProgressText(video: QuizRequirementVideo, t: TranslateFn, locale: string) {
   const watchedPercentage = Number(video.percentage_watched);
   const requirementWatchedPercentage = Number(video.requirement_percentage_watched);
   const requiredPercentage = Number(video.required_percentage);
@@ -283,7 +273,7 @@ function getRequirementProgressText(video: QuizRequirementVideo, t: TranslateFn)
 
   if (video.rule_type === "video_watch_seconds" && Number.isFinite(requiredSeconds) && requiredSeconds > 0) {
     const watched = Number.isFinite(totalWatchSeconds) ? Math.round(totalWatchSeconds) : 0;
-    return t("quizRequirementTimeProgress", { watched: formatTime(watched), required: formatTime(Math.round(requiredSeconds)) });
+    return t("quizRequirementTimeProgress", { watched: formatDurationWords(watched, locale), required: formatDurationWords(requiredSeconds, locale) });
   }
 
   if (Number.isFinite(watchedPercentage)) {
@@ -1760,7 +1750,7 @@ function VideoQuizPage() {
               <span className="videoQuizBadge">{QuizSVG}</span>
               <span>
                 <h1>{quizDisplayTitle}</h1>
-                <p>{stage === "intro" ? t("quizIntroSubtitle") : t(quizMetaKey, { count: displayedQuestionCount, time: formatQuizTimeLimitLabel(quizTimeLimitSeconds, t) })}</p>
+                <p>{stage === "intro" ? t("quizIntroSubtitle") : t(quizMetaKey, { count: displayedQuestionCount, time: formatQuizTimeLimitLabel(quizTimeLimitSeconds, t, locale) })}</p>
               </span>
             </div>
 
@@ -1788,7 +1778,7 @@ function VideoQuizPage() {
                 </div>
                 <dl className="videoQuizFacts">
                   <div><dt>{t("quizQuestions")}</dt><dd>{isQuizLoading ? "—" : summaryQuestionCount}</dd></div>
-                  <div><dt>{t("quizTimeLimitLabel")}</dt><dd>{formatQuizTimeLimitLabel(quizTimeLimitSeconds, t)}</dd></div>
+                  <div><dt>{t("quizTimeLimitLabel")}</dt><dd>{formatQuizTimeLimitLabel(quizTimeLimitSeconds, t, locale)}</dd></div>
                   <div><dt>{t("quizPassingScoreLabel")}</dt><dd>{quizSummary ? `${Number(quizSummary.passing_score_percentage)}%` : "—"}</dd></div>
                   <div><dt>{t("quizAttemptsLabel")}</dt><dd>{quizMaxAttempts > 0 ? t("quizAttemptsLeft", { count: attemptsLeft }) : t("quizUnlimitedLabel")}</dd></div>
                 </dl>
@@ -1883,7 +1873,7 @@ function VideoQuizPage() {
 
                                 <div className="videoQuizRequirementVideoText">
                                   <strong>{video.title || t("quizRequiredVideo")}</strong>
-                                  <p>{getRequirementProgressText(video, t)}</p>
+                                  <p>{getRequirementProgressText(video, t, locale)}</p>
                                   <div
                                     className="videoQuizRequirementProgress"
                                     role="progressbar"

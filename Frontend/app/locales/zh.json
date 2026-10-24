@@ -979,6 +979,8 @@
   "quizYourLastAttempts": "您最后的尝试",
   "quizNoTimeLimit": "无时间限制",
   "quizRequirementComplete": "完成",
+  "quizCompletedRequirements": "已完成的要求",
+  "quizRequirementFulfilled": "观看要求（{{param.required}}）已完成",
   "quizViewCertificate": "查看证书",
   "quizViewCertificates": "查看我的证书",
   "quizAttemptsLeft": "还剩 {{param.count}} 次尝试",

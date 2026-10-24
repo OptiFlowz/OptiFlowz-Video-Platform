@@ -55,7 +55,7 @@ export default function QuizCertificate({ quiz, editable, onDirty }: { quiz: Qui
     <Notice {...action} />
     <div className={styles.toolbar}>
       <button type="button" className={styles.button} disabled={action.busy} onClick={() => void manage()}>{t('quizCertificateLibrary')}</button>
-      {editable && <button type="button" className={`${styles.button} ${styles.primary}`} disabled={action.busy || !dirty || templates.isPending || templates.isError || unavailable} onClick={() => void action.run(async () => { const result = await request<{ quiz: Quiz }>(`/${quiz.id}`, 'PATCH', { certificate_template_id: selected || null }); setSaved(result.quiz.certificate_template_id ?? ''); setSelected(result.quiz.certificate_template_id ?? ''); onDirty(false); })}>{t(action.busy ? 'saving' : 'saveChanges')}</button>}
+      {editable && <button type="button" className={`${styles.button} ${styles.primary} ${styles.savePrimary}`} disabled={action.busy || !dirty || templates.isPending || templates.isError || unavailable} onClick={() => void action.run(async () => { const result = await request<{ quiz: Quiz }>(`/${quiz.id}`, 'PATCH', { certificate_template_id: selected || null }); setSaved(result.quiz.certificate_template_id ?? ''); setSelected(result.quiz.certificate_template_id ?? ''); onDirty(false); })}>{t(action.busy ? 'saving' : 'saveChanges')}</button>}
     </div>
     <ConfirmDialog {...dialogProps} />
   </div>;

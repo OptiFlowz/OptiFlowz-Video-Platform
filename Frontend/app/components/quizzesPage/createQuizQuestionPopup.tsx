@@ -541,7 +541,7 @@ function CreateQuizQuestionPopup({
                   onChange={(event) => setVideoSearch(event.target.value)}
                   placeholder={t("quizSearchVideosForQuestion")}
                   disabled={isSubmitting}
-                  className="w-full rounded-2xl border border-(--border1) bg-(--background1) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
+                  className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
                 />
 
                 {selectedVideo ? (
@@ -632,7 +632,7 @@ function CreateQuizQuestionPopup({
                   onChange={(event) => setPlaylistSearch(event.target.value)}
                   placeholder={t("quizSearchPlaylistsForQuestion")}
                   disabled={isSubmitting}
-                  className="w-full rounded-2xl border border-(--border1) bg-(--background1) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
+                  className="w-full rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 outline-none transition-colors focus:border-(--accentBlue)"
                 />
 
                 {selectedPlaylist ? (

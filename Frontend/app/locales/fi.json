@@ -979,6 +979,8 @@
   "quizYourLastAttempts": "Viimeiset yrityksesi",
   "quizNoTimeLimit": "Ei aikarajaa",
   "quizRequirementComplete": "Täydellinen",
+  "quizCompletedRequirements": "Täytetyt vaatimukset",
+  "quizRequirementFulfilled": "Katseluvaatimus ({{param.required}}) täytetty",
   "quizViewCertificate": "Näytä sertifikaatti",
   "quizViewCertificates": "Näytä Omat sertifikaatit",
   "quizAttemptsLeft": "{{param.count}} yritystä jäljellä",

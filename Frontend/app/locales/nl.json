@@ -954,6 +954,8 @@
   "quizYourLastAttempts": "Je laatste pogingen",
   "quizNoTimeLimit": "Geen tijdslimiet",
   "quizRequirementComplete": "Voltooid",
+  "quizCompletedRequirements": "Voldane vereisten",
+  "quizRequirementFulfilled": "Aan de kijkvereiste ({{param.required}}) voldaan",
   "quizViewCertificate": "Certificaat bekijken",
   "quizViewCertificates": "Mijn certificaten bekijken",
   "quizAttemptsLeft": "{{param.count}} pogingen over",

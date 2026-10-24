@@ -979,6 +979,8 @@
   "quizYourLastAttempts": "あなたの最後の試み",
   "quizNoTimeLimit": "時間制限なし",
   "quizRequirementComplete": "完了",
+  "quizCompletedRequirements": "達成済みの要件",
+  "quizRequirementFulfilled": "視聴要件（{{param.required}}）を達成しました",
   "quizViewCertificate": "証明書を表示する",
   "quizViewCertificates": "私の証明書を表示する",
   "quizAttemptsLeft": "残り {{param.count}} 回の試行回数",

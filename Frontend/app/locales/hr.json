@@ -954,6 +954,8 @@
   "quizYourLastAttempts": "Vaši poslednji pokusaji",
   "quizNoTimeLimit": "Bez vremenskog ograničenja",
   "quizRequirementComplete": "Završeno",
+  "quizCompletedRequirements": "Ispunjeni uvjeti",
+  "quizRequirementFulfilled": "Uvjet gledanja ({{param.required}}) je ispunjen",
   "quizViewCertificate": "Prikaži certifikat",
   "quizViewCertificates": "Prikaži moje certifikate",
   "quizAttemptsLeft": "{{param.count}} preostalih pokusaja",

@@ -1059,6 +1059,8 @@
   "quizYourLastAttempts": "Твоите последни обиди",
   "quizNoTimeLimit": "Нема временско ограничување",
   "quizRequirementComplete": "Целосно",
+  "quizCompletedRequirements": "Исполнети услови",
+  "quizRequirementFulfilled": "Условот за гледање ({{param.required}}) е исполнет",
   "quizViewCertificate": "Погледнете го сертификатот",
   "quizViewCertificates": "Погледнете ги моите сертификати",
   "quizAttemptsLeft": "Преостануваат уште {{param.count}} обиди",

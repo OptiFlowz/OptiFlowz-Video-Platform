@@ -979,6 +979,8 @@
   "quizYourLastAttempts": "Jūsų paskutiniai bandymai",
   "quizNoTimeLimit": "Nėra laiko limito",
   "quizRequirementComplete": "Užbaigti",
+  "quizCompletedRequirements": "Įvykdyti reikalavimai",
+  "quizRequirementFulfilled": "Peržiūros reikalavimas ({{param.required}}) įvykdytas",
   "quizViewCertificate": "Žiūrėti sertifikatą",
   "quizViewCertificates": "Peržiūrėti Mano sertifikatus",
   "quizAttemptsLeft": "Liko {{param.count}} bandymai",

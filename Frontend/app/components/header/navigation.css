@@ -75,7 +75,7 @@ header[data-app-header].appHeader > .appHeaderInner {
     overflow: hidden;
     border: 1px solid var(--border1);
     border-radius: 999px;
-    background: var(--background1);
+    background: var(--background2);
 }
 .appHeaderSearchField:focus-within { border-color: var(--accentBlue2); box-shadow: 0 0 0 1px var(--accentBlue2); }
 .appHeaderSearch input {
@@ -83,7 +83,7 @@ header[data-app-header].appHeader > .appHeaderInner {
     min-width: 0;
     width: 100%;
     padding: 0 20px;
-    background: var(--background1);
+    background: transparent;
     color: var(--text1);
     font-size: 1rem;
 }

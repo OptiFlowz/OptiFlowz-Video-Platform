@@ -978,6 +978,8 @@
   "quizYourLastAttempts": "შენი ბოლო მცდელობები",
   "quizNoTimeLimit": "დროის ლიმიტი არ არის",
   "quizRequirementComplete": "სრული",
+  "quizCompletedRequirements": "შესრულებული მოთხოვნები",
+  "quizRequirementFulfilled": "ყურების მოთხოვნა ({{param.required}}) შესრულებულია",
   "quizViewCertificate": "სერტიფიკატის ნახვა",
   "quizViewCertificates": "ჩემი სერთიფიკატების ნახვა",
   "quizAttemptsLeft": "{{param.count}} მცდელობები დარჩა",

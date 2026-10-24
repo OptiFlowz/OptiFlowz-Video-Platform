@@ -983,6 +983,8 @@
   "quizYourLastAttempts": "Tvoji poslednji pokušaji",
   "quizNoTimeLimit": "Nema vremenskog ograničenja",
   "quizRequirementComplete": "Završeno",
+  "quizCompletedRequirements": "Ispunjeni uslovi",
+  "quizRequirementFulfilled": "Uslov gledanja ({{param.required}}) je ispunjen",
   "quizViewCertificate": "Pogledajte certifikat",
   "quizViewCertificates": "Pregledajte moje certifikate",
   "quizAttemptsLeft": "{{param.count}} pokušava lijevo",

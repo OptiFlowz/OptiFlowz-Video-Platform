@@ -1059,6 +1059,8 @@
   "quizYourLastAttempts": "Përpjekjet tuaja të fundit",
   "quizNoTimeLimit": "Nuk ka kufizim kohor",
   "quizRequirementComplete": "Kompletuar",
+  "quizCompletedRequirements": "Kërkesat e përmbushura",
+  "quizRequirementFulfilled": "Kërkesa e shikimit ({{param.required}}) është përmbushur",
   "quizViewCertificate": "Shiko certifikatën",
   "quizViewCertificates": "Shiko Certifikatat e Mia",
   "quizAttemptsLeft": "{{param.count}} përpjekje të mbetura",

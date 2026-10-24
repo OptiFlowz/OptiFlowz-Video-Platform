@@ -954,6 +954,8 @@
   "quizYourLastAttempts": "आपके अंतिम प्रयास",
   "quizNoTimeLimit": "कोई समय सीमा नहीं",
   "quizRequirementComplete": "पूर्ण",
+  "quizCompletedRequirements": "पूरी की गई शर्तें",
+  "quizRequirementFulfilled": "देखने की शर्त ({{param.required}}) पूरी हुई",
   "quizViewCertificate": "प्रमाणपत्र देखें",
   "quizViewCertificates": "मेरे प्रमाणपत्र देखें",
   "quizAttemptsLeft": "{{param.count}} प्रयास बाएँ",
