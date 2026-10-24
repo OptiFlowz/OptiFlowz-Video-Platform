@@ -22,6 +22,7 @@
     "test:live-playback": "node --experimental-test-module-mocks --test tests/live-playback-db.test.js",
     "test:live-details": "node --experimental-test-module-mocks --test tests/live-details-db.test.js tests/live-details-read-db.test.js",
     "test:mux-webhooks": "node --experimental-test-module-mocks --test tests/mux-webhook.test.js tests/mux-webhook-db.test.js",
+    "test:mux-ai": "node --experimental-test-module-mocks --test tests/mux-ai-zod-compatibility.test.js",
     "test:video-deletion": "node --experimental-test-module-mocks --test tests/video-deletion.test.js tests/video-deletion-sdk.test.js tests/video-deletion-db.test.js",
     "test:post-option-positions": "node --experimental-test-module-mocks --test tests/post-option-positions.test.js",
     "test:2fa-setup": "node --experimental-test-module-mocks --test tests/two-factor-setup.test.js",
@@ -97,7 +98,7 @@
     "undici": "^7.29.0",
     "uuid": "^13.0.0",
     "workflow": "^5.2.3",
-    "zod": "^4.1.11"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@flydotio/dockerfile": "^0.7.4",
@@ -105,6 +106,7 @@
     "nodemon": "^3.1.10"
   },
   "overrides": {
-    "undici": "$undici"
+    "undici": "$undici",
+    "zod": "$zod"
   }
 }
