@@ -31,7 +31,7 @@ test('certificate library orders defaults, protects system designs, edits privat
   const mocks = {
     '../cssColorEditor/CssColorEditor': { __esModule: true, default: ({ label, value, onChange, disabled }) => React.createElement('textarea', { 'aria-label': label, value, disabled, onChange: event => onChange(event.target.value) }) },
     '~/i18n': { useI18n: () => ({ t: (key, values = {}) => String(messages[key] ?? key).replace(/\{\{param\.(\w+)\}\}/g, (_, name) => values[name] ?? '') }) },
-    '~/functions': { getToken: () => 'token' }, '~/env': { env: { apiBaseUrl: 'https://test.local' } }, 'react-router': { useNavigate: () => () => {} }, '~/constants': { AddSVG: '+' },
+    '~/functions': { getToken: () => 'token' }, '~/env': { env: { apiBaseUrl: 'https://test.local' } }, 'react-router': { useNavigate: () => () => {} }, '~/constants': { AddSVG: '+', DeleteSVG: React.createElement('svg', { 'data-icon': 'delete' }) },
     '~/API': { fetchApiResponse: async (url, options) => {
       requests.push({ url, ...options });
       assert.equal(options.method, 'POST'); assert.equal(options.body, undefined); assert.equal(options.headers.Authorization, 'Bearer token');
@@ -101,6 +101,10 @@ test('certificate library orders defaults, protects system designs, edits privat
     assert.match(frame.srcdoc, /John Anderson/);
   }
   assert.equal(pdfCount, 0, 'card thumbnails do not request PDF rendering');
+  assert.equal(document.querySelector('.certificateCard .certificateCardDelete'), document.querySelector('[aria-label="Delete: A private design"]'), 'only custom cards expose Delete');
+  assert.equal(document.querySelectorAll('.certificateCardDelete').length, 1, 'built-in cards cannot be deleted');
+  assert.ok(document.querySelector('.managementRowActions .certificateCardDelete.danger svg'), 'cards reuse the question-list trash button');
+  assert.equal(document.querySelector('.certificateCardDelete').textContent, '', 'Delete is an icon-only action');
   await click('Edit');
   assert.equal(edit, 'classic', 'card action opens its template');
 
@@ -116,9 +120,29 @@ test('certificate library orders defaults, protects system designs, edits privat
   await click('PDF Preview');
   assert.match(document.querySelector('iframe[title="PDF Preview"]').src, /^blob:pdf-/);
   await click('Create copy');
+  assert.equal(rows.at(-1).name, 'Classic - copy');
   assert.equal(rows.at(-1).is_system, false);
   assert.equal(saved, rows.at(-1).id);
   assert.ok(!requests.some(request => request.method === 'PATCH' && request.route?.endsWith('/classic')));
+
+  const copiedId = rows.at(-1).id;
+  await render();
+  edit = undefined;
+  const deleteCopy = async () => { await act(async () => document.querySelector('[aria-label="Delete: Classic - copy"]').click()); await tick(); };
+  const deleteCount = () => requests.filter(request => request.method === 'DELETE').length;
+  const beforeCancel = deleteCount();
+  allow = false; await deleteCopy();
+  assert.equal(deleteCount(), beforeCancel, 'cancelling the confirmation never sends DELETE');
+  assert.ok(rows.some(row => row.id === copiedId));
+  assert.equal(confirmations.at(-1).intent, 'danger');
+  assert.ok(confirmations.at(-1).message.includes('Classic - copy'), 'the existing popup identifies the template');
+  allow = true; reject = true; await deleteCopy();
+  assert.ok(document.querySelector('[role=alert]'), 'failed deletion is reported in the gallery');
+  assert.ok(rows.some(row => row.id === copiedId), 'failed deletion keeps the card');
+  reject = false; await deleteCopy();
+  assert.ok(!rows.some(row => row.id === copiedId), 'confirmation deletes the chosen copy');
+  assert.equal(document.querySelector('[aria-label="Delete: Classic - copy"]'), null, 'the gallery refreshes after deletion');
+  assert.equal(edit, undefined, 'Delete never triggers card navigation');
 
   await render('private');
   assert.ok(!document.querySelector('fieldset').disabled);

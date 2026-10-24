@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Annotation, Compartment, EditorState, StateField, Transaction } from '@codemirror/state';
-import { Decoration, EditorView, WidgetType, keymap } from '@codemirror/view';
+import { Decoration, EditorView, WidgetType, highlightActiveLine, highlightActiveLineGutter, keymap, lineNumbers } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { css } from '@codemirror/lang-css';
 import { html } from '@codemirror/lang-html';
@@ -50,7 +50,7 @@ export default function CodeEditor({ value, onChange, label, disabled = false, l
       codeHighlighting, history(), keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
       editable.current.of([EditorState.readOnly.of(latest.current.disabled), EditorView.editable.of(!latest.current.disabled)]),
       EditorView.contentAttributes.of({ 'aria-label': latest.current.label, 'aria-multiline': 'true', spellcheck: 'false' }),
-      EditorView.lineWrapping,
+      lineNumbers(), highlightActiveLine(), highlightActiveLineGutter(), EditorView.lineWrapping,
       EditorView.updateListener.of(update => {
         if (!update.docChanged) return;
         if (!pickerChange.current) close();

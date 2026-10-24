@@ -16,7 +16,17 @@
 
 .editor { min-width: 0; overflow: hidden; border-radius: 12px; background: color-mix(in srgb, var(--background2) 94%, var(--text1)); color: var(--text1); }
 .editor :global(.cm-editor) { font-size: .85rem; }
-.editor :global(.cm-scroller) { min-height: 200px; max-height: 440px; overflow: auto; font-family: monospace; line-height: 1.5; }
+.editor :global(.cm-editor .cm-gutters) { background: transparent; color: var(--text2); border: 0; }
+.editor :global(.cm-lineNumbers .cm-gutterElement) { padding-inline: 8px; }
+.editor :global(.cm-editor .cm-activeLine), .editor :global(.cm-editor .cm-activeLineGutter) { background: transparent; }
+.editor :global(.cm-editor.cm-focused .cm-activeLine) { background: color-mix(in srgb, var(--text1) 6%, transparent); }
+.editor :global(.cm-editor.cm-focused .cm-activeLineGutter) { color: var(--text1); font-weight: 600; }
+.editor :global(.cm-scroller) { min-height: 200px; max-height: 440px; overflow: auto; font-family: monospace; line-height: 1.5; scrollbar-width: thin; scrollbar-color: var(--accentBlue2) transparent; }
+.editor :global(.cm-scroller)::-webkit-scrollbar { width: 5px; height: 5px; }
+.editor :global(.cm-scroller)::-webkit-scrollbar-track { background: transparent; }
+.editor :global(.cm-scroller)::-webkit-scrollbar-thumb { min-height: 32px; border-radius: var(--bR); background: var(--accentBlue2); }
+.editor :global(.cm-scroller)::-webkit-scrollbar-thumb:hover { background: var(--accentBlue3); }
+.editor :global(.cm-scroller)::-webkit-scrollbar-button { display: none; }
 .editor :global(.cm-content) { padding: 12px 14px; caret-color: var(--text1); }
 .editor :global(.cm-line) { padding: 0; }
 .editor :global(.cm-focused) { outline: 2px solid var(--accentBlue); outline-offset: -2px; }

@@ -148,14 +148,14 @@ header[data-app-header].appHeader > .appHeaderInner {
 /* Leave the portal mounted while fading out; usePopupPresence removes it afterwards. */
 .adminAvatarDropdown[data-visible] {
     opacity: 0;
-    transform: translateY(-8px) scale(.98);
+    transform: translateY(-8px);
     transform-origin: top right;
     pointer-events: none;
     transition: opacity 200ms ease, transform 200ms ease;
 }
 .adminAvatarDropdown[data-visible="true"] {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
     pointer-events: auto;
 }
 @media (prefers-reduced-motion: reduce) {

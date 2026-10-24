@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useI18n } from '~/i18n';
 import { getToken } from '~/functions';
-import { AddSVG, SearchSVG, CopySVG, CheckSVG } from '~/constants';
+import { AddSVG, SearchSVG, CopySVG, CheckSVG, DeleteSVG } from '~/constants';
 import Pagination from '~/components/library/pagination';
 import { ConfirmDialog } from '~/components/confirmPopup/confirmDialog';
 import { useConfirm } from '~/components/confirmPopup/useConfirm';
@@ -18,31 +18,42 @@ const placeholders = ['user.full_name', 'quiz.title', 'result.score_percentage',
 
 export default function CertificateTemplates(props: Props) {
   const { t } = useI18n(), token = getToken();
+  const action = useAction(), { confirm, dialogProps } = useConfirm();
   const [search, setSearch] = useState(''), [page, setPage] = useState(1), [limit, setLimit] = useState(20);
   const templates = useQuery({ queryKey: [...engineKey, token, 'certificate-templates'], enabled: !!token && !props.id,
     queryFn: ({ signal }) => allCertificateTemplates(signal), retry: false });
   const rows = (templates.data ?? []).filter(row => row.name.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()));
   const totalPages = Math.max(1, Math.ceil(rows.length / limit));
   useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
+  const remove = (template: CertificateTemplate) => {
+    if (template.is_system || action.busy) return;
+    void action.run(async () => {
+      if (!await confirm({ intent: 'danger', title: t('quizCertificateDelete'), message: t('quizCertificateDeleteConfirm', { name: template.name }), yesText: t('adminDelete'), noText: t('adminCancel') })) return false;
+      await certificateRequest(`/${encodeURIComponent(template.id)}`, 'DELETE');
+    });
+  };
   if (props.id) return <TemplateDetail key={props.id} {...props} id={props.id} />;
   return <section className={styles.certificateTab}>
     <div className={styles.toolbar}>
       <div className={styles.certificateFilter}>{SearchSVG}<input type="search" aria-label={t('quizCertificateSearch')} placeholder={t('quizCertificateSearch')} maxLength={255} value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} /></div>
-      <button type="button" className={styles.button} onClick={() => props.onEdit('new')}>{AddSVG}{t('quizCertificateCreate')}</button>
+      <button type="button" className={styles.button} disabled={action.busy} onClick={() => props.onEdit('new')}>{AddSVG}{t('quizCertificateCreate')}</button>
     </div>
+    <Notice {...action} />
     <LoadState query={templates} />
     {templates.isSuccess && <div className={styles.certificateGallery}>
       {rows.slice((page - 1) * limit, page * limit).map(template => <article className={styles.certificateCard} key={template.id}>
+        <button type="button" className={styles.certificateCardOpen} aria-label={`${t('adminEdit')}: ${template.name}`} disabled={action.busy} onClick={() => props.onEdit(template.id)}><span className="sr-only">{t('adminEdit')}</span></button>
         <div className={styles.certificateThumbnail} aria-hidden="true" inert><CertificateHtmlPreview template={template} thumbnail /></div>
         <div className={styles.certificateCardBody}>
           <div className={styles.certificateCardTop}><h2>{template.name}</h2>{template.is_system && <span className={styles.badge}>{t(template.is_default ? 'quizCertificateDefault' : 'quizCertificateSystem')}</span>}</div>
           {template.description && <p>{template.description}</p>}
-          <div className={styles.certificateCardBottom}><span>{template.page_format} · {t(template.orientation === 'portrait' ? 'quizCertificatePortrait' : 'quizCertificateLandscape')}</span><button type="button" className={styles.certificateCardAction} aria-label={`${t('adminEdit')}: ${template.name}`} onClick={() => props.onEdit(template.id)}>{t('adminEdit')}</button></div>
+          <div className={styles.certificateCardBottom}><span>{template.page_format} · {t(template.orientation === 'portrait' ? 'quizCertificatePortrait' : 'quizCertificateLandscape')}</span>{!template.is_system && <span className="managementRowActions"><button type="button" className={`danger ${styles.certificateCardDelete}`} aria-label={`${t('adminDelete')}: ${template.name}`} title={t('adminDelete')} disabled={action.busy} onClick={() => remove(template)}>{DeleteSVG}</button></span>}</div>
         </div>
       </article>)}
       {!rows.length && <p className={styles.panel}>{t(search ? 'adminZeroResults' : 'quizCertificateEmpty')}</p>}
     </div>}
-    <Pagination page={page} limit={limit} total={rows.length} totalPages={totalPages} loading={templates.isFetching} label={t('quizCertificateLibrary')} onPageChange={setPage} onLimitChange={value => { setLimit(value); setPage(1); }} />
+    <Pagination page={page} limit={limit} total={rows.length} totalPages={totalPages} loading={templates.isFetching} disabled={action.busy} label={t('quizCertificateLibrary')} onPageChange={setPage} onLimitChange={value => { setLimit(value); setPage(1); }} />
+    <ConfirmDialog {...dialogProps} />
   </section>;
 }
 
@@ -85,7 +96,7 @@ export function TemplateForm({ id, initial, onEdit, onSaved, onDirty, onBusy }: 
       <div className="libraryHeading"><h1>{id === 'new' ? t('quizCertificateCreate') : form.name}</h1></div>
       <div className={styles.actions}>
         {id !== 'new' && <button type="button" className={styles.button} disabled={action.busy || dirty} onClick={() => void action.run(async () => {
-          const result = await certificateRequest<{ template: CertificateTemplate }>('', 'POST', { ...templateInput(form), name: `${form.name} — ${t('quizCertificateCopy')}`.slice(0, 255) });
+          const result = await certificateRequest<{ template: CertificateTemplate }>('', 'POST', { ...templateInput(form), name: `${form.name.slice(0, 248)} - copy` });
           onSaved(result.template.id);
         })}>{t('quizCertificateCopy')}</button>}
         {id !== 'new' && !readOnly && <button type="button" className={`${styles.button} ${styles.danger}`} disabled={action.busy} onClick={() => void action.run(async () => {

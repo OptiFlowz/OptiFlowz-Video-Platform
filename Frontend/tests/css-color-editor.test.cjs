@@ -26,12 +26,14 @@ test('opening CSS with server line endings stays clean; only real edits notify t
   }
   const Editor = load(path.resolve('app/components/cssColorEditor/CssColorEditor.tsx')).default;
   const changes = [];
+  const numbers = () => [...document.querySelectorAll('.cm-lineNumbers .cm-gutterElement')].filter(element => element.style.visibility !== 'hidden').map(element => element.textContent);
   const render = async (key, value, disabled, language = 'css') => act(async () => root.render(React.createElement(React.StrictMode, null, React.createElement(Editor, { key, label: 'CSS', value, disabled, language, onChange: next => changes.push(next) }))));
   for (const [index, ending] of ['\n', '\r\n', '\r'].entries()) {
     const source = `.modern {${ending}  color: blue;${ending}}`;
     await render(index, source, true);
     assert.deepEqual(changes, [], 'mounting read-only system CSS must not mark the template dirty');
     assert.ok(document.querySelector('.cm-line span[class]'), 'CSS has syntax highlighting');
+    assert.deepEqual(numbers(), ['1', '2', '3'], 'read-only CSS numbers logical lines for every line-ending format');
     await render(index, source, false);
     assert.deepEqual(changes, [], 'changing editability must not rewrite CSS');
     const updated = source.replace('blue', 'red');
@@ -50,6 +52,7 @@ test('opening CSS with server line endings stays clean; only real edits notify t
   const markup = '<!-- certificate -->\r\n<div class="certificate"><h1>{{user.full_name}}</h1></div>';
   await render('html', markup, true, 'html');
   assert.deepEqual(changes, [], 'HTML highlights without emitting an edit');
+  assert.deepEqual(numbers(), ['1', '2'], 'the long HTML line has a single line number');
   const tokens = [...document.querySelectorAll('.cm-line span[class]')];
   assert.ok(tokens.some(node => node.textContent === 'div'), 'HTML tags are highlighted');
   assert.ok(tokens.some(node => node.textContent === 'class'), 'HTML attributes are highlighted');
@@ -57,7 +60,14 @@ test('opening CSS with server line endings stays clean; only real edits notify t
   assert.equal(document.querySelector('.cm-content button'), null, 'HTML does not get CSS swatches');
   await render('html', markup, false, 'html');
   const view = EditorView.findFromDOM(document.querySelector('.cm-editor'));
-  await act(async () => view.dispatch({ changes: { from: view.state.doc.length, insert: '<p>Done</p>' }, userEvent: 'input' }));
+  await act(async () => view.dispatch({ changes: { from: view.state.doc.length, insert: '\n<p>Done</p>' }, userEvent: 'input' }));
   assert.equal(changes.length, 1);
   assert.ok(changes[0].endsWith('<p>Done</p>'));
+  assert.deepEqual(numbers(), ['1', '2', '3'], 'adding a newline updates the gutter');
+  for (const line of [2, 3]) {
+    await act(async () => { view.focus(); view.dispatch({ selection: { anchor: view.state.doc.line(line).from } }); });
+    assert.equal(document.querySelector('.cm-activeLine').textContent, view.state.doc.line(line).text, 'the highlight follows the caret line');
+    assert.equal(document.querySelector('.cm-lineNumbers .cm-activeLineGutter').textContent, String(line), 'the active number follows the same line');
+    assert.equal(changes.length, 1, 'moving the caret does not mark the template dirty');
+  }
 });

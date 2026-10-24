@@ -1170,7 +1170,7 @@ header .primaryNavigation .primaryNavigationBrand::before {
 	box-shadow: 0 16px 40px color-mix(in srgb, var(--background1) 22%, transparent);
 	opacity: 0;
 	pointer-events: none;
-	transform: translateY(-7px) scale(0.975);
+	transform: translateY(-7px);
 	transform-origin: top right;
 	visibility: hidden;
 	transition:
@@ -1190,7 +1190,7 @@ header .primaryNavigation .primaryNavigationBrand::before {
 		customSelectSlideIn 260ms cubic-bezier(0.16, 1, 0.3, 1);
 	opacity: 1;
 	pointer-events: auto;
-	transform: translateY(0) scale(1);
+	transform: translateY(0);
 	visibility: visible;
 	transition:
 		opacity 190ms ease,
@@ -1245,12 +1245,12 @@ header .primaryNavigation .primaryNavigationBrand::before {
 	--custom-select-enter-y: 7px;
 	top: auto;
 	bottom: calc(100% + 8px);
-	transform: translateY(7px) scale(0.975);
+	transform: translateY(7px);
 	transform-origin: bottom right;
 }
 
 .customSelect.isOpen .customSelectMenu.opensUpward {
-	transform: translateY(0) scale(1);
+	transform: translateY(0);
 }
 
 /* Entry animations restart when a menu returns from display: none. */
@@ -1260,8 +1260,8 @@ header .primaryNavigation .primaryNavigationBrand::before {
 }
 
 @keyframes customSelectSlideIn {
-	from { transform: translateY(var(--custom-select-enter-y, -7px)) scale(0.975); }
-	to { transform: translateY(0) scale(1); }
+	from { transform: translateY(var(--custom-select-enter-y, -7px)); }
+	to { transform: translateY(0); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2416,7 +2416,7 @@ main.play .player.theater .persistent-video-slot {
 .persistent-video-player--mini.is-closing {
   opacity: 0;
   pointer-events: none;
-  transform: translateY(10px) scale(0.94);
+  transform: translateY(10px);
   transform-origin: center;
 }
 
@@ -3807,7 +3807,7 @@ mux-player::part(menu-item) {
 }
 
 .comment-replies-panel{
-  transform: translateY(-10px) scale(0.985);
+  transform: translateY(-10px);
   transform-origin: top left;
   transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform;
@@ -3819,7 +3819,7 @@ mux-player::part(menu-item) {
 }
 
 .comment-replies-shell.open .comment-replies-panel{
-  transform: translateY(0) scale(1);
+  transform: translateY(0);
 }
 
 .comment-thread-flat-node{
@@ -11401,14 +11401,14 @@ progress::-moz-progress-bar {
 :root .popupMotionLayer:is(.isOpen, .opacity-100) { opacity: 1; }
 :root :is(.popup-content, .popupMotionPanel, .platformRolePopupPanel, .videoAnalyticsCityPopup, .postDialog) {
   opacity: 0;
-  transform: translateY(12px) scale(.98);
+  transform: translateY(12px);
   transform-origin: center;
   animation: none;
   transition: transform var(--popup-exit-duration) var(--popup-exit-ease), opacity var(--popup-exit-duration) var(--popup-exit-ease);
 }
 :root :is(.popup.active .popup-content, .popupMotionPanel.isOpen, .platformRolePopup.visible .platformRolePopupPanel, .videoAnalyticsCityBackdrop.visible .videoAnalyticsCityPopup, .postDialog[data-visible="true"]) {
   opacity: 1;
-  transform: translateY(0) scale(1);
+  transform: translateY(0);
   transition-duration: var(--popup-enter-duration);
   transition-timing-function: var(--popup-enter-ease);
 }
@@ -11424,7 +11424,7 @@ progress::-moz-progress-bar {
 /* A popup mounted already open still gets an entrance transition. */
 @starting-style {
   :root .popup.active { opacity: 0; }
-  :root .popup.active .popup-content { opacity: 0; transform: translateY(12px) scale(.98); }
+  :root .popup.active .popup-content { opacity: 0; transform: translateY(12px); }
 }
 @media (prefers-reduced-motion: reduce) {
   :root { --popup-enter-duration: 0ms; --popup-exit-duration: 0ms; }

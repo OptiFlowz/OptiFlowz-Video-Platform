@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type ConfirmOptions = {
   intent?: "danger" | "primary";
@@ -12,20 +12,40 @@ export function useConfirm() {
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState<ConfirmOptions>({});
   const resolverRef = useRef<((value: boolean) => void) | null>(null);
+  const promiseRef = useRef<Promise<boolean> | null>(null);
+  const resultRef = useRef<boolean | null>(null);
 
   const confirm = useCallback((opts: ConfirmOptions = {}) => {
+    if (promiseRef.current) return promiseRef.current;
     setOptions(opts);
     setOpen(true);
 
-    return new Promise<boolean>((resolve) => {
+    promiseRef.current = new Promise<boolean>((resolve) => {
       resolverRef.current = resolve;
     });
+    return promiseRef.current;
   }, []);
 
   const close = useCallback((result: boolean) => {
+    if (!resolverRef.current || resultRef.current !== null) return;
+    resultRef.current = result;
     setOpen(false);
-    resolverRef.current?.(result);
+  }, []);
+
+  const afterClose = useCallback(() => {
+    if (resultRef.current === null) return;
+    const result = resultRef.current, resolve = resolverRef.current;
     resolverRef.current = null;
+    promiseRef.current = null;
+    resultRef.current = null;
+    resolve?.(result);
+  }, []);
+
+  useEffect(() => () => {
+    resolverRef.current?.(false);
+    resolverRef.current = null;
+    promiseRef.current = null;
+    resultRef.current = null;
   }, []);
 
   return {
@@ -39,6 +59,7 @@ export function useConfirm() {
       noText: options.noText,
       onYes: () => close(true),
       onNo: () => close(false),
+      onAfterClose: afterClose,
     },
   };
 }
