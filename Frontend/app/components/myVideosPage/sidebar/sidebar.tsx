@@ -22,10 +22,7 @@ function Sidebar() {
 
     return (
         <aside className="videoAside adminSidebarDock">
-            <div className="videoAsideSticky">
-                <div className="background">
-                    <img className="w-full h-full" src={backgroundImage} alt="" />
-                </div>
+            <div className="videoAsideSticky" style={{ backgroundImage: `url(${backgroundImage})` }}>
                 <section>
                     {channelPath ? <>
                         <Link to={channelPath} className="videoAsidePhotoLink" aria-label={`${t("channelLabel")}: ${channelName}`}>{photo}</Link>

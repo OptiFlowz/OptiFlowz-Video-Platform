@@ -16,10 +16,7 @@ function PlatformSidebar() {
 
   return (
     <aside className="videoAside platformAside adminSidebarDock">
-      <div className="videoAsideSticky">
-        <div className="background">
-          <img className="w-full h-full" src={backgroundImage} alt="" />
-        </div>
+      <div className="videoAsideSticky" style={{ backgroundImage: `url(${backgroundImage})` }}>
         <section>
           <img src={LOGO} alt={BRAND_NAME} />
           <div className="videoAsideIdentity">
