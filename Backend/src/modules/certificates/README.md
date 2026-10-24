@@ -58,13 +58,59 @@ Filters combine with AND. Pagination returns `page`, `limit`, `total`, `totalPag
 
 ## Content validation
 
-`certificate-templates/helpers/templateContent.validation.js` exports `validateTemplateContent`, the shared HTML, CSS and placeholder validator used for creation, partial updates and PDF preview. Preview revalidates the stored HTML/CSS pair, page format and orientation before launching Chromium. Each source field is limited to 100 KiB; HTML/CSS trees are bounded to 5,000 nodes and 64 levels of nesting.
+`certificate-templates/helpers/templateContent.validation.js` exports `validateTemplateContent`, the shared HTML, CSS and placeholder validator used for creation, partial updates and PDF preview. Preview revalidates the stored HTML/CSS pair, page format and orientation before launching Chromium. Each source field is limited to 1 MiB to accommodate embedded fonts; HTML/CSS trees are bounded to 5,000 nodes and 64 levels of nesting. Certificate-template routes accept JSON bodies up to 3 MiB; other API routes retain their existing limits.
 
-HTML is checked with `sanitize-html` using explicit tag and attribute allowlists. Supported elements cover certificate layout, text, tables, links and images. Inline `style` attributes pass through the same CSS policy as `css_template`. Script, event handlers, iframe, object/embed, SVG, MathML, forms, style/link/meta elements, unknown attributes and unfinished markup are rejected. Sanitizer removals are errors, not silently saved alterations; harmless serialization differences and class whitespace normalization do not rewrite the stored source.
+HTML is checked with `sanitize-html` using explicit tag and attribute allowlists. Supported elements cover certificate layout, text, tables, links, images and static inline SVG. Inline `style` attributes pass through the same CSS policy as `css_template`. Script, event handlers, iframe, object/embed, MathML, forms, style/meta elements, unknown attributes and unfinished markup are rejected. The only permitted `link` elements are Google Fonts stylesheet and preconnect links. Sanitizer removals are errors, not silently saved alterations; harmless serialization differences and class whitespace normalization do not rewrite the stored source.
 
-CSS is parsed with `postcss`; `postcss-value-parser` inspects function values, including escaped names. The property allowlist supports Flexbox, Grid, positioning, typography, backgrounds, borders, transforms and print layout. Allowed at-rules are `@media`, `@supports`, `@page`, and `@font-face`. CSS custom properties and `var()` are supported, with their values validated. Imports, unknown at-rules/properties/functions, `expression`, legacy bindings, unsafe URLs, malformed CSS and HTML style-element breakouts are rejected.
+CSS is parsed with `postcss`; `postcss-value-parser` inspects function values, including escaped names. The property allowlist supports Flexbox, Grid, positioning, typography, backgrounds, borders, transforms, SVG presentation properties and print layout. Allowed at-rules are `@media`, `@supports`, `@page`, `@font-face`, and top-level `@import` for Google Fonts. CSS custom properties and `var()` are supported, with their values validated. Other imports, unknown at-rules/properties/functions, `expression`, legacy bindings, unsafe URLs, malformed CSS and HTML style-element breakouts are rejected.
 
-Resource URLs must be absolute HTTPS URLs without credentials or whitespace. Fragment links and CSS fragment references are allowed. HTTP, protocol-relative, relative, `data:`, `javascript:`, and `file:` URLs are rejected. No remote resource is fetched by CRUD. PDF preview denies all network requests, so external images and web fonts are not loaded; local fonts, CSS backgrounds and layout still render.
+Resource URLs must be absolute HTTPS URLs without credentials or whitespace. Fragment links and CSS fragment references are allowed. Data URLs are permitted only for validated SVG images and base64 WOFF/WOFF2/TTF/OTF font files in `@font-face src`. HTTP, protocol-relative, relative, `javascript:`, `file:` and other data URLs are rejected. No remote resource is fetched by CRUD. External images remain blocked in PDF preview; custom fonts are loaded through the bounded server-side font loader described below.
+
+### SVG
+
+Inline SVG supports paths, basic shapes, groups, text/tspan/textPath, symbols/use, gradients, clipping, masks, patterns, markers and common static filter primitives (blur, offset, blend, color matrix, composite, flood, merge and morphology). SVG tag/attribute casing such as `linearGradient` and `viewBox` is retained in the rendered document. `fill`, `stroke`, typography and related presentation properties work in attributes, inline styles and `css_template`.
+
+```html
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 100" width="500" height="100">
+  <rect width="500" height="100" rx="12" fill="#f3e6b0" />
+  <text x="20" y="60" font-family="CertificateTitle" font-size="32">{{user.full_name}}</text>
+</svg>
+```
+
+SVG references (`use`, gradients, clip paths, masks and filters) must use local `#id` fragments. Scripts, event attributes, animation elements, `foreignObject`, SVG `image` elements and external SVG references are rejected. SVG images may also use `data:image/svg+xml,...` with percent-encoded XML or `data:image/svg+xml;base64,...` in HTML `img src` and CSS `url(...)`. Embedded SVG is limited to 100 KiB and parsed as strict XML; DOCTYPE, processing instructions and placeholders inside SVG data images are rejected. Placeholders in inline SVG text are supported.
+
+### Custom fonts
+
+Use `font-family` in HTML styles, SVG text or CSS rules. Define fonts in `css_template` with `@font-face`; supported formats are WOFF, WOFF2, TTF and OTF. Sources may be direct public HTTPS font-file URLs or embedded base64 font data:
+
+```css
+@font-face {
+  font-family: CertificateTitle;
+  src: url("https://your-public-cdn.example/fonts/title.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+}
+h1, svg text { font-family: CertificateTitle, serif; }
+/* Embedded alternative: src: url("data:font/woff2;base64,...") format("woff2"); */
+```
+
+Google Fonts can be included with either a stylesheet link in `html_template` or a top-level import in `css_template`:
+
+```html
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto&amp;display=swap">
+<h1 style="font-family:Roboto,sans-serif">{{user.full_name}}</h1>
+```
+
+```css
+@import url("https://fonts.googleapis.com/css2?family=Roboto&display=swap");
+h1 { font-family: Roboto, sans-serif; }
+```
+
+Only Google Fonts `/css` and `/css2` stylesheet URLs are supported. Their responses must contain only validated `@font-face` declarations. Preconnect links to `fonts.googleapis.com` and `fonts.gstatic.com` are accepted but removed from the render document. Arbitrary stylesheet links/imports and HTML `style` elements remain unsupported; use the separate CSS field.
+
+During PDF preview the API fetches font resources over public HTTPS on port 443, without cookies or authorization headers. Socket DNS lookup rejects private/reserved IPv4/IPv6 destinations, including mapped addresses; redirects are not followed. Chromium itself stays offline and receives font bytes only through synthetic, intercepted font URLs. Font signatures and resource sizes are checked. The renderer waits for font loading before printing; failed custom-font loads return `422` rather than silently generating a fallback-font PDF.
+
+Per preview: up to 4 Google stylesheets (64 KiB each), 32 remote font sources, 1 MiB per font file, 4 MiB total fetched resources and a 5-second timeout per fetch, within the existing total render deadline. Only fonts actually requested by the browser are downloaded, with per-render caching. Use direct final font URLs that do not require redirects or authentication.
 
 ## PDF preview
 
@@ -86,9 +132,9 @@ Unknown names, expressions, malformed/triple braces and placeholders in attribut
 
 `postcss-prefix-selector` scopes each CSS rule's subject to the wrapper or its descendants, including rules inside media/supports blocks. The renderer supplies page dimensions from `page_format` and `orientation`, prints backgrounds and uses zero margins. Preview is one page; content beyond the fixed certificate canvas is clipped. User CSS cannot select elements outside the wrapper. `@page`/`@font-face` remain document-level at-rules inside the isolated document; PDF format is controlled by Playwright's format/orientation options rather than CSS page sizing.
 
-Each preview launches a fresh Playwright Chromium browser with `chromiumSandbox: true` and a fresh context. Page JavaScript, service workers and downloads are disabled. The context is offline; HTTP and WebSocket routes are blocked, and the generated document has a restrictive CSP. Chromium inherits only a small environment allowlist, excluding API secrets. The browser process tree is killed on completion, error, deadline or client disconnect.
+Each preview launches a fresh Playwright Chromium browser with `chromiumSandbox: true` and a fresh context. Page JavaScript, service workers and downloads are disabled. The context is offline; all browser requests are blocked except synthetic font URLs fulfilled by the font loader. WebSockets are blocked. CSP permits inline styles, embedded SVG images and embedded/intercepted fonts. Chromium inherits only a small environment allowlist, excluding API secrets. Resource requests are aborted and the browser process tree is killed on completion, error, deadline or client disconnect.
 
-Resource budgets per API process: one active render (no queue), 20-second total render deadline, 10-second launch timeout, 512 KiB generated-document limit, 5 MiB output limit and one PDF page. Each user is limited to 10 preview requests per minute. Chromium also receives a renderer-process limit and a 128 MiB V8 heap setting; these are not hard limits on Chromium's total native memory. Deployment memory/CPU limits remain necessary (the existing Fly app VM is limited to 1 GiB and one CPU).
+Resource budgets per API process: one active render (no queue), 20-second total render deadline, 10-second launch timeout, 3 MiB generated-document limit, 5 MiB output limit and one PDF page. Each user is limited to 10 preview requests per minute. Chromium also receives a renderer-process limit and a 128 MiB V8 heap setting; these are not hard limits on Chromium's total native memory. Deployment memory/CPU limits remain necessary (the existing Fly app VM is limited to 1 GiB and one CPU).
 
 Success returns `Content-Type: application/pdf`, an inline UUID-based filename, `Cache-Control: no-store` and `X-Content-Type-Options: nosniff`. Busy renderer: `503` with `Retry-After`; deadline: `504`; rate limit: `429`. Invalid stored content returns `422` before a browser is launched.
 
@@ -98,4 +144,4 @@ Errors use `{ success: false, message }`: `400` for invalid request shape/query/
 
 Run `npm run test:certificate-templates`. The PostgreSQL integration test uses session-local temporary tables and requires `TEST_DATABASE_URL`; without it, that test is skipped.
 
-Run `npm run test:certificate-preview` for placeholder/document/HTTP tests, renderer lifecycle tests, and real Chromium PDF tests. Real-browser tests are skipped when Chromium is not installed. They check all A4/Letter orientations, one-page output, no outbound requests, and CSS/HTML containment.
+Run `npm run test:certificate-preview` for placeholder/document/HTTP tests, SVG/font validation, font-loader network policy, renderer lifecycle tests, and real Chromium PDF tests. Real-browser tests are skipped when Chromium is not installed. They check all A4/Letter orientations, one-page output, SVG rendering, embedded fonts in PDFs, denied browser requests, and CSS/HTML containment.
