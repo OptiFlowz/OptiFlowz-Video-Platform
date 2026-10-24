@@ -32,7 +32,7 @@ export async function getQuiz(req, res) {
 
 export async function updateQuiz(req, res) {
   try {
-    const quiz = await updateQuizInternal(req.params, req.body, req.resourceOwnerId ?? req.user?.sub);
+    const quiz = await updateQuizInternal(req.params, req.body, req.resourceOwnerId ?? req.user?.sub, req.user?.sub);
     return sendSuccess(res, { quiz });
   } catch (error) { return handleQuizError(res, error, 'updateQuiz'); }
 }

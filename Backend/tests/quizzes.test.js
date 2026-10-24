@@ -123,7 +123,8 @@ test('every quiz handler rejects unauthenticated and malformed input before data
   await assert.rejects(create({ ...body, user_id: userId }, userId), { status: 400 });
   await assert.rejects(get({ quizId: 'invalid' }, userId), { status: 400 });
   await assert.rejects(list({ limit: '101' }, userId), { status: 400 });
-  await assert.rejects(update(params, {}, userId), { status: 400 });
+  await assert.rejects(update(params, { title: 'A' }, userId), { status: 401 });
+  await assert.rejects(update(params, {}, userId, userId), { status: 400 });
   await assert.rejects(remove({ quizId: 'invalid' }, userId), { status: 400 });
   assert.equal(databaseCalls, 0);
 });
