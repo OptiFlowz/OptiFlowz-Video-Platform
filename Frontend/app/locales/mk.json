@@ -1883,5 +1883,8 @@
   "quizCertificatePlaceholders": "Достапни полиња",
   "quizCertificatePreviewHelp": "Прегледот користи примерни податоци. Надворешни слики и фонтови не се вчитуваат.",
   "quizCertificateSavePreview": "Зачувајте го шаблонот за да ги прегледате измените.",
-  "copy": "Копирај"
+  "copy": "Копирај",
+  "quizCertificateNone": "Без сертификат",
+  "quizCertificateUnavailable": "Избраниот шаблон не е достапен",
+  "quizCertificateChoose": "Избери сертификат"
 }

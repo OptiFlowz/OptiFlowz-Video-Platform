@@ -1803,5 +1803,8 @@
   "quizCertificatePlaceholders": "Tilgjengelige felt",
   "quizCertificatePreviewHelp": "Forhåndsvisningen bruker eksempeldata. Eksterne bilder og skrifttyper lastes ikke inn.",
   "quizCertificateSavePreview": "Lagre malen for å forhåndsvise endringene.",
-  "copy": "Kopier"
+  "copy": "Kopier",
+  "quizCertificateNone": "Ingen sertifikat",
+  "quizCertificateUnavailable": "Den valgte malen er ikke tilgjengelig",
+  "quizCertificateChoose": "Velg sertifikat"
 }

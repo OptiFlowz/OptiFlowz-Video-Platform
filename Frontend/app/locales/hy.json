@@ -1803,5 +1803,8 @@
   "quizCertificatePlaceholders": "Հասանելի դաշտեր",
   "quizCertificatePreviewHelp": "Նախադիտումն օգտագործում է օրինակային տվյալներ։ Արտաքին պատկերներն ու տառատեսակները չեն բեռնվում։",
   "quizCertificateSavePreview": "Պահպանեք ձևանմուշը՝ փոփոխությունները նախադիտելու համար։",
-  "copy": "Պատճենել"
+  "copy": "Պատճենել",
+  "quizCertificateNone": "Առանց վկայականի",
+  "quizCertificateUnavailable": "Ընտրված ձևանմուշը հասանելի չէ",
+  "quizCertificateChoose": "Ընտրել վկայական"
 }

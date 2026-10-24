@@ -1803,5 +1803,8 @@
   "quizCertificatePlaceholders": "שדות זמינים",
   "quizCertificatePreviewHelp": "התצוגה המקדימה משתמשת בנתונים לדוגמה. תמונות וגופנים חיצוניים אינם נטענים.",
   "quizCertificateSavePreview": "שמור את התבנית כדי לצפות בשינויים.",
-  "copy": "העתקה"
+  "copy": "העתקה",
+  "quizCertificateNone": "ללא תעודה",
+  "quizCertificateUnavailable": "התבנית שנבחרה אינה זמינה",
+  "quizCertificateChoose": "בחירת תעודה"
 }

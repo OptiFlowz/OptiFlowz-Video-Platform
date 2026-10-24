@@ -5,7 +5,6 @@ export type CreateQuizPayload = {
   title: string;
   description: string;
   is_active: boolean;
-  has_certificate: boolean;
   time_limit_seconds: number;
   question_count: number;
   max_attempts: number | null;
@@ -101,7 +100,7 @@ export type QuizData = {
   title: string;
   description: string;
   is_active: boolean;
-  has_certificate?: boolean;
+  certificate_template_id?: string | null;
   time_limit_seconds: number;
   question_count: number;
   max_attempts: number | null;

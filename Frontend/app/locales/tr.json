@@ -1778,5 +1778,8 @@
   "quizCertificatePlaceholders": "Kullanılabilir alanlar",
   "quizCertificatePreviewHelp": "Önizlemede örnek veriler kullanılır. Harici resimler ve yazı tipleri yüklenmez.",
   "quizCertificateSavePreview": "Değişiklikleri önizlemek için şablonu kaydedin.",
-  "copy": "Kopyala"
+  "copy": "Kopyala",
+  "quizCertificateNone": "Sertifika yok",
+  "quizCertificateUnavailable": "Seçilen şablon kullanılamıyor",
+  "quizCertificateChoose": "Sertifika seç"
 }

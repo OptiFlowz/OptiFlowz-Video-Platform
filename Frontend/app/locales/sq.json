@@ -1883,5 +1883,8 @@
   "quizCertificatePlaceholders": "Fushat e disponueshme",
   "quizCertificatePreviewHelp": "Pamja paraprake përdor të dhëna shembull. Imazhet dhe fontet e jashtme nuk ngarkohen.",
   "quizCertificateSavePreview": "Ruajeni shabllonin për të parë ndryshimet.",
-  "copy": "Kopjo"
+  "copy": "Kopjo",
+  "quizCertificateNone": "Pa certifikatë",
+  "quizCertificateUnavailable": "Shablloni i zgjedhur nuk është i disponueshëm",
+  "quizCertificateChoose": "Zgjidh certifikatën"
 }

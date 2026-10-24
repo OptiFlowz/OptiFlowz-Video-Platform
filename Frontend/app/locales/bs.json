@@ -1815,5 +1815,8 @@
   "quizCertificatePlaceholders": "Dostupna polja",
   "quizCertificatePreviewHelp": "Pregled koristi primjere podataka. Vanjske slike i fontovi se ne učitavaju.",
   "quizCertificateSavePreview": "Sačuvajte predložak da pregledate izmjene.",
-  "copy": "Kopiraj"
+  "copy": "Kopiraj",
+  "quizCertificateNone": "Bez certifikata",
+  "quizCertificateUnavailable": "Odabrani predložak nije dostupan",
+  "quizCertificateChoose": "Odaberi certifikat"
 }

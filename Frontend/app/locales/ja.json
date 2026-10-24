@@ -1803,5 +1803,8 @@
   "quizCertificatePlaceholders": "使用可能なフィールド",
   "quizCertificatePreviewHelp": "プレビューにはサンプルデータを使用します。外部の画像やフォントは読み込まれません。",
   "quizCertificateSavePreview": "変更をプレビューするにはテンプレートを保存してください。",
-  "copy": "コピー"
+  "copy": "コピー",
+  "quizCertificateNone": "証明書なし",
+  "quizCertificateUnavailable": "選択したテンプレートは利用できません",
+  "quizCertificateChoose": "証明書を選択"
 }

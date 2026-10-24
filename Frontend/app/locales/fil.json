@@ -1803,5 +1803,8 @@
   "quizCertificatePlaceholders": "Mga available na field",
   "quizCertificatePreviewHelp": "Sample na datos ang gamit sa preview. Hindi nilo-load ang mga panlabas na larawan at font.",
   "quizCertificateSavePreview": "I-save ang template para makita ang mga pagbabago sa preview.",
-  "copy": "Kopyahin"
+  "copy": "Kopyahin",
+  "quizCertificateNone": "Walang sertipiko",
+  "quizCertificateUnavailable": "Hindi available ang napiling template",
+  "quizCertificateChoose": "Pumili ng sertipiko"
 }

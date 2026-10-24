@@ -1793,5 +1793,8 @@
   "quizCertificatePlaceholders": "Campos disponibles",
   "quizCertificatePreviewHelp": "La vista previa utiliza datos de ejemplo. No se cargan imágenes ni fuentes externas.",
   "quizCertificateSavePreview": "Guarda la plantilla para previsualizar los cambios.",
-  "copy": "Copiar"
+  "copy": "Copiar",
+  "quizCertificateNone": "Sin certificado",
+  "quizCertificateUnavailable": "Plantilla seleccionada no disponible",
+  "quizCertificateChoose": "Elegir certificado"
 }

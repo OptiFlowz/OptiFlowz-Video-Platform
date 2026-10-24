@@ -1803,5 +1803,8 @@
   "quizCertificatePlaceholders": "Pieejamie lauki",
   "quizCertificatePreviewHelp": "Priekšskatījumā izmantoti parauga dati. Ārējie attēli un fonti netiek ielādēti.",
   "quizCertificateSavePreview": "Saglabājiet veidni, lai priekšskatītu izmaiņas.",
-  "copy": "Kopēt"
+  "copy": "Kopēt",
+  "quizCertificateNone": "Bez sertifikāta",
+  "quizCertificateUnavailable": "Atlasītā veidne nav pieejama",
+  "quizCertificateChoose": "Izvēlēties sertifikātu"
 }

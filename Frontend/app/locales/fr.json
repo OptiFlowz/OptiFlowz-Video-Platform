@@ -1778,5 +1778,8 @@
   "quizCertificatePlaceholders": "Champs disponibles",
   "quizCertificatePreviewHelp": "L'aperçu utilise des données d'exemple. Les images et polices externes ne sont pas chargées.",
   "quizCertificateSavePreview": "Enregistrez le modèle pour prévisualiser vos modifications.",
-  "copy": "Copier"
+  "copy": "Copier",
+  "quizCertificateNone": "Aucun certificat",
+  "quizCertificateUnavailable": "Modèle sélectionné indisponible",
+  "quizCertificateChoose": "Choisir un certificat"
 }

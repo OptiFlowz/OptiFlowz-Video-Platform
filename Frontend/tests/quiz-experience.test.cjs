@@ -52,7 +52,7 @@ async function mount(t, { attempts = [], maxAttempts = 0, eligible = true } = {}
     'react-router': { useLocation: () => ({ pathname: '/quiz/quiz-1', search: '' }), useNavigate: () => () => {}, useParams: () => ({ quizId: 'quiz-1' }), Link: ({ to, children, ...props }) => React.createElement('a', { ...props, href: to }, children) },
     '~/API': { fetchFn: async ({ route, options }) => {
       requests.push({ route, ...options });
-      if (route.endsWith('/details')) return { quiz: { id: 'quiz-1', title: 'Surgical knowledge', description: '', has_certificate: false, question_count: 3, time_limit_seconds: 0, max_attempts: maxAttempts, passing_score_percentage: '50.00' } };
+      if (route.endsWith('/details')) return { quiz: { id: 'quiz-1', title: 'Surgical knowledge', description: '', certificate_template_id: null, question_count: 3, time_limit_seconds: 0, max_attempts: maxAttempts, passing_score_percentage: '50.00' } };
       if (route.endsWith('/attempts')) return { attempts };
       if (route.endsWith('/requirements')) return { success: true, hasMetRequirements: eligible };
       if (route.endsWith('/requirements/videos')) return { requirements: [] };

@@ -1883,5 +1883,8 @@
   "quizCertificatePlaceholders": "Налични полета",
   "quizCertificatePreviewHelp": "Прегледът използва примерни данни. Външни изображения и шрифтове не се зареждат.",
   "quizCertificateSavePreview": "Запазете шаблона, за да прегледате промените.",
-  "copy": "Копиране"
+  "copy": "Копиране",
+  "quizCertificateNone": "Без сертификат",
+  "quizCertificateUnavailable": "Избраният шаблон не е наличен",
+  "quizCertificateChoose": "Избор на сертификат"
 }

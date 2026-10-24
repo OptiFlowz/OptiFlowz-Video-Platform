@@ -1883,5 +1883,8 @@
   "quizCertificatePlaceholders": "Доступные поля",
   "quizCertificatePreviewHelp": "В предпросмотре используются демонстрационные данные. Внешние изображения и шрифты не загружаются.",
   "quizCertificateSavePreview": "Сохраните шаблон для просмотра изменений.",
-  "copy": "Копировать"
+  "copy": "Копировать",
+  "quizCertificateNone": "Без сертификата",
+  "quizCertificateUnavailable": "Выбранный шаблон недоступен",
+  "quizCertificateChoose": "Выбрать сертификат"
 }

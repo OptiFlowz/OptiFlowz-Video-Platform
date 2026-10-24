@@ -1803,5 +1803,8 @@
   "quizCertificatePlaceholders": "ช่องข้อมูลที่ใช้ได้",
   "quizCertificatePreviewHelp": "ตัวอย่างใช้ข้อมูลสมมติ ระบบจะไม่โหลดรูปภาพและแบบอักษรภายนอก",
   "quizCertificateSavePreview": "บันทึกเทมเพลตเพื่อดูตัวอย่างการเปลี่ยนแปลง",
-  "copy": "คัดลอก"
+  "copy": "คัดลอก",
+  "quizCertificateNone": "ไม่มีใบรับรอง",
+  "quizCertificateUnavailable": "เทมเพลตที่เลือกไม่พร้อมใช้งาน",
+  "quizCertificateChoose": "เลือกใบรับรอง"
 }

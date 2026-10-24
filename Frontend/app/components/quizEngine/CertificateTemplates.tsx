@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useI18n } from '~/i18n';
 import { getToken } from '~/functions';
@@ -14,6 +14,7 @@ import CodeEditor from '../cssColorEditor/CssColorEditor';
 import { certificateHtmlDocument, certificatePaper } from './certificatePreview';
 import { certificateQrImages } from './certificateQrStyles';
 import QrStyler from './QrStyler';
+import CertificatePreviewLoading from './CertificatePreviewLoading';
 
 type Props = { id: string | null; onEdit: (id?: string) => void; onSaved: (id: string) => void; onDirty: (dirty: boolean) => void; onBusy: (busy: boolean) => void };
 const placeholders = ['user.full_name', 'quiz.title', 'result.score_percentage', 'result.earned_points', 'result.max_points', 'certificate.number', 'certificate.issued_at', 'certificate.qr_code_data_uri']
@@ -44,15 +45,8 @@ export default function CertificateTemplates(props: Props) {
     <Notice {...action} />
     <LoadState query={templates} />
     {templates.isSuccess && <div className={styles.certificateGallery}>
-      {rows.slice((page - 1) * limit, page * limit).map(template => <article className={styles.certificateCard} key={template.id}>
-        <button type="button" className={styles.certificateCardOpen} aria-label={`${t('adminEdit')}: ${template.name}`} disabled={action.busy} onClick={() => props.onEdit(template.id)}><span className="sr-only">{t('adminEdit')}</span></button>
-        <div className={styles.certificateThumbnail} aria-hidden="true" inert><CertificateHtmlPreview template={template} thumbnail /></div>
-        <div className={styles.certificateCardBody}>
-          <div className={styles.certificateCardTop}><h2>{template.name}</h2>{template.is_system && <span className={styles.badge}>{t(template.is_default ? 'quizCertificateDefault' : 'quizCertificateSystem')}</span>}</div>
-          {template.description && <p>{template.description}</p>}
-          <div className={styles.certificateCardBottom}><span>{template.page_format} · {t(template.orientation === 'portrait' ? 'quizCertificatePortrait' : 'quizCertificateLandscape')}</span>{!template.is_system && <span className="managementRowActions"><button type="button" className={`danger ${styles.certificateCardDelete}`} aria-label={`${t('adminDelete')}: ${template.name}`} title={t('adminDelete')} disabled={action.busy} onClick={() => remove(template)}>{DeleteSVG}</button></span>}</div>
-        </div>
-      </article>)}
+      {rows.slice((page - 1) * limit, page * limit).map(template => <CertificateTemplateCard key={template.id} template={template}
+        disabled={action.busy} onOpen={() => props.onEdit(template.id)} onDelete={!template.is_system ? () => remove(template) : undefined} />)}
       {!rows.length && <p className={styles.panel}>{t(search ? 'adminZeroResults' : 'quizCertificateEmpty')}</p>}
     </div>}
     <Pagination page={page} limit={limit} total={rows.length} totalPages={totalPages} loading={templates.isFetching} disabled={action.busy} label={t('quizCertificateLibrary')} onPageChange={setPage} onLimitChange={value => { setLimit(value); setPage(1); }} />
@@ -138,6 +132,26 @@ export function TemplateForm({ id, initial, onEdit, onSaved, onDirty, onBusy }: 
   </div>;
 }
 
+export function CertificateTemplateCard({ template, disabled = false, onOpen, onDelete, selected }: {
+  template: CertificateTemplate; disabled?: boolean; onOpen: () => void; onDelete?: () => void; selected?: boolean;
+}) {
+  const { t } = useI18n();
+  const choosing = selected !== undefined;
+  return <article className={`${styles.certificateCard} ${choosing ? styles.certificateChoice : ''}`} data-selected={selected}>
+    <button type="button" className={styles.certificateCardOpen} aria-label={`${t(choosing ? 'quizCertificateChoose' : 'adminEdit')}: ${template.name}`}
+      aria-pressed={selected} disabled={disabled} onClick={onOpen}><span className="sr-only">{t(choosing ? 'quizCertificateChoose' : 'adminEdit')}</span></button>
+    <div className={styles.certificateThumbnail} aria-hidden="true" inert><CertificateHtmlPreview template={template} thumbnail /></div>
+    <div className={styles.certificateCardBody}>
+      <div className={styles.certificateCardTop}><h2>{template.name}</h2>{template.is_system && <span className={styles.badge}>{t(template.is_default ? 'quizCertificateDefault' : 'quizCertificateSystem')}</span>}</div>
+      {template.description && <p>{template.description}</p>}
+      <div className={styles.certificateCardBottom}><span>{template.page_format} · {t(template.orientation === 'portrait' ? 'quizCertificatePortrait' : 'quizCertificateLandscape')}</span>
+        {choosing && <span className={styles.certificateChoiceCheck} aria-hidden="true">{selected && CheckSVG}</span>}
+        {onDelete && <span className="managementRowActions"><button type="button" className={`danger ${styles.certificateCardDelete}`} aria-label={`${t('adminDelete')}: ${template.name}`} title={t('adminDelete')} disabled={disabled} onClick={onDelete}>{DeleteSVG}</button></span>}
+      </div>
+    </div>
+  </article>;
+}
+
 export function CertificatePreview({ id, revision, dirty, template, savedTemplate }: { id: string; revision: number; dirty: boolean; template: CertificateTemplateInput; savedTemplate: CertificateTemplateInput }) {
   const { t } = useI18n();
   const [mode, setMode] = useState<'html' | 'pdf'>('html'), [pdfRequested, setPdfRequested] = useState(false);
@@ -158,38 +172,42 @@ export function CertificatePreview({ id, revision, dirty, template, savedTemplat
   </aside>;
 }
 
-function CertificateHtmlPreview({ template, thumbnail = false }: { template: CertificateTemplateInput; thumbnail?: boolean }) {
+export function CertificateHtmlPreview({ template, thumbnail = false }: { template: CertificateTemplateInput; thumbnail?: boolean }) {
   const { t } = useI18n();
   const container = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
-  const [qrState, setQrState] = useState<{ html: string; images: Record<string, string>; error: string }>({ html: '', images: {}, error: '' });
+  // Commit the complete document once, with its QR images already resolved. Keep
+  // the previous document visible while an edited version is being prepared.
+  const [rendered, setRendered] = useState<{ template: CertificateTemplateInput; images: Record<string, string>; error: string } | null>(() =>
+    template.html_template.includes('certificate.qr_code_data_uri') ? null : { template, images: {}, error: '' });
+  const prepared = useRef(false);
   useEffect(() => {
     let cancelled = false;
     const timer = window.setTimeout(() => {
       void certificateQrImages(template.html_template).then(images => {
-        if (!cancelled) setQrState({ html: template.html_template, images, error: '' });
+        if (!cancelled) { prepared.current = true; setRendered({ template, images, error: '' }); }
       }).catch(error => {
-        if (!cancelled) setQrState({ html: template.html_template, images: {}, error: error instanceof Error ? error.message : String(error) });
+        if (!cancelled) { prepared.current = true; setRendered({ template, images: {}, error: error instanceof Error ? error.message : String(error) }); }
       });
-    }, 180);
+    }, prepared.current ? 180 : 0);
     return () => { cancelled = true; window.clearTimeout(timer); };
-  }, [template.html_template]);
-  const paper = certificatePaper(template);
-  const document = useMemo(() => certificateHtmlDocument(template, qrState.html === template.html_template ? qrState.images : {}), [template.html_template, template.css_template, template.page_format, template.orientation, qrState]);
-  useEffect(() => {
+  }, [template.html_template, template.css_template, template.page_format, template.orientation]);
+  const paper = certificatePaper(rendered?.template ?? template);
+  const document = useMemo(() => rendered ? certificateHtmlDocument(rendered.template, rendered.images) : '', [rendered]);
+  useLayoutEffect(() => {
     const element = container.current; if (!element) return;
     const update = () => setWidth(element.clientWidth);
     update(); const observer = new ResizeObserver(update); observer.observe(element);
     return () => observer.disconnect();
   }, []);
-  return <>{!thumbnail && qrState.html === template.html_template && <Notice error={qrState.error} />}<div ref={container} className={styles.certificatePaper} style={{ aspectRatio: `${paper.width} / ${paper.height}`, ...(thumbnail ? { width: `${Math.max(1, paper.width / paper.height) * 100}%` } : {}) }}>
-    <iframe loading={thumbnail ? "lazy" : "eager"} tabIndex={thumbnail ? -1 : undefined} title={`HTML ${t('postPreview')}`} sandbox="" referrerPolicy="no-referrer" srcDoc={document} style={{ width: paper.width, height: paper.height, transform: `scale(${width / paper.width})` }} />
+  return <>{!thumbnail && rendered && <Notice error={rendered.error} />}<div ref={container} className={styles.certificatePaper} style={{ aspectRatio: `${paper.width} / ${paper.height}`, ...(thumbnail ? { width: `${Math.max(1, paper.width / paper.height) * 100}%` } : {}) }}>
+    {document && <iframe loading={thumbnail ? "lazy" : "eager"} tabIndex={thumbnail ? -1 : undefined} title={`HTML ${t('postPreview')}`} sandbox="" referrerPolicy="no-referrer" srcDoc={document} style={{ width: paper.width, height: paper.height, transform: `scale(${width / paper.width})` }} />}
   </div></>;
 }
 
 function CertificatePdfPreview({ id, revision, template }: { id: string; revision: number; template: CertificateTemplateInput }) {
   const { t } = useI18n();
-  const [url, setUrl] = useState(''), [error, setError] = useState(''), [loading, setLoading] = useState(false), [retry, setRetry] = useState(0);
+  const [url, setUrl] = useState(''), [error, setError] = useState(''), [loading, setLoading] = useState(id !== 'new'), [retry, setRetry] = useState(0);
   useEffect(() => {
     setUrl(''); setError('');
     if (id === 'new') { setLoading(false); return; }
@@ -206,7 +224,7 @@ function CertificatePdfPreview({ id, revision, template }: { id: string; revisio
   }, [id, revision, retry]);
   const paper = certificatePaper(template);
   return <>
-    {loading && <p role="status">{t('quizLoadingQuiz')}</p>}
+    {loading && <CertificatePreviewLoading width={paper.width} height={paper.height} label={`PDF ${t('postPreview')}`} />}
     {error && <div role="alert"><p className={styles.error}>{error}</p><button type="button" className={styles.button} onClick={() => setRetry(value => value + 1)}>{t('usersRetry')}</button></div>}
     {url && <><iframe className={styles.certificatePdf} style={{ aspectRatio: `${paper.width} / ${paper.height}` }} title={`PDF ${t('postPreview')}`} src={`${url}#toolbar=0&navpanes=0&view=Fit`} /><a className={styles.button} href={url} target="_blank" rel="noopener noreferrer">{t('adminOpen')}</a></>}
   </>;

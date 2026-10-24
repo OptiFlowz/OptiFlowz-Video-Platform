@@ -1803,5 +1803,8 @@
   "quizCertificatePlaceholders": "Medan tersedia",
   "quizCertificatePreviewHelp": "Pratonton menggunakan data contoh. Imej dan fon luaran tidak dimuatkan.",
   "quizCertificateSavePreview": "Simpan templat untuk pratonton perubahan.",
-  "copy": "Salin"
+  "copy": "Salin",
+  "quizCertificateNone": "Tiada sijil",
+  "quizCertificateUnavailable": "Templat yang dipilih tidak tersedia",
+  "quizCertificateChoose": "Pilih sijil"
 }

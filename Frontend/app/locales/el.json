@@ -1778,5 +1778,8 @@
   "quizCertificatePlaceholders": "Διαθέσιμα πεδία",
   "quizCertificatePreviewHelp": "Η προεπισκόπηση χρησιμοποιεί ενδεικτικά δεδομένα. Δεν φορτώνονται εξωτερικές εικόνες και γραμματοσειρές.",
   "quizCertificateSavePreview": "Αποθηκεύστε το πρότυπο για προεπισκόπηση των αλλαγών.",
-  "copy": "Αντιγραφή"
+  "copy": "Αντιγραφή",
+  "quizCertificateNone": "Χωρίς πιστοποιητικό",
+  "quizCertificateUnavailable": "Το επιλεγμένο πρότυπο δεν είναι διαθέσιμο",
+  "quizCertificateChoose": "Επιλογή πιστοποιητικού"
 }

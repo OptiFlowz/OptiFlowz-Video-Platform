@@ -32,7 +32,7 @@ async function mount(t, { resume = false, eligible = true, expired = false, hidd
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
   const fetchFn = async ({ route, options }) => {
     requests.push({ route, method: options.method, body: options.body && JSON.parse(options.body) });
-    if (route === 'api/quizzes/quiz-1') return { quiz: { title: 'Knowledge quiz', questions_per_page: quizPerPage, question_count: 3, time_limit_seconds: 900, passing_score_percentage: 50, has_certificate: true } };
+    if (route === 'api/quizzes/quiz-1') return { quiz: { title: 'Knowledge quiz', questions_per_page: quizPerPage, question_count: 3, time_limit_seconds: 900, passing_score_percentage: 50, certificate_template_id: 'classic' } };
     if (route.endsWith('/eligibility')) return { can_start: !started && eligible, can_resume: started && !submitted, active_attempt_id: started && !submitted ? 'a1' : null, attempts_remaining: resume ? 0 : 1, reason: eligible ? null : 'requirements_not_met' };
     if (route.endsWith('/progress')) return { requirements_met: eligible, requirements };
     if (route.endsWith('/attempts') && options.method === 'POST') { started = true; return { id: 'a1', settings: { correctness_visibility: visibility, allow_attempt_review: review, questions_per_page: perPage } }; }

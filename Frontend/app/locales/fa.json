@@ -1803,5 +1803,8 @@
   "quizCertificatePlaceholders": "فیلدهای موجود",
   "quizCertificatePreviewHelp": "پیش‌نمایش از داده‌های نمونه استفاده می‌کند. تصاویر و قلم‌های خارجی بارگیری نمی‌شوند.",
   "quizCertificateSavePreview": "برای پیش‌نمایش تغییرات، قالب را ذخیره کنید.",
-  "copy": "کپی"
+  "copy": "کپی",
+  "quizCertificateNone": "بدون گواهی",
+  "quizCertificateUnavailable": "قالب انتخاب‌شده در دسترس نیست",
+  "quizCertificateChoose": "انتخاب گواهی"
 }

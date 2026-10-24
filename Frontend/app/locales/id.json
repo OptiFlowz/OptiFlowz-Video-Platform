@@ -1803,5 +1803,8 @@
   "quizCertificatePlaceholders": "Kolom tersedia",
   "quizCertificatePreviewHelp": "Pratinjau menggunakan data contoh. Gambar dan font eksternal tidak dimuat.",
   "quizCertificateSavePreview": "Simpan templat untuk melihat perubahan.",
-  "copy": "Salin"
+  "copy": "Salin",
+  "quizCertificateNone": "Tanpa sertifikat",
+  "quizCertificateUnavailable": "Templat yang dipilih tidak tersedia",
+  "quizCertificateChoose": "Pilih sertifikat"
 }

@@ -1883,5 +1883,8 @@
   "quizCertificatePlaceholders": "Dostupná pole",
   "quizCertificatePreviewHelp": "Náhled používá ukázková data. Externí obrázky a písma se nenačítají.",
   "quizCertificateSavePreview": "Uložte šablonu pro zobrazení změn v náhledu.",
-  "copy": "Kopírovat"
+  "copy": "Kopírovat",
+  "quizCertificateNone": "Bez certifikátu",
+  "quizCertificateUnavailable": "Vybraná šablona není dostupná",
+  "quizCertificateChoose": "Vybrat certifikát"
 }

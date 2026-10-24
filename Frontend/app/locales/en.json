@@ -1811,5 +1811,8 @@
   "quizCertificatePlaceholders": "Available fields",
   "quizCertificatePreviewHelp": "The preview uses sample data. External images and fonts are not loaded.",
   "quizCertificateSavePreview": "Save the template to preview your changes.",
-  "copy": "Copy"
+  "copy": "Copy",
+  "quizCertificateNone": "No certificate",
+  "quizCertificateUnavailable": "Selected template unavailable",
+  "quizCertificateChoose": "Choose certificate"
 }

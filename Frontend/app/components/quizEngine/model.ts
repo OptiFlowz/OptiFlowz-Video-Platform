@@ -16,16 +16,16 @@ export type QuizSettings = {
   title: string; description: string | null; status: 'draft' | 'published' | 'archived';
   questions_per_page: number; time_limit_seconds: number | null; max_attempts: number | null;
   passing_score_percentage: number; min_answered_percentage: number; min_correct_percentage: number;
-  shuffle_questions: boolean; shuffle_options: boolean; has_certificate: boolean;
+  shuffle_questions: boolean; shuffle_options: boolean;
   correctness_visibility: Feedback; correct_answers_visibility: Feedback; explanation_visibility: Feedback;
   explanation_incorrect_only: boolean; allow_answer_changes_after_check: boolean;
   allow_attempt_review: boolean; show_final_score: boolean; scoring_mode: 'exact_match' | 'partial_credit';
 };
-export type Quiz = Owned & QuizSettings & { question_count: number };
+export type Quiz = Owned & QuizSettings & { question_count: number; certificate_template_id: string | null };
 export const defaultSettings: QuizSettings = {
   title: '', description: null, status: 'draft', questions_per_page: 1, time_limit_seconds: null, max_attempts: null,
   passing_score_percentage: 50, min_answered_percentage: 0, min_correct_percentage: 0,
-  shuffle_questions: true, shuffle_options: true, has_certificate: false,
+  shuffle_questions: true, shuffle_options: true,
   correctness_visibility: 'after_finish', correct_answers_visibility: 'after_finish', explanation_visibility: 'after_finish',
   explanation_incorrect_only: false, allow_answer_changes_after_check: true, allow_attempt_review: true,
   show_final_score: true, scoring_mode: 'exact_match',

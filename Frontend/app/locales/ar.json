@@ -1778,5 +1778,8 @@
   "quizCertificatePlaceholders": "الحقول المتاحة",
   "quizCertificatePreviewHelp": "تستخدم المعاينة بيانات تجريبية. لا تُحمّل الصور والخطوط الخارجية.",
   "quizCertificateSavePreview": "احفظ القالب لمعاينة التغييرات.",
-  "copy": "نسخ"
+  "copy": "نسخ",
+  "quizCertificateNone": "بدون شهادة",
+  "quizCertificateUnavailable": "القالب المحدد غير متاح",
+  "quizCertificateChoose": "اختيار شهادة"
 }

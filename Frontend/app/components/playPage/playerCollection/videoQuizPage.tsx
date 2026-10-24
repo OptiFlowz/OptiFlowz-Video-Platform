@@ -107,7 +107,7 @@ type VideoQuizSummary = {
   title: string;
   description: string;
   is_active: boolean;
-  has_certificate?: boolean;
+  certificate_template_id?: string | null;
   time_limit_seconds: number;
   question_count: number;
   max_attempts: number;
@@ -964,7 +964,7 @@ function VideoQuizPage() {
   const displayedQuestionCount = stage === "intro" ? summaryQuestionCount : questions.length || summaryQuestionCount;
   const quizDisplayTitle = quizSummary?.title || t("quizDefaultTitle");
   const quizDescription = quizSummary?.description?.trim() ?? "";
-  const quizMetaKey = quizSummary?.has_certificate ? "quizCertificateMeta" : "quizPlainMeta";
+  const quizMetaKey = quizSummary?.certificate_template_id ? "quizCertificateMeta" : "quizPlainMeta";
   const attemptsLeft = Math.max(0, quizMaxAttempts - attempts.length);
   const hasMetQuizRequirements = requirementsStatus?.hasMetRequirements === true;
   const isRequirementsBlocking = requirementsStatus?.hasMetRequirements === false;
@@ -1792,7 +1792,7 @@ function VideoQuizPage() {
                   <div><dt>{t("quizPassingScoreLabel")}</dt><dd>{quizSummary ? `${Number(quizSummary.passing_score_percentage)}%` : "—"}</dd></div>
                   <div><dt>{t("quizAttemptsLabel")}</dt><dd>{quizMaxAttempts > 0 ? t("quizAttemptsLeft", { count: attemptsLeft }) : t("quizUnlimitedLabel")}</dd></div>
                 </dl>
-                {quizSummary?.has_certificate ? <div className="videoQuizCertificateNote"><span aria-hidden="true">{CheckSVG}</span>{t("quizCertificateHint")}</div> : null}
+                {quizSummary?.certificate_template_id ? <div className="videoQuizCertificateNote"><span aria-hidden="true">{CheckSVG}</span>{t("quizCertificateHint")}</div> : null}
                 <div className="videoQuizFooterActions videoQuizStartActions">
                   <button
                     type="button"
@@ -1964,7 +1964,7 @@ function VideoQuizPage() {
                       <p>{t("quizHistoryHint")}</p>
                     </span>
 
-                    {can(P.quizzesCertificates) && quizSummary?.has_certificate && attempts.some((attempt) => attempt.passed) &&
+                    {can(P.quizzesCertificates) && quizSummary?.certificate_template_id && attempts.some((attempt) => attempt.passed) &&
                       <Link to="/account" className="viewQuizCertificate">{t("quizViewCertificates")}</Link>
                     }
                   </div>
@@ -2307,7 +2307,7 @@ function VideoQuizPage() {
                 <button type="button" className="videoQuizGhostButton" onClick={handleExit}>
                   {t("quizCloseQuiz")}
                 </button>
-                {latestResult.passed === true && quizSummary?.has_certificate && can(P.quizzesCertificates) ? (
+                {latestResult.passed === true && quizSummary?.certificate_template_id && can(P.quizzesCertificates) ? (
                   <Link to="/account" className="videoQuizPrimaryButton">
                     {t("quizViewCertificate")}
                   </Link>

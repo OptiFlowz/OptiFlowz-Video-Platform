@@ -1803,5 +1803,8 @@
   "quizCertificatePlaceholders": "ხელმისაწვდომი ველები",
   "quizCertificatePreviewHelp": "წინასწარი ნახვა იყენებს სანიმუშო მონაცემებს. გარე სურათები და შრიფტები არ იტვირთება.",
   "quizCertificateSavePreview": "ცვლილებების სანახავად შეინახეთ შაბლონი.",
-  "copy": "კოპირება"
+  "copy": "კოპირება",
+  "quizCertificateNone": "სერტიფიკატის გარეშე",
+  "quizCertificateUnavailable": "არჩეული შაბლონი მიუწვდომელია",
+  "quizCertificateChoose": "სერტიფიკატის არჩევა"
 }

@@ -1778,5 +1778,8 @@
   "quizCertificatePlaceholders": "Verfügbare Felder",
   "quizCertificatePreviewHelp": "Die Vorschau verwendet Beispieldaten. Externe Bilder und Schriftarten werden nicht geladen.",
   "quizCertificateSavePreview": "Speichern Sie die Vorlage, um Ihre Änderungen anzusehen.",
-  "copy": "Kopieren"
+  "copy": "Kopieren",
+  "quizCertificateNone": "Kein Zertifikat",
+  "quizCertificateUnavailable": "Ausgewählte Vorlage nicht verfügbar",
+  "quizCertificateChoose": "Zertifikat auswählen"
 }

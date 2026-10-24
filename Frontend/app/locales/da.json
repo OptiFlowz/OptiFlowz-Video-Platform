@@ -1803,5 +1803,8 @@
   "quizCertificatePlaceholders": "Tilgængelige felter",
   "quizCertificatePreviewHelp": "Forhåndsvisningen bruger eksempeldata. Eksterne billeder og skrifttyper indlæses ikke.",
   "quizCertificateSavePreview": "Gem skabelonen for at se ændringerne.",
-  "copy": "Kopiér"
+  "copy": "Kopiér",
+  "quizCertificateNone": "Intet certifikat",
+  "quizCertificateUnavailable": "Den valgte skabelon er ikke tilgængelig",
+  "quizCertificateChoose": "Vælg certifikat"
 }

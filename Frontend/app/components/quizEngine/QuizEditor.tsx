@@ -103,7 +103,6 @@ function Settings({ initial, onSaved, onDirty, onClose }: { initial?: Quiz; onSa
       </div><div className="quizPopupToggleList">{toggle('explanation_incorrect_only', 'qeIncorrectOnly')}</div></div>
       <div className={`${styles.settingsGroup} quizPopupToggleList`}>
         {toggle('allow_answer_changes_after_check', 'qeAnswerChanges')}{toggle('allow_attempt_review', 'qeReview')}{toggle('show_final_score', 'qeFinalScore')}
-        {!initial && toggle('has_certificate', 'quizHasCertificate')}
       </div></section></fieldset></div>
 
     </div>

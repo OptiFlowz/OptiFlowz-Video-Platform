@@ -1778,5 +1778,8 @@
   "quizCertificatePlaceholders": "Campos disponíveis",
   "quizCertificatePreviewHelp": "A pré-visualização utiliza dados de exemplo. Imagens e tipos de letra externos não são carregados.",
   "quizCertificateSavePreview": "Guarde o modelo para pré-visualizar as alterações.",
-  "copy": "Copiar"
+  "copy": "Copiar",
+  "quizCertificateNone": "Sem certificado",
+  "quizCertificateUnavailable": "Modelo selecionado indisponível",
+  "quizCertificateChoose": "Escolher certificado"
 }

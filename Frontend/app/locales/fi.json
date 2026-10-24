@@ -1803,5 +1803,8 @@
   "quizCertificatePlaceholders": "Käytettävissä olevat kentät",
   "quizCertificatePreviewHelp": "Esikatselu käyttää esimerkkitietoja. Ulkoisia kuvia ja fontteja ei ladata.",
   "quizCertificateSavePreview": "Tallenna pohja esikatsellaksesi muutokset.",
-  "copy": "Kopioi"
+  "copy": "Kopioi",
+  "quizCertificateNone": "Ei todistusta",
+  "quizCertificateUnavailable": "Valittu malli ei ole saatavilla",
+  "quizCertificateChoose": "Valitse todistus"
 }

@@ -1803,5 +1803,8 @@
   "quizCertificatePlaceholders": "Galimi laukai",
   "quizCertificatePreviewHelp": "Peržiūroje naudojami pavyzdiniai duomenys. Išoriniai vaizdai ir šriftai neįkeliami.",
   "quizCertificateSavePreview": "Išsaugokite šabloną, kad peržiūrėtumėte pakeitimus.",
-  "copy": "Kopijuoti"
+  "copy": "Kopijuoti",
+  "quizCertificateNone": "Be sertifikato",
+  "quizCertificateUnavailable": "Pasirinktas šablonas nepasiekiamas",
+  "quizCertificateChoose": "Pasirinkti sertifikatą"
 }

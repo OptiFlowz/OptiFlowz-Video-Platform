@@ -1803,5 +1803,8 @@
   "quizCertificatePlaceholders": "Sehemu zinazopatikana",
   "quizCertificatePreviewHelp": "Hakiki hutumia data ya mfano. Picha na fonti za nje hazipakuliwi.",
   "quizCertificateSavePreview": "Hifadhi kiolezo ili kuhakiki mabadiliko.",
-  "copy": "Nakili"
+  "copy": "Nakili",
+  "quizCertificateNone": "Bila cheti",
+  "quizCertificateUnavailable": "Kiolezo kilichochaguliwa hakipatikani",
+  "quizCertificateChoose": "Chagua cheti"
 }

@@ -23,6 +23,7 @@ test('certificate library orders defaults, protects system designs, edits privat
     { id: 'minimal', name: 'Minimal', is_system: true, is_default: false, user_id: null },
   ].map(row => ({ ...row, description: null, html_template: '<div>{{user.full_name}}</div>', css_template: '.certificate { display: grid; }', page_format: 'Letter', orientation: 'landscape' })), reject = false, allow = true;
   let rejectPdf = false, pdfCount = 0;
+  const pendingQr = [];
   let waitForConfirmation = false, resolveConfirmation, actionRuns = 0;
   const revoked = [], originalCreate = URL.createObjectURL, originalRevoke = URL.revokeObjectURL;
   URL.createObjectURL = () => `blob:pdf-${++pdfCount}`; URL.revokeObjectURL = value => revoked.push(value);
@@ -30,6 +31,8 @@ test('certificate library orders defaults, protects system designs, edits privat
   const styles = new Proxy({}, { get: (_, key) => String(key) });
   const tick = () => act(() => new Promise(resolve => setTimeout(resolve, 20)));
   const mocks = {
+    './engine.module.css': { __esModule: true, default: styles },
+    './certificateQrStyles': { certificateQrImages: html => html.includes('certificate.qr_code_data_uri') ? new Promise(resolve => pendingQr.push(resolve)) : Promise.resolve({}) },
     './QrStyler': { __esModule: true, default: () => null },
     '../cssColorEditor/CssColorEditor': { __esModule: true, default: ({ label, value, onChange, disabled }) => React.createElement('textarea', { 'aria-label': label, value, disabled, onChange: event => onChange(event.target.value) }) },
     '~/i18n': { useI18n: () => ({ t: (key, values = {}) => String(messages[key] ?? key).replace(/\{\{param\.(\w+)\}\}/g, (_, name) => values[name] ?? '') }) },
@@ -44,7 +47,8 @@ test('certificate library orders defaults, protects system designs, edits privat
       assert.ok(route.startsWith('api/certificates/certificate-templates'));
       if (options.method === 'GET' && route.includes('?')) {
         const query = new URL(route, 'https://test.local').searchParams;
-        const filtered = Number(query.get('page')) === 1 ? rows.slice(0, 2) : rows.slice(2);
+        const accessible = rows.filter(row => row.is_system || row.user_id === 'me');
+        const filtered = Number(query.get('page')) === 1 ? accessible.slice(0, 2) : accessible.slice(2);
         return { templates: filtered, pagination: { page: Number(query.get('page')), limit: Number(query.get('limit')), total: filtered.length, totalPages: 2, hasNextPage: Number(query.get('page')) === 1 } };
       }
       const id = route.split('/').at(-1);
@@ -57,14 +61,14 @@ test('certificate library orders defaults, protects system designs, edits privat
       else rows = rows.map(row => row.id === id ? { ...row, ...body } : row);
       return { template: options.method === 'POST' ? rows.at(-1) : rows.find(row => row.id === id), success: true };
     } },
-    './api': { engineKey: ['quiz-engine'], request: async (route, method, body) => { requests.push({ route, method, body }); return {}; } },
+    './api': { engineKey: ['quiz-engine'], request: async (route, method, body) => { requests.push({ route, method, body }); if (reject) throw new Error('Certificate template not found or unavailable'); return { quiz: { id: 'quiz1', ...body } }; } },
     '~/components/library/pagination': { __esModule: true, default: ({ onPageChange, onLimitChange }) => React.createElement('div', null, React.createElement('button', { onClick: () => onPageChange(2) }, 'Page two'), React.createElement('button', { onClick: () => onLimitChange(10) }, 'Ten rows')) },
     '~/components/confirmPopup/useConfirm': { useConfirm: () => ({ confirm: async options => { confirmations.push(options); return waitForConfirmation ? new Promise(resolve => { resolveConfirmation = resolve; }) : allow; }, dialogProps: {} }) },
     '~/components/confirmPopup/confirmDialog': { ConfirmDialog: () => null },
     './EditorPopup': { __esModule: true, default: ({ open, title, children, onClose, onAfterClose }) => { React.useEffect(() => { if (!open) onAfterClose?.(); }, [open]); return open ? React.createElement('div', { role: 'dialog' }, title, React.createElement('button', { onClick: onClose }, 'Close popup'), children) : null; }, EditorActions: ({ children }) => React.createElement('div', null, children) },
     './shared': {
       styles, Field: ({ label, children }) => React.createElement('label', null, label, children),
-      Select: ({ label, value, values, onChange }) => React.createElement('select', { 'aria-label': label, value, onChange: e => onChange(e.target.value) }, values.map(option => React.createElement('option', { key: option.value, value: option.value }, option.label))),
+      Select: ({ label, value, values, onChange, disabled }) => React.createElement('select', { 'aria-label': label, value, disabled, onChange: e => onChange(e.target.value) }, values.map(option => React.createElement('option', { key: option.value, value: option.value, disabled: option.disabled }, option.label))),
       Notice: ({ error }) => error ? React.createElement('p', { role: 'alert' }, error) : null,
       LoadState: ({ query }) => query.isError ? React.createElement('p', { role: 'alert' }, query.error.message) : null,
       useAction: () => { const client = useQueryClient(); const [busy, setBusy] = React.useState(false), [error, setError] = React.useState(''); return { busy, error, run: async work => { actionRuns++; setBusy(true); setError(''); try { await work(); } catch (error) { setError(error.message); } finally { await client.invalidateQueries({ queryKey: ['quiz-engine'] }); setBusy(false); } } }; },
@@ -204,7 +208,85 @@ test('certificate library orders defaults, protects system designs, edits privat
   assert.equal(saved, '');
 
   const QuizView = load('app/components/quizEngine/QuizCertificate.tsx').default;
-  await act(async () => root.render(React.createElement(QueryClientProvider, { client }, React.createElement(QuizView, { quiz: { id: 'quiz1', has_certificate: false }, editable: true, onDirty }))));
-  await act(async () => document.querySelector('input[type=checkbox]').click()); await click('Save changes');
-  assert.deepEqual(requests.find(request => request.route === '/quiz1'), { route: '/quiz1', method: 'PATCH', body: { has_certificate: true } });
+  rows.push({ ...rows[0], id: 'own-template', name: 'My design', is_system: false, user_id: 'me' },
+    { ...rows[0], id: 'foreign-template', name: 'Other owner design', is_system: false, user_id: 'other' });
+  await client.invalidateQueries({ queryKey: ['quiz-engine'] });
+  const renderQuiz = async (templateId, editable = true, key = 'quiz1', owner = 'other') => {
+    await act(async () => root.render(React.createElement(QueryClientProvider, { client }, React.createElement(QuizView, {
+      key, quiz: { id: 'quiz1', user_id: owner, certificate_template_id: templateId }, editable, onDirty,
+    })))); await tick();
+  };
+  const choose = async name => {
+    await click('Choose certificate');
+    const button = document.querySelector(`[aria-label="Choose certificate: ${name}"]`);
+    assert.ok(button, `visible choice: ${name}`);
+    await act(async () => button.click()); await tick();
+  };
+  const saveButton = () => [...document.querySelectorAll('button')].find(b => b.textContent === 'Save changes');
+  const writes = () => requests.filter(r => r.route === '/quiz1');
+  await renderQuiz(null);
+  assert.match(document.querySelector('.quizCertificateInfo').textContent, /No certificate/);
+  assert.ok(saveButton().disabled);
+  assert.equal(document.querySelector('input[type=checkbox]'), null, 'legacy certificate switch is removed');
+  await click('Choose certificate');
+  assert.ok(document.querySelector('[aria-label="Choose certificate: My design"]'), 'own private templates remain selectable when editing another user’s quiz');
+  assert.equal(document.querySelector('[aria-label="Choose certificate: Other owner design"]'), null, 'cannot assign another user’s private design');
+  assert.ok(document.querySelectorAll('.certificateChoice .certificateThumbnail iframe').length >= 3, 'picker uses the same template cards with tilted previews');
+  await fill('Search templates', 'Modern');
+  assert.equal(document.querySelectorAll('.certificateChoice').length, 1);
+  await click('Close popup');
+  assert.equal(dirty.at(-1), false, 'browsing and cancelling does not change assignment');
+  await choose('Classic'); assert.equal(dirty.at(-1), true);
+  assert.ok(document.querySelector('.quizCertificatePaper iframe'), 'chosen template has a large HTML preview');
+  await click('Save changes');
+  assert.deepEqual(writes().at(-1), { route: '/quiz1', method: 'PATCH', body: { certificate_template_id: 'classic' } });
+  assert.equal(dirty.at(-1), false); assert.ok(saveButton().disabled);
+  await click('Remove'); await click('Save changes');
+  assert.deepEqual(writes().at(-1).body, { certificate_template_id: null }, 'clearing the selection explicitly sends null');
+  assert.equal(dirty.at(-1), false);
+  await choose('My design'); reject = true; await click('Save changes');
+  assert.match(document.querySelector('[role=alert]').textContent, /not found or unavailable/);
+  assert.equal(document.querySelector('.quizCertificateInfo h2').textContent, 'My design');
+  assert.equal(dirty.at(-1), true, 'failure keeps the selection unsaved');
+  reject = false; await click('Save changes');
+  assert.equal(dirty.at(-1), false);
+  assert.deepEqual(writes().at(-1).body, { certificate_template_id: 'own-template' }, 'moderator can assign their own private design to another owner’s quiz');
+  await renderQuiz('own-template', true, 'reopened');
+  assert.equal(document.querySelector('.quizCertificateInfo h2').textContent, 'My design', 'saved cross-owner assignment retains its preview');
+  assert.ok(saveButton().disabled);
+  await renderQuiz(null, true, 'own-quiz', 'me');
+  await choose('My design');
+  assert.equal(document.querySelector('.quizCertificateInfo h2').textContent, 'My design', 'own quiz assignment still works');
+  await renderQuiz('modern', false, 'readonly');
+  assert.equal(document.querySelector('.quizCertificateInfo h2').textContent, 'Modern');
+  assert.ok(document.querySelector('.quizCertificatePaper iframe'));
+  assert.equal(saveButton(), undefined);
+  assert.ok(![...document.querySelectorAll('button')].some(b => b.textContent === 'Choose certificate'));
+  await renderQuiz('deleted-template', true, 'missing');
+  assert.match(document.querySelector('.quizCertificateInfo h2').textContent, /unavailable/, 'unknown selection is not silently removed');
+  await click('Remove'); await click('Save changes');
+  assert.deepEqual(writes().at(-1).body, { certificate_template_id: null });
+  const HtmlPreview = load('app/components/quizEngine/CertificateTemplates.tsx').CertificateHtmlPreview;
+  const qrSource = '{{certificate.qr_code_data_uri.color_14243b}}';
+  const qrImage = 'data:image/png;base64,cXItcHJldmlldw==';
+  const qrTemplate = { ...rows[0], html_template: `<div>First preview<img src="${qrSource}" /></div>` };
+  const renderPreview = async template => {
+    await act(async () => root.render(React.createElement(HtmlPreview, { template })));
+    await tick();
+  };
+  await renderPreview(qrTemplate);
+  assert.equal(document.querySelector('iframe'), null, 'do not load a partial document before its QR is ready');
+  await act(async () => pendingQr.shift()({ [qrSource]: qrImage }));
+  const frame = document.querySelector('iframe'), originalDocument = frame.srcdoc;
+  assert.ok(originalDocument.includes(qrImage), 'first iframe document already contains the styled QR');
+  await renderPreview({ ...qrTemplate, html_template: qrTemplate.html_template.replace('First preview', 'Updated preview') });
+  assert.equal(document.querySelector('iframe'), frame, 'keep the existing preview mounted while preparing edits');
+  assert.equal(frame.srcdoc, originalDocument, 'no intermediate QR-less document is loaded');
+  await act(() => new Promise(resolve => setTimeout(resolve, 200)));
+  await act(async () => pendingQr.shift()({ [qrSource]: qrImage }));
+  assert.match(frame.srcdoc, /Updated preview/);
+  assert.ok(frame.srcdoc.includes(qrImage));
+  const model = load('app/components/quizEngine/model.ts');
+  assert.ok(!('has_certificate' in model.defaultSettings), 'new quizzes never send the removed field');
+  assert.ok(!('certificate_template_id' in model.settingsOf({ ...model.defaultSettings, certificate_template_id: 'classic' })), 'saving general settings cannot overwrite the separately assigned template');
 });

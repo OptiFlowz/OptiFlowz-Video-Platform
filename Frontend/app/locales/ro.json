@@ -1778,5 +1778,8 @@
   "quizCertificatePlaceholders": "Câmpuri disponibile",
   "quizCertificatePreviewHelp": "Previzualizarea folosește date de exemplu. Imaginile și fonturile externe nu sunt încărcate.",
   "quizCertificateSavePreview": "Salvați șablonul pentru a previzualiza modificările.",
-  "copy": "Copiază"
+  "copy": "Copiază",
+  "quizCertificateNone": "Fără certificat",
+  "quizCertificateUnavailable": "Șablonul selectat nu este disponibil",
+  "quizCertificateChoose": "Alege certificatul"
 }

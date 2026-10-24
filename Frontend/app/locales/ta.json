@@ -1803,5 +1803,8 @@
   "quizCertificatePlaceholders": "கிடைக்கும் புலங்கள்",
   "quizCertificatePreviewHelp": "முன்னோட்டம் மாதிரித் தரவைப் பயன்படுத்துகிறது. வெளிப்புறப் படங்களும் எழுத்துருக்களும் ஏற்றப்படாது.",
   "quizCertificateSavePreview": "மாற்றங்களை முன்னோட்டமிட வார்ப்புருவைச் சேமிக்கவும்.",
-  "copy": "நகலெடு"
+  "copy": "நகலெடு",
+  "quizCertificateNone": "சான்றிதழ் இல்லை",
+  "quizCertificateUnavailable": "தேர்ந்தெடுக்கப்பட்ட வார்ப்புரு கிடைக்கவில்லை",
+  "quizCertificateChoose": "சான்றிதழைத் தேர்ந்தெடுக்கவும்"
 }

@@ -1778,5 +1778,8 @@
   "quizCertificatePlaceholders": "Beschikbare velden",
   "quizCertificatePreviewHelp": "Het voorbeeld gebruikt testgegevens. Externe afbeeldingen en lettertypen worden niet geladen.",
   "quizCertificateSavePreview": "Sla het sjabloon op om de wijzigingen te bekijken.",
-  "copy": "Kopiëren"
+  "copy": "Kopiëren",
+  "quizCertificateNone": "Geen certificaat",
+  "quizCertificateUnavailable": "Geselecteerde sjabloon niet beschikbaar",
+  "quizCertificateChoose": "Certificaat kiezen"
 }

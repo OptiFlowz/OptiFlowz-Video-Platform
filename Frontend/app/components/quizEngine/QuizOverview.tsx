@@ -83,7 +83,7 @@ export default function QuizOverview() {
             <div><dt>{t('quizPassingScoreLabel')}</dt><dd>{quiz?.passing_score_percentage != null ? `${quiz.passing_score_percentage}%` : '—'}</dd></div>
             <div><dt>{t('quizAttemptsLabel')}</dt><dd>{!eligibility.data ? '—' : eligibility.data.attempts_remaining != null ? t('quizAttemptsLeft', { count: eligibility.data.attempts_remaining }) : eligibility.data.max_attempts === null ? t('quizUnlimitedLabel') : '—'}</dd></div>
           </dl>
-          {quiz?.has_certificate && <div className="videoQuizCertificateNote"><span aria-hidden="true">{CheckSVG}</span>{t('quizCertificateHint')}</div>}
+          {quiz?.certificate_template_id && <div className="videoQuizCertificateNote"><span aria-hidden="true">{CheckSVG}</span>{t('quizCertificateHint')}</div>}
           {eligibility.data?.reason === 'requirements_not_met' && <p className={styles.overviewStartHint}>{t('quizCompleteRequiredVideos')}</p>}
           {eligibility.data?.reason === 'max_attempts_reached' && <p className={styles.overviewStartHint}>{t('quizNoAttemptsLeft')}</p>}
           {startError && <p role="alert" className={styles.error}>{startError}</p>}
@@ -108,7 +108,7 @@ export default function QuizOverview() {
           </section>}
           <section className="videoQuizHistory" aria-labelledby="quiz-history-title">
             <div className="videoQuizSectionTitle"><span><h3 id="quiz-history-title">{t('quizYourLastAttempts')}</h3><p>{t('quizHistoryHint')}</p></span>
-              {can('quizzes.certificates') && quiz?.has_certificate && history.some(attempt => attempt.passed) && <Link to="/account" className="viewQuizCertificate">{t('quizViewCertificates')}</Link>}
+              {can('quizzes.certificates') && quiz?.certificate_template_id && history.some(attempt => attempt.passed) && <Link to="/account" className="viewQuizCertificate">{t('quizViewCertificates')}</Link>}
             </div>
             {!attempts.data && <LoadState query={attempts} />}
             {!!history.length && <div className="videoQuizAttemptList">{history.map(attempt => {

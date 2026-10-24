@@ -1803,5 +1803,8 @@
   "quizCertificatePlaceholders": "উপলব্ধ ক্ষেত্র",
   "quizCertificatePreviewHelp": "পূর্বরূপে নমুনা তথ্য ব্যবহৃত হয়। বাইরের ছবি ও ফন্ট লোড হয় না।",
   "quizCertificateSavePreview": "পরিবর্তনের পূর্বরূপ দেখতে টেমপ্লেট সংরক্ষণ করুন।",
-  "copy": "কপি করুন"
+  "copy": "কপি করুন",
+  "quizCertificateNone": "কোনো সনদ নেই",
+  "quizCertificateUnavailable": "নির্বাচিত টেমপ্লেট উপলভ্য নয়",
+  "quizCertificateChoose": "সনদ বেছে নিন"
 }

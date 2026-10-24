@@ -1803,5 +1803,8 @@
   "quizCertificatePlaceholders": "Tillgängliga fält",
   "quizCertificatePreviewHelp": "Förhandsgranskningen använder exempeldata. Externa bilder och teckensnitt läses inte in.",
   "quizCertificateSavePreview": "Spara mallen för att förhandsgranska ändringarna.",
-  "copy": "Kopiera"
+  "copy": "Kopiera",
+  "quizCertificateNone": "Inget certifikat",
+  "quizCertificateUnavailable": "Den valda mallen är inte tillgänglig",
+  "quizCertificateChoose": "Välj certifikat"
 }

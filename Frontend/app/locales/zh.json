@@ -1803,5 +1803,8 @@
   "quizCertificatePlaceholders": "可用字段",
   "quizCertificatePreviewHelp": "预览使用示例数据，不会加载外部图片和字体。",
   "quizCertificateSavePreview": "保存模板以预览更改。",
-  "copy": "复制"
+  "copy": "复制",
+  "quizCertificateNone": "无证书",
+  "quizCertificateUnavailable": "所选模板不可用",
+  "quizCertificateChoose": "选择证书"
 }

@@ -1803,5 +1803,8 @@
   "quizCertificatePlaceholders": "Camps disponibles",
   "quizCertificatePreviewHelp": "La previsualització utilitza dades d'exemple. No es carreguen imatges ni fonts externes.",
   "quizCertificateSavePreview": "Deseu la plantilla per previsualitzar els canvis.",
-  "copy": "Copia"
+  "copy": "Copia",
+  "quizCertificateNone": "Sense certificat",
+  "quizCertificateUnavailable": "Plantilla seleccionada no disponible",
+  "quizCertificateChoose": "Tria un certificat"
 }

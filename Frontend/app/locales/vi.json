@@ -1803,5 +1803,8 @@
   "quizCertificatePlaceholders": "Các trường có sẵn",
   "quizCertificatePreviewHelp": "Bản xem trước sử dụng dữ liệu mẫu. Hình ảnh và phông chữ bên ngoài không được tải.",
   "quizCertificateSavePreview": "Lưu mẫu để xem trước các thay đổi.",
-  "copy": "Sao chép"
+  "copy": "Sao chép",
+  "quizCertificateNone": "Không có chứng chỉ",
+  "quizCertificateUnavailable": "Mẫu đã chọn không khả dụng",
+  "quizCertificateChoose": "Chọn chứng chỉ"
 }

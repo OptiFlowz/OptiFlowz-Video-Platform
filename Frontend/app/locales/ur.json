@@ -1803,5 +1803,8 @@
   "quizCertificatePlaceholders": "دستیاب فیلڈز",
   "quizCertificatePreviewHelp": "پیش منظر میں نمونہ ڈیٹا استعمال ہوتا ہے۔ بیرونی تصاویر اور فونٹس لوڈ نہیں ہوتے۔",
   "quizCertificateSavePreview": "تبدیلیوں کا پیش منظر دیکھنے کے لیے ٹیمپلیٹ محفوظ کریں۔",
-  "copy": "کاپی کریں"
+  "copy": "کاپی کریں",
+  "quizCertificateNone": "کوئی سرٹیفکیٹ نہیں",
+  "quizCertificateUnavailable": "منتخب ٹیمپلیٹ دستیاب نہیں ہے",
+  "quizCertificateChoose": "سرٹیفکیٹ منتخب کریں"
 }

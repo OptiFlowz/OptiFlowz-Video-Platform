@@ -1883,5 +1883,8 @@
   "quizCertificatePlaceholders": "Elérhető mezők",
   "quizCertificatePreviewHelp": "Az előnézet mintaadatokat használ. Külső képek és betűtípusok nem töltődnek be.",
   "quizCertificateSavePreview": "Mentse a sablont a módosítások előnézetéhez.",
-  "copy": "Másolás"
+  "copy": "Másolás",
+  "quizCertificateNone": "Nincs tanúsítvány",
+  "quizCertificateUnavailable": "A kiválasztott sablon nem érhető el",
+  "quizCertificateChoose": "Tanúsítvány kiválasztása"
 }

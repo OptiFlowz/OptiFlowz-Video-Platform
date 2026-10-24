@@ -1803,5 +1803,8 @@
   "quizCertificatePlaceholders": "Saadaolevad väljad",
   "quizCertificatePreviewHelp": "Eelvaade kasutab näidisandmeid. Väliseid pilte ja fonte ei laadita.",
   "quizCertificateSavePreview": "Muudatuste eelvaateks salvesta mall.",
-  "copy": "Kopeeri"
+  "copy": "Kopeeri",
+  "quizCertificateNone": "Ilma sertifikaadita",
+  "quizCertificateUnavailable": "Valitud mall pole saadaval",
+  "quizCertificateChoose": "Vali sertifikaat"
 }

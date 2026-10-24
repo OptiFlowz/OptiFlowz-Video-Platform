@@ -1803,5 +1803,8 @@
   "quizCertificatePlaceholders": "Tiltækir reitir",
   "quizCertificatePreviewHelp": "Forskoðun notar sýnigögn. Ytri myndir og letur eru ekki hlaðin.",
   "quizCertificateSavePreview": "Vistaðu sniðmátið til að forskoða breytingarnar.",
-  "copy": "Afrita"
+  "copy": "Afrita",
+  "quizCertificateNone": "Ekkert skírteini",
+  "quizCertificateUnavailable": "Valið sniðmát er ekki tiltækt",
+  "quizCertificateChoose": "Velja skírteini"
 }
