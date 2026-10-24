@@ -35,6 +35,7 @@
     "test:question-categories": "node --experimental-test-module-mocks --test tests/question-categories.test.js tests/question-categories-db.test.js tests/question-categories-migration-db.test.js",
     "test:quizzes": "node --experimental-test-module-mocks --test tests/quizzes.test.js tests/quizzes-db.test.js",
     "test:certificate-templates": "node --experimental-test-module-mocks --test tests/certificate-templates.test.js tests/certificate-templates-db.test.js",
+    "test:certificates:db": "node --test tests/certificates-db.test.js",
     "test:certificate-preview": "node --experimental-test-module-mocks --test tests/certificate-preview.test.js tests/certificate-preview-renderer.test.js tests/certificate-preview-pdf.test.js tests/certificate-resources.test.js tests/certificate-font-loader.test.js tests/certificate-qr-code.test.js",
     "test:quiz-requirements": "node --experimental-test-module-mocks --test tests/quiz-requirements.test.js tests/quiz-requirements-db.test.js",
     "test:quiz-attempts": "node --experimental-test-module-mocks --test tests/quiz-attempts-db.test.js tests/quiz-eligibility.test.js tests/quiz-eligibility-db.test.js tests/quiz-attempt-start.test.js tests/quiz-attempt-start-db.test.js tests/quiz-attempt-answers.test.js tests/quiz-attempt-review.test.js tests/quiz-attempt-answers-db.test.js",

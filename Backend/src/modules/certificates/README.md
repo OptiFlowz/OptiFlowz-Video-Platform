@@ -112,6 +112,16 @@ During PDF preview the API fetches font resources over public HTTPS on port 443,
 
 Per preview: up to 4 Google stylesheets (64 KiB each), 32 remote font sources, 1 MiB per font file, 4 MiB total fetched resources and a 5-second timeout per fetch, within the existing total render deadline. Only fonts actually requested by the browser are downloaded, with per-render caching. Use direct final font URLs that do not require redirects or authentication.
 
+## Issued certificate storage
+
+Migration `1792926000001_add-certificates.sql` creates `public.certificates`, the `certificate_status` enum (`issued`, `revoked`), `certificates_number_seq`, and `generate_certificate_number()`. Each certificate belongs to a user, quiz, and unique quiz attempt. Both `data_snapshot` and `template_snapshot` are required JSONB values. Status defaults to `issued`; `issued_at` and `created_at` default to `now()`, and `revoked_at` is initially null.
+
+Omit `certificate_number` on INSERT to generate `CERT-2026-000001` automatically. The year comes from the current transaction's timestamp in UTC. The sequence is global, starts at 1, does not reset annually, and remains unique across concurrent inserts. Numbers have at least six digits and grow without truncation (`1000000` after `999999`). As with PostgreSQL sequences generally, failed or rolled-back inserts can leave gaps; numbers are not gapless.
+
+The unique attempt constraint permits one certificate per attempt, including revoked certificates. The unique certificate-number constraint also protects explicitly supplied numbers. Deleting a template sets `certificate_template_id` to null while preserving both snapshots; user, quiz, and attempt deletion remains restricted by the foreign keys. Indexes support user issuance history and quiz/template references.
+
+The Down migration removes the certificate table, number function, sequence, and status enum. It deletes issued-certificate records, and a subsequent Up starts a new sequence; it is intended for rolling back the feature, not resetting certificate numbering. Run `npm run test:certificates:db` with `TEST_DATABASE_URL` to exercise the migration in an isolated schema.
+
 ## Quiz certificate selection
 
 Quiz create/PATCH accepts `certificate_template_id` as a UUID or `null`; it replaces the removed `has_certificate` flag. Omission on create defaults to `null`; omission on PATCH preserves the current selection. A non-null ID enables certificates and must identify a system template or a private template belonging to the quiz owner. Missing/inaccessible templates return `422`; malformed UUIDs or the legacy boolean field return `400`. Quiz create/detail/list/update responses include `certificate_template_id`.
