@@ -1,11 +1,23 @@
 import assert from 'node:assert/strict';
 import { mock, test } from 'node:test';
-import { sourceQuotas, selectAttemptQuestions, snapshotAttemptQuestions, publicAttempt } from '../src/modules/quizzes-engine/quiz-attempts/helpers/attemptQuestions.js';
+import { sourceQuotas, selectAttemptQuestions, snapshotAttemptQuestions, publicAttempt, snapshotQuizSettings } from '../src/modules/quizzes-engine/quiz-attempts/helpers/attemptQuestions.js';
 
 const stable = n => n - 1;
 const candidate = (id, category_id = null, position = 0, is_fixed = false) => ({ id, category_id, position, max_points: 2, is_fixed });
 const source = (category_id, question_count, position = 0, max_points = 3) => ({ id: category_id ?? 'uncategorized', category_id, question_count, position, max_points });
 const settings = (question_count, shuffle_questions = false) => ({ question_count, shuffle_questions, shuffle_options: false });
+
+test('new settings snapshots retain the selected certificate template independently of later quiz edits', () => {
+  const id = '12345678-1234-4234-8234-123456789abc';
+  for (const templateId of [id, null]) {
+    const quiz = { title: 'Quiz', question_count: 1, passing_score_percentage: 50,
+      min_answered_percentage: 0, min_correct_percentage: 0, certificate_template_id: templateId, has_certificate: true };
+    const snapshot = snapshotQuizSettings(quiz);
+    quiz.certificate_template_id = null;
+    assert.equal(snapshot.certificate_template_id, templateId);
+    assert.equal(Object.hasOwn(snapshot, 'has_certificate'), false);
+  }
+});
 
 test('every fixed question is included, category selection excludes fixed questions and uses source weights', () => {
   const pool = [candidate('fixed', 'x', 1, true), candidate('random-a', 'x'), candidate('random-b', 'x'), candidate('uncategorized')];

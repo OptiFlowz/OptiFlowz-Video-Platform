@@ -1,4 +1,5 @@
 import { upgradeFixedQuizLayout } from './helpers/fixed-quiz-schema.js';
+import { upgradeQuizCertificates } from './helpers/quiz-certificate-schema.js';
 import { upgradeQuestionCategories } from './helpers/question-categories-schema.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
@@ -38,6 +39,7 @@ test('quiz authorization uses real role grants, denies and Owner bypass on all m
   await installQuizPermissions(client,{ defaultRole: null });
   await upgradeQuestionCategories(client);
   await upgradeFixedQuizLayout(client);
+  await upgradeQuizCertificates(client);
   for (const [id,role] of [[viewer,'Viewer'],[uploader,'Uploader'],[admin,'Administrator'],[owner,'Owner']]) {
     await client.query('INSERT INTO user_roles(user_id,role_id) SELECT $1,id FROM roles WHERE name=$2',[id,role]);
   }

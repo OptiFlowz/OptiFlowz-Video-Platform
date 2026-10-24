@@ -127,7 +127,7 @@ async function seedCompleteQuiz(client, userId, questions, videos, existingQuiz 
     correctness_visibility: 'after_check', correct_answers_visibility: 'after_finish',
     explanation_visibility: 'after_check', explanation_incorrect_only: true,
     allow_answer_changes_after_check: false, allow_attempt_review: true,
-    show_final_score: true, scoring_mode: 'partial_credit', has_certificate: false,
+    show_final_score: true, scoring_mode: 'partial_credit', certificate_template_id: null,
   });
   // Field names come only from the strict application schema above, never CLI input.
   const fields = Object.keys(settings);

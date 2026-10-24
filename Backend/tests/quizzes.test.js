@@ -9,7 +9,7 @@ const body = { title: 'Quiz' };
 test('quiz creation trims text and applies all database-aligned defaults', () => {
   assert.deepEqual(createQuizSchema.parse({ ...body, title: ' Quiz ' }), {
     ...body, questions_per_page: 1, description: null, status: 'draft', time_limit_seconds: null, max_attempts: null,
-    passing_score_percentage: 50, shuffle_questions: true, shuffle_options: true, has_certificate: false,
+    passing_score_percentage: 50, shuffle_questions: true, shuffle_options: true, certificate_template_id: null,
     min_answered_percentage: 0, min_correct_percentage: 0,
     correctness_visibility: 'after_finish', correct_answers_visibility: 'after_finish', explanation_visibility: 'after_finish',
     explanation_incorrect_only: false, allow_answer_changes_after_check: false,
@@ -43,7 +43,7 @@ test('invalid quiz settings, readonly fields and future membership fields are re
 
 test('PATCH permits false, zero score and explicit null limits while preserving omission', () => {
   const updates = { description: null, time_limit_seconds: null, max_attempts: null, passing_score_percentage: 0,
-    shuffle_questions: false, shuffle_options: false, has_certificate: false };
+    shuffle_questions: false, shuffle_options: false, certificate_template_id: null };
   assert.deepEqual(updateQuizSchema.parse(updates), updates);
   assert.deepEqual(updateQuizSchema.parse({ title: ' New title ' }), { title: 'New title' });
   for (const input of [{}, { title: '' }, { status: null }, { question_count: null }, { user_id: 'spoof' }, { question_ids: [] }]) {
@@ -72,6 +72,22 @@ test('submission, feedback and scoring settings validate equally on create and P
       assert.equal(updateQuizSchema.safeParse({ [field]: value }).success, false, field);
     }
     assert.equal(field in updateQuizSchema.parse({ title: 'Only title' }), false);
+  }
+});
+
+test('certificate template UUID or null controls certificates and replaces the legacy flag', () => {
+  for (const value of [null, '12345678-1234-4234-8234-123456789abc']) {
+    assert.equal(createQuizSchema.parse({ ...body, certificate_template_id: value }).certificate_template_id, value);
+    assert.deepEqual(updateQuizSchema.parse({ certificate_template_id: value }), { certificate_template_id: value });
+  }
+  assert.equal(Object.hasOwn(updateQuizSchema.parse({ title: 'Rename' }), 'certificate_template_id'), false);
+  for (const value of ['', 'invalid', true, false, 1, {}, []]) {
+    assert.equal(createQuizSchema.safeParse({ ...body, certificate_template_id: value }).success, false);
+    assert.equal(updateQuizSchema.safeParse({ certificate_template_id: value }).success, false);
+  }
+  for (const value of [true, false, null]) {
+    assert.equal(createQuizSchema.safeParse({ ...body, has_certificate: value }).success, false);
+    assert.equal(updateQuizSchema.safeParse({ has_certificate: value }).success, false);
   }
 });
 

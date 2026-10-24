@@ -1,4 +1,5 @@
 import { upgradeFixedQuizLayout } from './helpers/fixed-quiz-schema.js';
+import { upgradeQuizCertificates } from './helpers/quiz-certificate-schema.js';
 import { upgradeQuestionCategories } from './helpers/question-categories-schema.js';
 import { installQuizPermissions } from './helpers/quiz-permissions-schema.js';
 import assert from 'node:assert/strict';
@@ -10,6 +11,41 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import pg from 'pg';
 import { errorHandler } from '../src/middleware/error-handler.js';
+
+test('certificate migration preserves configured IDs, leaves legacy flags unconfigured and nulls deleted references', {
+  skip: !process.env.TEST_DATABASE_URL,
+}, async t => {
+  const client = new pg.Client({ connectionString: process.env.TEST_DATABASE_URL });
+  await client.connect();
+  t.after(() => client.end());
+  await client.query('CREATE TEMP TABLE certificate_templates (id uuid PRIMARY KEY)');
+  await client.query('CREATE TEMP TABLE quizzes (id uuid PRIMARY KEY, has_certificate boolean NOT NULL DEFAULT false)');
+  // Also cover environments that already added the column and an old FK manually.
+  await client.query(`ALTER TABLE pg_temp.quizzes ADD COLUMN certificate_template_id uuid
+    CONSTRAINT quizzes_certificate_template_id_fkey REFERENCES pg_temp.certificate_templates(id) ON DELETE RESTRICT`);
+  const templateId = randomUUID(), configured = randomUUID(), legacy = randomUUID(), disabled = randomUUID();
+  await client.query('INSERT INTO pg_temp.certificate_templates VALUES ($1)', [templateId]);
+  await client.query('INSERT INTO pg_temp.quizzes VALUES ($1,false,$2),($3,true,NULL),($4,false,NULL)',
+    [configured, templateId, legacy, disabled]);
+  const [up, down] = (await readFile(new URL('../src/database/migrations/1792926000000_quiz-certificate-template.sql', import.meta.url), 'utf8'))
+    .replaceAll('public.', 'pg_temp.').split('-- Down Migration');
+  await client.query(up);
+  let rows = (await client.query('SELECT * FROM pg_temp.quizzes')).rows;
+  assert.ok(rows.every(row => !Object.hasOwn(row, 'has_certificate')));
+  assert.equal(rows.find(row => row.id === configured).certificate_template_id, templateId);
+  for (const id of [legacy, disabled]) assert.equal(rows.find(row => row.id === id).certificate_template_id, null);
+  await assert.rejects(client.query('UPDATE pg_temp.quizzes SET certificate_template_id=$1 WHERE id=$2', [randomUUID(), legacy]), { code: '23503' });
+  await client.query(down);
+  rows = (await client.query('SELECT * FROM pg_temp.quizzes')).rows;
+  assert.equal(rows.find(row => row.id === configured).has_certificate, true);
+  assert.equal(rows.find(row => row.id === legacy).has_certificate, false);
+  assert.ok(rows.every(row => !Object.hasOwn(row, 'certificate_template_id')));
+  // This time Up must create the missing column itself.
+  await client.query(up);
+  await client.query('UPDATE pg_temp.quizzes SET certificate_template_id=$1 WHERE id=$2', [templateId, configured]);
+  await client.query('DELETE FROM pg_temp.certificate_templates WHERE id=$1', [templateId]);
+  assert.equal((await client.query('SELECT certificate_template_id FROM pg_temp.quizzes WHERE id=$1', [configured])).rows[0].certificate_template_id, null);
+});
 
 test('quiz settings migration preserves existing quizzes, enforces database constraints and supports rollback', {
   skip: !process.env.TEST_DATABASE_URL,
@@ -89,6 +125,8 @@ test('quiz CRUD and existing submodule routing against PostgreSQL session-local 
   await installQuizPermissions(client);
   await upgradeQuestionCategories(client);
   await upgradeFixedQuizLayout(client);
+  await upgradeQuizCertificates(client);
+  const templateId = (await client.query('SELECT id FROM pg_temp.certificate_templates WHERE is_default=true')).rows[0].id;
   const query = (sql, params) => client.query(sql.replaceAll('public.', 'pg_temp.'), params);
   mock.module(new URL('../src/database/index.js', import.meta.url).href, { namedExports: { writePool: { query } } });
   const { default: router } = await import('../src/modules/quizzes-engine/quizzes-engine.routes.js');
@@ -131,7 +169,7 @@ test('quiz CRUD and existing submodule routing against PostgreSQL session-local 
     const quiz = created.quiz;
     assert.deepEqual(quiz, { id: quiz.id, user_id: userId, ...minimal, question_count: 0, questions_per_page: 1, description: null, status: 'draft',
       time_limit_seconds: null, max_attempts: null, passing_score_percentage: 50, shuffle_questions: true,
-      shuffle_options: true, has_certificate: false,
+      shuffle_options: true, certificate_template_id: null,
       min_answered_percentage: 0, min_correct_percentage: 0,
       correctness_visibility: 'after_finish', correct_answers_visibility: 'after_finish', explanation_visibility: 'after_finish',
       explanation_incorrect_only: false, allow_answer_changes_after_check: false,
@@ -142,7 +180,7 @@ test('quiz CRUD and existing submodule routing against PostgreSQL session-local 
     assert.equal((await request('POST', '', minimal)).status, 201);
     const configured = { title: 'Configured', description: ' Details ', status: 'published',
       time_limit_seconds: 600, max_attempts: 3, passing_score_percentage: 75.25,
-      shuffle_questions: false, shuffle_options: false, has_certificate: true };
+      shuffle_questions: false, shuffle_options: false, certificate_template_id: templateId };
     const saved = await request('POST', '', configured);
     assert.equal(saved.status, 201);
     for (const [field, value] of Object.entries(configured)) assert.equal(saved.quiz[field], field === 'description' ? 'Details' : value);
@@ -159,6 +197,32 @@ test('quiz CRUD and existing submodule routing against PostgreSQL session-local 
     assert.equal((await request('PATCH', path, { title: 'Renamed' })).quiz.questions_per_page, 3);
     assert.equal((await request('GET', path)).quiz.questions_per_page, 3);
     assert.equal((await request('GET')).quizzes.find(q => q.id === created.quiz.id).questions_per_page, 3);
+  });
+
+  await scenario('certificate assignment accepts own/system templates, rejects inaccessible IDs and supports clearing/deletion', async () => {
+    const own = randomUUID(), foreign = randomUUID();
+    await client.query(`INSERT INTO pg_temp.certificate_templates (id,user_id,name,html_template)
+      VALUES ($1,$2,'Own','<p>Certificate</p>'),($3,$4,'Other','<p>Certificate</p>')`, [own, userId, foreign, otherUserId]);
+    const created = await request('POST', '', { ...minimal, certificate_template_id: own });
+    assert.equal(created.status, 201);
+    assert.equal(created.quiz.certificate_template_id, own);
+    const path = `/${created.quiz.id}`;
+    for (const inaccessible of [foreign, randomUUID()]) {
+      assert.equal((await request('POST', '', { ...minimal, certificate_template_id: inaccessible })).status, 422);
+      assert.equal((await request('PATCH', path, { certificate_template_id: inaccessible })).status, 422);
+    }
+    assert.equal((await request('PATCH', path, { certificate_template_id: templateId })).quiz.certificate_template_id, templateId);
+    assert.equal((await request('PATCH', path, { title: 'Still issues certificates' })).quiz.certificate_template_id, templateId);
+    assert.equal((await request('GET', '')).quizzes[0].certificate_template_id, templateId);
+    assert.equal((await request('PATCH', path, { certificate_template_id: null })).quiz.certificate_template_id, null);
+    assert.equal((await request('PATCH', path, { certificate_template_id: own })).quiz.certificate_template_id, own);
+    await client.query('DELETE FROM pg_temp.certificate_templates WHERE id=$1', [own]);
+    assert.equal((await request('GET', path)).quiz.certificate_template_id, null);
+    assert.equal((await request('PATCH', path, { certificate_template_id: templateId }, otherToken)).status, 404);
+    for (const value of [true, false]) {
+      assert.equal((await request('POST', '', { ...minimal, has_certificate: value })).status, 400);
+      assert.equal((await request('PATCH', path, { has_certificate: value })).status, 400);
+    }
   });
 
   await scenario('new quiz settings round-trip through create, PATCH, detail and list without resetting omitted fields', async () => {
@@ -206,7 +270,7 @@ test('quiz CRUD and existing submodule routing against PostgreSQL session-local 
   });
 
   await scenario('partial PATCH preserves omitted fields, supports null/false/zero and updates the timestamp', async () => {
-    const created = await request('POST', '', { ...minimal, description: 'Keep', time_limit_seconds: 600, max_attempts: 3, has_certificate: true });
+    const created = await request('POST', '', { ...minimal, description: 'Keep', time_limit_seconds: 600, max_attempts: 3, certificate_template_id: templateId });
     await client.query("UPDATE pg_temp.quizzes SET created_at='2026-01-01',updated_at='2026-01-01' WHERE id=$1", [created.quiz.id]);
     const original = (await request('GET', `/${created.quiz.id}`)).quiz;
     const renamed = await request('PATCH', `/${original.id}`, { title: ' Renamed ' });
@@ -214,7 +278,7 @@ test('quiz CRUD and existing submodule routing against PostgreSQL session-local 
     assert.deepEqual(renamed.quiz, { ...original, title: 'Renamed', updated_at: renamed.quiz.updated_at });
     assert.ok(Date.parse(renamed.quiz.updated_at) > Date.parse(original.updated_at));
     const changes = { description: null, time_limit_seconds: null, max_attempts: null, passing_score_percentage: 0,
-      shuffle_questions: false, shuffle_options: false, has_certificate: false, status: 'archived' };
+      shuffle_questions: false, shuffle_options: false, certificate_template_id: null, status: 'archived' };
     const cleared = await request('PATCH', `/${original.id}`, changes);
     assert.equal(cleared.status, 200);
     assert.deepEqual(cleared.quiz, { ...renamed.quiz, ...changes, updated_at: cleared.quiz.updated_at });

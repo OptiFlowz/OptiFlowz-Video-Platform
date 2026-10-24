@@ -1,4 +1,5 @@
 import { upgradeFixedQuizLayout } from './helpers/fixed-quiz-schema.js';
+import { upgradeQuizCertificates } from './helpers/quiz-certificate-schema.js';
 import { upgradeQuestionCategories } from './helpers/question-categories-schema.js';
 import { installQuizPermissions } from './helpers/quiz-permissions-schema.js';
 import assert from 'node:assert/strict';
@@ -37,6 +38,7 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
   await installQuizPermissions(admin, { schema });
   await upgradeQuestionCategories(admin, { schema });
   await upgradeFixedQuizLayout(admin, { schema });
+  await upgradeQuizCertificates(admin, { schema });
   let failQuestions = false, released = 0;
   const queryOn = database => async (sql, params) => {
     const result = await database.query(sql.replaceAll('public.', `${schema}.`), params);
@@ -109,6 +111,27 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
   async function historical(id, status, attemptNo, userId = participant) {
     await admin.query("INSERT INTO quiz_attempts(quiz_id,user_id,status,attempt_no,settings_snapshot) VALUES ($1,$2,$3,$4,'{}')", [id, userId, status, attemptNo]);
   }
+
+  await t.test('attempt snapshots retain their template ID when the quiz changes or the template is deleted', async () => {
+    const id = await quiz({ count: 1 });
+    await question(id);
+    const templateId = randomUUID();
+    await admin.query(`INSERT INTO certificate_templates(id,user_id,name,html_template)
+      VALUES ($1,$2,'Snapshot template','<p>Certificate</p>')`, [templateId, owner]);
+    await admin.query('UPDATE quizzes SET certificate_template_id=$1 WHERE id=$2', [templateId, id]);
+    const started = await request(id);
+    assert.equal(started.status, 201);
+    assert.equal(started.body.settings.certificate_template_id, templateId);
+    assert.equal(Object.hasOwn(started.body.settings, 'has_certificate'), false);
+    await admin.query('DELETE FROM certificate_templates WHERE id=$1', [templateId]);
+    assert.equal((await admin.query('SELECT certificate_template_id FROM quizzes WHERE id=$1', [id])).rows[0].certificate_template_id, null);
+    assert.equal((await request(id)).body.settings.certificate_template_id, templateId, 'resume keeps the original snapshot');
+    const next = await request(id, tokenFor(other));
+    assert.equal(next.status, 201);
+    assert.equal(next.body.settings.certificate_template_id, null);
+    const saved = (await admin.query('SELECT settings_snapshot FROM quiz_attempts WHERE quiz_id=$1 AND user_id=$2', [id, participant])).rows[0];
+    assert.equal(saved.settings_snapshot.certificate_template_id, templateId);
+  });
 
   await t.test('auth, visibility and unpublished quiz availability return the specified errors', async () => {
     const id = await quiz();

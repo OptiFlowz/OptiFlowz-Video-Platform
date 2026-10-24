@@ -112,6 +112,14 @@ During PDF preview the API fetches font resources over public HTTPS on port 443,
 
 Per preview: up to 4 Google stylesheets (64 KiB each), 32 remote font sources, 1 MiB per font file, 4 MiB total fetched resources and a 5-second timeout per fetch, within the existing total render deadline. Only fonts actually requested by the browser are downloaded, with per-render caching. Use direct final font URLs that do not require redirects or authentication.
 
+## Quiz certificate selection
+
+Quiz create/PATCH accepts `certificate_template_id` as a UUID or `null`; it replaces the removed `has_certificate` flag. Omission on create defaults to `null`; omission on PATCH preserves the current selection. A non-null ID enables certificates and must identify a system template or a private template belonging to the quiz owner. Missing/inaccessible templates return `422`; malformed UUIDs or the legacy boolean field return `400`. Quiz create/detail/list/update responses include `certificate_template_id`.
+
+Migration `1792926000000_quiz-certificate-template.sql` preserves already configured IDs, leaves legacy quizzes without a selected template at `null` (including those with `has_certificate=true`), removes the boolean column, and sets the foreign key to `ON DELETE SET NULL`. Deleting a template clears its selection on affected quizzes. Rollback derives the restored boolean from whether an ID is selected; discarded legacy boolean values cannot be reconstructed.
+
+New attempts copy `certificate_template_id` into `settings_snapshot` instead of `has_certificate`. Resuming an attempt preserves that snapshot even if the quiz selection changes or the template is deleted. Historical attempts are not rewritten; a saved template ID does not retain the deleted template's HTML/CSS.
+
 ## PDF preview
 
 `POST /api/certificates/certificate-templates/:id/preview/pdf` requires the same Bearer token as CRUD and selects either a system template or the user's own private template. A missing template or another user's private template returns `404`. The request body is not used: source, format and orientation come from the database, and placeholder values are fixed server-side. No template is changed, no certificate record is created, and no PDF is written to the database, storage, or an output file.
