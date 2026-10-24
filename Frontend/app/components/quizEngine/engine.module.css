@@ -741,6 +741,9 @@ main.management .categoryQuestionsTable .categoryRemove { color: var(--accentRed
 .attemptOption input[type='checkbox']:checked::after { content: '✓'; color: var(--text1); font-size: 14px; line-height: 1; }
 .attemptOption input[type='radio']:checked::after { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--text1); }
 .attemptOption input:disabled { cursor: default; }
+.attemptOption[data-result='correct'] input:checked { background: var(--accentGreen2); border-color: var(--accentGreen2); }
+.attemptOption[data-result='incorrect'] input:checked { background: var(--accentRed); border-color: var(--accentRed); }
+
 @media (max-width: 800px) {
   .attemptLayout { grid-template-columns: minmax(0, 1fr); gap: 20px; }
   .attemptNavigation { position: static; }

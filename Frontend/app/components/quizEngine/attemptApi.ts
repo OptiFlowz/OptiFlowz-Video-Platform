@@ -31,3 +31,15 @@ export function isCompleteAnswer(question: AttemptQuestion, answer: Answer | nul
   if (question.type === 'multiple_choice') return 'option_nos' in answer && answer.option_nos.length > 0;
   return 'pairs' in answer && question.matching_items.every(item => answer.pairs.some(pair => pair.item_no === item.item_no && question.matching_options.some(option => option.option_no === pair.option_no)));
 }
+
+/** Saved answers still need checking when the attempt uses per-question feedback. */
+export function resumeQuestionIndex(questions: AttemptQuestion[], correctnessVisibility: AttemptSettings['correctness_visibility']): number {
+  for (let index = questions.length - 1; index >= 0; index--) {
+    const question = questions[index], answer = question.answer;
+    const hasAnswer = answer && ('option_no' in answer ? answer.option_no != null : 'option_nos' in answer ? answer.option_nos.length > 0 : answer.pairs.length > 0);
+    if (!hasAnswer && !question.checked_at) continue;
+    if (!isCompleteAnswer(question, answer) || (correctnessVisibility === 'after_check' && (!question.checked_at || question.feedback.is_correct === false))) return index;
+    return Math.min(index + 1, questions.length - 1);
+  }
+  return 0;
+}

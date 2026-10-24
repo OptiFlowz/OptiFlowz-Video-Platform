@@ -1,3 +1,4 @@
+import { decodeHTMLStrict as decodeQuizText } from 'entities';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -9,7 +10,7 @@ import { ConfirmDialog } from '~/components/confirmPopup/confirmDialog';
 import { engineKey } from './api';
 import { AnswerSaveQueue, type SaveStatus } from './AnswerSaveQueue';
 import { LoadState, Select, styles } from './shared';
-import { attemptRequest, isCompleteAnswer, type AttemptSettings, type Answer, type AttemptQuestion, type AttemptQuestions, type AttemptResult, type SavedAnswer } from './attemptApi';
+import { attemptRequest, isCompleteAnswer, resumeQuestionIndex, type AttemptSettings, type Answer, type AttemptQuestion, type AttemptQuestions, type AttemptResult, type SavedAnswer } from './attemptApi';
 
 export default function AttemptPlayer({ attemptId, onClose, onFinished, completedAttempt, settings, headerActions }: { headerActions?: HTMLElement | null; settings?: AttemptSettings; attemptId: string; onClose: () => void; onFinished: () => void; completedAttempt?: AttemptResult }) {
   const { t } = useI18n(), client = useQueryClient(), { confirm, dialogProps } = useConfirm();
@@ -30,6 +31,12 @@ export default function AttemptPlayer({ attemptId, onClose, onFinished, complete
   const questions = reviewing && !canReview ? [] : data?.questions ?? [], question = questions[index];
   const remaining = data?.expires_at ? Math.max(0, Math.ceil((Date.parse(data.expires_at) - now) / 1000)) : null;
   const expired = !!data?.is_expired || remaining === 0 || data?.status === 'timed_out';
+  const initializedAttempt = useRef<string | null>(null);
+  useEffect(() => {
+    if (!query.isFetchedAfterMount || !data || initializedAttempt.current === attemptId) return;
+    initializedAttempt.current = attemptId;
+    setIndex(reviewing ? 0 : resumeQuestionIndex(data.questions, attemptSettings?.correctness_visibility));
+  }, [attemptId, data, query.isFetchedAfterMount, reviewing, attemptSettings?.correctness_visibility]);
   const answered = questions.filter(q => isCompleteAnswer(q, q.answer)).length;
   async function check(question: AttemptQuestion): Promise<boolean> {
     if (!question || reviewing || expired || lock.current) return false;
@@ -293,26 +300,28 @@ function QuestionCard({ question, answer, setAnswer, index, total, reviewing, sh
   const changed = JSON.stringify(answer) !== JSON.stringify(question.answer);
   const editable = question.can_edit && !reviewing && !busy && !expired;
   const feedback = question.feedback;
+  const answerState = showCheck && !changed && question.checked_at && typeof feedback.is_correct === 'boolean'
+    ? (feedback.is_correct ? 'correct' : 'incorrect') : undefined;
   const showFeedback = !changed && !!question.checked_at && ((showCheck && (feedback.is_correct !== undefined || feedback.awarded_points !== undefined)) || !!feedback.correct_answers?.options?.length || !!feedback.correct_answers?.matching_items?.length || !!feedback.explanation);
   return <article ref={cardRef} tabIndex={-1} aria-label={t('quizQuestionPosition', { current: index + 1, total })} className={`${styles.panel} ${styles.attemptQuestion}`}>
       <div className={styles.toolbar}><span className={styles.badge}>{t('quizQuestionPosition', { current: index + 1, total })}</span>{showCheck && <span className={styles.muted}>{t('quizPoints')}: {question.max_points}</span>}</div>
-      <h2>{question.content}</h2>
+      <h2>{decodeQuizText(question.content)}</h2>
       {reviewing ? !question.checked_at && <p className={styles.muted}>{t('quizNotAnsweredYet')}</p> : <p className={styles.muted}>{t(question.type === 'matching' ? 'quizMatchHint' : question.type === 'single_choice' ? 'quizSelectOneHint' : 'quizSelectMultipleHint')}</p>}
       {question.type === 'matching' ? <div className={styles.attemptMatches}>{question.matching_items.map(item => <div className={styles.attemptMatch} key={item.item_no}>
-        <span>{item.content}</span><Select label={item.content} value={answer && 'pairs' in answer ? answer.pairs.find(p => p.item_no === item.item_no)?.option_no ?? '' : ''} disabled={!editable}
-          values={[{ value: '', label: t('quizChooseAnswer') }, ...question.matching_options.map(o => ({ value: o.option_no, label: o.content }))]}
+        <span>{decodeQuizText(item.content)}</span><Select label={decodeQuizText(item.content)} value={answer && 'pairs' in answer ? answer.pairs.find(p => p.item_no === item.item_no)?.option_no ?? '' : ''} disabled={!editable}
+          values={[{ value: '', label: t('quizChooseAnswer') }, ...question.matching_options.map(o => ({ value: o.option_no, label: decodeQuizText(o.content) }))]}
           onChange={value => setAnswer(current => ({ pairs: [...(current && 'pairs' in current ? current.pairs.filter(p => p.item_no !== item.item_no) : []), ...(value ? [{ item_no: item.item_no, option_no: Number(value) }] : [])].sort((a, b) => a.item_no - b.item_no) }))} />
-      </div>)}</div> : <div className={styles.attemptOptions} role="group" aria-label={question.content}>{question.options.map(option => {
+      </div>)}</div> : <div className={styles.attemptOptions} role="group" aria-label={decodeQuizText(question.content)}>{question.options.map(option => {
         const selected = !!answer && ('option_no' in answer ? answer.option_no === option.option_no : 'option_nos' in answer && answer.option_nos.includes(option.option_no));
-        return <label className={styles.attemptOption} data-selected={selected} key={option.option_no}><input type={question.type === 'single_choice' ? 'radio' : 'checkbox'} name={`question-${question.question_no}`} checked={selected} disabled={!editable}
-          onChange={() => setAnswer(current => question.type === 'single_choice' ? { option_no: option.option_no } : { option_nos: (current && 'option_nos' in current ? selected ? current.option_nos.filter(n => n !== option.option_no) : [...current.option_nos, option.option_no] : [option.option_no]).sort((a, b) => a - b) })} /><span>{option.content}</span></label>;
+        return <label className={styles.attemptOption} data-selected={selected} data-result={selected ? answerState : undefined} key={option.option_no}><input type={question.type === 'single_choice' ? 'radio' : 'checkbox'} name={`question-${question.question_no}`} checked={selected} disabled={!editable}
+          onChange={() => setAnswer(current => question.type === 'single_choice' ? { option_no: option.option_no } : { option_nos: (current && 'option_nos' in current ? selected ? current.option_nos.filter(n => n !== option.option_no) : [...current.option_nos, option.option_no] : [option.option_no]).sort((a, b) => a - b) })} /><span>{decodeQuizText(option.content)}</span></label>;
       })}</div>}
       {showFeedback && <div className={styles.attemptFeedback} aria-live="polite">
         {showCheck && feedback.is_correct !== undefined && <p className={feedback.is_correct ? styles.success : styles.error}>{t(feedback.is_correct ? 'quizCorrect' : 'quizIncorrect')}</p>}
         {showCheck && feedback.awarded_points !== undefined && <p>{t('quizPointsScore', { score: feedback.awarded_points, total: question.max_points })}</p>}
-        {feedback.correct_answers?.options && <p>{t('quizCorrectAnswerValue', { value: question.options.filter(o => feedback.correct_answers!.options!.some(correct => correct.option_no === o.option_no && correct.is_correct)).map(o => o.content).join(', ') })}</p>}
-        {feedback.correct_answers?.matching_items && <><h3>{t('quizCorrectMatches')}</h3>{feedback.correct_answers.matching_items.map(pair => <p key={pair.item_no}>{question.matching_items.find(i => i.item_no === pair.item_no)?.content} → {question.matching_options.find(o => o.option_no === pair.correct_option_no)?.content}</p>)}</>}
-        {feedback.explanation && <section className={styles.attemptExplanation}><h3>{t('quizExplanation')}</h3><div>{formatDescription(feedback.explanation)}</div></section>}
+        {feedback.correct_answers?.options && <p>{t('quizCorrectAnswerValue', { value: question.options.filter(o => feedback.correct_answers!.options!.some(correct => correct.option_no === o.option_no && correct.is_correct)).map(o => decodeQuizText(o.content)).join(', ') })}</p>}
+        {feedback.correct_answers?.matching_items && <><h3>{t('quizCorrectMatches')}</h3>{feedback.correct_answers.matching_items.map(pair => <p key={pair.item_no}>{decodeQuizText(question.matching_items.find(i => i.item_no === pair.item_no)?.content ?? '')} → {decodeQuizText(question.matching_options.find(o => o.option_no === pair.correct_option_no)?.content ?? '')}</p>)}</>}
+        {feedback.explanation && <section className={styles.attemptExplanation}><h3>{t('quizExplanation')}</h3><div>{formatDescription(decodeQuizText(feedback.explanation))}</div></section>}
       </div>}
       {children}
     </article>;

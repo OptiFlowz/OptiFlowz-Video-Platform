@@ -140,6 +140,8 @@ test('resumes at the limit without creating an attempt and restores saved checke
   const ui = await mount(t, { resume: true, saved: true });
   await ui.click('Continue quiz');
   assert.ok(!ui.requests.some(r => r.method === 'POST'));
+  assert.equal(document.querySelector('.attemptQuestion h2').textContent, 'Multiple answers');
+  await ui.click('Previous Question');
   assert.equal(document.querySelector('input:checked').parentElement.textContent, 'Second');
   assert.equal(document.querySelector('input:checked').disabled, true);
 });
@@ -680,6 +682,7 @@ test('autosaves without checking and restores unchecked answers from the backend
   assert.match(document.body.textContent, /Answers saved/);
   assert.equal(ui.requests.filter(r => r.route.endsWith('/check')).length, 0);
   await ui.click('Back to quiz'); ui.clearCache(); await tick(); await ui.click('Continue quiz');
+  assert.equal(document.querySelector('.attemptQuestion h2').textContent, 'One answer');
   assert.equal(document.querySelector('input:checked').parentElement.textContent, 'Second');
   assert.equal(document.querySelector('input:checked').disabled, false);
   assert.equal(document.querySelector('.attemptFeedback'), null);
@@ -794,3 +797,108 @@ test('deadline submission supersedes a pending manual confirmation without dupli
   assert.equal(ui.requests.filter(r => r.route.endsWith('/submit')).length, 1);
   assert.ok(document.querySelector('.attemptResult'));
 });
+
+function encodedTextFixtures(review = false) {
+  const rows = review ? reviewFixtures() : fixtures();
+  rows[0].content = 'What is the patient&apos;s &quot;plan&quot; &amp; risk &#8804; 5?';
+  rows[0].options[0].content = 'Review each patient&#39;s anatomy &amp; vessels';
+  rows[0].options[1].content = '&lt;img src=x onerror=alert(1)&gt;';
+  rows[1].options[0].content = 'A &#x26; B &ndash; C';
+  rows[2].matching_items[0].content = 'Patient&apos;s left';
+  rows[2].matching_options[0].content = '&quot;Right&quot; &amp; safe';
+  return rows;
+}
+test('questions and all answer types decode entities as safe text without changing saved answers', async t => {
+  const rows = encodedTextFixtures();
+  const ui = await mount(t, { perPage: 3, reviewRows: rows });
+  await ui.click('Start quiz');
+  const card = document.querySelector('.attemptQuestion');
+  assert.equal(card.querySelector('h2').textContent, 'What is the patient\'s "plan" & risk ≤ 5?');
+  assert.equal(card.querySelector('[role="group"]').getAttribute('aria-label'), card.querySelector('h2').textContent);
+  assert.match(document.body.textContent, /A & B – C/);
+  assert.equal(document.querySelector('select').getAttribute('aria-label'), "Patient's left");
+  assert.equal(document.querySelector('select option[value="6"]').textContent, '"Right" & safe');
+  assert.ok([...card.querySelectorAll('label')].some(label => label.textContent === '<img src=x onerror=alert(1)>'));
+  assert.equal(card.querySelector('img'), null, 'decoded markup must never become HTML');
+  await ui.choose("Review each patient's anatomy & vessels");
+  await ui.click('Check answer');
+  const saved = ui.requests.find(request => request.method === 'PUT');
+  assert.deepEqual(saved.body, { answer: { option_no: 4 } });
+  assert.equal(ui.serverRows()[0].options[0].content, rows[0].options[0].content);
+});
+test('review decodes correct answers, matching feedback and explanation text', async t => {
+  const rows = encodedTextFixtures(true);
+  rows[0].feedback.correct_answers.options = [{ option_no: 4, is_correct: true }];
+  rows[0].feedback.explanation = 'Patient&apos;s anatomy &amp; risk &#x2264; 5';
+  const ui = await mount(t, { perPage: 3, review: true, visibility: 'after_finish', history: [reviewedAttempt()], reviewRows: rows });
+  await ui.click('View');
+  const cards = document.querySelectorAll('.attemptQuestion');
+  assert.match(cards[0].querySelector('.attemptFeedback').textContent, /Review each patient's anatomy & vessels/);
+  assert.equal(cards[0].querySelector('.attemptExplanation > div').textContent, "Patient's anatomy & risk ≤ 5");
+  assert.match(cards[2].querySelector('.attemptFeedback').textContent, /Patient's left → "Right" & safe/);
+});
+
+for (const isCorrect of [true, false]) test(`continuing resumes ${isCorrect ? 'after the last correct answer' : 'on the last incorrect answer'}`, async t => {
+  const rows = fixtures();
+  rows[0] = { ...rows[0], answer: { option_no: 4 }, checked_at: 'now', feedback: { is_correct: true } };
+  rows[1] = { ...rows[1], answer: { option_nos: [2] }, checked_at: 'now', feedback: { is_correct: isCorrect } };
+  const ui = await mount(t, { resume: true, reviewRows: rows });
+  await ui.click('Continue quiz');
+  assert.equal(document.querySelector('.attemptQuestion h2').textContent, isCorrect ? 'Match answers' : 'Multiple answers');
+  assert.ok(!ui.requests.some(request => request.method === 'POST'));
+});
+test('continuing keeps a partially answered matching question', async t => {
+  const rows = fixtures();
+  rows[2] = { ...rows[2], answer: { pairs: [{ item_no: 8, option_no: 6 }] } };
+  const ui = await mount(t, { resume: true, reviewRows: rows });
+  await ui.click('Continue quiz');
+  assert.equal(document.querySelector('.attemptQuestion h2').textContent, 'Match answers');
+  assert.equal(document.querySelector('select').value, '6');
+});
+for (const isCorrect of [true, false, undefined]) test(`selected answer indicates only disclosed correctness: ${isCorrect}`, async t => {
+  const ui = await mount(t, { correct: isCorrect ?? true, hidden: isCorrect === undefined, allowChanges: true });
+  await ui.click('Start quiz');
+  await ui.choose('First');
+  assert.equal(document.querySelector('.attemptOption[data-selected="true"]').dataset.result, undefined);
+  await ui.click('Check answer');
+  assert.equal(document.querySelector('.attemptQuestion h2').textContent, 'One answer', 'checking must not trigger resume navigation');
+  assert.equal(document.querySelector('.attemptOption[data-selected="true"]').dataset.result, isCorrect === undefined ? undefined : isCorrect ? 'correct' : 'incorrect');
+  assert.equal(document.querySelector('.attemptOption[data-selected="false"]').dataset.result, undefined);
+  await ui.choose('Second');
+  assert.equal(document.querySelector('.attemptOption[data-selected="true"]').dataset.result, undefined, 'new answer must not retain previous correctness');
+});
+
+test('continuing a fully answered attempt stays on its final question and the correct page', async t => {
+  const rows = reviewFixtures().map(question => ({ ...question, feedback: { is_correct: true } }));
+  const ui = await mount(t, { resume: true, reviewRows: rows, perPage: 2 });
+  await ui.click('Continue quiz');
+  assert.equal(document.querySelector('.attemptQuestion h2').textContent, 'Match answers');
+  assert.equal(document.querySelector('[aria-current="step"]').textContent, '3');
+  assert.equal(document.querySelectorAll('.attemptQuestion').length, 1);
+});
+
+for (const visibility of ['after_check', 'after_finish', 'never']) {
+  for (const [index, answer] of [
+    [0, { option_no: 7 }],
+    [1, { option_nos: [2, 5] }],
+    [2, { pairs: [{ item_no: 8, option_no: 6 }, { item_no: 3, option_no: 6 }] }],
+  ]) test(`continuing ${visibility} with a saved unchecked ${fixtures()[index].type} answer`, async t => {
+    const rows = fixtures();
+    rows.push({ ...fixtures()[0], question_no: 4, question_id: 'q4', content: 'Next unanswered question' });
+    rows[index] = { ...rows[index], answer };
+    const ui = await mount(t, { resume: true, visibility, reviewRows: rows });
+    await ui.click('Continue quiz');
+    const expected = visibility === 'after_check' ? index : index + 1;
+    assert.equal(document.querySelector('.attemptQuestion h2').textContent, rows[expected].content);
+    assert.equal(document.querySelector('[aria-current="step"]').textContent, String(expected + 1));
+    assert.ok(!ui.requests.some(request => request.method === 'PUT' || request.method === 'POST'));
+    if (visibility === 'after_check') {
+      assert.equal(ui.button('Check answer').disabled, false);
+      await ui.click('Check answer');
+      assert.equal(document.querySelector('.attemptQuestion h2').textContent, rows[index].content, 'checking does not jump to a new question');
+      assert.equal(ui.serverRows()[index].checked_at, 'now');
+    } else {
+      assert.equal(ui.button('Check answer'), undefined);
+    }
+  });
+}
