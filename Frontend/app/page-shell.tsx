@@ -37,7 +37,7 @@ export function FramedPage({
     <ClientGuard mode={guard} access={access}>
       <NavigationFrame drawerOnly={drawerOnly}>
         <Suspense fallback={<Loader />}>{children}</Suspense>
-        <Footer />
+        {(!access || access === "participate") && <Footer />}
       </NavigationFrame>
     </ClientGuard>
   );

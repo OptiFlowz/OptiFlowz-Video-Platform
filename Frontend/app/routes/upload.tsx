@@ -1,4 +1,3 @@
-import Footer from "~/components/footer/footer";
 import Header from "~/components/header/header";
 import type { Route } from "./+types/play";
 import UploadPage from "~/components/uploadPage/uploadPage";
@@ -12,5 +11,5 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Page() {
-  return <ClientGuard mode="auth" access="upload"><Header /><UploadPage /><Footer /></ClientGuard>;
+  return <ClientGuard mode="auth" access="upload"><Header /><UploadPage /></ClientGuard>;
 }

@@ -7246,6 +7246,7 @@ main.myVideos{
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  line-height: 1.2rem;
   padding: 1rem 1.15rem;
   margin-inline: 12px;
   border-radius: 16px;
@@ -8913,19 +8914,6 @@ main.playlist .videoHolder .playlistOrderNumber {
   }
   main.playlist .videoHolder {
     gap: var(--video-grid-row-gap) var(--video-grid-gap);
-  }
-  .videoAside{
-    width: 250px;
-  }
-  .videoAsideSticky{
-    width: 250px;
-  }
-  .videoAside section{
-    max-width: 250px;
-    padding: 20px;
-  }
-  .videoAside section img{
-    max-width: 100px;
   }
   main.myVideos table th:nth-child(5), main.myVideos table td:nth-child(5){
     display: none;

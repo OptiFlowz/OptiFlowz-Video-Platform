@@ -25,7 +25,7 @@ export default function RequirementCard({ row, editable, busy, onEdit, onRemove,
       </div>
       <div className={styles.ruleTitle}>
         <p>{title}</p>
-        <small className={styles.ruleSummary}>{t(percentage ? 'quizRequiredPercentage' : 'quizRequiredSeconds')}: {percentage ? `${row.min_watch_percentage}%` : row.min_watch_seconds}</small>
+        <small className={styles.ruleSummary}>{t(percentage ? 'quizRequiredPercentage' : 'quizRequiredSeconds')}: {percentage ? `${row.min_watch_percentage}%` : formatDuration(row.min_watch_seconds ?? 0)}</small>
         {editable && <button type="button" className={styles.ruleChangeVideo} disabled={busy} onClick={() => onChangeVideo({ min_watch_percentage: row.min_watch_percentage, min_watch_seconds: row.min_watch_seconds })}>{t('qeChangeVideo')}</button>}
       </div>
     </div>

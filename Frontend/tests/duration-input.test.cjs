@@ -17,9 +17,9 @@ test('duration segments round-trip seconds, support keyboard editing, clear to u
   const mod = { exports: {} };
   new Function('require', 'module', 'exports', code)(name => name === '~/i18n' ? { useI18n: () => ({ t: key => key }) } : name.endsWith('.css') ? { __esModule: true, default: {} } : require(name), mod, mod.exports);
   const DurationInput = mod.exports.default;
-  let setValue, value, disabled = false;
+  let setValue, value, disabled = false, validationMessage = '', deferErrors = false, instance = 0;
   const changes = [];
-  function Harness() { const [seconds, setSeconds] = React.useState(3661); value = seconds; setValue = setSeconds; return React.createElement(DurationInput, { value: seconds, label: 'Time limit', disabled, onChange: next => { changes.push(next); setSeconds(next); } }); }
+  function Harness() { const [seconds, setSeconds] = React.useState(3661); value = seconds; setValue = setSeconds; return React.createElement(DurationInput, { key: instance, value: seconds, label: 'Time limit', disabled, validationMessage, deferErrors, onChange: next => { changes.push(next); setSeconds(next); } }); }
   await act(async () => root.render(React.createElement(Harness)));
   const fields = () => [...document.querySelectorAll('input')];
   assert.deepEqual(fields().map(el => el.value), ['01', '01', '01']);
@@ -38,5 +38,35 @@ test('duration segments round-trip seconds, support keyboard editing, clear to u
   await enter(0, '99'); await enter(1, '59'); await enter(2, '59'); assert.equal(value, 359999);
   const beforeLoad = changes.length;
   await act(async () => setValue(360001)); assert.deepEqual(fields().map(el => el.value), ['100', '00', '01']); assert.equal(changes.length, beforeLoad, 'existing long limits must not be silently truncated');
+  validationMessage = 'Required watch time exceeds the video length.';
+  await act(async () => root.render(React.createElement(Harness)));
+  let valid;
+  await act(async () => { valid = fields()[2].checkValidity(); });
+  assert.equal(valid, false);
+  assert.equal(fields()[2].validationMessage, validationMessage);
+  const warning = document.querySelector('[role="alert"]');
+  assert.equal(warning.textContent, validationMessage);
+  assert.ok(fields().every(el => el.getAttribute('aria-invalid') === 'true' && el.getAttribute('aria-describedby') === warning.id));
+  validationMessage = '';
+  await act(async () => root.render(React.createElement(Harness)));
+  assert.equal(fields()[2].checkValidity(), true, 'normal quiz time limits have no requirement validation');
+  assert.equal(document.querySelector('[role="alert"]'), null);
+  deferErrors = true; instance++; validationMessage = 'Enter a watch time of at least one second.';
+  await act(async () => { setValue(null); root.render(React.createElement(Harness)); });
+  assert.equal(document.querySelector('[role="alert"]'), null, 'deferred errors remain hidden on an untouched field');
+  await act(async () => fields()[0].dispatchEvent(new window.FocusEvent('focusout', { bubbles: true })));
+  assert.equal(document.querySelector('[role="alert"]'), null, 'focusing or blurring does not count as editing');
+  let invalidEvent;
+  fields()[2].addEventListener('invalid', event => { invalidEvent = event; });
+  await act(async () => fields()[2].reportValidity());
+  assert.equal(invalidEvent.defaultPrevented, true, 'the browser validation popup is suppressed');
+  assert.equal(document.activeElement, fields()[2], 'invalid watch time focuses seconds');
+  assert.equal(document.querySelector('[role="alert"]').textContent, validationMessage, 'native invalid submission reveals the error');
+  instance++; await act(async () => root.render(React.createElement(Harness)));
+  assert.equal(document.querySelector('[role="alert"]'), null, 'a new field resets its interaction state');
+  await enter(2, '0');
+  assert.equal(document.querySelector('[role="alert"]').textContent, validationMessage, 'typing enables live errors even if the total stays zero');
+  validationMessage = ''; await act(async () => root.render(React.createElement(Harness)));
+  assert.equal(document.querySelector('[role="alert"]'), null);
   disabled = true; await act(async () => root.render(React.createElement(Harness))); assert.ok(fields().every(el => el.disabled));
 });

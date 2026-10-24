@@ -23,6 +23,7 @@ test('certificate library orders defaults, protects system designs, edits privat
     { id: 'minimal', name: 'Minimal', is_system: true, is_default: false, user_id: null },
   ].map(row => ({ ...row, description: null, html_template: '<div>{{user.full_name}}</div>', css_template: '.certificate { display: grid; }', page_format: 'Letter', orientation: 'landscape' })), reject = false, allow = true;
   let rejectPdf = false, pdfCount = 0;
+  let waitForConfirmation = false, resolveConfirmation, actionRuns = 0;
   const revoked = [], originalCreate = URL.createObjectURL, originalRevoke = URL.revokeObjectURL;
   URL.createObjectURL = () => `blob:pdf-${++pdfCount}`; URL.revokeObjectURL = value => revoked.push(value);
   t.after(() => { URL.createObjectURL = originalCreate; URL.revokeObjectURL = originalRevoke; });
@@ -58,7 +59,7 @@ test('certificate library orders defaults, protects system designs, edits privat
     } },
     './api': { engineKey: ['quiz-engine'], request: async (route, method, body) => { requests.push({ route, method, body }); return {}; } },
     '~/components/library/pagination': { __esModule: true, default: ({ onPageChange, onLimitChange }) => React.createElement('div', null, React.createElement('button', { onClick: () => onPageChange(2) }, 'Page two'), React.createElement('button', { onClick: () => onLimitChange(10) }, 'Ten rows')) },
-    '~/components/confirmPopup/useConfirm': { useConfirm: () => ({ confirm: async options => { confirmations.push(options); return allow; }, dialogProps: {} }) },
+    '~/components/confirmPopup/useConfirm': { useConfirm: () => ({ confirm: async options => { confirmations.push(options); return waitForConfirmation ? new Promise(resolve => { resolveConfirmation = resolve; }) : allow; }, dialogProps: {} }) },
     '~/components/confirmPopup/confirmDialog': { ConfirmDialog: () => null },
     './EditorPopup': { __esModule: true, default: ({ open, title, children, onClose, onAfterClose }) => { React.useEffect(() => { if (!open) onAfterClose?.(); }, [open]); return open ? React.createElement('div', { role: 'dialog' }, title, React.createElement('button', { onClick: onClose }, 'Close popup'), children) : null; }, EditorActions: ({ children }) => React.createElement('div', null, children) },
     './shared': {
@@ -66,7 +67,7 @@ test('certificate library orders defaults, protects system designs, edits privat
       Select: ({ label, value, values, onChange }) => React.createElement('select', { 'aria-label': label, value, onChange: e => onChange(e.target.value) }, values.map(option => React.createElement('option', { key: option.value, value: option.value }, option.label))),
       Notice: ({ error }) => error ? React.createElement('p', { role: 'alert' }, error) : null,
       LoadState: ({ query }) => query.isError ? React.createElement('p', { role: 'alert' }, query.error.message) : null,
-      useAction: () => { const client = useQueryClient(); const [busy, setBusy] = React.useState(false), [error, setError] = React.useState(''); return { busy, error, run: async work => { setBusy(true); setError(''); try { await work(); } catch (error) { setError(error.message); } finally { await client.invalidateQueries({ queryKey: ['quiz-engine'] }); setBusy(false); } } }; },
+      useAction: () => { const client = useQueryClient(); const [busy, setBusy] = React.useState(false), [error, setError] = React.useState(''); return { busy, error, run: async work => { actionRuns++; setBusy(true); setError(''); try { await work(); } catch (error) { setError(error.message); } finally { await client.invalidateQueries({ queryKey: ['quiz-engine'] }); setBusy(false); } } }; },
     },
   };
   function load(file) {
@@ -132,15 +133,23 @@ test('certificate library orders defaults, protects system designs, edits privat
   const deleteCopy = async () => { await act(async () => document.querySelector('[aria-label="Delete: Classic - copy"]').click()); await tick(); };
   const deleteCount = () => requests.filter(request => request.method === 'DELETE').length;
   const beforeCancel = deleteCount();
+  const beforeCancelActions = actionRuns;
   allow = false; await deleteCopy();
   assert.equal(deleteCount(), beforeCancel, 'cancelling the confirmation never sends DELETE');
+  assert.equal(actionRuns, beforeCancelActions, 'cancelling does not start a loading toast');
   assert.ok(rows.some(row => row.id === copiedId));
   assert.equal(confirmations.at(-1).intent, 'danger');
   assert.ok(confirmations.at(-1).message.includes('Classic - copy'), 'the existing popup identifies the template');
   allow = true; reject = true; await deleteCopy();
   assert.ok(document.querySelector('[role=alert]'), 'failed deletion is reported in the gallery');
   assert.ok(rows.some(row => row.id === copiedId), 'failed deletion keeps the card');
-  reject = false; await deleteCopy();
+  reject = false; waitForConfirmation = true;
+  const beforeConfirmedDelete = actionRuns;
+  await deleteCopy();
+  assert.equal(actionRuns, beforeConfirmedDelete, 'gallery deletion waits for confirmation before loading');
+  await act(async () => resolveConfirmation(true)); await tick();
+  assert.equal(actionRuns, beforeConfirmedDelete + 1);
+  waitForConfirmation = false;
   assert.ok(!rows.some(row => row.id === copiedId), 'confirmation deletes the chosen copy');
   assert.equal(document.querySelector('[aria-label="Delete: Classic - copy"]'), null, 'the gallery refreshes after deletion');
   assert.equal(edit, undefined, 'Delete never triggers card navigation');
@@ -183,8 +192,15 @@ test('certificate library orders defaults, protects system designs, edits privat
   await submit(); assert.equal(rows.at(-1).name, 'New certificate');
 
   await render('private');
+  const beforeDetailDelete = actionRuns;
   allow = false; await click('Delete'); assert.ok(rows.find(row => row.id === 'private'));
-  allow = true; await click('Delete'); assert.ok(!rows.find(row => row.id === 'private'));
+  assert.equal(actionRuns, beforeDetailDelete);
+  waitForConfirmation = true; await click('Delete');
+  assert.equal(actionRuns, beforeDetailDelete, 'template editor deletion does not announce loading while confirming');
+  await act(async () => resolveConfirmation(true)); await tick();
+  assert.equal(actionRuns, beforeDetailDelete + 1);
+  assert.ok(!rows.find(row => row.id === 'private'));
+  waitForConfirmation = false; allow = true;
   assert.equal(saved, '');
 
   const QuizView = load('app/components/quizEngine/QuizCertificate.tsx').default;

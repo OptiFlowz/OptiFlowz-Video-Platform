@@ -1,4 +1,3 @@
-import Footer from "~/components/footer/footer";
 import Header from "~/components/header/header";
 import AnalyticsPage from "~/components/analytics/analyticsPage";
 import type { Route } from "./+types/play";
@@ -12,5 +11,5 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Page() {
-  return <ClientGuard mode="auth" access="platformAnalytics"><Header /><AnalyticsPage /><Footer /></ClientGuard>;
+  return <ClientGuard mode="auth" access="platformAnalytics"><Header /><AnalyticsPage /></ClientGuard>;
 }

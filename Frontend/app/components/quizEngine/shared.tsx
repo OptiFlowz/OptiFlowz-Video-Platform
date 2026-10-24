@@ -5,7 +5,7 @@ import { useAuthorization } from '~/authorization/authorization';
 import { InfoSVG } from '~/constants';
 import { getToken } from '~/functions';
 import { useI18n } from '~/i18n';
-import { showToast } from '~/components/toast/Toast';
+import { startToast } from '~/components/toast/Toast';
 import CustomSelect from '~/components/customSelect/customSelect';
 import { engineKey, request, all } from './api';
 import type { Resource, Owned } from './model';
@@ -41,9 +41,16 @@ export function useAction() {
   async function run(work: () => Promise<void | boolean>, announce = true) {
     if (lock.current) return;
     lock.current = true; setBusy(true); setError('');
-    try { const changed = await work(); if (announce && changed !== false) showToast(t('qeSaved')); }
-    catch (e) { setError(e instanceof Error ? e.message : t('quizError')); }
-    finally { await client.invalidateQueries({ queryKey: engineKey }); lock.current = false; setBusy(false); }
+    const notification = announce ? startToast(t('qeSaving')) : null;
+    try {
+      let changed: void | boolean;
+      try { changed = await work(); }
+      finally { await client.invalidateQueries({ queryKey: engineKey }); }
+      if (changed !== false) notification?.success(t('qeSaved'));
+      else notification?.dismiss();
+    }
+    catch (e) { notification?.dismiss(); setError(e instanceof Error ? e.message : t('quizError')); }
+    finally { lock.current = false; setBusy(false); }
   }
   return { busy, error, run, setError };
 }

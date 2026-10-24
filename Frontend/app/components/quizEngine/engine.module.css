@@ -562,7 +562,7 @@ main.management .categoryQuestionsTable .categoryRemove { color: var(--accentRed
 .ruleTitle p { margin: 0; color: var(--text1); font-size: 1rem; font-weight: 500; overflow-wrap: anywhere; }
 .page.editorPage .ruleCard .ruleChangeVideo { display: inline-flex; align-items: center; justify-content: center; width: auto; min-height: 32px; padding: 6px 12px; margin: 8px 0 0; border: 0; border-radius: 999px; background: var(--background2); color: var(--accentBlue2); font: inherit; font-size: .8rem; line-height: 1.25; cursor: pointer; }
 .page.editorPage .ruleCard .ruleChangeVideo:hover:not(:disabled) { background: var(--background1); }
-.ruleSummary { display: block; margin-top: 6px; color: var(--text2); font-size: .85rem; overflow-wrap: anywhere; }
+.ruleSummary { display: block; margin-top: 2px; color: var(--text2); font-size: .85rem; overflow-wrap: anywhere; }
 .ruleControls { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 12px; }
 .ruleControls .ruleActive { margin-right: 8px; }
 @media (max-width: 600px) {
@@ -806,6 +806,7 @@ main.management .resourceHeader { flex-direction: row; align-items: center; }
 .partBody > .partEmpty { margin: 0; }
 .partBody > .candidateList:empty { display: none; }
 .partBody > .partHeader.candidateHeader { min-height: 32px; margin: 0 0 8px; padding-inline: 0; }
+.candidateHeader > .partAdd { margin-inline-start: auto; align-self: center; flex-shrink: 0; }
 .partHeader .partHeading { min-width: 0; flex-shrink: 1; flex-wrap: wrap; }
 .candidateBulk { flex-wrap: wrap; }
 .candidateBulk[data-visible='false'] { display: none; }
@@ -868,6 +869,10 @@ main.management .listTable thead tr > th, main.management .listTable tbody tr > 
 @container quiz-management (max-width: 460px) {
   main.management .listTable[data-resource='quizzes'] tbody tr { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   main.management .listTable[data-resource='quizzes'] td:first-child:not(.empty) { grid-column: 1 / -1; grid-row: auto; }
+}
+@media (max-width: 450px) {
+  .candidateHeader > .partAdd { box-sizing: border-box; flex: 0 0 44px; width: 44px; height: 44px; padding: 0; gap: 0; border-radius: 50%; justify-content: center; }
+  .candidateHeader > .partAdd > span { display: none; }
 }
 @media (max-width: 400px) {
   .headerActions { flex-direction: column; align-items: stretch; }

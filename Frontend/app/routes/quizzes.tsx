@@ -1,5 +1,4 @@
 import ClientGuard from "~/client-guard";
-import Footer from "~/components/footer/footer";
 import Header from "~/components/header/header";
 import type { Route } from "./+types/play";
 
@@ -16,5 +15,5 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Page() {
-  return <ClientGuard mode="auth" access="quizzes"><Header /><QuizzesPage /><Footer /></ClientGuard>;
+  return <ClientGuard mode="auth" access="quizzes"><Header /><QuizzesPage /></ClientGuard>;
 }

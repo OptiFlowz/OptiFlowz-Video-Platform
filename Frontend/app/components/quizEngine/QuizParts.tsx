@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useI18n } from '~/i18n';
 import { AddSVG, DeleteSVG } from '~/constants';
+import { formatDuration } from '~/functions';
+import DurationInput from '../library/DurationInput';
 import PlaylistVideoPicker from '~/components/editPlaylistPage/PlaylistVideoPicker';
 import { ConfirmDialog } from '~/components/confirmPopup/confirmDialog';
 import { useConfirm } from '~/components/confirmPopup/useConfirm';
@@ -23,8 +25,8 @@ function Footer({ onBack, busy = false, children }: { onBack?: () => void; busy?
   if (!onBack && !children) return null;
   return <EditorActions className={styles.partFooter}>{onBack && <button type="button" className="cancelBtn" disabled={busy} onClick={onBack}>{t('back')}</button>}{children}</EditorActions>;
 }
-function AddButton({ children, onClick, disabled }: { children: ReactNode; onClick: () => void; disabled?: boolean }) {
-  return <button type="button" className={styles.partAdd} disabled={disabled} onClick={onClick}>{AddSVG}{children}</button>;
+function AddButton({ children, onClick, disabled }: { children: string; onClick: () => void; disabled?: boolean }) {
+  return <button type="button" className={styles.partAdd} aria-label={children} disabled={disabled} onClick={onClick}>{AddSVG}<span>{children}</span></button>;
 }
 function PartCard({ title, meta, children, image, video = false, editable, busy, onEdit, onRemove, selected, onSelect }: {
   selected: boolean; onSelect: (checked: boolean) => void;
@@ -63,7 +65,7 @@ function DraftDialog<T extends object>({ title, initial, onClose, save, children
     setOpen(false);
   };
   return <EditorPopup open={open} compact title={title} onClose={() => void close()} onAfterClose={onClose} className={className}>
-    <form className={`quizPopupForm ${styles.settingsForm}`} onSubmit={event => { event.preventDefault(); event.stopPropagation(); if (!valid(draft)) return; let saved = false; void action.run(async () => { await save(draft); saved = true; }).then(() => { if (saved) setOpen(false); }); }}>
+    <form className={`quizPopupForm ${styles.settingsForm}`} onSubmit={event => { event.preventDefault(); event.stopPropagation(); if (!event.currentTarget.reportValidity() || !valid(draft)) return; let saved = false; void action.run(async () => { await save(draft); saved = true; }).then(() => { if (saved) setOpen(false); }); }}>
       <div className="quizPopupBody"><Notice {...action} /><fieldset disabled={action.busy}>{children(draft, patch => setDraft(previous => ({ ...previous, ...patch })))}</fieldset></div>
       <EditorActions><button type="button" className="cancelBtn" disabled={action.busy} onClick={() => void close()}>{t('adminCancel')}</button><button type="submit" className="saveCaptionsBtn" disabled={action.busy || !valid(draft)}>{t(action.busy ? 'saving' : 'adminSave')}</button></EditorActions>
     </form><ConfirmDialog {...dialogProps} />
@@ -113,23 +115,25 @@ export function Candidates({ quiz, editable, onBack, onDirty = () => {} }: PartP
     try { await mutate(async () => { await request(`/${quiz.id}/questions/${id}`, 'PATCH', { position: rows[to].position }); }); }
     finally { setOrder(null); }
   };
-  const removeMany = (ids: string[]) => void mutate(async () => {
-    if (!ids.length || !await confirm({ title: t('quizRemove'), message: t(ids.length === 1 ? 'qeUnlinkQuestion' : 'qeUnlinkQuestions'), yesText: t('quizRemove'), noText: t('adminCancel') })) return false;
-    // Keep failed and unprocessed rows selected. A retry never repeats successful deletions.
-    for (const id of ids) {
-      await request(`/${quiz.id}/questions/${id}`, 'DELETE');
-      reportDirty(id, false);
-      setSelected(current => current.filter(value => value !== id));
-    }
-  });
+  const removeMany = async (ids: string[]) => {
+    if (!editable || mutation.current || !ids.length) return;
+    if (!await confirm({ title: t('quizRemove'), message: t(ids.length === 1 ? 'qeUnlinkQuestion' : 'qeUnlinkQuestions'), yesText: t('quizRemove'), noText: t('adminCancel') })) return;
+    await mutate(async () => {
+      // Keep failed and unprocessed rows selected. A retry never repeats successful deletions.
+      for (const id of ids) {
+        await request(`/${quiz.id}/questions/${id}`, 'DELETE');
+        reportDirty(id, false);
+        setSelected(current => current.filter(value => value !== id));
+      }
+    });
+  };
   const remove = (row: Candidate) => removeMany([row.question_id]);
   return <>
-    <div className={scrollClass}><div className={`${styles.partHeader} ${styles.candidateHeader}`}>{editable && <input ref={selectAll} className={styles.candidateCheckbox} type="checkbox" aria-label={t('qeSelectAll')} checked={allSelected} disabled={action.busy || !rows.length} onChange={event => setSelected(event.target.checked ? rows.map(row => row.question_id) : [])} />}<h4 className={styles.partHeading}>{t('qeCandidates')} {linked.data && <span>{linked.data.length}</span>}</h4>{editable && <div className={styles.candidateBulk} data-visible={selectedIds.length > 0} aria-hidden={!selectedIds.length}><span>{t('postSelectedCount', { count: selectedIds.length })}</span><button type="button" className={styles.button} tabIndex={selectedIds.length ? 0 : -1} disabled={action.busy || !selectedIds.length} onClick={() => removeMany(selectedIds)}>{DeleteSVG}{t('quizRemove')}</button></div>}<Notice {...action} variant="heading" /></div><LoadState query={linked} />
+    <div className={scrollClass}><div className={`${styles.partHeader} ${styles.candidateHeader}`}>{editable && <input ref={selectAll} className={styles.candidateCheckbox} type="checkbox" aria-label={t('qeSelectAll')} checked={allSelected} disabled={action.busy || !rows.length} onChange={event => setSelected(event.target.checked ? rows.map(row => row.question_id) : [])} />}<h4 className={styles.partHeading}>{t('qeCandidates')} {linked.data && <span>{linked.data.length}</span>}</h4>{editable && <div className={styles.candidateBulk} data-visible={selectedIds.length > 0} aria-hidden={!selectedIds.length}><span>{t('postSelectedCount', { count: selectedIds.length })}</span><button type="button" className={styles.button} tabIndex={selectedIds.length ? 0 : -1} disabled={action.busy || !selectedIds.length} onClick={() => removeMany(selectedIds)}>{DeleteSVG}{t('quizRemove')}</button></div>}<Notice {...action} variant="heading" />{editable && bankAccess.read && <AddButton disabled={action.busy || !linked.isSuccess} onClick={() => setAdding(true)}>{t('quizAddQuestion')}</AddButton>}</div><LoadState query={linked} />
       <CandidateList rows={rows} selected={selectedIds} onSelect={(id, checked) => setSelected(current => checked ? [...current.filter(value => value !== id), id] : current.filter(value => value !== id))} editable={editable} busy={action.busy} onMove={(id, targetId) => { void move(id, targetId); }} onDirty={reportDirty} onRemove={remove}
         onEdit={canEditQuestions ? row => setEditingQuestion(row.question_id) : undefined}
         onPoints={(row, max_points) => mutate(async () => { await request(`/${quiz.id}/questions/${row.question_id}`, 'PATCH', { max_points }); })} />
       {!linked.data?.length && linked.isSuccess && <p className={styles.partEmpty}>{t('quizNoQuestionsYet')}</p>}
-      {editable && bankAccess.read && <AddButton disabled={action.busy || !linked.isSuccess} onClick={() => setAdding(true)}>{t('quizAddQuestion')}</AddButton>}
     </div><Footer onBack={onBack} busy={action.busy} />
     <EditorPopup open={adding} title={t('quizAddQuestion')} description={t('qeCandidatesHelp')} onClose={() => { if (!action.busy) setAdding(false); }} wide>
       <div className={scrollClass}><Notice {...action} /><LoadState query={bank} /><LoadState query={sources} variant="inline" /><Select label={t('qeCategory')} value={categoryFilter} values={[{ value: '', label: t('qeAllCategories') }, { value: '__uncategorized__', label: t('qeUncategorized') }, ...bankCategories.map(category => ({ value: category.id, label: category.name }))]} onChange={setCategoryFilter} /><input className={styles.partFilter} type="search" placeholder={t('qeFilterQuestions')} aria-label={t('qeFilterQuestions')} value={filter} onChange={e => setFilter(e.target.value)} />
@@ -172,11 +176,13 @@ function SourceForm({ quiz, initial, editable, onDirty, onBack }: PartProps & { 
   };
   const valid = allocationValid(rows);
   return <>
-    <div className={scrollClass}><PartSelectionHeader title={t('quizSourcesButton')} count={rows.length} editable={editable} busy={action.busy} selection={selection} onRemove={ids => void removeSources(ids)}><Notice {...action} variant="heading" /></PartSelectionHeader>
+    <div className={scrollClass}><PartSelectionHeader title={t('quizSourcesButton')} count={rows.length} editable={editable} busy={action.busy} selection={selection} onRemove={ids => void removeSources(ids)}>
+      <Notice {...action} variant="heading" />
+      {editable && <AddButton disabled={action.busy || !fixed.isSuccess || rows.length >= 1000} onClick={() => setEditing({ index: rows.length, row: { category_id: '', position: nextPosition(rows, fixed.data ?? []), question_count: 1, max_points: null } })}>{t('quizAddSource')}</AddButton>}
+    </PartSelectionHeader>
       {categoryAccess.read && <LoadState query={categories} variant="inline" />}
       {rows.map((row, index) => <PartCard key={`${index}:${row.category_id}`} selected={selection.selectedIds.includes(sourceId(row))} onSelect={checked => selection.select(sourceId(row), checked)} title={row.category_id === null ? t('qeUncategorized') : choices.find(g => g.id === row.category_id)?.name || row.category?.name || row.category_id} meta={<>{t('quizQuestionsCount', { count: row.question_count })} · {t('qePointsPerQuestion')}: {row.max_points ?? t('qeUseBankPoints')}</>} editable={editable} busy={action.busy} onEdit={() => setEditing({ index, row })} onRemove={() => void removeSources([sourceId(row)])} />)}
       {!rows.length && <p className={styles.partEmpty}>{t('quizNoSourcesYet')}</p>}
-      {editable && <AddButton disabled={action.busy || !fixed.isSuccess || rows.length >= 1000} onClick={() => setEditing({ index: rows.length, row: { category_id: '', position: nextPosition(rows, fixed.data ?? []), question_count: 1, max_points: null } })}>{t('quizAddSource')}</AddButton>}
       <LoadState query={fixed} variant="inline" />
       {fixed.data && <p className={styles.partMeta}>{t('quizQuestionCount')}: {questionCount(fixed.data, rows)} · {t('qeDerivedCountHelp')}</p>}
       {!valid && <p className={styles.error}>{t('qeAllocationInvalid')}</p>}
@@ -211,14 +217,17 @@ export function Requirements({ quiz, editable, onBack }: PartProps & { onDirty?:
     try { await action.run(async () => { saved = await work() !== false; return saved; }); return saved; }
     finally { mutation.current = false; }
   };
-  const removeRules = (ids: string[]) => void mutate(async () => {
-    if (!ids.length || !await confirm({ title: t('quizRemove'), message: t(ids.length === 1 ? 'quizDeleteRuleMessage' : 'quizDeleteRulesMessage'), yesText: t('quizRemove'), noText: t('adminCancel') })) return false;
-    // Only failed and unprocessed rules remain selected if a batch stops midway.
-    for (const id of ids) {
-      await request(`/quiz-requirements/${quiz.id}/${id}`, 'DELETE');
-      selection.select(id, false);
-    }
-  });
+  const removeRules = async (ids: string[]) => {
+    if (!editable || mutation.current || !ids.length) return;
+    if (!await confirm({ title: t('quizRemove'), message: t(ids.length === 1 ? 'quizDeleteRuleMessage' : 'quizDeleteRulesMessage'), yesText: t('quizRemove'), noText: t('adminCancel') })) return;
+    await mutate(async () => {
+      // Only failed and unprocessed rules remain selected if a batch stops midway.
+      for (const id of ids) {
+        await request(`/quiz-requirements/${quiz.id}/${id}`, 'DELETE');
+        selection.select(id, false);
+      }
+    });
+  };
   const selectVideo = async (video: VideoCard) => {
     if (!picker || mutation.current) return;
     setAddingId(video.id);
@@ -229,7 +238,10 @@ export function Requirements({ quiz, editable, onBack }: PartProps & { onDirty?:
     } finally { setAddingId(null); }
   };
   return <>
-    <div className={scrollClass}><PartSelectionHeader title={t('quizRulesButton')} count={query.data?.length} editable={editable} busy={action.busy} selection={selection} onRemove={removeRules}><Notice {...action} variant="heading" /></PartSelectionHeader><LoadState query={query} />
+    <div className={scrollClass}><PartSelectionHeader title={t('quizRulesButton')} count={query.data?.length} editable={editable} busy={action.busy} selection={selection} onRemove={removeRules}>
+      <Notice {...action} variant="heading" />
+      {editable && <AddButton disabled={action.busy || !query.isSuccess} onClick={() => setPicker({ threshold: { min_watch_percentage: 100, min_watch_seconds: null } })}>{t('quizAddRule')}</AddButton>}
+    </PartSelectionHeader><LoadState query={query} />
       {query.data?.map(row => <RequirementCard key={row.video_id} row={row} editable={editable} busy={action.busy}
         selected={selection.selectedIds.includes(row.video_id)} onSelect={checked => selection.select(row.video_id, checked)}
         onEdit={() => setEditing(row)}
@@ -237,21 +249,26 @@ export function Requirements({ quiz, editable, onBack }: PartProps & { onDirty?:
         onChangeVideo={threshold => setPicker({ row, threshold })}
         onRemove={() => removeRules([row.video_id])} />)}
       {query.isSuccess && !query.data?.length && <p className={styles.partEmpty}>{t('quizNoRulesYet')}</p>}
-      {editable && <AddButton disabled={action.busy || !query.isSuccess} onClick={() => setPicker({ threshold: { min_watch_percentage: 100, min_watch_seconds: null } })}>{t('quizAddRule')}</AddButton>}
     </div><Footer onBack={onBack} busy={action.busy} />
     {editing && <DraftDialog<{ mode: 'percentage' | 'seconds'; value: number | '' }>
       title={t('quizEditRule')}
       initial={{ mode: editing.min_watch_percentage !== null ? 'percentage' : 'seconds', value: Number(editing.min_watch_percentage ?? editing.min_watch_seconds) }}
       onClose={() => setEditing(null)} valid={draft => draft.value !== ''}
       save={async draft => { await saveRequirement(request, editing, false, editing.video_id, { min_watch_percentage: draft.mode === 'percentage' ? Number(draft.value) : null, min_watch_seconds: draft.mode === 'seconds' ? Number(draft.value) : null }, t('qeRuleReplacementIncomplete')); }}>
-      {(draft, change) => <>
+      {(draft, change) => {
+        const maxSeconds = editing.video_card?.duration_seconds ?? 2147483647;
+        const timeError = draft.mode !== 'seconds' ? '' : Number(draft.value) < 1 ? t('quizWatchTimeRequired') : Number(draft.value) > maxSeconds ? t('quizWatchTimeExceedsVideo', { duration: formatDuration(maxSeconds) }) : '';
+        return <>
         <Field label={t('quizRuleType')} help={`${t('quizVideoWatchPercentageHelp')} ${t('quizVideoWatchSecondsHelp')}`}><Select label={t('quizRuleType')} value={draft.mode}
           values={[{ value: 'percentage', label: t('quizVideoWatchPercentage') }, { value: 'seconds', label: t('quizVideoWatchSeconds') }]}
-          onChange={mode => change({ mode: mode as 'percentage' | 'seconds', value: mode === 'percentage' ? 100 : 1 })} /></Field>
-        <Field label={t(draft.mode === 'percentage' ? 'quizRequiredPercentage' : 'quizRequiredSeconds')} help={t(draft.mode === 'percentage' ? 'quizVideoWatchPercentageHelp' : 'quizVideoWatchSecondsHelp')}><input aria-label={t(draft.mode === 'percentage' ? 'quizRequiredPercentage' : 'quizRequiredSeconds')} type="number" required
-          min={draft.mode === 'percentage' ? 0.01 : 1} max={draft.mode === 'percentage' ? 100 : editing.video_card?.duration_seconds ?? 2147483647} step={draft.mode === 'percentage' ? 0.01 : 1} value={draft.value}
-          onChange={event => change({ value: numberDraftValue(event.target.value) })} /></Field>
-      </>}
+          onChange={mode => change({ mode: mode as 'percentage' | 'seconds', value: mode === 'percentage' ? 100 : 0 })} /></Field>
+        <Field label={t(draft.mode === 'percentage' ? 'quizRequiredPercentage' : 'quizRequiredSeconds')} help={t(draft.mode === 'percentage' ? 'quizVideoWatchPercentageHelp' : 'quizVideoWatchSecondsHelp')}>
+          {draft.mode === 'percentage' ? <input aria-label={t('quizRequiredPercentage')} type="number" required min={0.01} max={100} step={0.01} value={draft.value}
+            onChange={event => change({ value: numberDraftValue(event.target.value) })} /> :
+            <DurationInput label={t('quizRequiredSeconds')} value={draft.value === '' ? null : draft.value} validationMessage={timeError} deferErrors onChange={value => change({ value: value ?? 0 })} />}
+        </Field>
+      </>;
+      }}
     </DraftDialog>}
     <EditorPopup open={!!picker} title={t(picker?.row ? 'qeChangeVideo' : 'quizAddRule')} description={t('quizSelectVideoForRule')} onClose={() => { if (!mutation.current) setPicker(null); }} wide className={styles.rulePopup}>
       <div className={`${scrollClass} ${styles.ruleVideoPicker}`}><Notice {...action} /><PlaylistVideoPicker ownerId={quiz.user_id} included={query.data?.map(r => r.video_id) ?? []} busy={action.busy || !query.isSuccess} addingId={addingId} onAdd={video => void selectVideo(video)} /></div><Footer busy={action.busy} onBack={() => setPicker(null)} />

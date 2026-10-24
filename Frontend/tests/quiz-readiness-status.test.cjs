@@ -37,7 +37,7 @@ test('readiness progress and errors stay in the readiness section while saves an
   }
   const shared = load('shared.tsx', {
     '@tanstack/react-query': { useQueryClient: () => ({ invalidateQueries: async () => {} }) },
-    '~/constants': { InfoSVG: 'i' }, '~/authorization/authorization': {}, '~/functions': {}, '~/i18n': i18n, '~/components/toast/Toast': { showToast: message => notifications.push(message) }, '~/components/customSelect/customSelect': {},
+    '~/constants': { InfoSVG: 'i' }, '~/authorization/authorization': {}, '~/functions': {}, '~/i18n': i18n, '~/components/toast/Toast': { startToast: () => ({ success: message => notifications.push(message), dismiss() {} }) }, '~/components/customSelect/customSelect': {},
     './api': { engineKey: ['quiz-engine'] }, './model': {}, './EditorPopup': popup, './engine.module.css': styles,
   });
   const model = load('model.ts');

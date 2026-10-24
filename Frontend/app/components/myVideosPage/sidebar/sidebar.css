@@ -1,4 +1,4 @@
-/* Reserve the same column for page content and its footer. */
+/* Keep page content aligned with the fixed desktop sidebar. */
 @media (min-width: 901px) {
   .appFrame:has(.adminSidebarDock) {
     --admin-sidebar-width: 300px;
@@ -31,11 +31,5 @@
     overscroll-behavior-y: contain;
     scrollbar-width: thin;
     scrollbar-color: var(--accentBlue) var(--background1);
-  }
-}
-
-@media (min-width: 901px) and (max-width: 1300px) {
-  .appFrame:has(.adminSidebarDock) {
-    --admin-sidebar-width: 250px;
   }
 }

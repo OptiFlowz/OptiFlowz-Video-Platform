@@ -28,10 +28,10 @@ export default function CertificateTemplates(props: Props) {
   const rows = (templates.data ?? []).filter(row => row.name.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()));
   const totalPages = Math.max(1, Math.ceil(rows.length / limit));
   useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
-  const remove = (template: CertificateTemplate) => {
+  const remove = async (template: CertificateTemplate) => {
     if (template.is_system || action.busy) return;
-    void action.run(async () => {
-      if (!await confirm({ intent: 'danger', title: t('quizCertificateDelete'), message: t('quizCertificateDeleteConfirm', { name: template.name }), yesText: t('adminDelete'), noText: t('adminCancel') })) return false;
+    if (!await confirm({ intent: 'danger', title: t('quizCertificateDelete'), message: t('quizCertificateDeleteConfirm', { name: template.name }), yesText: t('adminDelete'), noText: t('adminCancel') })) return;
+    await action.run(async () => {
       await certificateRequest(`/${encodeURIComponent(template.id)}`, 'DELETE');
     });
   };
@@ -94,6 +94,13 @@ export function TemplateForm({ id, initial, onEdit, onSaved, onDirty, onBusy }: 
     setBaseline(JSON.stringify(templateInput(form))); onDirty(false);
     if (id === 'new') onSaved(result.template.id); else setRevision(value => value + 1);
   };
+  const remove = async () => {
+    if (id === 'new' || readOnly || action.busy) return;
+    if (!await confirm({ title: t('quizCertificateDelete'), message: t('quizCertificateDeleteConfirm', { name: initial.name }), yesText: t('adminDelete'), noText: t('adminCancel') })) return;
+    await action.run(async () => {
+      await certificateRequest(`/${encodeURIComponent(id)}`, 'DELETE'); onDirty(false); onSaved('');
+    });
+  };
   return <div className={styles.certificateTab}>
     <div className={styles.toolbar}>
       <div className="libraryHeading"><h1>{id === 'new' ? t('quizCertificateCreate') : form.name}</h1></div>
@@ -102,10 +109,7 @@ export function TemplateForm({ id, initial, onEdit, onSaved, onDirty, onBusy }: 
           const result = await certificateRequest<{ template: CertificateTemplate }>('', 'POST', { ...templateInput(form), name: `${form.name.slice(0, 248)} - copy` });
           onSaved(result.template.id);
         })}>{t('quizCertificateCopy')}</button>}
-        {id !== 'new' && !readOnly && <button type="button" className={`${styles.button} ${styles.danger}`} disabled={action.busy} onClick={() => void action.run(async () => {
-          if (!await confirm({ title: t('quizCertificateDelete'), message: t('quizCertificateDeleteConfirm', { name: initial.name }), yesText: t('adminDelete'), noText: t('adminCancel') })) return false;
-          await certificateRequest(`/${encodeURIComponent(id)}`, 'DELETE'); onDirty(false); onSaved('');
-        })}>{t('adminDelete')}</button>}
+        {id !== 'new' && !readOnly && <button type="button" className={`${styles.button} ${styles.danger}`} disabled={action.busy} onClick={() => void remove()}>{t('adminDelete')}</button>}
       </div>
     </div>
     {readOnly && <p className={styles.sectionHelp}>{t('quizCertificateReadOnly')}</p>}

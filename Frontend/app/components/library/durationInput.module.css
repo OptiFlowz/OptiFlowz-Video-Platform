@@ -3,3 +3,4 @@
 .control.control input.segment.segment[type='text'][role='spinbutton']:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: 0; }
 .control.control input.segment.segment[type='text'][role='spinbutton']:disabled { cursor: not-allowed; opacity: .5; }
 .separator { flex: none; color: var(--text2); user-select: none; }
+.error { margin: 6px 0 0; color: var(--accentRed3); font-size: .875rem; line-height: 1.5; }
