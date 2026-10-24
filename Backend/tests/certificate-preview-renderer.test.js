@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { mock, test } from 'node:test';
+import { createCertificateFontLoader as realFontLoader } from '../src/modules/certificates/certificate-templates/services/certificateFontLoader.js';
 
 let options;
 let contextOptions;
@@ -11,6 +12,17 @@ let requestRoute;
 let websocketRoute;
 let resolveLaunch;
 let launchStarted;
+let resolveFonts;
+let fontsStarted;
+mock.module(new URL('../src/modules/certificates/certificate-templates/services/certificateFontLoader.js', import.meta.url).href, {
+  namedExports: { createCertificateFontLoader(document, signal) {
+    if (mode !== 'late-font-stylesheet') return realFontLoader(document, signal);
+    return { async stylesheet() {
+      fontsStarted();
+      return new Promise(resolve => { resolveFonts = resolve; });
+    } };
+  } },
+});
 const server = { wsEndpoint: () => 'ws://127.0.0.1/test', async kill() { kills++; } };
 mock.module('playwright', { namedExports: { chromium: {
   async launchServer(value) {
@@ -29,6 +41,7 @@ mock.module('playwright', { namedExports: { chromium: {
         setDefaultTimeout() {}, setDefaultNavigationTimeout() {},
         async newPage() { return {
           async emulateMedia() {}, async setContent() { if (mode === 'content-error') throw new Error('Content failed'); },
+          async evaluate() { return mode === 'font-error'; },
           async pdf(value) {
             pdfOptions = value;
             if (mode === 'hang') return new Promise(() => {});
@@ -58,7 +71,8 @@ test('renderer uses isolated sandboxed browsers, no inherited secrets, disabled 
     assert.equal(contextOptions.offline, true);
     assert.equal(contextOptions.acceptDownloads, false);
     let aborted = false, socketClosed = false;
-    await requestRoute({ async abort(reason) { aborted = reason === 'blockedbyclient'; } });
+    await requestRoute({ request: () => ({ url: () => 'http://127.0.0.1/private', resourceType: () => 'image' }),
+      async abort(reason) { aborted = reason === 'blockedbyclient'; } });
     await websocketRoute({ close() { socketClosed = true; } });
     assert.equal(aborted, true);
     assert.equal(socketClosed, true);
@@ -83,6 +97,8 @@ test('renderer bounds input/output and releases capacity after errors', async ()
   const beforeKill = kills;
   await assert.rejects(render(document), /Content failed/);
   assert.equal(kills, beforeKill + 1);
+  mode = 'font-error';
+  await assert.rejects(render(document), { status: 422 });
   mode = 'launch-error';
   await assert.rejects(render(document), /Launch failed/);
   mode = 'success';
@@ -122,6 +138,23 @@ test('client cancellation kills Chromium, including a launch completing after ab
   await rejected;
   assert.equal(kills, beforeKill + 1);
   launchStarted = undefined;
+  mode = 'success';
+  await render(document);
+});
+
+test('cancelled font preparation cannot launch an orphaned browser after the render slot is released', async () => {
+  mode = 'late-font-stylesheet';
+  const controller = new AbortController();
+  const started = new Promise(resolve => { fontsStarted = resolve; });
+  const before = launches;
+  const pending = render({ ...document, fontStylesheets: ['https://fonts.googleapis.com/css2?family=Roboto'] }, { signal: controller.signal });
+  const rejected = assert.rejects(pending, { status: 499 });
+  await started;
+  controller.abort();
+  await rejected;
+  resolveFonts('');
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(launches, before);
   mode = 'success';
   await render(document);
 });

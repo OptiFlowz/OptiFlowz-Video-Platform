@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
+import { readFile, readdir } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { once } from 'node:events';
 import { test } from 'node:test';
@@ -15,6 +16,43 @@ const template = {
   css_template: '.certificate {display:grid;place-items:center;background:rgb(240,240,250)} h1 {color:navy}',
   page_format: 'A4', orientation: 'landscape',
 };
+
+test('embedded custom fonts and SVG geometry render in Chromium and the generated PDF', { skip: !browserAvailable }, async () => {
+  // Reuse the real font shipped with our browser-test dependency; no network or system-font assumption.
+  const fixtureDir = new URL('../node_modules/playwright-core/lib/vite/traceViewer/', import.meta.url);
+  const filename = (await readdir(fixtureDir)).find(name => name.endsWith('.ttf'));
+  assert.ok(filename, 'Playwright ships its icon-font fixture');
+  const font = await readFile(new URL(filename, fixtureDir));
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50" width="100" height="50"><rect width="100" height="50" fill="gold"/></svg>';
+  const dataSvg = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+  const document = buildPreviewDocument({ ...template,
+    html_template: `<svg id="vector" viewBox="0 0 100 50" width="100" height="50"><defs><linearGradient id="paint"><stop offset="0" stop-color="gold"/><stop offset="1" stop-color="white"/></linearGradient></defs><rect width="100" height="50" fill="url(#paint)"/></svg>
+      <img id="seal" src="${dataSvg}"><p id="custom-font" style="font-family:CertificateIcons;font-size:40px">&#xea60;</p>`,
+    css_template: `@font-face {font-family:CertificateIcons;src:url('data:font/ttf;base64,${font.toString('base64')}') format('truetype')}
+      .certificate {display:block} #vector {stroke:black;stroke-width:1}`,
+  });
+  const pdf = await renderCertificatePdf(document);
+  assert.equal(pdf.subarray(0, 5).toString(), '%PDF-');
+  assert.match(pdf.toString('latin1'), /codicon/i, 'PDF embeds the custom font');
+  const browser = await chromium.launch({ executablePath, headless: true, chromiumSandbox: true });
+  try {
+    const page = await browser.newPage({ javaScriptEnabled: false });
+    await page.setContent(document.html);
+    const details = await page.evaluate(async () => {
+      await document.fonts.ready;
+      const vector = document.querySelector('#vector');
+      const image = document.querySelector('#seal');
+      return { viewBox: vector.viewBox.baseVal.width, gradient: vector.querySelector('linearGradient').localName,
+        fill: getComputedStyle(vector.querySelector('rect')).fill, imageWidth: image.naturalWidth,
+        fonts: Array.from(document.fonts).map(font => ({ family: font.family, status: font.status })) };
+    });
+    assert.equal(details.viewBox, 100);
+    assert.equal(details.gradient, 'linearGradient');
+    assert.match(details.fill, /url\(.*#paint/);
+    assert.equal(details.imageWidth, 100);
+    assert.deepEqual(details.fonts, [{ family: 'CertificateIcons', status: 'loaded' }]);
+  } finally { await browser.close(); }
+});
 
 for (const [name, loadTemplate] of [['Classic', loadDefaultCertificateTemplate], ['Minimal', loadMinimalCertificateTemplate], ['Modern', loadModernCertificateTemplate]]) {
 test(`the seeded ${name} design renders as one Letter landscape PDF page with visible certificate fields`, { skip: !browserAvailable }, async () => {

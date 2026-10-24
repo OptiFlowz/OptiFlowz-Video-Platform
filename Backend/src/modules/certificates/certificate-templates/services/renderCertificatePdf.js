@@ -1,11 +1,12 @@
 import { chromium } from 'playwright';
 import { HttpError } from '../../../../common/httpError.js';
+import { createCertificateFontLoader } from './certificateFontLoader.js';
 
 export const PDF_LIMITS = Object.freeze({
   concurrent: 1,
   timeoutMs: 20_000,
   launchTimeoutMs: 10_000,
-  maxDocumentBytes: 512 * 1024,
+  maxDocumentBytes: 3 * 1024 * 1024,
   maxPdfBytes: 5 * 1024 * 1024,
 });
 let activeRenders = 0;
@@ -28,12 +29,18 @@ export async function renderCertificatePdf(document, { signal } = {}) {
   let stopped = false;
   let timer;
   let abort;
+  const resources = new AbortController();
   const interrupted = new Promise((_resolve, reject) => {
     timer = setTimeout(() => reject(new HttpError(504, { message: 'Certificate preview timed out' })), PDF_LIMITS.timeoutMs);
     abort = () => reject(new HttpError(499, { message: 'Preview request cancelled' }));
     signal?.addEventListener('abort', abort, { once: true });
   });
   const render = async () => {
+    const fonts = createCertificateFontLoader(document, resources.signal);
+    const fontCss = document.fontStylesheets?.length ? await fonts.stylesheet() : '';
+    if (stopped || resources.signal.aborted) throw new HttpError(499, { message: 'Preview request cancelled' });
+    const html = fontCss ? document.html.replace('</head>', `<style>${fontCss}</style></head>`) : document.html;
+    if (Buffer.byteLength(html) > PDF_LIMITS.maxDocumentBytes) throw new HttpError(422, { message: 'Certificate preview exceeds the document size limit', field: 'css_template' });
     launchPromise = chromium.launchServer({
       host: '127.0.0.1',
       headless: true,
@@ -56,14 +63,20 @@ export async function renderCertificatePdf(document, { signal } = {}) {
       viewport: { width: 1123, height: 1123 },
       deviceScaleFactor: 1,
     });
-    // Deny all requests, including loopback, private networks, metadata endpoints and redirects.
-    await context.route('**/*', route => route.abort('blockedbyclient'));
+    // Chromium stays offline. Only synthetic font URLs can be fulfilled with validated font bytes.
+    await context.route('**/*', route => fonts.route(route).catch(() => {}));
     await context.routeWebSocket('**/*', socket => socket.close());
     context.setDefaultTimeout(PDF_LIMITS.timeoutMs);
     context.setDefaultNavigationTimeout(PDF_LIMITS.timeoutMs);
     const page = await context.newPage();
     await page.emulateMedia({ media: 'print' });
-    await page.setContent(document.html, { waitUntil: 'load', timeout: PDF_LIMITS.timeoutMs });
+    await page.setContent(html, { waitUntil: 'load', timeout: PDF_LIMITS.timeoutMs });
+    const fontFailed = await page.evaluate(async () => {
+      await document.fonts.ready;
+      return Array.from(document.fonts).some(font => font.status === 'error');
+    });
+    fonts.check();
+    if (fontFailed) throw new HttpError(422, { message: 'css_template: A custom font could not be loaded', field: 'css_template' });
     const pdf = await page.pdf({
       format: document.format,
       landscape: document.landscape,
@@ -80,6 +93,7 @@ export async function renderCertificatePdf(document, { signal } = {}) {
     return await Promise.race([render(), interrupted]);
   } finally {
     stopped = true;
+    resources.abort();
     clearTimeout(timer);
     signal?.removeEventListener('abort', abort);
     try {

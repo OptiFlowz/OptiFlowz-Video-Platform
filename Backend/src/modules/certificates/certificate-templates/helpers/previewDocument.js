@@ -4,9 +4,10 @@ import selectorParser from 'postcss-selector-parser';
 import { HttpError } from '../../../../common/httpError.js';
 import { normalizeTemplateHtml, validateTemplateContent } from './templateContent.validation.js';
 import { fillPreviewPlaceholders } from './templatePlaceholders.js';
+import { FONT_ORIGIN, RESOURCE_LIMITS, fontImportUrl, resourceError, rewriteFontSources } from './certificateResources.js';
 
 const PAPER_SIZES = { A4: [210, 297], Letter: [215.9, 279.4] };
-export const PREVIEW_CSP = "default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; img-src 'none'; font-src 'none'; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'";
+export const PREVIEW_CSP = `default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data: ${FONT_ORIGIN}; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'`;
 
 export function buildPreviewDocument(template) {
   const { html_template, css_template, page_format, orientation } = template;
@@ -17,7 +18,18 @@ export function buildPreviewDocument(template) {
     throw new HttpError(422, { message: 'Stored HTML and CSS must be strings', field: 'html_template' });
   }
   validateTemplateContent({ html_template, css_template });
-  const html = normalizeTemplateHtml(fillPreviewPlaceholders(normalizeTemplateHtml(html_template)));
+  const fontStylesheets = [];
+  const fontSources = [];
+  const addStylesheet = url => {
+    if (!fontStylesheets.includes(url)) fontStylesheets.push(url);
+    if (fontStylesheets.length > RESOURCE_LIMITS.stylesheets) throw resourceError('Too many font stylesheets');
+  };
+  const html = normalizeTemplateHtml(fillPreviewPlaceholders(normalizeTemplateHtml(html_template)), addStylesheet);
+  const root = postcss.parse(css_template, { from: undefined });
+  root.walkAtRules(rule => {
+    if (rule.name.toLowerCase() === 'import') { addStylesheet(fontImportUrl(rule.params)); rule.remove(); }
+  });
+  rewriteFontSources(root, fontSources);
   let css;
   try {
     css = postcss([prefixSelector({
@@ -40,7 +52,7 @@ export function buildPreviewDocument(template) {
         const subject = parsed.toString() || '*';
         return `${prefix}:is(${subject})${suffix}, ${prefix} :is(${subject})${suffix}`;
       },
-    })]).process(css_template, { from: undefined }).css;
+    })]).process(root, { from: undefined }).css;
   } catch {
     throw new HttpError(422, { message: 'css_template: Unable to scope CSS selectors', field: 'css_template' });
   }
@@ -57,5 +69,5 @@ body { font-family:Arial,sans-serif; }
 ${css}
 @page { size:${page_format} ${orientation}!important; margin:0!important; }
 </style></head><body><div class="certificate" style="${dimensions};box-sizing:border-box!important;margin:0!important;position:relative!important;overflow:hidden!important;contain:strict!important;page:auto!important;break-before:auto!important;break-after:auto!important">${html}</div></body></html>`;
-  return { html: document, format: page_format, landscape: orientation === 'landscape' };
+  return { html: document, format: page_format, landscape: orientation === 'landscape', fontSources, fontStylesheets };
 }
