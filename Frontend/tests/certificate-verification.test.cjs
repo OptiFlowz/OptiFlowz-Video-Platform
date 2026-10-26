@@ -54,6 +54,9 @@ test('verification page shows saved preview, current revoked status, public PDF 
     'react-router': { useParams: () => ({ certificateId: certificate.id }) },
     '~/i18n': { useI18n: () => ({ t: key => key, locale: 'en' }) },
     '~/constants': { DownloadSVG: null, CheckSVG: null },
+    '~/API': { fetchApiResponse: async () => {} },
+    '../loaders/pageLoader': { default: () => null, __esModule: true },
+    '../analytics/analyticsReportPreview': { createAnalyticsReportPreview: () => {} },
     '~/env': { env: { apiBaseUrl: 'https://api.example.test' } },
     './accountQueries': { publicCertificateQuery: () => ({}) },
     './issuedCertificatePreview': {
@@ -65,7 +68,7 @@ test('verification page shows saved preview, current revoked status, public PDF 
   assert.match(html, /Original issued title/);
   assert.doesNotMatch(html, /Changed current title/);
   assert.match(html, /certificateIssued/);
-  assert.ok(html.includes(`https://api.example.test/api/certificates/${certificate.id}/pdf`));
+  assert.match(html, /<button[^>]*aria-busy="false"[^>]*>.*analyticsDownloadPdf/);
   assert.match(html, /data-preview=/);
   result = { data: { certificate: { ...certificate, status: 'revoked', revoked_at: '2026-10-27' } } };
   html = renderToStaticMarkup(React.createElement(Page));
@@ -98,4 +101,68 @@ test('certificate card title is a full-card link to verification instead of a po
   assert.doesNotMatch(html, /<button|dialog/);
   const css = fs.readFileSync(path.resolve(__dirname, '../app/components/accountPage/accountCertificates.module.css'), 'utf8');
   assert.match(css, /\.title::after\s*\{[^}]*inset:\s*0/);
+});
+
+test('certificate PDF uses the analytics loader until the PDF arrives and allows retry after failure', async () => {
+  const previousWindow = global.window;
+  const previousCreate = URL.createObjectURL;
+  const shown = [];
+  const busy = [];
+  let request;
+  let finish;
+  let opens = 0;
+  let fail = false;
+  global.window = { open: () => { opens++; return {}; } };
+  URL.createObjectURL = () => 'blob:certificate';
+  try {
+    let stateIndex = 0;
+    const Page = load('certificateVerification.tsx', {
+      react: { ...React, useRef: value => ({ current: value }), useState: value => {
+        const index = stateIndex++;
+        return [value, next => { if (index === 0) busy.push(next); }];
+      } },
+      '@tanstack/react-query': { useQuery: () => ({ data: { certificate } }) },
+      'react-router': { useParams: () => ({ certificateId: certificate.id }) },
+      '~/i18n': { useI18n: () => ({ t: key => key, locale: 'en' }) },
+      '~/constants': { DownloadSVG: null, CheckSVG: null },
+      '~/env': { env: { apiBaseUrl: 'https://api.example.test' } },
+      '~/API': { fetchApiResponse: async (...args) => {
+        request = args;
+        if (fail) throw new Error('network');
+        return { ok: true, blob: () => new Promise(resolve => { finish = () => resolve(new Blob(['pdf'])); }) };
+      } },
+      './accountQueries': { publicCertificateQuery: () => ({}) },
+      './issuedCertificatePreview': { IssuedPreview: () => null, issuedDate: value => value },
+      '../loaders/pageLoader': { default: () => null, __esModule: true },
+      '../analytics/analyticsReportPreview': { createAnalyticsReportPreview: (_, labels) => {
+        shown.push(labels.generating);
+        return { showPdf: (...args) => shown.push(args), showError: () => shown.push('error') };
+      } },
+    }).default;
+    const findButton = node => {
+      if (!node || typeof node !== 'object') return;
+      if (node.type === 'button' && 'aria-busy' in node.props) return node;
+      return React.Children.toArray(node.props?.children).map(findButton).find(Boolean);
+    };
+    const button = findButton(Page());
+    button.props.onClick();
+    button.props.onClick();
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(opens, 1, 'duplicate clicks do not open more tabs');
+    assert.deepEqual(busy, [true]);
+    assert.deepEqual(shown, ['analyticsGeneratingPdf']);
+    assert.deepEqual(request, [`https://api.example.test/api/certificates/${certificate.id}/pdf`, { method: 'GET' }, true]);
+    finish();
+    await new Promise(resolve => setImmediate(resolve));
+    assert.deepEqual(shown[1], ['blob:certificate', `${certificate.certificate_number}.pdf`]);
+    assert.deepEqual(busy, [true, false]);
+    fail = true;
+    button.props.onClick();
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(shown.at(-1), 'error');
+    assert.deepEqual(busy, [true, false, true, false]);
+  } finally {
+    global.window = previousWindow;
+    URL.createObjectURL = previousCreate;
+  }
 });

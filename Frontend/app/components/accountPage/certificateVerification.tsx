@@ -1,3 +1,7 @@
+import { useRef, useState } from 'react';
+import { fetchApiResponse } from '~/API';
+import PageLoader from '../loaders/pageLoader';
+import { createAnalyticsReportPreview } from '../analytics/analyticsReportPreview';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router';
 import { useI18n } from '~/i18n';
@@ -15,7 +19,55 @@ export default function CertificateVerification() {
   const status = (detail.error as (Error & { status?: number }) | null)?.status;
   const notFound = !certificateId || status === 400 || status === 404;
 
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [pdfFailed, setPdfFailed] = useState(false);
+  const generatingRef = useRef(false);
+
+  const openPdf = async () => {
+    if (!certificate || generatingRef.current) return;
+    generatingRef.current = true;
+    setIsGeneratingPdf(true);
+    setPdfFailed(false);
+    let preview: ReturnType<typeof createAnalyticsReportPreview> | undefined;
+    try {
+      const target = window.open('', '_blank');
+      if (target) preview = createAnalyticsReportPreview(target, {
+        generating: t('analyticsGeneratingPdf'),
+        report: certificate.data_snapshot.quiz.title,
+        failed: t('editorGenerateFailed'),
+        close: t('close'),
+      });
+      const response = await fetchApiResponse(
+        `${env.apiBaseUrl}/api/certificates/${encodeURIComponent(certificate.id)}/pdf`,
+        { method: 'GET' },
+        true,
+      );
+      if (!response.ok) throw new Error('Failed to fetch certificate PDF.');
+      const blob = await response.blob();
+      const url = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+      const filename = `${certificate.certificate_number}.pdf`;
+      if (preview) preview.showPdf(url, filename);
+      else {
+        // Popup blockers must not prevent the certificate from downloading.
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      }
+    } catch {
+      preview?.showError();
+      setPdfFailed(true);
+    } finally {
+      generatingRef.current = false;
+      setIsGeneratingPdf(false);
+    }
+  };
+
   return <main className={styles.page}>
+    <PageLoader active={isGeneratingPdf} />
     <p className={styles.eyebrow}>{t('quizViewCertificate')}</p>
     {notFound ? <p role="alert">{t('errorNotFound')}</p> : detail.isPending ? <p role="status">{t('videoLoadingData')}</p> : detail.isError ? <div role="alert">
       <p>{t('searchLoadFailed')}</p>
@@ -34,10 +86,11 @@ export default function CertificateVerification() {
             </span>
           </div>
         </div>
-        <a className={styles.pdf} href={`${env.apiBaseUrl}/api/certificates/${encodeURIComponent(certificate.id)}/pdf`} target="_blank" rel="noopener noreferrer">
-          {DownloadSVG}<span>{t('analyticsDownloadPdf')}</span>
-        </a>
+        <button type="button" className={styles.pdf} onClick={() => void openPdf()} disabled={isGeneratingPdf} aria-busy={isGeneratingPdf}>
+          {DownloadSVG}<span>{t(isGeneratingPdf ? 'analyticsGeneratingPdf' : 'analyticsDownloadPdf')}</span>
+        </button>
       </div>
+      {pdfFailed && <p role="alert">{t('editorGenerateFailed')}</p>}
       <IssuedPreview certificate={certificate} />
     </>}
   </main>;

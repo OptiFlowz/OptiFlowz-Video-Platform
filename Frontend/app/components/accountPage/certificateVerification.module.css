@@ -18,7 +18,8 @@
 .revoked { color: var(--accentRed); }
 .page .pdf { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; gap: 10px; padding: 14px 20px; border: 0; border-radius: 12px; background: var(--accentBlue); color: var(--borderWhite); font-weight: 600; line-height: 1.4; text-decoration: none; transition: background-color 180ms ease; }
 .pdf svg { width: 20px; height: 20px; flex-shrink: 0; }
-.page .pdf:hover { background: var(--accentBlue2); }
+.page .pdf:disabled { cursor: wait; opacity: 0.65; }
+.page .pdf:hover:not(:disabled) { background: var(--accentBlue2); }
 .page .pdf:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: 4px; }
 @media (max-width: 700px) {
   .page { width: calc(100% - 32px); padding: 28px 0 40px; gap: 20px; }
