@@ -1888,5 +1888,12 @@
   "copy": "Копировать",
   "quizCertificateNone": "Без сертификата",
   "quizCertificateUnavailable": "Выбранный шаблон недоступен",
-  "quizCertificateChoose": "Выбрать сертификат"
+  "quizCertificateChoose": "Выбрать сертификат",
+  "qrStyleDots": "Точки",
+  "qrStyleCorners": "Внешние углы",
+  "qrStyleCornerDots": "Внутренние углы",
+  "qrStyleColor": "Цвет",
+  "qrStyleSize": "Размер",
+  "qrStyleMargin": "Свободная зона",
+  "qrStyleCorrection": "Коррекция ошибок"
 }

@@ -1808,5 +1808,12 @@
   "copy": "Kopiera",
   "quizCertificateNone": "Inget certifikat",
   "quizCertificateUnavailable": "Den valda mallen är inte tillgänglig",
-  "quizCertificateChoose": "Välj certifikat"
+  "quizCertificateChoose": "Välj certifikat",
+  "qrStyleDots": "Punkter",
+  "qrStyleCorners": "Yttre hörn",
+  "qrStyleCornerDots": "Inre hörn",
+  "qrStyleColor": "Färg",
+  "qrStyleSize": "Storlek",
+  "qrStyleMargin": "Frizon",
+  "qrStyleCorrection": "Felkorrigering"
 }

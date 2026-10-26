@@ -1783,5 +1783,12 @@
   "copy": "Kopiraj",
   "quizCertificateNone": "Brez potrdila",
   "quizCertificateUnavailable": "Izbrana predloga ni na voljo",
-  "quizCertificateChoose": "Izberi potrdilo"
+  "quizCertificateChoose": "Izberi potrdilo",
+  "qrStyleDots": "Pike",
+  "qrStyleCorners": "Zunanji vogali",
+  "qrStyleCornerDots": "Notranji vogali",
+  "qrStyleColor": "Barva",
+  "qrStyleSize": "Velikost",
+  "qrStyleMargin": "Zaščitni rob",
+  "qrStyleCorrection": "Popravljanje napak"
 }

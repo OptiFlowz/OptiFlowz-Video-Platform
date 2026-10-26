@@ -1808,5 +1808,12 @@
   "copy": "کاپی کریں",
   "quizCertificateNone": "کوئی سرٹیفکیٹ نہیں",
   "quizCertificateUnavailable": "منتخب ٹیمپلیٹ دستیاب نہیں ہے",
-  "quizCertificateChoose": "سرٹیفکیٹ منتخب کریں"
+  "quizCertificateChoose": "سرٹیفکیٹ منتخب کریں",
+  "qrStyleDots": "نقطے",
+  "qrStyleCorners": "بیرونی کونے",
+  "qrStyleCornerDots": "اندرونی کونے",
+  "qrStyleColor": "رنگ",
+  "qrStyleSize": "سائز",
+  "qrStyleMargin": "خالی حاشیہ",
+  "qrStyleCorrection": "غلطی کی اصلاح"
 }

@@ -1808,5 +1808,12 @@
   "copy": "Kopiér",
   "quizCertificateNone": "Intet certifikat",
   "quizCertificateUnavailable": "Den valgte skabelon er ikke tilgængelig",
-  "quizCertificateChoose": "Vælg certifikat"
+  "quizCertificateChoose": "Vælg certifikat",
+  "qrStyleDots": "Prikker",
+  "qrStyleCorners": "Ydre hjørner",
+  "qrStyleCornerDots": "Indre hjørner",
+  "qrStyleColor": "Farve",
+  "qrStyleSize": "Størrelse",
+  "qrStyleMargin": "Frizone",
+  "qrStyleCorrection": "Fejlkorrektion"
 }

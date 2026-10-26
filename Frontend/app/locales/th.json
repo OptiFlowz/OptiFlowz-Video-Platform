@@ -1808,5 +1808,12 @@
   "copy": "คัดลอก",
   "quizCertificateNone": "ไม่มีใบรับรอง",
   "quizCertificateUnavailable": "เทมเพลตที่เลือกไม่พร้อมใช้งาน",
-  "quizCertificateChoose": "เลือกใบรับรอง"
+  "quizCertificateChoose": "เลือกใบรับรอง",
+  "qrStyleDots": "จุด",
+  "qrStyleCorners": "มุมด้านนอก",
+  "qrStyleCornerDots": "มุมด้านใน",
+  "qrStyleColor": "สี",
+  "qrStyleSize": "ขนาด",
+  "qrStyleMargin": "พื้นที่ว่างรอบโค้ด",
+  "qrStyleCorrection": "การแก้ไขข้อผิดพลาด"
 }

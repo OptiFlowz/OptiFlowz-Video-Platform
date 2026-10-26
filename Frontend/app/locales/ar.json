@@ -1783,5 +1783,12 @@
   "copy": "نسخ",
   "quizCertificateNone": "بدون شهادة",
   "quizCertificateUnavailable": "القالب المحدد غير متاح",
-  "quizCertificateChoose": "اختيار شهادة"
+  "quizCertificateChoose": "اختيار شهادة",
+  "qrStyleDots": "النقاط",
+  "qrStyleCorners": "الزوايا الخارجية",
+  "qrStyleCornerDots": "الزوايا الداخلية",
+  "qrStyleColor": "اللون",
+  "qrStyleSize": "الحجم",
+  "qrStyleMargin": "المساحة الخالية",
+  "qrStyleCorrection": "تصحيح الأخطاء"
 }

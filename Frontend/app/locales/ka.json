@@ -1808,5 +1808,12 @@
   "copy": "კოპირება",
   "quizCertificateNone": "სერტიფიკატის გარეშე",
   "quizCertificateUnavailable": "არჩეული შაბლონი მიუწვდომელია",
-  "quizCertificateChoose": "სერტიფიკატის არჩევა"
+  "quizCertificateChoose": "სერტიფიკატის არჩევა",
+  "qrStyleDots": "წერტილები",
+  "qrStyleCorners": "გარე კუთხეები",
+  "qrStyleCornerDots": "შიდა კუთხეები",
+  "qrStyleColor": "ფერი",
+  "qrStyleSize": "ზომა",
+  "qrStyleMargin": "თავისუფალი არე",
+  "qrStyleCorrection": "შეცდომების გასწორება"
 }

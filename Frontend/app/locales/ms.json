@@ -1808,5 +1808,12 @@
   "copy": "Salin",
   "quizCertificateNone": "Tiada sijil",
   "quizCertificateUnavailable": "Templat yang dipilih tidak tersedia",
-  "quizCertificateChoose": "Pilih sijil"
+  "quizCertificateChoose": "Pilih sijil",
+  "qrStyleDots": "Titik",
+  "qrStyleCorners": "Sudut luar",
+  "qrStyleCornerDots": "Sudut dalam",
+  "qrStyleColor": "Warna",
+  "qrStyleSize": "Saiz",
+  "qrStyleMargin": "Zon kosong",
+  "qrStyleCorrection": "Pembetulan ralat"
 }

@@ -1808,5 +1808,12 @@
   "copy": "Kopeeri",
   "quizCertificateNone": "Ilma sertifikaadita",
   "quizCertificateUnavailable": "Valitud mall pole saadaval",
-  "quizCertificateChoose": "Vali sertifikaat"
+  "quizCertificateChoose": "Vali sertifikaat",
+  "qrStyleDots": "Punktid",
+  "qrStyleCorners": "Välisnurgad",
+  "qrStyleCornerDots": "Sisenurgad",
+  "qrStyleColor": "Värv",
+  "qrStyleSize": "Suurus",
+  "qrStyleMargin": "Vaba ala",
+  "qrStyleCorrection": "Veaparandus"
 }

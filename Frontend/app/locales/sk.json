@@ -1888,5 +1888,12 @@
   "copy": "Kopírovať",
   "quizCertificateNone": "Bez certifikátu",
   "quizCertificateUnavailable": "Vybraná šablóna nie je dostupná",
-  "quizCertificateChoose": "Vybrať certifikát"
+  "quizCertificateChoose": "Vybrať certifikát",
+  "qrStyleDots": "Body",
+  "qrStyleCorners": "Vonkajšie rohy",
+  "qrStyleCornerDots": "Vnútorné rohy",
+  "qrStyleColor": "Farba",
+  "qrStyleSize": "Veľkosť",
+  "qrStyleMargin": "Ochranná zóna",
+  "qrStyleCorrection": "Oprava chýb"
 }

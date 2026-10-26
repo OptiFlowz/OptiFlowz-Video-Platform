@@ -1808,5 +1808,12 @@
   "copy": "Kopijuoti",
   "quizCertificateNone": "Be sertifikato",
   "quizCertificateUnavailable": "Pasirinktas šablonas nepasiekiamas",
-  "quizCertificateChoose": "Pasirinkti sertifikatą"
+  "quizCertificateChoose": "Pasirinkti sertifikatą",
+  "qrStyleDots": "Taškai",
+  "qrStyleCorners": "Išoriniai kampai",
+  "qrStyleCornerDots": "Vidiniai kampai",
+  "qrStyleColor": "Spalva",
+  "qrStyleSize": "Dydis",
+  "qrStyleMargin": "Laisvoji zona",
+  "qrStyleCorrection": "Klaidų taisymas"
 }

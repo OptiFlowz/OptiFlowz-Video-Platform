@@ -1808,5 +1808,12 @@
   "copy": "কপি করুন",
   "quizCertificateNone": "কোনো সনদ নেই",
   "quizCertificateUnavailable": "নির্বাচিত টেমপ্লেট উপলভ্য নয়",
-  "quizCertificateChoose": "সনদ বেছে নিন"
+  "quizCertificateChoose": "সনদ বেছে নিন",
+  "qrStyleDots": "বিন্দু",
+  "qrStyleCorners": "বাইরের কোণ",
+  "qrStyleCornerDots": "ভেতরের কোণ",
+  "qrStyleColor": "রং",
+  "qrStyleSize": "আকার",
+  "qrStyleMargin": "ফাঁকা সীমানা",
+  "qrStyleCorrection": "ত্রুটি সংশোধন"
 }

@@ -1888,5 +1888,12 @@
   "copy": "Копиране",
   "quizCertificateNone": "Без сертификат",
   "quizCertificateUnavailable": "Избраният шаблон не е наличен",
-  "quizCertificateChoose": "Избор на сертификат"
+  "quizCertificateChoose": "Избор на сертификат",
+  "qrStyleDots": "Точки",
+  "qrStyleCorners": "Външни ъгли",
+  "qrStyleCornerDots": "Вътрешни ъгли",
+  "qrStyleColor": "Цвят",
+  "qrStyleSize": "Размер",
+  "qrStyleMargin": "Защитна зона",
+  "qrStyleCorrection": "Корекция на грешки"
 }

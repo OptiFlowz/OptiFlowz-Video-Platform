@@ -1888,5 +1888,12 @@
   "copy": "Kopjo",
   "quizCertificateNone": "Pa certifikatë",
   "quizCertificateUnavailable": "Shablloni i zgjedhur nuk është i disponueshëm",
-  "quizCertificateChoose": "Zgjidh certifikatën"
+  "quizCertificateChoose": "Zgjidh certifikatën",
+  "qrStyleDots": "Pika",
+  "qrStyleCorners": "Këndet e jashtme",
+  "qrStyleCornerDots": "Këndet e brendshme",
+  "qrStyleColor": "Ngjyra",
+  "qrStyleSize": "Madhësia",
+  "qrStyleMargin": "Zona e lirë",
+  "qrStyleCorrection": "Korrigjimi i gabimeve"
 }

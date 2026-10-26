@@ -1803,5 +1803,12 @@
   "copy": "Kopiraj",
   "quizCertificateNone": "Bez sertifikata",
   "quizCertificateUnavailable": "Izabrani šablon nije dostupan",
-  "quizCertificateChoose": "Izaberi sertifikat"
+  "quizCertificateChoose": "Izaberi sertifikat",
+  "qrStyleDots": "Tačkice",
+  "qrStyleCorners": "Spoljni uglovi",
+  "qrStyleCornerDots": "Unutrašnji uglovi",
+  "qrStyleColor": "Boja",
+  "qrStyleSize": "Veličina",
+  "qrStyleMargin": "Zaštitna margina",
+  "qrStyleCorrection": "Korekcija grešaka"
 }

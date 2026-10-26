@@ -1816,5 +1816,12 @@
   "copy": "Copy",
   "quizCertificateNone": "No certificate",
   "quizCertificateUnavailable": "Selected template unavailable",
-  "quizCertificateChoose": "Choose certificate"
+  "quizCertificateChoose": "Choose certificate",
+  "qrStyleDots": "Dots",
+  "qrStyleCorners": "Outer corners",
+  "qrStyleCornerDots": "Inner corners",
+  "qrStyleColor": "Color",
+  "qrStyleSize": "Size",
+  "qrStyleMargin": "Quiet zone",
+  "qrStyleCorrection": "Error correction"
 }

@@ -1783,5 +1783,12 @@
   "copy": "Kopiuj",
   "quizCertificateNone": "Bez certyfikatu",
   "quizCertificateUnavailable": "Wybrany szablon jest niedostępny",
-  "quizCertificateChoose": "Wybierz certyfikat"
+  "quizCertificateChoose": "Wybierz certyfikat",
+  "qrStyleDots": "Punkty",
+  "qrStyleCorners": "Zewnętrzne narożniki",
+  "qrStyleCornerDots": "Wewnętrzne narożniki",
+  "qrStyleColor": "Kolor",
+  "qrStyleSize": "Rozmiar",
+  "qrStyleMargin": "Strefa ciszy",
+  "qrStyleCorrection": "Korekcja błędów"
 }

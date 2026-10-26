@@ -1808,5 +1808,12 @@
   "copy": "Kopioi",
   "quizCertificateNone": "Ei todistusta",
   "quizCertificateUnavailable": "Valittu malli ei ole saatavilla",
-  "quizCertificateChoose": "Valitse todistus"
+  "quizCertificateChoose": "Valitse todistus",
+  "qrStyleDots": "Pisteet",
+  "qrStyleCorners": "Ulkokulmat",
+  "qrStyleCornerDots": "Sisäkulmat",
+  "qrStyleColor": "Väri",
+  "qrStyleSize": "Koko",
+  "qrStyleMargin": "Suoja-alue",
+  "qrStyleCorrection": "Virheenkorjaus"
 }

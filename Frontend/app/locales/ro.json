@@ -1783,5 +1783,12 @@
   "copy": "Copiază",
   "quizCertificateNone": "Fără certificat",
   "quizCertificateUnavailable": "Șablonul selectat nu este disponibil",
-  "quizCertificateChoose": "Alege certificatul"
+  "quizCertificateChoose": "Alege certificatul",
+  "qrStyleDots": "Puncte",
+  "qrStyleCorners": "Colțuri exterioare",
+  "qrStyleCornerDots": "Colțuri interioare",
+  "qrStyleColor": "Culoare",
+  "qrStyleSize": "Dimensiune",
+  "qrStyleMargin": "Zonă liberă",
+  "qrStyleCorrection": "Corectarea erorilor"
 }

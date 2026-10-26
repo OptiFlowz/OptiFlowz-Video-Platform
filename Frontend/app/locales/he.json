@@ -1808,5 +1808,12 @@
   "copy": "העתקה",
   "quizCertificateNone": "ללא תעודה",
   "quizCertificateUnavailable": "התבנית שנבחרה אינה זמינה",
-  "quizCertificateChoose": "בחירת תעודה"
+  "quizCertificateChoose": "בחירת תעודה",
+  "qrStyleDots": "נקודות",
+  "qrStyleCorners": "פינות חיצוניות",
+  "qrStyleCornerDots": "פינות פנימיות",
+  "qrStyleColor": "צבע",
+  "qrStyleSize": "גודל",
+  "qrStyleMargin": "אזור ריק",
+  "qrStyleCorrection": "תיקון שגיאות"
 }

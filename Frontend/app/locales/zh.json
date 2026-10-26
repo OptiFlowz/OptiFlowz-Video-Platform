@@ -1808,5 +1808,12 @@
   "copy": "复制",
   "quizCertificateNone": "无证书",
   "quizCertificateUnavailable": "所选模板不可用",
-  "quizCertificateChoose": "选择证书"
+  "quizCertificateChoose": "选择证书",
+  "qrStyleDots": "码点",
+  "qrStyleCorners": "外定位角",
+  "qrStyleCornerDots": "内定位角",
+  "qrStyleColor": "颜色",
+  "qrStyleSize": "尺寸",
+  "qrStyleMargin": "留白区域",
+  "qrStyleCorrection": "纠错级别"
 }

@@ -1888,5 +1888,12 @@
   "copy": "Másolás",
   "quizCertificateNone": "Nincs tanúsítvány",
   "quizCertificateUnavailable": "A kiválasztott sablon nem érhető el",
-  "quizCertificateChoose": "Tanúsítvány kiválasztása"
+  "quizCertificateChoose": "Tanúsítvány kiválasztása",
+  "qrStyleDots": "Pontok",
+  "qrStyleCorners": "Külső sarkok",
+  "qrStyleCornerDots": "Belső sarkok",
+  "qrStyleColor": "Szín",
+  "qrStyleSize": "Méret",
+  "qrStyleMargin": "Üres szegély",
+  "qrStyleCorrection": "Hibajavítás"
 }

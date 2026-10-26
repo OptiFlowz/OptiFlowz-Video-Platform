@@ -1888,5 +1888,12 @@
   "copy": "Kopírovat",
   "quizCertificateNone": "Bez certifikátu",
   "quizCertificateUnavailable": "Vybraná šablona není dostupná",
-  "quizCertificateChoose": "Vybrat certifikát"
+  "quizCertificateChoose": "Vybrat certifikát",
+  "qrStyleDots": "Body",
+  "qrStyleCorners": "Vnější rohy",
+  "qrStyleCornerDots": "Vnitřní rohy",
+  "qrStyleColor": "Barva",
+  "qrStyleSize": "Velikost",
+  "qrStyleMargin": "Ochranná zóna",
+  "qrStyleCorrection": "Oprava chyb"
 }

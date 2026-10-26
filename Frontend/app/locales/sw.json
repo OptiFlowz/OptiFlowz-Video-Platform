@@ -1808,5 +1808,12 @@
   "copy": "Nakili",
   "quizCertificateNone": "Bila cheti",
   "quizCertificateUnavailable": "Kiolezo kilichochaguliwa hakipatikani",
-  "quizCertificateChoose": "Chagua cheti"
+  "quizCertificateChoose": "Chagua cheti",
+  "qrStyleDots": "Nukta",
+  "qrStyleCorners": "Pembe za nje",
+  "qrStyleCornerDots": "Pembe za ndani",
+  "qrStyleColor": "Rangi",
+  "qrStyleSize": "Ukubwa",
+  "qrStyleMargin": "Eneo tupu",
+  "qrStyleCorrection": "Urekebishaji wa makosa"
 }

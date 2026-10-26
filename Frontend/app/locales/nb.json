@@ -1808,5 +1808,12 @@
   "copy": "Kopier",
   "quizCertificateNone": "Ingen sertifikat",
   "quizCertificateUnavailable": "Den valgte malen er ikke tilgjengelig",
-  "quizCertificateChoose": "Velg sertifikat"
+  "quizCertificateChoose": "Velg sertifikat",
+  "qrStyleDots": "Prikker",
+  "qrStyleCorners": "Ytre hjørner",
+  "qrStyleCornerDots": "Indre hjørner",
+  "qrStyleColor": "Farge",
+  "qrStyleSize": "Størrelse",
+  "qrStyleMargin": "Frisone",
+  "qrStyleCorrection": "Feilretting"
 }

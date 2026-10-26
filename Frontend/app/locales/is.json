@@ -1808,5 +1808,12 @@
   "copy": "Afrita",
   "quizCertificateNone": "Ekkert skírteini",
   "quizCertificateUnavailable": "Valið sniðmát er ekki tiltækt",
-  "quizCertificateChoose": "Velja skírteini"
+  "quizCertificateChoose": "Velja skírteini",
+  "qrStyleDots": "Punktar",
+  "qrStyleCorners": "Ytri horn",
+  "qrStyleCornerDots": "Innri horn",
+  "qrStyleColor": "Litur",
+  "qrStyleSize": "Stærð",
+  "qrStyleMargin": "Auður jaðar",
+  "qrStyleCorrection": "Villuleiðrétting"
 }

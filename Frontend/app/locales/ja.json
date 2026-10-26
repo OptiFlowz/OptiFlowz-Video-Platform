@@ -1808,5 +1808,12 @@
   "copy": "コピー",
   "quizCertificateNone": "証明書なし",
   "quizCertificateUnavailable": "選択したテンプレートは利用できません",
-  "quizCertificateChoose": "証明書を選択"
+  "quizCertificateChoose": "証明書を選択",
+  "qrStyleDots": "ドット",
+  "qrStyleCorners": "外側の角",
+  "qrStyleCornerDots": "内側の角",
+  "qrStyleColor": "色",
+  "qrStyleSize": "サイズ",
+  "qrStyleMargin": "余白",
+  "qrStyleCorrection": "誤り訂正"
 }

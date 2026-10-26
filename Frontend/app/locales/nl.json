@@ -1783,5 +1783,12 @@
   "copy": "Kopiëren",
   "quizCertificateNone": "Geen certificaat",
   "quizCertificateUnavailable": "Geselecteerde sjabloon niet beschikbaar",
-  "quizCertificateChoose": "Certificaat kiezen"
+  "quizCertificateChoose": "Certificaat kiezen",
+  "qrStyleDots": "Punten",
+  "qrStyleCorners": "Buitenste hoeken",
+  "qrStyleCornerDots": "Binnenste hoeken",
+  "qrStyleColor": "Kleur",
+  "qrStyleSize": "Grootte",
+  "qrStyleMargin": "Vrije marge",
+  "qrStyleCorrection": "Foutcorrectie"
 }

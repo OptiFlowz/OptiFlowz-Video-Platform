@@ -1808,5 +1808,12 @@
   "copy": "Sao chép",
   "quizCertificateNone": "Không có chứng chỉ",
   "quizCertificateUnavailable": "Mẫu đã chọn không khả dụng",
-  "quizCertificateChoose": "Chọn chứng chỉ"
+  "quizCertificateChoose": "Chọn chứng chỉ",
+  "qrStyleDots": "Chấm",
+  "qrStyleCorners": "Góc ngoài",
+  "qrStyleCornerDots": "Góc trong",
+  "qrStyleColor": "Màu sắc",
+  "qrStyleSize": "Kích thước",
+  "qrStyleMargin": "Vùng trống",
+  "qrStyleCorrection": "Sửa lỗi"
 }

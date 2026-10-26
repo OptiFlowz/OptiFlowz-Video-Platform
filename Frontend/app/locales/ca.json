@@ -1808,5 +1808,12 @@
   "copy": "Copia",
   "quizCertificateNone": "Sense certificat",
   "quizCertificateUnavailable": "Plantilla seleccionada no disponible",
-  "quizCertificateChoose": "Tria un certificat"
+  "quizCertificateChoose": "Tria un certificat",
+  "qrStyleDots": "Punts",
+  "qrStyleCorners": "Cantonades exteriors",
+  "qrStyleCornerDots": "Cantonades interiors",
+  "qrStyleColor": "Color",
+  "qrStyleSize": "Mida",
+  "qrStyleMargin": "Zona lliure",
+  "qrStyleCorrection": "Correcció d’errors"
 }

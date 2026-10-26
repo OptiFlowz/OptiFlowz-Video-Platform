@@ -1888,5 +1888,12 @@
   "copy": "Копіювати",
   "quizCertificateNone": "Без сертифіката",
   "quizCertificateUnavailable": "Вибраний шаблон недоступний",
-  "quizCertificateChoose": "Вибрати сертифікат"
+  "quizCertificateChoose": "Вибрати сертифікат",
+  "qrStyleDots": "Точки",
+  "qrStyleCorners": "Зовнішні кути",
+  "qrStyleCornerDots": "Внутрішні кути",
+  "qrStyleColor": "Колір",
+  "qrStyleSize": "Розмір",
+  "qrStyleMargin": "Вільна зона",
+  "qrStyleCorrection": "Корекція помилок"
 }

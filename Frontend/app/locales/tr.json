@@ -1783,5 +1783,12 @@
   "copy": "Kopyala",
   "quizCertificateNone": "Sertifika yok",
   "quizCertificateUnavailable": "Seçilen şablon kullanılamıyor",
-  "quizCertificateChoose": "Sertifika seç"
+  "quizCertificateChoose": "Sertifika seç",
+  "qrStyleDots": "Noktalar",
+  "qrStyleCorners": "Dış köşeler",
+  "qrStyleCornerDots": "İç köşeler",
+  "qrStyleColor": "Renk",
+  "qrStyleSize": "Boyut",
+  "qrStyleMargin": "Boş kenarlık",
+  "qrStyleCorrection": "Hata düzeltme"
 }

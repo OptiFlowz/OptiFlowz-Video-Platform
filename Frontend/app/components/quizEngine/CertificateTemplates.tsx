@@ -28,8 +28,9 @@ export default function CertificateTemplates(props: Props) {
   const templates = useQuery({ queryKey: [...engineKey, token, 'certificate-templates'], enabled: !!token && !props.id,
     queryFn: ({ signal }) => allCertificateTemplates(signal), retry: false });
   const scope = props.ownership === 'mine' || props.ownership === 'others' ? props.ownership : 'all';
-  // The accessible set contains the current user's private templates and system templates.
-  const rows = (templates.data ?? []).filter(row => (scope === 'all' || (scope === 'mine' ? !row.is_system : row.is_system))
+  // The API returns only the current user's private templates and shared system templates.
+  // Default and built-in designs belong in everyone's library, including Only mine.
+  const rows = (templates.data ?? []).filter(row => (scope !== 'others' || row.is_system)
     && row.name.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()));
   useEffect(() => { setPage(1); }, [scope]);
   const totalPages = Math.max(1, Math.ceil(rows.length / limit));

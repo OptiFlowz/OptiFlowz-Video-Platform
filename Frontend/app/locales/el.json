@@ -1783,5 +1783,12 @@
   "copy": "Αντιγραφή",
   "quizCertificateNone": "Χωρίς πιστοποιητικό",
   "quizCertificateUnavailable": "Το επιλεγμένο πρότυπο δεν είναι διαθέσιμο",
-  "quizCertificateChoose": "Επιλογή πιστοποιητικού"
+  "quizCertificateChoose": "Επιλογή πιστοποιητικού",
+  "qrStyleDots": "Κουκκίδες",
+  "qrStyleCorners": "Εξωτερικές γωνίες",
+  "qrStyleCornerDots": "Εσωτερικές γωνίες",
+  "qrStyleColor": "Χρώμα",
+  "qrStyleSize": "Μέγεθος",
+  "qrStyleMargin": "Κενή ζώνη",
+  "qrStyleCorrection": "Διόρθωση σφαλμάτων"
 }

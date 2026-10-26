@@ -1808,5 +1808,12 @@
   "copy": "Kopyahin",
   "quizCertificateNone": "Walang sertipiko",
   "quizCertificateUnavailable": "Hindi available ang napiling template",
-  "quizCertificateChoose": "Pumili ng sertipiko"
+  "quizCertificateChoose": "Pumili ng sertipiko",
+  "qrStyleDots": "Mga tuldok",
+  "qrStyleCorners": "Mga panlabas na sulok",
+  "qrStyleCornerDots": "Mga panloob na sulok",
+  "qrStyleColor": "Kulay",
+  "qrStyleSize": "Laki",
+  "qrStyleMargin": "Bakanteng palugit",
+  "qrStyleCorrection": "Pagwawasto ng error"
 }

@@ -1808,5 +1808,12 @@
   "copy": "복사",
   "quizCertificateNone": "인증서 없음",
   "quizCertificateUnavailable": "선택한 템플릿을 사용할 수 없습니다",
-  "quizCertificateChoose": "인증서 선택"
+  "quizCertificateChoose": "인증서 선택",
+  "qrStyleDots": "도트",
+  "qrStyleCorners": "바깥 모서리",
+  "qrStyleCornerDots": "안쪽 모서리",
+  "qrStyleColor": "색상",
+  "qrStyleSize": "크기",
+  "qrStyleMargin": "여백",
+  "qrStyleCorrection": "오류 정정"
 }

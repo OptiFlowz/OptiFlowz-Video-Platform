@@ -1808,5 +1808,12 @@
   "copy": "நகலெடு",
   "quizCertificateNone": "சான்றிதழ் இல்லை",
   "quizCertificateUnavailable": "தேர்ந்தெடுக்கப்பட்ட வார்ப்புரு கிடைக்கவில்லை",
-  "quizCertificateChoose": "சான்றிதழைத் தேர்ந்தெடுக்கவும்"
+  "quizCertificateChoose": "சான்றிதழைத் தேர்ந்தெடுக்கவும்",
+  "qrStyleDots": "புள்ளிகள்",
+  "qrStyleCorners": "வெளிப்புற மூலைகள்",
+  "qrStyleCornerDots": "உட்புற மூலைகள்",
+  "qrStyleColor": "நிறம்",
+  "qrStyleSize": "அளவு",
+  "qrStyleMargin": "வெற்று விளிம்பு",
+  "qrStyleCorrection": "பிழை திருத்தம்"
 }

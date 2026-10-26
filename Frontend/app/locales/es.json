@@ -1798,5 +1798,12 @@
   "copy": "Copiar",
   "quizCertificateNone": "Sin certificado",
   "quizCertificateUnavailable": "Plantilla seleccionada no disponible",
-  "quizCertificateChoose": "Elegir certificado"
+  "quizCertificateChoose": "Elegir certificado",
+  "qrStyleDots": "Puntos",
+  "qrStyleCorners": "Esquinas exteriores",
+  "qrStyleCornerDots": "Esquinas interiores",
+  "qrStyleColor": "Color",
+  "qrStyleSize": "Tamaño",
+  "qrStyleMargin": "Zona libre",
+  "qrStyleCorrection": "Corrección de errores"
 }

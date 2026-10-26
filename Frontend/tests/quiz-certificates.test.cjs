@@ -115,13 +115,13 @@ test('certificate library orders defaults, protects system designs, edits privat
   assert.equal(edit, 'classic', 'card action opens its template');
 
   await render(null, 'mine');
-  assert.deepEqual([...document.querySelectorAll('.certificateCard h2')].map(node => node.textContent), ['A private design'], 'Only mine excludes built-in templates');
+  assert.deepEqual([...document.querySelectorAll('.certificateCard h2')].map(node => node.textContent), ['Classic', 'Minimal', 'Modern', 'A private design'], 'Only mine includes the default, built-in and own private templates');
   await render(null, 'others');
   assert.deepEqual([...document.querySelectorAll('.certificateCard h2')].map(node => node.textContent), ['Classic', 'Minimal', 'Modern'], 'From others shows accessible built-in templates');
   await fill('Search templates', 'Minimal');
   assert.deepEqual([...document.querySelectorAll('.certificateCard h2')].map(node => node.textContent), ['Minimal'], 'search combines with scope');
   await render(null, 'mine');
-  assert.equal(document.querySelectorAll('.certificateCard').length, 0, 'scope does not ignore the search');
+  assert.deepEqual([...document.querySelectorAll('.certificateCard h2')].map(node => node.textContent), ['Minimal'], 'Only mine keeps matching built-in templates and respects search');
   await fill('Search templates', '');
   await render(null, 'all');
   assert.equal(document.querySelectorAll('.certificateCard').length, 4, 'All restores the full accessible set');

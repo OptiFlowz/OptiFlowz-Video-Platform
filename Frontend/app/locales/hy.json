@@ -1808,5 +1808,12 @@
   "copy": "Պատճենել",
   "quizCertificateNone": "Առանց վկայականի",
   "quizCertificateUnavailable": "Ընտրված ձևանմուշը հասանելի չէ",
-  "quizCertificateChoose": "Ընտրել վկայական"
+  "quizCertificateChoose": "Ընտրել վկայական",
+  "qrStyleDots": "Կետեր",
+  "qrStyleCorners": "Արտաքին անկյուններ",
+  "qrStyleCornerDots": "Ներքին անկյուններ",
+  "qrStyleColor": "Գույն",
+  "qrStyleSize": "Չափ",
+  "qrStyleMargin": "Դատարկ եզրագոտի",
+  "qrStyleCorrection": "Սխալների ուղղում"
 }

@@ -1808,5 +1808,12 @@
   "copy": "Kopēt",
   "quizCertificateNone": "Bez sertifikāta",
   "quizCertificateUnavailable": "Atlasītā veidne nav pieejama",
-  "quizCertificateChoose": "Izvēlēties sertifikātu"
+  "quizCertificateChoose": "Izvēlēties sertifikātu",
+  "qrStyleDots": "Punkti",
+  "qrStyleCorners": "Ārējie stūri",
+  "qrStyleCornerDots": "Iekšējie stūri",
+  "qrStyleColor": "Krāsa",
+  "qrStyleSize": "Izmērs",
+  "qrStyleMargin": "Brīvā zona",
+  "qrStyleCorrection": "Kļūdu labošana"
 }

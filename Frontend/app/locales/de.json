@@ -1783,5 +1783,12 @@
   "copy": "Kopieren",
   "quizCertificateNone": "Kein Zertifikat",
   "quizCertificateUnavailable": "Ausgewählte Vorlage nicht verfügbar",
-  "quizCertificateChoose": "Zertifikat auswählen"
+  "quizCertificateChoose": "Zertifikat auswählen",
+  "qrStyleDots": "Punkte",
+  "qrStyleCorners": "Äußere Ecken",
+  "qrStyleCornerDots": "Innere Ecken",
+  "qrStyleColor": "Farbe",
+  "qrStyleSize": "Größe",
+  "qrStyleMargin": "Ruhezone",
+  "qrStyleCorrection": "Fehlerkorrektur"
 }

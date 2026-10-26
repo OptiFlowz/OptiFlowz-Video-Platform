@@ -1783,5 +1783,12 @@
   "copy": "कॉपी करें",
   "quizCertificateNone": "कोई प्रमाणपत्र नहीं",
   "quizCertificateUnavailable": "चयनित टेम्पलेट उपलब्ध नहीं है",
-  "quizCertificateChoose": "प्रमाणपत्र चुनें"
+  "quizCertificateChoose": "प्रमाणपत्र चुनें",
+  "qrStyleDots": "बिंदु",
+  "qrStyleCorners": "बाहरी कोने",
+  "qrStyleCornerDots": "भीतरी कोने",
+  "qrStyleColor": "रंग",
+  "qrStyleSize": "आकार",
+  "qrStyleMargin": "खाली किनारा",
+  "qrStyleCorrection": "त्रुटि सुधार"
 }
