@@ -1815,5 +1815,7 @@
   "qrStyleColor": "颜色",
   "qrStyleSize": "尺寸",
   "qrStyleMargin": "留白区域",
-  "qrStyleCorrection": "纠错级别"
+  "qrStyleCorrection": "纠错级别",
+  "certificateIssued": "已签发",
+  "certificateRevoked": "已撤销"
 }

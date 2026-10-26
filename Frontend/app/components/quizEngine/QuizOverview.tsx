@@ -130,7 +130,7 @@ export default function QuizOverview() {
           {!!progress.data?.requirements.length && <OverviewRequirements key={quizId} requirements={progress.data.requirements} />}
           <section className="videoQuizHistory" aria-labelledby="quiz-history-title">
             <div className="videoQuizSectionTitle"><span><h3 id="quiz-history-title">{t('quizYourLastAttempts')}</h3><p>{t('quizHistoryHint')}</p></span>
-              {can('quizzes.certificates') && quiz?.has_certificate && history.some(attempt => attempt.passed) && <Link to="/account/certificates" className="viewQuizCertificate">{t('quizViewCertificates')}</Link>}
+              {quiz?.has_certificate && history.some(attempt => attempt.passed) && <Link to="/account/certificates" className="viewQuizCertificate">{t('quizViewCertificates')}</Link>}
             </div>
             {!attempts.data && <LoadState query={attempts} />}
             {!!history.length && <div className="videoQuizAttemptList">{history.map(attempt => {

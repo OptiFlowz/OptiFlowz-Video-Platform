@@ -23,7 +23,7 @@ const accountTabs = [
     { id: 'liked', icon: LikeSVG, label: 'likedVideos', type: 3, permission: P.videosLibrary },
     { id: 'continue', icon: ContinueWatchingSVG, label: 'continueWatching', type: 0, permission: P.videosLibrary },
     { id: 'playlists', icon: PlaylistSVG, label: 'savedPlaylists', type: 6, permission: P.playlistsLibrary },
-    { id: 'certificates', icon: CupOutlineSVG, label: 'accountCertificatesTitle', type: null, permission: P.quizzesCertificates },
+    { id: 'certificates', icon: CupOutlineSVG, label: 'accountCertificatesTitle', type: null, permission: null },
 ] as const;
 
 function AccountPage(){
@@ -43,18 +43,17 @@ function AccountPage(){
     const token = getToken();
     const canViewVideos = can(P.videosLibrary);
     const canViewPlaylists = can(P.playlistsLibrary);
-    const canViewCertificates = can(P.quizzesCertificates);
     useEffect(() => {
         if (!token) return;
         if (canViewVideos) {
             for (const type of [4, 3, 0] as const) void queryClient.prefetchInfiniteQuery(accountLibraryQuery(type, token));
         }
         if (canViewPlaylists) void queryClient.prefetchInfiniteQuery(accountLibraryQuery(6, token));
-        if (canViewCertificates) void queryClient.prefetchQuery(accountCertificatesQuery(token));
-    }, [queryClient, token, canViewVideos, canViewPlaylists, canViewCertificates]);
+        void queryClient.prefetchInfiniteQuery(accountCertificatesQuery(token));
+    }, [queryClient, token, canViewVideos, canViewPlaylists]);
     const tabsId = useId();
     const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
-    const tabs = accountTabs.filter(tab => can(tab.permission));
+    const tabs = accountTabs.filter(tab => tab.permission === null || can(tab.permission));
     const activeTab = tabs.find(tab => tab.id === selectedTab) ?? tabs[0];
     const logoutHandle = () => {
         redirectToLogin();

@@ -541,3 +541,8 @@ export const MatchingQuestionSVG = <svg width="24" height="24" viewBox="0 0 24 2
 </svg>;
 
 export const CopySVG = <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.8" /><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>;
+
+export const DownloadSVG = <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <path d="M8 17H6.5A4.5 4.5 0 0 1 6 8.03 6 6 0 0 1 17.64 9.5H18a3.5 3.5 0 0 1 0 7h-2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  <path d="M12 11v9m0 0-3-3m3 3 3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+</svg>;

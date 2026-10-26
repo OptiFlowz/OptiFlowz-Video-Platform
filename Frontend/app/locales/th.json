@@ -1815,5 +1815,7 @@
   "qrStyleColor": "สี",
   "qrStyleSize": "ขนาด",
   "qrStyleMargin": "พื้นที่ว่างรอบโค้ด",
-  "qrStyleCorrection": "การแก้ไขข้อผิดพลาด"
+  "qrStyleCorrection": "การแก้ไขข้อผิดพลาด",
+  "certificateIssued": "ออกแล้ว",
+  "certificateRevoked": "เพิกถอนแล้ว"
 }

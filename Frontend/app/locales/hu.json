@@ -1895,5 +1895,7 @@
   "qrStyleColor": "Szín",
   "qrStyleSize": "Méret",
   "qrStyleMargin": "Üres szegély",
-  "qrStyleCorrection": "Hibajavítás"
+  "qrStyleCorrection": "Hibajavítás",
+  "certificateIssued": "Kiállítva",
+  "certificateRevoked": "Visszavonva"
 }

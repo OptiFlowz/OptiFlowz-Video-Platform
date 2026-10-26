@@ -1790,5 +1790,7 @@
   "qrStyleColor": "Culoare",
   "qrStyleSize": "Dimensiune",
   "qrStyleMargin": "Zonă liberă",
-  "qrStyleCorrection": "Corectarea erorilor"
+  "qrStyleCorrection": "Corectarea erorilor",
+  "certificateIssued": "Emis",
+  "certificateRevoked": "Revocat"
 }

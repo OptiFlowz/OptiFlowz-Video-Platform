@@ -1815,5 +1815,7 @@
   "qrStyleColor": "Krāsa",
   "qrStyleSize": "Izmērs",
   "qrStyleMargin": "Brīvā zona",
-  "qrStyleCorrection": "Kļūdu labošana"
+  "qrStyleCorrection": "Kļūdu labošana",
+  "certificateIssued": "Izsniegts",
+  "certificateRevoked": "Atsaukts"
 }

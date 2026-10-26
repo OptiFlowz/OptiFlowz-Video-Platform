@@ -1895,5 +1895,7 @@
   "qrStyleColor": "Ngjyra",
   "qrStyleSize": "Madhësia",
   "qrStyleMargin": "Zona e lirë",
-  "qrStyleCorrection": "Korrigjimi i gabimeve"
+  "qrStyleCorrection": "Korrigjimi i gabimeve",
+  "certificateIssued": "Lëshuar",
+  "certificateRevoked": "Revokuar"
 }

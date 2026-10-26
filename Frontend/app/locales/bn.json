@@ -1815,5 +1815,7 @@
   "qrStyleColor": "রং",
   "qrStyleSize": "আকার",
   "qrStyleMargin": "ফাঁকা সীমানা",
-  "qrStyleCorrection": "ত্রুটি সংশোধন"
+  "qrStyleCorrection": "ত্রুটি সংশোধন",
+  "certificateIssued": "ইস্যু করা হয়েছে",
+  "certificateRevoked": "বাতিল করা হয়েছে"
 }

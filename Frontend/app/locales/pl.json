@@ -1790,5 +1790,7 @@
   "qrStyleColor": "Kolor",
   "qrStyleSize": "Rozmiar",
   "qrStyleMargin": "Strefa ciszy",
-  "qrStyleCorrection": "Korekcja błędów"
+  "qrStyleCorrection": "Korekcja błędów",
+  "certificateIssued": "Wydany",
+  "certificateRevoked": "Unieważniony"
 }

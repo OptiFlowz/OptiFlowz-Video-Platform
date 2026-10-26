@@ -1815,5 +1815,7 @@
   "qrStyleColor": "ფერი",
   "qrStyleSize": "ზომა",
   "qrStyleMargin": "თავისუფალი არე",
-  "qrStyleCorrection": "შეცდომების გასწორება"
+  "qrStyleCorrection": "შეცდომების გასწორება",
+  "certificateIssued": "გაცემულია",
+  "certificateRevoked": "გაუქმებულია"
 }

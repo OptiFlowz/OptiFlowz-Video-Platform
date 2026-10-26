@@ -1790,5 +1790,7 @@
   "qrStyleColor": "Χρώμα",
   "qrStyleSize": "Μέγεθος",
   "qrStyleMargin": "Κενή ζώνη",
-  "qrStyleCorrection": "Διόρθωση σφαλμάτων"
+  "qrStyleCorrection": "Διόρθωση σφαλμάτων",
+  "certificateIssued": "Εκδόθηκε",
+  "certificateRevoked": "Ανακλήθηκε"
 }

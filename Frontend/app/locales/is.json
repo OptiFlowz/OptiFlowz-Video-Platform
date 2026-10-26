@@ -1815,5 +1815,7 @@
   "qrStyleColor": "Litur",
   "qrStyleSize": "Stærð",
   "qrStyleMargin": "Auður jaðar",
-  "qrStyleCorrection": "Villuleiðrétting"
+  "qrStyleCorrection": "Villuleiðrétting",
+  "certificateIssued": "Gefið út",
+  "certificateRevoked": "Afturkallað"
 }

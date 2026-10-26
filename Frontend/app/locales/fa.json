@@ -1815,5 +1815,7 @@
   "qrStyleColor": "رنگ",
   "qrStyleSize": "اندازه",
   "qrStyleMargin": "حاشیهٔ خالی",
-  "qrStyleCorrection": "تصحیح خطا"
+  "qrStyleCorrection": "تصحیح خطا",
+  "certificateIssued": "صادرشده",
+  "certificateRevoked": "لغوشده"
 }

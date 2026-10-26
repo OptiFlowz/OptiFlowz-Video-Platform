@@ -1895,5 +1895,7 @@
   "qrStyleColor": "Цвет",
   "qrStyleSize": "Размер",
   "qrStyleMargin": "Свободная зона",
-  "qrStyleCorrection": "Коррекция ошибок"
+  "qrStyleCorrection": "Коррекция ошибок",
+  "certificateIssued": "Выдан",
+  "certificateRevoked": "Отозван"
 }

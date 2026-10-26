@@ -1790,5 +1790,7 @@
   "qrStyleColor": "Renk",
   "qrStyleSize": "Boyut",
   "qrStyleMargin": "Boş kenarlık",
-  "qrStyleCorrection": "Hata düzeltme"
+  "qrStyleCorrection": "Hata düzeltme",
+  "certificateIssued": "Düzenlendi",
+  "certificateRevoked": "İptal edildi"
 }

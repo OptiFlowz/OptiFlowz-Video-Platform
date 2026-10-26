@@ -5,7 +5,7 @@ import { useLayoutEffect } from "react";
 const widgetSelector = "#optiflowz-chat, #optiflowz-chat-open, .optiflowz-chat-wrapper";
 
 export function isQuizChatBlocked(pathname: string) {
-  return /^\/quiz(?:\/|$)/i.test(pathname);
+  return /^\/quiz(?:\/|$)/i.test(pathname) || /^\/certificates\/verify(?:\/|$)/i.test(pathname);
 }
 
 /** Also covers a widget that finishes loading after navigation to a quiz. */

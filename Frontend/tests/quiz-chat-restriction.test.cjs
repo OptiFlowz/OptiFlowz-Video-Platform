@@ -13,7 +13,7 @@ new Function('require', 'module', 'exports', ts.transpileModule(source, {
 const { isQuizChatBlocked, useQuizChatRestriction } = mod.exports;
 
 test('chat is blocked on participant quiz routes and remains available on admin routes', () => {
-  for (const path of ['/quiz', '/quiz/course', '/quiz/course/question/2', '/quiz/course/']) {
+  for (const path of ['/quiz', '/quiz/course', '/quiz/course/question/2', '/certificates/verify/certificate-id', '/quiz/course/']) {
     assert.equal(isQuizChatBlocked(path), true, path);
   }
   for (const path of ['/', '/video/123', '/account', '/quizzes', '/quizzes/templates', '/quiz-help', '/quizzes-archive']) {

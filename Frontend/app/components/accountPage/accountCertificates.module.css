@@ -1,0 +1,28 @@
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--video-grid-gap); }
+.card { position: relative; min-width: 0; }
+.preview { display: block; width: 100%; border-radius: 16px; overflow: hidden; background: var(--background2); transition: opacity .2s ease; }
+.card:hover .preview { opacity: .9; }
+.title { display: block; width: 100%; text-align: start; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.title::after { content: ''; position: absolute; inset: 0; z-index: 1; border-radius: 16px; }
+.title:focus-visible { outline: none; }
+.title:focus-visible::after { outline: 2px solid var(--accentBlue2); outline-offset: 3px; }
+.card:hover .title, .title:hover { color: var(--accentBlue2); background: none; }
+.pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.pills > * { padding: 4px 10px; border-radius: 999px; background: var(--background2); border: 1px solid var(--border1); font-size: .85rem; color: var(--text1); }
+.pills .revoked, .revoked { color: var(--accentRed); }
+.issued { color: var(--accentGreen2); }
+.metadata { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+.metadata h3 { margin: 0; font-size: 1.2rem; font-weight: 700; overflow-wrap: anywhere; }
+.metadata p { color: var(--text2); font-size: .9rem; overflow-wrap: anywhere; }
+.detail { display: grid; grid-auto-rows: max-content; gap: 20px; padding: 4px; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; }
+.detail > a { justify-self: end; }
+.paper { position: relative; overflow: hidden; width: 100%; border-radius: 12px; background: var(--background2); }
+.paper iframe { position: absolute; inset: 0; border: 0; transform-origin: top left; pointer-events: none; }
+.placeholder { display: grid; place-items: center; aspect-ratio: 11 / 8.5; color: var(--text2); }
+.placeholder > span { width: 100%; height: 100%; }
+@media (max-width: 1100px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+.card h2 { margin: 8px 0 0; font-size: 1.08rem; font-weight: 700; line-height: 1.4; color: var(--text1); overflow-wrap: anywhere; }
+
+.previewState { position: absolute; inset: 0; display: grid; place-items: center; color: var(--text2); }

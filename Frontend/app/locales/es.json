@@ -1805,5 +1805,7 @@
   "qrStyleColor": "Color",
   "qrStyleSize": "Tamaño",
   "qrStyleMargin": "Zona libre",
-  "qrStyleCorrection": "Corrección de errores"
+  "qrStyleCorrection": "Corrección de errores",
+  "certificateIssued": "Emitido",
+  "certificateRevoked": "Revocado"
 }

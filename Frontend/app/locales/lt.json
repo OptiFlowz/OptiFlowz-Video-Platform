@@ -1815,5 +1815,7 @@
   "qrStyleColor": "Spalva",
   "qrStyleSize": "Dydis",
   "qrStyleMargin": "Laisvoji zona",
-  "qrStyleCorrection": "Klaidų taisymas"
+  "qrStyleCorrection": "Klaidų taisymas",
+  "certificateIssued": "Išduotas",
+  "certificateRevoked": "Atšauktas"
 }

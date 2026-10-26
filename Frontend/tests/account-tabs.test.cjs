@@ -60,6 +60,7 @@ test('account tabs default to history, preload permitted content, follow tab URL
       useNavigate: () => changeLocation,
     },
     '~/env': { env: {} },
+    '../quizEngine/EditorPopup': { __esModule: true, default: () => null },
     '~/hooks/useLocalizedPageTitle': { useLocalizedPageTitle() {} },
     '~/authorization/authorization': { useAuthorization: () => ({ can: permission => permission !== 'certificates' || allowCertificates }) },
     '~/authorization/permissions': { P: { videosLibrary: 'videos', playlistsLibrary: 'playlists', quizzesCertificates: 'certificates' } },
@@ -69,7 +70,7 @@ test('account tabs default to history, preload permitted content, follow tab URL
     '~/i18n': { useI18n: () => ({ t: key => key }) },
     '~/API': { fetchFn: async request => {
       requests.push(request);
-      if (request.route === 'api/quizzes/certificates') return { success: true, certificates: [] };
+      if (request.route === 'api/certificates?page=1&limit=20&sortBy=issued_at&sortOrder=desc') return { success: true, certificates: [] };
       const saved = request.route.includes('playlists');
       const params = new URL(request.route, 'https://example.test/').searchParams;
       const laterPage = saved ? Number(params.get('offset')) > 0 : Number(params.get('page')) > 1;
@@ -105,7 +106,7 @@ test('account tabs default to history, preload permitted content, follow tab URL
     assert.deepEqual(requests.map(request => request.route).sort(), [
       'api/videos/user/history?limit=20&page=1', 'api/videos/user/liked?limit=20&page=1',
       'api/videos/user/continue?limit=20&page=1', 'api/playlists/user/saved?limit=20&offset=0',
-      'api/quizzes/certificates',
+      'api/certificates?page=1&limit=20&sortBy=issued_at&sortOrder=desc',
     ].sort());
     assert.equal(requests[0].route, 'api/videos/user/history?limit=20&page=1');
     assert.equal(requests[0].options.headers.Authorization, 'Bearer token');
@@ -152,18 +153,18 @@ test('account tabs default to history, preload permitted content, follow tab URL
       locationListeners.forEach(listener => listener());
     });
     assert.equal(tabs()[4].getAttribute('aria-selected'), 'true');
-    assert.equal(requests.length, requestCount);
+    assert.ok(requests.length > requestCount, 'Reopening certificates refreshes current status');
     allowCertificates = false;
     await act(async () => render()); await flush();
-    assert.equal(tabs().length, 4);
-    assert.equal(tabs()[0].getAttribute('aria-selected'), 'true');
-    assert.notEqual(activePanel().textContent, 'accountCertificatesEmpty');
+    assert.equal(tabs().length, 5);
+    assert.equal(tabs()[4].getAttribute('aria-selected'), 'true');
+    assert.equal(activePanel().textContent, 'accountCertificatesEmpty');
     client.clear();
     await act(async () => root.render(null));
     requests.length = 0;
     await act(async () => render()); await flush();
-    assert.equal(requests.length, 4);
-    assert.ok(requests.every(request => request.route !== 'api/quizzes/certificates'), 'Never prefetch a tab without permission');
+    assert.equal(requests.length, 5);
+    assert.ok(requests.some(request => request.route === 'api/certificates?page=1&limit=20&sortBy=issued_at&sortOrder=desc'), 'Own certificates are available without the legacy permission');
   } finally {
     await act(async () => root.unmount());
     client.clear(); dom.window.close();

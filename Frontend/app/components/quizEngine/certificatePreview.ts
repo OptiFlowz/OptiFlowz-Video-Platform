@@ -76,7 +76,7 @@ function svgImage(value: string): string | null {
 
 // Parse in an inert template, never in the application's live DOM. The iframe
 // stays sandboxed; only font resources may use HTTPS. Saving uses backend validation.
-export function certificateHtmlDocument(template: CertificateTemplateInput, qrImages: Record<string, string> = {}): string {
+export function certificateHtmlDocument(template: CertificateTemplateInput, qrImages: Record<string, string> = {}, options: { values?: Record<string, string>; sampleQr?: boolean } = {}): string {
   if (typeof document === 'undefined') return '';
   const fragment = document.createElement('template');
   fragment.innerHTML = template.html_template;
@@ -96,6 +96,8 @@ export function certificateHtmlDocument(template: CertificateTemplateInput, qrIm
     }
     if (!tags.has(element.localName)) { element.remove(); continue; }
     const source = element.getAttribute('src') ?? '';
+    // Issued certificates must never display the sample verification QR.
+    if (element.localName === 'img' && options.sampleQr === false && !qrImages[source] && source.includes('certificate.qr_code_data_uri')) { element.remove(); continue; }
     const image = element.localName === 'img'
       ? (qrImages[source] ?? (/^\{\{\s*certificate\.qr_code_data_uri\s*\}\}$/.test(source) ? certificateQrPreview : svgImage(source)))
       : null;
@@ -106,7 +108,7 @@ export function certificateHtmlDocument(template: CertificateTemplateInput, qrIm
   }
   const walker = document.createTreeWalker(fragment.content, 4 /* SHOW_TEXT */);
   while (walker.nextNode()) {
-    walker.currentNode.textContent = (walker.currentNode.textContent ?? '').replace(/\{\{\s*([\w.]+)\s*\}\}/g, (match, name) => certificatePreviewData[name] ?? match);
+    walker.currentNode.textContent = (walker.currentNode.textContent ?? '').replace(/\{\{\s*([\w.]+)\s*\}\}/g, (match, name) => (options.values ?? certificatePreviewData)[name] ?? match);
   }
   const { width, height } = certificatePaper(template);
   // Escaping '<' prevents template CSS from closing its style element.

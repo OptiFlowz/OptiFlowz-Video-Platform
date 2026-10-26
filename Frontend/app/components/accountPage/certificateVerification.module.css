@@ -1,0 +1,28 @@
+.page {
+  width: calc(100% - 48px);
+  max-width: 900px;
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 48px 0 64px;
+  display: grid;
+  gap: 24px;
+  color: var(--text1);
+}
+.eyebrow { margin: 0; color: var(--text2); font-size: 0.875rem; font-weight: 600; }
+.heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+.title { min-width: 0; }
+.page h1 { margin: 0; font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.25; font-weight: 700; overflow-wrap: anywhere; }
+.metadata { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin-top: 16px; color: var(--text2); font-size: 0.875rem; overflow-wrap: anywhere; }
+.issued, .revoked { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.issued { color: var(--accentGreen2); }
+.revoked { color: var(--accentRed); }
+.page .pdf { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; gap: 10px; padding: 14px 20px; border: 0; border-radius: 12px; background: var(--accentBlue); color: var(--borderWhite); font-weight: 600; line-height: 1.4; text-decoration: none; transition: background-color 180ms ease; }
+.pdf svg { width: 20px; height: 20px; flex-shrink: 0; }
+.page .pdf:hover { background: var(--accentBlue2); }
+.page .pdf:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: 4px; }
+@media (max-width: 700px) {
+  .page { width: calc(100% - 32px); padding: 28px 0 40px; gap: 20px; }
+  .heading { flex-direction: column; gap: 20px; }
+  .page .pdf { width: 100%; box-sizing: border-box; }
+}
+@media (prefers-reduced-motion: reduce) { .page .pdf { transition: none; } }

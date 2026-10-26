@@ -1815,5 +1815,7 @@
   "qrStyleColor": "நிறம்",
   "qrStyleSize": "அளவு",
   "qrStyleMargin": "வெற்று விளிம்பு",
-  "qrStyleCorrection": "பிழை திருத்தம்"
+  "qrStyleCorrection": "பிழை திருத்தம்",
+  "certificateIssued": "வழங்கப்பட்டது",
+  "certificateRevoked": "ரத்து செய்யப்பட்டது"
 }

@@ -1815,5 +1815,7 @@
   "qrStyleColor": "Kulay",
   "qrStyleSize": "Laki",
   "qrStyleMargin": "Bakanteng palugit",
-  "qrStyleCorrection": "Pagwawasto ng error"
+  "qrStyleCorrection": "Pagwawasto ng error",
+  "certificateIssued": "Naibigay",
+  "certificateRevoked": "Binawi"
 }

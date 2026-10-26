@@ -1815,5 +1815,7 @@
   "qrStyleColor": "Värv",
   "qrStyleSize": "Suurus",
   "qrStyleMargin": "Vaba ala",
-  "qrStyleCorrection": "Veaparandus"
+  "qrStyleCorrection": "Veaparandus",
+  "certificateIssued": "Väljastatud",
+  "certificateRevoked": "Tühistatud"
 }

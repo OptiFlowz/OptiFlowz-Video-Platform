@@ -1790,5 +1790,7 @@
   "qrStyleColor": "اللون",
   "qrStyleSize": "الحجم",
   "qrStyleMargin": "المساحة الخالية",
-  "qrStyleCorrection": "تصحيح الأخطاء"
+  "qrStyleCorrection": "تصحيح الأخطاء",
+  "certificateIssued": "صادر",
+  "certificateRevoked": "ملغى"
 }

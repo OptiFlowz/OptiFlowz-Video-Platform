@@ -1790,5 +1790,7 @@
   "qrStyleColor": "Kleur",
   "qrStyleSize": "Grootte",
   "qrStyleMargin": "Vrije marge",
-  "qrStyleCorrection": "Foutcorrectie"
+  "qrStyleCorrection": "Foutcorrectie",
+  "certificateIssued": "Uitgegeven",
+  "certificateRevoked": "Ingetrokken"
 }

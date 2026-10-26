@@ -1815,5 +1815,7 @@
   "qrStyleColor": "Warna",
   "qrStyleSize": "Ukuran",
   "qrStyleMargin": "Zona kosong",
-  "qrStyleCorrection": "Koreksi kesalahan"
+  "qrStyleCorrection": "Koreksi kesalahan",
+  "certificateIssued": "Diterbitkan",
+  "certificateRevoked": "Dicabut"
 }

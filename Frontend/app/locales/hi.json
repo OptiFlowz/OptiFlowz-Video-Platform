@@ -1790,5 +1790,7 @@
   "qrStyleColor": "रंग",
   "qrStyleSize": "आकार",
   "qrStyleMargin": "खाली किनारा",
-  "qrStyleCorrection": "त्रुटि सुधार"
+  "qrStyleCorrection": "त्रुटि सुधार",
+  "certificateIssued": "जारी किया गया",
+  "certificateRevoked": "रद्द किया गया"
 }

@@ -1815,5 +1815,7 @@
   "qrStyleColor": "رنگ",
   "qrStyleSize": "سائز",
   "qrStyleMargin": "خالی حاشیہ",
-  "qrStyleCorrection": "غلطی کی اصلاح"
+  "qrStyleCorrection": "غلطی کی اصلاح",
+  "certificateIssued": "جاری شدہ",
+  "certificateRevoked": "منسوخ شدہ"
 }

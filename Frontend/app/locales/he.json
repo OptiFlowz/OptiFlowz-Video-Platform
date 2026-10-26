@@ -1815,5 +1815,7 @@
   "qrStyleColor": "צבע",
   "qrStyleSize": "גודל",
   "qrStyleMargin": "אזור ריק",
-  "qrStyleCorrection": "תיקון שגיאות"
+  "qrStyleCorrection": "תיקון שגיאות",
+  "certificateIssued": "הונפק",
+  "certificateRevoked": "בוטל"
 }

@@ -1810,5 +1810,7 @@
   "qrStyleColor": "Boja",
   "qrStyleSize": "Veličina",
   "qrStyleMargin": "Zaštitna margina",
-  "qrStyleCorrection": "Korekcija grešaka"
+  "qrStyleCorrection": "Korekcija grešaka",
+  "certificateIssued": "Izdat",
+  "certificateRevoked": "Opozvan"
 }

@@ -1815,5 +1815,7 @@
   "qrStyleColor": "Väri",
   "qrStyleSize": "Koko",
   "qrStyleMargin": "Suoja-alue",
-  "qrStyleCorrection": "Virheenkorjaus"
+  "qrStyleCorrection": "Virheenkorjaus",
+  "certificateIssued": "Myönnetty",
+  "certificateRevoked": "Peruutettu"
 }

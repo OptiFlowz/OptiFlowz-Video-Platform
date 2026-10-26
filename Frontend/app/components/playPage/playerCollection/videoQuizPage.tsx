@@ -1954,8 +1954,8 @@ function VideoQuizPage() {
                       <p>{t("quizHistoryHint")}</p>
                     </span>
 
-                    {can(P.quizzesCertificates) && quizSummary?.certificate_template_id && attempts.some((attempt) => attempt.passed) &&
-                      <Link to="/account" className="viewQuizCertificate">{t("quizViewCertificates")}</Link>
+                    {quizSummary?.certificate_template_id && attempts.some((attempt) => attempt.passed) &&
+                      <Link to="/account/certificates" className="viewQuizCertificate">{t("quizViewCertificates")}</Link>
                     }
                   </div>
 
@@ -2297,8 +2297,8 @@ function VideoQuizPage() {
                 <button type="button" className="videoQuizGhostButton" onClick={handleExit}>
                   {t("quizCloseQuiz")}
                 </button>
-                {latestResult.passed === true && quizSummary?.certificate_template_id && can(P.quizzesCertificates) ? (
-                  <Link to="/account" className="videoQuizPrimaryButton">
+                {latestResult.passed === true && quizSummary?.certificate_template_id ? (
+                  <Link to="/account/certificates" className="videoQuizPrimaryButton">
                     {t("quizViewCertificate")}
                   </Link>
                 ) : null}

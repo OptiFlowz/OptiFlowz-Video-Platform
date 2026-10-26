@@ -1790,5 +1790,7 @@
   "qrStyleColor": "Boja",
   "qrStyleSize": "Veličina",
   "qrStyleMargin": "Zaštitna margina",
-  "qrStyleCorrection": "Ispravljanje pogrešaka"
+  "qrStyleCorrection": "Ispravljanje pogrešaka",
+  "certificateIssued": "Izdan",
+  "certificateRevoked": "Opozvan"
 }

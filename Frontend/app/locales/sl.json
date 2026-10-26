@@ -1790,5 +1790,7 @@
   "qrStyleColor": "Barva",
   "qrStyleSize": "Velikost",
   "qrStyleMargin": "Zaščitni rob",
-  "qrStyleCorrection": "Popravljanje napak"
+  "qrStyleCorrection": "Popravljanje napak",
+  "certificateIssued": "Izdan",
+  "certificateRevoked": "Preklican"
 }

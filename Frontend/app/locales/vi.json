@@ -1815,5 +1815,7 @@
   "qrStyleColor": "Màu sắc",
   "qrStyleSize": "Kích thước",
   "qrStyleMargin": "Vùng trống",
-  "qrStyleCorrection": "Sửa lỗi"
+  "qrStyleCorrection": "Sửa lỗi",
+  "certificateIssued": "Đã cấp",
+  "certificateRevoked": "Đã thu hồi"
 }

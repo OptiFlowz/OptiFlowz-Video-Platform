@@ -1815,5 +1815,7 @@
   "qrStyleColor": "Rangi",
   "qrStyleSize": "Ukubwa",
   "qrStyleMargin": "Eneo tupu",
-  "qrStyleCorrection": "Urekebishaji wa makosa"
+  "qrStyleCorrection": "Urekebishaji wa makosa",
+  "certificateIssued": "Imetolewa",
+  "certificateRevoked": "Imebatilishwa"
 }

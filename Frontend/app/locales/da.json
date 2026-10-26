@@ -1815,5 +1815,7 @@
   "qrStyleColor": "Farve",
   "qrStyleSize": "Størrelse",
   "qrStyleMargin": "Frizone",
-  "qrStyleCorrection": "Fejlkorrektion"
+  "qrStyleCorrection": "Fejlkorrektion",
+  "certificateIssued": "Udstedt",
+  "certificateRevoked": "Tilbagekaldt"
 }

@@ -46,6 +46,18 @@ test('HTML certificate previews support static SVG and fonts without enabling ac
   assert.match(qrDoc.window.document.querySelector('img').src, /^data:image\/png;base64,/);
   assert.equal(qrDoc.window.document.querySelectorAll('img')[1].hasAttribute('src'), false);
   assert.equal(qrDoc.window.document.querySelector('div[title]').title, '{{certificate.qr_code_data_uri}}');
+  const issuedTemplate = { page_format: 'Letter', orientation: 'landscape', css_template: '', html_template: '<h1>{{user.full_name}}</h1><p>{{quiz.title}}</p><span>{{certificate.number}}</span><img src="{{certificate.qr_code_data_uri}}">' };
+  const issuedOptions = { sampleQr: false, values: { 'user.full_name': '<img src=x onerror=alert(1)>', 'quiz.title': 'Saved quiz title', 'certificate.number': 'CERT-2026-000002' } };
+  const issued = new JSDOM(mod.exports.certificateHtmlDocument(issuedTemplate, {}, issuedOptions));
+  assert.equal(issued.window.document.querySelector('h1').textContent, '<img src=x onerror=alert(1)>', 'snapshot text is never interpreted as HTML');
+  assert.equal(issued.window.document.querySelector('p').textContent, 'Saved quiz title');
+  assert.equal(issued.window.document.querySelector('span').textContent, 'CERT-2026-000002');
+  assert.equal(issued.window.document.querySelector('img'), null, 'issued certificates never use a sample QR');
+  assert.doesNotMatch(issued.window.document.body.textContent, /John Anderson/);
+  const realQr = 'data:image/png;base64,aXNzdWVk';
+  const issuedWithQr = new JSDOM(mod.exports.certificateHtmlDocument(issuedTemplate, { '{{certificate.qr_code_data_uri}}': realQr }, issuedOptions));
+  assert.equal(issuedWithQr.window.document.querySelector('img').src, realQr);
+  issued.window.close(); issuedWithQr.window.close();
   qrDoc.window.close();
   result.window.close(); dom.window.close();
 });

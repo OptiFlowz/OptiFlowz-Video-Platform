@@ -1895,5 +1895,7 @@
   "qrStyleColor": "Цвят",
   "qrStyleSize": "Размер",
   "qrStyleMargin": "Защитна зона",
-  "qrStyleCorrection": "Корекция на грешки"
+  "qrStyleCorrection": "Корекция на грешки",
+  "certificateIssued": "Издаден",
+  "certificateRevoked": "Отменен"
 }

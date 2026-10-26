@@ -52,7 +52,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                     {item('/account/continue', t('continueWatching'), ContinueWatchingSVG)}
                 </>}
                 {can(P.playlistsLibrary) && item('/account/playlists', t('savedPlaylists'), PlaylistSVG)}
-                {can(P.quizzesCertificates) && item('/account/certificates', t('accountCertificatesTitle'), CupOutlineSVG)}
+                {item('/account/certificates', t('accountCertificatesTitle'), CupOutlineSVG)}
             </> : item('/login', t('login'), UserSVG)}
         </section>
         {management.length > 0 && <section className="appSidebarGroup" aria-label={t('navSectionManage')}>

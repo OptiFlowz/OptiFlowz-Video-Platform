@@ -1815,5 +1815,7 @@
   "qrStyleColor": "色",
   "qrStyleSize": "サイズ",
   "qrStyleMargin": "余白",
-  "qrStyleCorrection": "誤り訂正"
+  "qrStyleCorrection": "誤り訂正",
+  "certificateIssued": "発行済み",
+  "certificateRevoked": "失効"
 }

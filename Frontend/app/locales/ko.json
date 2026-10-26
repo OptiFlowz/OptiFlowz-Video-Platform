@@ -1815,5 +1815,7 @@
   "qrStyleColor": "색상",
   "qrStyleSize": "크기",
   "qrStyleMargin": "여백",
-  "qrStyleCorrection": "오류 정정"
+  "qrStyleCorrection": "오류 정정",
+  "certificateIssued": "발급됨",
+  "certificateRevoked": "취소됨"
 }

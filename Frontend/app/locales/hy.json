@@ -1815,5 +1815,7 @@
   "qrStyleColor": "Գույն",
   "qrStyleSize": "Չափ",
   "qrStyleMargin": "Դատարկ եզրագոտի",
-  "qrStyleCorrection": "Սխալների ուղղում"
+  "qrStyleCorrection": "Սխալների ուղղում",
+  "certificateIssued": "Տրված է",
+  "certificateRevoked": "Չեղարկված է"
 }

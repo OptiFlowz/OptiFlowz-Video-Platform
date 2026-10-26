@@ -1895,5 +1895,7 @@
   "qrStyleColor": "Farba",
   "qrStyleSize": "Veľkosť",
   "qrStyleMargin": "Ochranná zóna",
-  "qrStyleCorrection": "Oprava chýb"
+  "qrStyleCorrection": "Oprava chýb",
+  "certificateIssued": "Vydaný",
+  "certificateRevoked": "Odvolaný"
 }
