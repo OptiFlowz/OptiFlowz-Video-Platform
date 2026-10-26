@@ -1,4 +1,5 @@
 import { answerSnapshot } from './helpers/quiz-answer-fixtures.js';
+import { upgradeCertificateIssuance } from './helpers/quiz-certificate-schema.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
@@ -15,12 +16,13 @@ test('expiration uses saved grades safely in isolated PostgreSQL', {skip:!proces
   t.after(async()=>{await pool.end();try{await admin.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`);}finally{await admin.end();}});
   await admin.query(`CREATE SCHEMA ${schema}`);
   await admin.query(`SET search_path TO ${schema},public`);
-  await admin.query('CREATE TABLE users(id uuid PRIMARY KEY)');
+  await admin.query('CREATE TABLE users(id uuid PRIMARY KEY, full_name text)');
   for(const file of ['1791590400001_add-questions.sql','1791590400004_add-quizzes.sql','1792195200001_add-quiz-attempts.sql','1792195200002_add-quiz-attempt-questions-and-answers.sql','1792540800002_index-expired-quiz-attempts.sql']) {
     const sql=(await readFile(new URL(`../src/database/migrations/${file}`,import.meta.url),'utf8')).replaceAll('public.',`${schema}.`);
     await admin.query(sql.split('-- Down Migration')[0]);
   }
-  const user=randomUUID(); await admin.query('INSERT INTO users VALUES($1)',[user]);
+  await upgradeCertificateIssuance(admin, { schema });
+  const user=randomUUID(); await admin.query('INSERT INTO users(id) VALUES($1)',[user]);
   const wrap=client=>({query:(sql,args)=>client.query(sql.replaceAll('public.',`${schema}.`),args)});
   const wrappedPool={async connect(){const client=await pool.connect();return {...wrap(client),release:()=>client.release()};}};
   mock.module(new URL('../src/database/index.js',import.meta.url).href,{namedExports:{writePool:wrappedPool}});
@@ -57,6 +59,34 @@ test('expiration uses saved grades safely in isolated PostgreSQL', {skip:!proces
     const connection=await pool.connect();
     try {await connection.query('BEGIN');assert.equal(await finalizeExpiredAttempt(wrap(connection),id),null);await connection.query('COMMIT');}finally{connection.release();}
     assert.deepEqual(await row(id),saved);
+  });
+
+  await scenario('expiration issues once from the live quiz and rolls back certificates with failed finalization', async()=>{
+    const system=(await admin.query('SELECT id FROM certificate_templates WHERE is_system=true LIMIT 1')).rows[0].id;
+    const pass=await fixture({settings:{certificate_template_id:null}});
+    const fail=await fixture({answered:false});
+    const disabled=await fixture({settings:{certificate_template_id:system}});
+    for(const id of [pass,fail]) await admin.query("UPDATE quizzes SET certificate_template_id=$2,title='Current worker title' WHERE id=(SELECT quiz_id FROM quiz_attempts WHERE id=$1)",[id,system]);
+    const before=(await admin.query('SELECT * FROM certificate_number_counters ORDER BY year')).rows;
+    const brokenPool={async connect(){const c=await wrappedPool.connect();return {release:()=>c.release(),async query(sql,args){
+      const result=await c.query(sql,args);
+      if(sql.includes('INSERT INTO public.certificates') && result.rows.length) throw new Error('Injected certificate failure');
+      return result;
+    }};}};
+    await assert.rejects(run({pool:brokenPool}),/Injected certificate failure/);
+    for(const id of [pass,fail,disabled]) assert.equal((await row(id)).status,'in_progress');
+    assert.equal((await admin.query('SELECT count(*)::int AS count FROM certificates')).rows[0].count,0);
+    assert.deepEqual((await admin.query('SELECT * FROM certificate_number_counters ORDER BY year')).rows,before);
+    assert.equal((await run()).finalized,3);
+    const certs=(await admin.query('SELECT * FROM certificates')).rows;
+    assert.equal(certs.length,1);
+    assert.equal(certs[0].quiz_attempt_id,pass);
+    assert.equal(certs[0].certificate_template_id,system);
+    assert.equal(certs[0].data_snapshot.quiz.title,'Current worker title');
+    assert.equal(certs[0].data_snapshot.result.score_percentage,35);
+    assert.equal(certs[0].data_snapshot.result.passed,true);
+    assert.equal((await run()).finalized,0);
+    assert.deepEqual((await admin.query('SELECT * FROM certificates')).rows,certs);
   });
 
   await scenario('worker grades complete unchecked saved answers, skips partial drafts and preserves prior grades', async()=>{

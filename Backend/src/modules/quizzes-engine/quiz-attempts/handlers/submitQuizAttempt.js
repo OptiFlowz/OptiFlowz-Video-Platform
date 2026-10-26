@@ -4,6 +4,7 @@ import { attemptIdSchema, requireQuizAttemptUser } from '../helpers/quiz-attempt
 import { attemptError } from '../helpers/attemptQuestions.js';
 import { lockOwnedAttempt, isAttemptExpired, submitAttempt } from '../repository/quiz-attempts.repository.js';
 import { getAttemptResults } from '../services/attemptResults.js';
+import { issueAttemptCertificate } from '../../../certificates/services/issueAttemptCertificate.js';
 
 const expired = () => attemptError(409, 'ATTEMPT_EXPIRED', 'The attempt time limit has expired');
 
@@ -23,6 +24,7 @@ export async function submitQuizAttemptInternal(attemptId, userId) {
     // Guard the deadline again at the update, including time spent computing totals.
     const submitted = await submitAttempt(client, attempt.id, summary);
     if (!submitted) throw expired();
+    await issueAttemptCertificate(client, attempt.id);
     await client.query('COMMIT');
     return submitted;
   } catch (error) {

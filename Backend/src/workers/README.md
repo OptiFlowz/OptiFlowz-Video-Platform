@@ -61,10 +61,11 @@ by manual submission. Both first grade complete unchecked saved answers through
 - Sum `max_points` from attempt question snapshots.
 - Calculate score percentage and `passed` using `settings_snapshot.passing_score_percentage`.
 - Persist `status=timed_out`, `finished_at=expires_at` and the results.
+- For passed attempts, issue a certificate when the current `quizzes.certificate_template_id` selects an existing template. Certificate selection and quiz metadata use the live quiz, not attempt settings; grading still uses saved settings. The shared certificate service freezes user/quiz/result/template data and prevents duplicate issuance, including for revoked certificates.
 - Ignore minimum answered/correct submission thresholds on expiration.
 - Preserve question snapshots, answer content, save timestamps and all previously checked grades.
 - Grade complete pending answers using snapshot settings; partial/empty drafts remain unchecked with zero contribution.
-- Persist the new grades and final result atomically; failures roll them back together.
+- Persist the new grades, final result and any issued certificate atomically; failures roll them back together, including the certificate number counter increment.
 
 The service requires a caller-owned transaction and is idempotent. It returns the
 finalized ID or null when no transition is needed. It does not expose internal scores

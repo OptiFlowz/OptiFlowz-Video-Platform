@@ -8,6 +8,7 @@ import jwt from 'jsonwebtoken';
 import pg from 'pg';
 import { installQuizPermissions } from './helpers/quiz-permissions-schema.js';
 import { answerSettings, answerSnapshot } from './helpers/quiz-answer-fixtures.js';
+import { upgradeCertificateIssuance } from './helpers/quiz-certificate-schema.js';
 
 test('save answers: authentication, snapshots, grading, feedback and concurrent writes in isolated PostgreSQL', { skip: !process.env.TEST_DATABASE_URL }, async t => {
   const schema = `quiz_answer_test_${randomUUID().replaceAll('-', '')}`;
@@ -21,7 +22,7 @@ test('save answers: authentication, snapshots, grading, feedback and concurrent 
   });
   await admin.query(`CREATE SCHEMA ${schema}`);
   await admin.query(`SET search_path TO ${schema},public`);
-  await admin.query("CREATE TABLE users(id uuid PRIMARY KEY, status text DEFAULT 'active', authz_version integer DEFAULT 1)");
+  await admin.query("CREATE TABLE users(id uuid PRIMARY KEY, status text DEFAULT 'active', authz_version integer DEFAULT 1, full_name text)");
   for (const file of ['1791590400001_add-questions.sql', '1791590400004_add-quizzes.sql',
     '1792195200000_add-quiz-feedback-and-scoring-settings.sql', '1792627200001_add-quiz-questions-per-page.sql', '1792195200001_add-quiz-attempts.sql',
     '1792195200002_add-quiz-attempt-questions-and-answers.sql']) {
@@ -29,11 +30,12 @@ test('save answers: authentication, snapshots, grading, feedback and concurrent 
     await admin.query(sql.split('-- Down Migration')[0]);
   }
   const owner = randomUUID(), other = randomUUID(), noPermission = randomUUID();
+  await upgradeCertificateIssuance(admin, { schema });
   await admin.query('INSERT INTO users(id) VALUES ($1),($2)', [owner, other]);
   await installQuizPermissions(admin, { schema });
   await admin.query('INSERT INTO users(id) VALUES ($1)', [noPermission]);
   let failWrite = false, expireBeforeWrite = false, expireBeforeCheck = false, onLock = null;
-  let failSubmit = false, expireBeforeSubmit = false, pauseSubmit = null;
+  let failSubmit = false, failCertificate = false, expireBeforeSubmit = false, pauseSubmit = null;
   const queryOn = database => async (sql, params) => {
     if (sql.includes('FOR UPDATE')) onLock?.();
     if (sql.includes("UPDATE public.quiz_attempts a SET status='submitted'")) {
@@ -52,6 +54,10 @@ test('save answers: authentication, snapshots, grading, feedback and concurrent 
       await database.query(`UPDATE ${schema}.quiz_attempts SET expires_at=clock_timestamp() WHERE id=$1`, [params[0]]);
     }
     const result = await database.query(sql.replaceAll('public.', `${schema}.`), params);
+    if (failCertificate && sql.includes('INSERT INTO public.certificates')) {
+      failCertificate = false;
+      throw new Error('Injected certificate failure');
+    }
     if (failSubmit && sql.includes("UPDATE public.quiz_attempts a SET status='submitted'")) {
       failSubmit = false;
       throw new Error('Injected submit failure');
@@ -291,6 +297,86 @@ test('save answers: authentication, snapshots, grading, feedback and concurrent 
     assert.deepEqual(returned, listed);
     assert.equal((await submitRequest(id)).body.code, 'ATTEMPT_NOT_IN_PROGRESS');
     assert.equal((await request(id, { option_nos: [1, 2] })).body.code, 'ATTEMPT_NOT_IN_PROGRESS');
+  });
+
+  const certificatesFor = async id => (await admin.query('SELECT * FROM certificates WHERE quiz_attempt_id=$1', [id])).rows;
+  const privateTemplate = async () => (await admin.query(`INSERT INTO certificate_templates(user_id,name,html_template,css_template)
+    VALUES ($1,'Editor template','<h1>{{quiz.title}}</h1><p>{{user.full_name}}</p>','h1 {color:navy}') RETURNING *`, [other])).rows[0];
+
+  await t.test('passing submit snapshots the live quiz and editor template, even when the result is hidden', async () => {
+    const template = await privateTemplate();
+    const { id, quizId } = await fixture('single_choice', { show_final_score: false, certificate_template_id: randomUUID(), title: 'Old title' });
+    await admin.query('UPDATE users SET full_name=$2 WHERE id=$1', [owner, 'Current Recipient']);
+    await admin.query('UPDATE quizzes SET title=$2,description=$3,certificate_template_id=$4 WHERE id=$1',
+      [quizId, 'Current title', 'Current description', template.id]);
+    await request(id);
+    const response = await submitRequest(id);
+    assert.equal(response.status, 200);
+    assert.equal(response.body.passed, null);
+    const [certificate] = await certificatesFor(id);
+    assert.equal(certificate.user_id, owner);
+    assert.equal(certificate.quiz_id, quizId);
+    assert.equal(certificate.status, 'issued');
+    assert.equal(certificate.certificate_template_id, template.id);
+    assert.equal(certificate.template_snapshot.user_id, other);
+    assert.equal(certificate.template_snapshot.html_template, template.html_template);
+    assert.equal(certificate.template_snapshot.css_template, template.css_template);
+    assert.equal(certificate.data_snapshot.user.full_name, 'Current Recipient');
+    assert.equal(certificate.data_snapshot.quiz.title, 'Current title');
+    assert.equal(certificate.data_snapshot.quiz.description, 'Current description');
+    assert.equal(certificate.data_snapshot.quiz.certificate_template_id, template.id);
+    assert.equal(certificate.data_snapshot.result.passed, true);
+    assert.equal(certificate.data_snapshot.result.score_percentage, 100);
+    assert.equal(certificate.data_snapshot.result.earned_points, 3);
+    assert.equal(certificate.data_snapshot.result.max_points, 3);
+    assert.equal(certificate.data_snapshot.certificate.number, certificate.certificate_number);
+    assert.equal(new Date(certificate.data_snapshot.certificate.issued_at).getTime(), certificate.issued_at.getTime());
+    await admin.query("UPDATE quizzes SET title='Later title',certificate_template_id=NULL WHERE id=$1", [quizId]);
+    await admin.query("UPDATE certificate_templates SET html_template='<p>Later</p>' WHERE id=$1", [template.id]);
+    await admin.query("UPDATE users SET full_name='Later name' WHERE id=$1", [owner]);
+    assert.equal((await submitRequest(id)).status, 409);
+    assert.deepEqual(await certificatesFor(id), [certificate]);
+  });
+
+  await t.test('current template enable/disable/delete and failed attempts determine issuance, not snapshot flags', async () => {
+    const system = (await admin.query('SELECT id FROM certificate_templates WHERE is_system=true LIMIT 1')).rows[0].id;
+    for (const mode of ['enabled', 'disabled', 'deleted', 'failed']) {
+      const { id, quizId } = await fixture('single_choice', { certificate_template_id: mode === 'enabled' ? null : system, has_certificate: mode !== 'enabled' });
+      const selected = mode === 'deleted' ? (await privateTemplate()).id : system;
+      await admin.query('UPDATE quizzes SET certificate_template_id=$2 WHERE id=$1', [quizId, selected]);
+      if (mode === 'disabled') await admin.query('UPDATE quizzes SET certificate_template_id=NULL WHERE id=$1', [quizId]);
+      if (mode === 'deleted') await admin.query('DELETE FROM certificate_templates WHERE id=$1', [selected]);
+      await request(id, { option_no: mode === 'failed' ? 2 : 1 });
+      assert.equal((await submitRequest(id)).status, 200);
+      assert.equal((await certificatesFor(id)).length, mode === 'enabled' ? 1 : 0, mode);
+    }
+  });
+
+  await t.test('certificate failure rolls back grades, finalization and numbering; retry and duplicate issuance are safe', async () => {
+    const template = await privateTemplate();
+    const { id, quizId } = await fixture();
+    await admin.query('UPDATE quizzes SET certificate_template_id=$2 WHERE id=$1', [quizId, template.id]);
+    await request(id);
+    const counters = (await admin.query('SELECT * FROM certificate_number_counters ORDER BY year')).rows;
+    failCertificate = true;
+    await assert.rejects(submit(id, owner), /Injected certificate failure/);
+    assert.equal((await attemptRow(id)).status, 'in_progress');
+    assert.equal((await stored(id))[0].checked_at, null);
+    assert.deepEqual(await certificatesFor(id), []);
+    assert.deepEqual((await admin.query('SELECT * FROM certificate_number_counters ORDER BY year')).rows, counters);
+    assert.deepEqual((await Promise.all([submitRequest(id), submitRequest(id)])).map(r => r.status).sort(), [200, 409]);
+    assert.equal((await certificatesFor(id)).length, 1);
+    await admin.query("UPDATE certificates SET status='revoked',revoked_at=now() WHERE quiz_attempt_id=$1", [id]);
+    const [revoked] = await certificatesFor(id);
+    const { issueAttemptCertificate } = await import('../src/modules/certificates/services/issueAttemptCertificate.js');
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('SELECT id FROM quiz_attempts WHERE id=$1 FOR UPDATE', [id]);
+      assert.equal(await issueAttemptCertificate({ query: queryOn(client) }, id), null);
+      await client.query('COMMIT');
+    } finally { client.release(); }
+    assert.deepEqual(await certificatesFor(id), [revoked]);
   });
 
   await t.test('correctness threshold denominator includes unanswered questions; score rounds to two decimals before passing comparison', async () => {
