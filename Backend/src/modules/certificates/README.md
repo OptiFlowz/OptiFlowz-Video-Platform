@@ -124,13 +124,43 @@ The unique attempt constraint permits one certificate per attempt, including rev
 
 The Down migration removes the certificate table, number function, sequence, and status enum. It deletes issued-certificate records, and a subsequent Up starts a new sequence; it is intended for rolling back the feature, not resetting certificate numbering. Run `npm run test:certificates:db` with `TEST_DATABASE_URL` to exercise the migration in an isolated schema.
 
+## Read your issued certificates
+
+Both routes require an active user's Bearer access token and always scope reads to `req.user.sub`. No Certificate Moderation permission is required to read your own issued certificates. Supplying a `user_id` filter is rejected. Responses use `Cache-Control: private, no-store`.
+
+- `GET /api/certificates` returns `{ success: true, certificates: [...], pagination: { page, limit, total, totalPages, hasNextPage, hasPreviousPage }, sorting: { sortBy, sortOrder } }`.
+- `GET /api/certificates/:id` returns `{ success: true, certificate: {...} }`. A nonexistent certificate and another user's certificate both return `404`; an invalid UUID returns `400`. Revoked certificates remain readable by their recipient.
+
+List items contain `id`, `user_id`, `quiz_id`, `quiz_attempt_id`, `certificate_template_id`, `certificate_number`, `status`, `issued_at`, `revoked_at`, `created_at`, and `quiz_title`. The title is read from the issuance snapshot, so later quiz renames do not change it. Detail adds the stored `data_snapshot` and `template_snapshot`. Lists omit both snapshots to avoid loading full HTML/CSS for every item. A deleted template does not hide a certificate; its nullable template reference becomes null and snapshots remain intact. Neither route returns a PDF.
+
+All filters are optional and combine with AND:
+
+| Query parameter | Meaning |
+| --- | --- |
+| `status` | `issued` or `revoked`; omitted includes both |
+| `quiz_id` | Exact quiz UUID |
+| `certificate_template_id` | Exact current template reference UUID; deleted references no longer match |
+| `certificate_number` | Case-insensitive substring, up to 100 characters |
+| `quiz_title` | Case-insensitive substring of the saved title, up to 255 characters |
+| `issued_from`, `issued_to` | Inclusive ISO 8601 timestamps with `Z` or a UTC offset; from must not exceed to |
+| `page` | Positive integer, default `1` |
+| `limit` | Integer `1–100`, default `20` |
+| `sortBy` | `issued_at` (default), `created_at`, `certificate_number`, `quiz_title`, or `status` |
+| `sortOrder` | `desc` (default) or `asc` |
+
+Text search treats `%`, `_` and backslash literally. Sorting uses `id ASC` as a stable tie-breaker and places null values last. Certificate-number sorting is lexical. Empty and out-of-range pages return an empty array with the correct filtered total. Invalid/unknown query parameters return `400`; missing or invalid authentication returns `401`. URL-encode timestamps containing `+` offsets.
+
+Example: `GET /api/certificates?status=issued&quiz_title=safety&page=1&limit=20&sortBy=issued_at&sortOrder=desc`.
+
+Run `npm run test:certificates:api` with `TEST_DATABASE_URL` for isolated PostgreSQL and HTTP coverage.
+
 ## Quiz certificate selection
 
 Manual attempt submission and automatic expiration finalization call the shared `services/issueAttemptCertificate.js` service in the same database transaction as grading and the terminal status update. A certificate is inserted only for a persisted `passed=true` attempt with status `submitted` or `timed_out` whose **current quiz row** selects an existing template. Scoring and passing thresholds still use attempt settings; certificate selection, quiz title and all other quiz metadata use `quizzes`, never `settings_snapshot`. Enabling, disabling or changing the quiz's template while an attempt is active therefore affects issuance. A deleted template clears the live selection and prevents issuance.
 
 Each issued record freezes `data_snapshot` with `user` (`id`, `full_name`), `quiz` (the current quiz row), `result` (`score_percentage`, `earned_points`, `max_points`, `passed`, `finished_at`), and `certificate` (`number`, `issued_at`). `template_snapshot` stores the complete selected template row, including HTML/CSS, paper format and orientation. Text placeholders remain in the saved template; issuance does not modify the original template or render a PDF. Later edits to users, quizzes or templates do not change these snapshots. `issued_at` is the issuance transaction time, while `result.finished_at` records the attempt's completion/deadline.
 
-The attempt row lock and unique `quiz_attempt_id` guarantee at most one certificate per attempt. Existing certificates, including revoked ones, are never overwritten or reissued. A certificate insert failure rolls back finalization, newly graded answers and the annual counter increment; retrying can complete the operation safely. Failed attempts and quizzes without a selected template finalize normally without a certificate. The stored pass result is used even when `show_final_score=false`; existing response visibility remains unchanged. Existing terminal attempts are not backfilled. Issued-certificate listing, download and verification endpoints remain separate work.
+The attempt row lock and unique `quiz_attempt_id` guarantee at most one certificate per attempt. Existing certificates, including revoked ones, are never overwritten or reissued. A certificate insert failure rolls back finalization, newly graded answers and the annual counter increment; retrying can complete the operation safely. Failed attempts and quizzes without a selected template finalize normally without a certificate. The stored pass result is used even when `show_final_score=false`; existing attempt-response visibility remains unchanged. Certificate detail exposes its saved result in `data_snapshot`. Existing terminal attempts are not backfilled. Issued-certificate download and verification endpoints remain separate work.
 
 Quiz create/PATCH accepts `certificate_template_id` as a UUID or `null`; it replaces the removed `has_certificate` flag. Omission on create defaults to `null`; omission on PATCH preserves the current selection without rechecking template access, and explicit `null` removes it. A supplied non-null ID enables certificates and must identify a system template or a private template belonging to the authenticated user making the request. A user authorized to edit another user's quiz can therefore assign their own private template, but cannot select the quiz owner's or a third user's private template. `updateQuizInternal` takes separate `resourceOwnerId` and `authenticatedUserId` arguments: the former scopes the quiz update, while the latter scopes template selection. Quiz ownership and edit permissions remain unchanged. Missing/inaccessible templates return `422`; malformed UUIDs or the legacy boolean field return `400`. Quiz create/detail/list/update responses include `certificate_template_id`.
 
