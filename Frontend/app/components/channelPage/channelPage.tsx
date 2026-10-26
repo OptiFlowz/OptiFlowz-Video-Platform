@@ -1,12 +1,17 @@
+import InfiniteScroll from '../library/infiniteScroll';
+import { nextResultsPage, uniqueResults } from '../library/infiniteResults';
+import { useAuthorization } from "~/authorization/authorization";
+import { P } from "~/authorization/permissions";
+import PublishedQuizList from "../quizEngine/PublishedQuizList";
 import ChannelCollections from "../collections/ChannelCollections";
 import ExpandableDescription from "../shared/ExpandableDescription";
 import ChannelPosts from '../posts/ChannelPosts';
 import { LiveList } from '../live/LiveList';
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo, useRef, useState, useId } from "react";
 import { useLocation, useNavigate, useParams } from "react-router";
 import { fetchFn } from "~/API";
-import { CollectionsSVG, LiveSVG, ChannelMenuSVG, PlaylistSVG, PostSVG, ShareSVG } from "~/constants";
+import { QuizSVG, CollectionsSVG, LiveSVG, ChannelMenuSVG, PlaylistSVG, PostSVG, ShareSVG } from "~/constants";
 import { env } from "~/env";
 import { getToken } from "~/functions";
 import { useI18n } from "~/i18n";
@@ -64,16 +69,21 @@ const SkeletonHeader = () => (
 
 function ChannelPage() {
     const { t } = useI18n();
+    const { can } = useAuthorization();
+    const canParticipate = can(P.quizzesParticipate);
+    const tabs = (["videos", "live", "playlists", "collections", "posts", "quizzes"] as const).filter(tab => tab !== "quizzes" || canParticipate);
     const { id: channelId } = useParams();
     const { pathname } = useLocation();
     const navigate = useNavigate();
     const channelPath = `/channel/${encodeURIComponent(channelId || '')}`;
     const tabSegment = pathname.replace(/\/$/, '').split('/')[3];
-    const activeTab = tabSegment === 'collections' || tabSegment === 'playlists' || tabSegment === 'posts' || tabSegment === 'live' ? tabSegment : 'videos';
-    const selectTab = (tab: 'videos' | 'playlists' | 'collections' | 'posts' | 'live') => {
+    const activeTab = (tabSegment === 'quizzes' && canParticipate) || tabSegment === 'collections' || tabSegment === 'playlists' || tabSegment === 'posts' || tabSegment === 'live' ? tabSegment : 'videos';
+    const selectTab = (tab: 'videos' | 'playlists' | 'collections' | 'posts' | 'live' | 'quizzes') => {
         if (tab === activeTab) return;
         navigate(tab === 'videos' ? channelPath : `${channelPath}/${tab}`, { preventScrollReset: true, shallow: true });
     };
+    const [quizSortOrder, setQuizSortOrder] = useState<ChannelSortOrder>('desc');
+    const [collectionSortOrder, setCollectionSortOrder] = useState<ChannelSortOrder>('desc');
     const [postAscending, setPostAscending] = useState(false);
     const [liveSort, setLiveSort] = useState('streamed_at:desc');
     const tabsId = useId();
@@ -122,10 +132,11 @@ function ChannelPage() {
         enabled: !!channelId
     });
 
-    const { data: channelVideosData, isLoading: isLoadingVideos } = useQuery({
-        queryKey: [`channel-videos-${channelId}`, !!token, videoSortBy, videoSortOrder],
-        queryFn: ({ signal }) => fetchFn<ChannelVideosT>({
-            route: `api/channels/${channelId}/videos?sortBy=${videoSortBy}&sortOrder=${videoSortOrder}&page=1&limit=20`,
+    const videoQuery = useInfiniteQuery({
+        queryKey: [`channel-videos-${channelId}`, token, videoSortBy, videoSortOrder],
+        initialPageParam: 1,
+        queryFn: ({ pageParam, signal }) => fetchFn<ChannelVideosT>({
+            route: `api/channels/${channelId}/videos?sortBy=${videoSortBy}&sortOrder=${videoSortOrder}&page=${pageParam}&limit=20`,
             options: {
                 method: "GET",
                 headers, signal
@@ -133,13 +144,14 @@ function ChannelPage() {
         }),
         enabled: !!channelId && activeTab === "videos",
         staleTime: 30_000,
-        placeholderData: (previousData, previousQuery) => previousQuery?.queryKey[0] === `channel-videos-${channelId}` ? previousData : undefined
+        getNextPageParam: (page, pages, pageParam) => nextResultsPage(page, pages, pageParam, 20, data => data.videos)
     });
 
-    const { data: channelPlaylistsData, isLoading: isLoadingPlaylists } = useQuery({
-        queryKey: [`channel-playlists-${channelId}`, !!token, playlistSortBy, playlistSortOrder],
-        queryFn: ({ signal }) => fetchFn<ChannelPlaylistsT>({
-            route: `api/channels/${channelId}/playlists?sortBy=${playlistSortBy}&sortOrder=${playlistSortOrder}`,
+    const playlistQuery = useInfiniteQuery({
+        queryKey: [`channel-playlists-${channelId}`, token, playlistSortBy, playlistSortOrder],
+        initialPageParam: 1,
+        queryFn: ({ pageParam, signal }) => fetchFn<ChannelPlaylistsT>({
+            route: `api/channels/${channelId}/playlists?sortBy=${playlistSortBy}&sortOrder=${playlistSortOrder}&page=${pageParam}&limit=20`,
             options: {
                 method: "GET",
                 headers, signal
@@ -147,8 +159,13 @@ function ChannelPage() {
         }),
         enabled: !!channelId && activeTab === "playlists",
         staleTime: 30_000,
-        placeholderData: (previousData, previousQuery) => previousQuery?.queryKey[0] === `channel-playlists-${channelId}` ? previousData : undefined
+        getNextPageParam: (page, pages, pageParam) => nextResultsPage(page, pages, pageParam, 20, data => data.playlists)
     });
+
+    const channelVideosData = videoQuery.data;
+    const channelPlaylistsData = playlistQuery.data;
+    const isLoadingVideos = videoQuery.isLoading;
+    const isLoadingPlaylists = playlistQuery.isLoading;
 
     const { data: channelVideoCount } = useQuery({
         queryKey: ["channel-video-count", channelId, token],
@@ -160,13 +177,13 @@ function ChannelPage() {
         staleTime: 30_000,
     });
     const channel = channelData?.channel as ChannelT | undefined;
-    const normalizedVideos = useMemo(() => channelVideosData?.videos?.map((video) => ({
+    const normalizedVideos = useMemo(() => uniqueResults(channelVideosData?.pages.flatMap(page => page.videos) ?? []).map((video) => ({
         ...video,
         progress_seconds: Number(video.progress_seconds ?? 0),
         percentage_watched: Number(video.percentage_watched ?? 0),
-    })) ?? [], [channelVideosData]);
-    const normalizedPlaylists = channelPlaylistsData?.playlists ?? [];
-    const videoCount = channelVideosData?.pagination?.total ?? channelVideoCount?.pagination?.total;
+    })), [channelVideosData]);
+    const normalizedPlaylists = uniqueResults(channelPlaylistsData?.pages.flatMap(page => page.playlists) ?? []);
+    const videoCount = channelVideosData?.pages[0]?.pagination?.total ?? channelVideoCount?.pagination?.total;
 
     const videoArray = normalizedVideos.map((video) => (
         <Item key={video.id} props={video as VideoT} />
@@ -233,7 +250,7 @@ function ChannelPage() {
 
             <div className="channelNavigation">
                 <ProfileTabs className="channelTabs" label={t("channelLabel")}>
-                    {(["videos", "live", "playlists", "collections", "posts"] as const).map((tab, index) => (
+                    {tabs.map((tab, index) => (
                         <button
                             key={tab}
                             ref={(element) => { tabRefs.current[index] = element; }}
@@ -247,16 +264,22 @@ function ChannelPage() {
                             onKeyDown={(event) => {
                                 if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
                                 event.preventDefault();
-                                const next = event.key === "Home" ? 0 : event.key === "End" ? 4 : (index + (event.key === "ArrowRight" ? 1 : -1) + 5) % 5;
-                                selectTab((["videos", "live", "playlists", "collections", "posts"] as const)[next]);
+                                const next = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+                                selectTab(tabs[next]);
                                 tabRefs.current[next]?.focus();
                                 tabRefs.current[next]?.scrollIntoView({ block: "nearest", inline: "nearest" });
                             }}
-                        ><span className={`profileTabIcon${tab === "posts" ? " profileTabIcon--posts" : ""}`} aria-hidden="true">{tab === "live" ? LiveSVG : tab === "videos" ? ChannelMenuSVG : tab === "playlists" ? PlaylistSVG : tab === "collections" ? CollectionsSVG : PostSVG}</span><span>{t(tab === "live" ? "liveTitle" : `${tab}Tab`)}</span></button>
+                        ><span className={`profileTabIcon${tab === "posts" ? " profileTabIcon--posts" : ""}`} aria-hidden="true">{tab === "quizzes" ? QuizSVG : tab === "live" ? LiveSVG : tab === "videos" ? ChannelMenuSVG : tab === "playlists" ? PlaylistSVG : tab === "collections" ? CollectionsSVG : PostSVG}</span><span>{t(tab === "quizzes" ? "navQuizzes" : tab === "live" ? "liveTitle" : `${tab}Tab`)}</span></button>
                     ))}
                 </ProfileTabs>
-                <div className="channelSortControl" hidden={activeTab === "collections"}>
-                    {activeTab === 'live' ? <CustomSelect value={liveSort} onChange={setLiveSort} ariaLabel={t('searchSortBy')} rootClassName="channelSortSelect" options={[
+                <div className="channelSortControl">
+                    {activeTab === 'quizzes' || activeTab === 'collections' ? <CustomSelect
+                        value={activeTab === 'quizzes' ? quizSortOrder : collectionSortOrder}
+                        onChange={value => (activeTab === 'quizzes' ? setQuizSortOrder : setCollectionSortOrder)(value as ChannelSortOrder)}
+                        ariaLabel={t('searchSortBy')} rootClassName="channelSortSelect" options={[
+                            { value: 'desc', label: t('channelSortNewest') },
+                            { value: 'asc', label: t('channelSortOldest') },
+                        ]} /> : activeTab === 'live' ? <CustomSelect value={liveSort} onChange={setLiveSort} ariaLabel={t('searchSortBy')} rootClassName="channelSortSelect" options={[
                         { value: 'streamed_at:desc', label: t('channelSortNewest') },
                         { value: 'streamed_at:asc', label: t('channelSortOldest') },
                         { value: 'views:desc', label: t('channelSortMostPopular') },
@@ -278,22 +301,31 @@ function ChannelPage() {
 
             <div className="channelPanel" role="tabpanel" id={`${tabsId}-videos-panel`} aria-labelledby={`${tabsId}-videos-tab`} hidden={activeTab !== "videos"} tabIndex={0}>
                 {activeTab === "videos" && <><div className="videoHolder">{isLoadingVideos ? skeletonVideoArray : videoArray}</div>
-                {!isLoadingVideos && normalizedVideos.length === 0 && <p className="channelEmpty">{t("channelAnalyticsBestVideosEmpty")}</p>}</>}
+                {!isLoadingVideos && !videoQuery.isError && normalizedVideos.length === 0 && <p className="channelEmpty">{t("channelAnalyticsBestVideosEmpty")}</p>}
+                <InfiniteScroll hasMore={videoQuery.hasNextPage} fetching={videoQuery.isFetchingNextPage}
+                    error={videoQuery.isError} loadingLabel={t('videoLoadingData')}
+                    onLoadMore={() => void (videoQuery.isFetchNextPageError || videoQuery.hasNextPage ? videoQuery.fetchNextPage() : videoQuery.refetch())} /></>}
             </div>
 
             <div className="channelPanel" role="tabpanel" id={`${tabsId}-playlists-panel`} aria-labelledby={`${tabsId}-playlists-tab`} hidden={activeTab !== "playlists"} tabIndex={0}>
                 {activeTab === "playlists" && <><div className="collection notscrollable channelPlaylistGrid">{isLoadingPlaylists ? skeletonPlaylistArray : playlistArray}</div>
-                {!isLoadingPlaylists && normalizedPlaylists.length === 0 && <p className="channelEmpty">{t("quizNoPlaylistsFound")}</p>}</>}
+                {!isLoadingPlaylists && !playlistQuery.isError && normalizedPlaylists.length === 0 && <p className="channelEmpty">{t("quizNoPlaylistsFound")}</p>}
+                <InfiniteScroll hasMore={playlistQuery.hasNextPage} fetching={playlistQuery.isFetchingNextPage}
+                    error={playlistQuery.isError} loadingLabel={t('videoLoadingData')}
+                    onLoadMore={() => void (playlistQuery.isFetchNextPageError || playlistQuery.hasNextPage ? playlistQuery.fetchNextPage() : playlistQuery.refetch())} /></>}
             </div>
             <div className="channelPanel" role="tabpanel" id={`${tabsId}-live-panel`} aria-labelledby={`${tabsId}-live-tab`} hidden={activeTab !== 'live'} tabIndex={0}>
                 {channelId && <LiveList key={channelId} channelId={channelId} sort={liveSort} active={activeTab === 'live'} />}
             </div>
             <div className="channelPanel" role="tabpanel" id={`${tabsId}-collections-panel`} aria-labelledby={`${tabsId}-collections-tab`} hidden={activeTab !== "collections"} tabIndex={0}>
-                {activeTab === "collections" && channelId && <ChannelCollections key={channelId} channelId={channelId} />}
+                {activeTab === "collections" && channelId && <ChannelCollections key={channelId} channelId={channelId} sortOrder={collectionSortOrder} />}
             </div>
             <div className="channelPanel" role="tabpanel" id={`${tabsId}-posts-panel`} aria-labelledby={`${tabsId}-posts-tab`} hidden={activeTab !== 'posts'} tabIndex={0}>
                 {activeTab === 'posts' && channel && <ChannelPosts channelId={channelId || ''} author={channel} videos={normalizedVideos} ascending={postAscending} />}
             </div>
+            {canParticipate && <div className="channelPanel" role="tabpanel" id={`${tabsId}-quizzes-panel`} aria-labelledby={`${tabsId}-quizzes-tab`} hidden={activeTab !== 'quizzes'} tabIndex={0}>
+                {activeTab === 'quizzes' && channelId && <PublishedQuizList key={channelId} userId={channelId} sortOrder={quizSortOrder} />}
+            </div>}
         </main>
     );
 }

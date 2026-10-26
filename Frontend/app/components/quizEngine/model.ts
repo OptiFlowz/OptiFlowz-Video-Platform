@@ -22,6 +22,8 @@ export type QuizSettings = {
   allow_attempt_review: boolean; show_final_score: boolean; scoring_mode: 'exact_match' | 'partial_credit';
 };
 export type Quiz = Owned & QuizSettings & { question_count: number; certificate_template_id: string | null };
+// Participant metadata deliberately excludes author IDs, template IDs and question content.
+export type PublishedQuiz = Omit<Quiz, 'user_id' | 'certificate_template_id' | 'status'> & { status: 'published'; has_certificate: boolean };
 export const defaultSettings: QuizSettings = {
   title: '', description: null, status: 'draft', questions_per_page: 1, time_limit_seconds: null, max_attempts: null,
   passing_score_percentage: 50, min_answered_percentage: 0, min_correct_percentage: 0,

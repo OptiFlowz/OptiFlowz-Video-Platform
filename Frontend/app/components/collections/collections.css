@@ -24,8 +24,6 @@ main.collectionsManagement td span.collectionVisibility:hover { filter: none; }
 .collectionPicker .playlistVideoAddBtn svg { width: 18px; height: 18px; }
 .collectionEditor button:disabled, .collectionsManagement button:disabled { opacity: .5; cursor: not-allowed; }
 .collectionCards { display: grid; grid-template-columns: repeat(var(--video-grid-columns-count, 3), minmax(0, 1fr)); gap: 1.5rem; }
-.collectionCardLabel { position: absolute; inset-inline-end: .75rem; bottom: .75rem; display: flex; align-items: center; gap: .35rem; padding: .35rem .65rem; border-radius: 999px; background: var(--background2); color: var(--text1); font-size: .8rem; }
-.collectionCardLabel svg { width: 16px; height: 16px; }
 .collectionCards h3 { margin-top: .5rem; font-size: 1.1rem; font-weight: 600; overflow-wrap: anywhere; }
 .collectionCardSubtitle { margin-top: .25rem; color: var(--text2); overflow-wrap: anywhere; }
 .collectionEditor :focus-visible, .collectionsManagement :focus-visible, .collectionDetailsPage :focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: -2px; }

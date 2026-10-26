@@ -17,7 +17,7 @@ const fixtures = () => [
   { ...base, question_no: 2, question_id: 'q2', type: 'multiple_choice', content: 'Multiple answers', options: [{ option_no: 2, content: 'Alpha', position: 1 }, { option_no: 5, content: 'Beta', position: 2 }] },
   { ...base, question_no: 3, question_id: 'q3', type: 'matching', content: 'Match answers', matching_items: [{ item_no: 8, content: 'Left', position: 1 }, { item_no: 3, content: 'Other left', position: 2 }], matching_options: [{ option_no: 6, content: 'Right', position: 1 }] },
 ];
-async function mount(t, { resume = false, eligible = true, expired = false, hidden = false, saved = false, history = [], read = true, requirements = [], visibility = 'after_check', passed = false, correct = true, allowChanges = false, explanation = '', expiresAt = null, review = false, reviewRows, reviewError = false, directResult, perPage, quizPerPage = 1, timeLimit = 900, beforeWrite, confirmResult } = {}) {
+async function mount(t, { resume = false, eligible = true, expired = false, hidden = false, saved = false, history = [], read = true, publishedError = false, certificate = true, requirements = [], visibility = 'after_check', passed = false, correct = true, allowChanges = false, explanation = '', expiresAt = null, review = false, reviewRows, reviewError = false, directResult, perPage, quizPerPage = 1, timeLimit = 900, beforeWrite, confirmResult } = {}) {
   const dom = new JSDOM('<div id="root"></div>', { url: 'http://localhost/quiz/quiz-1', pretendToBeVisual: true });
   const names = ['window', 'document', 'navigator', 'HTMLElement', 'IS_REACT_ACT_ENVIRONMENT', 'IntersectionObserver'];
   const prior = new Map(names.map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)]));
@@ -32,7 +32,7 @@ async function mount(t, { resume = false, eligible = true, expired = false, hidd
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
   const fetchFn = async ({ route, options }) => {
     requests.push({ route, method: options.method, body: options.body && JSON.parse(options.body) });
-    if (route === 'api/quizzes/quiz-1') return { quiz: { title: 'Knowledge quiz', questions_per_page: quizPerPage, question_count: 3, time_limit_seconds: timeLimit, passing_score_percentage: 50, certificate_template_id: 'classic' } };
+    if (route === 'api/quizzes/published/quiz-1') { if (publishedError) throw new Error('Quiz not found'); return { quiz: { title: 'Knowledge quiz', questions_per_page: quizPerPage, question_count: 3, time_limit_seconds: timeLimit, passing_score_percentage: 50, has_certificate: certificate } }; }
     if (route.endsWith('/eligibility')) return { can_start: !started && eligible, can_resume: started && !submitted, active_attempt_id: started && !submitted ? 'a1' : null, attempts_remaining: resume ? 0 : 1, reason: eligible ? null : 'requirements_not_met' };
     if (route.endsWith('/progress')) return { requirements_met: eligible, requirements };
     if (route.endsWith('/attempts') && options.method === 'POST') { started = true; return { id: 'a1', settings: { correctness_visibility: visibility, allow_attempt_review: review, questions_per_page: perPage } }; }
@@ -81,7 +81,7 @@ async function mount(t, { resume = false, eligible = true, expired = false, hidd
       useSearchParams: () => [new URLSearchParams(window.location.search)], Link: ({ to, children, ...props }) => React.createElement('a', { href: to, ...props }, children),
     },
     './shared': {
-      styles, useAccess: () => ({ user: { id: 'me' }, can: () => true, read }),
+      styles, useAccess: () => ({ user: { id: 'me' }, can: permission => read || permission === 'quizzes.participate', read }),
       useDetail: (route, enabled = true) => useQuery({ enabled, queryKey: [route], queryFn: () => fetchFn({ route: `api/quizzes${route}`, options: { method: 'GET' } }) }),
       LoadState: ({ query }) => query.error ? React.createElement('p', { role: 'alert' }, query.error.message) : null,
       Select: ({ label, value, values, onChange, disabled }) => React.createElement('select', { 'aria-label': label, value, disabled, onChange: e => onChange(e.target.value) }, values.map(v => React.createElement('option', { key: v.value, value: v.value }, v.label))),
@@ -270,7 +270,14 @@ test('participant-only accounts do not request authoring metadata', async t => {
   const ui = await mount(t, { read: false });
   assert.ok(!ui.requests.some(r => r.route === 'api/quizzes/quiz-1'));
   assert.equal(ui.button('Start quiz').disabled, false);
-  assert.match(document.querySelector('.videoQuizFacts').textContent, /—/);
+  assert.ok(ui.requests.some(r => r.route === 'api/quizzes/published/quiz-1'));
+  assert.match(document.querySelector('.videoQuizFacts').textContent, /15 minutes/);
+  assert.ok(document.querySelector('.videoQuizCertificateNote'));
+  assert.equal(document.querySelector('h1').textContent, 'Knowledge quiz');
+  await ui.click('Start quiz');
+  assert.ok(ui.requests.some(r => r.route === 'api/quizzes/quiz-1/attempts' && r.method === 'POST'));
+  assert.ok(ui.requests.some(r => r.route === 'api/quiz-attempts/a1/questions'));
+  assert.match(document.body.textContent, /One answer/);
 });
 
 
@@ -303,6 +310,7 @@ test('requirements put pending videos first and collapse concise completed rows 
   ] });
   const section = document.querySelector('.overviewRequirements');
   const details = section.querySelector('details');
+  assert.equal(section.querySelector('.overviewRequirementsStatus'), null);
   assert.equal(details.open, false);
   assert.match(details.querySelector('summary').textContent, /Completed requirements.*2/);
   assert.deepEqual([...section.querySelectorAll('.overviewRequirement strong')].map(el => el.textContent), ['Pending video', 'Done time', 'Done percent']);
@@ -322,6 +330,7 @@ test('requirements put pending videos first and collapse concise completed rows 
 test('all-completed requirements stay collapsed without an empty pending group', async t => {
   await mount(t, { requirements: [{ video_id: 'done', min_watch_seconds: 100, is_met: true }] });
   const section = document.querySelector('.overviewRequirements');
+  assert.match(section.querySelector('#quiz-requirements-title .overviewRequirementsStatus').textContent, /Complete$/);
   assert.equal(section.querySelector(':scope > .overviewRequirementList'), null);
   assert.equal(section.querySelector('details').open, false);
   assert.match(section.textContent, /Requirement \(watch 1 minute and 40 seconds\) complete/);
@@ -902,3 +911,15 @@ for (const visibility of ['after_check', 'after_finish', 'never']) {
     }
   });
 }
+
+
+test('unavailable published metadata does not show a misleading start panel', async t => {
+  await mount(t, { publishedError: true });
+  assert.match(document.querySelector('[role="alert"]').textContent, /Quiz not found/);
+  assert.equal(document.querySelector('.videoQuizStartPanel'), null);
+});
+
+test('participant metadata uses has_certificate false without advertising a certificate', async t => {
+  await mount(t, { certificate: false });
+  assert.equal(document.querySelector('.videoQuizCertificateNote'), null);
+});

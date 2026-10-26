@@ -1,3 +1,5 @@
+import InfiniteScroll from '~/components/library/infiniteScroll';
+import { nextResultsPage, uniqueResults } from '~/components/library/infiniteResults';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { fetchFn } from '~/API';
@@ -11,8 +13,8 @@ export default function ChannelPosts({ channelId, author, videos, ascending }: {
   const { t } = useI18n();
   const query = useInfiniteQuery({ queryKey: ['posts', 'channel', channelId, getToken(), ascending], initialPageParam: 1, enabled: !!channelId,
     queryFn: ({ pageParam, signal }) => getChannelPosts(channelId, pageParam, ascending, signal),
-    getNextPageParam: data => data.pagination.hasNextPage ? data.pagination.page + 1 : undefined, retry: false });
-  const posts = useMemo(() => query.data?.pages.flatMap(page => page.posts) ?? [], [query.data]);
+    getNextPageParam: (page, pages, pageParam) => nextResultsPage(page, pages, pageParam, 20, data => data.posts), retry: false });
+  const posts = useMemo(() => uniqueResults(query.data?.pages.flatMap(page => page.posts) ?? []), [query.data]);
   // Modern responses hydrate embedded videos. Only old responses need the
   // channel's video list as a fallback, so opening posts need not preload it.
   const needsVideoFallback = posts.some(post => post.blocks.some(block =>
@@ -31,9 +33,10 @@ export default function ChannelPosts({ channelId, author, videos, ascending }: {
   ).values()), [videos, fallback.data]);
   return <div className="channelPostsFeed" aria-busy={query.isFetching}>
     {query.isPending && <p role="status">{t('postLoading')}</p>}
-    {query.isError && <p role="alert" className="postError">{t('postLoadError')} <button type="button" className="postSecondary" onClick={() => void query.refetch()}>{t('postRetry')}</button></p>}
+    {query.isError && !query.data && <p role="alert" className="postError">{t('postLoadError')} <button type="button" className="postSecondary" onClick={() => void query.refetch()}>{t('postRetry')}</button></p>}
     {!query.isPending && !query.isError && !posts.length && <p>{t('postEmpty')}</p>}
     {posts.map(post => <PostCard key={post.id} post={post} author={author} videos={embeddedVideos} interactive sideComments />)}
-    {query.hasNextPage && <button type="button" className="postSecondary" disabled={query.isFetchingNextPage} onClick={() => void query.fetchNextPage()}>{t('postLoadMore')}</button>}
+    <InfiniteScroll hasMore={query.hasNextPage} fetching={query.isFetchingNextPage} error={query.isFetchNextPageError}
+      onLoadMore={() => void query.fetchNextPage()} loadingLabel={t('postLoading')} />
   </div>;
 }

@@ -12,7 +12,7 @@ import InfiniteScroll from '~/components/library/infiniteScroll';
 import { nextResultsPage, uniqueResults } from '~/components/library/infiniteResults';
 import { engineKey, list, request } from './api';
 import { useDetail, useAccess, LoadState, styles } from './shared';
-import type { Quiz, Requirement } from './model';
+import type { PublishedQuiz, Requirement } from './model';
 import AttemptPlayer from './AttemptPlayer';
 import type { AttemptSettings } from './attemptApi';
 import { ArrowSVG, CheckSVG, CloseSVG, PlaySVG, QuizSVG } from '~/constants';
@@ -48,7 +48,10 @@ function OverviewRequirements({ requirements }: { requirements: Requirement[] })
     </div>;
   };
   return <section className={styles.overviewRequirements} aria-labelledby="quiz-requirements-title">
-    <h3 id="quiz-requirements-title">{t('quizRequirements')}</h3>
+    <h3 id="quiz-requirements-title" className={styles.overviewRequirementsTitle}>
+      {t('quizRequirements')}
+      {completed.length > 0 && pending.length === 0 && <span className={styles.overviewRequirementsStatus}>{CheckSVG}{t('quizRequirementComplete')}</span>}
+    </h3>
     {!!pending.length && <div className={styles.overviewRequirementList}>{pending.map(renderRequirement)}</div>}
     {!!completed.length && <details className={styles.overviewCompletedRequirements}>
       <summary>{t('quizCompletedRequirements')} <span>({completed.length})</span></summary>
@@ -65,8 +68,7 @@ export default function QuizOverview() {
   const [starting, setStarting] = useState(false), [startError, setStartError] = useState('');
   const startLock = useRef(false);
   const [startedAttempt, setStartedAttempt] = useState<{ id: string; settings?: AttemptSettings } | null>(null);
-  // Quiz metadata is an authoring endpoint; participant-only accounts must not request it.
-  const detail = useDetail<{ quiz: Quiz }>(`/${quizId}`, !!quizId && read);
+  const detail = useDetail<{ quiz: PublishedQuiz }>(`/published/${quizId}`, !!quizId && can('quizzes.participate'));
   const quiz = detail.data?.quiz;
   const title = quiz?.title || t('quizDefaultTitle');
   const openAttempt = (id: string) => navigate(`/quiz/${quizId}?${new URLSearchParams({ attempt: id })}`);
@@ -106,7 +108,8 @@ export default function QuizOverview() {
     </div></div>
     {attemptId ? <div className={styles.page}><AttemptPlayer key={attemptId} headerActions={attemptActions} attemptId={attemptId} settings={(startedAttempt?.id === attemptId ? startedAttempt : history.find(attempt => attempt.id === attemptId))?.settings} completedAttempt={history.find(attempt => attempt.id === attemptId && ['submitted', 'timed_out'].includes(attempt.status))} onClose={() => { navigate(`/quiz/${quizId}`); refresh(); }} onFinished={refresh} /></div> : <>
       <LoadState query={eligibility} />
-      {eligibility.data?.reason === 'quiz_unavailable' ? <p className={styles.note}>{t('quizNoQuizAvailable')}</p> : <div className="videoQuizIntro">
+      {can('quizzes.participate') && <LoadState query={detail} variant="inline" />}
+      {eligibility.data?.reason === 'quiz_unavailable' ? <p className={styles.note}>{t('quizNoQuizAvailable')}</p> : detail.isSuccess && <div className="videoQuizIntro">
         <aside className="videoQuizStartPanel" aria-labelledby="quiz-start-title">
           <div className="videoQuizStartHeading"><h3 id="quiz-start-title">{t(canResume ? 'quizContinueQuiz' : 'quizBeforeYouBegin')}</h3><p>{t(canResume ? 'quizResumeHint' : 'quizStartHint')}</p></div>
           <dl className="videoQuizFacts">
@@ -115,7 +118,7 @@ export default function QuizOverview() {
             <div><dt>{t('quizPassingScoreLabel')}</dt><dd>{quiz?.passing_score_percentage != null ? `${quiz.passing_score_percentage}%` : '—'}</dd></div>
             <div><dt>{t('quizAttemptsLabel')}</dt><dd>{!eligibility.data ? '—' : eligibility.data.attempts_remaining != null ? t('quizAttemptsLeft', { count: eligibility.data.attempts_remaining }) : eligibility.data.max_attempts === null ? t('quizUnlimitedLabel') : '—'}</dd></div>
           </dl>
-          {quiz?.certificate_template_id && <div className="videoQuizCertificateNote"><span aria-hidden="true">{CheckSVG}</span>{t('quizCertificateHint')}</div>}
+          {quiz?.has_certificate && <div className="videoQuizCertificateNote"><span aria-hidden="true">{CheckSVG}</span>{t('quizCertificateHint')}</div>}
           {eligibility.data?.reason === 'requirements_not_met' && <p className={styles.overviewStartHint}>{t('quizCompleteRequiredVideos')}</p>}
           {eligibility.data?.reason === 'max_attempts_reached' && <p className={styles.overviewStartHint}>{t('quizNoAttemptsLeft')}</p>}
           {startError && <p role="alert" className={styles.error}>{startError}</p>}
@@ -127,7 +130,7 @@ export default function QuizOverview() {
           {!!progress.data?.requirements.length && <OverviewRequirements key={quizId} requirements={progress.data.requirements} />}
           <section className="videoQuizHistory" aria-labelledby="quiz-history-title">
             <div className="videoQuizSectionTitle"><span><h3 id="quiz-history-title">{t('quizYourLastAttempts')}</h3><p>{t('quizHistoryHint')}</p></span>
-              {can('quizzes.certificates') && quiz?.certificate_template_id && history.some(attempt => attempt.passed) && <Link to="/account" className="viewQuizCertificate">{t('quizViewCertificates')}</Link>}
+              {can('quizzes.certificates') && quiz?.has_certificate && history.some(attempt => attempt.passed) && <Link to="/account/certificates" className="viewQuizCertificate">{t('quizViewCertificates')}</Link>}
             </div>
             {!attempts.data && <LoadState query={attempts} />}
             {!!history.length && <div className="videoQuizAttemptList">{history.map(attempt => {
