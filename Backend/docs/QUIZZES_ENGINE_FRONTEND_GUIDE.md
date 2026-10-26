@@ -577,6 +577,40 @@ ka kategoriji. Ukupan broj pitanja pogođenih kvizova automatski se smanjuje za 
 
 POST/GET `/` znače `/api/quizzes`, bez dodatnog `/quizzes` segmenta.
 
+### Participant katalog objavljenih kvizova
+
+- `GET /api/quizzes/published` — lista objavljenih kvizova svih autora.
+- `GET /api/quizzes/published/:quizId` — detalji jednog objavljenog kviza.
+
+Obe rute zahtevaju Bearer token i `quizzes.participate`, bez autorskih read
+permisija. Lista vraća `{ success, quizzes, pagination, sorting }`, a detalji
+`{ success, quiz }`. Podržani su `user_id`, `title`, `page`, `limit`, `sortBy` i `sortOrder`
+kao kod autorske liste. `status` je opcion i prihvata samo `published`;
+`draft`/`archived` daju 400 na listi. Pojedinačni draft/archived/nepostojeći kviz
+vraća 404, uključujući kada ga traži vlasnik ili Owner.
+
+Odgovor sadrži naslov, opis, status, broj pitanja, `questions_per_page`, vremensko
+ograničenje, limit pokušaja, pragove prolaza/predaje, shuffle/feedback/scoring
+podešavanja i datume. `has_certificate` je informativan boolean izveden iz
+postojanja dodeljenog šablona. Ne vraćaju se `user_id`, `certificate_template_id`,
+pitanja, rešenja, sources niti attemptovi. Ovo ne menja autorski CRUD, koji za
+sertifikat i dalje koristi `certificate_template_id`.
+
+Requirements i limit pokušaja ne skrivaju objavljeni kviz. Za dugme „Započni“ ili
+„Nastavi“ pozovi `GET /api/quizzes/:quizId/eligibility`. Ovi detalji prikazuju
+aktuelna podešavanja kviza; za rad u attemptu koristi njegov `settings` snapshot.
+
+Opcioni `user_id` je UUID autora, na obe liste:
+
+- `/api/quizzes/published?user_id=UUID` vraća samo objavljene kvizove tog autora.
+- `/api/quizzes?user_id=UUID` filtrira administrativnu listu. `read_any` i Owner
+  mogu filtrirati po bilo kom autoru; sa `read_own` tuđi ID vraća praznu listu i
+  `total: 0`, jer filter ne proširuje dozvoljeni pristup.
+
+Filter važi i za ukupan broj rezultata i može se kombinovati sa ostalim query
+parametrima. Bez filtera ponašanje ostaje isto. Nepostojeći autor vraća praznu
+listu, a neispravan, prazan ili ponovljen `user_id` daje 400.
+
 ### 6.2. Podešavanja i default vrednosti
 
 `questions_per_page` određuje željeni broj pitanja po stranici na frontendu. Backend ga čuva i vraća, ali ne paginira pitanja prema toj vrednosti. Novi attempt ga kopira u `settings_snapshot`; promena kviza ne menja postojeće snapshotove. Za stare attemptove bez tog polja frontend može koristiti 1.

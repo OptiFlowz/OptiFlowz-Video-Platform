@@ -7,6 +7,17 @@ const QUIZ_COLUMNS = `id, user_id, title, description, status, question_count, q
   explanation_incorrect_only, allow_answer_changes_after_check, allow_attempt_review,
   show_final_score, scoring_mode, created_at, updated_at`;
 
+// Participant DTO: quiz rules and presentation data, without author/template IDs
+// or question-bank/source configuration. Certificate availability is informational.
+const PUBLISHED_QUIZ_COLUMNS = `id, title, description, status, question_count, questions_per_page,
+  time_limit_seconds, max_attempts, passing_score_percentage::double precision AS passing_score_percentage,
+  shuffle_questions, shuffle_options, (certificate_template_id IS NOT NULL) AS has_certificate,
+  min_answered_percentage::double precision AS min_answered_percentage,
+  min_correct_percentage::double precision AS min_correct_percentage,
+  correctness_visibility, correct_answers_visibility, explanation_visibility,
+  explanation_incorrect_only, allow_answer_changes_after_check, allow_attempt_review,
+  show_final_score, scoring_mode, created_at, updated_at`;
+
 const WRITABLE_FIELDS = [
   'questions_per_page', 'title', 'description', 'status', 'time_limit_seconds', 'max_attempts',
   'passing_score_percentage', 'shuffle_questions', 'shuffle_options', 'certificate_template_id',
@@ -31,7 +42,24 @@ export async function getQuiz(database, quizId, userId) {
   return rows[0] || null;
 }
 
-export async function listQuizzes(database, userId, { title, status, limit, offset, sortBy, sortOrder }) {
+export async function getPublishedQuiz(database, quizId) {
+  const { rows } = await database.query(`
+    SELECT ${PUBLISHED_QUIZ_COLUMNS} FROM public.quizzes WHERE id=$1 AND status='published'
+  `, [quizId]);
+  return rows[0] || null;
+}
+
+export function listQuizzes(database, userId, query) {
+  return queryQuizList(database, userId, query, QUIZ_COLUMNS);
+}
+
+export function listPublishedQuizzes(database, query) {
+  return queryQuizList(database, null, { ...query, status: 'published' }, PUBLISHED_QUIZ_COLUMNS);
+}
+
+// The projection comes only from the two fixed constants above.
+// The author filter intersects the authorized owner scope; it never replaces it.
+async function queryQuizList(database, userId, { user_id, title, status, limit, offset, sortBy, sortOrder }, columns) {
   const pattern = title ? `%${title.replace(/[\\%_]/g, '\\$&')}%` : null;
   const fields = {
     created_at: 'created_at', updated_at: 'updated_at', title: 'title', status: 'status',
@@ -43,15 +71,16 @@ export async function listQuizzes(database, userId, { title, status, limit, offs
   const ordering = `${field} ${direction}, id ASC`;
   const { rows } = await database.query(`
     WITH owned_quizzes AS (
-      SELECT ${QUIZ_COLUMNS} FROM public.quizzes
+      SELECT ${columns} FROM public.quizzes
       WHERE ($1::uuid IS NULL OR user_id = $1) AND ($2::text IS NULL OR title ILIKE $2)
         AND ($3::public.quiz_status IS NULL OR status = $3)
+        AND ($6::uuid IS NULL OR user_id = $6)
     ), page AS (
       SELECT * FROM owned_quizzes ORDER BY ${ordering} LIMIT $4 OFFSET $5
     )
     SELECT COALESCE((SELECT jsonb_agg(to_jsonb(page) ORDER BY ${ordering}) FROM page), '[]'::jsonb) AS quizzes,
       (SELECT count(*)::integer FROM owned_quizzes) AS total
-  `, [userId, pattern, status ?? null, limit, offset]);
+  `, [userId, pattern, status ?? null, limit, offset, user_id ?? null]);
   return rows[0];
 }
 

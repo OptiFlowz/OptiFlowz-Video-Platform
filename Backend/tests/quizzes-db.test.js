@@ -155,6 +155,117 @@ test('quiz CRUD and existing submodule routing against PostgreSQL session-local 
   }
   const minimal = { title: 'Quiz' };
 
+  await scenario('participants browse published quizzes from every author without author read access', async () => {
+    const viewer = randomUUID(), denied = randomUUID(), owner = randomUUID();
+    await client.query('INSERT INTO pg_temp.users(id) VALUES ($1),($2),($3)', [viewer, denied, owner]);
+    await client.query("INSERT INTO pg_temp.user_roles(user_id,role_id) SELECT $1,id FROM pg_temp.roles WHERE name='Viewer'", [viewer]);
+    await client.query("INSERT INTO pg_temp.user_roles(user_id,role_id) SELECT $1,id FROM pg_temp.roles WHERE name='Owner'", [owner]);
+    const bearer = id => jwt.sign({ sub: id, authzVersion: 1 }, process.env.JWT_SECRET);
+    const published = (await request('POST', '', { title: 'Published', status: 'published', questions_per_page: 5,
+      certificate_template_id: templateId, min_answered_percentage: 100, max_attempts: 1 })).quiz;
+    const foreign = (await request('POST', '', { title: 'Foreign published', status: 'published' }, otherToken)).quiz;
+    const draft = (await request('POST', '', { title: 'Draft' })).quiz;
+    const archived = (await request('POST', '', { title: 'Archived', status: 'archived' })).quiz;
+    const paths = ['/published', `/published/${published.id}`];
+    const temporary = jwt.sign({ sub: viewer, purpose: 'two_factor' }, process.env.JWT_SECRET);
+    for (const path of paths) {
+      assert.equal((await request('GET', path, undefined, null)).status, 401);
+      assert.equal((await request('GET', path, undefined, temporary)).status, 401);
+      assert.equal((await request('GET', path, undefined, bearer(denied))).status, 403);
+    }
+    assert.equal((await request('GET', '', undefined, bearer(viewer))).status, 403);
+    assert.equal((await request('GET', `/${published.id}`, undefined, bearer(viewer))).status, 403);
+    const listed = await request('GET', '/published', undefined, bearer(viewer));
+    assert.equal(listed.status, 200);
+    assert.deepEqual(new Set(listed.quizzes.map(q => q.id)), new Set([published.id, foreign.id]));
+    const detail = await request('GET', `/published/${published.id}`, undefined, bearer(viewer));
+    assert.equal(detail.status, 200);
+    const listItem = listed.quizzes.find(q => q.id === published.id);
+    // JSONB aggregation preserves PostgreSQL timezone/precision; detail uses pg Dates.
+    for (const key of ['created_at', 'updated_at']) listItem[key] = new Date(listItem[key]).toISOString();
+    assert.deepEqual(detail.quiz, listItem);
+    assert.equal(detail.quiz.questions_per_page, 5);
+    assert.equal(detail.quiz.has_certificate, true);
+    assert.equal(listed.quizzes.find(q => q.id === foreign.id).has_certificate, false);
+    assert.equal(detail.quiz.min_answered_percentage, 100);
+    assert.equal(detail.quiz.passing_score_percentage, 50);
+    for (const key of ['user_id', 'certificate_template_id', 'questions', 'sources', 'settings_snapshot']) {
+      assert.equal(Object.hasOwn(detail.quiz, key), false);
+    }
+    // Participant-only publication scope applies to authors and Owners too.
+    for (const actor of [token, bearer(viewer), bearer(owner)]) {
+      for (const id of [draft.id, archived.id, randomUUID()]) {
+        assert.equal((await request('GET', `/published/${id}`, undefined, actor)).status, 404);
+      }
+      assert.equal((await request('GET', '/published', undefined, actor)).pagination.total, 2);
+    }
+    assert.equal((await request('GET', `/${draft.id}`)).status, 200);
+    const response = await fetch(`${baseUrl}/published/${published.id}`, { headers: { Authorization: `Bearer ${bearer(viewer)}` } });
+    assert.equal(response.headers.get('cache-control'), 'private, no-store');
+    await response.json();
+    await request('PATCH', `/${published.id}`, { status: 'draft' });
+    assert.equal((await request('GET', `/published/${published.id}`, undefined, bearer(viewer))).status, 404);
+    assert.equal((await request('GET', '/published', undefined, bearer(viewer))).pagination.total, 1);
+  });
+
+  await scenario('published list preserves pagination, literal title filters and stable sorting', async () => {
+    const a = (await request('POST', '', { title: '100% Quiz', status: 'published' })).quiz;
+    const b = (await request('POST', '', { title: '100% Quiz', status: 'published' }, otherToken)).quiz;
+    await request('POST', '', { title: '100% Quiz', status: 'draft' });
+    await request('POST', '', { title: 'Other', status: 'published' });
+    const ids = [a.id, b.id].sort();
+    const first = await request('GET', '/published?title=100%25&page=1&limit=1&sortBy=title&sortOrder=desc');
+    assert.equal(first.status, 200);
+    assert.equal(first.quizzes[0].id, ids[0]);
+    assert.deepEqual(first.pagination, { page: 1, limit: 1, total: 2, totalPages: 2, hasNextPage: true, hasPreviousPage: false });
+    assert.deepEqual(first.sorting, { sortBy: 'title', sortOrder: 'desc' });
+    assert.equal((await request('GET', '/published?title=100%25&page=2&limit=1&sortBy=title&sortOrder=desc')).quizzes[0].id, ids[1]);
+    const beyond = await request('GET', '/published?title=100%25&page=3&limit=1');
+    assert.deepEqual(beyond.quizzes, []);
+    assert.equal(beyond.pagination.total, 2);
+    const empty = await request('GET', '/published?title=missing');
+    assert.deepEqual(empty.quizzes, []);
+    assert.equal(empty.pagination.total, 0);
+    const asc = await request('GET', '/published?sortBy=title&sortOrder=asc&status=published');
+    assert.deepEqual(asc.quizzes.map(q => q.title), ['100% Quiz', '100% Quiz', 'Other']);
+    for (const query of ['status=draft', 'status=archived', 'status=invalid', 'limit=101', 'page=0',
+      'sortBy=unknown', 'sortOrder=unknown', 'user_id=invalid', 'offset=0']) {
+      assert.equal((await request('GET', `/published?${query}`)).status, 400, query);
+    }
+    const filtered = await request('GET', `/published?user_id=${userId.toUpperCase()}&title=100%25&limit=1`);
+    assert.equal(filtered.status, 200);
+    assert.deepEqual(filtered.quizzes.map(q => q.id), [a.id]);
+    assert.equal(filtered.pagination.total, 1);
+    assert.equal(filtered.pagination.totalPages, 1);
+    const foreign = await request('GET', `/published?user_id=${otherUserId}`);
+    assert.deepEqual(foreign.quizzes.map(q => q.id), [b.id]);
+    const beyondUser = await request('GET', `/published?user_id=${otherUserId}&page=2&limit=1`);
+    assert.deepEqual(beyondUser.quizzes, []);
+    assert.equal(beyondUser.pagination.total, 1);
+    const missingUser = await request('GET', `/published?user_id=${randomUUID()}`);
+    assert.deepEqual(missingUser.quizzes, []);
+    assert.equal(missingUser.pagination.total, 0);
+    assert.equal((await request('GET', '/published/invalid')).status, 400);
+  });
+
+  await scenario('own-only author filtering cannot expose another author or their counts', async () => {
+    const own = (await request('POST', '', { title: 'Mine', status: 'draft' })).quiz;
+    await request('POST', '', { title: 'Other', status: 'published' }, otherToken);
+    const mine = await request('GET', `?user_id=${userId.toUpperCase()}`);
+    assert.equal(mine.status, 200);
+    assert.deepEqual(mine.quizzes.map(q => q.id), [own.id]);
+    assert.equal(mine.pagination.total, 1);
+    for (const id of [otherUserId, randomUUID()]) {
+      const filtered = await request('GET', `?user_id=${id}`);
+      assert.equal(filtered.status, 200);
+      assert.deepEqual(filtered.quizzes, []);
+      assert.equal(filtered.pagination.total, 0);
+    }
+    for (const path of ['?user_id=invalid', '?user_id=', `?user_id=${userId}&user_id=${otherUserId}`]) {
+      assert.equal((await request('GET', path)).status, 400);
+    }
+  });
+
   await scenario('all five quiz endpoints require access tokens and reject temporary tokens', async () => {
     const temporary = jwt.sign({ sub: userId, purpose: 'two_factor' }, process.env.JWT_SECRET);
     for (const [method, path] of [['POST', ''], ['GET', ''], ['GET', `/${randomUUID()}`], ['PATCH', `/${randomUUID()}`], ['DELETE', `/${randomUUID()}`]]) {

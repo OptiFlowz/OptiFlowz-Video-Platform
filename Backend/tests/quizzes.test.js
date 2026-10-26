@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { mock, test } from 'node:test';
 import {
-  createQuizSchema, updateQuizSchema, listQuizzesSchema,
+  createQuizSchema, updateQuizSchema, listQuizzesSchema, listPublishedQuizzesSchema,
 } from '../src/modules/quizzes-engine/quizzes/helpers/quizzes.validation.js';
 
 const body = { title: 'Quiz' };
@@ -127,4 +127,35 @@ test('every quiz handler rejects unauthenticated and malformed input before data
   await assert.rejects(update(params, {}, userId, userId), { status: 400 });
   await assert.rejects(remove({ quizId: 'invalid' }, userId), { status: 400 });
   assert.equal(databaseCalls, 0);
+});
+
+
+test('participant list schema cannot broaden the publication scope', () => {
+  assert.deepEqual(listPublishedQuizzesSchema.parse({}), listQuizzesSchema.parse({}));
+  assert.equal(listPublishedQuizzesSchema.parse({ status: 'published' }).status, 'published');
+  for (const status of ['draft', 'archived', ['published', 'draft']]) {
+    assert.equal(listPublishedQuizzesSchema.safeParse({ status }).success, false);
+  }
+});
+
+test('published quiz handlers reject unauthenticated and malformed requests before database access', async () => {
+  const { getPublishedQuizInternal: getPublished } = await import('../src/modules/quizzes-engine/quizzes/handlers/getPublishedQuiz.js');
+  const { getPublishedQuizzesInternal: listPublished } = await import('../src/modules/quizzes-engine/quizzes/handlers/getPublishedQuizzes.js');
+  await assert.rejects(getPublished(params), { status: 401 });
+  await assert.rejects(listPublished({}), { status: 401 });
+  await assert.rejects(getPublished({ quizId: 'invalid' }, userId), { status: 400 });
+  await assert.rejects(listPublished({ status: 'draft' }, userId), { status: 400 });
+  assert.equal(databaseCalls, 0);
+});
+
+
+test('both quiz lists accept one UUID author filter and normalize its case', () => {
+  const id = 'ABCDEF12-1234-4234-8234-123456789ABC';
+  for (const schema of [listQuizzesSchema, listPublishedQuizzesSchema]) {
+    assert.equal(schema.parse({ user_id: id }).user_id, id.toLowerCase());
+    assert.equal('user_id' in schema.parse({}), false);
+    for (const user_id of ['', 'invalid', null, [id], { id }]) {
+      assert.equal(schema.safeParse({ user_id }).success, false);
+    }
+  }
 });

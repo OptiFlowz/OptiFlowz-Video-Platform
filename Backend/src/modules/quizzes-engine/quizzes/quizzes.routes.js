@@ -9,6 +9,8 @@ const router = express.Router();
 
 router.use(requireAuth);
 router.post('/', requirePermission(Permissions.QUIZZES_CREATE), quizzesController.createQuiz);
+router.get('/published', requirePermission(Permissions.QUIZZES_PARTICIPATE), quizzesController.getPublishedQuizzes);
+router.get('/published/:quizId', requirePermission(Permissions.QUIZZES_PARTICIPATE), quizzesController.getPublishedQuiz);
 router.get('/', access('quizzes', 'read', { list: true }), quizzesController.getQuizzes);
 router.get('/:quizId', access('quizzes', 'read', { key: 'quizId' }), quizzesController.getQuiz);
 router.patch('/:quizId', access('quizzes', 'update', { key: 'quizId' }), quizzesController.updateQuiz);

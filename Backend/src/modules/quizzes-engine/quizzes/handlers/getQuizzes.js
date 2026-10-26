@@ -5,9 +5,9 @@ import { listQuizzes } from '../repository/quizzes.repository.js';
 
 export async function getQuizzesInternal(query, userId, access) {
   requireQuizUser(userId);
-  const { title, status, page, limit, sortBy, sortOrder } = validateOrThrow(listQuizzesSchema.safeParse(query));
+  const { user_id, title, status, page, limit, sortBy, sortOrder } = validateOrThrow(listQuizzesSchema.safeParse(query));
   const offset = (page - 1) * limit;
-  const { quizzes, total } = await listQuizzes(writePool, access?.canAccessAny === true ? null : userId, { title, status, limit, offset, sortBy, sortOrder });
+  const { quizzes, total } = await listQuizzes(writePool, access?.canAccessAny === true ? null : userId, { user_id, title, status, limit, offset, sortBy, sortOrder });
   const totalPages = Math.ceil(total / limit);
   return {
     quizzes,

@@ -1,3 +1,5 @@
+import { getPublishedQuizInternal } from './handlers/getPublishedQuiz.js';
+import { getPublishedQuizzesInternal } from './handlers/getPublishedQuizzes.js';
 import { sendSuccess, sendError } from '../../../common/response.js';
 import { createQuizInternal } from './handlers/createQuiz.js';
 import { getQuizzesInternal } from './handlers/getQuizzes.js';
@@ -41,4 +43,19 @@ export async function deleteQuiz(req, res) {
   try {
     return sendSuccess(res, await deleteQuizInternal(req.params, req.resourceOwnerId ?? req.user?.sub));
   } catch (error) { return handleQuizError(res, error, 'deleteQuiz'); }
+}
+
+export async function getPublishedQuizzes(req, res) {
+  res.set('Cache-Control', 'private, no-store');
+  try {
+    return sendSuccess(res, await getPublishedQuizzesInternal(req.query, req.user?.sub));
+  } catch (error) { return handleQuizError(res, error, 'getPublishedQuizzes'); }
+}
+
+export async function getPublishedQuiz(req, res) {
+  res.set('Cache-Control', 'private, no-store');
+  try {
+    const quiz = await getPublishedQuizInternal(req.params, req.user?.sub);
+    return sendSuccess(res, { quiz });
+  } catch (error) { return handleQuizError(res, error, 'getPublishedQuiz'); }
 }

@@ -77,7 +77,7 @@ test('quiz authorization uses real role grants, denies and Owner bypass on all m
     ['POST',`/${x.quiz}/questions`,{question_id:x.question}],['GET',`/${x.quiz}/questions`],['GET',`/${x.quiz}/questions/${x.question}`],['PATCH',`/${x.quiz}/questions/${x.question}`,{position:1}],['DELETE',`/${x.quiz}/questions/${x.question}`],
     ['POST',`/${x.quiz}/sources`,{category_id:x.category,question_count:1}],['PUT',`/${x.quiz}/sources`,{sources:[]}],['GET',`/${x.quiz}/sources`],['GET',`/${x.quiz}/sources/${x.category}`],['PATCH',`/${x.quiz}/sources/${x.category}`,{position:1}],['DELETE',`/${x.quiz}/sources/${x.category}`],
   ];
-  const participantRoutes = x => [['GET',`/${x.quiz}/eligibility`],['POST',`/${x.quiz}/attempts`],['GET',`/quiz-requirements/${x.quiz}/check`],['GET',`/quiz-requirements/${x.quiz}/progress`]];
+  const participantRoutes = x => [['GET','/published'],['GET',`/published/${x.quiz}`],['GET',`/${x.quiz}/eligibility`],['POST',`/${x.quiz}/attempts`],['GET',`/quiz-requirements/${x.quiz}/check`],['GET',`/quiz-requirements/${x.quiz}/progress`]];
 
   await t.test('no-role users are blocked on every route; Viewer cannot author even resources they own',async()=>{
     for(const [method,path,body] of [...authorRoutes(f),...participantRoutes(f)]) assert.equal((await request(unprivileged,method,path,body)).status,403,`${method} ${path}`);
@@ -118,6 +118,23 @@ test('quiz authorization uses real role grants, denies and Owner bypass on all m
       const created=await request(actor,'POST',path,body); assert.equal(created.status,201); assert.equal(created[key].user_id,actor);
     }
   }
+  await t.test('Administrator and Owner can filter management lists by author; Viewer filters only published lists', async()=>{
+    for (const actor of [admin, owner]) {
+      const filtered = await request(actor, 'GET', `/?user_id=${viewer}`);
+      assert.equal(filtered.status, 200);
+      assert.ok(filtered.quizzes.length > 0);
+      assert.ok(filtered.quizzes.every(q => q.user_id === viewer));
+      assert.equal(filtered.pagination.total, filtered.quizzes.length);
+      const absent = await request(actor, 'GET', `/?user_id=${randomUUID()}`);
+      assert.equal(absent.pagination.total, 0);
+    }
+    const published = await request(viewer, 'GET', `/published?user_id=${uploader}`);
+    assert.equal(published.status, 200);
+    assert.ok(published.quizzes.some(q => q.id === f.quiz));
+    assert.ok(published.quizzes.every(q => q.status === 'published' && q.id !== v.quiz));
+    assert.equal((await request(viewer, 'GET', `/?user_id=${uploader}`)).status, 403);
+  });
+
   await t.test('Administrator any permissions manage foreign resources and preserve their owners',()=>manageForeign(admin));
   await t.test('foreign quiz editors select their own or system templates and preserve assignment in attempts', async () => {
     const templates = new Map();

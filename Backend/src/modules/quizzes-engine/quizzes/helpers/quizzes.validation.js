@@ -58,6 +58,7 @@ export const updateQuizSchema = z.object(quizFields).partial().strict().refine(
 );
 
 export const listQuizzesSchema = z.object({
+  user_id: z.string().uuid('Invalid user ID').transform(value => value.toLowerCase()).optional(),
   title: z.string().trim().max(255).optional(),
   status: quizStatus.optional(),
   sortBy: z.enum(['created_at', 'updated_at', 'title', 'status', 'question_count', 'passing_score_percentage'])
@@ -68,6 +69,12 @@ export const listQuizzesSchema = z.object({
 }).strict().refine(query => Number.isSafeInteger((query.page - 1) * query.limit), {
   message: 'Pagination offset exceeds the supported range', path: ['page'],
 });
+
+// Participants cannot broaden the server-enforced publication scope.
+export const listPublishedQuizzesSchema = listQuizzesSchema.refine(
+  query => query.status === undefined || query.status === 'published',
+  { message: 'Only published quizzes are available', path: ['status'] },
+);
 
 export function requireQuizUser(userId) {
   if (!userId) throw new HttpError(401, { message: 'Unauthorized' });
