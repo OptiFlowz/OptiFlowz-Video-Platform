@@ -9,7 +9,7 @@ import { QR_CODE_KEY, QR_PLACEHOLDER_SOURCE, parseCertificateQrOptions, qrStyleE
 const qrPlaceholder = new RegExp(QR_PLACEHOLDER_SOURCE, 'gi');
 const MAX_RENDER_BYTES = 3 * 1024 * 1024;
 
-// Shared by preview and future certificate issuance; no network or database access.
+// Shared by preview and issued certificate rendering; no network or database access.
 export async function generateCertificateQrCode(verificationUrl, key = QR_CODE_KEY) {
   const { options, marginModules } = parseCertificateQrOptions(key);
   if (typeof verificationUrl !== 'string' || !verificationUrl || Buffer.byteLength(verificationUrl) > 1024) {
@@ -44,13 +44,17 @@ export async function generateCertificateQrCode(verificationUrl, key = QR_CODE_K
 }
 
 export function getPreviewVerificationUrl(baseUrl = process.env.FRONTEND_BASE_URL) {
+  return getCertificateVerificationUrl('preview', baseUrl);
+}
+
+export function getCertificateVerificationUrl(certificateId, baseUrl = process.env.FRONTEND_BASE_URL) {
   let url;
   try { url = new URL(baseUrl); } catch { /* Report a configuration error below. */ }
   if (!url || !['https:', 'http:'].includes(url.protocol) || url.username || url.password) {
-    throw new HttpError(500, { message: 'FRONTEND_BASE_URL must be an absolute HTTP(S) URL for certificate QR preview' });
+    throw new HttpError(500, { message: 'FRONTEND_BASE_URL must be an absolute HTTP(S) URL for certificate QR codes' });
   }
-  // A dedicated test identifier, never an issued certificate's verification token.
-  url.pathname = `${url.pathname.replace(/\/$/, '')}/certificates/verify/preview`;
+  // Preview passes a test identifier; issued PDFs pass the stored certificate UUID.
+  url.pathname = `${url.pathname.replace(/\/$/, '')}/certificates/verify/${encodeURIComponent(certificateId)}`;
   url.search = '';
   url.hash = '';
   return url.href;

@@ -5,7 +5,7 @@ import { createServer } from 'node:http';
 import { once } from 'node:events';
 import { test } from 'node:test';
 import { chromium } from 'playwright';
-import { buildPreviewDocument } from '../src/modules/certificates/certificate-templates/helpers/previewDocument.js';
+import { buildPreviewDocument, buildCertificateDocument } from '../src/modules/certificates/certificate-templates/helpers/previewDocument.js';
 import { renderCertificatePdf } from '../src/modules/certificates/certificate-templates/services/renderCertificatePdf.js';
 import { fillCertificateQrCode } from '../src/modules/certificates/helpers/certificateQrCode.js';
 import { loadDefaultCertificateTemplate, loadMinimalCertificateTemplate, loadModernCertificateTemplate } from './helpers/default-certificate-template.js';
@@ -17,6 +17,21 @@ const template = {
   css_template: '.certificate {display:grid;place-items:center;background:rgb(240,240,250)} h1 {color:navy}',
   page_format: 'A4', orientation: 'landscape',
 };
+
+test('issued snapshot values produce a real PDF through the shared renderer', { skip: !browserAvailable }, async () => {
+  const document = buildCertificateDocument({ ...template,
+    html_template: '<h1>{{user.full_name}}</h1><p>{{quiz.title}}</p><p>{{certificate.number}}</p>',
+  }, { 'user.full_name': 'Ana <Petar>', 'quiz.title': 'Actual saved quiz', 'certificate.number': 'CERT-2026-000042' });
+  const pdf = await renderCertificatePdf(document);
+  assert.equal(pdf.subarray(0, 5).toString(), '%PDF-');
+  assert.equal((pdf.toString('latin1').match(/\/Type\s*\/Page\b/g) || []).length, 1);
+  const browser = await chromium.launch({ executablePath, headless: true, chromiumSandbox: true });
+  try {
+    const page = await browser.newPage({ javaScriptEnabled: false });
+    await page.setContent(document.html);
+    assert.match(await page.locator('body').innerText(), /Ana <Petar>[\s\S]*Actual saved quiz[\s\S]*CERT-2026-000042/);
+  } finally { await browser.close(); }
+});
 
 test('QR PNG renders in PDF and respects template CSS position and dimensions', { skip: !browserAvailable }, async () => {
   const document = buildPreviewDocument({ ...template,

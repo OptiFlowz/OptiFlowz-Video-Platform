@@ -48,7 +48,17 @@ export function escapeHtml(value) {
 }
 
 export function fillPreviewPlaceholders(html) {
+  return fillCertificatePlaceholders(html, PREVIEW_DATA);
+}
+
+export function fillCertificatePlaceholders(html, values) {
   // The caller has already validated each placeholder's HTML context.
   validatePlaceholders(html, 'html_template', true);
-  return html.replace(placeholderPattern, (match, key) => isQrCodeKey(key) ? match : escapeHtml(PREVIEW_DATA[key]));
+  return html.replace(placeholderPattern, (match, key) => {
+    if (isQrCodeKey(key)) return match;
+    if (!Object.hasOwn(values, key) || !['string', 'number'].includes(typeof values[key])
+      || (typeof values[key] === 'number' && !Number.isFinite(values[key]))) invalid(`Missing or invalid certificate value "${key}"`);
+    // Snapshot text is data, including any literal placeholder-like text in a name/title.
+    return escapeHtml(values[key]).replace(/\{/g, '&#123;').replace(/\}/g, '&#125;');
+  });
 }

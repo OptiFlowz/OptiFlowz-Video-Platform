@@ -67,8 +67,8 @@ test('owned certificate routes: authentication, filtering, sorting, pagination a
     return { status: response.status, body: await response.json(), cache: response.headers.get('cache-control') };
   }
 
-  await t.test('only authenticated active recipients can read their own certificates, without moderation grants', async () => {
-    for (const path of ['', `/${certificates[0].id}`]) {
+  await t.test('lists require active recipients while certificate details are public', async () => {
+    for (const path of ['']) {
       for (const actor of [null, inactive, randomUUID()]) assert.equal((await request(path, actor)).status, 401);
       assert.equal((await request(path, user, { authzVersion: 2 })).status, 401);
       assert.equal((await request(path, user, { purpose: '2fa' })).status, 401);
@@ -79,11 +79,12 @@ test('owned certificate routes: authentication, filtering, sorting, pagination a
     assert.equal(list.body.pagination.total, 3);
     assert.ok(list.body.certificates.every(row => row.user_id === user && !('data_snapshot' in row) && !('template_snapshot' in row)));
     assert.deepEqual(list.body.sorting, { sortBy: 'issued_at', sortOrder: 'desc' });
-    assert.equal((await request(`/${certificates[3].id}`)).status, 404);
+    assert.equal((await request(`/${certificates[3].id}`, null)).status, 200);
+    assert.equal((await request(`/${certificates[0].id}`, inactive)).status, 200);
     assert.equal((await request(`/${randomUUID()}`)).status, 404);
     assert.equal((await request('/invalid')).status, 400);
     assert.equal((await request(`?user_id=${other}`)).status, 400);
-    const detail = await request(`/${certificates[1].id}`);
+    const detail = await request(`/${certificates[1].id}`, null);
     assert.equal(detail.status, 200);
     assert.equal(detail.cache, 'private, no-store');
     assert.equal(detail.body.certificate.status, 'revoked');

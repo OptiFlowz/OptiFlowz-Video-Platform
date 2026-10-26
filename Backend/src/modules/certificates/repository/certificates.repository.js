@@ -10,7 +10,7 @@ export async function listCertificates(database, userId, filters) {
   const ordering = `${field} ${filters.sortOrder === 'asc' ? 'ASC' : 'DESC'} NULLS LAST, id ASC`;
   const { rows } = await database.query(`
     WITH owned AS (
-      SELECT ${COLUMNS} FROM public.certificates
+      SELECT ${COLUMNS}, data_snapshot, template_snapshot FROM public.certificates
       WHERE user_id=$1
         AND ($2::text IS NULL OR status::text=$2)
         AND ($3::uuid IS NULL OR quiz_id=$3)
@@ -30,8 +30,8 @@ export async function listCertificates(database, userId, filters) {
   return rows[0];
 }
 
-export async function getCertificate(database, id, userId) {
+export async function getCertificate(database, id) {
   const { rows } = await database.query(`SELECT ${COLUMNS}, data_snapshot, template_snapshot
-    FROM public.certificates WHERE id=$1 AND user_id=$2`, [id, userId]);
+    FROM public.certificates WHERE id=$1`, [id]);
   return rows[0] || null;
 }

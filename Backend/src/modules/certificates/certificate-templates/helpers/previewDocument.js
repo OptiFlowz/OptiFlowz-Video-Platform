@@ -3,13 +3,17 @@ import prefixSelector from 'postcss-prefix-selector';
 import selectorParser from 'postcss-selector-parser';
 import { HttpError } from '../../../../common/httpError.js';
 import { normalizeTemplateHtml, validateTemplateContent } from './templateContent.validation.js';
-import { fillPreviewPlaceholders } from './templatePlaceholders.js';
+import { fillCertificatePlaceholders, PREVIEW_DATA } from './templatePlaceholders.js';
 import { FONT_ORIGIN, RESOURCE_LIMITS, fontImportUrl, resourceError, rewriteFontSources } from './certificateResources.js';
 
 const PAPER_SIZES = { A4: [210, 297], Letter: [215.9, 279.4] };
 export const PREVIEW_CSP = `default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data: ${FONT_ORIGIN}; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'`;
 
 export function buildPreviewDocument(template) {
+  return buildCertificateDocument(template, PREVIEW_DATA);
+}
+
+export function buildCertificateDocument(template, values) {
   const { html_template, css_template, page_format, orientation } = template;
   if (!Object.hasOwn(PAPER_SIZES, page_format) || !['portrait', 'landscape'].includes(orientation)) {
     throw new HttpError(422, { message: 'Invalid stored page format or orientation', field: 'page_format' });
@@ -24,7 +28,7 @@ export function buildPreviewDocument(template) {
     if (!fontStylesheets.includes(url)) fontStylesheets.push(url);
     if (fontStylesheets.length > RESOURCE_LIMITS.stylesheets) throw resourceError('Too many font stylesheets');
   };
-  const html = normalizeTemplateHtml(fillPreviewPlaceholders(normalizeTemplateHtml(html_template)), addStylesheet);
+  const html = fillCertificatePlaceholders(normalizeTemplateHtml(html_template, addStylesheet), values);
   const root = postcss.parse(css_template, { from: undefined });
   root.walkAtRules(rule => {
     if (rule.name.toLowerCase() === 'import') { addStylesheet(fontImportUrl(rule.params)); rule.remove(); }
@@ -61,7 +65,7 @@ export function buildPreviewDocument(template) {
   const dimensions = `width:${width}mm!important;height:${height}mm!important;min-width:0!important;min-height:0!important;max-width:${width}mm!important;max-height:${height}mm!important`;
   const document = `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="${PREVIEW_CSP}">
-<title>Certificate preview</title>
+<title>Certificate</title>
 <style>
 html, body { margin:0!important; padding:0!important; ${dimensions}; overflow:hidden!important; }
 body { font-family:Arial,sans-serif; }
