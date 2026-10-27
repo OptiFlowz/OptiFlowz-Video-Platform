@@ -60,6 +60,7 @@ const properties = new Set(`
   line-height letter-spacing word-spacing text-align text-align-last text-indent text-transform
   text-decoration text-decoration-line text-decoration-color text-decoration-style text-decoration-thickness
   text-underline-offset text-shadow text-overflow text-wrap white-space word-break hyphens vertical-align
+  line-clamp -webkit-line-clamp -webkit-box-orient
   direction unicode-bidi writing-mode text-orientation
   flex flex-direction flex-wrap flex-flow flex-grow flex-shrink flex-basis order
   justify-content justify-items justify-self align-content align-items align-self place-content place-items place-self

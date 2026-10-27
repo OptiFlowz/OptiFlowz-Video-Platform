@@ -66,6 +66,17 @@ test('accepted HTML and CSS are returned unchanged, including layout, print, fon
   }
 });
 
+test('line clamping is accepted in stylesheets and inline styles without bypassing value validation', () => {
+  const css = 'display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden';
+  const template = { html_template: `<p style="${css}">Long certificate title</p>`, css_template: `.title {${css}}` };
+  assert.deepEqual(validateTemplateContent(structuredClone(template)), template);
+  for (const property of ['-webkit-line-clamp', '-webkit-box-orient', 'line-clamp']) {
+    assert.throws(() => validateTemplateContent({ css_template: `.title {${property}: expression(alert(1))}` }), { status: 422 });
+    assert.throws(() => validateTemplateContent({ html_template: `<p style="${property}: url(javascript:alert(1))">Title</p>` }), { status: 422 });
+  }
+  assert.throws(() => validateTemplateContent({ css_template: '.title {-webkit-unknown: 2}' }), { status: 422 });
+});
+
 test('HTML rejects active elements, event attributes, unsafe URLs and incomplete markup with 422', () => {
   const malicious = [
     '<script>alert(1)</script>', '<IFRAME src="https://example.com"></IFRAME>', '<object></object>', '<embed>',
