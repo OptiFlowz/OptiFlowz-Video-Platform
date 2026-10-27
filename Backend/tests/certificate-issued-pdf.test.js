@@ -64,7 +64,13 @@ test('public certificate PDF uses snapshots, real QR URL, shared renderer and bo
   stored.template_snapshot.html_template = '<p>{{user.full_name}}</p>';
   stored.status = 'revoked';
   delete process.env.FRONTEND_BASE_URL;
-  assert.equal((await get(`${id}/pdf`)).status, 200, 'snapshot PDF without QR needs no frontend configuration, including revoked records');
+  const rendersBeforeRevocation = renderCount;
+  const revoked = await get(`${id}/pdf`);
+  assert.equal(revoked.status, 403, 'revoked certificates cannot be downloaded, including direct PDF requests');
+  assert.doesNotMatch(revoked.headers.get('content-type'), /application\/pdf/);
+  assert.equal(renderCount, rendersBeforeRevocation, 'revoked certificates never reach the PDF renderer');
+  assert.equal((await get(id)).status, 200, 'public verification still shows revoked status');
+  stored.status = 'issued';
   for (const status of [503, 504]) {
     renderError = Object.assign(new Error('Renderer unavailable'), { status });
     const failure = await get(`${id}/pdf`);

@@ -162,7 +162,7 @@ The handler reuses `buildCertificateDocument`, placeholder escaping, QR generati
 
 QR placeholders, including styling options, encode `FRONTEND_BASE_URL/certificates/verify/<certificate-id>`. A configured base-path prefix is preserved and query/fragment removed. The frontend verification page can fetch the public JSON detail; this backend change does not create that frontend page. `FRONTEND_BASE_URL` is only needed when the template includes a QR placeholder.
 
-The public PDF route allows 10 requests per minute per IP (`429` after that). Existing shared renderer concurrency, sandbox, size limits, timeouts and cancellation remain in force (`503` with `Retry-After: 5` when busy, `504` on timeout). Invalid UUIDs return `400`, missing certificates `404`. Revoked certificates remain available as their original snapshot PDF; clients must use the public detail's `status`/`revoked_at` to check current validity.
+The public PDF route allows 10 requests per minute per IP (`429` after that). Existing shared renderer concurrency, sandbox, size limits, timeouts and cancellation remain in force (`503` with `Retry-After: 5` when busy, `504` on timeout). Invalid UUIDs return `400`, missing certificates `404`. Revoked certificates return `403` before PDF rendering. Public detail remains readable so clients can display `status`/`revoked_at`.
 
 Run `npm run test:certificates:pdf` for the route tests and Chromium rendering tests; set `CERTIFICATE_CHROMIUM_EXECUTABLE_PATH` when Chromium is not at Playwright's default path.
 

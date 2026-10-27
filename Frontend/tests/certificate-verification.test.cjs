@@ -53,7 +53,7 @@ test('verification page shows saved preview, current revoked status, public PDF 
     '@tanstack/react-query': { useQuery: () => result },
     'react-router': { useParams: () => ({ certificateId: certificate.id }) },
     '~/i18n': { useI18n: () => ({ t: key => key, locale: 'en' }) },
-    '~/constants': { DownloadSVG: null, CheckSVG: null },
+    '~/constants': { DownloadSVG: null, CheckSVG: null, CloseSVG: React.createElement('svg', { 'data-icon': 'close' }) },
     '~/API': { fetchApiResponse: async () => {} },
     '../loaders/pageLoader': { default: () => null, __esModule: true },
     '../analytics/PdfGenerationStatus': { PdfGenerationStatus: () => null },
@@ -74,6 +74,8 @@ test('verification page shows saved preview, current revoked status, public PDF 
   result = { data: { certificate: { ...certificate, status: 'revoked', revoked_at: '2026-10-27' } } };
   html = renderToStaticMarkup(React.createElement(Page));
   assert.match(html, /certificateRevoked/);
+  assert.match(html, /data-icon="close"/);
+  assert.doesNotMatch(html, /analyticsDownloadPdf|download=/);
   assert.match(html, /2026-10-27/);
   for (const status of [400, 404, 500]) {
     result = { isError: true, error: { status } };
@@ -136,11 +138,12 @@ for (const mode of ['client', 'server-fallback']) test(`${mode} PDF download pre
   let localSignal;
   let fail = true;
   let id = certificate.id;
+  let status = 'issued';
   const Page = load('certificateVerification.tsx', {
-    '@tanstack/react-query': { useQuery: () => ({ data: { certificate: { ...certificate, id } } }) },
+    '@tanstack/react-query': { useQuery: () => ({ data: { certificate: { ...certificate, id, status } } }) },
     'react-router': { useParams: () => ({ certificateId: id }) },
     '~/i18n': { useI18n: () => ({ t: key => key, locale: 'en' }) },
-    '~/constants': { DownloadSVG: null, CheckSVG: null },
+    '~/constants': { DownloadSVG: null, CheckSVG: null, CloseSVG: React.createElement('svg', { 'data-icon': 'close' }) },
     '~/env': { env: { apiBaseUrl: 'https://api.example.test' } },
     '~/API': { fetchApiResponse: async (...args) => {
       requests++;
@@ -193,14 +196,22 @@ for (const mode of ['client', 'server-fallback']) test(`${mode} PDF download pre
     link.click();
     assert.equal(downloads.length, 2);
     assert.equal(localRequests, 2, 'manual retry reuses the generated PDF');
+    status = 'revoked';
+    await React.act(async () => root.render(React.createElement(Page)));
+    assert.equal(document.querySelector('a[download], button'), null, 'revocation removes a prepared download');
+    assert.deepEqual(revoked, ['blob:certificate']);
+    status = 'issued';
     id = 'another-certificate';
     await React.act(async () => root.render(React.createElement(Page)));
     assert.deepEqual(revoked, ['blob:certificate']);
     assert.equal(document.querySelector('a[download]'), null);
     await React.act(async () => document.querySelector('button').click());
     const signal = mode === 'client' ? localSignal : request[1].signal;
+    status = 'revoked';
+    await React.act(async () => root.render(React.createElement(Page)));
+    assert.equal(signal.aborted, true, 'revoking the certificate aborts generation');
+    assert.equal(document.querySelector('a[download], button'), null);
     await React.act(async () => root.unmount());
-    assert.equal(signal.aborted, true, 'leaving the page aborts generation');
     await React.act(async () => finish());
     assert.equal(downloads.length, 2, 'a late response cannot download the previous certificate');
   } finally {
@@ -212,4 +223,31 @@ for (const mode of ['client', 'server-fallback']) test(`${mode} PDF download pre
     URL.createObjectURL = previous.create;
     URL.revokeObjectURL = previous.revoke;
   }
+});
+
+
+test('local PDF renderer rejects revoked certificates before creating a capture document', async () => {
+  const { generateCertificatePdf } = load('generateCertificatePdf.ts', {
+    '../quizEngine/certificatePreview': {}, './issuedCertificateDocument': {},
+  });
+  await assert.rejects(generateCertificatePdf({ ...certificate, status: 'revoked' }, new AbortController().signal), /Revoked certificates/);
+});
+
+test('shared certificate preview blurs revoked documents and presents a localized overlay', () => {
+  const Preview = load('issuedCertificatePreview.tsx', {
+    '@tanstack/react-query': { useQuery: () => ({ data: '<p>Issued snapshot</p>' }) },
+    '~/i18n': { useI18n: () => ({ t: key => key }) },
+    '~/constants': { CloseSVG: React.createElement('svg', { 'data-icon': 'close' }) },
+    './issuedCertificateDocument': {},
+    '../quizEngine/certificatePreview': { certificatePaper: () => ({ width: 1056, height: 816 }) },
+    './accountCertificates.module.css': { __esModule: true, default: { previewContent: 'previewContent', blurredPreview: 'blurredPreview', revokedOverlay: 'revokedOverlay' } },
+  }).IssuedPreview;
+  const revoked = renderToStaticMarkup(React.createElement(Preview, { certificate: { ...certificate, status: 'revoked' } }));
+  assert.match(revoked, /blurredPreview/);
+  assert.match(revoked, /aria-hidden="true" inert=""/);
+  assert.match(revoked, /revokedOverlay/);
+  assert.match(revoked, /certificateRevoked/);
+  assert.match(revoked, /data-icon="close"/);
+  const issued = renderToStaticMarkup(React.createElement(Preview, { certificate }));
+  assert.doesNotMatch(issued, /blurredPreview|revokedOverlay|certificateRevoked/);
 });

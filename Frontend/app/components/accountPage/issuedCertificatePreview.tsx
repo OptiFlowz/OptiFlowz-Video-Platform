@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useI18n } from '~/i18n';
+import { CloseSVG } from '~/constants';
 import { issuedCertificateDocument } from './issuedCertificateDocument';
 import { certificatePaper } from '../quizEngine/certificatePreview';
 import type { CertificateDetail } from './accountQueries';
@@ -17,6 +18,7 @@ export function IssuedPreview({ certificate }: { certificate: CertificateDetail 
   const [width, setWidth] = useState(0);
   const template = certificate.template_snapshot;
   const paper = certificatePaper(template);
+  const isRevoked = certificate.status === 'revoked';
   // Share the complete document between the card and verification page, and wait for its
   // verification QR before mounting either iframe.
   const preview = useQuery({
@@ -37,10 +39,15 @@ export function IssuedPreview({ certificate }: { certificate: CertificateDetail 
     return () => observer.disconnect();
   }, []);
   return <div ref={container} className={styles.paper} style={{ aspectRatio: `${paper.width} / ${paper.height}` }}>
+    <div className={`${styles.previewContent} ${isRevoked ? styles.blurredPreview : ''}`} aria-hidden={isRevoked || undefined} inert={isRevoked}>
     {width > 0 && preview.data && <iframe title={t('quizViewCertificate')} tabIndex={-1} sandbox="" referrerPolicy="no-referrer" srcDoc={preview.data}
       style={{ width: paper.width, height: paper.height, transform: `scale(${width / paper.width})` }} />}
     {preview.isPending && <span className={styles.previewState} role="status">{t('videoLoadingData')}</span>}
     {preview.isError && <span className={styles.previewState} role="alert">{t('searchLoadFailed')}</span>}
+    </div>
+    {isRevoked && <div className={styles.revokedOverlay}>
+      <strong className={styles.revokedLabel} role="status"><span aria-hidden="true">{CloseSVG}</span>{t('certificateRevoked')}</strong>
+    </div>}
   </div>;
 }
 

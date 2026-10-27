@@ -5,6 +5,7 @@ import { issuedCertificateDocument } from './issuedCertificateDocument';
 /** Rasterize the issued document at 192 dpi, within mobile canvas memory limits. */
 export async function generateCertificatePdf(certificate: CertificateDetail, signal: AbortSignal): Promise<Blob> {
   signal.throwIfAborted();
+  if (certificate.status !== 'issued') throw new Error('Revoked certificates cannot be downloaded.');
   const frame = document.createElement('iframe');
   // Parent access is needed for capture; certificate scripts remain forbidden.
   frame.setAttribute('sandbox', 'allow-same-origin');

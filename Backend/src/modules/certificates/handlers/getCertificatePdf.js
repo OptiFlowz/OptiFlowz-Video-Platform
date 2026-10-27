@@ -7,6 +7,9 @@ import { HttpError } from '../../../common/httpError.js';
 
 export async function getCertificatePdfInternal(params, options) {
   const certificate = await getCertificateInternal(params);
+  if (certificate.status === 'revoked') {
+    throw new HttpError(403, { message: 'Revoked certificates cannot be downloaded' });
+  }
   const snapshot = certificate.data_snapshot;
   const issuedAt = new Date(certificate.issued_at);
   if (!certificate.template_snapshot || !snapshot || !Number.isFinite(issuedAt.getTime())) {

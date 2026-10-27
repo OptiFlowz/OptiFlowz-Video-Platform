@@ -26,3 +26,10 @@
 .card h2 { margin: 8px 0 0; font-size: 1.08rem; font-weight: 700; line-height: 1.4; color: var(--text1); overflow-wrap: anywhere; }
 
 .previewState { position: absolute; inset: 0; display: grid; place-items: center; color: var(--text2); }
+
+.previewContent { position: absolute; inset: 0; }
+.blurredPreview { filter: blur(8px); opacity: .6; pointer-events: none; user-select: none; }
+.revokedOverlay { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; }
+.revokedLabel { display: inline-flex; align-items: center; justify-content: center; gap: 10px; max-width: 100%; box-sizing: border-box; padding: 16px 24px; border: 1px solid var(--border1); border-radius: 12px; background: var(--background1); color: var(--accentRed); font-size: clamp(1.125rem, 2.5vw, 2rem); line-height: 1.2; text-align: center; overflow-wrap: anywhere; }
+.revokedLabel > span { display: inline-flex; flex-shrink: 0; }
+.revokedLabel svg { width: 1em; height: 1em; }

@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router';
 import { useI18n } from '~/i18n';
 import { env } from '~/env';
-import { DownloadSVG, CheckSVG } from '~/constants';
+import { DownloadSVG, CheckSVG, CloseSVG } from '~/constants';
 import { publicCertificateQuery } from './accountQueries';
 import { IssuedPreview, issuedDate } from './issuedCertificatePreview';
 import styles from './certificateVerification.module.css';
@@ -16,6 +16,9 @@ export default function CertificateVerification() {
   const { t, locale } = useI18n();
   const detail = useQuery(publicCertificateQuery(certificateId));
   const certificate = detail.data?.certificate;
+  const isRevoked = certificate?.status === 'revoked';
+  const currentCertificate = useRef(certificate);
+  currentCertificate.current = certificate;
   const status = (detail.error as (Error & { status?: number }) | null)?.status;
   const notFound = !certificateId || status === 400 || status === 404;
 
@@ -35,10 +38,10 @@ export default function CertificateVerification() {
       if (downloadRef.current) URL.revokeObjectURL(downloadRef.current);
       downloadRef.current = null;
     };
-  }, [certificateId]);
+  }, [certificateId, certificate?.status]);
 
   const openPdf = async () => {
-    if (!certificate || requestRef.current) return;
+    if (!certificate || certificate.status !== 'issued' || requestRef.current) return;
     const controller = new AbortController();
     requestRef.current = controller;
     setIsGeneratingPdf(true);
@@ -51,6 +54,7 @@ export default function CertificateVerification() {
       } catch {
         // Keep downloading available on browsers/templates that cannot be captured locally.
         controller.signal.throwIfAborted();
+        if (currentCertificate.current?.status !== 'issued' || currentCertificate.current.id !== certificate.id) return;
         const response = await fetchApiResponse(
           `${env.apiBaseUrl}/api/certificates/${encodeURIComponent(certificate.id)}/pdf`,
           { method: 'GET', signal: controller.signal },
@@ -59,7 +63,7 @@ export default function CertificateVerification() {
         if (!response.ok) throw new Error('Failed to fetch certificate PDF.');
         blob = await response.blob();
       }
-      if (controller.signal.aborted) return;
+      if (controller.signal.aborted || currentCertificate.current?.status !== 'issued' || currentCertificate.current.id !== certificate.id) return;
       const filename = certificatePdfFilename(certificate.data_snapshot.quiz.title, certificate.certificate_number);
       const url = URL.createObjectURL(new File([blob], filename, { type: 'application/pdf' }));
       downloadRef.current = url;
@@ -76,7 +80,7 @@ export default function CertificateVerification() {
     }
   };
 
-  const readyDownload = download?.id === certificate?.id ? download : null;
+  const readyDownload = !isRevoked && download?.id === certificate?.id ? download : null;
 
   return <>
     {isGeneratingPdf && <div className={styles.generating}>
@@ -95,17 +99,17 @@ export default function CertificateVerification() {
             <span>{certificate.certificate_number}</span>
             <time dateTime={certificate.issued_at}>{issuedDate(certificate.issued_at, locale)}</time>
             <span role="status" className={certificate.status === 'revoked' ? styles.revoked : styles.issued}>
-              {certificate.status !== 'revoked' && CheckSVG}
+              <span aria-hidden="true">{isRevoked ? CloseSVG : CheckSVG}</span>
               {t(certificate.status === 'revoked' ? 'certificateRevoked' : 'certificateIssued')}
               {certificate.revoked_at && <> · {issuedDate(certificate.revoked_at, locale)}</>}
             </span>
           </div>
         </div>
-        {readyDownload ? <a className={styles.pdf} href={readyDownload.url} download={readyDownload.filename}>
+        {!isRevoked && (readyDownload ? <a className={styles.pdf} href={readyDownload.url} download={readyDownload.filename}>
           {DownloadSVG}<span>{t('analyticsDownloadPdf')}</span>
         </a> : <button type="button" className={styles.pdf} onClick={() => void openPdf()} disabled={isGeneratingPdf} aria-busy={isGeneratingPdf}>
           {DownloadSVG}<span>{t(isGeneratingPdf ? 'analyticsGeneratingPdf' : 'analyticsDownloadPdf')}</span>
-        </button>}
+        </button>)}
       </div>
       {pdfFailed && <p role="alert">{t('editorGenerateFailed')}</p>}
       <IssuedPreview certificate={certificate} />
