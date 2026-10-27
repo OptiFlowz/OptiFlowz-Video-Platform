@@ -44,13 +44,21 @@ export default function CertificateVerification() {
     setIsGeneratingPdf(true);
     setPdfFailed(false);
     try {
-      const response = await fetchApiResponse(
-        `${env.apiBaseUrl}/api/certificates/${encodeURIComponent(certificate.id)}/pdf`,
-        { method: 'GET', signal: controller.signal },
-        true,
-      );
-      if (!response.ok) throw new Error('Failed to fetch certificate PDF.');
-      const blob = await response.blob();
+      let blob: Blob;
+      try {
+        const { generateCertificatePdf } = await import('./generateCertificatePdf');
+        blob = await generateCertificatePdf(certificate, controller.signal);
+      } catch {
+        // Keep downloading available on browsers/templates that cannot be captured locally.
+        controller.signal.throwIfAborted();
+        const response = await fetchApiResponse(
+          `${env.apiBaseUrl}/api/certificates/${encodeURIComponent(certificate.id)}/pdf`,
+          { method: 'GET', signal: controller.signal },
+          true,
+        );
+        if (!response.ok) throw new Error('Failed to fetch certificate PDF.');
+        blob = await response.blob();
+      }
       if (controller.signal.aborted) return;
       const filename = certificatePdfFilename(certificate.data_snapshot.quiz.title, certificate.certificate_number);
       const url = URL.createObjectURL(new File([blob], filename, { type: 'application/pdf' }));

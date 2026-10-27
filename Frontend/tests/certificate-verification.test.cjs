@@ -113,7 +113,7 @@ test('PDF filenames preserve the issued title and number and remove unsafe filen
   assert.ok(certificatePdfFilename('x'.repeat(400), certificate.certificate_number).length < 180);
 });
 
-test('PDF download stays in the current page, preserves a named retry link, and cleans up on navigation', async () => {
+for (const mode of ['client', 'server-fallback']) test(`${mode} PDF download preserves its filename, retry link and navigation cleanup`, async () => {
   const { JSDOM } = await import('jsdom');
   const dom = new JSDOM('<div id="root"></div>', { url: 'https://example.test' });
   const previous = { window: global.window, document: global.document, act: global.IS_REACT_ACT_ENVIRONMENT, create: URL.createObjectURL, revoke: URL.revokeObjectURL };
@@ -132,6 +132,8 @@ test('PDF download stays in the current page, preserves a named retry link, and 
   let request;
   let finish;
   let requests = 0;
+  let localRequests = 0;
+  let localSignal;
   let fail = true;
   let id = certificate.id;
   const Page = load('certificateVerification.tsx', {
@@ -145,6 +147,13 @@ test('PDF download stays in the current page, preserves a named retry link, and 
       request = args;
       if (fail) return { ok: false };
       return { ok: true, blob: () => new Promise(resolve => { finish = () => resolve(new Blob(['%PDF-test'])); }) };
+    } },
+    './generateCertificatePdf': { generateCertificatePdf: async (saved, signal) => {
+      localRequests++;
+      localSignal = signal;
+      assert.equal(saved.data_snapshot.quiz.title, 'Original issued title');
+      if (fail || mode === 'server-fallback') throw new Error('Client capture unavailable');
+      return new Promise(resolve => { finish = () => resolve(new Blob(['%PDF-client-test'])); });
     } },
     './accountQueries': { publicCertificateQuery: () => ({}) },
     './issuedCertificatePreview': { IssuedPreview: () => null, issuedDate: value => value },
@@ -162,7 +171,8 @@ test('PDF download stays in the current page, preserves a named retry link, and 
       button.click();
       button.click();
     });
-    assert.equal(requests, 2, 'the two rapid retry clicks generate only one request');
+    assert.equal(localRequests, 2, 'the two rapid retry clicks generate only one PDF');
+    assert.equal(requests, mode === 'client' ? 1 : 2, 'successful client rendering never calls the PDF endpoint');
     assert.ok(document.querySelector('[data-generating]'), 'loader renders in the active document');
     assert.ok(document.querySelector('main').hasAttribute('inert'));
     assert.equal(request[0], `https://api.example.test/api/certificates/${certificate.id}/pdf`);
@@ -182,13 +192,13 @@ test('PDF download stays in the current page, preserves a named retry link, and 
     assert.deepEqual(revoked, [], 'download remains usable even after the async click');
     link.click();
     assert.equal(downloads.length, 2);
-    assert.equal(requests, 2, 'manual retry reuses the generated PDF');
+    assert.equal(localRequests, 2, 'manual retry reuses the generated PDF');
     id = 'another-certificate';
     await React.act(async () => root.render(React.createElement(Page)));
     assert.deepEqual(revoked, ['blob:certificate']);
     assert.equal(document.querySelector('a[download]'), null);
     await React.act(async () => document.querySelector('button').click());
-    const signal = request[1].signal;
+    const signal = mode === 'client' ? localSignal : request[1].signal;
     await React.act(async () => root.unmount());
     assert.equal(signal.aborted, true, 'leaving the page aborts generation');
     await React.act(async () => finish());

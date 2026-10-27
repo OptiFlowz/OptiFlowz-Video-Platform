@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useI18n } from '~/i18n';
-import { certificateQrImages } from '../quizEngine/certificateQrStyles';
-import { certificateHtmlDocument, certificatePaper } from '../quizEngine/certificatePreview';
+import { issuedCertificateDocument } from './issuedCertificateDocument';
+import { certificatePaper } from '../quizEngine/certificatePreview';
 import type { CertificateDetail } from './accountQueries';
 import styles from './accountCertificates.module.css';
 
@@ -24,18 +24,7 @@ export function IssuedPreview({ certificate }: { certificate: CertificateDetail 
     enabled: width > 0,
     staleTime: Infinity,
     queryFn: async () => {
-      const verificationUrl = new URL(`certificates/verify/${encodeURIComponent(certificate.id)}`, `${window.location.origin}/`).href;
-      const qrImages = await certificateQrImages(template.html_template, verificationUrl);
-      const data = certificate.data_snapshot;
-      return certificateHtmlDocument(template, qrImages, { sampleQr: false, values: {
-        'user.full_name': data.user.full_name,
-        'quiz.title': data.quiz.title,
-        'result.score_percentage': String(data.result.score_percentage),
-        'result.earned_points': String(data.result.earned_points),
-        'result.max_points': String(data.result.max_points),
-        'certificate.number': certificate.certificate_number,
-        'certificate.issued_at': new Date(certificate.issued_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }),
-      } });
+      return issuedCertificateDocument(certificate);
     },
   });
   useEffect(() => {
