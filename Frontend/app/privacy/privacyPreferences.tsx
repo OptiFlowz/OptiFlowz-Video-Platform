@@ -72,12 +72,14 @@ function readStoredPreferences(): StoredPrivacyPreferences | null {
 
 export function PrivacyPreferencesProvider({ children }: { children: React.ReactNode }) {
   const { t } = useI18n();
-  const chatBlocked = useQuizChatRestriction(usePathname());
+  const pathname = usePathname();
+  const chatBlocked = useQuizChatRestriction(pathname);
+  const showPrivacyUi = !/^\/certificates\/verify(?:\/|$)/i.test(pathname);
   const [preferences, setPreferences] = useState<PrivacyPreferences>(defaultPreferences);
   const [hasDecision, setHasDecision] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
-  const preferencesPopup = usePopupPresence(isPreferencesOpen);
+  const preferencesPopup = usePopupPresence(showPrivacyUi && isPreferencesOpen);
   const [draft, setDraft] = useState<PrivacyPreferences>(defaultPreferences);
 
   useEffect(() => {
@@ -149,7 +151,7 @@ export function PrivacyPreferencesProvider({ children }: { children: React.React
         data-chat-desktop-height="550px"
       />}
 
-      {isHydrated && !hasDecision && (
+      {showPrivacyUi && isHydrated && !hasDecision && (
         <section className="privacyBanner" aria-label={t("privacyBannerTitle")}>
           <div>
             <h2>{t("privacyBannerTitle")}</h2>
@@ -175,7 +177,7 @@ export function PrivacyPreferencesProvider({ children }: { children: React.React
         </section>
       )}
 
-      {preferencesPopup.mounted && (
+      {showPrivacyUi && preferencesPopup.mounted && (
         <div
           className={`privacyPreferencesBackdrop popupMotionLayer ${preferencesPopup.visible ? "isOpen" : ""}`}
           inert={!isPreferencesOpen}
