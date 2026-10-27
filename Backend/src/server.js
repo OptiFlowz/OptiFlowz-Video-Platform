@@ -6,7 +6,8 @@ import { logDbRolesOnce } from './database/index.js';
 
 const app = createApp();
 
-app.listen(env.port, () => {
+// Fly Proxy connects over IPv4; do not expose the API directly on private IPv6.
+app.listen(env.port, '0.0.0.0', () => {
   console.log(`API running on http://localhost:${env.port}`);
 });
 

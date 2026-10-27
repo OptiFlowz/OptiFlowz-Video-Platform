@@ -70,7 +70,7 @@ export const resetRequestLimiter = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req) => {
     const email = (req.body?.email || '').toString().trim().toLowerCase();
-    const ip = ipKeyGenerator(req);
+    const ip = ipKeyGenerator(req.ip);
     return `${ip}|${email}`;
   },
   message: { message: 'Too many requests. Try again in 10 seconds.' },
@@ -81,7 +81,7 @@ export const resetLimiter = rateLimit({
   limit: 1,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => ipKeyGenerator(req),
+  keyGenerator: (req) => ipKeyGenerator(req.ip),
   message: { message: 'Too many requests. Try again in 10 seconds.' },
 });
 
@@ -93,7 +93,7 @@ export const resetVerifyLimiter = rateLimit({
   keyGenerator: (req) => {
     const email = (req.body?.email || '').toString().trim().toLowerCase();
     const token = (req.body?.token || '').toString().trim().toUpperCase();
-    const ip = ipKeyGenerator(req);
+    const ip = ipKeyGenerator(req.ip);
     return `${ip}|${email}|${token}`;
   },
   message: { message: 'Too many requests. Try again in 10 seconds.' },

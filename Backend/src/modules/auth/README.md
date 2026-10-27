@@ -161,3 +161,14 @@ Setup, verification, disabling, and 2FA login each permit five requests per acco
 per ten minutes per process. Login limits use the signed account ID, so obtaining
 a new temporary token does not reset the limit.
 Use a shared rate-limit store when running multiple API instances.
+
+On Fly.io (`FLY_APP_NAME` is supplied by the platform), the API replaces the
+incoming `X-Forwarded-For` chain with the validated `Fly-Client-IP` before any
+routes or limiters run, and trusts just that one proxy hop. Missing Fly headers
+fall back to the socket IP; malformed client IPs return HTTP 400. Outside Fly,
+proxy trust is disabled. The server listens on IPv4 (`0.0.0.0`) so Fly's private
+IPv6 network cannot connect directly and forge the proxy headers.
+This assumes clients connect through Fly Proxy; an additional CDN/reverse proxy
+would be counted by its IP and needs its own explicit trust configuration.
+See [Fly request headers](https://fly.io/docs/networking/request-headers/).
+Run `npm run test:proxy` to verify IP isolation and forwarded-header spoofing.

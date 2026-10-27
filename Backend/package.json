@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "test:proxy": "node --experimental-test-module-mocks --test tests/proxy-rate-limit.test.js",
     "test:playback": "node --experimental-test-module-mocks --test tests/video-playback.test.js",
     "test:card-media": "node --experimental-test-module-mocks --test tests/video-card-media.test.js",
     "test:subtitles": "node --experimental-test-module-mocks --test tests/video-subtitles.test.js",
