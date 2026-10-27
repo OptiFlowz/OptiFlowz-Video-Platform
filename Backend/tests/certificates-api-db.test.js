@@ -25,7 +25,8 @@ test('owned certificate routes: authentication, filtering, sorting, pagination a
   await client.query(`CREATE SCHEMA ${schema}; SET search_path TO ${schema},public`);
   await client.query("CREATE TABLE users(id uuid PRIMARY KEY, status text DEFAULT 'active', authz_version integer DEFAULT 1)");
   for (const table of ['quizzes', 'quiz_attempts', 'certificate_templates']) await client.query(`CREATE TABLE ${table}(id uuid PRIMARY KEY)`);
-  for (const file of ['1792926000001_add-certificates.sql', '1792926000002_certificate-number-per-year.sql']) {
+  for (const file of ['1792926000001_add-certificates.sql', '1792926000002_certificate-number-per-year.sql',
+    '1793059200000_certificate-attempt-on-delete-set-null.sql']) {
     const sql = await readFile(new URL(`../src/database/migrations/${file}`, import.meta.url), 'utf8');
     await client.query(sql.split('-- Down Migration')[0].replaceAll('public.', `${schema}.`));
   }
@@ -144,5 +145,19 @@ test('owned certificate routes: authentication, filtering, sorting, pagination a
     assert.equal(detail.quiz_title, certificates[0].data_snapshot.quiz.title);
     assert.equal((await request()).body.pagination.total, 3);
     assert.equal((await request(`?certificate_template_id=${templateId}`)).body.pagination.total, 0);
+  });
+
+  await t.test('deleted attempts keep certificates listed and publicly verifiable from snapshots', async () => {
+    const saved = certificates[0];
+    await client.query('DELETE FROM quiz_attempts WHERE id=$1', [saved.quiz_attempt_id]);
+    const detail = await request(`/${saved.id}`, null);
+    assert.equal(detail.status, 200);
+    assert.equal(detail.body.certificate.quiz_attempt_id, null);
+    assert.equal(detail.body.certificate.certificate_number, saved.certificate_number);
+    assert.deepEqual(detail.body.certificate.data_snapshot, saved.data_snapshot);
+    assert.deepEqual(detail.body.certificate.template_snapshot, saved.template_snapshot);
+    const list = await request();
+    assert.equal(list.body.pagination.total, 3);
+    assert.equal(list.body.certificates.find(row => row.id === saved.id).quiz_attempt_id, null);
   });
 });

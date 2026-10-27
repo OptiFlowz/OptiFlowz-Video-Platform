@@ -159,6 +159,35 @@ test('certificate issuance schema generates unique numbers, preserves snapshots 
     await client.query(annualDown);
   });
 
+  const [attemptUp, attemptDown] = (await readFile(new URL('../src/database/migrations/1793059200000_certificate-attempt-on-delete-set-null.sql', import.meta.url), 'utf8'))
+    .replaceAll('public.', `${schema}.`).split('-- Down Migration');
+  await t.test('attempt deletion preserves issued and revoked certificates with nullable unique references', async () => {
+    const before = (await client.query(`SELECT * FROM ${schema}.certificates ORDER BY id`)).rows;
+    await client.query(attemptUp);
+    assert.deepEqual((await client.query(`SELECT * FROM ${schema}.certificates ORDER BY id`)).rows, before);
+    const targets = ['issued', 'revoked'].map(status => before.find(row => row.status === status));
+    for (const row of targets) {
+      await client.query(`DELETE FROM ${schema}.quiz_attempts WHERE id=$1`, [row.quiz_attempt_id]);
+    }
+    const expected = before.map(row => targets.includes(row) ? { ...row, quiz_attempt_id: null } : row);
+    assert.deepEqual((await client.query(`SELECT * FROM ${schema}.certificates ORDER BY id`)).rows, expected);
+    const remaining = before.find(row => !targets.includes(row));
+    await assert.rejects(client.query(insertSql, valuesWithoutTemplate(remaining.quiz_attempt_id)), { code: '23505' });
+    await assert.rejects(client.query(insertSql, valuesWithoutTemplate(randomUUID())), { code: '23503' });
+    // Rollback must preserve orphaned certificates instead of deleting them.
+    await assert.rejects(client.query(attemptDown), { code: '23502' });
+    assert.deepEqual((await client.query(`SELECT * FROM ${schema}.certificates ORDER BY id`)).rows, expected);
+    // Restore only test fixtures to verify the reversible path as well.
+    for (const row of targets) {
+      await client.query(`INSERT INTO ${schema}.quiz_attempts VALUES ($1)`, [row.quiz_attempt_id]);
+      await client.query(`UPDATE ${schema}.certificates SET quiz_attempt_id=$1 WHERE id=$2`, [row.quiz_attempt_id, row.id]);
+    }
+    await client.query(attemptDown);
+    await assert.rejects(client.query(`DELETE FROM ${schema}.quiz_attempts WHERE id=$1`, [targets[0].quiz_attempt_id]), { code: '23503' });
+    await assert.rejects(client.query(`UPDATE ${schema}.certificates SET quiz_attempt_id=NULL WHERE id=$1`, [targets[0].id]), { code: '23502' });
+    await client.query(attemptUp);
+  });
+
   await client.query(down);
   const removed = (await client.query(`SELECT to_regclass('${schema}.certificates') AS certificates,
     to_regclass('${schema}.certificates_number_seq') AS sequence,

@@ -7,7 +7,7 @@ import jsQR from 'jsqr';
 
 const id = '12345678-1234-4234-8234-123456789abc';
 const certificate = {
-  id, certificate_template_id: null, status: 'issued', certificate_number: 'CERT-2026-000042', issued_at: new Date('2026-10-26T23:30:00Z'),
+  id, quiz_attempt_id: null, certificate_template_id: null, status: 'issued', certificate_number: 'CERT-2026-000042', issued_at: new Date('2026-10-26T23:30:00Z'),
   data_snapshot: { user: { full_name: '<b>Ana & Petar</b>' }, quiz: { title: 'Saved title {{user.full_name}}' },
     result: { score_percentage: 87.5, earned_points: 7, max_points: 8 } },
   template_snapshot: { html_template: '<h1>{{user.full_name}}</h1><p>{{quiz.title}}</p><p>{{result.score_percentage}}%: {{result.earned_points}} / {{result.max_points}}</p><p>{{certificate.number}} — {{certificate.issued_at}}</p><img src="{{certificate.qr_code_data_uri.dots_rounded}}">',

@@ -182,6 +182,13 @@ New attempts copy `certificate_template_id` into `settings_snapshot` instead of 
 
 Attempt snapshots retain their original template ID for historical context but do not determine issuance. Issuance resolves the current quiz's selected template internally without filtering by the quiz owner's or participant's ownership, so an editor's assigned private template works. This does not grant those users direct access to private template CRUD/preview routes. PDF rendering itself operates on supplied template content and has no owner restriction; the existing preview endpoint still checks the requesting user's access.
 
+Deleting a quiz attempt preserves its certificates and sets `quiz_attempt_id` to
+`null` (`ON DELETE SET NULL`, migration
+`1793059200000_certificate-attempt-on-delete-set-null.sql`). Lists, public
+verification and PDF generation continue using the saved snapshots. Non-null
+attempt IDs remain unique. Rolling back this migration requires restoring valid
+attempt references first if any are null; rollback never deletes certificates.
+
 ## PDF preview
 
 `POST /api/certificates/certificate-templates/:id/preview/pdf` requires the same Bearer token as CRUD and selects either a system template or the user's own private template. A missing template or another user's private template returns `404`. The request body is not used: source, format and orientation come from the database, and placeholder values are fixed server-side. No template is changed, no certificate record is created, and no PDF is written to the database, storage, or an output file.
