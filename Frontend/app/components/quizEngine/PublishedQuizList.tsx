@@ -5,7 +5,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { decodeHTMLStrict } from 'entities';
 import { useAuthorization } from '~/authorization/authorization';
 import { P } from '~/authorization/permissions';
-import { ArrowSVG, CheckSVG } from '~/constants';
+import { CheckSVG } from '~/constants';
 import { getToken } from '~/functions';
 import { useI18n } from '~/i18n';
 import { formatDurationWords } from '~/locales/formatDuration';
@@ -39,10 +39,12 @@ export default function PublishedQuizList({ userId, sortOrder = 'desc' }: { user
       <p>{t('adminFailedLoadQuizzes')}</p><button type="button" className={styles.action} onClick={() => void query.refetch()}>{t('usersRetry')}</button>
     </div> : quizzes.length ? <div className={styles.grid}>{quizzes.map(quiz => <article className={styles.card} key={quiz.id}>
       <Link className={styles.cardLink} to={`/quiz/${quiz.id}`} aria-labelledby={`published-quiz-${quiz.id}`}>
-        <QuizThumbnail src={quiz.thumbnail_url} />
-        <div className={styles.heading}>
+        <div className={styles.summary}>
+          <QuizThumbnail src={quiz.thumbnail_url} size="cover" />
+          <div className={styles.heading}>
           <h3 id={`published-quiz-${quiz.id}`}>{decodeHTMLStrict(quiz.title)}</h3>
           {quiz.description && <p className={styles.description}>{decodeHTMLStrict(quiz.description)}</p>}
+          </div>
         </div>
         <dl className={styles.facts}>
           <div><dt>{t('quizQuestions')}</dt><dd>{quiz.question_count}</dd></div>
@@ -50,10 +52,7 @@ export default function PublishedQuizList({ userId, sortOrder = 'desc' }: { user
           <div><dt>{t('quizPassingScoreLabel')}</dt><dd>{quiz.passing_score_percentage}%</dd></div>
           <div><dt>{t('quizAttemptsLabel')}</dt><dd>{quiz.max_attempts == null ? t('quizUnlimitedLabel') : quiz.max_attempts}</dd></div>
         </dl>
-        <div className={styles.footer}>
         {quiz.has_certificate && <p className={styles.certificate}><span aria-hidden="true">{CheckSVG}</span>{t('quizCertificateHint')}</p>}
-        <span className={styles.view} aria-hidden="true">{t('quizView')}{ArrowSVG}</span>
-        </div>
       </Link>
     </article>)}</div> : <p className={styles.empty}>{t('adminNoQuizzesFound')}</p>}
     <InfiniteScroll hasMore={query.hasNextPage} fetching={query.isFetchingNextPage} error={query.isFetchNextPageError}

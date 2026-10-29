@@ -13,3 +13,7 @@
 .actions > button:first-child { min-width: 0; }
 .actions .remove { flex: 0 0 40px; width: 40px; height: 40px; padding: 10px; color: var(--accentRed); }
 @media (max-width: 600px) { .heading { width: 56px; height: 56px; } .item { width: 52px; height: 52px; } .editor { align-items: flex-start; flex-wrap: wrap; } }
+
+.cover { width: 100%; height: auto; aspect-ratio: 1; border-radius: 14px; background: var(--background3); }
+.cover img { position: absolute; inset: 0; }
+.cover svg { width: 56px; height: 56px; }
