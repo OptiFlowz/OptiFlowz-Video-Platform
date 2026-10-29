@@ -5,11 +5,15 @@ const AUTHOR_ATTEMPT_FIELDS = `
   a.score_percentage::double precision AS score_percentage, a.passed,
   jsonb_build_object('id', u.id, 'full_name', u.full_name, 'image_url', u.image_url) AS "user"`;
 
-export async function listQuizResults(database, quizId, ownerId, query) {
+function resultOrdering(query) {
   const fields = { started_at: 'started_at', finished_at: 'finished_at', attempt_no: 'attempt_no',
     status: 'status', earned_points: 'earned_points', score_percentage: 'score_percentage' };
   const direction = query.sortOrder === 'asc' ? 'ASC' : 'DESC';
-  const ordering = `${fields[query.sortBy]} ${direction} NULLS LAST, id ASC`;
+  return `${fields[query.sortBy]} ${direction} NULLS LAST, id ASC`;
+}
+
+export async function listQuizResults(database, quizId, ownerId, query) {
+  const ordering = resultOrdering(query);
   const { rows } = await database.query(`
     WITH owned_quiz AS (
       SELECT id FROM public.quizzes WHERE id=$1 AND user_id=$2
@@ -28,6 +32,38 @@ export async function listQuizResults(database, quizId, ownerId, query) {
     FROM owned_quiz
   `, [quizId, ownerId, query.user_id ?? null, query.status ?? null, query.passed ?? null,
     query.limit, (query.page - 1) * query.limit]);
+  return rows[0] || null;
+}
+
+export async function listQuizResultsByUser(database, quizId, ownerId, query) {
+  const ordering = resultOrdering(query);
+  const { rows } = await database.query(`
+    WITH owned_quiz AS (
+      SELECT id FROM public.quizzes WHERE id=$1 AND user_id=$2
+    ), filtered AS (
+      SELECT a.user_id AS participant_id, ${AUTHOR_ATTEMPT_FIELDS}
+      FROM public.quiz_attempts a JOIN owned_quiz q ON q.id=a.quiz_id
+      JOIN public.users u ON u.id=a.user_id
+      WHERE ($3::uuid IS NULL OR a.user_id=$3)
+        AND ($4::public.quiz_attempt_status IS NULL OR a.status=$4)
+        AND ($5::boolean IS NULL OR a.passed=$5)
+    ), representatives AS (
+      SELECT DISTINCT ON (participant_id) * FROM filtered
+      ORDER BY participant_id, ${ordering}
+    ), page AS (
+      SELECT * FROM representatives ORDER BY ${ordering} LIMIT $6 OFFSET $7
+    )
+    SELECT COALESCE((SELECT jsonb_agg(jsonb_build_object(
+      'user', page."user",
+      'attempts', (SELECT jsonb_agg(to_jsonb(f) - 'participant_id' - 'user' ORDER BY ${ordering})
+        FROM filtered f WHERE f.participant_id=page.participant_id)
+      ) ORDER BY ${ordering}) FROM page), '[]'::jsonb) AS users,
+      (SELECT count(*)::integer FROM representatives) AS total
+    FROM owned_quiz
+  `, [quizId, ownerId, query.user_id ?? null, query.status ?? null, query.passed ?? null,
+    query.limit, (query.page - 1) * query.limit]);
+  // Page whole users, then include every matching attempt for those users.
+  // Each user's first sorted attempt determines the group's position.
   return rows[0] || null;
 }
 

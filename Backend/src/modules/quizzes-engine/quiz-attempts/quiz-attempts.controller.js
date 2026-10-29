@@ -7,6 +7,7 @@ import { saveQuizAttemptAnswerInternal } from './handlers/saveQuizAttemptAnswer.
 import { getQuizAttemptQuestionsInternal } from './handlers/getQuizAttemptQuestions.js';
 import { submitQuizAttemptInternal } from './handlers/submitQuizAttempt.js';
 import { getQuizResultsInternal } from './handlers/getQuizResults.js';
+import { getQuizResultsByUserInternal } from './handlers/getQuizResultsByUser.js';
 import { getQuizResultInternal } from './handlers/getQuizResult.js';
 import { deleteQuizAttemptInternal } from './handlers/deleteQuizAttempt.js';
 
@@ -17,6 +18,16 @@ export async function getQuizResults(req, res) {
   } catch (error) {
     if (!error.status || error.status >= 500) console.error('getQuizResults error:', error);
     return sendError(res, error.status && error.status < 500 ? error.message : 'Unable to list quiz results', error.status || 500);
+  }
+}
+
+export async function getQuizResultsByUser(req, res) {
+  res.set('Cache-Control', 'private, no-store');
+  try {
+    return sendSuccess(res, await getQuizResultsByUserInternal(req.params, req.query, req.resourceOwnerId));
+  } catch (error) {
+    if (!error.status || error.status >= 500) console.error('getQuizResultsByUser error:', error);
+    return sendError(res, error.status && error.status < 500 ? error.message : 'Unable to list quiz results by user', error.status || 500);
   }
 }
 

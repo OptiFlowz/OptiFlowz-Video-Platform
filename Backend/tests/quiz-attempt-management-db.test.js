@@ -82,14 +82,15 @@ test('quiz attempt management: author permissions, reports and deletion', { skip
   const activeId = await attempt(quizId, participant, 'in_progress', 2);
   const foreignQuiz = await quiz(foreignAuthor), foreignAttempt = await attempt(foreignQuiz);
 
-  await t.test('authentication, quiz ownership and attempt/quiz binding protect all three routes', async () => {
-    for (const [method, path] of [['GET', `/${quizId}/results`], ['GET', `/${quizId}/results/${attemptId}`], ['DELETE', `/${quizId}/attempts/${attemptId}`]]) {
+  await t.test('authentication, quiz ownership and attempt/quiz binding protect management routes', async () => {
+    for (const [method, path] of [['GET', `/${quizId}/results`], ['GET', `/${quizId}/results/by-user`], ['GET', `/${quizId}/results/${attemptId}`], ['DELETE', `/${quizId}/attempts/${attemptId}`]]) {
       assert.equal((await request(null, method, `/quizzes${path}`)).status, 401);
       assert.equal((await request(participant, method, `/quizzes${path}`)).status, 403);
       assert.equal((await request(foreignAuthor, method, `/quizzes${path}`)).status, 404);
     }
     for (const actor of [author, administrator, owner]) {
       assert.equal((await request(actor, 'GET', `/quizzes/${quizId}/results`)).status, 200);
+      assert.equal((await request(actor, 'GET', `/quizzes/${quizId}/results/by-user`)).status, 200);
       assert.equal((await request(actor, 'GET', `/quizzes/${quizId}/results/${attemptId}`)).status, 200);
       assert.equal((await request(actor, 'GET', `/quizzes/${quizId}/results/${foreignAttempt}`)).status, 404);
       assert.equal((await request(actor, 'DELETE', `/quizzes/${quizId}/attempts/${foreignAttempt}`)).status, 404);
@@ -123,13 +124,72 @@ test('quiz attempt management: author permissions, reports and deletion', { skip
   await t.test('validation rejects invalid filters, IDs, sorting and pagination', async () => {
     for (const query of ['passed=0', 'passed=', 'user_id=bad', 'user_id=x&user_id=y', 'status=bad', 'sortBy=password_hash', 'sortOrder=bad', 'limit=101', 'page=0', 'page=9007199254740991&limit=100', 'unknown=x']) {
       assert.equal((await request(author, 'GET', `/quizzes/${quizId}/results?${query}`)).status, 400, query);
+      assert.equal((await request(author, 'GET', `/quizzes/${quizId}/results/by-user?${query}`)).status, 400, query);
     }
     assert.equal((await request(author, 'GET', '/quizzes/bad/results')).status, 400);
     assert.equal((await request(author, 'GET', `/quizzes/${randomUUID()}/results`)).status, 404);
+    assert.equal((await request(author, 'GET', '/quizzes/bad/results/by-user')).status, 400);
+    assert.equal((await request(author, 'GET', `/quizzes/${randomUUID()}/results/by-user`)).status, 404);
     for (const [method, suffix] of [['GET', 'results'], ['DELETE', 'attempts']]) {
       assert.equal((await request(author, method, `/quizzes/${quizId}/${suffix}/bad`)).status, 400);
       assert.equal((await request(author, method, `/quizzes/${quizId}/${suffix}/${randomUUID()}`)).status, 404);
     }
+  });
+  await t.test('grouped results page whole users and preserve the flat list sorting and projections', async () => {
+    const q = await quiz();
+    const first = await attempt(q, participant), second = await attempt(q, participant, 'submitted', 2);
+    const third = await attempt(q, foreignAuthor), active = await attempt(q, author, 'in_progress');
+    await admin.query("UPDATE quiz_attempts SET started_at='2026-01-02',score_percentage=90 WHERE id=$1", [second]);
+    await admin.query("UPDATE quiz_attempts SET started_at='2026-01-03',score_percentage=50 WHERE id=$1", [third]);
+    for (const sortBy of ['started_at', 'score_percentage', 'status']) {
+      for (const sortOrder of ['asc', 'desc']) {
+        const query = `sortBy=${sortBy}&sortOrder=${sortOrder}`;
+        const flat = (await request(author, 'GET', `/quizzes/${q}/results?${query}`)).body.attempts;
+        const expected = new Map();
+        for (const { user, ...entry } of flat) {
+          if (!expected.has(user.id)) expected.set(user.id, { user, attempts: [] });
+          expected.get(user.id).attempts.push(entry);
+        }
+        const groups = [];
+        for (let page = 1; page <= 3; page++) {
+          const result = await request(author, 'GET', `/quizzes/${q}/results/by-user?${query}&page=${page}&limit=1`);
+          assert.equal(result.status, 200); assert.equal(result.cache, 'private, no-store');
+          assert.deepEqual(result.body.sorting, { sortBy, sortOrder });
+          assert.deepEqual(result.body.pagination, { page, limit: 1, total: 3, totalPages: 3,
+            hasNextPage: page < 3, hasPreviousPage: page > 1 });
+          groups.push(...result.body.users);
+        }
+        assert.deepEqual(groups, [...expected.values()]);
+        assert.equal(groups.find(g => g.user.id === participant).attempts.length, 2);
+        assert.equal(groups.flatMap(g => g.attempts).length, 4);
+        assert.equal(groups.find(g => g.user.id === author).attempts[0].id, active);
+        const beyond = (await request(author, 'GET', `/quizzes/${q}/results/by-user?${query}&page=4&limit=1`)).body;
+        assert.deepEqual(beyond.users, []); assert.equal(beyond.pagination.total, 3);
+      }
+    }
+    assert.notEqual(first, second);
+  });
+  await t.test('grouped filters apply before grouping, omit empty groups and count matching users', async () => {
+    const get = async query => (await request(author, 'GET', `/quizzes/${quizId}/results/by-user${query}`)).body;
+    const all = await get('');
+    assert.equal(all.pagination.total, 2);
+    assert.equal(all.users.find(g => g.user.id === participant).attempts.length, 2);
+    const selected = await get(`?user_id=${participant.toUpperCase()}&status=submitted&passed=true`);
+    assert.equal(selected.pagination.total, 1);
+    assert.equal(selected.users[0].user.id, participant);
+    assert.deepEqual(selected.users[0].attempts.map(a => a.id), [attemptId]);
+    const failed = await get('?passed=false');
+    assert.equal(failed.pagination.total, 1); assert.equal(failed.users[0].user.id, foreignAuthor);
+    assert.deepEqual(failed.users[0].attempts.map(a => a.id), [otherId]);
+    for (const query of [`?user_id=${randomUUID()}`, '?status=cancelled', '?status=in_progress&passed=true']) {
+      const empty = await get(query);
+      assert.deepEqual(empty.users, []); assert.equal(empty.pagination.total, 0);
+      assert.equal(empty.pagination.totalPages, 0);
+    }
+    const emptyQuiz = await quiz();
+    const empty = await request(author, 'GET', `/quizzes/${emptyQuiz}/results/by-user`);
+    assert.equal(empty.status, 200); assert.deepEqual(empty.body.users, []);
+    assert.equal(empty.body.pagination.total, 0);
   });
   await t.test('detail returns immutable snapshots and unchecked drafts without grading or participant restrictions', async () => {
     const originalQuestion = randomUUID();
@@ -157,6 +217,7 @@ test('quiz attempt management: author permissions, reports and deletion', { skip
     for (const state of ['draft', 'archived']) {
       await admin.query('UPDATE quizzes SET status=$2 WHERE id=$1', [quizId, state]);
       assert.equal((await request(author, 'GET', `/quizzes/${quizId}/results`)).status, 200);
+      assert.equal((await request(author, 'GET', `/quizzes/${quizId}/results/by-user`)).status, 200);
       assert.equal((await request(author, 'GET', `/quizzes/${quizId}/results/${attemptId}`)).status, 200);
     }
   });
@@ -215,6 +276,8 @@ test('quiz attempt management: author permissions, reports and deletion', { skip
     await admin.query(`UPDATE role_permissions SET effect='deny' WHERE role_id=(SELECT id FROM roles WHERE name='Uploader')
       AND permission_id=(SELECT id FROM permissions WHERE key='quizzes.attempts.read_own')`);
     assert.equal((await request(author, 'GET', `/quizzes/${quizId}/results`)).status, 403);
+    assert.equal((await request(author, 'GET', `/quizzes/${quizId}/results/by-user`)).status, 403);
+    assert.equal((await request(owner, 'GET', `/quizzes/${quizId}/results/by-user`)).status, 200);
     assert.equal((await request(owner, 'GET', `/quizzes/${quizId}/results/${attemptId}`)).status, 200);
   });
   await t.test('permission migration rolls back only its own keys and grants', async () => {

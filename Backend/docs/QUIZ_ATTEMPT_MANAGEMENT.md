@@ -74,6 +74,57 @@ pokušaja `earned_points`, `score_percentage` i `passed` ostaju `null`;
 `max_points` može već biti poznat. `user` sadrži trenutne javne podatke učesnika,
 bez email adrese i drugih privatnih polja. Lista ne učitava pitanja i odgovore.
 
+## Pokušaji grupisani po učesniku
+
+```http
+GET /api/quizzes/:quizId/results/by-user?page=1&limit=20&sortBy=started_at&sortOrder=desc
+```
+
+Koristi iste permisije, filtere i opcije sortiranja kao `/results`. Vraća
+`users`, gde svaki element sadrži `user: { id, full_name, image_url }` i niz
+`attempts`. Pokušaji imaju ista polja kao u ravnoj listi, ali bez ponavljanja
+objekta `user` unutar svakog pokušaja. Pitanja i odgovori se ne učitavaju.
+
+`page`, `limit`, `pagination.total` i `pagination.totalPages` odnose se na
+**korisnike**, a ne pokušaje. Svaki korisnik na stranici ima sve pokušaje koji
+odgovaraju filterima, čak i kada ih ima više od `limit`. Jedan korisnik se ne
+deli između stranica. Korisnici bez odgovarajućih pokušaja se izostavljaju.
+
+`user_id`, `status` i `passed` filtriraju pokušaje **pre** grupisanja. Na primer,
+`status=submitted` vraća samo korisnike sa predatim pokušajima i samo njihove
+predate pokušaje, a `pagination.total` broji takve korisnike.
+
+Pokušaji unutar korisnika prate `sortBy`/`sortOrder`, sa `id ASC` za jednake
+vrednosti i `NULLS LAST`. Korisnici su poređani prema prvom pokušaju u svom
+sortiranom nizu, koristeći isti redosled. Podrazumevano se prvo prikazuje
+korisnik sa najnovijim pokušajem; za `score_percentage desc` prvi je korisnik
+sa najboljim rezultatom među filtriranim pokušajima.
+
+Primer strukture (stavka pokušaja je skraćena):
+
+```json
+{
+  "success": true,
+  "users": [
+    {
+      "user": { "id": "user-uuid", "full_name": "Ime Prezime", "image_url": null },
+      "attempts": [
+        { "id": "attempt-uuid", "quiz_id": "quiz-uuid", "attempt_no": 2, "status": "submitted" },
+        { "id": "older-attempt-uuid", "quiz_id": "quiz-uuid", "attempt_no": 1, "status": "timed_out" }
+      ]
+    }
+  ],
+  "pagination": {
+    "page": 1, "limit": 20, "total": 1, "totalPages": 1,
+    "hasNextPage": false, "hasPreviousPage": false
+  },
+  "sorting": { "sortBy": "started_at", "sortOrder": "desc" }
+}
+```
+
+Prazan rezultat vraća `users: []`; nepostojeći ili nedostupan kviz vraća `404`.
+Za ovu rutu nije potrebna nova migracija.
+
 ## Detaljan pregled pokušaja
 
 ```http
