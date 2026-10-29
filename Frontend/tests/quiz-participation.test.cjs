@@ -192,18 +192,18 @@ test('quiz table opens the participant route with Play before Edit and respects 
   const prior = new Map(['window', 'document', 'IS_REACT_ACT_ENVIRONMENT'].map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)]));
   Object.assign(globalThis, { window: dom.window, document: dom.window.document, IS_REACT_ACT_ENVIRONMENT: true });
   const root = createRoot(document.getElementById('root')), navigations = [], styles = new Proxy({}, { get: (_, key) => key });
-  let participate = true;
+  let participate = true, resultsRead = true;
   const row = { id: 'quiz-1', title: 'Demo quiz', status: 'published', user_id: 'me', question_count: 3 };
   const empty = () => null;
   const mocks = {
     '~/i18n': { useI18n: () => ({ t: translate, locale: 'en' }) }, '~/functions': { getToken: () => 'token' },
-    '~/constants': { PlaySVG: 'play', EditSVG: 'edit', QuizSVG: 'quiz' },
+    '~/constants': { PlaySVG: 'play', EditSVG: 'edit', QuizSVG: 'quiz', AnalyticsSVG: 'results' },
     'react-router': { useSearchParams: () => [new URLSearchParams()], useNavigate: () => to => navigations.push(to) },
     '@tanstack/react-query': { useQuery: ({ queryKey }) => ({ data: queryKey.includes('resource-filter') ? [row] : { items: [row], pagination: { total: 1, totalPages: 1 } }, isSuccess: true }) },
     './shared': {
       styles, Select: empty, Notice: empty, LoadState: empty,
       useAction: () => ({ busy: false }), useAll: () => ({ data: [] }),
-      useAccess: () => ({ user: { id: 'me' }, create: true, read: true, can: permission => permission === 'quizzes.participate' ? participate : true, canAny: () => true, canOwn: () => true }),
+      useAccess: () => ({ user: { id: 'me' }, create: true, read: true, can: permission => permission === 'quizzes.participate' ? participate : true, canAny: () => true, canOwn: own => own === 'quizzes.attempts.read_own' ? resultsRead : true }),
     },
     '~/components/myVideosPage/sidebar/sidebar': { default: empty }, '~/components/library/pagination': { default: empty },
     '~/components/library/ProfileTabs': { default: ({ children }) => children }, '~/components/library/librarySortButton': { default: () => null },
@@ -231,6 +231,14 @@ test('quiz table opens the participant route with Play before Edit and respects 
   participate = false;
   await act(async () => root.render(React.createElement(View)));
   assert.equal(document.querySelector('.managementRowActions button').textContent, 'edit');
+  const shortcut = document.querySelector('button[title="Results"]');
+  assert.ok(shortcut);
+  await act(async () => shortcut.click());
+  assert.equal(navigations.at(-1), '/quizzes?tab=quizzes&scope=mine&edit=quiz-1&section=results');
+  resultsRead = false;
+  await act(async () => root.render(React.createElement(View)));
+  assert.equal(document.querySelector('button[title="Results"]'), null);
+
 });
 
 const historyFixtures = count => Array.from({ length: count }, (_, i) => ({

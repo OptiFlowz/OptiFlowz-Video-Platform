@@ -8,6 +8,7 @@ export type Feedback = {
   correct_answers?: { options?: { option_no: number; is_correct: boolean }[]; matching_items?: { item_no: number; correct_option_no: number }[] };
 };
 export type AttemptQuestion = {
+  management_review?: true;
   question_no: number; question_id: string; type: 'single_choice' | 'multiple_choice' | 'matching'; content: string; max_points: number;
   options: { option_no: number; content: string; position: number }[];
   matching_options: { option_no: number; content: string; position: number }[];

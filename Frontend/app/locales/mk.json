@@ -1897,5 +1897,16 @@
   "qrStyleMargin": "Заштитна маргина",
   "qrStyleCorrection": "Корекција на грешки",
   "certificateIssued": "Издаден",
-  "certificateRevoked": "Поништен"
+  "certificateRevoked": "Поништен",
+  "quizResults": "Резултати",
+  "quizParticipants": "Учесници",
+  "quizStartedAt": "Почеток",
+  "quizFinishedAt": "Завршување",
+  "quizResultScore": "Резултат",
+  "quizAllResults": "Сите резултати",
+  "quizThumbnailHelp": "JPG, PNG or WebP, up to 5 MB. Choosing an image saves it immediately.",
+  "quizThumbnailSaveFirst": "Save the quiz first to add a thumbnail.",
+  "quizResetAttempts": "Delete all attempts",
+  "quizResetAttemptsConfirm": "Permanently delete all attempts and saved answers for every participant in this quiz, including attempts hidden by filters? Attempt limits will be reset. Issued certificates will remain. This cannot be undone.",
+  "quizResetAttemptsProgress": "Deleted {{param.deleted}} of {{param.total}} attempts."
 }

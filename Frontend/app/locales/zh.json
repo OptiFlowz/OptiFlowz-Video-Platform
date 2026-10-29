@@ -1817,5 +1817,16 @@
   "qrStyleMargin": "留白区域",
   "qrStyleCorrection": "纠错级别",
   "certificateIssued": "已签发",
-  "certificateRevoked": "已撤销"
+  "certificateRevoked": "已撤销",
+  "quizResults": "结果",
+  "quizParticipants": "参与者",
+  "quizStartedAt": "开始时间",
+  "quizFinishedAt": "完成时间",
+  "quizResultScore": "得分",
+  "quizAllResults": "所有结果",
+  "quizThumbnailHelp": "JPG, PNG or WebP, up to 5 MB. Choosing an image saves it immediately.",
+  "quizThumbnailSaveFirst": "Save the quiz first to add a thumbnail.",
+  "quizResetAttempts": "Delete all attempts",
+  "quizResetAttemptsConfirm": "Permanently delete all attempts and saved answers for every participant in this quiz, including attempts hidden by filters? Attempt limits will be reset. Issued certificates will remain. This cannot be undone.",
+  "quizResetAttemptsProgress": "Deleted {{param.deleted}} of {{param.total}} attempts."
 }

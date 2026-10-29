@@ -21,7 +21,7 @@ export type QuizSettings = {
   explanation_incorrect_only: boolean; allow_answer_changes_after_check: boolean;
   allow_attempt_review: boolean; show_final_score: boolean; scoring_mode: 'exact_match' | 'partial_credit';
 };
-export type Quiz = Owned & QuizSettings & { question_count: number; certificate_template_id: string | null };
+export type Quiz = Owned & QuizSettings & { thumbnail_url?: string | null; question_count: number; certificate_template_id: string | null };
 // Participant metadata deliberately excludes author IDs, template IDs and question content.
 export type PublishedQuiz = Omit<Quiz, 'user_id' | 'certificate_template_id' | 'status'> & { status: 'published'; has_certificate: boolean };
 export const defaultSettings: QuizSettings = {

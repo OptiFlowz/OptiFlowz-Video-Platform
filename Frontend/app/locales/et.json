@@ -1817,5 +1817,16 @@
   "qrStyleMargin": "Vaba ala",
   "qrStyleCorrection": "Veaparandus",
   "certificateIssued": "Väljastatud",
-  "certificateRevoked": "Tühistatud"
+  "certificateRevoked": "Tühistatud",
+  "quizResults": "Tulemused",
+  "quizParticipants": "Osalejad",
+  "quizStartedAt": "Alustatud",
+  "quizFinishedAt": "Lõpetatud",
+  "quizResultScore": "Tulemus",
+  "quizAllResults": "Kõik tulemused",
+  "quizThumbnailHelp": "JPG, PNG or WebP, up to 5 MB. Choosing an image saves it immediately.",
+  "quizThumbnailSaveFirst": "Save the quiz first to add a thumbnail.",
+  "quizResetAttempts": "Delete all attempts",
+  "quizResetAttemptsConfirm": "Permanently delete all attempts and saved answers for every participant in this quiz, including attempts hidden by filters? Attempt limits will be reset. Issued certificates will remain. This cannot be undone.",
+  "quizResetAttemptsProgress": "Deleted {{param.deleted}} of {{param.total}} attempts."
 }

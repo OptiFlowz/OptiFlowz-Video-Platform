@@ -1,0 +1,15 @@
+.thumbnail { position: relative; display: grid; place-items: center; flex-shrink: 0; overflow: hidden; aspect-ratio: 1; width: 64px; height: 64px; border-radius: 12px; background: var(--background2); color: var(--accentBlue2); }
+.thumbnail::after { content: ""; position: absolute; inset: 0; border: 1px solid var(--border1); border-radius: inherit; pointer-events: none; }
+.thumbnail img { width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.thumbnail svg { width: 32px; height: 32px; }
+.heading { width: 72px; height: 72px; }
+.heading svg { width: 40px; height: 40px; }
+.preview { width: 104px; height: 104px; }
+.editor { display: flex; align-items: center; gap: 20px; padding: 16px 0; }
+.controls { display: grid; gap: 10px; min-width: 0; }
+.label { display: flex; align-items: center; gap: 8px; }
+.label h3 { margin: 0; }
+.actions { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.actions > button:first-child { min-width: 0; }
+.actions .remove { flex: 0 0 40px; width: 40px; height: 40px; padding: 10px; color: var(--accentRed); }
+@media (max-width: 600px) { .heading { width: 56px; height: 56px; } .item { width: 52px; height: 52px; } .editor { align-items: flex-start; flex-wrap: wrap; } }

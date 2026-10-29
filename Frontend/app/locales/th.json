@@ -1817,5 +1817,16 @@
   "qrStyleMargin": "พื้นที่ว่างรอบโค้ด",
   "qrStyleCorrection": "การแก้ไขข้อผิดพลาด",
   "certificateIssued": "ออกแล้ว",
-  "certificateRevoked": "เพิกถอนแล้ว"
+  "certificateRevoked": "เพิกถอนแล้ว",
+  "quizResults": "ผลลัพธ์",
+  "quizParticipants": "ผู้เข้าร่วม",
+  "quizStartedAt": "เริ่มต้น",
+  "quizFinishedAt": "สิ้นสุด",
+  "quizResultScore": "คะแนน",
+  "quizAllResults": "ผลลัพธ์ทั้งหมด",
+  "quizThumbnailHelp": "JPG, PNG or WebP, up to 5 MB. Choosing an image saves it immediately.",
+  "quizThumbnailSaveFirst": "Save the quiz first to add a thumbnail.",
+  "quizResetAttempts": "Delete all attempts",
+  "quizResetAttemptsConfirm": "Permanently delete all attempts and saved answers for every participant in this quiz, including attempts hidden by filters? Attempt limits will be reset. Issued certificates will remain. This cannot be undone.",
+  "quizResetAttemptsProgress": "Deleted {{param.deleted}} of {{param.total}} attempts."
 }

@@ -50,12 +50,12 @@ test('readiness progress and errors stay in the readiness section while saves an
     '~/components/library/DurationInput': load('../library/DurationInput.tsx', { '~/i18n': i18n, './durationInput.module.css': styles }),
     '~/i18n': i18n, 'react-router': { Link: () => null },
     '~/components/library/ProfileTabs': { __esModule: true, default: ({ children }) => React.createElement('div', null, children) },
-    './shared': { ...shared, styles: styles.default, useDetail: () => ({ data: { quiz } }), useAccess: () => ({ update: true, create: true, can: () => true }),
+    './shared': { ...shared, styles: styles.default, useDetail: () => ({ data: { quiz } }), useAccess: () => ({ update: true, create: true, canOwn: () => false, can: () => true }),
       Select: () => null },
     './api': { request: (route, method, body) => new Promise(resolve => { savedBody = body; resolveSave = resolve; }) }, './model': model,
     './inspectQuiz': { inspectQuiz: () => { checks++; return new Promise((resolve, reject) => { resolveCheck = resolve; rejectCheck = reject; }); } },
     './QuizStatus': { __esModule: true, default: () => null },
-    './QuizParts': {}, './QuizCertificate': { __esModule: true, default: () => null }, './EditorPopup': popup, './numberDraft': load('numberDraft.ts'),
+    './QuizParts': {}, './quizResultsModel': { canReadQuizResults: () => false }, './QuizCertificate': { __esModule: true, default: () => null }, './QuizThumbnailEditor': { __esModule: true, default: () => null }, './EditorPopup': popup, './numberDraft': load('numberDraft.ts'),
   });
   await act(async () => root.render(React.createElement(QuizEditor, { id: quiz.id, section: 'settings', onSectionChange() {}, onSaved() {}, onDirty() {}, onClose() {} })));
   assert.deepEqual([...document.querySelectorAll('[role=tab]')].map(tab => tab.textContent), ['Quiz settings', 'Questions', 'Sources', 'Rules', 'Certificate']);

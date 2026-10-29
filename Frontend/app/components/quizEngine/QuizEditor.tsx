@@ -1,5 +1,5 @@
 import DurationInput from '~/components/library/DurationInput';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useContext, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { useI18n } from '~/i18n';
 import ProfileTabs from '~/components/library/ProfileTabs';
@@ -10,26 +10,39 @@ import { inspectQuiz } from './inspectQuiz';
 import { Candidates, Sources, Requirements } from './QuizParts';
 import { EditorActions, EditorBusyStatusContext } from './EditorPopup';
 import QuizCertificate from './QuizCertificate';
+import { canReadQuizResults } from './quizResultsModel';
 import QuizStatus from './QuizStatus';
+import QuizThumbnailEditor from './QuizThumbnailEditor';
 import { numberDraftValue, type NumberDraft } from './numberDraft';
 
-const editorTabs = { settings: 'qeSettings', questions: 'quizQuestionsButton', sources: 'quizSourcesButton', rules: 'quizRulesButton', certificate: 'quizCertificateTab' };
+const QuizResults = lazy(() => import('./QuizResults'));
+const editorTabs = { settings: 'qeSettings', questions: 'quizQuestionsButton', sources: 'quizSourcesButton', rules: 'quizRulesButton', certificate: 'quizCertificateTab', results: 'quizResults' };
 export default function QuizEditor({ id, section, onSectionChange, onSaved, onDirty, onClose }: {
   id: string; section: string; onSectionChange: (section: string) => void; onSaved: (id: string) => void; onDirty: (dirty: boolean) => void; onClose: () => void;
 }) {
   const { t } = useI18n(), busy = useContext(EditorBusyStatusContext);
   const detail = useDetail<{ quiz: Quiz }>(`/${id}`, id !== 'new');
   const access = useAccess('quizzes', detail.data?.quiz), quiz = detail.data?.quiz;
-  const tab = id === 'new' || !Object.hasOwn(editorTabs, section) ? 'settings' : section as keyof typeof editorTabs;
+  const resultsAllowed = !!quiz && canReadQuizResults(access, quiz.user_id);
+  const tab = id === 'new' || (section === 'results' && !resultsAllowed) || !Object.hasOwn(editorTabs, section) ? 'settings' : section as keyof typeof editorTabs;
+  const activeTab = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const button = activeTab.current, scroller = button?.parentElement;
+    if (!button || !scroller) return;
+    const bounds = scroller.getBoundingClientRect(), target = button.getBoundingClientRect();
+    if (target.right > bounds.right) scroller.scrollLeft += target.right - bounds.right;
+    else if (target.left < bounds.left) scroller.scrollLeft += target.left - bounds.left;
+  }, [tab, resultsAllowed]);
   return <div className={`${styles.page} ${styles.editorPage}`}>
     <div className="libraryHeader"><div className="libraryHeading"><h1>{quiz?.title || t(id === 'new' ? 'quizCreateTitle' : 'quizEditTitle')}</h1><p>{t(id === 'new' ? 'qePublishAfterCreate' : 'qeIntro')}</p></div>{quiz && <QuizStatus quiz={quiz} disabled={busy} className={`managementStatus ${quiz.status === 'published' ? 'active' : ''}`} />}</div>
-    <ProfileTabs className={styles.resourceTabs} label={t('qeSettings')}>{Object.entries(editorTabs).map(([key, label]) => <button type="button" role="tab" key={key} id={`quiz-tab-${key}`} aria-selected={tab === key} aria-controls="quiz-editor-panel" disabled={busy || (key !== 'settings' && !quiz)} onClick={() => { if (tab !== key) onSectionChange(key); }}>{t(label)}</button>)}</ProfileTabs>
+    <ProfileTabs className={styles.resourceTabs} label={t('qeSettings')}>{Object.entries(editorTabs).filter(([key]) => key !== 'results' || resultsAllowed).map(([key, label]) => <button type="button" role="tab" key={key} ref={tab === key ? activeTab : undefined} id={`quiz-tab-${key}`} aria-selected={tab === key} aria-controls="quiz-editor-panel" disabled={busy || (key !== 'settings' && !quiz)} onClick={() => { if (tab !== key) onSectionChange(key); }}>{t(label)}</button>)}</ProfileTabs>
     <div id="quiz-editor-panel" role="tabpanel" aria-labelledby={`quiz-tab-${tab}`} className={styles.editorBody}>
       {id !== 'new' && !detail.data ? <LoadState query={detail} variant="form" /> : <>
         {tab === 'settings' && <Settings key={id} initial={quiz} onSaved={onSaved} onDirty={onDirty} onClose={onClose} />}
         {quiz && tab === 'questions' && <><p className={styles.sectionHelp}>{t('qeCandidatesHelp')}</p><Candidates quiz={quiz} editable={access.update} onDirty={onDirty} /></>}
         {quiz && tab === 'sources' && <><p className={styles.sectionHelp}>{t('qeSourcesHelp')}</p><Sources quiz={quiz} editable={access.update} onDirty={onDirty} /></>}
         {quiz && tab === 'rules' && <><p className={styles.sectionHelp}>{t('quizRulesDescription', { title: quiz.title })}</p><Requirements quiz={quiz} editable={access.update} onDirty={onDirty} /></>}
+        {quiz && tab === 'results' && resultsAllowed && <Suspense fallback={<p role="status">{t("quizLoadingQuiz")}</p>}><QuizResults quiz={quiz} /></Suspense>}
         {quiz && tab === 'certificate' && <QuizCertificate key={quiz.id} quiz={quiz} editable={access.update} onDirty={onDirty} />}
       </>}
     </div>
@@ -87,6 +100,7 @@ function Settings({ initial, onSaved, onDirty, onClose }: { initial?: Quiz; onSa
     const saved = settingsOf(result.quiz); setForm(saved); setBaseline(JSON.stringify(saved)); onDirty(false); onSaved(result.quiz.id);
   }); }}>
     <div className="quizPopupBody"><div className={styles.settingsLayout}><div className={styles.settingsColumn}><fieldset disabled={busy || !editable}><section className={styles.settingsSection}><div className={styles.partHeader}><h2>{t('qeSettings')}</h2><Notice {...action} variant="heading" /></div>
+      <QuizThumbnailEditor quiz={initial} editable={editable} disabled={busy} />
       <div className={styles.settingsGroup}><Field label={t('title')} help={help('title')}><input required maxLength={255} aria-label={t('title')} value={form.title} onChange={e => change({ title: e.target.value })} /></Field>
       <Field label={t('description')} help={help('description')}><textarea aria-label={t('description')} value={form.description ?? ''} onChange={e => change({ description: e.target.value || null })} /></Field>
       </div><div className={styles.settingsGroup}><div className="quizPopupGrid"><Field label={t('adminTableStatus')} help={t('qeHelp_status')}><Select label={t('adminTableStatus')} value={form.status} values={['draft', 'published', 'archived'].map(value => ({ value, label: t(`qe${value[0].toUpperCase()}${value.slice(1)}`), disabled: !initial && value === 'published' }))} onChange={value => change({ status: value as QuizSettings['status'] })} /></Field>

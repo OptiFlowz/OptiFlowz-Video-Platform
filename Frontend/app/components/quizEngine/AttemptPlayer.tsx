@@ -120,6 +120,17 @@ export default function AttemptPlayer({ attemptId, onClose, onFinished, complete
   </section></>;
 }
 
+/** Uses the quiz question layout without participant queries, timers or write actions. */
+export function ManagedAttemptQuestions({ questions, pageSize, onClose }: { questions: AttemptQuestion[]; pageSize: number; onClose: () => void }) {
+  const { t } = useI18n();
+  const [index, setIndex] = useState(0);
+  return <section className={`${styles.attemptPlayer} ${styles.attemptReview}`}>
+    <AttemptStatusBar reviewing><h2>{t('quizReviewAttempt')}</h2><span>{t('quizAnsweredCount', { answered: questions.filter(q => isCompleteAnswer(q, q.answer)).length, total: questions.length })}</span></AttemptStatusBar>
+    {questions.length ? <QuestionPage questions={questions} onNavigate={setIndex} reviewing showCheck index={index} pageSize={pageSize} busy={false} expired={false} expiresAt={null} confirming={false}
+      onCheck={async () => false} onSaveDraft={async () => {}} onFinish={async () => {}} onClose={onClose}  /> : <p>{t('quizNoQuestionsYet')}</p>}
+  </section>;
+}
+
 /** Share the measured status height with the sticky navigation and question scroll targets. */
 function AttemptStatusBar({ reviewing, children }: { reviewing: boolean; children: ReactNode }) {
   const bar = useRef<HTMLDivElement>(null);
@@ -302,11 +313,11 @@ function QuestionCard({ question, answer, setAnswer, index, total, reviewing, sh
   const feedback = question.feedback;
   const answerState = showCheck && !changed && question.checked_at && typeof feedback.is_correct === 'boolean'
     ? (feedback.is_correct ? 'correct' : 'incorrect') : undefined;
-  const showFeedback = !changed && !!question.checked_at && ((showCheck && (feedback.is_correct !== undefined || feedback.awarded_points !== undefined)) || !!feedback.correct_answers?.options?.length || !!feedback.correct_answers?.matching_items?.length || !!feedback.explanation);
+  const showFeedback = !changed && (!!question.checked_at || question.management_review) && ((showCheck && (feedback.is_correct !== undefined || feedback.awarded_points !== undefined)) || !!feedback.correct_answers?.options?.length || !!feedback.correct_answers?.matching_items?.length || !!feedback.explanation);
   return <article ref={cardRef} tabIndex={-1} aria-label={t('quizQuestionPosition', { current: index + 1, total })} className={`${styles.panel} ${styles.attemptQuestion}`}>
       <div className={styles.toolbar}><span className={styles.badge}>{t('quizQuestionPosition', { current: index + 1, total })}</span>{showCheck && <span className={styles.muted}>{t('quizPoints')}: {question.max_points}</span>}</div>
       <h2>{decodeQuizText(question.content)}</h2>
-      {reviewing ? !question.checked_at && <p className={styles.muted}>{t('quizNotAnsweredYet')}</p> : <p className={styles.muted}>{t(question.type === 'matching' ? 'quizMatchHint' : question.type === 'single_choice' ? 'quizSelectOneHint' : 'quizSelectMultipleHint')}</p>}
+      {reviewing ? !question.checked_at && <p className={styles.muted}>{t(question.management_review && question.answer ? 'quizNotChecked' : 'quizNotAnsweredYet')}</p> : <p className={styles.muted}>{t(question.type === 'matching' ? 'quizMatchHint' : question.type === 'single_choice' ? 'quizSelectOneHint' : 'quizSelectMultipleHint')}</p>}
       {question.type === 'matching' ? <div className={styles.attemptMatches}>{question.matching_items.map(item => <div className={styles.attemptMatch} key={item.item_no}>
         <span>{decodeQuizText(item.content)}</span><Select label={decodeQuizText(item.content)} value={answer && 'pairs' in answer ? answer.pairs.find(p => p.item_no === item.item_no)?.option_no ?? '' : ''} disabled={!editable}
           values={[{ value: '', label: t('quizChooseAnswer') }, ...question.matching_options.map(o => ({ value: o.option_no, label: decodeQuizText(o.content) }))]}

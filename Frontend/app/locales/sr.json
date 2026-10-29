@@ -1812,5 +1812,16 @@
   "qrStyleMargin": "Zaštitna margina",
   "qrStyleCorrection": "Korekcija grešaka",
   "certificateIssued": "Izdat",
-  "certificateRevoked": "Opozvan"
+  "certificateRevoked": "Opozvan",
+  "quizResults": "Rezultati",
+  "quizParticipants": "Učesnici",
+  "quizStartedAt": "Početak",
+  "quizFinishedAt": "Završetak",
+  "quizResultScore": "Rezultat",
+  "quizAllResults": "Svi rezultati",
+  "quizThumbnailHelp": "JPG, PNG ili WebP, do 5 MB. Izabrana slika se odmah čuva.",
+  "quizThumbnailSaveFirst": "Prvo sačuvajte kviz da biste dodali sliku.",
+  "quizResetAttempts": "Obriši sve pokušaje",
+  "quizResetAttemptsConfirm": "Trajno obrisati sve pokušaje i sačuvane odgovore svih učesnika ovog kviza, uključujući pokušaje skrivene filterima? Limiti pokušaja biće resetovani. Izdati sertifikati ostaju. Ova radnja se ne može poništiti.",
+  "quizResetAttemptsProgress": "Obrisano {{param.deleted}} od {{param.total}} pokušaja."
 }

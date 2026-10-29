@@ -1829,5 +1829,16 @@
   "qrStyleMargin": "Zaštitna margina",
   "qrStyleCorrection": "Korekcija grešaka",
   "certificateIssued": "Izdat",
-  "certificateRevoked": "Opozvan"
+  "certificateRevoked": "Opozvan",
+  "quizResults": "Rezultati",
+  "quizParticipants": "Učesnici",
+  "quizStartedAt": "Početak",
+  "quizFinishedAt": "Završetak",
+  "quizResultScore": "Rezultat",
+  "quizAllResults": "Svi rezultati",
+  "quizThumbnailHelp": "JPG, PNG or WebP, up to 5 MB. Choosing an image saves it immediately.",
+  "quizThumbnailSaveFirst": "Save the quiz first to add a thumbnail.",
+  "quizResetAttempts": "Delete all attempts",
+  "quizResetAttemptsConfirm": "Permanently delete all attempts and saved answers for every participant in this quiz, including attempts hidden by filters? Attempt limits will be reset. Issued certificates will remain. This cannot be undone.",
+  "quizResetAttemptsProgress": "Deleted {{param.deleted}} of {{param.total}} attempts."
 }

@@ -1817,5 +1817,16 @@
   "qrStyleMargin": "Vùng trống",
   "qrStyleCorrection": "Sửa lỗi",
   "certificateIssued": "Đã cấp",
-  "certificateRevoked": "Đã thu hồi"
+  "certificateRevoked": "Đã thu hồi",
+  "quizResults": "Kết quả",
+  "quizParticipants": "Người tham gia",
+  "quizStartedAt": "Bắt đầu",
+  "quizFinishedAt": "Kết thúc",
+  "quizResultScore": "Điểm",
+  "quizAllResults": "Tất cả kết quả",
+  "quizThumbnailHelp": "JPG, PNG or WebP, up to 5 MB. Choosing an image saves it immediately.",
+  "quizThumbnailSaveFirst": "Save the quiz first to add a thumbnail.",
+  "quizResetAttempts": "Delete all attempts",
+  "quizResetAttemptsConfirm": "Permanently delete all attempts and saved answers for every participant in this quiz, including attempts hidden by filters? Attempt limits will be reset. Issued certificates will remain. This cannot be undone.",
+  "quizResetAttemptsProgress": "Deleted {{param.deleted}} of {{param.total}} attempts."
 }

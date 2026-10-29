@@ -6,9 +6,10 @@ import { useSearchParams, useNavigate } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { useI18n } from '~/i18n';
 import { getToken } from '~/functions';
-import { AddSVG, CollectionsSVG, DeleteSVG, EditSVG, PlaySVG, MatchingQuestionSVG, MultipleChoiceQuestionSVG, QuestionSVG, QuizSVG, SearchSVG, SingleChoiceQuestionSVG } from '~/constants';
+import { AnalyticsSVG, AddSVG, CollectionsSVG, DeleteSVG, EditSVG, PlaySVG, MatchingQuestionSVG, MultipleChoiceQuestionSVG, QuestionSVG, SearchSVG, SingleChoiceQuestionSVG } from '~/constants';
 import Sidebar from '~/components/myVideosPage/sidebar/sidebar';
 import Pagination from '~/components/library/pagination';
+import QuizThumbnail from './QuizThumbnail';
 import ProfileTabs from '~/components/library/ProfileTabs';
 import LibrarySortButton from '~/components/library/librarySortButton';
 import { ConfirmDialog } from '~/components/confirmPopup/confirmDialog';
@@ -21,6 +22,7 @@ import QuestionTransfer from './QuestionTransfer';
 import QuestionEditor from './QuestionEditor';
 import CategoryEditor from './CategoryEditor';
 import QuizEditor from './QuizEditor';
+import { canReadQuizResults } from './quizResultsModel';
 import QuizStatus from './QuizStatus';
 import CertificateTemplates from './CertificateTemplates';
 import EditorPopup, { EditorBusyContext, EditorBusyStatusContext } from './EditorPopup';
@@ -76,7 +78,7 @@ export default function QuizzesPage() {
       </div>
       <ProfileTabs className={styles.resourceTabs} label={t('navQuizzes')}>{allowed.map(tab => <button type="button" role="tab" key={tab} disabled={busy} aria-selected={!certificatesTab && resource === tab} onClick={() => { if (certificatesTab || resource !== tab) void navigate(tab); }}>{t(names[tab])}</button>)}<button type="button" role="tab" disabled={busy} aria-selected={certificatesTab} onClick={() => { if (!certificatesTab) void navigate('certificates'); }}>{t('quizCertificateLibrary')}</button></ProfileTabs>
       {certificatesTab ? <CertificateTemplates ownership={params.get('scope') ?? 'mine'} onOwnershipChange={scope => setParams({ tab: 'certificates', scope })} id={editor} onDirty={setDirty} onBusy={setBusy} onEdit={id => void navigate('certificates', id)} onSaved={id => { setDirty(false); setParams({ tab: 'certificates', scope: params.get('scope') ?? 'mine', ...(id ? { edit: id } : {}) }); }} /> : <>
-      <ResourceList headerTransfer={headerTransfer} onCloseTransfer={() => setHeaderTransfer(null)} key={`${resource}:${params.get('category') ?? ''}`} resource={resource} initialCategory={params.get('category') ?? ''} ownership={params.get('scope') ?? 'mine'} onOwnershipChange={scope => setParams({ tab: resource, scope })} onBrowseCategory={(category, ownerId) => void navigate('questions', undefined, undefined, category, ownerId === access.user?.id ? 'mine' : 'others')} onEdit={id => void navigate(resource, id)} />
+      <ResourceList headerTransfer={headerTransfer} onCloseTransfer={() => setHeaderTransfer(null)} key={`${resource}:${params.get('category') ?? ''}`} resource={resource} initialCategory={params.get('category') ?? ''} ownership={params.get('scope') ?? 'mine'} onOwnershipChange={scope => setParams({ tab: resource, scope })} onBrowseCategory={(category, ownerId) => void navigate('questions', undefined, undefined, category, ownerId === access.user?.id ? 'mine' : 'others')} onEdit={id => void navigate(resource, id)} onResults={id => void navigate('quizzes', id, 'results')} />
       <EditorPopup wide={resource === 'questions'} open={!!editor} title={popupTitle} onClose={() => void navigate(resource)}>
         {editor && (resource === 'questions' ? <QuestionEditor key={editor} id={editor} onSaved={saved} onDirty={setDirty} onClose={() => void navigate(resource)} /> : <CategoryEditor key={editor} id={editor} onSaved={saved} onDirty={setDirty} />)}
       </EditorPopup>
@@ -87,7 +89,7 @@ export default function QuizzesPage() {
 
 }
 
-function ResourceList({ headerTransfer, onCloseTransfer, resource, onEdit, initialCategory, onBrowseCategory, ownership, onOwnershipChange }: { headerTransfer: 'import' | 'export' | null; onCloseTransfer: () => void; resource: Resource; onEdit: (id: string) => void; initialCategory: string; onBrowseCategory: (id: string, ownerId: string) => void; ownership: string; onOwnershipChange: (scope: OwnershipFilter) => void }) {
+function ResourceList({ headerTransfer, onCloseTransfer, resource, onEdit, onResults, initialCategory, onBrowseCategory, ownership, onOwnershipChange }: { headerTransfer: 'import' | 'export' | null; onCloseTransfer: () => void; resource: Resource; onEdit: (id: string) => void; onResults: (id: string) => void; initialCategory: string; onBrowseCategory: (id: string, ownerId: string) => void; ownership: string; onOwnershipChange: (scope: OwnershipFilter) => void }) {
   const navigateTo = useNavigate();
   const { t, locale } = useI18n(), access = useAccess(resource), categoryAccess = useAccess('categories');
   const canReadOthers = access.can(resourcePermission(resource, 'read_any'));
@@ -156,9 +158,9 @@ function ResourceList({ headerTransfer, onCloseTransfer, resource, onEdit, initi
     </tr></thead><tbody>
       {rows.map(row => <tr key={row.id} data-question-type={resource === 'questions' ? row.type : undefined}><td><div className={styles.listIdentity}>
         <input className={checkbox} type="checkbox" aria-label={`${t('quizSelect')}: ${row.title || row.name || row.content || row.id}`} disabled={action.busy || !selectable.some(item => item.id === row.id)} checked={selected.includes(row.id)} onChange={e => setSelected(e.target.checked ? [...selected, row.id] : selected.filter(id => id !== row.id))} />
-        <span className={styles.quizThumbnail} aria-hidden="true">{resource === 'quizzes' ? QuizSVG : resource === 'questions' ? (row.type ? questionIcons[row.type] : QuestionSVG) : CollectionsSVG}</span>
+        <>{resource === 'quizzes' ? <QuizThumbnail src={row.thumbnail_url} /> : <span className={styles.quizThumbnail} aria-hidden="true">{resource === 'questions' ? (row.type ? questionIcons[row.type] : QuestionSVG) : CollectionsSVG}</span>}</>
         <div className={styles.listInfo}><button type="button" className={styles.rowTitle} title={row.title || row.name || row.content} onClick={() => onEdit(row.id)}>{row.title || row.name || row.content || t('qeUntitledQuestion')}</button>
-          <div className="managementRowActions">{resource === 'quizzes' && access.can('quizzes.participate') && <button type="button" title={t('quizStartQuiz')} aria-label={`${t('quizStartQuiz')}: ${row.title}`} onClick={() => navigateTo(`/quiz/${row.id}`)}>{PlaySVG}</button>}{resource === 'categories' && access.canAny(['questions.read_own', 'questions.read_any']) && <button type="button" title={t('qeBank')} aria-label={`${t('qeBank')}: ${row.name}`} onClick={() => onBrowseCategory(row.id, row.user_id)}>{SearchSVG}</button>}<button type="button" aria-label={`${t('adminOpen')}: ${row.title || row.name || row.content}`} title={t('adminOpen')} onClick={() => onEdit(row.id)}>{EditSVG}</button>{deletable.some(item => item.id === row.id) && <button type="button" className="danger" disabled={action.busy} aria-label={`${t('adminDelete')}: ${row.title || row.name || row.content}`} title={t('adminDelete')} onClick={() => void remove([row.id])}>{DeleteSVG}</button>}</div>
+          <div className="managementRowActions">{resource === 'quizzes' && access.can('quizzes.participate') && <button type="button" title={t('quizStartQuiz')} aria-label={`${t('quizStartQuiz')}: ${row.title}`} onClick={() => navigateTo(`/quiz/${row.id}`)}>{PlaySVG}</button>}{resource === 'categories' && access.canAny(['questions.read_own', 'questions.read_any']) && <button type="button" title={t('qeBank')} aria-label={`${t('qeBank')}: ${row.name}`} onClick={() => onBrowseCategory(row.id, row.user_id)}>{SearchSVG}</button>}<button type="button" aria-label={`${t('adminOpen')}: ${row.title || row.name || row.content}`} title={t('adminOpen')} onClick={() => onEdit(row.id)}>{EditSVG}</button>{resource === 'quizzes' && canReadQuizResults(access, row.user_id) && <button type="button" title={t('quizResults')} aria-label={`${t('quizResults')}: ${row.title}`} onClick={() => onResults(row.id)}>{AnalyticsSVG}</button>}{deletable.some(item => item.id === row.id) && <button type="button" className="danger" disabled={action.busy} aria-label={`${t('adminDelete')}: ${row.title || row.name || row.content}`} title={t('adminDelete')} onClick={() => void remove([row.id])}>{DeleteSVG}</button>}</div>
         </div></div></td>
         <td data-label={t(resource === 'questions' ? 'quizQuestionType' : resource === 'categories' ? 'description' : 'adminTableStatus')}>{resource === 'questions' ? <span className={`managementStatus ${styles.questionTypeBadge}`}>{t(typeLabels[row.type!])}</span> : resource === 'categories' ? <span className={styles.tableText} title={row.description ?? undefined}>{row.description}</span> : <QuizStatus quiz={{ id: row.id, user_id: row.user_id, title: row.title ?? '', status: row.status! }} disabled={action.busy} />}</td>
         {resource === 'categories' && <td data-label={t('quizQuestionCount')} className={styles.questionCount}>{(row.question_count ?? 0).toLocaleString(locale)}</td>}

@@ -1,4 +1,5 @@
 'use client';
+import QuizThumbnail from './QuizThumbnail';
 import { Link } from 'react-router';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { decodeHTMLStrict } from 'entities';
@@ -38,6 +39,7 @@ export default function PublishedQuizList({ userId, sortOrder = 'desc' }: { user
       <p>{t('adminFailedLoadQuizzes')}</p><button type="button" className={styles.action} onClick={() => void query.refetch()}>{t('usersRetry')}</button>
     </div> : quizzes.length ? <div className={styles.grid}>{quizzes.map(quiz => <article className={styles.card} key={quiz.id}>
       <Link className={styles.cardLink} to={`/quiz/${quiz.id}`} aria-labelledby={`published-quiz-${quiz.id}`}>
+        <QuizThumbnail src={quiz.thumbnail_url} />
         <div className={styles.heading}>
           <h3 id={`published-quiz-${quiz.id}`}>{decodeHTMLStrict(quiz.title)}</h3>
           {quiz.description && <p className={styles.description}>{decodeHTMLStrict(quiz.description)}</p>}

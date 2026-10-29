@@ -1817,5 +1817,16 @@
   "qrStyleMargin": "Bakanteng palugit",
   "qrStyleCorrection": "Pagwawasto ng error",
   "certificateIssued": "Naibigay",
-  "certificateRevoked": "Binawi"
+  "certificateRevoked": "Binawi",
+  "quizResults": "Mga resulta",
+  "quizParticipants": "Mga kalahok",
+  "quizStartedAt": "Nagsimula",
+  "quizFinishedAt": "Natapos",
+  "quizResultScore": "Iskor",
+  "quizAllResults": "Lahat ng resulta",
+  "quizThumbnailHelp": "JPG, PNG or WebP, up to 5 MB. Choosing an image saves it immediately.",
+  "quizThumbnailSaveFirst": "Save the quiz first to add a thumbnail.",
+  "quizResetAttempts": "Delete all attempts",
+  "quizResetAttemptsConfirm": "Permanently delete all attempts and saved answers for every participant in this quiz, including attempts hidden by filters? Attempt limits will be reset. Issued certificates will remain. This cannot be undone.",
+  "quizResetAttemptsProgress": "Deleted {{param.deleted}} of {{param.total}} attempts."
 }

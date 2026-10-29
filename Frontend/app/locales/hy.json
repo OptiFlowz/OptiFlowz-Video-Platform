@@ -1817,5 +1817,16 @@
   "qrStyleMargin": "Դատարկ եզրագոտի",
   "qrStyleCorrection": "Սխալների ուղղում",
   "certificateIssued": "Տրված է",
-  "certificateRevoked": "Չեղարկված է"
+  "certificateRevoked": "Չեղարկված է",
+  "quizResults": "Արդյունքներ",
+  "quizParticipants": "Մասնակիցներ",
+  "quizStartedAt": "Սկիզբ",
+  "quizFinishedAt": "Ավարտ",
+  "quizResultScore": "Միավոր",
+  "quizAllResults": "Բոլոր արդյունքները",
+  "quizThumbnailHelp": "JPG, PNG or WebP, up to 5 MB. Choosing an image saves it immediately.",
+  "quizThumbnailSaveFirst": "Save the quiz first to add a thumbnail.",
+  "quizResetAttempts": "Delete all attempts",
+  "quizResetAttemptsConfirm": "Permanently delete all attempts and saved answers for every participant in this quiz, including attempts hidden by filters? Attempt limits will be reset. Issued certificates will remain. This cannot be undone.",
+  "quizResetAttemptsProgress": "Deleted {{param.deleted}} of {{param.total}} attempts."
 }

@@ -19,8 +19,8 @@ export function EditorActions({ children, className = '' }: { children: ReactNod
 }
 
 /** Shared popup shell for the new engine, using the existing quiz popup motion and layout. */
-export default function EditorPopup({ open, title, description, onClose, onAfterClose, children, wide = false, compact = false, className = '' }: {
-  open: boolean; title: string; description?: string; onClose: () => void; onAfterClose?: () => void; children: ReactNode; wide?: boolean; compact?: boolean; className?: string;
+export default function EditorPopup({ open, title, heading, description, onClose, onAfterClose, children, wide = false, compact = false, className = '' }: {
+  open: boolean; title: string; heading?: ReactNode; description?: string; onClose: () => void; onAfterClose?: () => void; children: ReactNode; wide?: boolean; compact?: boolean; className?: string;
 }) {
   const { t } = useI18n(), titleId = useId();
   const [mounted, setMounted] = useState(open), [visible, setVisible] = useState(false), [busy, setBusy] = useState(false);
@@ -28,8 +28,8 @@ export default function EditorPopup({ open, title, description, onClose, onAfter
   const [noticeTarget, setNoticeTarget] = useState<HTMLDivElement | null>(null);
   const [panel, setPanel] = useState<HTMLDivElement | null>(null);
   const previousFocus = useRef<HTMLElement | null>(null);
-  const retained = useRef({ title, description, children });
-  if (open) retained.current = { title, description, children };
+  const retained = useRef({ title, heading, description, children });
+  if (open) retained.current = { title, heading, description, children };
   const close = useRef(onClose); close.current = onClose;
   const afterClose = useRef(onAfterClose); afterClose.current = onAfterClose;
   useEffect(() => {
@@ -77,7 +77,7 @@ export default function EditorPopup({ open, title, description, onClose, onAfter
   if (!mounted) return null;
   return <PopupPortal><div className={`${styles.popupLayer} popupMotionLayer ${visible ? 'opacity-100' : 'opacity-0'}`} onMouseDown={event => { if (event.target === event.currentTarget && open && !busy) onClose(); }}>
     <div ref={setPanel} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-busy={busy} tabIndex={-1} className={`${styles.page} ${styles.popupPanel} ${compact ? styles.compactPopup : ""} ${(presentation?.wide ?? wide) ? styles.widePopup : ""} ${className} popupMotionPanel ${visible ? 'isOpen' : ''}`}>
-      <div className={`quizPopupHeader ${styles.popupHeader}`}><div><h3 id={titleId}>{presentation?.title ?? retained.current.title}</h3>{(presentation?.description ?? retained.current.description) && <p>{presentation?.description ?? retained.current.description}</p>}</div><button type="button" className={styles.icon} aria-label={t('close')} disabled={busy || !open} onClick={onClose}>{CloseSVG}</button></div>
+      <div className={`quizPopupHeader ${styles.popupHeader}`}><div><div id={titleId}>{!presentation && retained.current.heading ? retained.current.heading : <h3>{presentation?.title ?? retained.current.title}</h3>}</div>{(presentation?.description ?? retained.current.description) && <p>{presentation?.description ?? retained.current.description}</p>}</div><button type="button" className={styles.icon} aria-label={t('close')} disabled={busy || !open} onClick={onClose}>{CloseSVG}</button></div>
       <EditorNoticeContext.Provider value={noticeTarget}><EditorNoticeTargetContext.Provider value={setNoticeTarget}><EditorPresentationContext.Provider value={setPresentation}><EditorBusyStatusContext.Provider value={busy}><EditorBusyContext.Provider value={setBusy}><div className={styles.popupContent}>{retained.current.children}</div></EditorBusyContext.Provider></EditorBusyStatusContext.Provider></EditorPresentationContext.Provider></EditorNoticeTargetContext.Provider></EditorNoticeContext.Provider>
     </div>
   </div></PopupPortal>;

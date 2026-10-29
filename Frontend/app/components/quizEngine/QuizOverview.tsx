@@ -3,6 +3,7 @@ import '~/styles/editor.css';
 import '~/styles/quiz.css';
 import '~/styles/quizExperience.css';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import QuizThumbnail from './QuizThumbnail';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useI18n } from '~/i18n';
@@ -103,7 +104,7 @@ export default function QuizOverview() {
 
   return <main className="videoQuizPage quizExperience"><div className="videoQuizPageContent introStage">
     <div className="videoQuizTop"><div className="videoQuizHeaderRow">
-      <div className="videoQuizHeading"><span className="videoQuizBadge" aria-hidden="true">{QuizSVG}</span><span><h1>{title}</h1><p>{t('quizIntroSubtitle')}</p></span></div>
+      <div className="videoQuizHeading"><QuizThumbnail src={quiz?.thumbnail_url} size="heading" /><span><h1>{title}</h1><p>{t('quizIntroSubtitle')}</p></span></div>
       {attemptId ? <div className={`videoQuizTopActions ${styles.page}`} ref={setAttemptActions} /> : <div className="videoQuizTopActions"><button type="button" className="videoQuizCloseButton" aria-label={t('quizCloseQuiz')} onClick={() => navigate(read ? '/quizzes' : '/')}>{CloseSVG}</button></div>}
     </div></div>
     {attemptId ? <div className={styles.page}><AttemptPlayer key={attemptId} headerActions={attemptActions} attemptId={attemptId} settings={(startedAttempt?.id === attemptId ? startedAttempt : history.find(attempt => attempt.id === attemptId))?.settings} completedAttempt={history.find(attempt => attempt.id === attemptId && ['submitted', 'timed_out'].includes(attempt.status))} onClose={() => { navigate(`/quiz/${quizId}`); refresh(); }} onFinished={refresh} /></div> : <>
