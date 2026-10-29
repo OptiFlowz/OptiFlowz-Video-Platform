@@ -38,7 +38,7 @@ export async function quizThumbnailUploadInternal({ params, file }, ownerId) {
       const metadata = await input.metadata();
       if (!['jpeg', 'png', 'webp'].includes(metadata.format)) throw new Error('Unsupported image format');
       image = await input.rotate()
-        .resize({ width: 1280, height: 720, fit: 'cover', position: 'center' })
+        .resize({ width: 1280, height: 1280, fit: 'cover', position: 'center' })
         .webp({ quality: 82 }).toBuffer();
     } catch {
       throw new HttpError(400, { message: 'Invalid image' });

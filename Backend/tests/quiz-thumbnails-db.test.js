@@ -120,7 +120,7 @@ test('quiz thumbnails: migration, HTTP authorization, image processing and trans
       assert.ok(put.Key.startsWith(`quiz-thumbnails/${quizId}/`));
       assert.deepEqual(response.body, { success: true, quiz: { id: quizId, thumbnail_url: `${base}/${put.Key}` } });
       const metadata = await sharp(put.Body).metadata();
-      assert.equal(metadata.format, 'webp'); assert.equal(metadata.width, 1280); assert.equal(metadata.height, 720);
+      assert.equal(metadata.format, 'webp'); assert.equal(metadata.width, 1280); assert.equal(metadata.height, 1280);
       assert.equal(objects.has(oldKey), false); assert.equal(objects.size, 1);
       const row = await stored();
       assert.equal(row.user_id, owner); assert.ok(row.updated_at > new Date('2026-01-01'));

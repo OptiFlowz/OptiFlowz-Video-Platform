@@ -161,8 +161,8 @@ Content-Type: multipart/form-data; boundary=...
 Send one file in the form-data field **`file`**. In Postman select File for this
 field; let Postman set the multipart Content-Type and boundary automatically.
 Supported formats: JPEG, PNG and WebP; maximum size: **5 MB**. The server applies
-EXIF rotation, crops/resizes to **1280 × 720** with centered cover, and encodes
-WebP at quality 82, matching video thumbnails.
+EXIF rotation, crops/resizes to **1280 × 1280 (1:1)** with centered cover, and encodes
+WebP at quality 82. Existing images keep their dimensions until uploaded again.
 
 Images are stored under `quiz-thumbnails/<quizId>/<uuid>.webp` in R2 with immutable
 cache headers. Requires the existing R2 configuration (`R2_BUCKET`,
