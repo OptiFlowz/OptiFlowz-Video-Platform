@@ -5,6 +5,8 @@ import { Permissions } from '../../authorization/permission.constants.js';
 
 const resources = {
   quizzes: { table: 'quizzes', prefix: 'QUIZZES', label: 'Quiz' },
+  // "Own" refers to the quiz author, not the participant who took the attempt.
+  quizAttempts: { table: 'quizzes', prefix: 'QUIZZES_ATTEMPTS', label: 'Quiz' },
   questions: { table: 'questions', prefix: 'QUESTIONS', label: 'Question' },
   categories: { table: 'question_categories', prefix: 'QUESTION_CATEGORIES', label: 'Question category' },
 };

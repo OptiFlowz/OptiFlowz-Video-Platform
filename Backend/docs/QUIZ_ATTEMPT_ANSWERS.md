@@ -1,5 +1,8 @@
 # Čuvanje i provera odgovora pokušaja
 
+Za pregled svih učesnika i brisanje pokušaja vlasnika kviza pogledati
+[Pregled i brisanje pokušaja](QUIZ_ATTEMPT_MANAGEMENT.md).
+
 - `PUT /api/quiz-attempts/:attemptId/answers/:questionNo` — čuva odgovor bez ocenjivanja.
 - `POST /api/quiz-attempts/:attemptId/answers/:questionNo/check` — proverava poslednji sačuvani odgovor; body nije potreban.
 

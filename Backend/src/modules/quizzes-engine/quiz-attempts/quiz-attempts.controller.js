@@ -6,6 +6,40 @@ import { getQuizAttemptsInternal } from './handlers/getQuizAttempts.js';
 import { saveQuizAttemptAnswerInternal } from './handlers/saveQuizAttemptAnswer.js';
 import { getQuizAttemptQuestionsInternal } from './handlers/getQuizAttemptQuestions.js';
 import { submitQuizAttemptInternal } from './handlers/submitQuizAttempt.js';
+import { getQuizResultsInternal } from './handlers/getQuizResults.js';
+import { getQuizResultInternal } from './handlers/getQuizResult.js';
+import { deleteQuizAttemptInternal } from './handlers/deleteQuizAttempt.js';
+
+export async function getQuizResults(req, res) {
+  res.set('Cache-Control', 'private, no-store');
+  try {
+    return sendSuccess(res, await getQuizResultsInternal(req.params, req.query, req.resourceOwnerId));
+  } catch (error) {
+    if (!error.status || error.status >= 500) console.error('getQuizResults error:', error);
+    return sendError(res, error.status && error.status < 500 ? error.message : 'Unable to list quiz results', error.status || 500);
+  }
+}
+
+export async function getQuizResult(req, res) {
+  res.set('Cache-Control', 'private, no-store');
+  try {
+    return sendSuccess(res, await getQuizResultInternal(req.params, req.resourceOwnerId));
+  } catch (error) {
+    if (!error.status || error.status >= 500) console.error('getQuizResult error:', error);
+    return sendError(res, error.status && error.status < 500 ? error.message : 'Unable to get quiz result', error.status || 500);
+  }
+}
+
+export async function deleteQuizAttempt(req, res) {
+  res.set('Cache-Control', 'private, no-store');
+  try {
+    return sendSuccess(res, await deleteQuizAttemptInternal(req.params, req.resourceOwnerId));
+  } catch (error) {
+    if (!error.status || error.status >= 500) console.error('deleteQuizAttempt error:', error);
+    return sendError(res, error.status && error.status < 500 ? error.message : 'Unable to delete quiz attempt', error.status || 500,
+      error.status && error.status < 500 && error.body?.code ? { code: error.body.code } : {});
+  }
+}
 
 export async function submitQuizAttempt(req, res) {
   res.set('Cache-Control', 'private, no-store');

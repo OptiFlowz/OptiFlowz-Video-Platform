@@ -88,17 +88,17 @@ router.post(
   handleDislikeVideo,
 );
 
-// router.get('/:id/similar', optionalAuth, handleGetSimilarVideos);
-// router.get('/:id/similar/vector', optionalAuth, handleGetSimilarVideosVector);
-// router.post('/:id/playback', optionalAuth, handleGetVideoPlayback);
-// router.get('/:id/comments', optionalAuth, handleGetComments);
-// router.get('/:id', optionalAuth, handleGetVideoById);
+router.get('/:id/similar', optionalAuth, handleGetSimilarVideos);
+router.get('/:id/similar/vector', optionalAuth, handleGetSimilarVideosVector);
+router.post('/:id/playback', optionalAuth, handleGetVideoPlayback);
+router.get('/:id/comments', optionalAuth, handleGetComments);
+router.get('/:id', optionalAuth, handleGetVideoById);
 
 
-router.get('/:id/similar', requireAuth, handleGetSimilarVideos);
-router.get('/:id/similar/vector', requireAuth, handleGetSimilarVideosVector);
-router.post('/:id/playback', requireAuth, handleGetVideoPlayback);
-router.get('/:id/comments', requireAuth, handleGetComments);
-router.get('/:id', requireAuth, handleGetVideoById);
+// router.get('/:id/similar', requireAuth, handleGetSimilarVideos);
+// router.get('/:id/similar/vector', requireAuth, handleGetSimilarVideosVector);
+// router.post('/:id/playback', requireAuth, handleGetVideoPlayback);
+// router.get('/:id/comments', requireAuth, handleGetComments);
+// router.get('/:id', requireAuth, handleGetVideoById);
 
 export default router;

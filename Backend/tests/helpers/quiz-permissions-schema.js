@@ -25,6 +25,8 @@ export async function installQuizPermissions(database, { schema = 'pg_temp', def
   `);
   const sql = await readFile(new URL('../../src/database/migrations/1792368000000_add-quizzes-engine-permissions.sql', import.meta.url), 'utf8');
   await database.query(sql.split('-- Down Migration')[0]);
+  const managementSql = await readFile(new URL('../../src/database/migrations/1793232000000_add-quiz-attempt-management-permissions.sql', import.meta.url), 'utf8');
+  await database.query(managementSql.split('-- Down Migration')[0]);
   if (defaultRole) await database.query(`INSERT INTO ${schema}.user_roles(user_id,role_id)
     SELECT u.id,r.id FROM ${schema}.users u CROSS JOIN ${schema}.roles r WHERE r.name=$1`, [defaultRole]);
 }

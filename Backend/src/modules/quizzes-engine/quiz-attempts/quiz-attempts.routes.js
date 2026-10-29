@@ -2,6 +2,8 @@ import { requirePermission } from '../../authorization/authorization.middleware.
 import { Permissions } from '../../authorization/permission.constants.js';
 import express from 'express';
 import { requireAuth } from '../../../middleware/auth.js';
+import { requireQuizResourceAccess as access } from '../helpers/quizAuthorization.js';
+import { getQuizResults, getQuizResult, deleteQuizAttempt } from './quiz-attempts.controller.js';
 import { getQuizEligibility, startQuizAttempt, getQuizAttempts, saveQuizAttemptAnswer, checkQuizAttemptAnswer, getQuizAttemptQuestions, submitQuizAttempt } from './quiz-attempts.controller.js';
 
 const router = express.Router();
@@ -19,5 +21,8 @@ quizAttemptAnswerRoutes.put('/:attemptId/answers/:questionNo', requireAuth,
 router.get('/:quizId/eligibility', requireAuth, requirePermission(Permissions.QUIZZES_PARTICIPATE), getQuizEligibility);
 router.post('/:quizId/attempts', requireAuth, requirePermission(Permissions.QUIZZES_PARTICIPATE), startQuizAttempt);
 router.get('/:quizId/attempts', requireAuth, requirePermission(Permissions.QUIZZES_PARTICIPATE), getQuizAttempts);
+router.get('/:quizId/results', requireAuth, access('quizAttempts', 'read', { key: 'quizId' }), getQuizResults);
+router.get('/:quizId/results/:attemptId', requireAuth, access('quizAttempts', 'read', { key: 'quizId' }), getQuizResult);
+router.delete('/:quizId/attempts/:attemptId', requireAuth, access('quizAttempts', 'delete', { key: 'quizId' }), deleteQuizAttempt);
 
 export default router;

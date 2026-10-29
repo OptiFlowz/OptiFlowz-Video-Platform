@@ -1,5 +1,5 @@
 import { upgradeFixedQuizLayout } from './helpers/fixed-quiz-schema.js';
-import { upgradeQuizCertificates } from './helpers/quiz-certificate-schema.js';
+import { upgradeCertificateIssuance } from './helpers/quiz-certificate-schema.js';
 import { upgradeQuestionCategories } from './helpers/question-categories-schema.js';
 import { installQuizPermissions } from './helpers/quiz-permissions-schema.js';
 import assert from 'node:assert/strict';
@@ -23,7 +23,7 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
   });
   await admin.query(`CREATE SCHEMA ${schema}`);
   await admin.query(`SET search_path TO ${schema},public`);
-  await admin.query("CREATE TABLE users (id uuid PRIMARY KEY, status text DEFAULT 'active', authz_version integer DEFAULT 1)");
+  await admin.query("CREATE TABLE users (id uuid PRIMARY KEY, status text DEFAULT 'active', authz_version integer DEFAULT 1, full_name text)");
   await admin.query('CREATE TABLE videos (id uuid PRIMARY KEY, duration_seconds integer)');
   await admin.query('CREATE TABLE watch_progress (user_id uuid, video_id uuid, total_watch_seconds numeric, PRIMARY KEY(user_id, video_id))');
   for (const file of ['1791590400001_add-questions.sql', '1791590400003_add-question-groups.sql', '1791590400004_add-quizzes.sql',
@@ -38,7 +38,7 @@ test('start/resume attempts, snapshots, source quotas and concurrency against is
   await installQuizPermissions(admin, { schema });
   await upgradeQuestionCategories(admin, { schema });
   await upgradeFixedQuizLayout(admin, { schema });
-  await upgradeQuizCertificates(admin, { schema });
+  await upgradeCertificateIssuance(admin, { schema });
   let failQuestions = false, released = 0;
   const queryOn = database => async (sql, params) => {
     const result = await database.query(sql.replaceAll('public.', `${schema}.`), params);
