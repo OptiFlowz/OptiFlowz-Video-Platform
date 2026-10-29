@@ -116,7 +116,7 @@ test('quiz CRUD and existing submodule routing against PostgreSQL session-local 
   t.after(() => client.end());
   await client.query("CREATE TEMP TABLE users (id uuid PRIMARY KEY, status text DEFAULT 'active', authz_version integer DEFAULT 1)");
   for (const file of ['1791590400001_add-questions.sql', '1791590400002_add-question-timestamps.sql', '1791590400003_add-question-groups.sql', '1791590400004_add-quizzes.sql',
-    '1792195200000_add-quiz-feedback-and-scoring-settings.sql', '1792627200001_add-quiz-questions-per-page.sql']) {
+    '1792195200000_add-quiz-feedback-and-scoring-settings.sql', '1792627200001_add-quiz-questions-per-page.sql', '1793232000001_add-quiz-thumbnail.sql']) {
     const sql = await readFile(new URL(`../src/database/migrations/${file}`, import.meta.url), 'utf8');
     await client.query(sql.split('-- Down Migration')[0].replaceAll('public.', 'pg_temp.'));
   }
@@ -278,7 +278,7 @@ test('quiz CRUD and existing submodule routing against PostgreSQL session-local 
     const created = await request('POST', '', { ...minimal, title: ' Quiz ' });
     assert.equal(created.status, 201); assert.equal(created.success, true);
     const quiz = created.quiz;
-    assert.deepEqual(quiz, { id: quiz.id, user_id: userId, ...minimal, question_count: 0, questions_per_page: 1, description: null, status: 'draft',
+    assert.deepEqual(quiz, { id: quiz.id, user_id: userId, ...minimal, thumbnail_url: null, question_count: 0, questions_per_page: 1, description: null, status: 'draft',
       time_limit_seconds: null, max_attempts: null, passing_score_percentage: 50, shuffle_questions: true,
       shuffle_options: true, certificate_template_id: null,
       min_answered_percentage: 0, min_correct_percentage: 0,
@@ -296,6 +296,18 @@ test('quiz CRUD and existing submodule routing against PostgreSQL session-local 
     assert.equal(saved.status, 201);
     for (const [field, value] of Object.entries(configured)) assert.equal(saved.quiz[field], field === 'description' ? 'Details' : value);
     assert.equal(typeof saved.quiz.passing_score_percentage, 'number');
+  });
+
+  await scenario('thumbnail URLs are returned and preserved by CRUD but changed only through upload', async () => {
+    const created = await request('POST', '', minimal);
+    const id = created.quiz.id, path = `/${id}`, url = `https://cdn.example.test/quiz-thumbnails/${id}/image.webp`;
+    assert.equal(created.quiz.thumbnail_url, null);
+    await client.query('UPDATE pg_temp.quizzes SET thumbnail_url=$2 WHERE id=$1', [id, url]);
+    assert.equal((await request('PATCH', path, { title: 'Renamed' })).quiz.thumbnail_url, url);
+    assert.equal((await request('GET', path)).quiz.thumbnail_url, url);
+    assert.equal((await request('GET', '')).quizzes[0].thumbnail_url, url);
+    assert.equal((await request('POST', '', { ...minimal, thumbnail_url: url })).status, 400);
+    assert.equal((await request('PATCH', path, { thumbnail_url: null })).status, 400);
   });
 
   await scenario('questions_per_page is informational and round-trips through CRUD', async () => {

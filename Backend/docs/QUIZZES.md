@@ -14,6 +14,7 @@ Missing or inaccessible quizzes return 404. Body fields `id`, `user_id`,
 | GET | `/api/quizzes/published` | Participant `{ quizzes: [...], pagination: {...}, sorting: {...} }` |
 | GET | `/api/quizzes/published/:quizId` | Participant `{ quiz: {...} }` |
 | PATCH | `/api/quizzes/:quizId` | `{ quiz: {...} }` |
+| POST | `/api/quizzes/:quizId/thumbnail` | `{ quiz: { id, thumbnail_url } }` |
 | DELETE | `/api/quizzes/:quizId` | `{ deleted: true }` |
 
 Responses include `success: true`. Validation errors return 400,
@@ -50,7 +51,7 @@ PATCH accepts a nonempty subset of the create fields and preserves omitted
 fields. Explicit null clears description, time limit or maximum attempts.
 False shuffle flags and a zero passing score are preserved.
 Each successful edit updates `updated_at` while preserving `created_at`.
-Each mutation is a single atomic PostgreSQL statement; concurrent partial
+Each CRUD mutation is a single atomic PostgreSQL statement; concurrent partial
 edits preserve unrelated fields. Duplicate titles are allowed.
 
 List query parameters:
@@ -126,7 +127,7 @@ list with total 0. The filter also applies to pagination totals. Example:
 GET /api/quizzes/published?user_id=12345678-1234-4234-8234-123456789abc&title=Programming&page=1&limit=20&sortBy=created_at&sortOrder=desc
 ```
 
-Both routes return the same participant quiz shape: `id`, `title`, `description`,
+Both routes return the same participant quiz shape: `id`, `title`, `description`, `thumbnail_url`,
 `status`, `question_count`, `questions_per_page`, `time_limit_seconds`,
 `max_attempts`, `passing_score_percentage`, `shuffle_questions`, `shuffle_options`,
 `min_answered_percentage`, `min_correct_percentage`, `correctness_visibility`,
@@ -142,3 +143,58 @@ remains visible even when a participant cannot start it. Use
 `GET /api/quizzes/:quizId/eligibility` for start/resume eligibility. Settings here
 are current quiz settings; an existing attempt continues to use its snapshot.
 Responses use `Cache-Control: private, no-store`.
+
+## Quiz thumbnail upload and removal
+
+Apply `1793232000001_add-quiz-thumbnail.sql` using `npm run migrate:deploy`.
+It adds nullable `quizzes.thumbnail_url text`; existing and new quizzes start
+with `null`. All quiz CRUD responses and both published routes return the field.
+The URL is managed by the upload route, not by JSON create/PATCH requests.
+It is presentation data and is not added to attempt settings snapshots.
+
+```http
+POST /api/quizzes/:quizId/thumbnail
+Authorization: Bearer <token>
+Content-Type: multipart/form-data; boundary=...
+```
+
+Send one file in the form-data field **`file`**. In Postman select File for this
+field; let Postman set the multipart Content-Type and boundary automatically.
+Supported formats: JPEG, PNG and WebP; maximum size: **5 MB**. The server applies
+EXIF rotation, crops/resizes to **1280 × 720** with centered cover, and encodes
+WebP at quality 82, matching video thumbnails.
+
+Images are stored under `quiz-thumbnails/<quizId>/<uuid>.webp` in R2 with immutable
+cache headers. Requires the existing R2 configuration (`R2_BUCKET`,
+`R2_PUBLIC_BASE_URL` and the credentials/endpoint used by the shared R2 client).
+The quiz's `updated_at` changes on upload/removal.
+
+```json
+{
+  "success": true,
+  "quiz": {
+    "id": "quiz-uuid",
+    "thumbnail_url": "https://cdn.example.com/quiz-thumbnails/quiz-uuid/image.webp"
+  }
+}
+```
+
+Sending the same POST **without a file removes the thumbnail**, returning
+`thumbnail_url: null`, as on the video route. Replacements/removals delete the
+old object after the database commit when it belongs to this quiz's R2 prefix.
+External URLs and other resources' objects are never deleted. Failed uploads
+or database writes keep the previous URL and clean up the newly allocated
+object; an uncertain COMMIT outcome retains files to avoid deleting a live image.
+
+Requires `quizzes.update_own` for the quiz author or `quizzes.update_any` for any
+quiz; Owner keeps full access. Authorization runs before multipart parsing,
+and ownership is checked again under a row lock before storage writes. All quiz
+statuses support uploading and removal. No new permission is required.
+
+Errors: `400` invalid UUID/file/type/image or file over 5 MB, `401` missing/invalid
+authentication, `403` missing update permission, `404` quiz missing/inaccessible,
+`500` storage/database failure. Responses use `Cache-Control: private, no-store`.
+
+Run `npm run test:quiz-thumbnails` with `TEST_DATABASE_URL` to verify migration,
+HTTP permissions, real image processing, concurrent writes and cleanup against
+isolated PostgreSQL tables and mocked storage (no real R2 requests).

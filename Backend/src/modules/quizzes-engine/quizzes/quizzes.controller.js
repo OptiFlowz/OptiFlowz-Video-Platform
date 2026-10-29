@@ -6,6 +6,15 @@ import { getQuizzesInternal } from './handlers/getQuizzes.js';
 import { getQuizInternal } from './handlers/getQuiz.js';
 import { updateQuizInternal } from './handlers/updateQuiz.js';
 import { deleteQuizInternal } from './handlers/deleteQuiz.js';
+import { quizThumbnailUploadInternal } from './handlers/quizThumbnailUpload.js';
+
+export async function uploadQuizThumbnail(req, res) {
+  res.set('Cache-Control', 'private, no-store');
+  try {
+    const quiz = await quizThumbnailUploadInternal({ params: req.params, file: req.file }, req.resourceOwnerId);
+    return sendSuccess(res, { quiz });
+  } catch (error) { return handleQuizError(res, error, 'uploadQuizThumbnail'); }
+}
 
 function handleQuizError(res, error, action) {
   if (!error.status || error.status >= 500) console.error(`${action} error:`, error);

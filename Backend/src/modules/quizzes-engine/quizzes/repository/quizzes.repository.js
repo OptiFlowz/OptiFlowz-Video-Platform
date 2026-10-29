@@ -1,4 +1,4 @@
-const QUIZ_COLUMNS = `id, user_id, title, description, status, question_count, questions_per_page,
+const QUIZ_COLUMNS = `id, user_id, title, description, thumbnail_url, status, question_count, questions_per_page,
   time_limit_seconds, max_attempts, passing_score_percentage::double precision AS passing_score_percentage,
   shuffle_questions, shuffle_options, certificate_template_id,
   min_answered_percentage::double precision AS min_answered_percentage,
@@ -9,7 +9,7 @@ const QUIZ_COLUMNS = `id, user_id, title, description, status, question_count, q
 
 // Participant DTO: quiz rules and presentation data, without author/template IDs
 // or question-bank/source configuration. Certificate availability is informational.
-const PUBLISHED_QUIZ_COLUMNS = `id, title, description, status, question_count, questions_per_page,
+const PUBLISHED_QUIZ_COLUMNS = `id, title, description, thumbnail_url, status, question_count, questions_per_page,
   time_limit_seconds, max_attempts, passing_score_percentage::double precision AS passing_score_percentage,
   shuffle_questions, shuffle_options, (certificate_template_id IS NOT NULL) AS has_certificate,
   min_answered_percentage::double precision AS min_answered_percentage,
@@ -100,4 +100,19 @@ export async function deleteQuiz(database, quizId, userId) {
     'DELETE FROM public.quizzes WHERE id = $1 AND user_id = $2', [quizId, userId],
   );
   return rowCount > 0;
+}
+
+export async function lockQuizThumbnail(database, quizId, ownerId) {
+  const { rows } = await database.query(
+    'SELECT thumbnail_url FROM public.quizzes WHERE id=$1 AND user_id=$2 FOR UPDATE', [quizId, ownerId],
+  );
+  return rows[0] || null;
+}
+
+export async function updateQuizThumbnail(database, quizId, thumbnailUrl) {
+  const { rows } = await database.query(`
+    UPDATE public.quizzes SET thumbnail_url=$2, updated_at=now()
+    WHERE id=$1 RETURNING id, thumbnail_url
+  `, [quizId, thumbnailUrl]);
+  return rows[0];
 }

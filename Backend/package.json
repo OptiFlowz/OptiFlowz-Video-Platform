@@ -34,6 +34,7 @@
     "test:drop-quizzes": "node --test tests/drop-quizzes-db.test.js",
     "test:questions": "node --experimental-test-module-mocks --test tests/questions.test.js tests/questions-db.test.js tests/questions-transfer.test.js tests/questions-transfer-db.test.js",
     "test:question-categories": "node --experimental-test-module-mocks --test tests/question-categories.test.js tests/question-categories-db.test.js tests/question-categories-migration-db.test.js",
+    "test:quiz-thumbnails": "node --experimental-test-module-mocks --test tests/quiz-thumbnails-db.test.js",
     "test:quizzes": "node --experimental-test-module-mocks --test tests/quizzes.test.js tests/quizzes-db.test.js",
     "test:certificate-templates": "node --experimental-test-module-mocks --test tests/certificate-templates.test.js tests/certificate-templates-db.test.js",
     "test:certificates:db": "node --test tests/certificates-db.test.js",
