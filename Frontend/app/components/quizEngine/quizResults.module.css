@@ -58,7 +58,7 @@
 
 .reviewSummary { display: grid; gap: 24px; padding: 24px; margin-bottom: 24px; border-radius: 24px; background: var(--background2); }
 .reviewSummaryHeader { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
-.attemptFooter > a { flex-shrink: 0; }
+.attemptActions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 @media (max-width: 600px) { .reviewSummary { padding: 18px; } }
 
 .resetActions { display: flex; justify-content: flex-start; }

@@ -38,6 +38,7 @@ test('participant popup links to a read-only quiz page with snapshots, identity 
   t.after(async () => { await act(async () => root.unmount()); client.clear(); dom.window.close(); for (const [key, value] of previous) { if (value) Object.defineProperty(globalThis, key, value); else delete globalThis[key]; } });
   let allowed = true, failList = false, reviewPage = false, deleteAllowed = false, confirmed = false, resets = 0, resetFailure = false;
   const requests = [];
+  const deletedAttempts = []; let deleteFailure = false;
   const attempt = { id: 'a1', attempt_no: 1, status: 'submitted', started_at: '2026-10-29T10:00:00Z', finished_at: '2026-10-29T10:10:00Z', earned_points: 0, max_points: 2, score_percentage: 0, passed: false };
   const question = (no, type, answer) => ({ question_no: no, question_id: null, max_points: 1, awarded_points: no === 1 ? 0 : null, is_correct: no === 1 ? false : null, checked_at: no === 1 ? '2026-10-29' : null, answer,
     question_snapshot: { type, content: `Original question ${no}`, explanation: 'Saved explanation', options: [{ option_no: 1, content: 'Right answer', is_correct: true }, { option_no: 2, content: 'Wrong answer', is_correct: false }], matching_items: [{ item_no: 1, content: 'Term', correct_option_no: 1 }], matching_options: [{ option_no: 1, content: 'Definition' }] } });
@@ -46,7 +47,7 @@ test('participant popup links to a read-only quiz page with snapshots, identity 
       Link: ({ to, children, ...props }) => React.createElement('a', { ...props, href: to, onClick: event => { event.preventDefault(); reviewPage = to.startsWith('/quiz/'); render(); } }, children) },
     '~/components/confirmPopup/useConfirm': { useConfirm: () => ({ confirm: async () => confirmed, dialogProps: {} }) },
     '~/components/confirmPopup/confirmDialog': { ConfirmDialog: () => null },
-    './quizResultsApi': { resetQuizAttempts: async (quizId, progress) => { assert.equal(quizId, 'quiz'); resets++; progress(1, 2); if (resetFailure) throw Error('Reset failed'); } },
+    './quizResultsApi': { deleteQuizAttempt: async (quizId, attemptId) => { assert.equal(quizId, 'quiz'); if (deleteFailure) throw Error('Delete failed'); deletedAttempts.push(attemptId); }, resetQuizAttempts: async (quizId, progress) => { assert.equal(quizId, 'quiz'); resets++; progress(1, 2); if (resetFailure) throw Error('Reset failed'); } },
     '~/i18n': { useI18n: () => ({ t: translate, locale: 'en' }) }, '~/functions': { getToken: () => 'token', formatDescription: value => value },
     '~/constants': { AnalyticsSVG: 'chart', CheckSVG: 'check', CloseSVG: 'cross', IconChevron: () => 'arrow', UserSVG: 'user' },
     '~/API': { fetchFn: async ({ route, options }) => {
@@ -96,6 +97,7 @@ test('participant popup links to a read-only quiz page with snapshots, identity 
   assert.match(document.querySelector('.attempt').textContent, /0%/);
   assert.match(document.querySelectorAll('.attempt')[1].textContent, /In progress/);
   assert.doesNotMatch(document.querySelectorAll('.attempt')[1].textContent, /Not passed|0%/);
+  assert.equal(document.querySelector('.attempt button'), null, 'read permission does not grant deletion');
   assert.equal(document.querySelector('.attempt a').getAttribute('href'), '/quiz/quiz/results/a1?scope=all');
   await click(document.querySelector('.attempt a'));
   assert.equal(document.querySelector('[role=dialog]'), null, 'review opens on a full page');
@@ -148,6 +150,19 @@ test('participant popup links to a read-only quiz page with snapshots, identity 
   assert.equal(document.querySelector('select[aria-label="Status"]').value,'');
   assert.equal(document.querySelector('select[aria-label="Results"]').value,'');
   assert.equal(document.querySelector('[role=status]'),null);
+  await click(document.querySelector('button.participant'));
+  const deleteButton = () => document.querySelector('.attemptActions button');
+  assert.equal(deleteButton().getAttribute('aria-label'), 'Delete — Attempt 1');
+  confirmed=false;await click(deleteButton());assert.deepEqual(deletedAttempts,[]);
+  confirmed=true;deleteFailure=true;await click(deleteButton());
+  assert.match(document.querySelector('[role=dialog] [role=alert]').textContent,/Delete failed/);
+  assert.equal(document.querySelectorAll('[role=dialog] article.attempt').length,2);
+  deleteFailure=false;await click(deleteButton());
+  assert.deepEqual(deletedAttempts,['a1']);
+  assert.equal(document.querySelectorAll('[role=dialog] article.attempt').length,1);
+  assert.match(document.querySelector('[role=dialog] .profileHeader').textContent,/Attempts: 1/);
+  await click(deleteButton());assert.deepEqual(deletedAttempts,['a1','a2']);
+  assert.equal(document.querySelector('[role=dialog]'),null,'last deletion closes participant popup');
   allowed = false; await act(async () => render());
   assert.equal(document.querySelector('section'), null);
   assert.ok(requests.every(({ options }) => options.method === 'GET'));
@@ -180,3 +195,15 @@ test('participant popup links to a read-only quiz page with snapshots, identity 
   await assert.rejects(()=>api.resetQuizAttempts('q',(done,total)=>progress.push([done,total])),/Conflict/);
   assert.deepEqual(progress,[[0,2],[1,2]]);
  });
+
+test('single attempt deletion uses the selected route and rejects unsuccessful responses', async () => {
+  const calls=[]; let deleted=true;
+  const api=loadModule(path.resolve('app/components/quizEngine/quizResultsApi.ts'),{
+    '~/functions':{getToken:()=> 'token'},
+    '~/API':{fetchFn:async({route,options})=>{ calls.push({route,method:options.method}); return {deleted}; }},
+  });
+  await api.deleteQuizAttempt('q','a1');
+  assert.deepEqual(calls,[{route:'api/quizzes/q/attempts/a1',method:'DELETE'}]);
+  deleted=false;
+  await assert.rejects(()=>api.deleteQuizAttempt('q','a2'),/Attempt was not deleted/);
+});

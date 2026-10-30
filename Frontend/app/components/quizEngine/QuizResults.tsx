@@ -6,7 +6,7 @@ import { getToken } from '~/functions';
 import { useI18n } from '~/i18n';
 import { ConfirmDialog } from '~/components/confirmPopup/confirmDialog';
 import { useConfirm } from '~/components/confirmPopup/useConfirm';
-import { resetQuizAttempts } from './quizResultsApi';
+import { deleteQuizAttempt, resetQuizAttempts } from './quizResultsApi';
 import Pagination from '~/components/library/pagination';
 import { engineKey, list } from './api';
 import { LoadState, Notice, Select, useAccess, useAction, styles } from './shared';
@@ -45,9 +45,22 @@ function ResultsList({ quiz }: { quiz: Quiz }) {
       setPage(1); setStatus(''); setPassed(''); setProgress(null);
     });
   };
+  const removeAttempt = async (attempt: ManagedAttempt) => {
+    if (!canReset || action.busy) return;
+    if (!await confirm({ title: `${t('adminDelete')} — ${t('quizAttemptNumber', { count: attempt.attempt_no })}`, message: t('adminConfirmMessage'), yesText: t('adminDelete'), noText: t('adminCancel') })) return;
+    await action.run(async () => {
+      await deleteQuizAttempt(quiz.id, attempt.id);
+      setParticipant(current => {
+        if (!current) return null;
+        const attempts = current.attempts.filter(item => item.id !== attempt.id);
+        return attempts.length ? { ...current, attempts } : null;
+      });
+      if (participant?.attempts.length === 1 && query.data?.items.length === 1) setPage(current => Math.max(1, current - 1));
+    });
+  };
   const date = (value: string | null) => value ? new Date(value).toLocaleString(locale === 'sr' ? 'sr-Latn' : locale, { dateStyle: 'medium', timeStyle: 'short' }) : '—';
   return <section className={css.results} aria-label={t('quizResults')}>
-    <Notice {...action} />
+    {!participant && <Notice {...action} />}
     {progress && <p role="status" className={css.attemptCount}>{t('quizResetAttemptsProgress', { deleted: progress.deleted, total: progress.total })}</p>}
     <div className={css.filters}>
       <Select label={t('adminTableStatus')} value={status} values={[{ value: '', label: t('qeAllStatuses') }, ...Object.entries(attemptStatusLabels).map(([value, label]) => ({ value, label: t(label) }))]} onChange={value => { setStatus(value); setPage(1); }} />
@@ -69,9 +82,11 @@ function ResultsList({ quiz }: { quiz: Quiz }) {
       <button type="button" className={`${styles.button} ${styles.danger}`} disabled={action.busy || query.isPending || query.isError} onClick={() => void reset()}>{DeleteSVG}{t('quizResetAttempts')}</button>
     </div>}
     {!!query.data?.pagination.total && <Pagination page={page} limit={limit} total={query.isError ? undefined : query.data.pagination.total} totalPages={query.data.pagination.totalPages} loading={query.isFetching} label={t('quizParticipants')} onPageChange={setPage} onLimitChange={value => { setLimit(value); setPage(1); }} />}
-    <EditorPopup wide className={css.resultsPopup} heading={participant && <ParticipantSummary group={participant} quizId={quiz.id} filtered={!!(status || passed)} header />} open={!!participant} title={t('quizAttemptsLabel')} onClose={() => setParticipant(null)}>
-      {participant && <div className={css.participantPopup}><div className={css.attempts}>
-        {participant.attempts.map(attempt => <AttemptCard key={attempt.id} attempt={attempt} date={date} reviewUrl={`/quiz/${encodeURIComponent(quiz.id)}/results/${encodeURIComponent(attempt.id)}?scope=${scope}`} />)}
+    <EditorPopup wide className={css.resultsPopup} heading={participant && <ParticipantSummary group={participant} quizId={quiz.id} filtered={!!(status || passed)} header />} open={!!participant} title={t('quizAttemptsLabel')} onClose={() => { if (!action.busy) setParticipant(null); }}>
+      {participant && <div className={css.participantPopup} aria-busy={action.busy}>
+        {action.error && !action.busy && <p className={styles.error} role="alert">{action.error}</p>}
+        <div className={css.attempts}>
+        {participant.attempts.map(attempt => <AttemptCard key={attempt.id} attempt={attempt} date={date} busy={action.busy} onDelete={canReset ? () => void removeAttempt(attempt) : undefined} reviewUrl={`/quiz/${encodeURIComponent(quiz.id)}/results/${encodeURIComponent(attempt.id)}?scope=${scope}`} />)}
       </div></div>}
     </EditorPopup>
     <ConfirmDialog {...dialogProps} />
@@ -105,7 +120,7 @@ export function OutcomeLabel({ passed }: { passed: boolean | null }) {
   </span>;
 }
 
-function AttemptCard({ attempt, date, reviewUrl }: { attempt: ManagedAttempt; date: (value: string | null) => string; reviewUrl: string }) {
+function AttemptCard({ attempt, date, reviewUrl, busy, onDelete }: { attempt: ManagedAttempt; date: (value: string | null) => string; reviewUrl: string; busy: boolean; onDelete?: () => void }) {
   const { t, locale } = useI18n();
   const number = (value: number | null) => value == null ? '—' : value.toLocaleString(locale, { maximumFractionDigits: 2 });
   return <article className={css.attempt}>
@@ -119,7 +134,10 @@ function AttemptCard({ attempt, date, reviewUrl }: { attempt: ManagedAttempt; da
     </div>
     <div className={css.attemptFooter}>
       <dl className={css.dates}><div><dt>{t('quizStartedAt')}</dt><dd>{date(attempt.started_at)}</dd></div><div><dt>{t('quizFinishedAt')}</dt><dd>{date(attempt.finished_at)}</dd></div></dl>
-      <Link className={styles.button} to={reviewUrl}>{AnalyticsSVG}{t('quizReviewAttempt')}</Link>
+      <div className={css.attemptActions}>
+        <Link className={styles.button} to={reviewUrl}>{AnalyticsSVG}{t('quizReviewAttempt')}</Link>
+        {onDelete && <button type="button" className={`${styles.icon} ${styles.danger}`} aria-label={`${t('adminDelete')} — ${t('quizAttemptNumber', { count: attempt.attempt_no })}`} title={t('adminDelete')} disabled={busy} onClick={onDelete}>{DeleteSVG}</button>}
+      </div>
     </div>
   </article>;
 }
