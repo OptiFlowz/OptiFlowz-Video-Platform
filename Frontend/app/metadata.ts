@@ -97,7 +97,8 @@ export function createPageMetadata({
 
 export const defaultMetadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  applicationName: DEFAULT_PAGE_TITLE,
+  applicationName: SITE_NAME,
+  appleWebApp: { capable: true, title: SITE_NAME, statusBarStyle: "default" },
   title: {
     default: DEFAULT_PAGE_TITLE,
     template: `%s | ${SITE_NAME}`,
@@ -117,7 +118,7 @@ export const defaultMetadata: Metadata = {
   referrer: "origin-when-cross-origin",
   formatDetection: { email: false, address: false, telephone: false },
   alternates: { canonical: "/" },
-  icons: { icon: "/favicon.ico", shortcut: "/favicon.ico", apple: "/favicon.ico" },
+  icons: { icon: "/favicon.ico", shortcut: "/favicon.ico", apple: { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" } },
   manifest: "/manifest.webmanifest",
   robots: {
     index: true,

@@ -1,0 +1,1 @@
+Home screen PNGs use the existing OptiFlowz favicon (256 px source) and assets/OptiFlowzLogo.webp (maskable variant). Background from app/app.css --background1. Maskable logo occupies 72% of the canvas.
