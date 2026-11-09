@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "test:ai-mcp": "node --test tests/ai-mcp.test.js",
     "test:proxy": "node --experimental-test-module-mocks --test tests/proxy-rate-limit.test.js",
     "test:playback": "node --experimental-test-module-mocks --test tests/video-playback.test.js",
     "test:card-media": "node --experimental-test-module-mocks --test tests/video-card-media.test.js",
@@ -69,6 +70,7 @@
     "@2toad/profanity": "^3.3.0",
     "@aws-sdk/client-s3": "^3.965.0",
     "@aws-sdk/s3-request-presigner": "^3.1101.0",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "@mux/ai": "^0.29.0",
     "@mux/mux-node": "^12.8.0",
     "axios": "^1.12.2",
