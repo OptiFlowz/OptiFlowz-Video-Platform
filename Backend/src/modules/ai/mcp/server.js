@@ -11,14 +11,38 @@ const pagination = {
 const byId = z.strictObject({ id: z.uuid() });
 const query = z.string().trim().min(1);
 const tags = z.string().describe('Comma-separated tags').optional();
+const progressStep = z.string().trim().optional().describe(
+  'Short status message in the user’s language to display while this tool runs, e.g. “Searching for the video…”',
+);
 
-function createAiMcpServer(baseUrl, authorization) {
+async function reportToolProgress(sessionId, siteDomain, step, signal) {
+  const token = process.env.AI_CHATBOT_PLATFORM_BEARER_TOKEN;
+  if (!sessionId || !siteDomain || !step || !token) return;
+
+  try {
+    const response = await fetch('https://ai-chatbot-platform.fly.dev/api/webhooks/n8n/progress', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionId, step, site_domain: siteDomain }),
+      redirect: 'error',
+      signal: AbortSignal.any([signal, AbortSignal.timeout(2000)]),
+    });
+    if (!response.ok) console.warn(`MCP progress webhook returned HTTP ${response.status}`);
+    await response.body?.cancel();
+  } catch {
+    if (!signal.aborted) console.warn('MCP progress webhook request failed');
+  }
+}
+
+function createAiMcpServer(baseUrl, authorization, sessionId, siteDomain) {
   const server = new McpServer({ name: 'optiflowz-video-platform', version: '1.0.0' });
 
   function register(name, path, description, inputSchema, method = 'GET') {
-    server.registerTool(name, { description, inputSchema, annotations: { readOnlyHint: true } },
+    const schema = inputSchema.extend({ step: progressStep });
+    server.registerTool(name, { description, inputSchema: schema, annotations: { readOnlyHint: true } },
       async (args, { signal }) => {
-        const { id, ...params } = args;
+        const { id, step, ...params } = args;
+        await reportToolProgress(sessionId, siteDomain, step, signal);
         const url = new URL(id ? path.replace(':id', id) : path, baseUrl);
         const headers = { Authorization: authorization, Accept: 'application/json' };
         const options = {
@@ -73,7 +97,10 @@ export async function handleAiMcp(req, res) {
 
   // The API listens on IPv4. Never derive the bearer token's destination from client headers.
   const baseUrl = `http://127.0.0.1:${req.socket.localPort}/api/ai/`;
-  const server = createAiMcpServer(baseUrl, req.get('Authorization'));
+  const { session_id, site_domain } = req.query;
+  const sessionId = typeof session_id === 'string' ? session_id.trim() : '';
+  const siteDomain = typeof site_domain === 'string' ? site_domain.trim() : '';
+  const server = createAiMcpServer(baseUrl, req.get('Authorization'), sessionId, siteDomain);
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
   await server.connect(transport);
   res.once('close', () => server.close());
