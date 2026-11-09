@@ -17,6 +17,9 @@ export async function getPlaylistById(req, res) {
     if (!playlist) {
       return sendError(res, 'Playlist not found', 404);
     }
+    if (res.locals.skipViewTracking) {
+      return sendSuccess(res, { playlist, view: { counted: false } });
+    }
 
     const view = await playlistIncrementViewCountInternal({
       playlistId: req.params.id,
@@ -36,7 +39,7 @@ export async function getPlaylistVideos(req, res) {
   res.set('Cache-Control', 'private, no-store');
   try {
     const result = await getPlaylistVideosInternal(
-      { ...req.params, ...req.query },
+      { ...req.query, id: req.params.id },
       req.user?.sub || null,
     );
     return sendSuccess(res, result);

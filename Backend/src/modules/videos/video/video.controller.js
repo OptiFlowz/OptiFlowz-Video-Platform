@@ -324,6 +324,9 @@ export async function handleGetVideoById(req, res) {
       logEvent('videos.get_failed', { user_id: userId, message: 'No video' });
       return res.status(404).json({ message: 'Video not found' });
     }
+    if (res.locals.skipViewTracking) {
+      return res.json({ ...video, view: { counted: false } });
+    }
     let view = null;
     try {
       view = await incrementViewCountInternal(req.params.id, {
