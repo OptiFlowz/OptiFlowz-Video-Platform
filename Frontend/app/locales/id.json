@@ -1293,6 +1293,7 @@
   "postResponsesLocked": "Pertanyaan ini memiliki jawaban dan tidak dapat lagi disunting.",
   "postSelectedVideo": "Video yang dipilih",
   "postWrongAnswer": "Belum tepat. Jawaban yang benar disorot.",
+  "postTotalVotes": "Total suara: {{param.count}}",
   "postSignInVote": "Log masuk untuk mengirimkan jawaban Anda.",
   "postCannotVote": "Anda tidak memiliki izin untuk menjawab pertanyaan ini.",
   "latestPosts": "Postingan terbaru",

@@ -1268,6 +1268,7 @@
   "postResponsesLocked": "Bu soru cevapları vardır ve artık düzenlenemez.",
   "postSelectedVideo": "Seçilen video",
   "postWrongAnswer": "Tam olarak değil. Doğru yanıt vurgulanmıştır.",
+  "postTotalVotes": "Toplam oy: {{param.count}}",
   "postSignInVote": "Cevapınızı göndermek için giriş yapın.",
   "postCannotVote": "Bu soruyu cevaplamaya izininiz yok.",
   "latestPosts": "Son gönderiler",

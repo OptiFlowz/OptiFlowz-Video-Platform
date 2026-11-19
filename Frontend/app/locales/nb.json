@@ -1293,6 +1293,7 @@
   "postResponsesLocked": "Dette spørsmålet har svar og kan ikke lenger redigeres.",
   "postSelectedVideo": "Valgt video",
   "postWrongAnswer": "Ikke helt. Det riktige svaret er uthevet.",
+  "postTotalVotes": "Totalt antall stemmer: {{param.count}}",
   "postSignInVote": "Logg inn for å sende inn svaret ditt.",
   "postCannotVote": "Du har ikke tillatelse til å svare på dette spørsmålet.",
   "latestPosts": "Siste innlegg",

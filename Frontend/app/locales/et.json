@@ -1293,6 +1293,7 @@
   "postResponsesLocked": "Sellel küsimusel on vastused ja seda ei saa enam muuta.",
   "postSelectedVideo": "Valitud video",
   "postWrongAnswer": "Mitte päris. Õige vastus on esile tõstetud.",
+  "postTotalVotes": "Hääli kokku: {{param.count}}",
   "postSignInVote": "Logi sisse, et oma vastust esitada.",
   "postCannotVote": "Sul ei ole õigust sellele küsimusele vastata.",
   "latestPosts": "Uusimad postitused",

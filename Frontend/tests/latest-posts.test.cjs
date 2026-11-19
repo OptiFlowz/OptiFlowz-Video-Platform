@@ -119,7 +119,7 @@ test('popup voting is immediate, survives reopening and supports single and mult
     '../../../assets/DefaultProfile.webp': '/default-profile.webp',
     '../../../assets/DefaultThumbnail.webp': '/default-thumbnail.webp',
     '~/functions': { getToken: () => 'token', formatDate: value => value },
-    '~/i18n': { useI18n: () => ({ t: key => key }) },
+    '~/i18n': { useI18n: () => ({ locale: 'en', t: (key, params) => key === 'postTotalVotes' ? 'Total votes: ' + params.count : key }) },
     '~/components/shared/videoMedia': { getVideoThumbnail: () => '' },
     '~/authorization/authorization': { useAuthorization: () => ({ user: {}, can: () => true, loading: false }) },
     '~/auth/session': { redirectToLogin: () => assert.fail('Already signed in') },
@@ -141,9 +141,14 @@ test('popup voting is immediate, survives reopening and supports single and mult
     assert.equal(document.querySelector('.postDialogHeading h2').textContent, 'latestPosts');
     assert.equal(document.querySelector('.latestPostsDialogFeed').scrollTop, index * 240);
   };
-  const reply = async ids => {
+  const totalVotes = () => activeCard.querySelector('.postOptions + [role="status"]')?.textContent;
+  const reply = async (ids, otherVotes = 0) => {
     await act(async () => {
-      respond({ selected_option_id: ids[0], selected_option_ids: ids, options: options.map(option => ({ ...option, vote_count: ids.includes(option.id) ? 1 : 0 })), correct_option_ids: ids });
+      const responseOptions = options.map(option => ({
+        ...option,
+        vote_count: Number(ids.includes(option.id)) + (option.id === 'b' ? otherVotes : 0),
+      }));
+      respond({ selected_option_id: ids[0], selected_option_ids: ids, options: responseOptions, correct_option_ids: ids });
       await new Promise(resolve => setTimeout(resolve, 0));
     });
   };
@@ -151,18 +156,26 @@ test('popup voting is immediate, survives reopening and supports single and mult
     await act(async () => { root.render(React.createElement(QueryClientProvider, { client }, React.createElement(Preview, { videos: [{ uploader_id: uuid(1) }] }))); });
     await open(0);
     assert.equal(requests.length, 0, 'Opening reuses the already loaded post');
+    assert.equal(totalVotes(), 'Total votes: 0');
     await click(activeCard.querySelector('.postOption'));
+    assert.equal(totalVotes(), 'Total votes: 1');
     assert.equal(activeCard.querySelector('.postOption').getAttribute('aria-pressed'), 'true');
     assert.equal(requests.length, 1);
     assert.ok(requests[0].route.endsWith('/vote'));
-    await reply(['a']);
+    await reply(['a'], 4);
     assert.deepEqual(client.getQueryData(channelKey).pages[0].posts[0].blocks[0].selectedOptionIds, ['a']);
+    assert.equal(activeCard.querySelector('.postOptionPercent.isVisible').textContent, '20%');
+    assert.equal(totalVotes(), 'Total votes: 5');
+    assert.equal(activeCard.querySelector('.postPollResultFeedback'), null);
     await close();
     assert.equal(document.activeElement, document.querySelector('.latestPostTrigger'));
     await open(0);
     assert.equal(activeCard.querySelector('.postOption').getAttribute('aria-pressed'), 'true', 'Vote remains after reopening');
+    assert.equal(activeCard.querySelector('.postPollResultFeedback'), null, 'saved votes do not show a confirmation message');
+    assert.equal(totalVotes(), 'Total votes: 5');
     await close();
     await open(1);
+    assert.equal(totalVotes(), undefined);
     await click(activeCard.querySelectorAll('.postOption')[0]);
     await click(activeCard.querySelectorAll('.postOption')[1]);
     assert.equal(requests.length, 1, 'Multiple answers wait for submit');
@@ -185,6 +198,12 @@ test('popup voting is immediate, survives reopening and supports single and mult
     assert.equal(document.querySelector('.latestPostsDialogFeed').scrollTop, 0, 'View all starts at the latest post');
     assert.equal(document.querySelector('.postAuthorLink').getAttribute('href'), `/channel/${uuid(1)}`);
     assert.equal(requests.length, 3, 'View all reuses loaded posts without extra requests');
+    activeCard = document.querySelector('.latestPostsDialogFeed .postCard');
+    await click(activeCard.querySelector('.postOption'));
+    assert.deepEqual(JSON.parse(requests[3].options.body), { option_id: 'a', remove: true });
+    assert.equal(totalVotes(), 'Total votes: 4');
+    await reply([], 4);
+    assert.equal(totalVotes(), 'Total votes: 4');
     await close();
     assert.equal(document.activeElement, viewAll);
     assert.equal(dom.window.location.href, 'https://example.test/');

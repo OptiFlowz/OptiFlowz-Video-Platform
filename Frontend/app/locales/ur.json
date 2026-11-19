@@ -1292,6 +1292,7 @@
   "postResponsesLocked": "اس سوال کے جوابات ہیں اور مزید ترمیم نہیں کی جا سکتی۔",
   "postSelectedVideo": "منتخب ویڈیو",
   "postWrongAnswer": "بالکل نہیں۔ صحیح جواب پر روشنی ڈالی گئی ہے۔",
+  "postTotalVotes": "کل ووٹ: {{param.count}}",
   "postSignInVote": "اپنا جواب جمع کرانے کے لیے سائن ان کریں۔",
   "postCannotVote": "آپ کو اس سوال کا جواب دینے کی اجازت نہیں ہے۔",
   "latestPosts": "تازہ ترین پوسٹس",

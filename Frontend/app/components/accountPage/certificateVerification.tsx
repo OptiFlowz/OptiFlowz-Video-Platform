@@ -3,16 +3,17 @@ import { fetchApiResponse } from '~/API';
 import { PdfGenerationStatus } from '../analytics/PdfGenerationStatus';
 import { certificatePdfFilename, downloadCertificatePdf } from './certificatePdf';
 import { useQuery } from '@tanstack/react-query';
-import { useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { useI18n } from '~/i18n';
 import { env } from '~/env';
-import { DownloadSVG, CheckSVG, CloseSVG } from '~/constants';
+import { DownloadSVG, CheckSVG, CloseSVG, IconChevron } from '~/constants';
 import { publicCertificateQuery } from './accountQueries';
 import { IssuedPreview, issuedDate } from './issuedCertificatePreview';
 import styles from './certificateVerification.module.css';
 
 export default function CertificateVerification() {
   const { certificateId } = useParams<{ certificateId: string }>();
+  const navigate = useNavigate();
   const { t, locale } = useI18n();
   const detail = useQuery(publicCertificateQuery(certificateId));
   const certificate = detail.data?.certificate;
@@ -81,13 +82,24 @@ export default function CertificateVerification() {
   };
 
   const readyDownload = !isRevoked && download?.id === certificate?.id ? download : null;
+  const goBack = () => {
+    const navigation = (window as Window & { navigation?: { canGoBack: boolean } }).navigation;
+    if (navigation?.canGoBack ?? (window.history.length > 1)) navigate(-1);
+    else navigate('/', { replace: true });
+  };
 
   return <>
     {isGeneratingPdf && <div className={styles.generating}>
       <PdfGenerationStatus labels={{ generating: t('analyticsGeneratingPdf'), report: certificate?.data_snapshot.quiz.title ?? '', failed: t('editorGenerateFailed'), close: t('close') }} />
     </div>}
     <main className={styles.page} inert={isGeneratingPdf} aria-busy={isGeneratingPdf}>
-    <p className={styles.eyebrow}>{t('quizViewCertificate')}</p>
+    <div className={styles.navigation}>
+      <button type="button" className={styles.back} onClick={goBack}>
+        <span aria-hidden="true"><IconChevron /></span>
+        {t('back')}
+      </button>
+      <p className={styles.eyebrow}>{t('quizViewCertificate')}</p>
+    </div>
     {notFound ? <p role="alert">{t('errorNotFound')}</p> : detail.isPending ? <p role="status">{t('videoLoadingData')}</p> : detail.isError ? <div role="alert">
       <p>{t('searchLoadFailed')}</p>
       <button type="button" className="button" onClick={() => void detail.refetch()}>{t('usersRetry')}</button>

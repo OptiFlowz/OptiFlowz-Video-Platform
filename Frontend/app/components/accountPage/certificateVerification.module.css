@@ -3,11 +3,18 @@
   max-width: 900px;
   box-sizing: border-box;
   margin: 0 auto;
-  padding: 48px 0 64px;
+  padding: calc(var(--headerHeight) + 20px) 0 64px;
   display: grid;
+  align-content: start;
   gap: 24px;
   color: var(--text1);
 }
+.navigation { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+.page .back { display: inline-flex; align-items: center; gap: 4px; border: 0; border-radius: 999px; background: var(--background2); color: var(--text1); padding: 10px 16px 10px 10px; font-weight: 600; cursor: pointer; }
+.back span { display: inline-flex; }
+.back svg { width: 20px; height: 20px; transform: rotate(90deg); }
+.page .back:hover { background: var(--background3); }
+.page .back:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: 4px; }
 .eyebrow { margin: 0; color: var(--text2); font-size: 0.875rem; font-weight: 600; }
 .heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
 .title { min-width: 0; }
@@ -22,7 +29,7 @@
 .page .pdf:hover:not(:disabled) { background: var(--accentBlue2); }
 .page .pdf:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: 4px; }
 @media (max-width: 700px) {
-  .page { width: calc(100% - 32px); padding: 28px 0 40px; gap: 20px; }
+  .page { padding: calc(var(--headerHeight) + 8px) 0 40px; gap: 20px; }
   .heading { flex-direction: column; gap: 20px; }
   .page .pdf { width: 100%; box-sizing: border-box; }
 }

@@ -19,7 +19,7 @@ import './posts.css';
 type PollBlock = Extract<PostBlock, { options: unknown }>;
 
 function Poll({ block, postId, interactive, readOnly }: { block: PollBlock; postId: string; interactive: boolean; readOnly: boolean }) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const { user, can, loading: permissionsLoading } = useAuthorization();
   const client = useQueryClient();
   const [previewSelection, setPreviewSelection] = useState<string[]>([]);
@@ -36,6 +36,7 @@ function Poll({ block, postId, interactive, readOnly }: { block: PollBlock; post
   const selectedIds = persisted ? selectedPostOptions(current) : previewSelection;
   const submitted = selectedIds.length > 0;
   const options = persisted ? current.options : block.options;
+  const totalVotes = options.reduce((sum, option) => sum + option.votes, 0);
   const correctIds = persisted ? current.correctIds : block.correctIds;
   const applyBlock = (next: PollBlock) => {
     setUpdated({ source: block, token, value: next });
@@ -55,7 +56,6 @@ function Poll({ block, postId, interactive, readOnly }: { block: PollBlock; post
   };
   const multiple = block.type === 'questionnaire' && (correctIds?.length ?? 0) > 1;
   const answerLocked = block.type === 'questionnaire' && submitted;
-  const showFeedback = submitted && (block.type === 'questionnaire' || !busy);
   const answerCorrect = !!correctIds?.length && selectedIds.length === correctIds.length && selectedIds.every(id => correctIds.includes(id));
   const allowed = !user || can(block.type === 'questionnaire' ? 'posts.questioner.answer' : 'posts.poll.vote');
   const submit = async (optionIds: string[]) => {
@@ -112,13 +112,16 @@ function Poll({ block, postId, interactive, readOnly }: { block: PollBlock; post
         <span className={`postOptionPercent ${showResults ? 'isVisible' : ''}`} aria-hidden={!showResults}>{percent}%</span>
       </button>;
     })}</div>
+    {persisted && block.type === 'poll' && <p className="postPollFeedback" role="status">
+      {t('postTotalVotes', { count: totalVotes.toLocaleString(locale) })}
+    </p>}
     {error && <p role="alert" className="postError">{error}</p>}
     {interactive && !user && <p className="postPollFeedback">{t('postSignInVote')}</p>}
     {interactive && user && !permissionsLoading && !allowed && <p className="postPollFeedback">{t('postCannotVote')}</p>}
     {multiple && !submitted && !readOnly && <div className="postPollSubmit"><button type="button" className="postPrimary" disabled={!pendingIds.length || busy || (interactive && (permissionsLoading || !allowed))} onClick={() => void submit(pendingIds)}>{t('postSubmitAnswers')}</button></div>}
-    <div className="postPollResultFeedback" data-visible={showFeedback} aria-hidden={!showFeedback}>
-      <div><p className="postPollFeedback" role="status">{t(block.type === 'poll' ? 'postVoteRecorded' : answerCorrect ? 'postCorrectAnswer' : 'postWrongAnswer')}</p></div>
-    </div>
+    {block.type === 'questionnaire' && <div className="postPollResultFeedback" data-visible={submitted} aria-hidden={!submitted}>
+      <div><p className="postPollFeedback" role="status">{t(answerCorrect ? 'postCorrectAnswer' : 'postWrongAnswer')}</p></div>
+    </div>}
   </section>;
 }
 export function PostAuthorHeader({ author, createdAt, channelId, children }: { author: PostAuthor; createdAt: string; channelId?: string; children?: ReactNode }) {

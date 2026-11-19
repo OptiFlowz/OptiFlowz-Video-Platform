@@ -1268,6 +1268,7 @@
   "postResponsesLocked": "To vprašanje ima odgovore in ga ni več mogoče urejati.",
   "postSelectedVideo": "Izbrani video posnetek",
   "postWrongAnswer": "Ni pravilno. Pravilen odgovor je označen.",
+  "postTotalVotes": "Skupno število glasov: {{param.count}}",
   "postSignInVote": "Prijavite se, da pošljete svoj odgovor.",
   "postCannotVote": "Nimate dovoljenja za odgovor na to vprašanje.",
   "latestPosts": "Najnovejše objave",

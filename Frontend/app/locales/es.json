@@ -1283,6 +1283,7 @@
   "postResponsesLocked": "Esta pregunta tiene respuestas y ya no se puede editar.",
   "postSelectedVideo": "Vídeo seleccionado",
   "postWrongAnswer": "No es correcto. La respuesta correcta está resaltada.",
+  "postTotalVotes": "Total de votos: {{param.count}}",
   "postSignInVote": "Inicia sesión para enviar tu respuesta.",
   "postCannotVote": "No tienes permiso para responder a esta pregunta.",
   "latestPosts": "Últimas publicaciones",

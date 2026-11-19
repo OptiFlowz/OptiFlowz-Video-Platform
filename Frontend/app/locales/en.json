@@ -1296,6 +1296,7 @@
   "postResponsesLocked": "This question has responses and can no longer be edited.",
   "postSelectedVideo": "Selected video",
   "postWrongAnswer": "Not quite. The correct answer is highlighted.",
+  "postTotalVotes": "Total votes: {{param.count}}",
   "postSignInVote": "Sign in to submit your answer.",
   "postCannotVote": "You do not have permission to answer this question.",
   "latestPosts": "Latest Posts",

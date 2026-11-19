@@ -1268,6 +1268,7 @@
   "postResponsesLocked": "Deze vraag heeft antwoorden en kan niet meer worden bewerkt.",
   "postSelectedVideo": "De geselecteerde video",
   "postWrongAnswer": "Niet helemaal. Het juiste antwoord is gemarkeerd.",
+  "postTotalVotes": "Totaal aantal stemmen: {{param.count}}",
   "postSignInVote": "Meld u aan om uw antwoord in te dienen.",
   "postCannotVote": "Je hebt geen toestemming om deze vraag te beantwoorden.",
   "latestPosts": "Nieuwste berichten",

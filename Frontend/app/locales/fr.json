@@ -1268,6 +1268,7 @@
   "postResponsesLocked": "Cette question a des réponses et ne peut plus être modifiée.",
   "postSelectedVideo": "Vidéo sélectionnée",
   "postWrongAnswer": "Pas tout à fait. La bonne réponse est mise en évidence.",
+  "postTotalVotes": "Nombre total de votes : {{param.count}}",
   "postSignInVote": "Connectez-vous pour soumettre votre réponse.",
   "postCannotVote": "Vous n'avez pas la permission de répondre à cette question.",
   "latestPosts": "Dernières publications",

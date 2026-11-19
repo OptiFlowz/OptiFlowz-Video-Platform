@@ -1373,6 +1373,7 @@
   "postResponsesLocked": "Ова прашање има одговори и повеќе не може да се уреди.",
   "postSelectedVideo": "Избрано видео",
   "postWrongAnswer": "Не е точно. Точниот одговор е означен.",
+  "postTotalVotes": "Вкупно гласови: {{param.count}}",
   "postSignInVote": "Впишете се за да го поднесете вашиот одговор.",
   "postCannotVote": "Немате дозвола да одговорите на ова прашање.",
   "latestPosts": "Најнови објави",

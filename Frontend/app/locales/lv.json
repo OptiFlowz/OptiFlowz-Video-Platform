@@ -1293,6 +1293,7 @@
   "postResponsesLocked": "Šim jautājumam ir atbildes, un to vairs nevar rediģēt.",
   "postSelectedVideo": "Izvēlētais videoklips",
   "postWrongAnswer": "Ne gluži. Pareizā atbilde ir izcelta.",
+  "postTotalVotes": "Kopējais balsu skaits: {{param.count}}",
   "postSignInVote": "Piesakieties, lai iesniegtu savu atbildi.",
   "postCannotVote": "Jums nav atļaujas atbildēt uz šo jautājumu.",
   "latestPosts": "Jaunākie ieraksti",

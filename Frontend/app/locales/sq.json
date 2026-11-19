@@ -1373,6 +1373,7 @@
   "postResponsesLocked": "Kjo pyetje ka përgjigje dhe nuk mund të ndryshohet më.",
   "postSelectedVideo": "Video e zgjedhur",
   "postWrongAnswer": "Jo saktësisht. Përgjigjja e saktë është theksuar.",
+  "postTotalVotes": "Gjithsej vota: {{param.count}}",
   "postSignInVote": "Fillo seancën për të dërguar përgjigjen tënde.",
   "postCannotVote": "Nuk keni të drejtë të përgjigjeni kësaj pyetjeje.",
   "latestPosts": "Postimet më të fundit",

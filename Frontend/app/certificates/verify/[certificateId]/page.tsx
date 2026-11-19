@@ -1,8 +1,8 @@
 "use client";
 
 import CertificateVerification from "~/components/accountPage/certificateVerification";
-import { SimplePage } from "../../../page-shell";
+import { FramedPage } from "../../../page-shell";
 
 export default function Page() {
-  return <SimplePage><CertificateVerification /></SimplePage>;
+  return <FramedPage><CertificateVerification /></FramedPage>;
 }

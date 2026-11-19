@@ -1293,6 +1293,7 @@
   "postResponsesLocked": "Šis klausimas turi atsakymus ir nebegali būti redaguojamas.",
   "postSelectedVideo": "Pasirinktas vaizdo įrašas",
   "postWrongAnswer": "Ne visai. Teisingas atsakymas paryškintas.",
+  "postTotalVotes": "Iš viso balsų: {{param.count}}",
   "postSignInVote": "Prisijunkite, kad pateiktumėte savo atsakymą.",
   "postCannotVote": "Jūs neturite teisės atsakyti į šį klausimą.",
   "latestPosts": "Naujausi įrašai",

@@ -1292,6 +1292,7 @@
   "postResponsesLocked": "ამ კითხვას აქვს პასუხები და მისი რედაქტირება შეუძლებელია.",
   "postSelectedVideo": "არჩეული ვიდეო",
   "postWrongAnswer": "არა მთლად. სწორი პასუხი მონიშნულია.",
+  "postTotalVotes": "ხმების საერთო რაოდენობა: {{param.count}}",
   "postSignInVote": "შედით თქვენი პასუხის გასაგზავნად.",
   "postCannotVote": "ამ კითხვაზე პასუხის გაცემის უფლება არ გაქვთ.",
   "latestPosts": "უახლესი პოსტები",

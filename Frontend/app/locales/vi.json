@@ -1293,6 +1293,7 @@
   "postResponsesLocked": "Câu hỏi này có câu trả lời và không thể sửa đổi nữa.",
   "postSelectedVideo": "Đoạn phim đã chọn",
   "postWrongAnswer": "Chưa đúng. Đáp án đúng đã được tô sáng.",
+  "postTotalVotes": "Tổng số phiếu bầu: {{param.count}}",
   "postSignInVote": "Nhập vào để gửi câu trả lời của bạn.",
   "postCannotVote": "Bạn không được phép trả lời câu hỏi này.",
   "latestPosts": "Bài đăng mới nhất",

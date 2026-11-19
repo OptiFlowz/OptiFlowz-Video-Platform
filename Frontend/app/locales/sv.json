@@ -1293,6 +1293,7 @@
   "postResponsesLocked": "Denna fråga har svar och kan inte längre redigeras.",
   "postSelectedVideo": "Vald video",
   "postWrongAnswer": "Inte riktigt. Det rätta svaret är markerat.",
+  "postTotalVotes": "Totalt antal röster: {{param.count}}",
   "postSignInVote": "Logga in för att skicka in ditt svar.",
   "postCannotVote": "Du har inte behörighet att svara på denna fråga.",
   "latestPosts": "Senaste inläggen",

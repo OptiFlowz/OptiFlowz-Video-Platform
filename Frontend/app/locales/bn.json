@@ -1292,6 +1292,7 @@
   "postResponsesLocked": "এই প্রশ্নের উত্তর আছে এবং আর এডিট করা যাবে না।",
   "postSelectedVideo": "নির্বাচিত ভিডিও",
   "postWrongAnswer": "পুরোপুরি না। সঠিক উত্তর হাইলাইট করা হয়.",
+  "postTotalVotes": "মোট ভোট: {{param.count}}",
   "postSignInVote": "আপনার উত্তর জমা দিতে সাইন ইন করুন.",
   "postCannotVote": "আপনার এই প্রশ্নের উত্তর দেওয়ার অনুমতি নেই।",
   "latestPosts": "সর্বশেষ পোস্ট",

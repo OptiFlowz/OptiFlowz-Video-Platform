@@ -1293,6 +1293,7 @@
   "postResponsesLocked": "Dette spørgsmål har svar og kan ikke længere redigeres.",
   "postSelectedVideo": "Udvalgte videoer",
   "postWrongAnswer": "Ikke helt. Det korrekte svar er fremhævet.",
+  "postTotalVotes": "Samlet antal stemmer: {{param.count}}",
   "postSignInVote": "Log ind for at indsende dit svar.",
   "postCannotVote": "Du har ikke tilladelse til at besvare dette spørgsmål.",
   "latestPosts": "Seneste opslag",

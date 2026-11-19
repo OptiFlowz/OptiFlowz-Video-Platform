@@ -1293,6 +1293,7 @@
   "postResponsesLocked": "이 질문은 답변이 있으며 더 이상 편집할 수 없습니다.",
   "postSelectedVideo": "선택한 비디오",
   "postWrongAnswer": "정답이 아닙니다. 올바른 답이 강조 표시되어 있습니다.",
+  "postTotalVotes": "총 투표 수: {{param.count}}",
   "postSignInVote": "답변을 제출하려면 로그인하십시오.",
   "postCannotVote": "이 질문에 답변할 권한이 없습니다.",
   "latestPosts": "최신 게시물",

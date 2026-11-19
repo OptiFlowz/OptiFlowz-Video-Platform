@@ -1293,6 +1293,7 @@
   "postResponsesLocked": "Þessi spurning hefur svör og er ekki lengur hægt að breyta.",
   "postSelectedVideo": "Valið myndband",
   "postWrongAnswer": "Ekki alveg. Rétt svar er auðkennt.",
+  "postTotalVotes": "Heildarfjöldi atkvæða: {{param.count}}",
   "postSignInVote": "Skráðu þig inn til að senda svarið þitt.",
   "postCannotVote": "Þú hefur ekki heimild til að svara þessari spurningu.",
   "latestPosts": "Nýjustu færslur",

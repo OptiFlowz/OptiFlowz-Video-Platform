@@ -1268,6 +1268,7 @@
   "postResponsesLocked": "هذا السؤال له إجابات ولم يعد من الممكن تحريره.",
   "postSelectedVideo": "الفيديو المحدد",
   "postWrongAnswer": "الإجابة غير صحيحة. تم تمييز الإجابة الصحيحة.",
+  "postTotalVotes": "إجمالي الأصوات: {{param.count}}",
   "postSignInVote": "تسجيل الدخول لتقديم إجابتك.",
   "postCannotVote": "ليس لديك إذن بالإجابة على هذا السؤال.",
   "latestPosts": "أحدث المنشورات",

@@ -1293,6 +1293,7 @@
   "postResponsesLocked": "לשאלה זו יש תשובות ולא ניתן עוד לערוך אותה.",
   "postSelectedVideo": "וידאו שנבחר",
   "postWrongAnswer": "לא בדיוק. התשובה הנכונה מודגשת.",
+  "postTotalVotes": "סך כל הקולות: {{param.count}}",
   "postSignInVote": "היכנס כדי לשלוח את התשובה שלך.",
   "postCannotVote": "אין לך רשות לענות על השאלה הזאת.",
   "latestPosts": "הפוסטים האחרונים",

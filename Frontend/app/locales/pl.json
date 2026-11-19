@@ -1268,6 +1268,7 @@
   "postResponsesLocked": "To pytanie ma odpowiedzi i nie można go już edytować.",
   "postSelectedVideo": "Wybrane filmy wideo",
   "postWrongAnswer": "Nie do końca. Prawidłowa odpowiedź jest wyróżniona.",
+  "postTotalVotes": "Łączna liczba głosów: {{param.count}}",
   "postSignInVote": "Zaloguj się, aby przesłać odpowiedź.",
   "postCannotVote": "Nie masz uprawnień, aby odpowiedzieć na to pytanie.",
   "latestPosts": "Najnowsze wpisy",

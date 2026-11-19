@@ -1292,6 +1292,7 @@
   "postResponsesLocked": "Swali hili lina majibu na haliwezi kuhaririwa tena.",
   "postSelectedVideo": "Video iliyochaguliwa",
   "postWrongAnswer": "Sio kabisa. Jibu sahihi limesisitizwa.",
+  "postTotalVotes": "Jumla ya kura: {{param.count}}",
   "postSignInVote": "Ingia ili kuwasilisha jibu lako.",
   "postCannotVote": "Huna ruhusa ya kujibu swali hili.",
   "latestPosts": "Machapisho ya Hivi Punde",

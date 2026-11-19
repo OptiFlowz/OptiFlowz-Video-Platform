@@ -1293,6 +1293,7 @@
   "postResponsesLocked": "この質問には回答があり、もはや編集できません。",
   "postSelectedVideo": "選択したビデオ",
   "postWrongAnswer": "不正解です。正しい回答が強調表示されています。",
+  "postTotalVotes": "総投票数：{{param.count}}",
   "postSignInVote": "答えを提出するにはログインしてください。",
   "postCannotVote": "あなたにはこの質問に答える権限がありません。",
   "latestPosts": "最新の投稿",

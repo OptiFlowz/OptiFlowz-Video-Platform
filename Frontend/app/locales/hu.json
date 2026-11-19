@@ -1373,6 +1373,7 @@
   "postResponsesLocked": "Ez a kérdés már megválaszolva van, és már nem szerkeszthető.",
   "postSelectedVideo": "A kiválasztott videó",
   "postWrongAnswer": "Nem egészen. A helyes válasz ki van emelve.",
+  "postTotalVotes": "Összes szavazat: {{param.count}}",
   "postSignInVote": "Jelentkezzen be a válasz elküldéséhez.",
   "postCannotVote": "Nincs jogosultságod, hogy válaszolj erre a kérdésre.",
   "latestPosts": "Legújabb bejegyzések",

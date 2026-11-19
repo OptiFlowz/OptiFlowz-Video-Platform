@@ -1292,6 +1292,7 @@
   "postResponsesLocked": "Soalan ini mempunyai jawapan dan tidak boleh diedit lagi.",
   "postSelectedVideo": "Video terpilih",
   "postWrongAnswer": "Tidak cukup. Jawapan yang betul diserlahkan.",
+  "postTotalVotes": "Jumlah undi: {{param.count}}",
   "postSignInVote": "Log masuk untuk menyerahkan jawapan anda.",
   "postCannotVote": "Anda tidak mempunyai kebenaran untuk menjawab soalan ini.",
   "latestPosts": "Catatan Terkini",

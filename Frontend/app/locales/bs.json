@@ -1298,6 +1298,7 @@
   "postResponsesLocked": "Ovo pitanje ima odgovore i više se ne može uređivati.",
   "postSelectedVideo": "Odabrani video",
   "postWrongAnswer": "Ne baš. Tačan odgovor je istaknut.",
+  "postTotalVotes": "Ukupno glasova: {{param.count}}",
   "postSignInVote": "Prijavite se da pošaljete svoj odgovor.",
   "postCannotVote": "Nemate dozvolu da odgovorite na ovo pitanje.",
   "latestPosts": "Najnovije postove",

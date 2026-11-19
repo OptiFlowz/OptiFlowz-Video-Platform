@@ -1268,6 +1268,7 @@
   "postResponsesLocked": "इस प्रश्न के उत्तर हैं और इसे अब संपादित नहीं किया जा सकता.",
   "postSelectedVideo": "चयनित वीडियो",
   "postWrongAnswer": "यह सही नहीं है। सही उत्तर को हाइलाइट किया गया है।",
+  "postTotalVotes": "कुल वोट: {{param.count}}",
   "postSignInVote": "अपना उत्तर जमा करने के लिए लॉगइन करें.",
   "postCannotVote": "आपके पास इस प्रश्न का उत्तर देने की अनुमति नहीं है.",
   "latestPosts": "नवीनतम पोस्ट",

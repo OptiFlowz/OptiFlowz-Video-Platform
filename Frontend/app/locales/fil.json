@@ -1292,6 +1292,7 @@
   "postResponsesLocked": "Ang tanong na ito ay may mga tugon at hindi na maaaring i-edit.",
   "postSelectedVideo": "Napiling video",
   "postWrongAnswer": "Hindi lubos. Ang tamang sagot ay naka-highlight.",
+  "postTotalVotes": "Kabuuang bilang ng boto: {{param.count}}",
   "postSignInVote": "Mag-sign in para isumite ang iyong sagot.",
   "postCannotVote": "Wala kang pahintulot na sagutin ang tanong na ito.",
   "latestPosts": "Pinakabagong Mga Post",

@@ -1373,6 +1373,7 @@
   "postResponsesLocked": "Tato otázka má odpovědi a nelze ji již upravovat.",
   "postSelectedVideo": "Zobrazit vybrané video",
   "postWrongAnswer": "Ne tak docela. Správná odpověď je zvýrazněna.",
+  "postTotalVotes": "Celkový počet hlasů: {{param.count}}",
   "postSignInVote": "Pro odeslání odpovědi se přihlaste.",
   "postCannotVote": "Nemáte oprávnění odpovědět na tuto otázku.",
   "latestPosts": "Nejnovější příspěvky",

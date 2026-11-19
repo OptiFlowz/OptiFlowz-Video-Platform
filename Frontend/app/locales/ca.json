@@ -1292,6 +1292,7 @@
   "postResponsesLocked": "Aquesta pregunta té respostes i ja no es pot editar.",
   "postSelectedVideo": "Vídeo seleccionat",
   "postWrongAnswer": "No del tot. Es destaca la resposta correcta.",
+  "postTotalVotes": "Total de vots: {{param.count}}",
   "postSignInVote": "Inicieu la sessió per enviar la vostra resposta.",
   "postCannotVote": "No teniu permís per respondre aquesta pregunta.",
   "latestPosts": "Últimes publicacions",

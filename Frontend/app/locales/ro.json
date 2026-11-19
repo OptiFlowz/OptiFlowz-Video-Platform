@@ -1268,6 +1268,7 @@
   "postResponsesLocked": "Această întrebare are răspunsuri și nu mai poate fi editată.",
   "postSelectedVideo": "Videoclipul selectat",
   "postWrongAnswer": "Nu chiar. Răspunsul corect este evidențiat.",
+  "postTotalVotes": "Număr total de voturi: {{param.count}}",
   "postSignInVote": "Autentifică-te pentru a trimite răspunsul.",
   "postCannotVote": "Nu ai permisiunea de a răspunde la această întrebare.",
   "latestPosts": "Cele mai recente postări",

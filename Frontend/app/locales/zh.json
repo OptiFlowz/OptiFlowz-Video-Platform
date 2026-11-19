@@ -1293,6 +1293,7 @@
   "postResponsesLocked": "此问题已有答案,无法再编辑。",
   "postSelectedVideo": "选定的视频",
   "postWrongAnswer": "回答不正确。正确答案已突出显示。",
+  "postTotalVotes": "总票数：{{param.count}}",
   "postSignInVote": "登录以提交您的回答。",
   "postCannotVote": "您没有权限回答此问题。",
   "latestPosts": "最新帖子",

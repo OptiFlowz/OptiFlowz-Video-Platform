@@ -51,9 +51,9 @@ test('verification page shows saved preview, current revoked status, public PDF 
   let result = { data: { certificate }, isPending: false, isError: false };
   const Page = load('certificateVerification.tsx', {
     '@tanstack/react-query': { useQuery: () => result },
-    'react-router': { useParams: () => ({ certificateId: certificate.id }) },
+    'react-router': { useNavigate: () => () => {}, useParams: () => ({ certificateId: certificate.id }) },
     '~/i18n': { useI18n: () => ({ t: key => key, locale: 'en' }) },
-    '~/constants': { DownloadSVG: null, CheckSVG: null, CloseSVG: React.createElement('svg', { 'data-icon': 'close' }) },
+    '~/constants': { IconChevron: () => null, DownloadSVG: null, CheckSVG: null, CloseSVG: React.createElement('svg', { 'data-icon': 'close' }) },
     '~/API': { fetchApiResponse: async () => {} },
     '../loaders/pageLoader': { default: () => null, __esModule: true },
     '../analytics/PdfGenerationStatus': { PdfGenerationStatus: () => null },
@@ -141,9 +141,9 @@ for (const mode of ['client', 'server-fallback']) test(`${mode} PDF download pre
   let status = 'issued';
   const Page = load('certificateVerification.tsx', {
     '@tanstack/react-query': { useQuery: () => ({ data: { certificate: { ...certificate, id, status } } }) },
-    'react-router': { useParams: () => ({ certificateId: id }) },
+    'react-router': { useNavigate: () => () => {}, useParams: () => ({ certificateId: id }) },
     '~/i18n': { useI18n: () => ({ t: key => key, locale: 'en' }) },
-    '~/constants': { DownloadSVG: null, CheckSVG: null, CloseSVG: React.createElement('svg', { 'data-icon': 'close' }) },
+    '~/constants': { IconChevron: () => null, DownloadSVG: null, CheckSVG: null, CloseSVG: React.createElement('svg', { 'data-icon': 'close' }) },
     '~/env': { env: { apiBaseUrl: 'https://api.example.test' } },
     '~/API': { fetchApiResponse: async (...args) => {
       requests++;
@@ -165,12 +165,12 @@ for (const mode of ['client', 'server-fallback']) test(`${mode} PDF download pre
   }).default;
   try {
     await React.act(async () => root.render(React.createElement(Page)));
-    await React.act(async () => document.querySelector('button').click());
+    await React.act(async () => document.querySelector('button[aria-busy]').click());
     assert.match(document.querySelector('[role="alert"]').textContent, /editorGenerateFailed/);
-    assert.equal(document.querySelector('button').disabled, false, 'network failure allows a retry');
+    assert.equal(document.querySelector('button[aria-busy]').disabled, false, 'network failure allows a retry');
     fail = false;
     await React.act(async () => {
-      const button = document.querySelector('button');
+      const button = document.querySelector('button[aria-busy]');
       button.click();
       button.click();
     });
@@ -198,19 +198,19 @@ for (const mode of ['client', 'server-fallback']) test(`${mode} PDF download pre
     assert.equal(localRequests, 2, 'manual retry reuses the generated PDF');
     status = 'revoked';
     await React.act(async () => root.render(React.createElement(Page)));
-    assert.equal(document.querySelector('a[download], button'), null, 'revocation removes a prepared download');
+    assert.equal(document.querySelector('a[download], button[aria-busy]'), null, 'revocation removes a prepared download');
     assert.deepEqual(revoked, ['blob:certificate']);
     status = 'issued';
     id = 'another-certificate';
     await React.act(async () => root.render(React.createElement(Page)));
     assert.deepEqual(revoked, ['blob:certificate']);
     assert.equal(document.querySelector('a[download]'), null);
-    await React.act(async () => document.querySelector('button').click());
+    await React.act(async () => document.querySelector('button[aria-busy]').click());
     const signal = mode === 'client' ? localSignal : request[1].signal;
     status = 'revoked';
     await React.act(async () => root.render(React.createElement(Page)));
     assert.equal(signal.aborted, true, 'revoking the certificate aborts generation');
-    assert.equal(document.querySelector('a[download], button'), null);
+    assert.equal(document.querySelector('a[download], button[aria-busy]'), null);
     await React.act(async () => root.unmount());
     await React.act(async () => finish());
     assert.equal(downloads.length, 2, 'a late response cannot download the previous certificate');

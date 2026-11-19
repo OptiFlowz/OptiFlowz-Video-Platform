@@ -1293,6 +1293,7 @@
   "postResponsesLocked": "คำถามนี้มีคำตอบแล้ว และไม่สามารถแก้ไขได้อีกต่อไปแล้ว",
   "postSelectedVideo": "วิดีโอที่เลือกไว้",
   "postWrongAnswer": "ยังไม่ถูกต้อง คำตอบที่ถูกต้องถูกเน้นไว้แล้ว",
+  "postTotalVotes": "คะแนนโหวตรวม: {{param.count}}",
   "postSignInVote": "ล็อกอินเพื่อส่งคำตอบของคุณ",
   "postCannotVote": "คุณไม่ได้รับอนุญาตให้ตอบคำถามนี้",
   "latestPosts": "โพสต์ล่าสุด",

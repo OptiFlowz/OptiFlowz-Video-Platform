@@ -1293,6 +1293,7 @@
   "postResponsesLocked": "این سؤال پاسخ دارد و دیگر نمی‌توان آن را ویرایش کرد.",
   "postSelectedVideo": "ویدئوهای برگزیده",
   "postWrongAnswer": "پاسخ درست نیست. پاسخ صحیح مشخص شده است.",
+  "postTotalVotes": "مجموع آرا: {{param.count}}",
   "postSignInVote": "برای ارسال پاسخ وارد شوید.",
   "postCannotVote": "شما مجوز پاسخ دادن به این سوال را ندارید.",
   "latestPosts": "تازه‌ترین پست‌ها",

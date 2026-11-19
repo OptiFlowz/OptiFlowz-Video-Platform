@@ -1293,6 +1293,7 @@
   "postResponsesLocked": "Tähän kysymykseen on vastauksia, eikä sitä voi enää muokata.",
   "postSelectedVideo": "Valittu video",
   "postWrongAnswer": "Ei aivan. Oikea vastaus on korostettu.",
+  "postTotalVotes": "Ääniä yhteensä: {{param.count}}",
   "postSignInVote": "Kirjaudu sisään lähettääksesi vastauksesi.",
   "postCannotVote": "Sinulla ei ole oikeutta vastata tähän kysymykseen.",
   "latestPosts": "Uusimmat julkaisut",
