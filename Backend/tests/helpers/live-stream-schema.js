@@ -1,5 +1,12 @@
 import { readFile } from 'node:fs/promises';
 
+export async function prepareRecordingAudience(client) {
+  await client.query(`ALTER TABLE pg_temp.videos ADD COLUMN IF NOT EXISTS audience_mode text DEFAULT 'everyone';
+    CREATE TEMP TABLE roles (id bigint PRIMARY KEY, name text);
+    CREATE TEMP TABLE user_roles (user_id uuid, role_id bigint, expires_at timestamptz);
+    CREATE TEMP TABLE video_allowed_roles (video_id uuid, role_id bigint);`);
+}
+
 export async function prepareLiveSchema(client, beforeUpgrade) {
   await client.query('CREATE TEMP TABLE users (id uuid PRIMARY KEY)');
   await client.query('CREATE TEMP TABLE videos (LIKE public.videos INCLUDING DEFAULTS INCLUDING CONSTRAINTS)');

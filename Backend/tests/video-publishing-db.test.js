@@ -24,19 +24,25 @@ test('publication rules against PostgreSQL temporary fixtures', {
       created_at timestamptz DEFAULT now(), updated_at timestamptz DEFAULT now(),
       published_at timestamptz, visibility text DEFAULT 'public', mux_status text DEFAULT 'ready',
       mux_playback_id text DEFAULT 'fixture-playback', playback_policy text DEFAULT 'public',
+      mux_asset_id text, mux_recording_completed_at timestamptz,
       mux_thumbnail_time double precision, tags text[] DEFAULT '{tutorial}', chapters jsonb
     );
     CREATE TEMP TABLE users (id uuid PRIMARY KEY, full_name text, image_url text);
+    CREATE TEMP TABLE live_streams (id uuid PRIMARY KEY, mux_active_asset_id text, status text, visibility text, user_id uuid);
+    CREATE TEMP TABLE roles (id bigint PRIMARY KEY, name text);
+    CREATE TEMP TABLE user_roles (user_id uuid, role_id bigint, expires_at timestamptz);
+    INSERT INTO roles VALUES (1,'Coach'), (2,'Member'), (3,'Reviewer');
     CREATE TEMP TABLE people (id uuid PRIMARY KEY, name text, image_url text, description text);
     CREATE TEMP TABLE video_chairs (video_id uuid, person_id uuid, type integer);
     CREATE TEMP TABLE categories (id uuid PRIMARY KEY, name text, color text);
     CREATE TEMP TABLE video_categories (video_id uuid, category_id uuid);
     CREATE TEMP TABLE watch_progress (video_id uuid, user_id uuid, progress_seconds numeric,
-      percentage_watched numeric, total_watch_seconds numeric, last_watched_at timestamptz);
+      percentage_watched numeric, total_watch_seconds numeric, last_watched_at timestamptz, PRIMARY KEY (user_id,video_id));
     CREATE TEMP TABLE video_reactions (video_id uuid, user_id uuid, reaction integer, created_at timestamptz);
-    CREATE TEMP TABLE video_views (id uuid, video_id uuid, created_at timestamptz);
-    CREATE TEMP TABLE video_comments (id uuid, video_id uuid, user_id uuid, parent_id uuid,
-      is_deleted boolean, content text, like_count integer, dislike_count integer,
+    CREATE TEMP TABLE video_views (id uuid, video_id uuid, created_at timestamptz, user_id uuid,
+      last_heartbeat_at timestamptz, last_seq bigint, watch_duration bigint, ip_address text, user_agent text);
+    CREATE TEMP TABLE video_comments (id uuid DEFAULT gen_random_uuid(), video_id uuid, user_id uuid, parent_id uuid,
+      is_deleted boolean DEFAULT false, content text, like_count integer DEFAULT 0, dislike_count integer DEFAULT 0,
       reply_count integer, created_at timestamptz, updated_at timestamptz);
     CREATE TEMP TABLE comment_reactions (comment_id uuid, user_id uuid, reaction integer);
     CREATE TEMP TABLE playlists (id uuid PRIMARY KEY, created_by uuid, title text,
@@ -82,10 +88,9 @@ test('publication rules against PostgreSQL temporary fixtures', {
   const { getCommentsInternal: comments } = await load('videos/video/handlers/getComments');
   const { requireVisibleVideo } = await import('../src/common/videoAccess.js');
 
+  const ddl = readFileSync(new URL('../src/database/migrations/1795132800000_add-video-audience.sql', import.meta.url), 'utf8');
+  await database.query(ddl.split('-- Down Migration')[0]);
   await t.test('editing the audience replaces all selected roles atomically', async () => {
-    const ddl = readFileSync(new URL('../src/database/migrations/1795132800000_add-video-audience.sql', import.meta.url), 'utf8');
-    await client.query('CREATE TEMP TABLE roles (id bigint PRIMARY KEY); INSERT INTO roles VALUES (1), (2), (3)');
-    await database.query(ddl.split('-- Down Migration')[0]);
     const update = body => patch({ params: { videoId: draft }, body });
     const state = async () => (await client.query(
       `SELECT audience_mode, title, ARRAY(SELECT role_id FROM video_allowed_roles WHERE video_id = v.id ORDER BY role_id) AS ids
@@ -202,5 +207,51 @@ test('publication rules against PostgreSQL temporary fixtures', {
     assert.equal((await playback(scheduled, viewer)).video_id, scheduled);
     const after = (await client.query('SELECT published_at FROM videos WHERE id=$1', [scheduled])).rows[0].published_at;
     assert.equal(after.getTime(), before.getTime());
+  });
+
+  await t.test('restricted cards stay visible and each interaction rechecks active membership', async () => {
+    const { setVideoReactionInternal: react } = await load('videos/video/handlers/setVideoReaction');
+    const { updateWatchProgressInternal: progress } = await load('videos/video/handlers/updateWatchProgress');
+    const { heartbeatWatchDurationInternal: heartbeat } = await load('videos/video/handlers/heartbeatWatchDuration');
+    const { postCommentInternal: post } = await load('comments/handlers/postComment');
+    const { getRepliesInternal: replies } = await load('comments/handlers/getReplies');
+    const { editCommentInternal: edit } = await load('comments/handlers/editComment');
+    const { setCommentReactionInternal: commentReact } = await load('comments/handlers/setCommentReaction');
+    const { deleteCommentInternal: remove } = await load('comments/handlers/deleteComment');
+    await patch({ params: { videoId: published }, body: { audience_mode: 'selected_roles', allowed_role_ids: ['2', '1'] } });
+    await client.query("INSERT INTO user_roles VALUES ($1,1,now()-interval '1 day'),($1,2,NULL)", [viewer]);
+    const viewId = uuid(700);
+    await client.query('INSERT INTO video_views(id, video_id, user_id) VALUES ($1,$2,$3)', [viewId, published, viewer]);
+    const card = async user => (await media([{ id: published }], user))[0];
+    assert.equal((await card(viewer)).can_watch, true);
+    assert.equal((await card(owner)).can_watch, true);
+    assert.equal((await playback(published, viewer)).video_id, published);
+    assert.equal((await details(published, viewer)).id, published);
+    await progress(published, viewer, 12);
+    await react(published, viewer, 'like');
+    assert.ok(await heartbeat(viewId, { seq: 1, userId: viewer }));
+    const comment = await post({ video_id: published, content: 'Test comment' }, viewer);
+    await client.query('DELETE FROM user_roles WHERE user_id=$1 AND role_id=2', [viewer]);
+    const locked = (await search({}, viewer)).videos.find(video => video.id === published);
+    assert.equal(locked.id, published);
+    assert.equal(locked.audience_mode, 'selected_roles');
+    assert.deepEqual(locked.allowed_roles, ['Coach', 'Member']);
+    assert.equal(locked.can_watch, false);
+    assert.equal(locked.preview_url, null);
+    assert.ok(locked.mux_thumbnail_url);
+    assert.equal((await card(null)).can_watch, false);
+    assert.deepEqual((await card(owner)).allowed_roles, ['Coach', 'Member']);
+    assert.equal((await card(owner)).can_watch, true);
+    assert.equal(await details(published, viewer), null);
+    assert.equal(await heartbeat(viewId, { seq: 2, userId: viewer }), null);
+    for (const fn of [
+      () => playback(published, viewer), () => progress(published, viewer, 50),
+      () => react(published, viewer, 'dislike'), () => comments({ params: { id: published }, query: {} }, viewer),
+      () => post({ video_id: published, content: 'Another' }, viewer), () => replies({ id: comment.id }, viewer),
+      () => commentReact(comment.id, viewer, 'like'), () => edit({ id: comment.id }, { content: 'Edited' }, viewer),
+      () => remove({ id: comment.id }, viewer, { permissions: new Map() }),
+    ]) await assert.rejects(fn, { status: 404 });
+    assert.equal((await client.query('SELECT last_seq FROM video_views WHERE id=$1', [viewId])).rows[0].last_seq, '1');
+    assert.equal(Number((await client.query('SELECT progress_seconds FROM watch_progress WHERE user_id=$1 AND video_id=$2', [viewer, published])).rows[0].progress_seconds), 12);
   });
 });

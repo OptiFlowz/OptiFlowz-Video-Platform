@@ -4,12 +4,13 @@ import { mock, test } from 'node:test';
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import pg from 'pg';
-import { prepareLiveSchema } from './helpers/live-stream-schema.js';
+import { prepareLiveSchema, prepareRecordingAudience } from './helpers/live-stream-schema.js';
 
 test('live playback selects and signs the current resource against PostgreSQL fixtures', { skip: !process.env.TEST_DATABASE_URL }, async t => {
   const client = new pg.Client({ connectionString: process.env.TEST_DATABASE_URL, connectionTimeoutMillis: 5000, statement_timeout: 10000 });
   await client.connect(); t.after(() => client.end());
   await prepareLiveSchema(client);
+  await prepareRecordingAudience(client);
   await client.query("ALTER TABLE pg_temp.users ADD COLUMN status text DEFAULT 'active', ADD COLUMN authz_version integer DEFAULT 1");
   const id = '12345678-1234-4234-8234-123456789012';
   const owner = '12345678-1234-4234-8234-123456789abc';
@@ -48,6 +49,16 @@ test('live playback selects and signs the current resource against PostgreSQL fi
     videoId = result.rows[0].id;
     queries = 0;
   }
+
+  await t.test('DVR checks the audience of the active recording', async () => {
+    await reset(true);
+    await client.query("UPDATE pg_temp.videos SET audience_mode='selected_roles' WHERE id=$1", [videoId]);
+    await assert.rejects(playback(id, viewer), { status: 404 });
+    assert.equal((await playback(id, owner)).video_id, videoId);
+    await client.query('INSERT INTO pg_temp.video_allowed_roles VALUES ($1,1)', [videoId]);
+    await client.query('INSERT INTO pg_temp.user_roles VALUES ($1,1,NULL)', [viewer]);
+    assert.equal((await playback(id, viewer)).video_id, videoId);
+  });
 
   for (const dvr of [false, true]) for (const policy of ['public', 'signed']) {
     await t.test(`${dvr ? 'DVR' : 'non-DVR'} ${policy} playback uses the correct ID and tokens`, async () => {

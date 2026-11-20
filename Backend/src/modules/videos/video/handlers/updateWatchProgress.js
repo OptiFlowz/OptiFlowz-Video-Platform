@@ -1,4 +1,6 @@
 import { writePool } from '../../../../database/index.js';
+import { watchableVideoWhere } from '../../../../common/videoAccess.js';
+import { HttpError } from '../../../../common/httpError.js';
 
 export async function updateWatchProgressInternal(videoId, userId, progressSeconds) {
   const query = `
@@ -24,7 +26,7 @@ export async function updateWatchProgressInternal(videoId, userId, progressSecon
       END AS percentage_watched,
       NOW()
     FROM videos v
-    WHERE v.id = $2::uuid
+    WHERE v.id = $2::uuid AND ${watchableVideoWhere({ userParam: '$1', allowLiveRecording: true })}
     ON CONFLICT (user_id, video_id)
     DO UPDATE SET
       progress_seconds = CASE
@@ -51,5 +53,6 @@ export async function updateWatchProgressInternal(videoId, userId, progressSecon
   `;
 
   // $1=userId, $2=videoId, $3=progressSeconds (int), $4=progressSeconds (numeric)
-  await writePool.query(query, [userId, videoId, progressSeconds, progressSeconds]);
+  const result = await writePool.query(query, [userId, videoId, progressSeconds, progressSeconds]);
+  if (!result.rowCount) throw new HttpError(404, { message: 'Video not found' });
 }

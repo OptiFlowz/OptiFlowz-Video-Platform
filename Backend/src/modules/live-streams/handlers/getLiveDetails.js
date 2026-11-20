@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { writePool } from '../../../database/index.js';
 import { HttpError } from '../../../common/httpError.js';
+import { videoAudienceWhere } from '../../../common/videoAccess.js';
 import { validateOrThrow } from '../../../common/input.validation.js';
 
 const idSchema = z.string().uuid('Invalid live stream ID');
@@ -35,6 +36,7 @@ export async function getLiveDetailsInternal(liveStreamId, userId = null) {
       LEFT JOIN public.watch_progress wp ON wp.video_id=v.id AND wp.user_id=$2
       LEFT JOIN public.video_reactions vr ON vr.video_id=v.id AND vr.user_id=$2
       WHERE ls.status IN ('live','disconnected') AND v.live_stream_id=ls.id
+        AND ${videoAudienceWhere()}
         AND v.mux_asset_id=ls.mux_active_asset_id
         AND v.mux_recording_completed_at IS NULL AND v.mux_status IS DISTINCT FROM 'deleted'
       LIMIT 1

@@ -74,7 +74,7 @@ export async function getUserLiveCardsInternal({ params, query = {} }, viewerId 
     ORDER BY ${order}`, viewerId ? [userId, limit, offset, viewerId] : [userId, limit, offset]),
   ]);
   const rows = result.rows.map(({ sort_at, ...card }) => card);
-  const recordings = await withVideoCardMedia(rows.filter(card => card.card_type === 'recording'));
+  const recordings = await withVideoCardMedia(rows.filter(card => card.card_type === 'recording'), viewerId);
   const mediaById = new Map(recordings.map(card => [card.id, card]));
   const cards = rows.map(card => card.card_type === 'recording' ? mediaById.get(card.id) : {
     ...card, mux_thumbnail_url: null, preview_url: null, media_expires_at: null,

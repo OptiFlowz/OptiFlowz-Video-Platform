@@ -3,12 +3,13 @@ import { mock, test } from 'node:test';
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import pg from 'pg';
-import { prepareLiveSchema } from './helpers/live-stream-schema.js';
+import { prepareLiveSchema, prepareRecordingAudience } from './helpers/live-stream-schema.js';
 
 test('public mixed livestream cards against PostgreSQL temporary tables', { skip: !process.env.TEST_DATABASE_URL }, async t => {
   const client = new pg.Client({ connectionString: process.env.TEST_DATABASE_URL, connectionTimeoutMillis: 5000, statement_timeout: 10000 });
   await client.connect(); t.after(() => client.end());
   await prepareLiveSchema(client);
+  await prepareRecordingAudience(client);
   await client.query(`ALTER TABLE pg_temp.users ADD COLUMN full_name text, ADD COLUMN status text DEFAULT 'active', ADD COLUMN authz_version integer DEFAULT 1;
     CREATE TEMP TABLE people(id uuid PRIMARY KEY,name text,image_url text);
     CREATE TEMP TABLE video_chairs(video_id uuid,person_id uuid);

@@ -1,9 +1,12 @@
 # Video playback endpoint
 
 `POST /api/videos/:id/playback` needs no request body. Send the application's
-`Authorization: Bearer <token>` header for private videos. Public visibility
-allows guests; private visibility allows only the uploader, matching the video
-details endpoint. Visibility is independent of the Mux playback policy.
+`Authorization: Bearer <token>` header. Playback and video details require a
+signed-in viewer. For a published video with `audience_mode = 'selected_roles'`,
+the viewer must hold at least one selected role with an active assignment.
+Uploaders retain access to their own ready public or private videos.
+An inaccessible video returns 404 before playback credentials are issued.
+Apply the `1795132800000_add-video-audience.sql` migration before deployment.
 
 Apply the `1788652800000_add-videos-playback-policy.sql` migration before using
 the endpoint. For signed playback, configure these backend secrets before
@@ -83,6 +86,15 @@ headers and response fields omit the internal token. Existing authentication,
 video update permissions, and processing responses are preserved.
 
 ## Video-card images
+
+Published videos with a restricted audience remain in search results,
+recommendations and other video lists. Each card includes:
+
+- `can_watch` is true for a signed-in viewer with access to a ready video with a playback ID.
+- `audience_mode` is `everyone` or `selected_roles`. A stale card whose video is no longer visible returns null.
+- `allowed_roles` contains the selected role names in name order, or an empty array.
+
+Locked cards show a thumbnail and return `preview_url: null`.
 
 Video-card lists now return these fields directly; no preview endpoint is needed:
 

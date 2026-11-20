@@ -1,6 +1,7 @@
 import { withPlaylistCardMedia } from '../../../playlists/helpers/playlistCardMedia.js';
 import { readPool, writePool } from '../../../../database/index.js';
 import { withVideoDetailsMedia } from '../../helpers/videoCardMedia.js';
+import { watchableVideoWhere } from '../../../../common/videoAccess.js';
 
 export async function getVideoByIdInternal(videoId, userId = null) {
   const query = `
@@ -32,9 +33,7 @@ export async function getVideoByIdInternal(videoId, userId = null) {
         LEFT JOIN users u ON v.uploaded_by = u.id
         ${userId ? 'LEFT JOIN watch_progress wp ON v.id = wp.video_id AND wp.user_id = $2' : ''}
         ${userId ? 'LEFT JOIN video_reactions vr ON v.id = vr.video_id AND vr.user_id = $2' : ''}
-        WHERE v.id = $1 AND v.mux_status = 'ready'
-          AND ((v.visibility = 'public' AND v.published_at <= NOW())
-            ${userId ? "OR (v.visibility IN ('public', 'private') AND v.uploaded_by = $2)" : ''})
+        WHERE v.id = $1 AND ${watchableVideoWhere({ userParam: userId ? '$2' : 'NULL' })}
     `;
 
   const params = [videoId];
