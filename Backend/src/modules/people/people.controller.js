@@ -23,8 +23,9 @@ export async function getPersonById(req, res) {
 }
 
 export async function searchPeople(req, res) {
+  res.set('Cache-Control', 'private, no-store');
   try {
-    const result = await searchPeopleInternal(req.query);
+    const result = await searchPeopleInternal(req.query, req.user?.sub);
     return sendSuccess(res, result);
   } catch (error) {
     console.error('Error searching people:', error);
@@ -75,8 +76,9 @@ export async function deletePerson(req, res) {
 
 
 export async function getAllPeople(req, res) {
+  res.set('Cache-Control', 'private, no-store');
   try {
-    const result = await getAllPeopleInternal(req.query);
+    const result = await getAllPeopleInternal(req.query, req.user?.sub);
     return sendSuccess(res, result);
   } catch (error) {
     console.error('Error fetching people:', error);

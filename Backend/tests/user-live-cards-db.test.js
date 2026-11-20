@@ -52,9 +52,12 @@ test('public mixed livestream cards against PostgreSQL temporary tables', { skip
   await client.query('INSERT INTO pg_temp.watch_progress VALUES ($1,$2,30,25),($1,$3,90,75)', [uuid(1001), viewer, other]);
 
   let queries = 0;
-  mock.module(new URL('../src/database/index.js', import.meta.url).href, { namedExports: { writePool: {
+  const database = {
     async query(sql, params) { queries++; return client.query(sql.replaceAll('public.', 'pg_temp.'), params); },
-  } } });
+  };
+  mock.module(new URL('../src/database/index.js', import.meta.url).href, {
+    namedExports: { readPool: database, writePool: database },
+  });
   mock.module('@mux/mux-node', { defaultExport: class {
     jwtSigningKey = 'test-key'; jwtPrivateKey = 'test-private-key';
     jwt = { async signPlaybackId(id, { type }) { return `test-${id}-${type}`; } };

@@ -161,10 +161,13 @@ test('collection schema, permissions and rollback against session-local PostgreS
     const errorLog = t.mock.method(console, 'error', () => {});
     let failInsert = false;
     const databaseMock = mock.module(new URL('../src/database/index.js', import.meta.url).href, {
-      namedExports: { writePool: { query(sql, params) {
-        if (failInsert && /INSERT INTO public.collections/.test(sql)) throw new Error('Private database failure');
-        return client.query(sql.replaceAll('public.', 'pg_temp.'), params);
-      } } },
+      namedExports: {
+        readPool: { query: (sql, params) => client.query(sql.replaceAll('public.', 'pg_temp.'), params) },
+        writePool: { query(sql, params) {
+          if (failInsert && /INSERT INTO public.collections/.test(sql)) throw new Error('Private database failure');
+          return client.query(sql.replaceAll('public.', 'pg_temp.'), params);
+        } },
+      },
     });
     t.after(() => databaseMock.restore());
     const { default: router } = await import('../src/modules/collections/collections.routes.js');

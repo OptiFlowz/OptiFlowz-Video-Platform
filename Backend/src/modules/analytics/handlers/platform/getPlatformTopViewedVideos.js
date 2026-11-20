@@ -45,7 +45,7 @@ export async function getPlatformTopViewedVideosInternal(object, userId = null) 
       video_cards AS (
         ${buildVideoCardSelect()},v.description
         ${buildVideoCardJoins()}
-        WHERE ${buildVideoCardVisibilityWhere()}
+        WHERE ${buildVideoCardVisibilityWhere(`$${filter.values.length + 1}`)}
       )
       SELECT
         video_cards.*,
@@ -56,7 +56,7 @@ export async function getPlatformTopViewedVideosInternal(object, userId = null) 
       ORDER BY period_views DESC, video_cards.created_at DESC
       LIMIT 3
     `,
-    filter.values,
+    [...filter.values, userId],
   );
 
   return withVideoCardMedia(rows, userId);

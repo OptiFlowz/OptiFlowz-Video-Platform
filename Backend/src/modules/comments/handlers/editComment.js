@@ -1,4 +1,4 @@
-import { writePool } from '../../../database/index.js';
+import { readPool, writePool } from '../../../database/index.js';
 import { watchableVideoWhere } from '../../../common/videoAccess.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
@@ -47,7 +47,7 @@ export async function editCommentInternal(params, body, userId) {
     return rows[0];
   }
 
-  const check = await writePool.query(
+  const check = await readPool.query(
     `SELECT c.user_id, c.is_deleted FROM public.video_comments c
      JOIN public.videos v ON v.id = c.video_id
      WHERE c.id = $1 AND ${watchableVideoWhere({ allowLiveRecording: true })}`,

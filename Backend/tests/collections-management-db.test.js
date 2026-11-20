@@ -36,7 +36,7 @@ test('collection listing and management against isolated PostgreSQL schema', {
   }
   for (const file of ['1785683496295_add-permission-tables.sql', '1791849600000_add-collections.sql',
     '1791849600001_add-collections-permissions.sql', '1791849600002_add-collections-visibility-subheading.sql',
-    '1792022400000_add-collections-featured.sql']) {
+    '1792022400000_add-collections-featured.sql', '1795132800000_add-video-audience.sql', '1795132800002_add-video-show-locked-card.sql']) {
     const sql = await readFile(new URL(`../src/database/migrations/${file}`, import.meta.url), 'utf8');
     await setup.query(sql.split('-- Down Migration')[0].replaceAll('public.', `${schema}.`));
   }
@@ -60,6 +60,7 @@ test('collection listing and management against isolated PostgreSQL schema', {
     return result;
   };
   const databaseMock = mock.module(new URL('../src/database/index.js', import.meta.url).href, { namedExports: {
+    readPool: { query: (sql, params) => queryWith(pool, sql, params) },
     writePool: { query: (sql, params) => queryWith(pool, sql, params), async connect() {
       const client = await pool.connect();
       return { query: (sql, params) => queryWith(client, sql, params), release() { releases++; client.release(); } };

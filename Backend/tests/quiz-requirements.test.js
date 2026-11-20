@@ -50,7 +50,7 @@ test('requirement list validates pagination, allowlisted sorting and quiz filter
 
 let databaseCalls = 0;
 mock.module(new URL('../src/database/index.js', import.meta.url).href, {
-  namedExports: { writePool: {
+  namedExports: { readPool: {}, writePool: {
     async query() { databaseCalls++; throw new Error('Unexpected database access'); },
     async connect() { databaseCalls++; throw new Error('Unexpected database access'); },
   } },

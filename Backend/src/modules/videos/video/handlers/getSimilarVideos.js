@@ -1,6 +1,6 @@
-import { visibleVideoWhere } from '../../../../common/videoAccess.js';
+import { videoCardAudienceWhere, visibleVideoWhere } from '../../../../common/videoAccess.js';
 import { withVideoCardMedia } from '../../helpers/videoCardMedia.js';
-import { writePool } from '../../../../database/index.js';
+import { readPool } from '../../../../database/index.js';
 
 export async function getSimilarVideosInternal(videoId, userId, limit = 10, page = 1) {
   const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
@@ -13,6 +13,7 @@ export async function getSimilarVideosInternal(videoId, userId, limit = 10, page
       FROM videos v
       LEFT JOIN video_categories vc ON vc.video_id = v.id
       WHERE v.id = $1 AND ${visibleVideoWhere({ userParam: userId ? '$4' : 'NULL', allowLiveRecording: true })}
+        AND ${videoCardAudienceWhere(userId ? '$4' : 'NULL')}
       GROUP BY v.id
     ),
     target_cats AS (
@@ -75,7 +76,7 @@ export async function getSimilarVideosInternal(videoId, userId, limit = 10, page
             ) ppl ON TRUE
     WHERE v.id <> $1
       AND v.mux_status = 'ready' AND v.visibility = 'public'
-      AND v.published_at <= NOW()
+      AND v.published_at <= NOW() AND ${videoCardAudienceWhere(userId ? '$4' : 'NULL')}
       AND (
         (COALESCE(v.tags, '{}')::text[] && cv.tags)
         OR (tc.cats && cv.category_ids)
@@ -84,7 +85,7 @@ export async function getSimilarVideosInternal(videoId, userId, limit = 10, page
     LIMIT $2 OFFSET $3;
   `;
   const { rows } = userId
-    ? await writePool.query(sql, [videoId, limit, offset, userId])
-    : await writePool.query(sql, [videoId, limit, offset]);
+    ? await readPool.query(sql, [videoId, limit, offset, userId])
+    : await readPool.query(sql, [videoId, limit, offset]);
   return withVideoCardMedia(rows, userId);
 }

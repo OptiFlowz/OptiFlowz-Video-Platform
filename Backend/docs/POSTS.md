@@ -253,7 +253,7 @@ Individual vote/answer records and respondent identities are not included.
 
 The post, blocks, and participation use one primary-database query for a consistent
 snapshot and current visibility. Video cards are then loaded in a batch with the
-viewer's video access checked on the primary database. Video blocks retain their
+viewer's video access checked through `readPool`. Video blocks retain their
 stored `content.video_id`; this endpoint does not grant playback access.
 
 ## Post comments

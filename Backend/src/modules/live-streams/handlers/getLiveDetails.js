@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { writePool } from '../../../database/index.js';
+import { readPool } from '../../../database/index.js';
 import { HttpError } from '../../../common/httpError.js';
 import { videoAudienceWhere } from '../../../common/videoAccess.js';
 import { validateOrThrow } from '../../../common/input.validation.js';
@@ -11,7 +11,7 @@ export async function getLiveDetailsInternal(liveStreamId, userId = null) {
   const id = validateOrThrow(idSchema.safeParse(liveStreamId));
   // Details are available before/after a broadcast; only the current unfinished
   // recording is attached. Livestream visibility governs in-progress content.
-  const { rows } = await writePool.query(`SELECT
+  const { rows } = await readPool.query(`SELECT
       ls.id, ls.title, ls.description, ls.thumbnail_url, ls.status, ls.mux_status,
       ls.visibility, ls.playback_policy, ls.dvr_enabled, ls.scheduled_at,
       ls.started_at, ls.ended_at, ls.connected_at, ls.disconnected_at, ls.completed_at,

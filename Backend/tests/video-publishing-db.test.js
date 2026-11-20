@@ -90,6 +90,8 @@ test('publication rules against PostgreSQL temporary fixtures', {
 
   const ddl = readFileSync(new URL('../src/database/migrations/1795132800000_add-video-audience.sql', import.meta.url), 'utf8');
   await database.query(ddl.split('-- Down Migration')[0]);
+  const lockedCardMigration = readFileSync(new URL('../src/database/migrations/1795132800002_add-video-show-locked-card.sql', import.meta.url), 'utf8');
+  await database.query(lockedCardMigration.split('-- Down Migration')[0]);
   await t.test('editing the audience replaces all selected roles atomically', async () => {
     const update = body => patch({ params: { videoId: draft }, body });
     const state = async () => (await client.query(
@@ -207,6 +209,52 @@ test('publication rules against PostgreSQL temporary fixtures', {
     assert.equal((await playback(scheduled, viewer)).video_id, scheduled);
     const after = (await client.query('SELECT published_at FROM videos WHERE id=$1', [scheduled])).rows[0].published_at;
     assert.equal(after.getTime(), before.getTime());
+  });
+
+  await t.test('show_locked_card controls discovery, counts and artwork independently of playback', async () => {
+    const patchCard = body => patch({ params: { videoId: published }, body });
+    const { getPlaylistVideosInternal: playlistVideos } = await load('playlists/playlists/handlers/getPlaylistVideos');
+    const { withPostVideoCards: postCards } = await load('posts/helpers/postVideoCards');
+    const blocks = [{ type: 'video', content: { video_id: published } }];
+    const page = actor => search({ limit: 1, sortBy: 'views' }, actor);
+    const hasVideo = (result, id) => result.videos.some(video => video.id === id);
+    await client.query('UPDATE videos SET view_count=100 WHERE id=$1', [published]);
+    await patchCard({ audience_mode: 'selected_roles', allowed_role_ids: ['1'] });
+    assert.equal((await page(viewer)).videos[0].show_locked_card, true);
+    const { getPersonalizedRecommendationsInternal: recommend } = await load('videos/video/handlers/getPersonalizedRecommendations');
+    assert.ok((await recommend(viewer)).some(card => card.id === published));
+    for (const invalid of [null, 'false', 0]) await assert.rejects(patchCard({ show_locked_card: invalid }), { status: 400 });
+    await patchCard({ show_locked_card: false });
+    await patchCard({ title: 'Members only' });
+    assert.ok(!(await recommend(viewer)).some(card => card.id === published));
+    const ownerPage = await page(owner);
+    assert.equal(ownerPage.videos[0].id, published);
+    assert.equal(ownerPage.videos[0].show_locked_card, false);
+    for (const actor of [null, viewer]) {
+      const hidden = await page(actor);
+      assert.equal(hidden.total, ownerPage.total - 1);
+      assert.equal(hidden.videos.length, 1);
+      assert.equal(hasVideo(hidden, published), false);
+      assert.deepEqual(await media([{ id: published, title: 'Stale card' }], actor), []);
+      assert.equal((await postCards([{ blocks }], actor))[0].blocks.length, 0);
+      assert.equal(hasVideo(await playlistVideos({ id: playlist }, actor), published), false);
+    }
+    // Only one otherwise eligible playlist item, making the fallback thumbnail unambiguous.
+    await client.query('UPDATE videos SET published_at=NULL WHERE id=$1', [scheduled]);
+    const { getPlaylistByIdInternal: playlistById } = await load('playlists/playlists/handlers/getPlaylistById');
+    const hiddenPlaylist = await playlistById({ id: playlist }, viewer);
+    assert.equal(hiddenPlaylist.video_count, 0);
+    assert.equal(hiddenPlaylist.thumbnail_url, null);
+    await client.query('INSERT INTO user_roles VALUES ($1,1,NULL)', [viewer]);
+    assert.equal(hasVideo(await page(viewer), published), true);
+    assert.equal((await playlistById({ id: playlist }, viewer)).video_count, 1);
+    assert.equal((await postCards([{ blocks }], viewer))[0].blocks[0].video_card.id, published);
+    await client.query("UPDATE user_roles SET expires_at=now()-interval '1 second' WHERE user_id=$1", [viewer]);
+    assert.equal(hasVideo(await page(viewer), published), false);
+    await client.query('DELETE FROM user_roles WHERE user_id=$1', [viewer]);
+    await patchCard({ audience_mode: 'everyone' });
+    assert.equal(hasVideo(await page(viewer), published), true);
+    await patchCard({ show_locked_card: true });
   });
 
   await t.test('restricted cards stay visible and each interaction rechecks active membership', async () => {

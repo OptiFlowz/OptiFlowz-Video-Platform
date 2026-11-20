@@ -28,9 +28,12 @@ test('live playback selects and signs the current resource against PostgreSQL fi
     if (value === undefined) delete process.env[key]; else process.env[key] = value;
   } });
   let queries = 0, videoId;
-  mock.module(new URL('../src/database/index.js', import.meta.url).href, { namedExports: { writePool: {
+  const database = {
     async query(sql, params) { queries++; return client.query(sql.replaceAll('public.', 'pg_temp.'), params); },
-  } } });
+  };
+  mock.module(new URL('../src/database/index.js', import.meta.url).href, {
+    namedExports: { readPool: database, writePool: database },
+  });
   // Real SDK JWT signing with generated keys; no Mux HTTP calls.
   const { getLivePlaybackInternal: playback } = await import('../src/modules/live-streams/handlers/getLivePlayback.js');
   const { default: router } = await import('../src/modules/live-streams/live-streams.routes.js');

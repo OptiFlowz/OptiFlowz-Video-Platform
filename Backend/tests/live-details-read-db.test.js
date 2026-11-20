@@ -20,9 +20,12 @@ test('livestream details and current recording against PostgreSQL fixtures', { s
   const viewer = '12345678-1234-4234-8234-123456789def';
   await client.query("INSERT INTO pg_temp.users(id,full_name,image_url) VALUES ($1,'Creator','https://example.com/avatar.webp'),($2,'Viewer',NULL)", [owner, viewer]);
   let queries = 0, videoId;
-  mock.module(new URL('../src/database/index.js', import.meta.url).href, { namedExports: { writePool: {
+  const database = {
     async query(sql, params) { queries++; return client.query(sql.replaceAll('public.', 'pg_temp.'), params); },
-  } } });
+  };
+  mock.module(new URL('../src/database/index.js', import.meta.url).href, {
+    namedExports: { readPool: database, writePool: database },
+  });
   const { getLiveDetailsInternal: details } = await import('../src/modules/live-streams/handlers/getLiveDetails.js');
   const { default: router } = await import('../src/modules/live-streams/live-streams.routes.js');
   const { optionalAuth } = await import('../src/middleware/auth.js');

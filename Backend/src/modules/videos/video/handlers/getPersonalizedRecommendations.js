@@ -1,3 +1,4 @@
+import { videoCardAudienceWhere } from '../../../../common/videoAccess.js';
 import { withVideoCardMedia } from '../../helpers/videoCardMedia.js';
 import { readPool } from '../../../../database/index.js';
 
@@ -65,7 +66,7 @@ export async function getPersonalizedRecommendationsInternal(userId, limit = 20,
         ) p
       ) ppl ON TRUE
       WHERE v.mux_status = 'ready' AND v.visibility = 'public'
-        AND v.published_at <= NOW()
+        AND v.published_at <= NOW() AND ${videoCardAudienceWhere('$1')}
         AND NOT EXISTS (
           SELECT 1
           FROM watch_progress wp2

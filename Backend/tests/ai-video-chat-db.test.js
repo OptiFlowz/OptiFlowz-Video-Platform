@@ -13,7 +13,7 @@ test('AI video chat retrieves and filters indexed sources from the requested pub
   t.after(() => client.end());
   await client.query(`
     CREATE TEMP TABLE videos (id uuid, title text, duration_seconds int, mux_status text,
-      visibility text, published_at timestamptz DEFAULT now());
+      visibility text, published_at timestamptz DEFAULT now(), uploaded_by uuid, audience_mode text DEFAULT 'everyone');
     CREATE TEMP TABLE video_indexing_sources (id uuid, indexed_revision int, enabled boolean);
     CREATE TEMP TABLE video_documents_pg (id uuid DEFAULT gen_random_uuid(), video_id uuid,
       source_id uuid, document_type text, source_revision int, language text DEFAULT 'en',
@@ -42,8 +42,8 @@ test('AI video chat retrieves and filters indexed sources from the requested pub
   process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
   process.env.AI_TOOLS_BEARER_TOKEN = randomUUID();
   process.env.OPENAI_API_KEY = 'test';
-  const { writePool } = await import('../src/database/index.js');
-  t.mock.method(writePool, 'query', client.query.bind(client));
+  const { readPool } = await import('../src/database/index.js');
+  t.mock.method(readPool, 'query', client.query.bind(client));
   const { default: router } = await import('../src/modules/ai/ai.routes.js');
   const app = express();
   app.use('/api/ai', express.json(), router);

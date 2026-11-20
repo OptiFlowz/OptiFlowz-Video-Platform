@@ -1,3 +1,4 @@
+import { videoCardAudienceWhere } from '../../../../common/videoAccess.js';
 import { withPlaylistCardMedia } from '../../helpers/playlistCardMedia.js';
 import { withVideoCardMedia } from '../../../videos/helpers/videoCardMedia.js';
 import { readPool } from '../../../../database/index.js';
@@ -37,7 +38,7 @@ export async function getPlaylistWithVideosInternal(playlistId, userId = null) {
       JOIN public.videos v ON v.id = pi.video_id
       WHERE pi.playlist_id = p.id
         AND v.mux_status = 'ready'
-        AND v.visibility = 'public' AND v.published_at <= NOW()
+        AND v.visibility = 'public' AND v.published_at <= NOW() AND ${videoCardAudienceWhere('$2')}
     ) ic ON TRUE
 
     LEFT JOIN LATERAL (
@@ -78,14 +79,14 @@ export async function getPlaylistWithVideosInternal(playlistId, userId = null) {
       ) ppl ON TRUE
       WHERE pi.playlist_id = p.id
         AND v.mux_status = 'ready'
-        AND v.visibility = 'public' AND v.published_at <= NOW()
+        AND v.visibility = 'public' AND v.published_at <= NOW() AND ${videoCardAudienceWhere('$2')}
     ) vs ON TRUE
 
     WHERE p.id = $1
     LIMIT 1;
   `;
 
-  const params = userId ? [playlistId, userId] : [playlistId];
+  const params = [playlistId, userId];
   const { rows } = await readPool.query(sql, params);
 
   if (!rows[0]) return null;

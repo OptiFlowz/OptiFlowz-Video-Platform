@@ -1,3 +1,4 @@
+import { videoCardAudienceWhere } from '../../../../common/videoAccess.js';
 import { withPlaylistCardMedia } from '../../helpers/playlistCardMedia.js';
 import { readPool } from '../../../../database/index.js';
 
@@ -17,13 +18,13 @@ export async function getFeaturedPlaylistsInternal(userId = null) {
       JOIN public.videos v3 ON v3.id = pi3.video_id
       WHERE pi3.playlist_id = p.id
         AND v3.mux_status = 'ready' AND v3.visibility = 'public'
-        AND v3.published_at <= NOW()
+        AND v3.published_at <= NOW() AND ${videoCardAudienceWhere('$1', 'v3')}
     ) ic ON TRUE
     WHERE p.status = 'public'
       AND p.featured = TRUE
     ORDER BY p.created_at ASC;
   `;
 
-  const { rows } = await readPool.query(sql);
+  const { rows } = await readPool.query(sql, [userId]);
   return { playlists: await withPlaylistCardMedia(rows, userId) };
 }

@@ -8,7 +8,7 @@ const otherUserId = '12345678-1234-4234-8234-123456789def';
 const liveStreamId = '12345678-1234-4234-8234-123456789012';
 let calls, row, stream, failure;
 mock.module(new URL('../src/database/index.js', import.meta.url).href, {
-  namedExports: { writePool: { async query(sql, values) {
+  namedExports: { readPool: {}, writePool: { async query(sql, values) {
     if (sql.includes('FROM users')) {
       return { rows: [{ id: values[0], status: 'active', authz_version: 1 }] };
     }

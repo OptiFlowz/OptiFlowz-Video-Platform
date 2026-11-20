@@ -1,18 +1,17 @@
-import { writePool } from '../../../database/index.js';
+import { videoCardAudienceWhere } from '../../../common/videoAccess.js';
+import { readPool } from '../../../database/index.js';
 import { withVideoThumbnailMedia } from '../../videos/helpers/videoCardMedia.js';
 
 export async function withPlaylistCardMedia(cards, userId = null) {
   if (!cards.length) return [];
-  // Re-read artwork and item order on the primary so removal/reordering takes
-  // effect even when the playlist cards came from a replica.
-  const { rows } = await writePool.query(
+  const { rows } = await readPool.query(
     `SELECT p.id, p.thumbnail_url, first_item.video_id
      FROM public.playlists p
      LEFT JOIN LATERAL (
        SELECT pi.video_id
        FROM public.playlist_items pi
        JOIN public.videos v ON v.id = pi.video_id
-       WHERE pi.playlist_id = p.id
+       WHERE pi.playlist_id = p.id AND ${videoCardAudienceWhere('$2')}
          AND v.mux_status = 'ready'
          AND ((v.visibility = 'public' AND v.published_at <= NOW())
            OR (v.visibility IN ('public', 'private') AND v.uploaded_by = $2))

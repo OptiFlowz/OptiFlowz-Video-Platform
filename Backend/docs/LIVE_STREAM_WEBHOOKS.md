@@ -75,7 +75,7 @@ URL, empty tokens and null expiry. Signed playback returns separate playback,
 thumbnail and storyboard JWTs, and puts the playback token in the HLS URL.
 Tokens last one hour; refresh through this route before `expires_at` (Unix
 seconds). Responses use `Cache-Control: private, no-store`, and every request
-checks current access on the primary database. Missing signing keys return 503.
+checks access through `readPool`. Missing signing keys return 503.
 
 `GET /api/live-streams/users/:userId/cards` is a public, optionally authenticated
 listing. It returns `{ success, cards, page, limit, total, total_pages, sort_by,

@@ -1,6 +1,6 @@
 import Mux from '@mux/mux-node';
 import { z } from 'zod';
-import { writePool } from '../../../database/index.js';
+import { readPool } from '../../../database/index.js';
 import { HttpError } from '../../../common/httpError.js';
 import { videoAudienceWhere } from '../../../common/videoAccess.js';
 import { validateOrThrow } from '../../../common/input.validation.js';
@@ -12,9 +12,8 @@ const TOKEN_LIFETIME_SECONDS = 3600;
 export async function getLivePlaybackInternal(liveStreamId, userId = null) {
   // Authentication is selected by the route; visibility is enforced for every viewer.
   const id = validateOrThrow(idSchema.safeParse(liveStreamId));
-  // Read the primary on each request so visibility changes apply to new tokens.
   // DVR must use this session's asset, never a recording from an earlier session.
-  const { rows } = await writePool.query(`SELECT ls.id, ls.user_id, ls.visibility,
+  const { rows } = await readPool.query(`SELECT ls.id, ls.user_id, ls.visibility,
     ls.status, ls.mux_status, ls.dvr_enabled, ls.playback_policy, ls.mux_live_playback_id,
     v.id AS video_id, v.mux_playback_id AS recording_playback_id,
     v.playback_policy AS recording_playback_policy

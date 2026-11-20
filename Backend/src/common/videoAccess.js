@@ -1,14 +1,19 @@
 import { HttpError } from './httpError.js';
 
-// Used with the server-owned video alias v. Missing/expired role assignments never match.
-export function videoAudienceWhere(userParam = '$2') {
-  return `(v.audience_mode = 'everyone' OR v.uploaded_by = ${userParam}
-    OR (v.audience_mode = 'selected_roles' AND EXISTS (
+// Aliases and parameter slots come only from server-owned query builders.
+export function videoAudienceWhere(userParam = '$2', videoAlias = 'v') {
+  if (userParam === 'NULL') return `${videoAlias}.audience_mode = 'everyone'`;
+  return `(${videoAlias}.audience_mode = 'everyone' OR ${videoAlias}.uploaded_by = ${userParam}
+    OR (${videoAlias}.audience_mode = 'selected_roles' AND EXISTS (
       SELECT 1 FROM public.video_allowed_roles ar
       JOIN public.user_roles ur ON ur.role_id = ar.role_id
-      WHERE ar.video_id = v.id AND ur.user_id = ${userParam}
+      WHERE ar.video_id = ${videoAlias}.id AND ur.user_id = ${userParam}
         AND (ur.expires_at IS NULL OR ur.expires_at > NOW())
     )))`;
+}
+
+export function videoCardAudienceWhere(userParam, videoAlias = 'v') {
+  return `(${videoAlias}.show_locked_card OR ${videoAudienceWhere(userParam, videoAlias)}) IS TRUE`;
 }
 
 export function watchableVideoWhere({ userParam = '$2', allowLiveRecording = false } = {}) {
@@ -38,8 +43,7 @@ export function visibleVideoWhere({ videoAlias = 'v', userParam = '$2', allowLiv
   ))`;
 }
 
-// Call with the primary database for current access state. Live access is
-// explicit so video embedding, notes and other callers keep their old rules.
+// Pass the transaction client when checking access as part of a write.
 export async function requireVisibleVideo(database, videoId, userId = null, options = {}) {
   const where = options.checkAudience ? watchableVideoWhere : visibleVideoWhere;
   const { rows } = await database.query(

@@ -1,6 +1,6 @@
-import { visibleVideoWhere } from '../../../../common/videoAccess.js';
+import { videoCardAudienceWhere, visibleVideoWhere } from '../../../../common/videoAccess.js';
 import { HttpError } from '../../../../common/httpError.js';
-import { writePool } from '../../../../database/index.js';
+import { readPool } from '../../../../database/index.js';
 import {
   buildVideoCardJoins,
   buildVideoCardVisibilityWhere,
@@ -33,7 +33,7 @@ export async function getSimilarVideosVectorInternal(videoId, userId = null, lim
 
   // Authorize the source video, including the current recording of a visible live stream.
   // Prefer its overview; captions alone can still provide a representative vector.
-  const { rows: sourceRows } = await writePool.query(
+  const { rows: sourceRows } = await readPool.query(
     `SELECT v.id,
        CASE WHEN vector_norm(reference.embedding) > 0 THEN reference.embedding END AS embedding
      FROM videos v
@@ -51,7 +51,7 @@ export async function getSimilarVideosVectorInternal(videoId, userId = null, lim
          AND d.index_version = $4
          AND vector_norm(d.embedding) > 0
      ) reference ON TRUE
-     WHERE v.id = $1 AND ${visibleVideoWhere({ allowLiveRecording: true })}`,
+     WHERE v.id = $1 AND ${visibleVideoWhere({ allowLiveRecording: true })} AND ${videoCardAudienceWhere('$2')}`,
     [videoId, userId, MODEL, INDEX_VERSION],
   );
   if (!sourceRows.length) throw new HttpError(404, { message: 'Video not found' });
@@ -63,23 +63,22 @@ export async function getSimilarVideosVectorInternal(videoId, userId = null, lim
     JOIN video_documents_pg d ON d.video_id = v.id
     JOIN video_indexing_sources s ON s.id = d.source_id
     WHERE v.id <> $1
-      AND ${buildVideoCardVisibilityWhere()}
+      AND ${buildVideoCardVisibilityWhere('$4')}
       AND s.enabled = TRUE
       AND d.source_revision = s.indexed_revision
       AND d.embedding_model = $2
       AND d.index_version = $3
       AND vector_norm(d.embedding) > 0
   `;
-  const filterParams = [videoId, MODEL, INDEX_VERSION];
+  const filterParams = [videoId, MODEL, INDEX_VERSION, userId];
   // pg returns vectors as strings unless a vector type parser is registered.
   const vector = typeof embedding === 'string' ? embedding : JSON.stringify(embedding);
   const params = [...filterParams, vector, limit, offset];
-  if (userId) params.push(userId);
 
   const [{ rows }, { rows: countRows }] = await Promise.all([
-    writePool.query(
+    readPool.query(
       `WITH ranked AS (
-        SELECT v.id, MAX(1 - (d.embedding <=> $4::vector)) AS similarity_score
+        SELECT v.id, MAX(1 - (d.embedding <=> $5::vector)) AS similarity_score
         ${eligibleDocuments}
         GROUP BY v.id
       )
@@ -91,14 +90,14 @@ export async function getSimilarVideosVectorInternal(videoId, userId = null, lim
         ${userId ? ', wp.progress_seconds, wp.percentage_watched' : ''}
       ${buildVideoCardJoins({
         includeWatchProgress: Boolean(userId),
-        watchProgressUserParam: userId ? '$7' : null,
+        watchProgressUserParam: userId ? '$4' : null,
       })}
       JOIN ranked ON ranked.id = v.id
       ORDER BY ranked.similarity_score DESC, v.view_count DESC, v.created_at DESC, v.id
-      LIMIT $5 OFFSET $6`,
+      LIMIT $6 OFFSET $7`,
       params,
     ),
-    writePool.query(`SELECT COUNT(DISTINCT v.id) AS total ${eligibleDocuments}`, filterParams),
+    readPool.query(`SELECT COUNT(DISTINCT v.id) AS total ${eligibleDocuments}`, filterParams),
   ]);
 
   return {

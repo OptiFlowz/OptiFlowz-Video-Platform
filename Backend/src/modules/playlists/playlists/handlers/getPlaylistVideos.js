@@ -44,7 +44,7 @@ export async function getPlaylistVideosInternal(object, userId = null) {
     JOIN playlist_items pi ON pi.video_id = v.id
     JOIN playlists pl ON pi.playlist_id = pl.id
     WHERE
-      ${buildVideoCardVisibilityWhere()}
+      ${buildVideoCardVisibilityWhere('$4')}
       AND pi.playlist_id = $1
       AND (
         pl.status = 'public'
@@ -63,7 +63,7 @@ export async function getPlaylistVideosInternal(object, userId = null) {
     JOIN playlist_items pi ON pi.video_id = v.id
     JOIN playlists pl ON pi.playlist_id = pl.id
     WHERE
-      ${buildVideoCardVisibilityWhere()}
+      ${buildVideoCardVisibilityWhere('$2')}
       AND pi.playlist_id = $1
       AND (
         pl.status = 'public'

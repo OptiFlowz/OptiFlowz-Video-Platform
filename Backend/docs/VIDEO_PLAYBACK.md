@@ -72,8 +72,9 @@ video's public/signed policy; the top-level `media_expires_at` applies to chapte
 images too. Invalid chapter times produce a null URL; times beyond the video
 are clamped. Null or empty chapter lists retain their existing shape.
 
-Access checks use the primary database. Existing visibility rules and view
-counting remain in place, and responses use `Cache-Control: private, no-store`.
+Details and playback check access through `readPool`. A visibility or role
+change takes effect on a replica once it receives the update. Responses use
+`Cache-Control: private, no-store`.
 
 ## Subtitle downloads
 
@@ -87,9 +88,15 @@ video update permissions, and processing responses are preserved.
 
 ## Video-card images
 
-Published videos with a restricted audience remain in search results,
-recommendations and other video lists. Each card includes:
+Published videos with a restricted audience appear as locked cards by default.
+After applying `1795132800002_add-video-show-locked-card.sql`, editors can send
+`{"show_locked_card": false}` to `PATCH /api/video-moderation/video-details/:videoId`.
+For `selected_roles`, this hides the card from guests and viewers without an active
+selected role. The uploader retains access. The setting takes effect in video
+lists, pagination, playlist counts and fallback artwork. Omitting the field in
+a PATCH preserves its saved value. Each card includes:
 
+- `show_locked_card` is the saved boolean setting.
 - `can_watch` is true for a signed-in viewer with access to a ready video with a playback ID.
 - `audience_mode` is `everyone` or `selected_roles`. A stale card whose video is no longer visible returns null.
 - `allowed_roles` contains the selected role names in name order, or an empty array.
@@ -136,7 +143,7 @@ width is 640 pixels and frame rate is 10 fps. Signed thumbnails use audience `t`
 and previews use `g`, with image parameters inside the JWT claims, following
 [Mux's image signing rules](https://www.mux.com/docs/guides/secure-video-playback).
 
-Each list performs one batch read from the primary database to check current
+Each list performs one batch read through `readPool` to check
 visibility and playback policy before issuing image tokens. Signing does not
 make Mux API requests. Configure `MUX_SIGNING_KEY` and `MUX_PRIVATE_KEY` and apply
 the playback-policy/thumbnail-settings migrations before serving signed cards.

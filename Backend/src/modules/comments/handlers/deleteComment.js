@@ -1,4 +1,4 @@
-import { writePool } from '../../../database/index.js';
+import { readPool, writePool } from '../../../database/index.js';
 import { watchableVideoWhere } from '../../../common/videoAccess.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
@@ -22,7 +22,7 @@ function prerequisites(object,userId) {
 export async function deleteCommentInternal(params, userId, authorization) {
   const { id: commentId } = prerequisites(params,userId);
 
-  const check = await writePool.query(
+  const check = await readPool.query(
     `
       SELECT id, user_id, is_deleted
       FROM public.video_comments

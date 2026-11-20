@@ -23,7 +23,7 @@ let importId = 0;
 
 mock.module(new URL('../src/database/index.js', import.meta.url).href, {
   namedExports: {
-    writePool: {
+    readPool: {
       async query(sql, params) {
         queries.push({ sql, params });
         return { rows: video ? [video] : [] };

@@ -1,4 +1,4 @@
-import { writePool } from '../../../database/index.js';
+import { readPool, writePool } from '../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
 import { moderateText } from '../../../common/moderateText.js';
@@ -34,7 +34,7 @@ export async function postCommentInternal(object, userId) {
   const { video_id, parent_id = null, content } = prerequisites(object,userId);
 
   if (parent_id) {
-    const parentCheck = await writePool.query(
+    const parentCheck = await readPool.query(
       `SELECT id, video_id
        FROM public.video_comments
        WHERE id = $1 AND video_id = $2 AND is_deleted=false
