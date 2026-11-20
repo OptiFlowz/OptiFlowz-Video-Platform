@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "จำกัดการรับชมตามบทบาท",
+  "uploadRoleRestrictionHelp": "ตัวอย่างเท่านั้น เลือกบทบาทที่จะรับชมวิดีโอนี้ได้",
+  "uploadRoleHideBanner": "ซ่อนจากผู้อื่น",
+  "uploadRoleHideBannerHelp": "ผู้ที่ไม่มีบทบาทใดที่เลือกไว้จะค้นหาวิดีโอไม่พบ",
   "liveDuration": "ระยะเวลาสูงสุด",
   "navSectionManage": "จัดการ",
   "videoScheduled": "กำหนดเวลาแล้ว",

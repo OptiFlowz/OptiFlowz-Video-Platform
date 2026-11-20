@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "Batasi pemutaran berdasarkan peran",
+  "uploadRoleRestrictionHelp": "Hanya pratinjau. Pilih peran yang dapat menonton video ini.",
+  "uploadRoleHideBanner": "Sembunyikan dari yang lain",
+  "uploadRoleHideBannerHelp": "Pengguna tanpa peran terpilih tidak akan dapat menemukan video",
   "liveDuration": "Durasi maksimum",
   "navSectionManage": "Kelola",
   "videoScheduled": "Terjadwal",

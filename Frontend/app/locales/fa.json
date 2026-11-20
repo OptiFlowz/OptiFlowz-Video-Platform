@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "محدود کردن پخش بر اساس نقش",
+  "uploadRoleRestrictionHelp": "فقط پیش‌نمایش است. نقش‌هایی را انتخاب کنید که بتوانند این ویدیو را تماشا کنند.",
+  "uploadRoleHideBanner": "پنهان کردن از دیگران",
+  "uploadRoleHideBannerHelp": "کاربران بدون نقش انتخاب‌شده نمی‌توانند ویدیو را پیدا کنند",
   "liveDuration": "حداکثر مدت‌زمان",
   "navSectionManage": "مدیریت",
   "videoScheduled": "زمان‌بندی‌شده",

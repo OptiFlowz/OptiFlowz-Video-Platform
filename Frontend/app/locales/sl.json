@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "Omeji predvajanje glede na vlogo",
+  "uploadRoleRestrictionHelp": "Samo predogled. Izberite vloge, s katerimi bi si uporabniki lahko ogledali ta videoposnetek.",
+  "uploadRoleHideBanner": "Skrij pred drugimi",
+  "uploadRoleHideBannerHelp": "Uporabniki brez izbrane vloge ne bodo mogli najti videoposnetka",
   "liveDuration": "Najdaljše trajanje",
   "navSectionManage": "Upravljanje",
   "videoScheduled": "Načrtovano",

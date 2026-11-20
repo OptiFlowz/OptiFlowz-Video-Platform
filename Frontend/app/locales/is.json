@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "Takmarka áhorf eftir hlutverki",
+  "uploadRoleRestrictionHelp": "Aðeins forskoðun. Veldu hvaða hlutverk myndu veita aðgang að myndbandinu.",
+  "uploadRoleHideBanner": "Fela fyrir öðrum",
+  "uploadRoleHideBannerHelp": "Notendur án valins hlutverks munu ekki geta fundið myndbandið",
   "liveDuration": "Hámarkslengd",
   "navSectionManage": "Stjórnun",
   "videoScheduled": "Áætlað",

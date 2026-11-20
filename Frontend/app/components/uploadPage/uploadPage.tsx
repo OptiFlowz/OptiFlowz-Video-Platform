@@ -28,6 +28,9 @@ import { useConstrainedSticky } from "../shared/useConstrainedSticky";
 import { useI18n } from "~/i18n";
 import type { UploadStatus } from "./uploadSession";
 import statusStyles from "./uploadStatus.module.css";
+import { useAuthorization } from "~/authorization/authorization";
+import { P } from "~/authorization/permissions";
+import RoleRestrictionSection, { useRoleRestrictionDraft } from "../shared/roleRestrictionSection";
 import VideoRecorder from "./videoRecorder";
 import LocalVideoEditor from "./localVideoEditor";
 import CustomSelect from "~/components/customSelect/customSelect";
@@ -160,6 +163,7 @@ function localDateTimeValue(date: Date): string {
 
 function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) => void; onFinish?: () => void } = {}) {
   const { t, locale } = useI18n();
+  const { can } = useAuthorization();
   const languageNames = useMemo(() => new Intl.DisplayNames([locale === "sr" ? "sr-Latn" : locale], { type: "language" }), [locale]);
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
@@ -177,6 +181,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
   const [oldChairs, setOldChairs] = useState<Contributor[]>([]);
   const [visibility, setVisibility] = useState<"public" | "private">("private");
   const [scheduleUpload, setScheduleUpload] = useState(false);
+  const [roleRestriction, setRoleRestriction] = useRoleRestrictionDraft();
   const [scheduledAt, setScheduledAt] = useState("");
   const [scheduleNow, setScheduleNow] = useState(() => Date.now());
   const scheduledTime = new Date(scheduledAt).getTime();
@@ -2206,7 +2211,11 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                         {scheduleInvalid && <p id="scheduleTimeError" className={statusStyles.scheduleError} role="status">{t("uploadScheduleInvalid")}</p>}
                       </div>}
                     </div>
-                    <div className="formGroup mt-7.5">
+                    {can(P.rolesGet) && (
+                      <RoleRestrictionSection token={token} draft={roleRestriction}
+                        setDraft={setRoleRestriction} disabled={isSavingDetails} />
+                    )}
+                    <div className={`formGroup ${statusStyles.schedule}`}>
                       <label htmlFor="uploadDetailsPlaybackPolicy">{t("playbackProtection")}</label>
                       <p className="formHint">
                         {t(playbackPolicy === "public" ? "playbackPublicHelp" : "playbackSignedHelp")}

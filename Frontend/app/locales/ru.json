@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "Ограничить просмотр по ролям",
+  "uploadRoleRestrictionHelp": "Только предпросмотр. Выберите роли, с которыми можно было бы смотреть это видео.",
+  "uploadRoleHideBanner": "Скрыть от остальных",
+  "uploadRoleHideBannerHelp": "Пользователи без выбранной роли не смогут найти видео",
   "liveDuration": "Максимальная длительность",
   "navSectionManage": "Управление",
   "videoScheduled": "Запланировано",

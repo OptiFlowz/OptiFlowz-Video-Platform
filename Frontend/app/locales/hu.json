@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "Lejátszás korlátozása szerepkör szerint",
+  "uploadRoleRestrictionHelp": "Csak előnézet. Válassza ki, mely szerepkörökkel lehetne megnézni a videót.",
+  "uploadRoleHideBanner": "Elrejtés mások elől",
+  "uploadRoleHideBannerHelp": "Kiválasztott szerepkör nélkül a videó nem lesz megtalálható",
   "liveDuration": "Maximális időtartam",
   "navSectionManage": "Kezelés",
   "videoScheduled": "Ütemezve",

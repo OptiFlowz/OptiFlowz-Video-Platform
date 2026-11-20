@@ -1,6 +1,7 @@
 import { permissionLabel, permissionGroupLabel } from "~/authorization/permissionLabels";
 import { useI18n } from "~/i18n";
 import { getRoleLabel } from "~/authorization/roleLabels";
+import { roleCatalogQuery, type ApiRole } from "~/authorization/roleCatalog";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -50,27 +51,6 @@ type PermissionGroup = {
 type RolePermissionsResponse = {
   success: boolean;
   groups: PermissionGroup[];
-};
-
-type ApiRole = {
-  id: string;
-  name: string;
-  position: number;
-  is_system: boolean;
-  is_default: boolean;
-  is_owner: boolean;
-  member_count: number;
-  permissions: Array<{
-    id: number;
-    effect: "allow" | "deny";
-  }>;
-  can_update: boolean;
-  can_delete: boolean;
-};
-
-type RolesResponse = {
-  success: boolean;
-  roles: ApiRole[];
 };
 
 type PlatformRole = {
@@ -461,15 +441,7 @@ export default function AccessAndRoles() {
     error: rolesError,
     refetch: refetchRoles,
   } = useQuery({
-    queryKey: ["roles", token],
-    queryFn: () =>
-      fetchFn<RolesResponse>({
-        route: "api/roles",
-        options: {
-          method: "GET",
-          headers: roleHeadersRef.current,
-        },
-      }),
+    ...roleCatalogQuery(token),
     enabled: !!token,
     refetchOnWindowFocus: false,
   });

@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "Limitahan ang panonood ayon sa tungkulin",
+  "uploadRoleRestrictionHelp": "Preview lang. Piliin ang mga tungkuling papayagang manood ng video.",
+  "uploadRoleHideBanner": "Itago sa iba",
+  "uploadRoleHideBannerHelp": "Hindi mahahanap ang video ng mga walang napiling tungkulin",
   "navSectionManage": "Pamahalaan",
   "videoScheduled": "Naka-iskedyul",
   "uploadSchedule": "Mag-iskedyul ng pag-upload",

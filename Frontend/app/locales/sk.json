@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "Obmedziť prehrávanie podľa roly",
+  "uploadRoleRestrictionHelp": "Iba ukážka. Vyberte roly, s ktorými by sa dalo toto video pozerať.",
+  "uploadRoleHideBanner": "Skryť pred ostatnými",
+  "uploadRoleHideBannerHelp": "Používatelia bez vybranej roly nebudú môcť video nájsť",
   "liveDuration": "Maximálna dĺžka",
   "navSectionManage": "Správa",
   "videoScheduled": "Naplánované",

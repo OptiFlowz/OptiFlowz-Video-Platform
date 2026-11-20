@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "ნახვის შეზღუდვა როლის მიხედვით",
+  "uploadRoleRestrictionHelp": "მხოლოდ წინასწარი ნახვა. აირჩიეთ როლები, რომელთა მქონე მომხმარებლებსაც შეეძლებოდათ ვიდეოს ნახვა.",
+  "uploadRoleHideBanner": "სხვებისგან დამალვა",
+  "uploadRoleHideBannerHelp": "არჩეული როლის გარეშე მომხმარებლები ვიდეოს ვერ იპოვიან",
   "navSectionManage": "მართვა",
   "videoScheduled": "დაგეგმილი",
   "uploadSchedule": "ატვირთვის დაგეგმვა",

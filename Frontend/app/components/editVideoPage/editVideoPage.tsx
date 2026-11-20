@@ -28,6 +28,9 @@ import { useI18n } from "~/i18n";
 import statusStyles from "../uploadPage/uploadStatus.module.css";
 import CustomSelect from "~/components/customSelect/customSelect";
 import { EditorHeader } from "../shared/editorHeader";
+import RoleRestrictionSection, { useRoleRestrictionDraft } from "../shared/roleRestrictionSection";
+import { useAuthorization } from "~/authorization/authorization";
+import { P } from "~/authorization/permissions";
 
 
 
@@ -139,8 +142,14 @@ function localDateTimeValue(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
+function EditRoleRestrictions({ token, disabled }: { token: string; disabled: boolean }) {
+  const [draft, setDraft] = useRoleRestrictionDraft();
+  return <RoleRestrictionSection token={token} draft={draft} setDraft={setDraft} disabled={disabled} />;
+}
+
 function EditVideoPage() {
   const { t, locale } = useI18n();
+  const { can } = useAuthorization();
   const queryClient = useQueryClient();
   const languageNames = useMemo(() => new Intl.DisplayNames([locale === "sr" ? "sr-Latn" : locale], { type: "language" }), [locale]);
   const navigate = useNavigate();
@@ -1611,7 +1620,10 @@ function EditVideoPage() {
                       {scheduleInvalid && <p id="editScheduleTimeError" className={statusStyles.scheduleError} role="status">{t("uploadScheduleInvalid")}</p>}
                     </div>}
                   </div>
-                  <div className="formGroup mt-7.5">
+                  {can(P.rolesGet) && (
+                    <EditRoleRestrictions key={videoId} token={token} disabled={isSavingAccess} />
+                  )}
+                  <div className={`formGroup ${statusStyles.schedule}`}>
                     <label htmlFor="editPlaybackPolicy">{t("playbackProtection")}</label>
                     <p className="formHint">
                       {t(playbackPolicy === "public" ? "playbackPublicHelp" : "playbackSignedHelp")}

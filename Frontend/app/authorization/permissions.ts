@@ -8,7 +8,7 @@ export const P = {
   postsCreate: 'posts.create', postsUpdateOwn: 'posts.update_own', postsUpdateAny: 'posts.update_any',
   postsDeleteOwn: 'posts.delete_own', postsDeleteAny: 'posts.delete_any',
   postsPollVote: 'posts.poll.vote', postsQuestionerAnswer: 'posts.questioner.answer',
-  rolesManage: 'roles.manage', usersSearch: 'users.search', usersAssignRoles: 'users.assign_roles',
+  rolesGet: 'roles.get', rolesManage: 'roles.manage', usersSearch: 'users.search', usersAssignRoles: 'users.assign_roles',
   videosCreate: 'videos.create', videosUpdateOwn: 'videos.update_own', videosUpdateAny: 'videos.update_any',
   videosDeleteOwn: 'videos.delete_own', videosDeleteAny: 'videos.delete_any', videosLibrary: 'videos.library.read',
   videosProgress: 'videos.progress.update', videosReact: 'videos.react',

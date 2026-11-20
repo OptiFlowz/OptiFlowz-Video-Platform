@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "ভূমিকা অনুযায়ী ভিডিও দেখা সীমিত করুন",
+  "uploadRoleRestrictionHelp": "শুধু প্রিভিউ। কোন কোন ভূমিকার ব্যবহারকারীরা ভিডিওটি দেখতে পারবেন তা বেছে নিন।",
+  "uploadRoleHideBanner": "অন্যদের কাছ থেকে লুকান",
+  "uploadRoleHideBannerHelp": "নির্বাচিত কোনো ভূমিকা না থাকলে ভিডিওটি খুঁজে পাওয়া যাবে না",
   "navSectionManage": "পরিচালনা করুন",
   "videoScheduled": "নির্ধারিত",
   "uploadSchedule": "আপলোড শিডিউল করুন",

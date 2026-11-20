@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "Restrict playback by role",
+  "uploadRoleRestrictionHelp": "Preview only. Choose which roles would be able to watch this video.",
+  "uploadRoleHideBanner": "Hide from others",
+  "uploadRoleHideBannerHelp": "Video will be undiscoverable to all unselected roles",
   "navSectionManage": "Manage",
   "videoScheduled": "Scheduled",
   "uploadSchedule": "Schedule upload",

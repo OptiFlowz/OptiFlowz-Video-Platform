@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "Riboti peržiūrą pagal vaidmenį",
+  "uploadRoleRestrictionHelp": "Tik peržiūra. Pasirinkite vaidmenis, kuriuos turintys naudotojai galėtų žiūrėti šį vaizdo įrašą.",
+  "uploadRoleHideBanner": "Slėpti nuo kitų",
+  "uploadRoleHideBannerHelp": "Naudotojai be pasirinkto vaidmens negalės rasti vaizdo įrašo",
   "liveDuration": "Didžiausia trukmė",
   "navSectionManage": "Valdymas",
   "videoScheduled": "Suplanuota",

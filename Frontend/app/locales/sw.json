@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "Zuia utazamaji kulingana na jukumu",
+  "uploadRoleRestrictionHelp": "Onyesho la kukagua pekee. Chagua majukumu ambayo yangeruhusu watumiaji kutazama video hii.",
+  "uploadRoleHideBanner": "Ficha kwa wengine",
+  "uploadRoleHideBannerHelp": "Watumiaji bila jukumu lililochaguliwa hawataweza kuipata video",
   "navSectionManage": "Dhibiti",
   "videoScheduled": "Imepangwa",
   "uploadSchedule": "Ratibu upakiaji",

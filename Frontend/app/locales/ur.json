@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "کردار کے لحاظ سے ویڈیو دیکھنے کی پابندی لگائیں",
+  "uploadRoleRestrictionHelp": "صرف پیش نظارہ۔ وہ کردار منتخب کریں جن کے حامل صارفین یہ ویڈیو دیکھ سکیں گے۔",
+  "uploadRoleHideBanner": "دوسروں سے چھپائیں",
+  "uploadRoleHideBannerHelp": "جن صارفین کے پاس کوئی منتخب کردہ کردار نہیں ہے وہ ویڈیو تلاش نہیں کر سکیں گے",
   "navSectionManage": "انتظام",
   "videoScheduled": "طے شدہ",
   "uploadSchedule": "شیڈول اپ لوڈ کریں۔",

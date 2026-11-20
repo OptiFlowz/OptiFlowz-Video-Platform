@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "Begræns afspilning efter rolle",
+  "uploadRoleRestrictionHelp": "Kun forhåndsvisning. Vælg de roller, der skal kunne se videoen.",
+  "uploadRoleHideBanner": "Skjul for andre",
+  "uploadRoleHideBannerHelp": "Brugere uden en valgt rolle vil ikke kunne finde videoen",
   "liveDuration": "Maksimal varighed",
   "navSectionManage": "Administrer",
   "videoScheduled": "Planlagt",

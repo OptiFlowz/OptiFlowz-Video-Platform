@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "Restricționează redarea în funcție de rol",
+  "uploadRoleRestrictionHelp": "Doar previzualizare. Alege rolurile care ar permite vizionarea acestui videoclip.",
+  "uploadRoleHideBanner": "Ascunde pentru ceilalți",
+  "uploadRoleHideBannerHelp": "Cei fără un rol selectat nu vor putea găsi videoclipul",
   "liveDuration": "Durată maximă",
   "navSectionManage": "Gestionare",
   "videoScheduled": "Programat",

@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "Afspelen beperken op basis van rol",
+  "uploadRoleRestrictionHelp": "Alleen een voorbeeld. Kies met welke rollen gebruikers deze video zouden kunnen bekijken.",
+  "uploadRoleHideBanner": "Verbergen voor anderen",
+  "uploadRoleHideBannerHelp": "Wie geen geselecteerde rol heeft, kan de video niet vinden",
   "liveDuration": "Maximale duur",
   "navSectionManage": "Beheren",
   "videoScheduled": "Gepland",

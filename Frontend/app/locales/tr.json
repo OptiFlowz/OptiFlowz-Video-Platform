@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "Oynatmayı role göre sınırla",
+  "uploadRoleRestrictionHelp": "Yalnızca önizleme. Bu videoyu izleyebilecek rolleri seçin.",
+  "uploadRoleHideBanner": "Diğerlerinden gizle",
+  "uploadRoleHideBannerHelp": "Seçili rollerden birine sahip olmayanlar videoyu bulamayacak",
   "liveDuration": "Maksimum süre",
   "navSectionManage": "Yönetim",
   "videoScheduled": "Planlandı",

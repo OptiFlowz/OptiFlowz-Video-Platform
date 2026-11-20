@@ -8,13 +8,9 @@ import { getStoredUser, getToken } from '~/functions';
 import type { AuthFetchT } from '~/types';
 import { updateStoredProfile } from '~/auth/session';
 import { P, accessPermissions, type AccessSection } from './permissions';
+import { roleCatalogQuery, type ApiRole as RoleDefinition } from './roleCatalog';
 
-export type RoleDefinition = {
-  id: string | number; name: string; is_owner: boolean; is_system?: boolean; position: number;
-  permissions: Array<{ id: string | number; key?: string; effect: 'allow' | 'deny' }>;
-  can_update?: boolean; can_delete?: boolean;
-};
-type RoleCatalog = { success: boolean; roles: RoleDefinition[] };
+export type { RoleDefinition };
 type UserPermissionsResponse = { success: boolean; permissions: string[]; message?: string };
 
 function createAccess(user?: AuthFetchT['user'], permissionKeys: readonly string[] = []) {
@@ -69,12 +65,7 @@ export function AuthorizationProvider({ children }: { children: ReactNode }) {
   // Its availability never determines the user's effective permission keys.
   const needsRoles = !!token && access.canAny([P.rolesManage, P.usersSearch, P.usersAssignRoles]);
   const roleQuery = useQuery({
-    ...options, enabled: needsRoles, queryKey: ['roles', token],
-    queryFn: async ({ signal }) => {
-      const result = await fetchFn<RoleCatalog>({ route: 'api/roles', options: { method: 'GET', headers: { Authorization: `Bearer ${token}` }, signal } });
-      if (!result?.success || !Array.isArray(result.roles)) throw new Error('Unable to load roles.');
-      return result;
-    },
+    ...roleCatalogQuery(token), ...options, enabled: needsRoles,
   });
   useEffect(() => {
     if (!user || !token || getToken() !== token) return;

@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "Ограничи ја репродукцијата според улога",
+  "uploadRoleRestrictionHelp": "Само преглед. Изберете кои улоги би можеле да го гледаат видеото.",
+  "uploadRoleHideBanner": "Сокриј од другите",
+  "uploadRoleHideBannerHelp": "Корисниците без избрана улога нема да можат да го најдат видеото",
   "liveDuration": "Максимално времетраење",
   "navSectionManage": "Управување",
   "videoScheduled": "Закажано",

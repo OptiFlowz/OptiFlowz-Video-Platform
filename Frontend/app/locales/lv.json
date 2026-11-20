@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "Ierobežot skatīšanos pēc lomas",
+  "uploadRoleRestrictionHelp": "Tikai priekšskatījums. Izvēlieties lomas, kuru lietotāji varētu skatīties šo video.",
+  "uploadRoleHideBanner": "Paslēpt no citiem",
+  "uploadRoleHideBannerHelp": "Lietotāji bez atlasītas lomas nevarēs atrast video",
   "liveDuration": "Maksimālais ilgums",
   "navSectionManage": "Pārvaldība",
   "videoScheduled": "Ieplānots",

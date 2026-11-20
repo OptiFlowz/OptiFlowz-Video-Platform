@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "ロール別に再生を制限",
+  "uploadRoleRestrictionHelp": "プレビューのみです。この動画を視聴できるようにするロールを選択してください。",
+  "uploadRoleHideBanner": "他の人には非表示",
+  "uploadRoleHideBannerHelp": "選択したロールを持たないユーザーには動画が表示されません",
   "liveDuration": "最大配信時間",
   "navSectionManage": "管理",
   "videoScheduled": "公開予定",

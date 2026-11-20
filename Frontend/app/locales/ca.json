@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "Restringeix la reproducció per rol",
+  "uploadRoleRestrictionHelp": "Només és una previsualització. Tria quins rols podrien veure aquest vídeo.",
+  "uploadRoleHideBanner": "Amaga’l als altres",
+  "uploadRoleHideBannerHelp": "Qui no tingui cap rol seleccionat no podrà trobar el vídeo",
   "navSectionManage": "Gestionar",
   "videoScheduled": "Programat",
   "uploadSchedule": "Programa la càrrega",

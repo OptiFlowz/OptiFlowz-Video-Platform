@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "Omezit přehrávání podle role",
+  "uploadRoleRestrictionHelp": "Pouze náhled. Vyberte role, jejichž držitelé by mohli video sledovat.",
+  "uploadRoleHideBanner": "Skrýt před ostatními",
+  "uploadRoleHideBannerHelp": "Uživatelé bez vybrané role nebudou moci video najít",
   "liveDuration": "Maximální délka",
   "navSectionManage": "Správa",
   "videoScheduled": "Naplánováno",

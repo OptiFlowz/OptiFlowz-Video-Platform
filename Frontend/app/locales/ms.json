@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "Hadkan tontonan mengikut peranan",
+  "uploadRoleRestrictionHelp": "Pratonton sahaja. Pilih peranan yang boleh menonton video ini.",
+  "uploadRoleHideBanner": "Sembunyikan daripada orang lain",
+  "uploadRoleHideBannerHelp": "Pengguna tanpa peranan terpilih tidak akan dapat menemukan video ini",
   "navSectionManage": "Urus",
   "videoScheduled": "Dijadualkan",
   "uploadSchedule": "Jadualkan muat naik",

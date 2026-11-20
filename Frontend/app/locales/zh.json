@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "按角色限制播放",
+  "uploadRoleRestrictionHelp": "仅供预览。请选择可以观看此视频的角色。",
+  "uploadRoleHideBanner": "对其他人隐藏",
+  "uploadRoleHideBannerHelp": "未拥有任何所选角色的用户将无法找到该视频",
   "liveDuration": "最长时长",
   "navSectionManage": "管理",
   "videoScheduled": "已安排",

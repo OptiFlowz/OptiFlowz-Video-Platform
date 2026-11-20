@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "הגבלת הצפייה לפי תפקיד",
+  "uploadRoleRestrictionHelp": "תצוגה מקדימה בלבד. בחרו אילו תפקידים יאפשרו לצפות בסרטון.",
+  "uploadRoleHideBanner": "הסתרה מאחרים",
+  "uploadRoleHideBannerHelp": "מי שאין לו תפקיד שנבחר לא יוכל למצוא את הסרטון",
   "liveDuration": "משך מרבי",
   "navSectionManage": "ניהול",
   "videoScheduled": "מתוזמן",

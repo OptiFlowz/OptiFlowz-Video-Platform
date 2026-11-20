@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "Restringir la reproducción por rol",
+  "uploadRoleRestrictionHelp": "Solo vista previa. Elige qué roles podrían ver este vídeo.",
+  "uploadRoleHideBanner": "Ocultar a los demás",
+  "uploadRoleHideBannerHelp": "Quienes no tengan un rol seleccionado no podrán encontrar el vídeo",
   "liveDuration": "Duración máxima",
   "navSectionManage": "Gestionar",
   "videoScheduled": "Programado",

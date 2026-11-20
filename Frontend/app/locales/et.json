@@ -1,4 +1,8 @@
 {
+  "uploadRoleRestriction": "Piira vaatamist rolli järgi",
+  "uploadRoleRestrictionHelp": "Ainult eelvaade. Vali rollid, mille kasutajad saaksid seda videot vaadata.",
+  "uploadRoleHideBanner": "Peida teiste eest",
+  "uploadRoleHideBannerHelp": "Valitud rollita kasutajad ei leia videot",
   "liveDuration": "Maksimaalne kestus",
   "navSectionManage": "Haldamine",
   "videoScheduled": "Ajastatud",
