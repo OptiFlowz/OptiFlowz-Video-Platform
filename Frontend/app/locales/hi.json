@@ -1,6 +1,7 @@
 {
   "uploadRoleRestriction": "भूमिका के आधार पर वीडियो देखना सीमित करें",
-  "uploadRoleRestrictionHelp": "केवल पूर्वावलोकन। चुनें कि किन भूमिकाओं वाले लोग यह वीडियो देख सकेंगे।",
+  "uploadRoleRestrictionHelp": "कम से कम एक भूमिका चुनें जिसके उपयोगकर्ता यह वीडियो देख सकें।",
+  "insufficientPermissions": "पर्याप्त अनुमति नहीं है",
   "uploadRoleHideBanner": "दूसरों से छिपाएँ",
   "uploadRoleHideBannerHelp": "चुनी गई भूमिकाओं में से कोई भी न होने पर वीडियो नहीं मिलेगा",
   "liveDuration": "अधिकतम अवधि",

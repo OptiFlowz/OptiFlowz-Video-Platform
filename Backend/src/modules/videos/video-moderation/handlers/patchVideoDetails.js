@@ -1,6 +1,7 @@
 import { scheduleOverview } from '../../../video-indexing/indexing.service.js';
 import { writePool } from '../../../../database/index.js';
 import { HttpError } from '../../../../common/httpError.js';
+import { finishPlaybackCleanup } from './updateVideoPlaybackPolicy.js';
 import { z } from 'zod';
 
 function isDefined(v) {
@@ -186,6 +187,18 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
     }
 
     let updatedVideo = null;
+
+    if (audience_mode === 'selected_roles') {
+      const { rows: [video] } = await client.query(
+        'SELECT id, mux_asset_id, playback_policy, mux_playback_id_pending_deletion FROM public.videos WHERE id = $1 FOR UPDATE',
+        [videoId],
+      );
+      if (!video) throw new HttpError(404, { message: 'Video not found' });
+      if (video.playback_policy !== 'signed') {
+        throw new HttpError(409, { message: 'Finish switching to signed playback before restricting the audience.' });
+      }
+      await finishPlaybackCleanup(client, video);
+    }
 
     if (anyVideoField) {
       const set = [];

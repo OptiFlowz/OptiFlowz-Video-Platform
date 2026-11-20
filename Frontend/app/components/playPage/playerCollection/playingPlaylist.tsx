@@ -13,6 +13,7 @@ import { PLAYLIST_ADVANCE_EVENT } from "./playlistAutoplay";
 import PlayerSheet from "./playerSheet";
 import { Link, useLocation, useNavigate } from "react-router";
 import { getToken } from "~/functions";
+import { isRoleLocked } from "~/authorization/videoAudience";
 import { useI18n } from "~/i18n";
 
 function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, videoId: string, onClose: () => void}){
@@ -51,7 +52,7 @@ function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, vi
     }, [token]);
 
     const playlistQuery = useQuery({
-        queryKey: [`playlist${playlistId}`],
+        queryKey: [`playlist${playlistId}`, token],
         queryFn: ({ signal }) => fetchFn<FetchPlaylistT>({
             route: `api/playlists/${playlistId}`,
             options: {
@@ -78,7 +79,7 @@ function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, vi
     });
     const videos = useMemo(() => uniqueResults(videosQuery.data?.pages.flatMap(page => page.videos) ?? []), [videosQuery.data]);
     const currentIndex = videos.findIndex(video => video.id === videoId);
-    const nextVideo = currentIndex >= 0 ? videos[currentIndex + 1] : undefined;
+    const nextVideo = currentIndex >= 0 ? videos.slice(currentIndex + 1).find(video => !isRoleLocked(video)) : undefined;
     const { fetchNextPage, hasNextPage, isFetching, isError, isFetchNextPageError, refetch } = videosQuery;
     const loadMore = useCallback(() => {
         if (isError && !isFetchNextPageError) void refetch();
@@ -149,7 +150,7 @@ function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, vi
         savingRef.current = true;
         setSaving(true);
         setSaveError(false);
-        await queryClient.cancelQueries({ queryKey: [`playlist${playlistId}`] });
+        await queryClient.cancelQueries({ queryKey: [`playlist${playlistId}`, token] });
         const prevSaved = isSaved;
         const prevCount = saveCount;
 
@@ -173,7 +174,7 @@ function PlayingPlaylist({playlistId, videoId, onClose}: {playlistId: string, vi
 
             if (typeof result?.is_saved === "boolean") setIsSaved(result.is_saved);
             if (typeof result?.save_count === "number") setSaveCount(result.save_count);
-            queryClient.setQueryData<FetchPlaylistT>([`playlist${playlistId}`], previous => previous ? {
+            queryClient.setQueryData<FetchPlaylistT>([`playlist${playlistId}`, token], previous => previous ? {
                 ...previous, playlist: { ...previous.playlist, is_saved: result.is_saved,
                     save_count: typeof result.save_count === "number" ? result.save_count : prevCount + (result.is_saved === prevSaved ? 0 : result.is_saved ? 1 : -1) },
             } : previous);

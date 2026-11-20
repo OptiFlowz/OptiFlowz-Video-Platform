@@ -2,7 +2,9 @@ import { useI18n } from "~/i18n";
 import LiveStatus from '../live/LiveStatus';
 import DefaultThumbnail from "../../../assets/DefaultThumbnail.webp";
 import { getVideoThumbnail } from "~/components/shared/videoMedia";
-import { Link } from "react-router";
+import { isRoleLocked } from "~/authorization/videoAudience";
+import { VideoCardLink } from "~/components/shared/videoCardLink";
+import { VideoLockOverlay } from "~/components/shared/videoLockOverlay";
 import { useContext, useState } from "react";
 import ContentInfo from "~/components/contentInfo";
 import { formatDuration } from "~/functions";
@@ -16,11 +18,12 @@ function Item({props, playlistIndex, playlistId, href, live}: {props: Omit<Playl
     const [failedThumbnail, setFailedThumbnail] = useState<string>();
     const newThumbnailUrl = failedThumbnail === requestedThumbnail ? DefaultThumbnail : requestedThumbnail;
     const isLive = !!live;
-    const animGifUrl = !isLive ? props.preview_url || undefined : undefined;
+    const locked = isRoleLocked(props);
+    const animGifUrl = !locked && !isLive ? props.preview_url || undefined : undefined;
     const isWatched = (!isLive) && (props?.percentage_watched ?? 0) >= 5 && !!props?.progress_seconds;
 
     const [isHovered, setIsHovered] = useState(false);
-    const { isActive: previewActive, start: startPreview, cancel: cancelPreview } = useDelayedHoverPreview();
+    const { isActive: previewActive, requested: previewRequested, start: startPreview, cancel: cancelPreview } = useDelayedHoverPreview();
     const [loadedThumbnail, setLoadedThumbnail] = useState<string>();
     const isLoading = loadedThumbnail !== newThumbnailUrl;
     const [loadedPreview, setLoadedPreview] = useState<string>();
@@ -33,8 +36,8 @@ function Item({props, playlistIndex, playlistId, href, live}: {props: Omit<Playl
     const videoHref = `/video/${props?.id || 0}${params.toString() ? `?${params.toString()}` : ""}`;
 
     return (
-        <Link
-            className={`item ${playlistIndex == 1 ? "playlistStartVideo" : ""}`}
+        <VideoCardLink locked={locked}
+            className={`item ${playlistId ? "playlistVideo" : ""}`}
             to={href || videoHref}
             onMouseEnter={() => { setIsHovered(true); startPreview(); }}
             onFocus={() => { setIsHovered(true); startPreview(); }}
@@ -42,9 +45,10 @@ function Item({props, playlistIndex, playlistId, href, live}: {props: Omit<Playl
             onMouseLeave={() => { setIsHovered(false); cancelPreview(); }}
             onClick={() => setCurrentNav(-1)}
         >
-            <span className="itemThumbnail">
+            <span className="itemThumbnail" data-locked-banner={locked || undefined}>
+                {locked && <VideoLockOverlay />}
                 {isLoading && <span className="itemThumbnailSkeleton skeleton-thumbnail" aria-hidden="true" />}
-                {animGifUrl &&
+                {previewRequested && animGifUrl &&
                     <img
                         className={previewActive ? "z-[-1] absolute top-0 left-0" : "z-[-1] absolute top-0 left-0 opacity-0"}
                         src={animGifUrl}
@@ -69,7 +73,7 @@ function Item({props, playlistIndex, playlistId, href, live}: {props: Omit<Playl
                 {playlistIndex && playlistIndex > -1 ? <span className="playlistOrderNumber">{playlistIndex}</span> : ""}
 
                 <span className="liveCardBadge"><LiveStatus live={live} scheduledAt={live?.scheduled_at} /></span>
-                {(!isLive) && <span className={"duration z-1" + (isWatched ? " watched" : "")}>{formatDuration(props.duration_seconds)}</span>}
+                {!isLive && !locked && <span className={"duration z-1" + (isWatched ? " watched" : "")}>{formatDuration(props.duration_seconds)}</span>}
 
                 {isWatched ? <span className="bottomShadow z-1 relative"></span> : ""}
 
@@ -85,7 +89,7 @@ function Item({props, playlistIndex, playlistId, href, live}: {props: Omit<Playl
                 date: props?.created_at,
                 uploader_name: props?.uploader_name,
             }} />
-        </Link>
+        </VideoCardLink>
     );
 }
 

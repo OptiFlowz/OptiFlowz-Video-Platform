@@ -1,6 +1,7 @@
 {
   "uploadRoleRestriction": "Обмежити перегляд за ролями",
-  "uploadRoleRestrictionHelp": "Лише попередній перегляд. Виберіть ролі, з якими можна було б дивитися це відео.",
+  "uploadRoleRestrictionHelp": "Виберіть хоча б одну роль, з якою можна дивитися відео.",
+  "insufficientPermissions": "Недостатньо прав",
   "uploadRoleHideBanner": "Приховати від інших",
   "uploadRoleHideBannerHelp": "Користувачі без вибраної ролі не зможуть знайти відео",
   "liveDuration": "Максимальна тривалість",

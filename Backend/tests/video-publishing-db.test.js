@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { setTimeout } from 'node:timers/promises';
 import { mock, test } from 'node:test';
 import pg from 'pg';
+import { generateKeyPairSync } from 'node:crypto';
 
 const uuid = n => `12345678-1234-4234-8234-${String(n).padStart(12, '0')}`;
 const owner = uuid(100), viewer = uuid(101), playlist = uuid(200);
@@ -24,7 +25,7 @@ test('publication rules against PostgreSQL temporary fixtures', {
       created_at timestamptz DEFAULT now(), updated_at timestamptz DEFAULT now(),
       published_at timestamptz, visibility text DEFAULT 'public', mux_status text DEFAULT 'ready',
       mux_playback_id text DEFAULT 'fixture-playback', playback_policy text DEFAULT 'public',
-      mux_asset_id text, mux_recording_completed_at timestamptz,
+      mux_asset_id text, mux_recording_completed_at timestamptz, mux_playback_id_pending_deletion text,
       mux_thumbnail_time double precision, tags text[] DEFAULT '{tutorial}', chapters jsonb
     );
     CREATE TEMP TABLE users (id uuid PRIMARY KEY, full_name text, image_url text);
@@ -76,6 +77,9 @@ test('publication rules against PostgreSQL temporary fixtures', {
   mock.module(new URL('../src/database/index.js', import.meta.url).href, { namedExports: { writePool: database, readPool: database } });
   mock.module(new URL('../src/modules/video-indexing/indexing.service.js', import.meta.url).href, { namedExports: { scheduleOverview: async () => {} } });
   const load = path => import(`../src/modules/${path}.js`);
+  process.env.MUX_SIGNING_KEY = 'fixture-key';
+  process.env.MUX_PRIVATE_KEY = Buffer.from(generateKeyPairSync('rsa', { modulusLength: 2048 }).privateKey
+    .export({ type: 'pkcs8', format: 'pem' })).toString('base64');
   const { getVideoByIdInternal: details } = await load('videos/video/handlers/getVideoById');
   const { getVideoPlaybackInternal: playback } = await load('videos/video/handlers/getVideoPlayback');
   const { searchVideosInternal: search } = await load('videos/video/handlers/searchVideos');
@@ -98,7 +102,12 @@ test('publication rules against PostgreSQL temporary fixtures', {
       `SELECT audience_mode, title, ARRAY(SELECT role_id FROM video_allowed_roles WHERE video_id = v.id ORDER BY role_id) AS ids
        FROM videos v WHERE v.id = $1`, [draft],
     )).rows[0];
+    await assert.rejects(update({ audience_mode: 'selected_roles', allowed_role_ids: ['1'] }), { status: 409 });
+    await client.query("UPDATE videos SET playback_policy='signed' WHERE id=$1", [draft]);
     await update({ audience_mode: 'selected_roles', allowed_role_ids: ['1', '2', '1'] });
+    const editorDetails = await details(draft, owner);
+    assert.equal(editorDetails.audience_mode, 'selected_roles');
+    assert.deepEqual(editorDetails.allowed_role_ids, ['1', '2']);
     assert.deepEqual((await state()).ids, ['1', '2']);
     await update({ audience_mode: 'selected_roles', allowed_role_ids: ['3'] });
     await update({ title: 'Retained audience' });
@@ -218,7 +227,7 @@ test('publication rules against PostgreSQL temporary fixtures', {
     const blocks = [{ type: 'video', content: { video_id: published } }];
     const page = actor => search({ limit: 1, sortBy: 'views' }, actor);
     const hasVideo = (result, id) => result.videos.some(video => video.id === id);
-    await client.query('UPDATE videos SET view_count=100 WHERE id=$1', [published]);
+    await client.query("UPDATE videos SET view_count=100, playback_policy='signed' WHERE id=$1", [published]);
     await patchCard({ audience_mode: 'selected_roles', allowed_role_ids: ['1'] });
     assert.equal((await page(viewer)).videos[0].show_locked_card, true);
     const { getPersonalizedRecommendationsInternal: recommend } = await load('videos/video/handlers/getPersonalizedRecommendations');

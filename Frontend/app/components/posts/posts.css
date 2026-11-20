@@ -43,7 +43,8 @@ main.channelPage .postCard > .postAuthor { display: flex; flex-direction: row; f
 
 .postVideoBlock > p { margin-bottom: 14px; }
 .postVideoMention { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 10px; background: var(--background2); color: var(--text1); }
-.postVideoMention > img { width: 32%; aspect-ratio: 16/9; object-fit: cover; border-radius: 8px; }
+.postVideoBanner { width: 32%; aspect-ratio: 16/9; overflow: hidden; border-radius: 8px; }
+.postVideoBanner > img { width: 100%; height: 100%; object-fit: cover; }
 .postVideoMention > div { min-width: 0; }
 .postVideoMention strong { font-size: .95rem; line-height: 1.4; display: block; }
 .postVideoMention small { display: block; margin-block: 4px 8px; color: var(--text2); }
@@ -266,7 +267,7 @@ main.myPostsPage #selectedButtons button:disabled { opacity: .5; cursor: default
 .latestPostOptionsSpace .latestPostOptions > div { padding-block: 6px; line-height: 1.5; }
 .latestPostOptionsSpace .latestPostOptions small { line-height: 1.5; }
 .latestPostBody > .postVideoMention { flex-shrink: 0; }
-.latestPostBody > .postVideoMention > img { flex-shrink: 0; }
+.latestPostBody > .postVideoMention > .postVideoBanner { flex-shrink: 0; }
 .latestPostBody > .postVideoMention strong { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
 .latestPostBody > .postVideoMention small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 

@@ -1,6 +1,7 @@
 import type { VideoMedia } from "./components/shared/videoMedia";
+import type { VideoCardAccess } from "./authorization/videoAudience";
 
-export type VPreviewProps = {
+export type VPreviewProps = VideoCardAccess & {
     id?: string,
     thumbnail: string,
     preview_url?: string | null,

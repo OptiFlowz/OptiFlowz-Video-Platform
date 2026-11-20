@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 export function useDelayedHoverPreview(delayMs = 300) {
   const [isActive, setIsActive] = useState(false);
+  const [requested, setRequested] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cancel = useCallback(() => {
@@ -11,6 +12,7 @@ export function useDelayedHoverPreview(delayMs = 300) {
   }, []);
 
   const start = useCallback(() => {
+    setRequested(true);
     if (timeoutRef.current !== null) clearTimeout(timeoutRef.current);
     setIsActive(false);
     timeoutRef.current = setTimeout(() => {
@@ -23,5 +25,5 @@ export function useDelayedHoverPreview(delayMs = 300) {
     if (timeoutRef.current !== null) clearTimeout(timeoutRef.current);
   }, []);
 
-  return { isActive, start, cancel };
+  return { isActive, requested, start, cancel };
 }

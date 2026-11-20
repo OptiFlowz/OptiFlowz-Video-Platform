@@ -1,6 +1,7 @@
 {
   "uploadRoleRestriction": "Begrens avspilling etter rolle",
-  "uploadRoleRestrictionHelp": "Kun forhåndsvisning. Velg hvilke roller som skal kunne se videoen.",
+  "uploadRoleRestrictionHelp": "Velg minst én rolle som kan se videoen.",
+  "insufficientPermissions": "Utilstrekkelige tillatelser",
   "uploadRoleHideBanner": "Skjul for andre",
   "uploadRoleHideBannerHelp": "Brukere uten en valgt rolle vil ikke kunne finne videoen",
   "liveDuration": "Maksimal varighet",

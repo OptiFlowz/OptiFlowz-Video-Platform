@@ -1,4 +1,6 @@
-export interface VideoMedia {
+import type { VideoCardAccess } from "~/authorization/videoAudience";
+
+export interface VideoMedia extends VideoCardAccess {
   playback_available?: boolean;
   stream_type?: 'on-demand' | 'live' | 'live:dvr' | 'unavailable';
   thumbnail_url?: string | null;

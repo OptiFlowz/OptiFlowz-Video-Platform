@@ -37,7 +37,7 @@ export function settingsOf(quiz: Quiz): QuizSettings {
 }
 export type Candidate = { quiz_id: string; question_id: string; position: number; max_points: number; question: Pick<Question, 'id' | 'type' | 'content' | 'explanation'> & Partial<Pick<Question, 'category'>> };
 export type Source = { id?: string; quiz_id?: string; category_id: string | null; position: number; question_count: number; max_points: number | null; category?: Pick<Category, 'id' | 'name' | 'description'> | null };
-export type VideoCard = { id: string; title: string; duration_seconds?: number; thumbnail_url?: string | null; mux_thumbnail_url?: string | null };
+export type VideoCard = import("~/authorization/videoAudience").VideoCardAccess & { id: string; title: string; duration_seconds?: number; thumbnail_url?: string | null; mux_thumbnail_url?: string | null };
 export type Requirement = {
   quiz_id: string; video_id: string; is_active?: boolean; position: number; min_watch_percentage: number | null; min_watch_seconds: number | null;
   video_card?: VideoCard | null; total_watch_seconds?: number; required_watch_seconds?: number | null;

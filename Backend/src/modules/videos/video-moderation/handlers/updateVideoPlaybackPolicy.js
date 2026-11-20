@@ -13,7 +13,7 @@ async function deletePlaybackId(assetId, playbackId) {
   }
 }
 
-async function finishCleanup(client, video) {
+export async function finishPlaybackCleanup(client, video) {
   if (!video.mux_playback_id_pending_deletion) return;
   try {
     await deletePlaybackId(video.mux_asset_id, video.mux_playback_id_pending_deletion);
@@ -32,7 +32,7 @@ async function finishCleanup(client, video) {
 
 async function lockVideo(client, videoId) {
   const { rows } = await client.query(
-    `SELECT id, mux_asset_id, mux_playback_id, playback_policy,
+    `SELECT id, mux_asset_id, mux_playback_id, playback_policy, audience_mode,
             mux_playback_id_pending_deletion
      FROM videos WHERE id = $1 FOR UPDATE`,
     [videoId],
@@ -58,7 +58,10 @@ export async function updateVideoPlaybackPolicyInternal({ params, body }) {
   try {
     await client.query('BEGIN');
     const video = await lockVideo(client, videoId);
-    await finishCleanup(client, video);
+    if (policy === 'public' && video.audience_mode === 'selected_roles') {
+      throw new HttpError(409, { message: 'Remove the role restriction before switching to public playback.' });
+    }
+    await finishPlaybackCleanup(client, video);
     if (video.playback_policy === policy) {
       await client.query('COMMIT');
       return { id: videoId, playback_policy: policy, mux_playback_id: video.mux_playback_id, changed: false };
@@ -87,7 +90,7 @@ export async function updateVideoPlaybackPolicyInternal({ params, body }) {
 
     await client.query('BEGIN');
     const current = await lockVideo(client, videoId);
-    await finishCleanup(client, current);
+    await finishPlaybackCleanup(client, current);
     await client.query('COMMIT');
     return { id: videoId, playback_policy: current.playback_policy, mux_playback_id: current.mux_playback_id, changed: true };
   } catch (error) {

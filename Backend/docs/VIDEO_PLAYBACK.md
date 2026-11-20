@@ -72,6 +72,12 @@ video's public/signed policy; the top-level `media_expires_at` applies to chapte
 images too. Invalid chapter times produce a null URL; times beyond the video
 are clamped. Null or empty chapter lists retain their existing shape.
 
+The details response includes `audience_mode`, `show_locked_card`, and
+`allowed_role_ids` (decimal strings). Editors send those three fields to the video
+details PATCH endpoint. A selected-role audience requires at least one role and a
+signed playback ID with any prior public ID revoked. To return to public playback,
+save the audience as `everyone` first.
+
 Details and playback check access through `readPool`. A visibility or role
 change takes effect on a replica once it receives the update. Responses use
 `Cache-Control: private, no-store`.
@@ -88,7 +94,9 @@ video update permissions, and processing responses are preserved.
 
 ## Video-card images
 
-Published videos with a restricted audience appear as locked cards by default.
+The upload and edit forms initially select **Hide from others** when a role
+restriction is enabled. The database default for clients that omit
+`show_locked_card` is `true`, which makes a locked card discoverable.
 After applying `1795132800002_add-video-show-locked-card.sql`, editors can send
 `{"show_locked_card": false}` to `PATCH /api/video-moderation/video-details/:videoId`.
 For `selected_roles`, this hides the card from guests and viewers without an active
@@ -115,8 +123,10 @@ Video-card lists now return these fields directly; no preview endpoint is needed
 Clients display `thumbnail_url || mux_thumbnail_url` and use `preview_url` as
 returned. Do not change signed URL parameters. Fetch the existing list again to
 refresh expired URLs; list HTTP responses use `Cache-Control: private, no-store`.
-Frontend changes are separate: cards should use the returned fields, load
-animated images on hover, and retain the thumbnail if a preview fails.
+The frontend uses `can_watch` and `audience_mode` to render restricted cards.
+A locked card keeps its metadata and 3px-blurred banner, with a centered lock
+and “Insufficient permissions” label. Eligible cards can load animated previews
+on hover or focus.
 Updated backend list responses include search, trending, history, liked videos,
 continue watching, recommendations, the uploader library, channels, playlist
 videos and top-viewed video cards.

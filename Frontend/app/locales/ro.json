@@ -1,6 +1,7 @@
 {
   "uploadRoleRestriction": "Restricționează redarea în funcție de rol",
-  "uploadRoleRestrictionHelp": "Doar previzualizare. Alege rolurile care ar permite vizionarea acestui videoclip.",
+  "uploadRoleRestrictionHelp": "Alege cel puțin un rol care permite vizionarea videoclipului.",
+  "insufficientPermissions": "Permisiuni insuficiente",
   "uploadRoleHideBanner": "Ascunde pentru ceilalți",
   "uploadRoleHideBannerHelp": "Cei fără un rol selectat nu vor putea găsi videoclipul",
   "liveDuration": "Durată maximă",

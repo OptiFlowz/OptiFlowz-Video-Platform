@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { VideoCardLink } from "~/components/shared/videoCardLink";
+import { VideoLockOverlay } from "~/components/shared/videoLockOverlay";
+import { isRoleLocked, type VideoCardAccess } from "~/authorization/videoAudience";
 import { formatDate, formatDuration, formatViews } from "~/functions";
 import { translateContentTitle, useI18n } from "~/i18n";
 import { SearchIcon } from "./searchIcons";
 import styles from "./searchPage.module.css";
 import { useDelayedHoverPreview } from "~/components/shared/useDelayedHoverPreview";
 
-export type SearchResult = {
+export type SearchResult = VideoCardAccess & {
   id: string;
   kind: "video" | "playlist" | "people";
   title: string;
@@ -24,18 +26,19 @@ export type SearchResult = {
 
 export default function SearchResultCard({ result }: { result: SearchResult }) {
   const { t } = useI18n();
-  const { isActive: previewActive, start: startPreview, cancel: cancelPreview } = useDelayedHoverPreview();
+  const { isActive: previewActive, requested: previewRequested, start: startPreview, cancel: cancelPreview } = useDelayedHoverPreview();
   const [imageFailed, setImageFailed] = useState(false);
   const [previewFailed, setPreviewFailed] = useState(false);
   const [loadedPreview, setLoadedPreview] = useState<string>();
-  const preview = result.kind === "video" && !previewFailed ? result.preview_url : undefined;
+  const locked = result.kind === "video" && isRoleLocked(result);
+  const preview = result.kind === "video" && !locked && !previewFailed ? result.preview_url : undefined;
   const title = result.kind === "people" ? result.title : translateContentTitle(result.title);
   const label = t(result.kind === "video" ? "adminTableVideo" : result.kind === "playlist" ? "playlistLabel" : "contributorLabel");
   const action = t(result.kind === "video" ? "searchWatchVideo" : result.kind === "playlist" ? "searchViewPlaylist" : "searchViewVideos");
   const hasDate = result.date && Number.isFinite(new Date(result.date).getTime());
 
   return (
-    <Link
+    <VideoCardLink locked={locked}
       to={result.href}
       className={`${styles.card} ${result.kind === "people" ? styles.personCard : ""}`}
       onMouseEnter={startPreview}
@@ -43,7 +46,8 @@ export default function SearchResultCard({ result }: { result: SearchResult }) {
       onBlur={cancelPreview}
       onMouseLeave={cancelPreview}
     >
-      <div className={`${styles.thumbnail} ${result.kind === "people" ? styles.portrait : ""}`}>
+      <div className={`${styles.thumbnail} ${result.kind === "people" ? styles.portrait : ""}`} data-locked-banner={locked || undefined}>
+        {locked && <VideoLockOverlay />}
         {result.thumbnail && !imageFailed ? (
           <img
             src={result.thumbnail}
@@ -53,7 +57,7 @@ export default function SearchResultCard({ result }: { result: SearchResult }) {
             onError={() => setImageFailed(true)}
           />
         ) : <span className={styles.thumbnailFallback}><SearchIcon name={result.kind} /></span>}
-        {preview && <img
+        {previewRequested && preview && <img
           className={`${styles.previewImage} ${previewActive && loadedPreview === preview ? styles.previewImageVisible : ""}`}
           src={preview}
           alt=""
@@ -63,12 +67,12 @@ export default function SearchResultCard({ result }: { result: SearchResult }) {
           onLoad={() => setLoadedPreview(preview)}
           onError={() => setPreviewFailed(true)}
         />}
-        {result.kind === "video" && result.duration != null ? <span className={styles.mediaBadge}>{formatDuration(result.duration)}</span> : null}
+        {result.kind === "video" && !locked && result.duration != null ? <span className={styles.mediaBadge}>{formatDuration(result.duration)}</span> : null}
         {result.kind === "playlist" ? <span className={styles.mediaBadge}><SearchIcon name="playlist" />{result.videoCount ?? 0}</span> : null}
         {result.kind === "video" && (result.progress ?? 0) > 0 ? (
           <span className={styles.progress}><span style={{ width: `${Math.min(100, Math.max(0, result.progress ?? 0))}%` }} /></span>
         ) : null}
-        {result.kind === "video" ? <span className={styles.playOverlay}><SearchIcon name="video" /></span> : null}
+        {result.kind === "video" && !locked ? <span className={styles.playOverlay}><SearchIcon name="video" /></span> : null}
       </div>
       <div className={styles.cardBody}>
         <span className={styles.kind}>{label}</span>
@@ -81,7 +85,7 @@ export default function SearchResultCard({ result }: { result: SearchResult }) {
           {result.kind !== "video" ? <span>{t("videosLabel", { count: Number(result.videoCount ?? 0) })}</span> : null}
         </div>
       </div>
-      <span className={styles.cardAction} aria-hidden="true"><span>{action}</span><SearchIcon name="arrow" /></span>
-    </Link>
+      {!locked && <span className={styles.cardAction} aria-hidden="true"><span>{action}</span><SearchIcon name="arrow" /></span>}
+    </VideoCardLink>
   );
 }

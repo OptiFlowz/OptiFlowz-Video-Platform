@@ -1,6 +1,7 @@
 {
   "uploadRoleRestriction": "ნახვის შეზღუდვა როლის მიხედვით",
-  "uploadRoleRestrictionHelp": "მხოლოდ წინასწარი ნახვა. აირჩიეთ როლები, რომელთა მქონე მომხმარებლებსაც შეეძლებოდათ ვიდეოს ნახვა.",
+  "uploadRoleRestrictionHelp": "აირჩიეთ მინიმუმ ერთი როლი, რომლითაც ამ ვიდეოს ნახვა შეიძლება.",
+  "insufficientPermissions": "არასაკმარისი უფლებები",
   "uploadRoleHideBanner": "სხვებისგან დამალვა",
   "uploadRoleHideBannerHelp": "არჩეული როლის გარეშე მომხმარებლები ვიდეოს ვერ იპოვიან",
   "navSectionManage": "მართვა",

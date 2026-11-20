@@ -1,6 +1,7 @@
 {
   "uploadRoleRestriction": "Ierobežot skatīšanos pēc lomas",
-  "uploadRoleRestrictionHelp": "Tikai priekšskatījums. Izvēlieties lomas, kuru lietotāji varētu skatīties šo video.",
+  "uploadRoleRestrictionHelp": "Izvēlieties vismaz vienu lomu, ar kuru var skatīties šo video.",
+  "insufficientPermissions": "Nepietiekamas atļaujas",
   "uploadRoleHideBanner": "Paslēpt no citiem",
   "uploadRoleHideBannerHelp": "Lietotāji bez atlasītas lomas nevarēs atrast video",
   "liveDuration": "Maksimālais ilgums",

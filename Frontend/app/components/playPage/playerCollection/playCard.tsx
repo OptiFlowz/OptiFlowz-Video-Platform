@@ -1,8 +1,10 @@
 import DefaultThumbnail from '../../../../assets/DefaultThumbnail.webp';
 import { useI18n } from "~/i18n";
 import { getVideoThumbnail } from "~/components/shared/videoMedia";
+import { isRoleLocked } from "~/authorization/videoAudience";
 import { memo, useState } from "react";
-import { Link } from "react-router";
+import { VideoCardLink } from "~/components/shared/videoCardLink";
+import { VideoLockOverlay } from "~/components/shared/videoLockOverlay";
 import { formatDate, formatDuration, formatViews } from "~/functions";
 import type { PlaylistVideoT, SimilarVideoT } from "~/types";
 import { useDelayedHoverPreview } from "~/components/shared/useDelayedHoverPreview";
@@ -16,10 +18,11 @@ function PlayCard({props, playedVideoId, playlistId, nextVideo} : {props: PlayCa
     const viewsLabel = formatViews(props?.view_count);
     const dateLabel = formatDate(props?.created_at);
     const newThumbnailUrl = getVideoThumbnail(props) || DefaultThumbnail;
-    const animGifUrl = props.preview_url || undefined;
+    const locked = isRoleLocked(props);
+    const animGifUrl = locked ? undefined : props.preview_url;
     const isWatched = (props?.percentage_watched ?? 0) >= 5 && props?.progress_seconds;
 
-    const { isActive: previewActive, start: startPreview, cancel: cancelPreview } = useDelayedHoverPreview();
+    const { isActive: previewActive, requested: previewRequested, start: startPreview, cancel: cancelPreview } = useDelayedHoverPreview();
     const [loadedPreview, setLoadedPreview] = useState<string>();
     const showPreview = previewActive && !!animGifUrl && loadedPreview === animGifUrl;
 
@@ -30,13 +33,14 @@ function PlayCard({props, playedVideoId, playlistId, nextVideo} : {props: PlayCa
     const videoLink = `${props?.id}${params.toString() ? `?${params.toString()}` : ""}`;
 
     return (
-        <Link data-playing-label={t("playing")} to={`/video/${videoLink}`} className={`${props?.id == playedVideoId ? "active" : props?.id == nextVideo?.id ? "nextVideo" : ""} playCard flex gap-4 items-center rounded-xl transition-all hover:cursor-pointer`} onMouseEnter={() => { if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) startPreview(); }}
+        <VideoCardLink locked={locked} data-playing-label={t("playing")} to={`/video/${videoLink}`} className={`${props?.id == playedVideoId ? "active" : props?.id == nextVideo?.id ? "nextVideo" : ""} playCard flex gap-4 items-center rounded-xl transition-all hover:cursor-pointer`} onMouseEnter={() => { if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) startPreview(); }}
             onMouseLeave={cancelPreview}>
-            <span className="banner relative w-[50%]">
-                {animGifUrl && <img className={previewActive ? "z-[-1] absolute top-0 left-0" : "z-0 absolute top-0 left-0 opacity-0"} src={animGifUrl} alt={t("thumbnailPreview")} loading="eager" decoding="async" onLoad={() => setLoadedPreview(animGifUrl)} onError={() => setLoadedPreview(undefined)} />}
+            <span className="banner relative w-[50%]" data-locked-banner={locked || undefined}>
+                {locked && <VideoLockOverlay />}
+                {previewRequested && animGifUrl && <img className={previewActive ? "z-[-1] absolute top-0 left-0" : "z-0 absolute top-0 left-0 opacity-0"} src={animGifUrl} alt={t("thumbnailPreview")} loading="eager" decoding="async" onLoad={() => setLoadedPreview(animGifUrl)} onError={() => setLoadedPreview(undefined)} />}
                 <img loading="lazy" decoding="async" className={showPreview ? "z-0 relative opacity-0" : "z-1 relative opacity-100"} src={newThumbnailUrl} alt={t("thumbnail")} />
 
-                <p className={"absolute bottom-1.75 right-1.75 z-2" + (isWatched ? " watched" : "")}>{formatDuration(props?.duration_seconds)}</p>
+                {!locked && <p className={"absolute bottom-1.75 right-1.75 z-2" + (isWatched ? " watched" : "")}>{formatDuration(props?.duration_seconds)}</p>}
 
                 {isWatched ? <span className="bottomShadow z-2"></span> : ""}
 
@@ -55,7 +59,7 @@ function PlayCard({props, playedVideoId, playlistId, nextVideo} : {props: PlayCa
                     <p className="weakText" title={dateLabel}>{dateLabel}</p>
                 </span>
             </span>
-        </Link>
+        </VideoCardLink>
     );
 }
 

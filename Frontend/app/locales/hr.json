@@ -1,6 +1,7 @@
 {
   "uploadRoleRestriction": "Ograniči gledanje prema ulozi",
-  "uploadRoleRestrictionHelp": "Samo pretpregled. Odaberite uloge čiji bi korisnici mogli gledati ovaj videozapis.",
+  "uploadRoleRestrictionHelp": "Odaberite barem jednu ulogu koja može gledati ovaj videozapis.",
+  "insufficientPermissions": "Nedovoljne dozvole",
   "uploadRoleHideBanner": "Sakrij od ostalih",
   "uploadRoleHideBannerHelp": "Korisnici bez odabrane uloge neće moći pronaći videozapis",
   "liveDuration": "Maksimalno trajanje",

@@ -1,6 +1,7 @@
 {
   "uploadRoleRestriction": "Restringeix la reproducció per rol",
-  "uploadRoleRestrictionHelp": "Només és una previsualització. Tria quins rols podrien veure aquest vídeo.",
+  "uploadRoleRestrictionHelp": "Tria almenys un rol que pugui veure aquest vídeo.",
+  "insufficientPermissions": "Permisos insuficients",
   "uploadRoleHideBanner": "Amaga’l als altres",
   "uploadRoleHideBannerHelp": "Qui no tingui cap rol seleccionat no podrà trobar el vídeo",
   "navSectionManage": "Gestionar",

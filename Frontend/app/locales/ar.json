@@ -1,6 +1,7 @@
 {
   "uploadRoleRestriction": "تقييد المشاهدة حسب الدور",
-  "uploadRoleRestrictionHelp": "للمعاينة فقط. اختر الأدوار التي يمكن لأصحابها مشاهدة هذا الفيديو.",
+  "uploadRoleRestrictionHelp": "اختر دورًا واحدًا على الأقل يمكن لأصحابه مشاهدة الفيديو.",
+  "insufficientPermissions": "صلاحيات غير كافية",
   "uploadRoleHideBanner": "إخفاء عن الآخرين",
   "uploadRoleHideBannerHelp": "لن يتمكن أصحاب الأدوار غير المحددة من العثور على الفيديو",
   "liveDuration": "المدة القصوى",

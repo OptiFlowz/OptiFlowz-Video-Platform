@@ -1,6 +1,7 @@
 {
   "uploadRoleRestriction": "Rajoita katselua roolin perusteella",
-  "uploadRoleRestrictionHelp": "Vain esikatselu. Valitse roolit, joilla videota voisi katsoa.",
+  "uploadRoleRestrictionHelp": "Valitse vähintään yksi rooli, jolla videota voi katsoa.",
+  "insufficientPermissions": "Käyttöoikeudet eivät riitä",
   "uploadRoleHideBanner": "Piilota muilta",
   "uploadRoleHideBannerHelp": "Videota ei voi löytää ilman valittua roolia",
   "liveDuration": "Enimmäiskesto",

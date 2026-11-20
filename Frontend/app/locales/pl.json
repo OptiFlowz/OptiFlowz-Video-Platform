@@ -1,6 +1,7 @@
 {
   "uploadRoleRestriction": "Ogranicz oglądanie według roli",
-  "uploadRoleRestrictionHelp": "Tylko podgląd. Wybierz role, które pozwalałyby obejrzeć ten film.",
+  "uploadRoleRestrictionHelp": "Wybierz co najmniej jedną rolę uprawniającą do oglądania filmu.",
+  "insufficientPermissions": "Brak wymaganych uprawnień",
   "uploadRoleHideBanner": "Ukryj przed innymi",
   "uploadRoleHideBannerHelp": "Osoby bez wybranej roli nie będą mogły znaleźć filmu",
   "liveDuration": "Maksymalny czas trwania",

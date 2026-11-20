@@ -1,6 +1,7 @@
 {
   "uploadRoleRestriction": "Giới hạn phát video theo vai trò",
-  "uploadRoleRestrictionHelp": "Chỉ xem trước. Chọn những vai trò có thể xem video này.",
+  "uploadRoleRestrictionHelp": "Chọn ít nhất một vai trò được phép xem video này.",
+  "insufficientPermissions": "Không đủ quyền",
   "uploadRoleHideBanner": "Ẩn với người khác",
   "uploadRoleHideBannerHelp": "Người không có vai trò nào đã chọn sẽ không tìm thấy video",
   "liveDuration": "Thời lượng tối đa",

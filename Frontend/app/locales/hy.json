@@ -1,6 +1,7 @@
 {
   "uploadRoleRestriction": "Սահմանափակել դիտումն ըստ դերի",
-  "uploadRoleRestrictionHelp": "Միայն նախադիտում։ Ընտրեք այն դերերը, որոնցով հնարավոր կլիներ դիտել այս տեսանյութը։",
+  "uploadRoleRestrictionHelp": "Ընտրեք առնվազն մեկ դեր, որը թույլ է տալիս դիտել այս տեսանյութը։",
+  "insufficientPermissions": "Անբավարար թույլտվություններ",
   "uploadRoleHideBanner": "Թաքցնել մյուսներից",
   "uploadRoleHideBannerHelp": "Ընտրված դերերից ոչ մեկը չունեցող օգտատերերը չեն կարողանա գտնել տեսանյութը",
   "navSectionManage": "Կառավարել",

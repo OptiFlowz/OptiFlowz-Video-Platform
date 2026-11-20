@@ -1,6 +1,7 @@
 {
   "uploadRoleRestriction": "Oynatmayı role göre sınırla",
-  "uploadRoleRestrictionHelp": "Yalnızca önizleme. Bu videoyu izleyebilecek rolleri seçin.",
+  "uploadRoleRestrictionHelp": "Bu videoyu izleyebilecek en az bir rol seçin.",
+  "insufficientPermissions": "Yetersiz izin",
   "uploadRoleHideBanner": "Diğerlerinden gizle",
   "uploadRoleHideBannerHelp": "Seçili rollerden birine sahip olmayanlar videoyu bulamayacak",
   "liveDuration": "Maksimum süre",

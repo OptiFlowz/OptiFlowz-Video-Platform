@@ -8,7 +8,9 @@ import { getToken } from '~/functions';
 import { useI18n } from '~/i18n';
 import { AddSVG, CheckSVG } from '~/constants';
 import type { PlaylistVideoT } from '~/types';
+import { VideoLockOverlay } from "~/components/shared/videoLockOverlay";
 import { getVideoThumbnail } from '~/components/shared/videoMedia';
+import { isRoleLocked } from '~/authorization/videoAudience';
 import InfiniteScroll from '~/components/library/infiniteScroll';
 import { nextResultsPage, uniqueResults } from '~/components/library/infiniteResults';
 import CustomSelect from '~/components/customSelect/customSelect';
@@ -64,8 +66,12 @@ export default function PlaylistVideoPicker({ included, busy, addingId, onAdd, o
       <div role="alert"><p className="formHint">{t('searchLoadFailed')}</p><button type="button" className="saveCaptionsBtn" onClick={() => void query.refetch()}>{t('usersRetry')}</button></div> :
       <div className={styles.pickerResults}>{videos.map(video => {
         const added = included.includes(video.id);
+        const locked = isRoleLocked(video);
         return <div className={`playlistVideoSearchRow ${styles.pickerRow}`} key={video.id}>
-          <img className="playlistVideoSearchThumb" src={getVideoThumbnail(video)} alt="" loading="lazy" />
+          <span className="playlistVideoSearchThumb" data-locked-banner={locked || undefined}>
+            <img className="h-full w-full object-cover" src={getVideoThumbnail(video)} alt="" loading="lazy" />
+            {locked && <VideoLockOverlay />}
+          </span>
           <div className={styles.pickerMeta}><strong className="playlistVideoTitleClamp" title={video.title}>{video.title}</strong><small>{t(video.visibility === 'private' ? 'adminPrivate' : 'adminPublic')}{video.uploader_name ? ` · ${video.uploader_name}` : ''}</small></div>
           <button type="button" className="saveCaptionsBtn playlistVideoAddBtn" disabled={busy || added} onClick={() => onAdd(video)} aria-label={`${t(added ? 'playlistVideoAdded' : 'addVideo')}: ${video.title}`}>
             {addingId === video.id ? <span className="uploadSpinner tiny" /> : added ? CheckSVG : AddSVG}

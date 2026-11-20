@@ -32,8 +32,8 @@ function ItemSlider({props, showFeaturedCollections = false, showLatestPosts = f
     const { t } = useI18n();
     const { preferences } = usePrivacyPreferences();
     // const { onDataStateChange } = props;
-    const myHeaders = useRef(new Headers());
-    const [token, setToken] = useState("");
+    const [hydrated, setHydrated] = useState(false);
+    const token = hydrated ? getToken() : null;
     const collectionRef = useRef<HTMLDivElement>(null);
     const sliderTitle = useRef('');
     const [hasOverflow, setHasOverflow] = useState(false);
@@ -86,27 +86,24 @@ function ItemSlider({props, showFeaturedCollections = false, showLatestPosts = f
             break;
     }
 
-    useLayoutEffect(() => {
-        const userToken = getToken();
-        if(!userToken) return;
-        setToken(userToken);
-        myHeaders.current.set("Authorization", `Bearer ${userToken}`);
-    }, [])
+    useLayoutEffect(() => setHydrated(true), []);
 
     type SliderData = RecommendationResult<fetchVideo> | fetchFeaturedPlaylist;
 
     const { data, isError, refetch } = useQuery<SliderData>({
-        queryKey: [isPlaylist ? "playlist" : "video", props.type, props.limit],
+        queryKey: [isPlaylist ? "playlist" : "video", props.type, props.limit, token],
         queryFn: ({ signal }) => {
             if (!route) throw new Error("Route is null");
 
+            const headers = new Headers();
+            if (token) headers.set("Authorization", `Bearer ${token}`);
             return isPlaylist
-            ? fetchFn<fetchFeaturedPlaylist>({ route, options: { method: "GET", headers: myHeaders.current, signal } })
-            : (props.type === 1 ? fetchRecommendedVideos<fetchVideo> : fetchFn<fetchVideo>)({ route, options: { method: "GET", headers: myHeaders.current, signal } });
+            ? fetchFn<fetchFeaturedPlaylist>({ route, options: { method: "GET", headers, signal } })
+            : (props.type === 1 ? fetchRecommendedVideos<fetchVideo> : fetchFn<fetchVideo>)({ route, options: { method: "GET", headers, signal } });
         },
-        enabled: hasLibraryAccess && !!route && (!requiresAuth || !!token) && (props.type !== 1 || preferences.personalization),
+        enabled: hydrated && hasLibraryAccess && !!route && (!requiresAuth || !!token) && (props.type !== 1 || preferences.personalization),
         gcTime: 30 * 60 * 1000,
-        refetchOnMount: false,
+        staleTime: 30_000,
         refetchOnWindowFocus: false,
     });
 
@@ -179,8 +176,8 @@ function ItemSlider({props, showFeaturedCollections = false, showLatestPosts = f
 
     const itemsArray = data &&
     ("videos" in data)
-        ? data.videos.slice(0, props.limit).map((item, index) => (
-            <Item key={`${props.type}${index}`} props={item} />
+        ? data.videos.slice(0, props.limit).map(item => (
+            <Item key={item.id} props={item} />
         ))
         : data && ("playlists" in data)
         ? data.playlists.map((pl, index) => (

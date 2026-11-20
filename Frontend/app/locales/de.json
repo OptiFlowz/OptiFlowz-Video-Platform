@@ -1,6 +1,7 @@
 {
   "uploadRoleRestriction": "Wiedergabe nach Rolle einschränken",
-  "uploadRoleRestrictionHelp": "Nur zur Vorschau. Wähle die Rollen aus, mit denen man dieses Video ansehen könnte.",
+  "uploadRoleRestrictionHelp": "Wähle mindestens eine Rolle aus, die dieses Video ansehen darf.",
+  "insufficientPermissions": "Unzureichende Berechtigungen",
   "uploadRoleHideBanner": "Für andere ausblenden",
   "uploadRoleHideBannerHelp": "Wer keine ausgewählte Rolle hat, kann das Video nicht finden",
   "liveDuration": "Maximale Dauer",

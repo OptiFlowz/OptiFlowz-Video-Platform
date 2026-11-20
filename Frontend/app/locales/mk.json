@@ -1,6 +1,7 @@
 {
   "uploadRoleRestriction": "Ограничи ја репродукцијата според улога",
-  "uploadRoleRestrictionHelp": "Само преглед. Изберете кои улоги би можеле да го гледаат видеото.",
+  "uploadRoleRestrictionHelp": "Изберете барем една улога што може да го гледа видеото.",
+  "insufficientPermissions": "Недоволни дозволи",
   "uploadRoleHideBanner": "Сокриј од другите",
   "uploadRoleHideBannerHelp": "Корисниците без избрана улога нема да можат да го најдат видеото",
   "liveDuration": "Максимално времетраење",

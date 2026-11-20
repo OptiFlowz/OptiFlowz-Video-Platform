@@ -8125,6 +8125,26 @@ main.myVideos td > p{
 }
 
 /* Image loading occupies only the thumbnail, never another carousel-sized card. */
+[data-locked-banner="true"] { position: relative; overflow: hidden; isolation: isolate; }
+[data-locked-banner="true"] > img { filter: blur(3px) !important; }
+[data-locked-banner="true"] > .videoLockOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 3px;
+  padding: 4px;
+  text-align: center;
+  color: var(--seeThroughtWhite);
+  background: var(--seethroughtBlack);
+  pointer-events: none;
+}
+.videoLockOverlay svg { display: block; width: 1.4rem; height: 1.4rem; }
+.videoLockOverlay small { font-size: 0.75rem; line-height: 1.15; }
+
 main .item > .itemThumbnail {
     position: relative;
     display: block;

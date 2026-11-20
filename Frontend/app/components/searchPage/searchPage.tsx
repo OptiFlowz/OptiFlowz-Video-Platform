@@ -141,6 +141,7 @@ function SearchResults({ context }: { context: SearchContext }) {
   const results = useMemo<SearchResult[]>(() => selected === 0
     ? videos.map((video) => ({
         id: video.id, kind: "video", title: video.title, href: `/video/${video.id}`,
+        audience_mode: video.audience_mode, can_watch: video.can_watch,
         thumbnail: getVideoThumbnail(video), preview_url: video.preview_url, author: video.people?.map((person) => person.name).join(", ") || video.uploader_name,
         views: video.view_count, date: video.created_at, duration: video.duration_seconds, progress: video.percentage_watched,
       }))

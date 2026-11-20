@@ -1,6 +1,7 @@
 {
   "uploadRoleRestriction": "Limitahan ang panonood ayon sa tungkulin",
-  "uploadRoleRestrictionHelp": "Preview lang. Piliin ang mga tungkuling papayagang manood ng video.",
+  "uploadRoleRestrictionHelp": "Pumili ng kahit isang tungkuling maaaring manood ng video.",
+  "insufficientPermissions": "Kulang ang pahintulot",
   "uploadRoleHideBanner": "Itago sa iba",
   "uploadRoleHideBannerHelp": "Hindi mahahanap ang video ng mga walang napiling tungkulin",
   "navSectionManage": "Pamahalaan",

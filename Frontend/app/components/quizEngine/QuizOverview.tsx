@@ -3,6 +3,8 @@ import '~/styles/editor.css';
 import '~/styles/quiz.css';
 import '~/styles/quizExperience.css';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { VideoLockOverlay } from "~/components/shared/videoLockOverlay";
+import { isRoleLocked } from "~/authorization/videoAudience";
 import QuizThumbnail from './QuizThumbnail';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { useInfiniteQuery } from '@tanstack/react-query';
@@ -29,15 +31,17 @@ function OverviewRequirements({ requirements }: { requirements: Requirement[] })
   const completed = requirements.filter(row => row.is_met);
   const renderRequirement = (row: Requirement) => {
     const title = row.video_card?.title || t('quizRequiredVideo');
+    const locked = isRoleLocked(row.video_card);
     const image = row.video_card?.thumbnail_url || row.video_card?.mux_thumbnail_url;
     const duration = row.video_card?.duration_seconds;
     const required = row.min_watch_percentage != null
       ? `${new Intl.NumberFormat(locale).format(row.min_watch_percentage)}%`
       : formatDurationWords(row.required_watch_seconds ?? row.min_watch_seconds ?? 0, locale);
     return <div key={row.video_id} className={styles.overviewRequirement}>
-      {row.video_card && <div className={styles.overviewRequirementImage}>
+      {row.video_card && <div className={styles.overviewRequirementImage} data-locked-banner={locked || undefined}>
+        {locked && <VideoLockOverlay />}
         {image ? <img src={image} alt="" /> : <span>{t('quizNoThumbnail')}</span>}
-        {duration != null && Number.isFinite(duration) && duration >= 0 && <span className={styles.ruleDuration}>{formatDuration(Math.floor(duration))}</span>}
+        {!locked && duration != null && Number.isFinite(duration) && duration >= 0 && <span className={styles.ruleDuration}>{formatDuration(Math.floor(duration))}</span>}
       </div>}
       <div className={styles.overviewRequirementContent}><strong>{title}</strong>
         {row.is_met ? <p><span className={styles.overviewRequirementDone}>{CheckSVG}{t('quizRequirementFulfilled', { required })}</span></p> : <>
@@ -45,7 +49,7 @@ function OverviewRequirements({ requirements }: { requirements: Requirement[] })
           {row.completion_percentage != null && <progress className={styles.overviewRequirementProgress} value={row.completion_percentage} max={100} aria-label={title} />}
         </>}
       </div>
-      {!row.is_met && row.video_card && <Link className="videoQuizInlineButton videoQuizAttemptViewButton" to={`/video/${row.video_id}`}>{t('quizWatch')}{ArrowSVG}</Link>}
+      {!row.is_met && row.video_card && !locked && <Link className="videoQuizInlineButton videoQuizAttemptViewButton" to={`/video/${row.video_id}`}>{t('quizWatch')}{ArrowSVG}</Link>}
     </div>;
   };
   return <section className={styles.overviewRequirements} aria-labelledby="quiz-requirements-title">

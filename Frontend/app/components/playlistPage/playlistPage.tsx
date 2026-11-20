@@ -1,4 +1,5 @@
 import { useAuthorization } from "~/authorization/authorization";
+import { isRoleLocked } from "~/authorization/videoAudience";
 import { P } from "~/authorization/permissions";
 import { useQuery } from "@tanstack/react-query";
 import { useLayoutEffect, useState, useCallback, useMemo } from "react";
@@ -68,7 +69,7 @@ function PlaylistPage(){
     }, [t]);
 
     function playPlaylist(){
-        document.querySelector<HTMLAnchorElement>(".playlistStartVideo")?.click();
+        document.querySelector<HTMLAnchorElement>(".playlistDetailsPage a.playlistVideo")?.click();
     }
 
 
@@ -81,7 +82,7 @@ function PlaylistPage(){
     }, [token]);
 
     const {data: playlistResponse, isLoading: isLoadingPlaylist} = useQuery({
-        queryKey: [`playlist${playlistId}`],
+        queryKey: [`playlist${playlistId}`, token],
         queryFn: () => fetchFn<FetchPlaylistT>({
             route: `api/playlists/${playlistId}`,
             options: {
@@ -97,7 +98,7 @@ function PlaylistPage(){
     const paletteStyle = useImagePalette(thumbnail);
 
     const {data: playlistVideosResponse, isLoading: isLoadingVideos} = useQuery({
-        queryKey: [`playlist-videos${playlistId}`],
+        queryKey: [`playlist-videos${playlistId}`, token],
         queryFn: () => fetchFn<PlaylistVideosT>({
             route: `api/playlists/${playlistId}/videos?limit=100&page=1`,
             options: {
@@ -179,7 +180,7 @@ function PlaylistPage(){
                     </p>
 
                     <span className="buttonHolder">
-                        <button className="play" onClick={playPlaylist}>{PlaySVG}&nbsp;{t("playAll")}</button>
+                        <button className="play" onClick={playPlaylist} disabled={!playlistVideos.some(video => !isRoleLocked(video))}>{PlaySVG}&nbsp;{t("playAll")}</button>
 
                         <button className={`${isSaved ? "saved" : ""} clickable`} onClick={toggleSave} disabled={!can(P.playlistsSave)}>{BookmarkSVG}&nbsp;{isSaved ? t("saved") : t("save")}</button>
                         <button onClick={e => sharePlaylistLink(e)} className="clickable">{ShareSVG}&nbsp;{t("share")}</button>

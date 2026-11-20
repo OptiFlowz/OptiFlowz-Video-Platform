@@ -24,6 +24,9 @@ export async function getVideoByIdInternal(videoId, userId = null) {
             v.published_at,
             v.chapters,
             v.visibility,
+            v.audience_mode,
+            ARRAY(SELECT ar.role_id::text FROM public.video_allowed_roles ar
+                  WHERE ar.video_id = v.id ORDER BY ar.role_id) AS allowed_role_ids,
             v.show_locked_card,
             u.id as uploader_id,
             u.full_name as uploader_name,

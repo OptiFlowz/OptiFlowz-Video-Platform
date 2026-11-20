@@ -2,7 +2,9 @@ import { useI18n } from "~/i18n";
 import { memo, useState } from "react";
 import type { VPreviewProps } from "~/types";
 import ContentInfo from "~/components/contentInfo";
-import { Link } from "react-router";
+import { VideoCardLink } from "~/components/shared/videoCardLink";
+import { VideoLockOverlay } from "~/components/shared/videoLockOverlay";
+import { isRoleLocked } from "~/authorization/videoAudience";
 import { formatDuration } from "~/functions";
 import { useDelayedHoverPreview } from "~/components/shared/useDelayedHoverPreview";
 
@@ -11,19 +13,21 @@ function Item({props}: {props: VPreviewProps}){
     const {id, duration, ...info} = props;
 
     const newThumbnailUrl = props.thumbnail;
-    const animGifUrl = props.preview_url || undefined;
+    const locked = isRoleLocked(props);
+    const animGifUrl = locked ? undefined : props.preview_url;
     const isWatched = (props?.percentage_watched < 5 || props?.percentage_watched > 95) ? false : props?.progress_seconds;
 
-    const { isActive: previewActive, start: startPreview, cancel: cancelPreview } = useDelayedHoverPreview();
+    const { isActive: previewActive, requested: previewRequested, start: startPreview, cancel: cancelPreview } = useDelayedHoverPreview();
     const [loadedPreview, setLoadedPreview] = useState<string>();
     const showPreview = previewActive && !!animGifUrl && loadedPreview === animGifUrl;
 
     return (
-        <Link to={`/video/${id || 0}`} className="item" onMouseEnter={startPreview} onFocus={startPreview} onBlur={cancelPreview} onMouseLeave={cancelPreview}>
-            <div className="thumbnail">
-                {animGifUrl && <img className={previewActive ? "z-[-1] absolute top-0 left-0" : "z-0 absolute top-0 left-0 opacity-0"} src={animGifUrl} alt={t("thumbnailPreview")} loading="eager" decoding="async" onLoad={() => setLoadedPreview(animGifUrl)} onError={() => setLoadedPreview(undefined)} />}
+        <VideoCardLink locked={locked} to={`/video/${id || 0}`} className="item" onMouseEnter={startPreview} onFocus={startPreview} onBlur={cancelPreview} onMouseLeave={cancelPreview}>
+            <div className="thumbnail" data-locked-banner={locked || undefined}>
+                {locked && <VideoLockOverlay />}
+                {previewRequested && animGifUrl && <img className={previewActive ? "z-[-1] absolute top-0 left-0" : "z-0 absolute top-0 left-0 opacity-0"} src={animGifUrl} alt={t("thumbnailPreview")} loading="eager" decoding="async" onLoad={() => setLoadedPreview(animGifUrl)} onError={() => setLoadedPreview(undefined)} />}
                 <img className={showPreview ? "z-0 relative opacity-0" : "z-1 relative opacity-100"} src={newThumbnailUrl} alt={t("thumbnail")} loading="lazy" decoding="async" />
-                <span className={"duration z-1" + (isWatched ? " watched" : "")}>{formatDuration(Number(duration))}</span>
+                {!locked && <span className={"duration z-1" + (isWatched ? " watched" : "")}>{formatDuration(Number(duration))}</span>}
                 
                 {isWatched ? <span className="bottomShadow z-1 relative"></span> : ""}
 
@@ -35,7 +39,7 @@ function Item({props}: {props: VPreviewProps}){
             <span>
                 <ContentInfo props={{ ...info, views: Number((info as any).views) }} />
             </span>
-        </Link>
+        </VideoCardLink>
     )
 }
 

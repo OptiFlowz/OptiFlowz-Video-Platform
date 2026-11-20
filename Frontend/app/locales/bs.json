@@ -1,6 +1,7 @@
 {
   "uploadRoleRestriction": "Ograniči gledanje prema ulozi",
-  "uploadRoleRestrictionHelp": "Samo pregled. Odaberite uloge čiji bi korisnici mogli gledati ovaj video.",
+  "uploadRoleRestrictionHelp": "Odaberite barem jednu ulogu koja može gledati ovaj video.",
+  "insufficientPermissions": "Nedovoljne dozvole",
   "uploadRoleHideBanner": "Sakrij od ostalih",
   "uploadRoleHideBannerHelp": "Korisnici bez odabrane uloge neće moći pronaći video",
   "navSectionManage": "Upravljaj",

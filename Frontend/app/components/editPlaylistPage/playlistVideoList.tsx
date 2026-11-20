@@ -3,16 +3,22 @@ import { createPortal } from "react-dom";
 import { DndContext, DragOverlay, MouseSensor, TouchSensor, KeyboardSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, useSortable, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Link } from "react-router";
+import { VideoCardLink } from "../shared/videoCardLink";
+import { VideoLockOverlay } from "../shared/videoLockOverlay";
 import { MenuSVG, DeleteSVG } from "~/constants";
 import { useI18n } from "~/i18n";
 import { getVideoThumbnail } from "~/components/shared/videoMedia";
+import { isRoleLocked } from "~/authorization/videoAudience";
 import type { PlaylistVideoT } from "~/types";
 import styles from "./editPlaylistPage.module.css";
 
 function VideoContent({ video, index }: { video: PlaylistVideoT; index: number }) {
+  const locked = isRoleLocked(video);
   return <>
-    <img src={getVideoThumbnail(video)} alt="" loading="lazy" draggable={false} />
+    <span className={styles.rowThumbnail} data-locked-banner={locked || undefined}>
+      <img src={getVideoThumbnail(video)} alt="" loading="lazy" draggable={false} />
+      {locked && <VideoLockOverlay />}
+    </span>
     <span className={styles.videoInfo}><strong>{index + 1}. {video.title}</strong><small>{video.uploader_name}</small></span>
   </>;
 }
@@ -23,7 +29,7 @@ function SortableVideo({ video, index, disabled, onDelete }: { video: PlaylistVi
   return <div ref={setNodeRef} style={{ transform: CSS.Translate.toString(transform), transition }} className={`${styles.videoRow} ${isDragging ? styles.dragging : ""}`}>
     <button ref={setActivatorNodeRef} type="button" {...attributes} {...listeners} disabled={disabled}
       className={styles.dragHandle} aria-label={`${t("quizDragToReorder")}: ${video.title}`} title={t("quizDragToReorder")}>{MenuSVG}</button>
-    <Link to={`/video/${video.id}`} draggable={false} className={styles.videoLink}><VideoContent video={video} index={index} /></Link>
+    <VideoCardLink locked={isRoleLocked(video)} to={`/video/${video.id}`} draggable={false} className={styles.videoLink}><VideoContent video={video} index={index} /></VideoCardLink>
     <button type="button" disabled={disabled} className={styles.deleteButton} onClick={() => onDelete(video.id)}
       aria-label={`${t("adminDelete")}: ${video.title}`} title={t("adminDelete")}>{DeleteSVG}</button>
   </div>;

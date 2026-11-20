@@ -1,6 +1,8 @@
 import PostEngagement, { PostComments } from './PostEngagement';
 import { CheckSVG, CloseSVG } from "~/constants";
+import { VideoLockOverlay } from "~/components/shared/videoLockOverlay";
 import { getVideoThumbnail } from "~/components/shared/videoMedia";
+import { isRoleLocked } from "~/authorization/videoAudience";
 import { useId, useRef, useState, type ReactNode } from 'react';
 import { useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { getToken } from '~/functions';
@@ -138,11 +140,15 @@ export function PostAuthorHeader({ author, createdAt, channelId, children }: { a
 export function PostVideoPreview({ video, linked = false }: { video?: ChannelVideoT | null; linked?: boolean }) {
   const { t } = useI18n();
   if (!video) return <div className="postInset">{t('postVideoUnavailable')}</div>;
+  const locked = isRoleLocked(video);
   const content = <>
-    <img src={getVideoThumbnail(video) || DefaultThumbnail} onError={event => { event.currentTarget.onerror = null; event.currentTarget.src = DefaultThumbnail; }} alt="" />
+    <span className="postVideoBanner" data-locked-banner={locked || undefined}>
+      {locked && <VideoLockOverlay />}
+      <img src={getVideoThumbnail(video) || DefaultThumbnail} onError={event => { event.currentTarget.onerror = null; event.currentTarget.src = DefaultThumbnail; }} alt="" />
+    </span>
     <div><strong>{video.title}</strong><small>{video.uploader_name}</small><div className="postVideoMeta"><span>{formatViews(video.view_count)}</span><span>{formatDate(video.created_at)}</span></div></div>
   </>;
-  return linked ? <Link className="postVideoMention" to={`/video/${video.id}`}>{content}</Link> : <div className="postVideoMention">{content}</div>;
+  return linked && !locked ? <Link className="postVideoMention" to={`/video/${video.id}`}>{content}</Link> : <div className="postVideoMention">{content}</div>;
 }
 
 export default function PostCard({ post, author, videos = [], interactive = false, readOnly = false, linkAuthor = false, sideComments = false }: { post: Post; author: PostAuthor; videos?: ChannelVideoT[]; interactive?: boolean; readOnly?: boolean; linkAuthor?: boolean; sideComments?: boolean }) {

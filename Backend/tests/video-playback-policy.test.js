@@ -47,6 +47,13 @@ function reset(policy = 'public') {
 }
 const input = policy => ({ params: { videoId: id }, body: { playback_policy: policy } });
 
+test('a role-restricted video cannot acquire a public playback ID', async () => {
+  reset('signed');
+  video.audience_mode = 'selected_roles';
+  await assert.rejects(update(input('public')), { status: 409 });
+  assert.equal(calls.some(call => call[0] === 'create'), false);
+});
+
 for (const [from, to] of [['public', 'signed'], ['signed', 'public']]) {
   test(`${from} to ${to} saves the replacement before deleting the previous ID`, async () => {
     reset(from);

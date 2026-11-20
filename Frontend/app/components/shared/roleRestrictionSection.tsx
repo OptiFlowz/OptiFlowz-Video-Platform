@@ -1,19 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { useId, useState, type Dispatch, type SetStateAction } from "react";
 import { roleCatalogQuery } from "~/authorization/roleCatalog";
+import { readAudience, type RoleRestrictionDraft } from "~/authorization/videoAudience";
 import { getRoleLabel } from "~/authorization/roleLabels";
 import { passwordHideSVG, passwordShowSVG } from "~/constants";
 import { useI18n } from "~/i18n";
 import styles from "../uploadPage/uploadStatus.module.css";
 
-type RoleRestrictionDraft = {
-  enabled: boolean;
-  roleIds: string[];
-  hideBanner: boolean;
-};
-
 export function useRoleRestrictionDraft() {
-  return useState<RoleRestrictionDraft>({ enabled: false, roleIds: [], hideBanner: true });
+  return useState<RoleRestrictionDraft>(() => readAudience());
 }
 
 type Props = {

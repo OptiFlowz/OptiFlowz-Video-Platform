@@ -1,6 +1,7 @@
 {
   "uploadRoleRestriction": "Takmarka áhorf eftir hlutverki",
-  "uploadRoleRestrictionHelp": "Aðeins forskoðun. Veldu hvaða hlutverk myndu veita aðgang að myndbandinu.",
+  "uploadRoleRestrictionHelp": "Veldu að minnsta kosti eitt hlutverk sem má horfa á myndbandið.",
+  "insufficientPermissions": "Ófullnægjandi heimildir",
   "uploadRoleHideBanner": "Fela fyrir öðrum",
   "uploadRoleHideBannerHelp": "Notendur án valins hlutverks munu ekki geta fundið myndbandið",
   "liveDuration": "Hámarkslengd",

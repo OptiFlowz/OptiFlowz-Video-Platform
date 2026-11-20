@@ -1,3 +1,5 @@
+import { VideoLockOverlay } from "../shared/videoLockOverlay";
+import { isRoleLocked } from "../../authorization/videoAudience";
 import { formatDuration } from '~/functions';
 import { DeleteSVG, EditSVG } from '~/constants';
 import { useI18n } from '~/i18n';
@@ -14,14 +16,16 @@ export default function RequirementCard({ row, editable, busy, onEdit, onRemove,
 }) {
   const { t } = useI18n();
   const title = row.video_card?.title || t('quizRequiredVideo');
+  const locked = isRoleLocked(row.video_card);
   const image = row.video_card?.thumbnail_url || row.video_card?.mux_thumbnail_url;
   const percentage = row.min_watch_percentage !== null;
   return <article className={`${styles.partCard} ${styles.ruleCard}`} aria-label={title}>
     <div className={styles.ruleIdentity}>
       {editable && <input className={styles.candidateCheckbox} type="checkbox" aria-label={`${t('quizSelect')}: ${title}`} checked={selected} disabled={busy} onChange={event => onSelect(event.target.checked)} />}
-      <div className={styles.ruleThumbnail}>
+      <div className={styles.ruleThumbnail} data-locked-banner={locked || undefined}>
+        {locked && <VideoLockOverlay />}
         {image ? <img src={image} alt="" /> : <span>{t('quizNoThumbnail')}</span>}
-        {row.video_card?.duration_seconds != null && <span className={styles.ruleDuration}>{formatDuration(row.video_card.duration_seconds)}</span>}
+        {!locked && row.video_card?.duration_seconds != null && <span className={styles.ruleDuration}>{formatDuration(row.video_card.duration_seconds)}</span>}
       </div>
       <div className={styles.ruleTitle}>
         <p>{title}</p>

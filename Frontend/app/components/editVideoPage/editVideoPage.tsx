@@ -29,6 +29,7 @@ import statusStyles from "../uploadPage/uploadStatus.module.css";
 import CustomSelect from "~/components/customSelect/customSelect";
 import { EditorHeader } from "../shared/editorHeader";
 import RoleRestrictionSection, { useRoleRestrictionDraft } from "../shared/roleRestrictionSection";
+import { audiencePayload, readAudience, type VideoAudience } from "~/authorization/videoAudience";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
 
@@ -52,7 +53,7 @@ interface GenerateChaptersResponse {
   }[];
 }
 
-interface VideoData extends VideoMedia {
+interface VideoData extends VideoMedia, VideoAudience {
   id: string;
   title: string;
   description: string;
@@ -142,19 +143,18 @@ function localDateTimeValue(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-function EditRoleRestrictions({ token, disabled }: { token: string; disabled: boolean }) {
-  const [draft, setDraft] = useRoleRestrictionDraft();
-  return <RoleRestrictionSection token={token} draft={draft} setDraft={setDraft} disabled={disabled} />;
+function EditVideoPage() {
+  const [searchParams] = useSearchParams();
+  const videoId = searchParams.get("video");
+  return <VideoEditor key={videoId} videoId={videoId} />;
 }
 
-function EditVideoPage() {
+function VideoEditor({ videoId }: { videoId: string | null }) {
   const { t, locale } = useI18n();
   const { can } = useAuthorization();
   const queryClient = useQueryClient();
   const languageNames = useMemo(() => new Intl.DisplayNames([locale === "sr" ? "sr-Latn" : locale], { type: "language" }), [locale]);
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const videoId = searchParams.get("video");
   const { previewRevision, refreshVideoPreview } = useVideoPreviewRefresh(videoId);
 
   const [title, setTitle] = useState("");
@@ -195,7 +195,10 @@ function EditVideoPage() {
   const [oldTitle, setOldTitle] = useState("");
   const [oldDescription, setOldDescription] = useState("");
   const [oldTags, setOldTags] = useState<string[]>([]);
-  const [playbackPolicy, setPlaybackPolicy] = useState<PlaybackPolicy | null>(null);
+  const [roleRestriction, setRoleRestriction] = useRoleRestrictionDraft();
+  const [savedRestriction, setSavedRestriction] = useRoleRestrictionDraft();
+  const [preferredPolicy, setPlaybackPolicy] = useState<PlaybackPolicy | null>(null);
+  const playbackPolicy = roleRestriction.enabled ? "signed" : preferredPolicy;
   const [oldPlaybackPolicy, setOldPlaybackPolicy] = useState<PlaybackPolicy | null>(null);
   const [isSavingAccess, setIsSavingAccess] = useState(false);
   const [accessError, setAccessError] = useState<string | null>(null);
@@ -276,7 +279,7 @@ function EditVideoPage() {
     isLoading: isVideoLoading,
     isError: isVideoError,
   } = useQuery({
-    queryKey: [`video${videoId}`],
+    queryKey: [`video${videoId}`, token],
     queryFn: () =>
       fetchFn({
         route: `api/videos/${videoId}`,
@@ -291,6 +294,15 @@ function EditVideoPage() {
     refetchOnMount: "always",
   });
 
+
+  const audienceMode = videoData?.audience_mode;
+  const allowedRoleIds = videoData?.allowed_role_ids;
+  const showLockedCard = videoData?.show_locked_card;
+  useEffect(() => {
+    const audience = readAudience({ audience_mode: audienceMode, allowed_role_ids: allowedRoleIds, show_locked_card: showLockedCard });
+    setRoleRestriction(audience);
+    setSavedRestriction(audience);
+  }, [audienceMode, allowedRoleIds, showLockedCard, setRoleRestriction, setSavedRestriction]);
 
   // Populate form with video data
   useEffect(() => {
@@ -375,7 +387,10 @@ function EditVideoPage() {
     oldTags,
   ]);
 
-  const accessModified = visibility !== oldVisibility || playbackPolicy !== oldPlaybackPolicy || scheduleModified;
+  const audienceModified = can(P.rolesGet) &&
+    JSON.stringify(audiencePayload(roleRestriction)) !== JSON.stringify(audiencePayload(savedRestriction));
+  const missingRole = audienceModified && roleRestriction.enabled && !roleRestriction.roleIds.length;
+  const accessModified = audienceModified || visibility !== oldVisibility || playbackPolicy !== oldPlaybackPolicy || scheduleModified;
 
   const displayedThumbnailUrl = thumbnailMarkedForRemoval
     ? null
@@ -1091,7 +1106,7 @@ function EditVideoPage() {
   // Each setting has its own endpoint. Keep successful baselines even if the
   // other request fails, so retrying only sends the remaining change.
   const handleSaveAccess = async () => {
-    if (!videoId || !accessModified || accessSavePending.current) return;
+    if (!videoId || !videoData || !accessModified || missingRole || accessSavePending.current) return;
     const now = Date.now();
     setScheduleNow(now);
     if (scheduleModified && scheduleUpload && (!Number.isFinite(scheduledTime) || scheduledTime <= now)) {
@@ -1102,15 +1117,35 @@ function EditVideoPage() {
     setIsSavingAccess(true);
     setAccessError(null);
     let changed = false;
+    const savePlaybackPolicy = async () => {
+      if (!playbackPolicy || playbackPolicy === oldPlaybackPolicy) return;
+      const response = await fetchFn<{ id: string; playback_policy: PlaybackPolicy; mux_playback_id: string }>({
+        route: `api/video-moderation/${videoId}/playback-policy`,
+        options: {
+          method: "PATCH",
+          headers: myHeaders.current,
+          body: JSON.stringify({ playback_policy: playbackPolicy }),
+        },
+      });
+      if (response?.id !== videoId || response.playback_policy !== playbackPolicy || !response.mux_playback_id) {
+        throw new Error("Invalid playback policy response");
+      }
+      setOldPlaybackPolicy(response.playback_policy);
+      setPlaybackPolicy(response.playback_policy);
+      changed = true;
+    };
     try {
-      if (visibility !== oldVisibility || scheduleModified) {
+      // Revoke a public playback ID before restricting the audience.
+      if (playbackPolicy === "signed") await savePlaybackPolicy();
+      if (audienceModified || visibility !== oldVisibility || scheduleModified) {
         const response = await fetchFn<{ success: boolean }>({
           route: `api/video-moderation/video-details/${videoId}`,
           options: {
             method: "PATCH",
             headers: myHeaders.current,
             body: JSON.stringify({
-              visibility,
+              ...(visibility !== oldVisibility || scheduleModified ? { visibility } : {}),
+              ...(audienceModified ? audiencePayload(roleRestriction) : {}),
               ...(scheduleModified ? {
                 published_at: scheduleUpload ? new Date(scheduledTime).toISOString() : new Date().toISOString(),
               } : {}),
@@ -1121,29 +1156,11 @@ function EditVideoPage() {
         setOldVisibility(visibility);
         setOldScheduleUpload(scheduleUpload);
         setOldScheduledAt(scheduledAt);
+        if (audienceModified) setSavedRestriction(roleRestriction);
         void queryClient.invalidateQueries({ queryKey: ["my-videos"] });
         changed = true;
       }
-      if (playbackPolicy && playbackPolicy !== oldPlaybackPolicy) {
-        const response = await fetchFn<{
-          id: string;
-          playback_policy: PlaybackPolicy;
-          mux_playback_id: string;
-          changed: boolean;
-        }>({
-          route: `api/video-moderation/${videoId}/playback-policy`,
-          options: {
-            method: "PATCH",
-            headers: myHeaders.current,
-            body: JSON.stringify({ playback_policy: playbackPolicy }),
-          },
-        });
-        if (response?.id !== videoId || response.playback_policy !== playbackPolicy || !response.mux_playback_id) {
-          throw new Error("Invalid playback policy response");
-        }
-        setOldPlaybackPolicy(response.playback_policy);
-        changed = true;
-      }
+      if (playbackPolicy === "public") await savePlaybackPolicy();
     } catch {
       setAccessError(t("uploadInitialSaveFailed"));
     } finally {
@@ -1621,7 +1638,8 @@ function EditVideoPage() {
                     </div>}
                   </div>
                   {can(P.rolesGet) && (
-                    <EditRoleRestrictions key={videoId} token={token} disabled={isSavingAccess} />
+                    <RoleRestrictionSection token={token} draft={roleRestriction}
+                      setDraft={setRoleRestriction} disabled={isSavingAccess || !videoData} />
                   )}
                   <div className={`formGroup ${statusStyles.schedule}`}>
                     <label htmlFor="editPlaybackPolicy">{t("playbackProtection")}</label>
@@ -1639,7 +1657,7 @@ function EditVideoPage() {
                       ]}
                       ariaLabel={t("playbackProtection")}
                       triggerClassName="visibilitySelect"
-                      disabled={isSavingAccess || oldPlaybackPolicy === null}
+                      disabled={isSavingAccess || oldPlaybackPolicy === null || roleRestriction.enabled}
                     />
                   </div>
                   {accessError && <p className="formHint" role="alert">{accessError}</p>}
@@ -1651,7 +1669,7 @@ function EditVideoPage() {
                       <button
                         type="button"
                         onClick={handleSaveAccess}
-                        disabled={!accessModified || isSavingAccess || scheduleInvalid}
+                        disabled={!accessModified || isSavingAccess || scheduleInvalid || missingRole}
                         className="saveCaptionsBtn"
                       >
                         {isSavingAccess ? <><div className="uploadSpinner tiny" />{t("saving")}</> : t("save")}

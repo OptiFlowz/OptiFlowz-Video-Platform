@@ -1,6 +1,7 @@
 {
   "uploadRoleRestriction": "Ограничаване на гледането по роля",
-  "uploadRoleRestrictionHelp": "Само за преглед. Изберете ролите, с които ще може да се гледа този видеоклип.",
+  "uploadRoleRestrictionHelp": "Изберете поне една роля, която може да гледа видеото.",
+  "insufficientPermissions": "Недостатъчни права",
   "uploadRoleHideBanner": "Скриване от другите",
   "uploadRoleHideBannerHelp": "Потребителите без избрана роля няма да могат да намерят видеото",
   "liveDuration": "Максимална продължителност",

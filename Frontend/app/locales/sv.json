@@ -1,6 +1,7 @@
 {
   "uploadRoleRestriction": "Begränsa uppspelning efter roll",
-  "uploadRoleRestrictionHelp": "Endast förhandsvisning. Välj vilka roller som skulle kunna se videon.",
+  "uploadRoleRestrictionHelp": "Välj minst en roll som får se videon.",
+  "insufficientPermissions": "Otillräcklig behörighet",
   "uploadRoleHideBanner": "Dölj för andra",
   "uploadRoleHideBannerHelp": "Användare utan en vald roll kommer inte att kunna hitta videon",
   "liveDuration": "Maximal längd",

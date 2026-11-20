@@ -23,6 +23,8 @@ function setup(t) {
     }
   });
   const mocks = {
+    '../live/LiveStatus': { __esModule: true, default: () => null },
+    '~/constants': { LockSVG: React.createElement('svg') },
     '~/components/shared/videoMedia': { getVideoThumbnail: video => video.thumbnail_url },
     'react-router': { Link: ({ to, children, ...props }) => React.createElement('a', { href: to, ...props }, children) },
     '~/components/contentInfo': { __esModule: true, default: () => null },
@@ -31,22 +33,46 @@ function setup(t) {
     '~/i18n': { useI18n: () => ({ t: key => require('../app/locales/en.json')[key] ?? key }) },
     'next/image': { __esModule: true, default: ({ fill, ...props }) => React.createElement('img', props) },
   };
-  function load(relative) {
+  function load(relative, named = false) {
     const file = path.join(__dirname, '..', relative);
     const code = ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
     const module = { exports: {} };
     new Function('require', 'module', 'exports', code)(name => {
       if (mocks[name]) return mocks[name];
+      if (name.startsWith('~/')) {
+        const relativePath = 'app/' + name.slice(2);
+        return load(relativePath + (fs.existsSync(path.join(__dirname, '..', relativePath + '.ts')) ? '.ts' : '.tsx'), true);
+      }
       if (name.endsWith('.css')) return {};
       if (name.endsWith('.webp')) return { __esModule: true, default: name };
       return require(name);
     }, module, module.exports);
-    return module.exports.default;
+    return named ? module.exports : module.exports.default;
   }
   return { root, load };
 }
 
 for (const vertical of [false, true]) {
+  test(`${vertical ? 'vertical' : 'collection'} role-locked card keeps its banner, with no preview or watch link`, async t => {
+    const { root, load } = setup(t);
+    const Item = load(vertical ? 'app/components/searchPage/verticalSlider/item.tsx' : 'app/components/itemSlider/item.tsx');
+    const props = { id: 'restricted', title: 'Members video', duration: 60, duration_seconds: 60,
+      thumbnail: '/banner.webp', thumbnail_url: '/banner.webp', preview_url: '/unused.webp',
+      audience_mode: 'selected_roles', can_watch: false };
+    await act(() => root.render(React.createElement(Item, { props })));
+    const banner = document.querySelector('[data-locked-banner="true"]');
+    assert.ok(banner.querySelector('svg'));
+    assert.equal(banner.querySelector('.duration'), null);
+    assert.equal(banner.querySelector('small').textContent, 'Insufficient permissions');
+    assert.equal(banner.querySelector('img').getAttribute('src'), '/banner.webp');
+    await act(() => banner.dispatchEvent(new window.FocusEvent('focusin', { bubbles: true })));
+    assert.equal(document.querySelector('img[src="/unused.webp"], a'), null);
+    await act(() => root.render(React.createElement(Item, { props: { ...props, can_watch: true } })));
+    assert.ok(document.querySelector('a[href="/video/restricted"]'));
+    assert.equal(document.querySelector('.duration').textContent, '1:00');
+    assert.equal(document.querySelector('.videoLockOverlay'), null);
+  });
+
   test(`${vertical ? 'vertical' : 'collection'} card requests signed preview only after pointer/focus intent`, async t => {
     const { root, load } = setup(t);
     const Item = load(vertical ? 'app/components/searchPage/verticalSlider/item.tsx' : 'app/components/itemSlider/item.tsx');

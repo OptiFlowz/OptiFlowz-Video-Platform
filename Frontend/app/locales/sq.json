@@ -1,6 +1,7 @@
 {
   "uploadRoleRestriction": "Kufizo shikimin sipas rolit",
-  "uploadRoleRestrictionHelp": "Vetëm parapamje. Zgjidhni rolet që do të mund ta shihnin këtë video.",
+  "uploadRoleRestrictionHelp": "Zgjidhni të paktën një rol që mund ta shohë videon.",
+  "insufficientPermissions": "Leje të pamjaftueshme",
   "uploadRoleHideBanner": "Fshihe nga të tjerët",
   "uploadRoleHideBannerHelp": "Përdoruesit pa një rol të zgjedhur nuk do ta gjejnë dot videon",
   "liveDuration": "Kohëzgjatja maksimale",

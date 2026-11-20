@@ -1,6 +1,7 @@
 {
   "uploadRoleRestriction": "Περιορισμός αναπαραγωγής ανά ρόλο",
-  "uploadRoleRestrictionHelp": "Μόνο προεπισκόπηση. Επιλέξτε ποιοι ρόλοι θα μπορούσαν να παρακολουθήσουν αυτό το βίντεο.",
+  "uploadRoleRestrictionHelp": "Επιλέξτε τουλάχιστον έναν ρόλο που μπορεί να δει το βίντεο.",
+  "insufficientPermissions": "Ανεπαρκή δικαιώματα",
   "uploadRoleHideBanner": "Απόκρυψη από άλλους",
   "uploadRoleHideBannerHelp": "Όσοι δεν έχουν επιλεγμένο ρόλο δεν θα μπορούν να βρουν το βίντεο",
   "liveDuration": "Μέγιστη διάρκεια",

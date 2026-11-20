@@ -31,6 +31,7 @@ import statusStyles from "./uploadStatus.module.css";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
 import RoleRestrictionSection, { useRoleRestrictionDraft } from "../shared/roleRestrictionSection";
+import { audiencePayload } from "~/authorization/videoAudience";
 import VideoRecorder from "./videoRecorder";
 import LocalVideoEditor from "./localVideoEditor";
 import CustomSelect from "~/components/customSelect/customSelect";
@@ -202,7 +203,9 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
   const [oldCaptions, setOldCaptions] = useState("");
   const [spokenLanguage, setSpokenLanguage] = useState("auto");
   const [captionLanguage, setCaptionLanguage] = useState("auto");
-  const [playbackPolicy, setPlaybackPolicy] = useState<PlaybackPolicy>("signed");
+  const [preferredPolicy, setPlaybackPolicy] = useState<PlaybackPolicy>("signed");
+  const playbackPolicy = roleRestriction.enabled ? "signed" : preferredPolicy;
+  const missingRole = roleRestriction.enabled && !roleRestriction.roleIds.length;
   const [savedPlaybackPolicy, setSavedPlaybackPolicy] = useState<PlaybackPolicy | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [oldChapters, setOldChapters] = useState<Chapter[]>([]);
@@ -306,7 +309,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
 
   // Fetch video data only after processing is complete
   const { data: videoData, isLoading: isVideoLoading } = useQuery({
-    queryKey: [`video${videoId}`],
+    queryKey: [`video${videoId}`, token],
     queryFn: () =>
       fetchFn({
         route: `api/videos/${videoId}`,
@@ -1333,7 +1336,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
       case 1:
         return !!videoFile && title.trim().length > 0 && !recordingOpen && !trimEditing;
       case 2:
-        return !scheduleInvalid;
+        return !scheduleInvalid && !missingRole;
       case 3:
         return title.trim().length > 0;
       default:
@@ -1342,7 +1345,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
   };
 
   const handleSubmit = async () => {
-    if (!isUploaded || !videoId || isSavingDetails) return;
+    if (!isUploaded || !videoId || isSavingDetails || missingRole) return;
     if (!validateSchedule()) return;
 
     setIsSavingDetails(true);
@@ -1384,6 +1387,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
             tags,
             visibility,
             published_at: publishedAt,
+            ...audiencePayload(roleRestriction),
             speakers: speakers.map((person) => person.id),
             chairs: chairs.map((person) => person.id),
             chapters: chapters.map((chapter) => ({ title: chapter.title, startTime: parseTimestampToSeconds(chapter.timestamp) })),
@@ -1634,7 +1638,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                   onChange={(value) => setPlaybackPolicy(value as "public" | "signed")}
                   options={[{ value: "signed", label: t("playbackSigned") }, { value: "public", label: t("playbackPublic") }]}
                   ariaLabel={t("playbackProtection")} triggerClassName="visibilitySelect"
-                  disabled={isUploaded || isProcessing} />
+                  disabled={isUploaded || isProcessing || roleRestriction.enabled} />
               </div>
             </div>
           )}
@@ -2231,7 +2235,7 @@ function UploadPage({ onStatus, onFinish }: { onStatus?: (status: UploadStatus) 
                         ]}
                         ariaLabel={t("playbackProtection")}
                         triggerClassName="visibilitySelect"
-                        disabled={isSavingDetails}
+                        disabled={isSavingDetails || roleRestriction.enabled}
                       />
                     </div>
                   </section>

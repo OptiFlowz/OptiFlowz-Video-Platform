@@ -1,6 +1,7 @@
 {
   "uploadRoleRestriction": "Restreindre la lecture par rôle",
-  "uploadRoleRestrictionHelp": "Aperçu uniquement. Choisissez les rôles qui permettraient de regarder cette vidéo.",
+  "uploadRoleRestrictionHelp": "Choisissez au moins un rôle autorisé à regarder cette vidéo.",
+  "insufficientPermissions": "Autorisations insuffisantes",
   "uploadRoleHideBanner": "Masquer aux autres",
   "uploadRoleHideBannerHelp": "Sans rôle sélectionné, personne ne pourra trouver la vidéo",
   "liveDuration": "Durée maximale",

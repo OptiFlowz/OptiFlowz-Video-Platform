@@ -1,6 +1,8 @@
 import "~/styles/analytics.css";
 import { createAnalyticsReportPreview } from "./analyticsReportPreview";
+import { VideoLockOverlay } from "~/components/shared/videoLockOverlay";
 import { getVideoThumbnail } from "~/components/shared/videoMedia";
+import { isRoleLocked, type VideoCardAccess } from "~/authorization/videoAudience";
 import { useAuthorization } from "~/authorization/authorization";
 import { P } from "~/authorization/permissions";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -64,7 +66,7 @@ type PlatformEngagementResponse = {
   averageEngagementPerVideo: number;
 };
 
-type TopViewedVideo = {
+type TopViewedVideo = VideoCardAccess & {
   id: string;
   title: string;
   thumbnail_url: string | null;
@@ -1184,7 +1186,8 @@ function Analytics() {
                 {topViewedVideos.map((video, index) => (
                   <article className="channelAnalyticsBestVideo" key={video.id}>
                     <span className="channelAnalyticsBestVideoRank" aria-label={`${index + 1}`}>{index + 1}</span>
-                    <div className="channelAnalyticsBestVideoThumbnail">
+                    <div className="channelAnalyticsBestVideoThumbnail" data-locked-banner={isRoleLocked(video) || undefined}>
+                      {isRoleLocked(video) && <VideoLockOverlay />}
                       <img
                         src={getVideoThumbnail(video) || DefaultThumbnail}
                         alt={video.title}
@@ -1192,7 +1195,7 @@ function Analytics() {
                         decoding="async"
                         onError={(event) => { event.currentTarget.src = DefaultThumbnail; }}
                       />
-                      <span>{formatDuration(video.duration_seconds)}</span>
+                      {!isRoleLocked(video) && <span>{formatDuration(video.duration_seconds)}</span>}
                     </div>
                     <div className="channelAnalyticsBestVideoInfo">
                       <h3>{video.title}</h3>

@@ -1,4 +1,5 @@
 import { memo, useMemo, useLayoutEffect, useRef, type ReactNode } from "react";
+import { isRoleLocked } from "~/authorization/videoAudience";
 import PlayCard from "./playCard";
 import type { PlaylistVideoT } from "~/types";
 
@@ -7,7 +8,7 @@ function PlaylistVideos({ playlistId, videos, playedVideoId, children }: { playl
 
   const { currentIndex, nextVideo } = useMemo(() => {
     const idx = videos.findIndex((v) => v.id === playedVideoId);
-    const next = idx >= 0 && idx + 1 < videos.length ? videos[idx + 1] : null;
+    const next = idx >= 0 ? videos.slice(idx + 1).find(video => !isRoleLocked(video)) : undefined;
     return { currentIndex: idx, nextVideo: next };
   }, [videos, playedVideoId]);
 

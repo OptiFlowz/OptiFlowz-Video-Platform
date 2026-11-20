@@ -1,6 +1,7 @@
 {
   "uploadRoleRestriction": "Restringir a reprodução por função",
-  "uploadRoleRestrictionHelp": "Apenas pré-visualização. Escolha quais funções permitiriam assistir a este vídeo.",
+  "uploadRoleRestrictionHelp": "Escolha pelo menos uma função que permita ver este vídeo.",
+  "insufficientPermissions": "Permissões insuficientes",
   "uploadRoleHideBanner": "Ocultar dos outros",
   "uploadRoleHideBannerHelp": "Quem não tiver uma das funções selecionadas não poderá encontrar o vídeo",
   "liveDuration": "Duração máxima",

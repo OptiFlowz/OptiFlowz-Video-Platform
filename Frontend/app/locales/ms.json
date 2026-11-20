@@ -1,6 +1,7 @@
 {
   "uploadRoleRestriction": "Hadkan tontonan mengikut peranan",
-  "uploadRoleRestrictionHelp": "Pratonton sahaja. Pilih peranan yang boleh menonton video ini.",
+  "uploadRoleRestrictionHelp": "Pilih sekurang-kurangnya satu peranan yang boleh menonton video ini.",
+  "insufficientPermissions": "Kebenaran tidak mencukupi",
   "uploadRoleHideBanner": "Sembunyikan daripada orang lain",
   "uploadRoleHideBannerHelp": "Pengguna tanpa peranan terpilih tidak akan dapat menemukan video ini",
   "navSectionManage": "Urus",
