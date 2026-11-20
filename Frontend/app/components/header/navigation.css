@@ -1,7 +1,9 @@
-.appFrame {
+.appFrame, .persistent-video-safe-area {
     --sidebar-width: 248px;
     --sidebar-duration: 280ms;
     --sidebar-easing: cubic-bezier(0.22, 1, 0.36, 1);
+}
+.appFrame {
     width: 100%;
     min-height: 100dvh;
 }
@@ -247,8 +249,13 @@ header[data-app-header].appHeader > .appHeaderInner {
     outline-offset: -3px;
 }
 
-/* Only the expanded desktop sidebar reduces the space available to video grids. */
 @media (min-width: 1101px) {
+    .persistent-video-safe-area {
+        transition: left var(--sidebar-duration) var(--sidebar-easing);
+    }
+    :root:has(.appSidebar[aria-hidden="false"]) .persistent-video-safe-area {
+        left: var(--sidebar-width);
+    }
     .appFrame:not(.appFrameCompact) main .collection.notscrollable,
     .appFrame:not(.appFrameCompact) main.playlist .videoHolder,
     .appFrame:not(.appFrameCompact) main.videos .holder,
@@ -332,7 +339,7 @@ header[data-app-header].appHeader > .appHeaderInner {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .appFrame { --sidebar-duration: 0s; }
+    .appFrame, .persistent-video-safe-area { --sidebar-duration: 0s; }
 }
 
 /* Match the mobile video and live watch headers, including loading states. */

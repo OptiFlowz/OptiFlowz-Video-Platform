@@ -16,7 +16,7 @@
 .timestamp:hover, .actions button:hover:not(:disabled) { border-color: var(--note-color); }
 .actions { display: flex; justify-content: space-between; gap: 5px; }
 .actions button { flex-shrink: 0; display: grid; place-items: center; width: 29px; height: 29px; padding: 5px; background: var(--background2); color: var(--note-color); border-radius: 50%; }
-.actions button:hover { background: var(--background3); }
+.actions button:enabled:hover, .error button:enabled:hover, .colors button:enabled:hover { background: var(--background3); }
 .actions svg { width: 17px; height: 17px; }
 .content { grid-column: 1; grid-row: 1; min-width: 0; }
 .content h3 { display: flex; align-items: flex-start; gap: 5px; margin: 0 0 6px; font-size: 0.95rem; line-height: 1.35; overflow-wrap: anywhere; }
@@ -39,8 +39,8 @@
 .editorButtons .primary, .cancel { padding: 6px 12px; }
 .cancel { border: 1px solid var(--border1); border-radius: 22px; background: var(--background2); color: var(--text2); }
 .cancel:hover { background: var(--background3); color: var(--text1); }
-.addNote { display: flex; align-items: center; gap: 10px; width: 100%; padding: 11px 12px; border: 1px dashed var(--border1); border-radius: 12px; background: var(--background3); color: var(--accentBlue3); text-align: left; transition: border-color 160ms ease, background-color 160ms ease; }
-.addNote:hover:not(:disabled) { border-color: var(--accentBlue3); background: var(--background2); }
+.addNote { display: flex; align-items: center; gap: 10px; width: 100%; padding: 11px 12px; border: 1px dashed var(--border1); border-radius: 12px; background: var(--background2); color: var(--accentBlue3); text-align: left; transition: border-color 160ms ease, background-color 160ms ease; }
+.addNote:hover:not(:disabled) { border-color: var(--accentBlue3); background: var(--background3); }
 .addIcon { display: inline-flex; align-items: center; justify-content: center; }
 .addIcon svg { width: 20px; height: 20px; }
 .addTime { margin-left: auto; color: var(--text2); font-size: 0.85rem; font-variant-numeric: tabular-nums; }

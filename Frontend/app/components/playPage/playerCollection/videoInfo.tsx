@@ -305,7 +305,7 @@ function VideoInfo({
                 <span className="functional max-[800px]:overflow-y-scroll max-[800px]:w-full no-scrollbar shrink-0 gap-2 flex items-center ml-3 max-[800px]:ml-0">
                     {!metadataOnly && <div className="flex bg-(--background2) rounded-full">
                         <button 
-                            className={`${userReaction == 1 ? "bookmarked" : ""} ${likeAnimation ? "like-animate" : ""} bg-transparent! rounded-r-none! border-r! border-r-(--border1)! hover:bg-(--background2)! pl-3.5!`} 
+                            className={`${userReaction == 1 ? "bookmarked" : ""} ${likeAnimation ? "like-animate" : ""} bg-transparent! rounded-r-none! border-r! border-r-(--border1)! enabled:hover:bg-(--background3)! pl-3.5!`}
                             onClick={toggleLike} disabled={!canReact || isReacting}
                             title={t("likeVideo")}
                         >
@@ -313,7 +313,7 @@ function VideoInfo({
                             <p>{likeCount}</p>
                         </button>
                         <button 
-                            className={`${userReaction == -1 ? "bookmarked" : ""} ${dislikeAnimation ? "dislike-animate" : ""} bg-transparent! rounded-l-none! hover:bg-(--background2)! pr-3.5!`} 
+                            className={`${userReaction == -1 ? "bookmarked" : ""} ${dislikeAnimation ? "dislike-animate" : ""} bg-transparent! rounded-l-none! enabled:hover:bg-(--background3)! pr-3.5!`}
                             onClick={toggleDislike} disabled={!canReact || isReacting}
                             title={t("dislikeVideo")}
                         >

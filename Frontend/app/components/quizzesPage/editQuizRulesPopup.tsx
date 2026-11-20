@@ -385,7 +385,7 @@ function EditQuizRulesPopup({
 
               <button
                 type="button"
-                className="flex cursor-pointer items-center gap-3 self-start rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 text-sm font-medium transition-colors hover:bg-(--background2)"
+                className="flex cursor-pointer items-center gap-3 self-start rounded-2xl border border-(--border1) bg-(--background2) px-4 py-3 text-sm font-medium transition-colors"
                 title={t("quizAddRule")}
                 aria-label={t("quizAddRule")}
                 onClick={() => {

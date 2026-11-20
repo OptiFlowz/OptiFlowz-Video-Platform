@@ -597,9 +597,9 @@
   transition: background 180ms ease, border-color 180ms ease;
 }
 
-.videoQuizPage .videoQuizRequirementWatchButton:hover {
+.videoQuizPage .videoQuizRequirementWatchButton:hover:not(:disabled) {
   border-color: var(--accentBlue2);
-  background: var(--background2);
+  background: var(--background3);
 }
 
 .videoQuizPage .videoQuizRequirementWatchButton svg {
@@ -705,9 +705,9 @@
   color: var(--text1);
 }
 
-.videoQuizPage .videoQuizGhostButton:hover,
-.videoQuizPage .videoQuizInlineButton:hover {
-  background: var(--background2);
+.videoQuizPage .videoQuizGhostButton:hover:not(:disabled),
+.videoQuizPage .videoQuizInlineButton:hover:not(:disabled) {
+  background: var(--background3);
 }
 
 .videoQuizPage .videoQuizPrimaryButton {
@@ -1111,10 +1111,10 @@
   transition: background 160ms ease, border-color 160ms ease;
 }
 
-.videoQuizPage .videoQuizOption:hover,
+.videoQuizPage .videoQuizOption:hover:not(:disabled),
 .videoQuizPage .videoQuizMatchRow:hover {
   border-color: var(--accentBlue2);
-  background: var(--background2);
+  background: var(--background3);
 }
 
 .videoQuizPage .videoQuizOption:disabled,
@@ -2167,8 +2167,8 @@ main.quizzesPage .quizMobileOptionsButton {
   cursor: pointer;
   transition: background-color .2s ease;
 }
-main.quizzesPage .quizMobileOptionsButton:hover {
-  background-color: var(--background2);
+main.quizzesPage .quizMobileOptionsButton:hover:not(:disabled) {
+  background-color: var(--background3);
 }
 main.quizzesPage .quizMobileOptionsButton svg {
   opacity: 0.5;

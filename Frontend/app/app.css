@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+@layer utilities {
+  @media (hover: hover) {
+    [class~="bg-(--background2)"]:where(button, a[href], [role="button"], select, input):where(:not(:disabled, :checked, [aria-disabled="true"])):hover {
+      background-color: var(--background3);
+    }
+  }
+}
+
 @theme {
   --font-sans:
     var(--font-outfit), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
@@ -46,7 +54,7 @@ html:is([lang="ar"], [lang="he"], [lang="fa"], [lang="ur"]) :where(
   --background1: var(--background);
   --background2: var(--backgroundC1);
   --background15: rgba(39, 41, 53, 0.15);
-  --background3: var(--background2);
+  --background3: var(--background15);
   --background4: #11141a;
 
   --backgroundGradient1: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 25%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0.04) 75%);
@@ -602,7 +610,7 @@ body {
   transition: all 0.15s ease-in-out;
 }
 
-.button:hover {
+.button:where(:not(:disabled, [aria-disabled="true"])):hover {
   filter: brightness(0.85);
 }
 
@@ -1079,6 +1087,10 @@ header .primaryNavigation .primaryNavigationBrand::before {
 	text-align: left;
 	cursor: pointer;
 	transition: background-color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.customSelectTrigger:enabled:hover {
+  background-color: var(--background3);
 }
 
 .customSelectTrigger:disabled {
@@ -2256,9 +2268,13 @@ main.play .relevant.relevant--compact {
 }
 
 /* Both player layouts share the same mounted details and recommendations. */
+main.play.playWatchLayout {
+  --watch-player-ratio: 427 / 240;
+  --watch-player-max-height: calc(100dvh - 150px);
+}
 main.play.playWatchLayout > .player:not(.theater) {
-  aspect-ratio: 427 / 240;
-  max-height: calc(100dvh - 150px);
+  aspect-ratio: var(--watch-player-ratio);
+  max-height: var(--watch-player-max-height);
 }
 main.play.playWatchLayout > .watchDetails {
   min-width: 0;
@@ -2281,6 +2297,10 @@ main.play.playWatchLayout > .watchDetails {
     gap: 20px;
     align-items: start;
     overflow-anchor: none;
+  }
+  main.play.playWatchLayout:not(.theater) {
+    grid-template-columns: minmax(0, calc(var(--watch-player-max-height) * var(--watch-player-ratio))) var(--watch-sidebar-width);
+    justify-content: center;
   }
   main.play.playWatchLayout.has-compact-relevant {
     --watch-sidebar-width: max(240px, 18%);
@@ -3045,7 +3065,7 @@ mux-player::part(menu-item) {
   background-image: var(--blueButtonGradient);
   color: var(--text1);
 }
-.videoInfo .functional button:hover {
+.videoInfo .functional button:enabled:hover {
   background-color: var(--background3);
 }
 .videoInfo .functional button.aiButton:hover{

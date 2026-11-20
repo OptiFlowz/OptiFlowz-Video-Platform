@@ -149,7 +149,8 @@ export function useFloatingMiniPlayer(active: boolean) {
     const isMobile = window.matchMedia("(max-width: 500px)").matches;
     const gap = isMobile ? 10 : 24;
     const chatRect = getVisibleChatRect();
-    const minX = safeLeft + gap;
+    const contentLeft = safeAreaRef.current?.getBoundingClientRect().left ?? 0;
+    const minX = Math.max(safeLeft, contentLeft) + gap;
     const headerBottom = getVisibleHeaderBottom();
     const minY = Math.max(safeTop + gap, headerBottom + gap);
     const maxX = window.innerWidth - safeRight - gap - playerWidth;
@@ -209,16 +210,24 @@ export function useFloatingMiniPlayer(active: boolean) {
   }, []);
 
   const springTo = useCallback(
-    (target: Position, initialVelocity: Velocity) => {
+    (initialVelocity: Velocity) => {
       stopAnimation();
 
-      let current = positionRef.current ?? target;
+      const start = positionRef.current;
+      if (!start) return;
+      let current = start;
       let velocity = initialVelocity;
       let previousTimestamp = performance.now();
       const stiffness = 250;
       const damping = 29;
 
       const tick = (timestamp: number) => {
+        const layout = getLayout();
+        const target = resolveSnapPoint(snapPointRef.current, layout);
+        if (!layout || !target) {
+          stopAnimation();
+          return;
+        }
         const deltaSeconds = Math.min((timestamp - previousTimestamp) / 1000, 0.032);
         previousTimestamp = timestamp;
 
@@ -229,7 +238,7 @@ export function useFloatingMiniPlayer(active: boolean) {
           y: velocity.y + accelerationY * deltaSeconds,
         };
         current = {
-          x: current.x + velocity.x * deltaSeconds,
+          x: clamp(current.x + velocity.x * deltaSeconds, layout.minX, layout.maxX),
           y: current.y + velocity.y * deltaSeconds,
         };
         updatePosition(current);
@@ -247,7 +256,7 @@ export function useFloatingMiniPlayer(active: boolean) {
 
       animationFrameRef.current = requestAnimationFrame(tick);
     },
-    [stopAnimation, updatePosition],
+    [getLayout, resolveSnapPoint, stopAnimation, updatePosition],
   );
 
   const snapFromVelocity = useCallback(
@@ -263,7 +272,6 @@ export function useFloatingMiniPlayer(active: boolean) {
         y: current.y + velocity.y * 0.22,
       };
       let bestSnap = snapPointRef.current;
-      let bestTarget = resolveSnapPoint(bestSnap, layout) ?? current;
       let bestDistance = Number.POSITIVE_INFINITY;
 
       for (const horizontal of HORIZONTAL_SNAPS) {
@@ -276,13 +284,12 @@ export function useFloatingMiniPlayer(active: boolean) {
           if (distance < bestDistance) {
             bestDistance = distance;
             bestSnap = candidateSnap;
-            bestTarget = candidate;
           }
         }
       }
 
       snapPointRef.current = bestSnap;
-      springTo(bestTarget, velocity);
+      springTo(velocity);
     },
     [getLayout, resolveSnapPoint, springTo],
   );
@@ -448,7 +455,7 @@ export function useFloatingMiniPlayer(active: boolean) {
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         updatePosition(target);
       } else {
-        springTo(target, { x: 0, y: 0 });
+        springTo({ x: 0, y: 0 });
       }
     });
   }, [resolveSnapPoint, springTo, stopAnimation, updatePosition]);
