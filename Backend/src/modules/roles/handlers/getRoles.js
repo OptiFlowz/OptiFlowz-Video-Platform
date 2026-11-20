@@ -1,4 +1,6 @@
 import { writePool } from '../../../database/index.js';
+import { hasPermission } from '../../authorization/authorization.service.js';
+import { Permissions } from '../../authorization/permission.constants.js';
 import {
   canDeleteRole,
   canUpdateRole,
@@ -48,9 +50,10 @@ export async function getRolesInternal(actorAuthorization) {
     `,
   );
 
+  const canManage = hasPermission(actorAuthorization, Permissions.ROLES_MANAGE);
   return rows.map((role) => ({
     ...role,
-    can_update: canUpdateRole(actorAuthorization, role),
-    can_delete: canDeleteRole(actorAuthorization, role),
+    can_update: canManage && canUpdateRole(actorAuthorization, role),
+    can_delete: canManage && canDeleteRole(actorAuthorization, role),
   }));
 }

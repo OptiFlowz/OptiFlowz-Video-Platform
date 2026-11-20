@@ -1,4 +1,5 @@
 export const Permissions = Object.freeze({
+  ROLES_GET: 'roles.get',
   ROLES_MANAGE: 'roles.manage',
   USERS_ASSIGN_ROLES: 'users.assign_roles',
   USERS_SEARCH: 'users.search',

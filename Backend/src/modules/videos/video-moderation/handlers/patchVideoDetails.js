@@ -36,6 +36,31 @@ function normalizeChapters(chapters) {
   return cleaned;
 }
 
+function getAudienceRoleIds(mode, ids) {
+  if (mode === undefined) {
+    if (ids !== undefined) throw new HttpError(400, { message: 'allowed_role_ids requires audience_mode' });
+    return undefined;
+  }
+  if (mode === 'everyone') {
+    if (ids !== undefined && !(Array.isArray(ids) && ids.length === 0)) {
+      throw new HttpError(400, { message: 'everyone requires allowed_role_ids to be omitted or empty' });
+    }
+    return [];
+  }
+  if (mode !== 'selected_roles') {
+    throw new HttpError(400, { message: "audience_mode must be 'everyone' or 'selected_roles'" });
+  }
+  if (!Array.isArray(ids) || !ids.length) {
+    throw new HttpError(400, { message: 'selected_roles requires at least one role ID' });
+  }
+  for (const id of ids) {
+    if (typeof id !== 'string' || !/^[1-9]\d{0,18}$/.test(id) || BigInt(id) > 9223372036854775807n) {
+      throw new HttpError(400, { message: 'Each role ID must be a positive bigint string' });
+    }
+  }
+  return [...new Set(ids)];
+}
+
 export async function patchVideoDetailsInternal({ params: routeParams, body: inputBody }) {
   const { videoId } = routeParams;
 
@@ -47,9 +72,13 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
     chapters,
     visibility, // "public" | "private"
     published_at,
+    audience_mode,
+    allowed_role_ids,
     chairs,
     speakers,
   } = inputBody || {};
+
+  const audienceRoleIds = getAudienceRoleIds(audience_mode, allowed_role_ids);
 
   // visibility validacija (null ne prihvatamo; ako hoćeš i null->NULL reci)
   let visibilityNorm = undefined;
@@ -120,7 +149,8 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
     isDefined(tags) ||
     isDefined(chapters) ||
     isDefined(visibility) ||
-    isDefined(published_at);
+    isDefined(published_at) ||
+    isDefined(audience_mode);
 
   const anyPeopleField = isDefined(chairs) || isDefined(speakers);
 
@@ -139,6 +169,16 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
         'SELECT id FROM people WHERE id = ANY($1::uuid[]) ORDER BY id FOR KEY SHARE',
         [[...new Set([...(chairIds || []), ...(speakerIds || [])])]],
       );
+    }
+
+    if (audienceRoleIds?.length) {
+      const roles = await client.query(
+        'SELECT id FROM public.roles WHERE id = ANY($1::bigint[]) ORDER BY id FOR KEY SHARE',
+        [audienceRoleIds],
+      );
+      if (roles.rowCount !== audienceRoleIds.length) {
+        throw new HttpError(400, { message: 'One or more selected roles do not exist' });
+      }
     }
 
     let updatedVideo = null;
@@ -207,6 +247,11 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
         params.push(published_at);
       }
 
+      if (isDefined(audience_mode)) {
+        set.push(`audience_mode = $${i++}`);
+        params.push(audience_mode);
+      }
+
       set.push(`updated_at = NOW()`);
 
       const sql = `
@@ -227,6 +272,16 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
       if (r.rowCount === 0) {
         await client.query('ROLLBACK');
         throw new HttpError(404, { message: 'Video not found' });
+      }
+    }
+
+    if (isDefined(audienceRoleIds)) {
+      await client.query('DELETE FROM public.video_allowed_roles WHERE video_id = $1', [videoId]);
+      if (audienceRoleIds.length) {
+        await client.query(
+          'INSERT INTO public.video_allowed_roles (video_id, role_id) SELECT $1, unnest($2::bigint[])',
+          [videoId, audienceRoleIds],
+        );
       }
     }
 

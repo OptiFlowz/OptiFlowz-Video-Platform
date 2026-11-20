@@ -8,7 +8,7 @@ const router = express.Router();
 const requireRoleManagement = requirePermission(Permissions.ROLES_MANAGE);
 
 router.get('/permissions', requireAuth, requireRoleManagement, roleController.getPermissions);
-router.get('/', requireAuth, requireRoleManagement, roleController.getRoles);
+router.get('/', requireAuth, requirePermission(Permissions.ROLES_GET), roleController.getRoles);
 router.post('/', requireAuth, requireRoleManagement, roleController.createRole);
 router.patch('/:roleId', requireAuth, requireRoleManagement, roleController.updateRole);
 router.delete('/:roleId', requireAuth, requireRoleManagement, roleController.deleteRole);

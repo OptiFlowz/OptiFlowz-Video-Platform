@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { setTimeout } from 'node:timers/promises';
 import { mock, test } from 'node:test';
 import pg from 'pg';
@@ -80,6 +81,34 @@ test('publication rules against PostgreSQL temporary fixtures', {
   const { withPlaylistCardMedia: playlistMedia } = await load('playlists/helpers/playlistCardMedia');
   const { getCommentsInternal: comments } = await load('videos/video/handlers/getComments');
   const { requireVisibleVideo } = await import('../src/common/videoAccess.js');
+
+  await t.test('editing the audience replaces all selected roles atomically', async () => {
+    const ddl = readFileSync(new URL('../src/database/migrations/1795132800000_add-video-audience.sql', import.meta.url), 'utf8');
+    await client.query('CREATE TEMP TABLE roles (id bigint PRIMARY KEY); INSERT INTO roles VALUES (1), (2), (3)');
+    await database.query(ddl.split('-- Down Migration')[0]);
+    const update = body => patch({ params: { videoId: draft }, body });
+    const state = async () => (await client.query(
+      `SELECT audience_mode, title, ARRAY(SELECT role_id FROM video_allowed_roles WHERE video_id = v.id ORDER BY role_id) AS ids
+       FROM videos v WHERE v.id = $1`, [draft],
+    )).rows[0];
+    await update({ audience_mode: 'selected_roles', allowed_role_ids: ['1', '2', '1'] });
+    assert.deepEqual((await state()).ids, ['1', '2']);
+    await update({ audience_mode: 'selected_roles', allowed_role_ids: ['3'] });
+    await update({ title: 'Retained audience' });
+    const selected = { audience_mode: 'selected_roles', ids: ['3'], title: 'Retained audience' };
+    assert.deepEqual(await state(), selected);
+    for (const invalid of [
+      { audience_mode: 'selected_roles', allowed_role_ids: ['2', '99'] },
+      { audience_mode: 'selected_roles', allowed_role_ids: [] },
+      { audience_mode: 'everyone', allowed_role_ids: ['2'] },
+      { allowed_role_ids: ['1'] },
+    ]) {
+      await assert.rejects(update({ title: 'Invalid edit', ...invalid }), { status: 400 });
+      assert.deepEqual(await state(), selected);
+    }
+    await update({ audience_mode: 'everyone' });
+    assert.deepEqual(await state(), { ...selected, audience_mode: 'everyone', ids: [] });
+  });
 
   await t.test('details, playback, media, notes and comments deny scheduled/draft access but allow uploader previews', async () => {
     for (const id of [scheduled, draft, privateId]) {
