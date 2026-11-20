@@ -14,6 +14,7 @@ dialog.statusPickerPopup::backdrop { background: transparent; }
 .statusPickerRadioVisual svg { width: 14px; height: 14px; }
 .statusPickerActions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
 .statusPickerActions button { display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; border-radius: 999px; background: var(--background2); color: var(--text1); font-size: .875rem; cursor: pointer; }
+.statusPickerActions button:where(:not(.statusPickerSave)):enabled:hover { background: var(--background3); }
 .statusPickerActions button.statusPickerSave { background: var(--accentBlue); color: var(--borderWhite); }
 .statusPickerActions button:disabled { opacity: .6; cursor: wait; }
 .statusPickerError { margin-top: 12px; color: var(--accentRed); font-size: .85rem; }

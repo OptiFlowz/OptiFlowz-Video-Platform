@@ -26,7 +26,8 @@ test('requirement CRUD, authorization, video cards and pagination against sessio
   await client.query('CREATE TEMP TABLE people (id uuid PRIMARY KEY, name text, image_url text)');
   await client.query('CREATE TEMP TABLE video_chairs (video_id uuid, person_id uuid, type text)');
   for (const file of ['1791590400004_add-quizzes.sql', '1791763200000_add-quiz-requirements.sql', '1792627200000_add-quiz-requirements-is-active.sql', '1791763200001_cascade-quiz-requirements-video-delete.sql',
-    '1792195200000_add-quiz-feedback-and-scoring-settings.sql', '1792627200001_add-quiz-questions-per-page.sql']) {
+    '1792195200000_add-quiz-feedback-and-scoring-settings.sql', '1792627200001_add-quiz-questions-per-page.sql',
+    '1792627200002_add-certificate-templates.sql', '1792926000000_quiz-certificate-template.sql', '1793232000001_add-quiz-thumbnail.sql']) {
     const sql = await readFile(new URL(`../src/database/migrations/${file}`, import.meta.url), 'utf8');
     await client.query(sql.split('-- Down Migration')[0].replaceAll('public.', 'pg_temp.'));
   }
@@ -36,6 +37,10 @@ test('requirement CRUD, authorization, video cards and pagination against sessio
   const pendingVideo = randomUUID(), scheduledVideo = randomUUID(), unknownVideo = randomUUID(), signedVideo = randomUUID();
   await client.query("INSERT INTO users(id,full_name) VALUES ($1,'Owner'),($2,'Other')", [owner, other]);
   await installQuizPermissions(client);
+  for (const file of ['1795132800000_add-video-audience.sql', '1795132800002_add-video-show-locked-card.sql']) {
+    const sql = await readFile(new URL(`../src/database/migrations/${file}`, import.meta.url), 'utf8');
+    await client.query(sql.split('-- Down Migration')[0].replaceAll('public.', 'pg_temp.'));
+  }
   await client.query("INSERT INTO pg_temp.quizzes(id,user_id,title,question_count,status) VALUES ($1,$4,'A',1,'published'),($2,$4,'B',1,'published'),($3,$5,'Foreign',1,'published')", [quizA, quizB, foreignQuiz, owner, other]);
   for (const [id, uploader, title, visibility, duration, policy] of [
     [ownVideo, owner, 'Own private', 'private', 120, 'public'],
@@ -57,7 +62,7 @@ test('requirement CRUD, authorization, video cards and pagination against sessio
   const queries = [];
   const query = (sql, params) => { queries.push(sql); return client.query(sql.replaceAll('public.', 'pg_temp.'), params); };
   mock.module(new URL('../src/database/index.js', import.meta.url).href, {
-    namedExports: { writePool: { query, async connect() { return { query, release() {} }; } } },
+    namedExports: { readPool: { query }, writePool: { query, async connect() { return { query, release() {} }; } } },
   });
   const envKeys = ['JWT_SECRET', 'MUX_SIGNING_KEY', 'MUX_PRIVATE_KEY'];
   const previous = Object.fromEntries(envKeys.map(key => [key, process.env[key]]));

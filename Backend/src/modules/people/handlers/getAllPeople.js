@@ -1,3 +1,4 @@
+import { videoCardAudienceWhere } from '../../../common/videoAccess.js';
 import { readPool } from '../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
@@ -25,9 +26,9 @@ function getOrderByClause(sortBy, sortOrder) {
   return sortMap[sortBy] || `name ASC, id ASC`;
 }
 
-export async function getAllPeopleInternal(object) {
+export async function getAllPeopleInternal(object, userId = null) {
   if (object?.q !== undefined) {
-    return searchPeopleInternal(object);
+    return searchPeopleInternal(object, userId);
   }
 
   const { limit, page, sortBy, sortOrder } = prerequisites(object);
@@ -41,7 +42,7 @@ export async function getAllPeopleInternal(object) {
         p.name,
         p.image_url,
         p.description,
-        COUNT(DISTINCT vc.video_id) FILTER (WHERE v.mux_status = 'ready' AND v.visibility = 'public' AND v.published_at <= NOW()) AS total_video_count
+        COUNT(DISTINCT vc.video_id) FILTER (WHERE v.mux_status = 'ready' AND v.visibility = 'public' AND v.published_at <= NOW() AND ${videoCardAudienceWhere('$3')}) AS total_video_count
       FROM public.people p
       LEFT JOIN public.video_chairs vc ON vc.person_id = p.id
       LEFT JOIN public.videos v ON v.id = vc.video_id
@@ -59,7 +60,7 @@ export async function getAllPeopleInternal(object) {
     LIMIT $1 OFFSET $2;
   `;
 
-  const { rows } = await readPool.query(sql, [limit, offset]);
+  const { rows } = await readPool.query(sql, [limit, offset, userId]);
 
   const total = rows.length ? Number(rows[0].total_results) : 0;
   const totalPages = Math.ceil(total / limit);

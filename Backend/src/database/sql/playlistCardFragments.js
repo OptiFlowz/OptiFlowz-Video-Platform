@@ -1,3 +1,4 @@
+import { videoCardAudienceWhere } from '../../common/videoAccess.js';
 export function buildPlaylistCardSelect({ includeDescription = false } = {}) {
   return `
     SELECT
@@ -12,7 +13,7 @@ export function buildPlaylistCardSelect({ includeDescription = false } = {}) {
   `;
 }
 
-export function buildPlaylistCardJoins() {
+export function buildPlaylistCardJoins(userParam = 'NULL') {
   return `
     FROM public.playlists p
     LEFT JOIN LATERAL (
@@ -21,7 +22,7 @@ export function buildPlaylistCardJoins() {
       JOIN public.videos v3 ON v3.id = pi3.video_id
       WHERE pi3.playlist_id = p.id
         AND v3.mux_status = 'ready' AND v3.visibility = 'public'
-        AND v3.published_at <= NOW()
+        AND v3.published_at <= NOW() AND ${videoCardAudienceWhere(userParam, 'v3')}
     ) ic ON TRUE
   `;
 }

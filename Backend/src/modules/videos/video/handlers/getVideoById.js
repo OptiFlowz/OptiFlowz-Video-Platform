@@ -1,6 +1,7 @@
 import { withPlaylistCardMedia } from '../../../playlists/helpers/playlistCardMedia.js';
-import { readPool, writePool } from '../../../../database/index.js';
+import { readPool } from '../../../../database/index.js';
 import { withVideoDetailsMedia } from '../../helpers/videoCardMedia.js';
+import { videoCardAudienceWhere, watchableVideoWhere } from '../../../../common/videoAccess.js';
 
 export async function getVideoByIdInternal(videoId, userId = null) {
   const query = `
@@ -23,6 +24,7 @@ export async function getVideoByIdInternal(videoId, userId = null) {
             v.published_at,
             v.chapters,
             v.visibility,
+            v.show_locked_card,
             u.id as uploader_id,
             u.full_name as uploader_name,
             u.image_url as uploader_image
@@ -32,16 +34,13 @@ export async function getVideoByIdInternal(videoId, userId = null) {
         LEFT JOIN users u ON v.uploaded_by = u.id
         ${userId ? 'LEFT JOIN watch_progress wp ON v.id = wp.video_id AND wp.user_id = $2' : ''}
         ${userId ? 'LEFT JOIN video_reactions vr ON v.id = vr.video_id AND vr.user_id = $2' : ''}
-        WHERE v.id = $1 AND v.mux_status = 'ready'
-          AND ((v.visibility = 'public' AND v.published_at <= NOW())
-            ${userId ? "OR (v.visibility IN ('public', 'private') AND v.uploaded_by = $2)" : ''})
+        WHERE v.id = $1 AND ${watchableVideoWhere({ userParam: userId ? '$2' : 'NULL' })}
     `;
 
   const params = [videoId];
   if (userId) params.push(userId);
 
-  // Check current access and media settings on the primary before signing.
-  const { rows } = await writePool.query(query, params);
+  const { rows } = await readPool.query(query, params);
 
   if (!rows.length) {
     return null;
@@ -72,10 +71,10 @@ export async function getVideoByIdInternal(videoId, userId = null) {
     JOIN video_chairs vc_all ON p.id = vc_all.person_id
 	  JOIN videos vid ON vc_all.video_id = vid.id
     WHERE vc.video_id = $1 AND vid.mux_status = 'ready' AND vid.visibility = 'public'
-      AND vid.published_at <= NOW()
+      AND vid.published_at <= NOW() AND ${videoCardAudienceWhere('$2', 'vid')}
     GROUP BY p.id, p.name, p.image_url, vc.type;
     `;
-  const { rows: chairRows } = await readPool.query(chairq, [videoId]);
+  const { rows: chairRows } = await readPool.query(chairq, [videoId, userId]);
 
   const playlistq = `
     SELECT
@@ -92,7 +91,7 @@ export async function getVideoByIdInternal(videoId, userId = null) {
       JOIN public.videos v3 ON v3.id = pi3.video_id
       WHERE pi3.playlist_id = p.id
         AND v3.mux_status = 'ready' AND v3.visibility = 'public'
-        AND v3.published_at <= NOW()
+        AND v3.published_at <= NOW() AND ${videoCardAudienceWhere('$2', 'v3')}
     ) ic ON TRUE
     WHERE p.status = 'public'
       AND EXISTS (
@@ -104,7 +103,7 @@ export async function getVideoByIdInternal(videoId, userId = null) {
     ORDER BY COALESCE(p.featured, false) DESC, p.view_count DESC NULLS LAST, p.id ASC
     LIMIT 5;
   `;
-  const { rows: playlistRows } = await readPool.query(playlistq, [videoId]);
+  const { rows: playlistRows } = await readPool.query(playlistq, [videoId, userId]);
 
   const countRes = await readPool.query(
     `

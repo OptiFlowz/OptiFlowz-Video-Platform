@@ -27,7 +27,7 @@ test('my livestream listing and HTTP route against PostgreSQL temporary tables',
       `2026-09-0${Math.max(1, n - 1)}T10:00:00Z`, `mux-${n}`, `playback-${n}`]);
   }
   let queries = 0;
-  mock.module(new URL('../src/database/index.js', import.meta.url).href, { namedExports: { writePool: {
+  mock.module(new URL('../src/database/index.js', import.meta.url).href, { namedExports: { readPool: {}, writePool: {
     async query(sql, params) { queries++; return client.query(sql.replaceAll('public.', 'pg_temp.'), params); },
   } } });
   mock.module('@mux/mux-node', { defaultExport: class {} });

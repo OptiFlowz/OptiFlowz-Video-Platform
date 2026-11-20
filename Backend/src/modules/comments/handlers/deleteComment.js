@@ -1,4 +1,5 @@
-import { writePool } from '../../../database/index.js';
+import { readPool, writePool } from '../../../database/index.js';
+import { watchableVideoWhere } from '../../../common/videoAccess.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
 import { hasPermission } from '../../authorization/authorization.service.js';
@@ -21,7 +22,7 @@ function prerequisites(object,userId) {
 export async function deleteCommentInternal(params, userId, authorization) {
   const { id: commentId } = prerequisites(params,userId);
 
-  const check = await writePool.query(
+  const check = await readPool.query(
     `
       SELECT id, user_id, is_deleted
       FROM public.video_comments
@@ -54,15 +55,22 @@ export async function deleteCommentInternal(params, userId, authorization) {
     throw error;
   }
 
-  await writePool.query(
+  const result = await writePool.query(
     `
-      UPDATE public.video_comments
+      UPDATE public.video_comments AS c
       SET is_deleted = true,
           updated_at = NOW()
       WHERE id = $1
+        AND ($3::boolean OR EXISTS (SELECT 1 FROM public.videos v WHERE v.id = c.video_id
+             AND ${watchableVideoWhere({ allowLiveRecording: true })}))
     `,
-    [commentId]
+    [commentId, userId, canModerate]
   );
 
+  if (!result.rowCount) {
+    const error = new Error('Comment not found');
+    error.status = 404;
+    throw error;
+  }
   return { deleted: true };
 }

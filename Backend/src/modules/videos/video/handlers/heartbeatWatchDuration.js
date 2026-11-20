@@ -1,4 +1,5 @@
 import { writePool } from '../../../../database/index.js';
+import { watchableVideoWhere } from '../../../../common/videoAccess.js';
 import { hashIp, normalizeIp } from '../../../../common/ip.js';
 
 export async function heartbeatWatchDurationInternal(
@@ -24,8 +25,10 @@ export async function heartbeatWatchDurationInternal(
       `
       WITH prev AS (
         SELECT id, user_id, video_id, last_heartbeat_at, last_seq, watch_duration
-        FROM video_views
+        FROM video_views vv
         WHERE id = $1
+          AND EXISTS (SELECT 1 FROM public.videos v
+                      WHERE v.id = vv.video_id AND ${watchableVideoWhere({ userParam: '$5', allowLiveRecording: true })})
           AND (
             ($5::uuid IS NOT NULL AND user_id = $5::uuid)
             OR (

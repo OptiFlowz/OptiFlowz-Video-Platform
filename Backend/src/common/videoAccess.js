@@ -1,5 +1,25 @@
 import { HttpError } from './httpError.js';
 
+// Aliases and parameter slots come only from server-owned query builders.
+export function videoAudienceWhere(userParam = '$2', videoAlias = 'v') {
+  if (userParam === 'NULL') return `${videoAlias}.audience_mode = 'everyone'`;
+  return `(${videoAlias}.audience_mode = 'everyone' OR ${videoAlias}.uploaded_by = ${userParam}
+    OR (${videoAlias}.audience_mode = 'selected_roles' AND EXISTS (
+      SELECT 1 FROM public.video_allowed_roles ar
+      JOIN public.user_roles ur ON ur.role_id = ar.role_id
+      WHERE ar.video_id = ${videoAlias}.id AND ur.user_id = ${userParam}
+        AND (ur.expires_at IS NULL OR ur.expires_at > NOW())
+    )))`;
+}
+
+export function videoCardAudienceWhere(userParam, videoAlias = 'v') {
+  return `(${videoAlias}.show_locked_card OR ${videoAudienceWhere(userParam, videoAlias)}) IS TRUE`;
+}
+
+export function watchableVideoWhere({ userParam = '$2', allowLiveRecording = false } = {}) {
+  return `(${visibleVideoWhere({ userParam, allowLiveRecording })} AND ${videoAudienceWhere(userParam)})`;
+}
+
 // SQL fragments are composed only from server-owned aliases/parameter slots.
 export function visibleVideoWhere({ videoAlias = 'v', userParam = '$2', allowLiveRecording = false } = {}) {
   const v = videoAlias;
@@ -23,12 +43,12 @@ export function visibleVideoWhere({ videoAlias = 'v', userParam = '$2', allowLiv
   ))`;
 }
 
-// Call with the primary database for current access state. Live access is
-// explicit so video embedding, notes and other callers keep their old rules.
+// Pass the transaction client when checking access as part of a write.
 export async function requireVisibleVideo(database, videoId, userId = null, options = {}) {
+  const where = options.checkAudience ? watchableVideoWhere : visibleVideoWhere;
   const { rows } = await database.query(
     `SELECT v.id FROM public.videos v
-     WHERE v.id = $1 AND ${visibleVideoWhere({ allowLiveRecording: options.allowLiveRecording })}`,
+     WHERE v.id = $1 AND ${where({ allowLiveRecording: options.allowLiveRecording })}`,
     [videoId, userId],
   );
   if (!rows.length) throw new HttpError(404, { message: 'Video not found' });

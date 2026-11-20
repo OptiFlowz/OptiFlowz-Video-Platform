@@ -1139,9 +1139,9 @@ if (template) {
                 height: calc(1.25 * var(--base));
               }
             </style>
-            <media-theater-mode-button id="media-theater-mode-button" class="media-button custom-btn" type="button" aria-label="theater mode">
+            <media-theater-mode-button id="media-theater-mode-button">
               <media-tooltip placement="top">Theater mode</media-tooltip>
-              <button style="background-color: transparent; border: none; cursor: pointer; outline: none;">
+              <button type="button" class="media-button custom-btn" aria-label="Theater mode">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path fill-rule="evenodd" clip-rule="evenodd" d="M2 7C2 5.89543 2.89543 5 4 5H20C21.1046 5 22 5.89543 22 7V17C22 18.1046 21.1046 19 20 19H4C2.89543 19 2 18.1046 2 17V7Z" stroke="var(--borderWhite)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   <path d="M9.33333 9.33325L6 11.9999L9.33333 14.6666M14.6667 14.6666L18 11.9999L14.6667 9.33325" stroke="var(--borderWhite)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1162,9 +1162,9 @@ if (template) {
                 transition: translate 0.18s ease;
               }
 
-              media-theater-mode-button button{
-                display: grid;
-                place-items: center;
+              media-theater-mode-button {
+                position: relative;
+                display: flex;
               }
 
               /* media-controller:not([breakpointxl]) media-theater-mode-button { */
@@ -1206,6 +1206,15 @@ if (template) {
 }
 
 class MediaTheaterModeButton extends HTMLElement {
+  keepSpaceOnButton(event) {
+    // Let the focused button handle Space before the player's play/pause shortcut.
+    if (event.key === " ") event.stopPropagation();
+  }
+
+  toggleTheaterMode() {
+    window.dispatchEvent(new CustomEvent('theater-mode', { bubbles: true, composed: true }));
+  }
+
   connectedCallback(){
     const button = this.querySelector("button");
     const syncVisibility = () => {
@@ -1213,9 +1222,8 @@ class MediaTheaterModeButton extends HTMLElement {
       this.classList.toggle("displayNone", !!isSmall);
     };
 
-    button?.addEventListener("click", () => {
-      window.dispatchEvent(new CustomEvent('theater-mode', { bubbles: true, composed: true }));
-    });
+    button?.addEventListener("click", this.toggleTheaterMode);
+    button?.addEventListener("keydown", this.keepSpaceOnButton);
 
     syncVisibility();
 

@@ -3,12 +3,13 @@ import { mock, test } from 'node:test';
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import pg from 'pg';
-import { prepareLiveSchema } from './helpers/live-stream-schema.js';
+import { prepareLiveSchema, prepareRecordingAudience } from './helpers/live-stream-schema.js';
 
 test('livestream details and current recording against PostgreSQL fixtures', { skip: !process.env.TEST_DATABASE_URL }, async t => {
   const client = new pg.Client({ connectionString: process.env.TEST_DATABASE_URL, connectionTimeoutMillis: 5000, statement_timeout: 10000 });
   await client.connect(); t.after(() => client.end());
   await prepareLiveSchema(client);
+  await prepareRecordingAudience(client);
   await client.query(`ALTER TABLE pg_temp.users ADD COLUMN full_name text, ADD COLUMN image_url text,
     ADD COLUMN status text DEFAULT 'active', ADD COLUMN authz_version integer DEFAULT 1;
     CREATE TEMP TABLE watch_progress (video_id uuid, user_id uuid, progress_seconds integer, percentage_watched numeric, PRIMARY KEY(video_id,user_id));
@@ -19,9 +20,12 @@ test('livestream details and current recording against PostgreSQL fixtures', { s
   const viewer = '12345678-1234-4234-8234-123456789def';
   await client.query("INSERT INTO pg_temp.users(id,full_name,image_url) VALUES ($1,'Creator','https://example.com/avatar.webp'),($2,'Viewer',NULL)", [owner, viewer]);
   let queries = 0, videoId;
-  mock.module(new URL('../src/database/index.js', import.meta.url).href, { namedExports: { writePool: {
+  const database = {
     async query(sql, params) { queries++; return client.query(sql.replaceAll('public.', 'pg_temp.'), params); },
-  } } });
+  };
+  mock.module(new URL('../src/database/index.js', import.meta.url).href, {
+    namedExports: { readPool: database, writePool: database },
+  });
   const { getLiveDetailsInternal: details } = await import('../src/modules/live-streams/handlers/getLiveDetails.js');
   const { default: router } = await import('../src/modules/live-streams/live-streams.routes.js');
   const { optionalAuth } = await import('../src/middleware/auth.js');

@@ -1,5 +1,5 @@
 import { withPlaylistCardMedia } from '../../playlists/helpers/playlistCardMedia.js';
-import { writePool } from '../../../database/index.js';
+import { readPool } from '../../../database/index.js';
 import { buildPlaylistCardSelect,buildPlaylistCardJoins,buildPlaylistCardVisibilityWhere } from '../../../database/sql/playlistCardFragments.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
@@ -31,11 +31,11 @@ export async function getChannelPlaylistsInternal(object, userId = null) {
 
   const canSeePrivate = userId != null && String(userId) === String(id);
 
-  const values = [id, limit, offset, canSeePrivate];
+  const values = [id, limit, offset, canSeePrivate, userId];
 
   const query = `
       ${buildPlaylistCardSelect({ includeDescription: false })}
-      ${buildPlaylistCardJoins()}
+      ${buildPlaylistCardJoins('$5')}
       WHERE
         p.created_by = $1
         AND (
@@ -57,8 +57,8 @@ export async function getChannelPlaylistsInternal(object, userId = null) {
   `;
 
   const [playlistsResult, countResult] = await Promise.all([
-    writePool.query(query, values),
-    writePool.query(countQuery, [id, canSeePrivate]),
+    readPool.query(query, values),
+    readPool.query(countQuery, [id, canSeePrivate]),
   ]);
 
   const total = countResult.rows[0]?.total || 0;

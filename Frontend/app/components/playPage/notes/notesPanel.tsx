@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from "react";
 import { Link } from "react-router";
-import { NotesSVG, AddSVG, CloseSVG, DeleteSVG, EditSVG } from "~/constants";
+import { NotesSVG, AddSVG, BookmarkSVG, CloseSVG, DeleteSVG, EditSVG } from "~/constants";
 import { useI18n } from "~/i18n";
 import { noteColor, noteColors, noteTime, parseNoteTime, useVideoNotes, type NoteInput, type OpenNotesDetail, type VideoNote } from "./videoNotes";
 import { ConfirmDialog } from "~/components/confirmPopup/confirmDialog";
@@ -58,7 +58,14 @@ export default function NotesPanel({ videoId, duration, request }: { videoId: st
       }} /> : <article key={note.id} className={styles.card} style={{ "--note-color": noteColor(note.color) } as CSSProperties}>
       <div className={styles.meta}><button className={styles.timestamp} aria-label={t("notesSeek", { time: noteTime(note.timestamp) })} onClick={() => window.dispatchEvent(new CustomEvent("player:seek", { detail: { videoId, seconds: note.timestamp } }))}>{noteTime(note.timestamp)}</button>
         <div className={styles.actions}>{notes.canEdit && <button disabled={notes.mutation.isPending || !!draft} aria-label={t("notesEdit")} title={t("notesEdit")} onClick={() => { setError(""); setDeleting(null); setDraft({ note, time: note.timestamp }); }}>{EditSVG}</button>}{notes.canDelete && <button className={styles.danger} disabled={notes.mutation.isPending} aria-label={t("notesDelete")} title={t("notesDelete")} onClick={() => { setError(""); setDeleting(note.id); }}>{DeleteSVG}</button>}</div>
-      </div><div className={styles.content}><h3 dir="auto">{note.title}</h3><p dir="auto">{note.text}</p></div>
+      </div>
+      <div className={styles.content}>
+        <h3 dir="auto">
+          <span className={styles.bookmark} aria-hidden="true">{BookmarkSVG}</span>
+          <span>{note.title}</span>
+        </h3>
+        <p dir="auto">{note.text}</p>
+      </div>
     </article>)}</div>
   </section>;
 }
@@ -85,10 +92,10 @@ function NoteForm({ note, time, duration, pending, onSave, onCancel, onDelete }:
   }}>
     <div className={styles.meta}>
       <input className={styles.timestamp} disabled={pending} required aria-label={t("notesTimestamp")} title={t("notesTimestamp")} size={Math.max(4, timestamp.length)} value={timestamp} onChange={event => setTimestamp(event.target.value)} placeholder="0:00" />
-      <div className={styles.actions}>
-        <button type="button" disabled={pending} aria-label={t("cancel")} title={t("cancel")} onClick={onCancel}>{CloseSVG}</button>
+      {(!note || onDelete) && <div className={styles.actions}>
+        {!note && <button type="button" disabled={pending} aria-label={t("cancel")} title={t("cancel")} onClick={onCancel}>{CloseSVG}</button>}
         {onDelete && <button type="button" className={styles.danger} disabled={pending} aria-label={t("notesDelete")} title={t("notesDelete")} onClick={onDelete}>{DeleteSVG}</button>}
-      </div>
+      </div>}
     </div>
     <div className={styles.content}>
       <input className={styles.titleInput} autoFocus disabled={pending} required maxLength={200} aria-label={t("title")} dir="auto" value={title} onChange={event => setTitle(event.target.value)} placeholder={t("notesTitlePlaceholder")} />

@@ -1,3 +1,4 @@
+import { videoCardAudienceWhere } from '../../../common/videoAccess.js';
 import { readPool } from '../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
@@ -12,7 +13,7 @@ function prerequisites(object) {
   return validateOrThrow(schema.safeParse(object));
 }
 
-export async function searchPeopleInternal(object) {
+export async function searchPeopleInternal(object, userId = null) {
   const { q, limit, page } = prerequisites(object);
   const offset = (page - 1) * limit;
 
@@ -38,7 +39,7 @@ export async function searchPeopleInternal(object) {
         rp.name,
         rp.image_url,
         rp.description,
-        COUNT(DISTINCT vc.video_id) FILTER (WHERE v.mux_status = 'ready' AND v.visibility = 'public' AND v.published_at <= NOW()) AS total_video_count,
+        COUNT(DISTINCT vc.video_id) FILTER (WHERE v.mux_status = 'ready' AND v.visibility = 'public' AND v.published_at <= NOW() AND ${videoCardAudienceWhere('$4')}) AS total_video_count,
         rp.rank
       FROM ranked_people rp
       LEFT JOIN video_chairs vc ON vc.person_id = rp.id
@@ -57,7 +58,7 @@ export async function searchPeopleInternal(object) {
     LIMIT $2 OFFSET $3;
   `;
 
-  const { rows } = await readPool.query(sql, [q, limit, offset]);
+  const { rows } = await readPool.query(sql, [q, limit, offset, userId]);
 
   const total = rows.length ? Number(rows[0].total_results) : 0;
   const totalPages = Math.ceil(total / limit);

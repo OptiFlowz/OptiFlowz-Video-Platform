@@ -1,3 +1,4 @@
+import { videoCardAudienceWhere } from '../../../../common/videoAccess.js';
 import { withVideoCardMedia } from '../../helpers/videoCardMedia.js';
 import { readPool } from '../../../../database/index.js';
 
@@ -79,7 +80,7 @@ export async function searchVideosInternal(searchParams, userId = null) {
       ) p
     ) ppl ON TRUE
     WHERE v.mux_status = 'ready' AND v.visibility = 'public'
-      AND v.published_at <= NOW()
+      AND v.published_at <= NOW() AND ${videoCardAudienceWhere(userId ? '$1' : 'NULL')}
   `;
 
   // Enhanced search filter
@@ -163,11 +164,11 @@ export async function searchVideosInternal(searchParams, userId = null) {
     SELECT COUNT(*) AS total
     FROM videos v
     WHERE v.mux_status = 'ready' AND v.visibility = 'public'
-      AND v.published_at <= NOW()
+      AND v.published_at <= NOW() AND ${videoCardAudienceWhere(userId ? '$1' : 'NULL')}
   `;
 
-  const countParams = [];
-  let countParamNum = 0;
+  const countParams = userId ? [userId] : [];
+  let countParamNum = countParams.length;
 
   if (searchQuery && searchQuery.trim().length > 0) {
     countParamNum++;

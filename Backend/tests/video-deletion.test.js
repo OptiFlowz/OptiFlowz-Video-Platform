@@ -10,7 +10,7 @@ const videoId = '12345678-1234-4234-8234-123456789013';
 let row, calls, failures, stream, assets, failDatabaseDelete;
 
 mock.module(new URL('../src/database/index.js', import.meta.url).href, {
-  namedExports: { writePool: { async connect() {
+  namedExports: { readPool: {}, writePool: { async connect() {
     const pool = this;
     return { release() {}, async query(sql, values) {
       if (sql.startsWith('SELECT id, thumbnail_url')) return { rows: [] };

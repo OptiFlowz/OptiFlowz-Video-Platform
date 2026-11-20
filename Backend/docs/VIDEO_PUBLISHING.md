@@ -48,7 +48,7 @@ videos before publication through details/playback and notes/comments.
 Public listings, recommendations, channel videos, playlist video lists/counts,
 people video counts, and public-only reports exclude future and null publication
 dates. Playlist fallback artwork skips unavailable videos. Playback and media
-authorization use the primary database, including after a schedule is changed.
+authorization use `readPool`, so schedule changes on a replica take effect after replication.
 Existing no-store response headers remain in use for media-bearing endpoints.
 
 If encoding finishes late, the video becomes available once Mux marks it ready.

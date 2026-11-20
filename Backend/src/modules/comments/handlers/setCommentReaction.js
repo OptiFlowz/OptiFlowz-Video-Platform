@@ -1,4 +1,5 @@
 import { writePool } from '../../../database/index.js';
+import { watchableVideoWhere } from '../../../common/videoAccess.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
 
@@ -29,12 +30,13 @@ export async function setCommentReactionInternal(commentId, userId, reaction) {
 
     const commentCheck = await client.query(
       `
-        SELECT id
-        FROM public.video_comments
-        WHERE id = $1 AND is_deleted = false
-        LIMIT 1
+        SELECT c.id
+        FROM public.video_comments c JOIN public.videos v ON v.id = c.video_id
+        WHERE c.id = $1 AND c.is_deleted = false
+          AND ${watchableVideoWhere({ allowLiveRecording: true })}
+        FOR UPDATE OF c
       `,
-      [validCommentId]
+      [validCommentId, validUserId]
     );
 
     if (commentCheck.rowCount === 0) {

@@ -28,6 +28,7 @@ test('live detail edits and playback replacement against PostgreSQL temporary ta
     },
   };
   mock.module(new URL('../src/database/index.js', import.meta.url).href, { namedExports: {
+    readPool: database,
     writePool: { ...database, async connect() { return database; } },
   } });
   mock.module('@mux/mux-node', { defaultExport: class { video = { liveStreams: {

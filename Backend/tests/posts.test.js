@@ -40,7 +40,7 @@ async function query(sql, params) {
 }
 
 mock.module(new URL('../src/database/index.js', import.meta.url).href, {
-  namedExports: { writePool: {
+  namedExports: { readPool: { query }, writePool: {
     query,
     async connect() { connections++; return { query, release() { released++; } }; },
   } },

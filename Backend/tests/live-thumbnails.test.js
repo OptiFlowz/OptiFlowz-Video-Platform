@@ -32,7 +32,7 @@ const client = {
     return { rows: [] };
   },
 };
-mock.module(new URL('../src/database/index.js', import.meta.url).href, { namedExports: { writePool: {
+mock.module(new URL('../src/database/index.js', import.meta.url).href, { namedExports: { readPool: {}, writePool: {
   async connect() { return client; },
   async query(sql) {
     if (sql.includes('bool_or')) return { rows: [{ id: '1', key: 'live_streams.update_own', has_allow: true, has_deny: false }] };

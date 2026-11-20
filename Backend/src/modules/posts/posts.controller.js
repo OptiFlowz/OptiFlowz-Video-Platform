@@ -47,6 +47,7 @@ export function dislikePost(req, res) {
 }
 
 export async function getPost(req, res) {
+  res.set('Cache-Control', 'private, no-store');
   try {
     const post = await getPostInternal(req.params, req.user?.sub || null, req.authorization);
     return sendSuccess(res, { post });
@@ -57,6 +58,7 @@ export async function getPost(req, res) {
 }
 
 export async function getMyPosts(req, res) {
+  res.set('Cache-Control', 'private, no-store');
   try {
     const result = await getMyPostsInternal(req.query, req.user?.sub);
     return sendSuccess(res, result);
@@ -67,6 +69,7 @@ export async function getMyPosts(req, res) {
 }
 
 export async function getUserPosts(req, res) {
+  res.set('Cache-Control', 'private, no-store');
   try {
     const result = await getUserPostsInternal(req.params.userId, req.query, req.user?.sub || null);
     return sendSuccess(res, result);
@@ -77,6 +80,7 @@ export async function getUserPosts(req, res) {
 }
 
 export async function getRecommendedPosts(req, res) {
+  res.set('Cache-Control', 'private, no-store');
   try {
     const { user_ids } = validateOrThrow(recommendedPostsSchema.safeParse(req.body));
     const result = await getUserPostsInternal(user_ids, req.query, req.user?.sub || null);

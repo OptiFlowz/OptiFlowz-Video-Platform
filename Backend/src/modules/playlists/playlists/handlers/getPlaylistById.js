@@ -32,7 +32,7 @@ export async function getPlaylistByIdInternal(object, userId = null) {
           AND ps.user_id = $2::uuid
       )
     END AS is_saved
-    ${buildPlaylistCardJoins()}
+    ${buildPlaylistCardJoins('$2')}
     WHERE
       p.id = $1
       AND (

@@ -1,5 +1,6 @@
+import { videoCardAudienceWhere, visibleVideoWhere } from '../../../common/videoAccess.js';
 import { z } from 'zod';
-import { writePool } from '../../../database/index.js';
+import { readPool } from '../../../database/index.js';
 import { buildVideoCardSelect, buildVideoCardJoins } from '../../../database/sql/videoCardFragments.js';
 import { withVideoCardMedia } from '../../videos/helpers/videoCardMedia.js';
 
@@ -18,25 +19,36 @@ export async function withPostVideoCards(posts, viewerId = null) {
   let cards = [];
   if (videoIds.length) {
     const includeWatchProgress = viewerId !== null;
-    const { rows } = await writePool.query(
+    const { rows } = await readPool.query(
       `${buildVideoCardSelect({ includeWatchProgress })}
        ${buildVideoCardJoins({ includeWatchProgress, watchProgressUserParam: '$2' })}
-       WHERE v.id = ANY($1::uuid[]) AND v.mux_status = 'ready'
-         AND ((v.visibility = 'public' AND v.published_at <= NOW())
-           OR (v.visibility IN ('public', 'private') AND v.uploaded_by = $2::uuid))`,
+       WHERE v.id = ANY($1::uuid[]) AND ${visibleVideoWhere()} AND ${videoCardAudienceWhere('$2')}`,
       [videoIds, viewerId],
     );
     cards = await withVideoCardMedia(rows, viewerId);
   }
   const cardsById = new Map(cards.map(card => [card.id, card]));
+  // Keep existing placeholders for unavailable attachments. Remove the entire
+  // block, including its stored video ID, when the viewer may not discover it.
+  const unresolved = videoIds.filter(id => !cardsById.has(id));
+  const hiddenIds = new Set();
+  if (unresolved.length) {
+    const { rows } = await readPool.query(
+      `SELECT v.id FROM public.videos v WHERE v.id = ANY($1::uuid[]) AND NOT ${videoCardAudienceWhere('$2')}`,
+      [unresolved, viewerId],
+    );
+    for (const row of rows) hiddenIds.add(row.id);
+  }
   return posts.map(post => {
     const key = post.blocks ? 'blocks' : 'video_blocks';
     if (!Array.isArray(post[key])) return post;
     return {
       ...post,
-      [key]: post[key].map(block => block.type === 'video'
-        ? { ...block, video_card: cardsById.get(videoId(block)) ?? null }
-        : block),
+      [key]: post[key].flatMap(block => {
+        if (block.type !== 'video') return [block];
+        const id = videoId(block);
+        return hiddenIds.has(id) ? [] : [{ ...block, video_card: cardsById.get(id) ?? null }];
+      }),
     };
   });
 }

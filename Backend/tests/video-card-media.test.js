@@ -7,6 +7,7 @@ const id = '12345678-1234-4234-8234-123456789abc';
 const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
 const encodedKey = Buffer.from(privateKey.export({ type: 'pkcs8', format: 'pem' })).toString('base64');
 const base = {
+  show_locked_card: true, card_visible: true, can_watch: true, audience_mode: 'everyone', allowed_roles: [],
   id, mux_playback_id: 'playback-123', playback_policy: 'public', mux_status: 'ready',
   thumbnail_url: null, mux_thumbnail_time: null, duration_seconds: 120,
 };
@@ -15,9 +16,10 @@ let queries;
 let instance = 0;
 mock.module(new URL('../src/database/index.js', import.meta.url).href, {
   namedExports: {
-    writePool: { async query(sql, params) { queries.push({ sql, params }); return { rows }; } },
-    readPool: { async query(sql) {
-      return { rows: sql.includes('COUNT(*)') ? [{ total: 1 }] : [{ id, title: 'Video', thumbnail_url: 'stale-url' }] };
+    readPool: { async query(sql, params) {
+      queries.push({ sql, params });
+      if (sql.includes('COUNT(*) AS total')) return { rows: [{ total: 1 }] };
+      return { rows };
     } },
   },
 });
@@ -43,6 +45,17 @@ test('public card URLs preserve custom thumbnails and use saved time and backend
   assert.deepEqual(Object.fromEntries(thumb.searchParams), { time: '12.5', width: '1280', height: '720', fit_mode: 'preserve' });
   assert.equal(new URL(card.preview_url).searchParams.get('start'), '60');
   assert.equal(card.media_expires_at, null);
+});
+
+test('restricted cards retain role names and a thumbnail while suppressing animated previews', async () => {
+  const enrich = await setup({ can_watch: false, audience_mode: 'selected_roles', allowed_roles: ['Coach', 'Member'] });
+  const [card] = await enrich([{ id, title: 'Restricted' }]);
+  assert.equal(card.title, 'Restricted');
+  assert.equal(card.can_watch, false);
+  assert.equal(card.audience_mode, 'selected_roles');
+  assert.deepEqual(card.allowed_roles, ['Coach', 'Member']);
+  assert.ok(card.mux_thumbnail_url);
+  assert.equal(card.preview_url, null);
 });
 
 test('signed thumbnail and animated WebP URLs contain distinct verifiable image tokens', async () => {

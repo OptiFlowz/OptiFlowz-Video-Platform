@@ -19,9 +19,6 @@ test('MCP discovers and calls all eight authenticated AI routes', async t => {
   t.mock.method(readPool, 'query', async (sql, values) => {
     if (sql.includes('FROM public.people') && values[0] === id) return { rows: [{ id, name: 'Ana' }] };
     if (sql.includes('END AS is_saved')) return { rows: [{ id, title: 'Playlist' }] };
-    return { rows: [] };
-  });
-  t.mock.method(writePool, 'query', async (sql, values) => {
     if (sql.includes('u.id as uploader_id')) return { rows: [{ id, title: 'Video' }] };
     if (sql.includes('COUNT(DISTINCT v.id) AS total')) return { rows: [{ total: 0 }] };
     if (sql.includes('WITH candidates AS')) {
@@ -32,6 +29,7 @@ test('MCP discovers and calls all eight authenticated AI routes', async t => {
     }
     return { rows: [] };
   });
+  t.mock.method(writePool, 'query', () => assert.fail('An AI lookup queried the write pool'));
   t.mock.method(writePool, 'connect', () => assert.fail('A bot lookup attempted to record a view'));
   const http = globalThis.fetch;
   const progressRequests = [];

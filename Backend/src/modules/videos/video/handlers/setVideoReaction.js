@@ -1,4 +1,6 @@
 import { writePool } from '../../../../database/index.js';
+import { watchableVideoWhere } from '../../../../common/videoAccess.js';
+import { HttpError } from '../../../../common/httpError.js';
 
 export async function setVideoReactionInternal(videoId, userId, reaction) {
   // reaction: "like" | "dislike"
@@ -7,6 +9,12 @@ export async function setVideoReactionInternal(videoId, userId, reaction) {
 
   try {
     await client.query('BEGIN');
+    const video = await client.query(
+      `SELECT v.id FROM public.videos v WHERE v.id = $1
+       AND ${watchableVideoWhere({ allowLiveRecording: true })} FOR UPDATE OF v`,
+      [videoId, userId],
+    );
+    if (!video.rowCount) throw new HttpError(404, { message: 'Video not found' });
 
     // Zaključaj red u tabeli reakcija (ako postoji) radi sigurnosti u konkurenciji
     const { rows } = await client.query(

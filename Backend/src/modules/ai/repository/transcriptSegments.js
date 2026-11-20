@@ -1,5 +1,5 @@
-import { writePool } from '../../../database/index.js';
-import { buildVideoCardVisibilityWhere } from '../../../database/sql/videoCardFragments.js';
+import { readPool } from '../../../database/index.js';
+import { watchableVideoWhere } from '../../../common/videoAccess.js';
 import { INDEX_VERSION, MODEL } from '../../video-indexing/documents.js';
 
 const SEGMENTS_PER_VIDEO = 4;
@@ -28,7 +28,7 @@ export async function queryTranscriptSegments(videoIds, section, embedding, { la
       ) ranked WHERE position <= $5`;
   }
 
-  const { rows } = await writePool.query(`
+  const { rows } = await readPool.query(`
     WITH candidates AS (
       SELECT d.id AS segment_id, v.id AS video_id, v.title AS video_title,
              d.language, d.document_type, d.metadata, d.text, d.start_seconds, d.end_seconds,
@@ -38,7 +38,7 @@ export async function queryTranscriptSegments(videoIds, section, embedding, { la
       FROM videos v
       JOIN video_documents_pg d ON d.video_id = v.id
       JOIN video_indexing_sources s ON s.id = d.source_id
-      WHERE v.id = ANY($1::uuid[]) AND ${buildVideoCardVisibilityWhere()}
+      WHERE v.id = ANY($1::uuid[]) AND ${watchableVideoWhere({ userParam: 'NULL' })}
         AND s.enabled
         AND ($6::text IS NULL OR lower(d.language) = lower($6))
         AND ($7::text IS NULL OR d.document_type = $7)

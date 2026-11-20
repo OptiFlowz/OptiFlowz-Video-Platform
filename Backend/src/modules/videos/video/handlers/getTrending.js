@@ -1,3 +1,4 @@
+import { videoCardAudienceWhere } from '../../../../common/videoAccess.js';
 import { withVideoCardMedia } from '../../helpers/videoCardMedia.js';
 import { readPool } from '../../../../database/index.js';
 import { HttpError } from '../../../../common/httpError.js';
@@ -48,7 +49,7 @@ export async function getTrendingInternal({ query: queryParams }, actorUserId = 
                 ) p
             ) ppl ON TRUE
             WHERE v.mux_status = 'ready' AND v.visibility = 'public'
-                AND v.published_at <= NOW()
+                AND v.published_at <= NOW() AND ${videoCardAudienceWhere(userId ? '$3' : 'NULL')}
             ORDER BY COALESCE(r.recent_views, 0) DESC, v.view_count DESC
             LIMIT $1 OFFSET $2
         `;

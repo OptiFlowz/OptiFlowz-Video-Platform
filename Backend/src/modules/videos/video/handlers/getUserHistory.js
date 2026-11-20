@@ -1,3 +1,4 @@
+import { videoCardAudienceWhere } from '../../../../common/videoAccess.js';
 import { withVideoCardMedia } from '../../helpers/videoCardMedia.js';
 import { readPool } from '../../../../database/index.js';
 import { HttpError } from '../../../../common/httpError.js';
@@ -39,7 +40,7 @@ export async function getUserHistoryInternal({ query: queryParams }, actorUserId
                 ) p
             ) ppl ON TRUE
             WHERE wp.user_id = $1
-                AND v.mux_status = 'ready' AND v.visibility = 'public' AND v.published_at <= NOW()
+                AND v.mux_status = 'ready' AND v.visibility = 'public' AND v.published_at <= NOW() AND ${videoCardAudienceWhere('$1')}
             ORDER BY wp.last_watched_at DESC
             LIMIT $2 OFFSET $3
         `;

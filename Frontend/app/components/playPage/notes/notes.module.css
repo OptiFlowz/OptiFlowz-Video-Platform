@@ -9,21 +9,25 @@
 .primary:hover { background: var(--accentBlue3); }
 .primary svg { width: 18px; height: 18px; }
 .list { display: grid; gap: 12px; }
-.card { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 13px; padding: 15px; border: 1px solid color-mix(in srgb, var(--note-color) 22%, var(--background3)); border-left: 5px solid var(--note-color); border-radius: 14px; background: color-mix(in srgb, var(--note-color) 9%, var(--background2)); }
+.card { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 13px; padding: 15px; border: 1px solid var(--border1); border-radius: 10px; background: color-mix(in srgb, var(--note-color) 7%, var(--background2)); }
 .meta { grid-column: 2; grid-row: 1; min-width: 63px; align-self: start; display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
-.timestamp { box-sizing: border-box; width: 100%; color: var(--text1); background: var(--background3); border: 1px solid color-mix(in srgb, var(--text2) 30%, transparent); border-radius: 20px; padding: 4px 10px; font-variant-numeric: tabular-nums; }
-.timestamp:hover { border-color: var(--note-color); }
+.timestamp, .actions button { border: 1px solid color-mix(in srgb, var(--text2) 30%, transparent); }
+.timestamp { box-sizing: border-box; width: 100%; color: var(--text1); background: var(--background3); border-radius: 20px; padding: 4px 10px; font-variant-numeric: tabular-nums; }
+.timestamp:hover, .actions button:hover:not(:disabled) { border-color: var(--note-color); }
 .actions { display: flex; justify-content: space-between; gap: 5px; }
-.actions button { flex-shrink: 0; display: grid; place-items: center; width: 29px; height: 29px; padding: 5px; background: var(--background2); color: var(--note-color); border: 1px solid var(--background3); border-radius: 50%; }
-.actions button:hover { background: var(--background3); }
+.actions button { flex-shrink: 0; display: grid; place-items: center; width: 29px; height: 29px; padding: 5px; background: var(--background2); color: var(--note-color); border-radius: 50%; }
+.actions button:enabled:hover, .error button:enabled:hover, .colors button:enabled:hover { background: var(--background3); }
 .actions svg { width: 17px; height: 17px; }
 .content { grid-column: 1; grid-row: 1; min-width: 0; }
-.content h3 { margin: 0 0 6px; font-size: 0.95rem; line-height: 1.35; overflow-wrap: anywhere; }
+.content h3 { display: flex; align-items: flex-start; gap: 5px; margin: 0 0 6px; font-size: 0.95rem; line-height: 1.35; overflow-wrap: anywhere; }
+.bookmark { flex: none; color: var(--note-color); }
+.bookmark svg { display: block; width: 1.35em; height: 1.35em; fill: currentColor; }
 .content p { margin: 0; color: var(--text2); font-size: 0.88rem; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
 .actions .danger { color: var(--accentRed3); }
 .error button { border: 1px solid var(--background3); border-radius: 18px; padding: 6px 12px; color: var(--text1); background: var(--background2); }
 .editing { margin: 0; }
 .editing input, .editing textarea { box-sizing: border-box; min-width: 0; border: 1px solid var(--border1); background: var(--background2); color: var(--text1); font: inherit; }
+.editing .actions .danger { width: 100%; box-sizing: border-box; border-radius: 20px; }
 .editing .timestamp { width: auto; max-width: 12ch; text-align: center; background: var(--background2); padding: 4px 6px; }
 .titleInput, .textInput { display: block; width: 100%; border-radius: 7px; padding: 4px 6px; }
 .editing .titleInput { margin-bottom: 6px; font-size: 0.95rem; font-weight: 600; line-height: 1.35; }
@@ -35,8 +39,8 @@
 .editorButtons .primary, .cancel { padding: 6px 12px; }
 .cancel { border: 1px solid var(--border1); border-radius: 22px; background: var(--background2); color: var(--text2); }
 .cancel:hover { background: var(--background3); color: var(--text1); }
-.addNote { display: flex; align-items: center; gap: 10px; width: 100%; padding: 11px 12px; border: 1px dashed var(--border1); border-radius: 12px; background: var(--background3); color: var(--accentBlue3); text-align: left; transition: border-color 160ms ease, background-color 160ms ease; }
-.addNote:hover:not(:disabled) { border-color: var(--accentBlue3); background: var(--background2); }
+.addNote { display: flex; align-items: center; gap: 10px; width: 100%; padding: 11px 12px; border: 1px dashed var(--border1); border-radius: 12px; background: var(--background2); color: var(--accentBlue3); text-align: left; transition: border-color 160ms ease, background-color 160ms ease; }
+.addNote:hover:not(:disabled) { border-color: var(--accentBlue3); background: var(--background3); }
 .addIcon { display: inline-flex; align-items: center; justify-content: center; }
 .addIcon svg { width: 20px; height: 20px; }
 .addTime { margin-left: auto; color: var(--text2); font-size: 0.85rem; font-variant-numeric: tabular-nums; }

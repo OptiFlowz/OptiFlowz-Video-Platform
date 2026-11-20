@@ -43,7 +43,7 @@ export async function getPlatformTopViewedPlaylistsInternal(object, userId = nul
       ),
       playlist_cards AS (
         ${buildPlaylistCardSelect()},p.description
-        ${buildPlaylistCardJoins()}
+        ${buildPlaylistCardJoins(`$${filter.values.length + 1}`)}
         WHERE ${buildPlaylistCardVisibilityWhere()}
       )
       SELECT
@@ -55,7 +55,7 @@ export async function getPlatformTopViewedPlaylistsInternal(object, userId = nul
       ORDER BY period_views DESC, playlist_cards.created_at DESC
       LIMIT 3
     `,
-    filter.values,
+    [...filter.values, userId],
   );
 
   return rows;

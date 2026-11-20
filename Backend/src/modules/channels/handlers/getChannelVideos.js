@@ -1,5 +1,5 @@
 import { withVideoCardMedia } from '../../videos/helpers/videoCardMedia.js';
-import { writePool } from '../../../database/index.js';
+import { readPool } from '../../../database/index.js';
 import { buildVideoCardSelect,buildVideoCardJoins,buildVideoCardVisibilityWhere } from '../../../database/sql/videoCardFragments.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
@@ -38,7 +38,7 @@ export async function getChannelVideosInternal(object, userId = null) {
       ${buildVideoCardSelect({ includeWatchProgress: userId != null })}
       ${buildVideoCardJoins({includeWatchProgress: userId != null,watchProgressUserParam: '$4'})}
       WHERE
-        ${buildVideoCardVisibilityWhere()}
+        ${buildVideoCardVisibilityWhere(userId ? '$4' : 'NULL')}
         AND v.uploaded_by = $1
         AND v.live_stream_id IS NULL
       ORDER BY ${orderByField} ${orderByDirection}
@@ -50,14 +50,12 @@ export async function getChannelVideosInternal(object, userId = null) {
     FROM videos v
     WHERE v.uploaded_by = $1
       AND v.live_stream_id IS NULL
-      AND v.mux_status = 'ready'
-      AND v.visibility = 'public'
-      AND v.published_at <= NOW()
+      AND ${buildVideoCardVisibilityWhere('$2')}
   `;
 
   const [videosResult, countResult] = await Promise.all([
-    writePool.query(query, values),
-    writePool.query(countQuery, [id]),
+    readPool.query(query, values),
+    readPool.query(countQuery, [id, userId]),
   ]);
 
   const total = countResult.rows[0]?.total || 0;

@@ -239,6 +239,7 @@ export async function handleUpdateProgress(req, res) {
       message: 'Progress updated',
     });
   } catch (error) {
+    if (error instanceof HttpError) return res.status(error.status).json(error.body);
     console.error('Progress update error:', error);
     res.status(500).json({ message: 'Failed to update progress' });
   }
@@ -249,6 +250,7 @@ export async function handleLikeVideo(req, res) {
     const result = await setVideoReactionInternal(req.params.id, req.user.sub, 'like');
     res.json({ success: true, status: result.status });
   } catch (e) {
+    if (e instanceof HttpError) return res.status(e.status).json(e.body);
     res.status(500).json({ message: 'Failed to set like' });
   }
 }
@@ -258,6 +260,7 @@ export async function handleDislikeVideo(req, res) {
     const result = await setVideoReactionInternal(req.params.id, req.user.sub, 'dislike');
     res.json({ success: true, status: result.status });
   } catch (e) {
+    if (e instanceof HttpError) return res.status(e.status).json(e.body);
     res.status(500).json({ message: 'Failed to set dislike' });
   }
 }

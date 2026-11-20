@@ -63,7 +63,7 @@ body:has(main.videoQuizPage.quizExperience) { overflow-x: clip; }
   color: var(--text1);
   flex-shrink: 0;
 }
-.videoQuizPage.quizExperience .videoQuizCloseButton:hover { background: var(--background2); }
+.videoQuizPage.quizExperience .videoQuizCloseButton:hover:not(:disabled) { background: var(--background3); }
 .videoQuizPage.quizExperience .videoQuizCloseButton svg { width: 20px; height: 20px; }
 .videoQuizPage.quizExperience .videoQuizCloseButton svg path { stroke: currentColor; }
 .videoQuizPage.quizExperience .videoQuizIntro {
@@ -189,7 +189,7 @@ body:has(main.videoQuizPage.quizExperience) { overflow-x: clip; }
   gap: 10px;
 }
 .videoQuizPage.quizExperience .videoQuizAttemptCard > .videoQuizAttemptViewButton { margin-inline-start: calc(40px - var(--attempt-column-gap)); }
-.videoQuizPage.quizExperience .videoQuizAttemptViewButton:hover:not(:disabled) { background: var(--background2); }
+.videoQuizPage.quizExperience .videoQuizAttemptViewButton:hover:not(:disabled) { background: var(--background3); }
 .videoQuizPage.quizExperience .videoQuizAttemptViewButton svg { width: 6px; height: 12px; }
 .videoQuizPage.quizExperience .videoQuizAttemptViewButton svg path { stroke: currentColor; }
 .videoQuizPage.quizExperience .videoQuizEmptyState { padding: 36px 24px; background: var(--background2); border: 0; text-align: center; }
@@ -228,7 +228,7 @@ body:has(main.videoQuizPage.quizExperience) { overflow-x: clip; }
 .videoQuizPage.quizExperience .videoQuizQuestionHeader p { margin: 2px 0 0; line-height: 1.45; font-size: 0.85rem; color: color-mix(in srgb, var(--text1) 65%, transparent); }
 .videoQuizPage.quizExperience .videoQuizOptions { gap: 12px; }
 .videoQuizPage.quizExperience .videoQuizOption { flex-direction: row-reverse; justify-content: space-between; padding: 18px; min-height: 70px; border: 2px solid transparent; background: var(--background2); border-radius: 12px; }
-.videoQuizPage.quizExperience .videoQuizOption:hover:not(:disabled) { background: var(--background2); }
+.videoQuizPage.quizExperience .videoQuizOption:hover:not(:disabled) { background: var(--background3); }
 .videoQuizPage.quizExperience .videoQuizOption.selected { background: var(--background2); border-color: var(--accentBlue2); box-shadow: none; }
 .videoQuizPage.quizExperience .videoQuizOptionMarker { width: 23px; height: 23px; }
 .videoQuizPage.quizExperience .videoQuizOption.selected .videoQuizOptionMarker { color: var(--borderWhite); background: var(--accentBlue); border-color: var(--accentBlue); }

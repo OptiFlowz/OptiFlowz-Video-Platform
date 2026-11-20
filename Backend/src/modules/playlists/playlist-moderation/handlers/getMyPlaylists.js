@@ -1,3 +1,4 @@
+import { videoCardAudienceWhere } from '../../../../common/videoAccess.js';
 import { withPlaylistCardMedia } from '../../helpers/playlistCardMedia.js';
 import { readPool } from '../../../../database/index.js';
 import { HttpError } from '../../../../common/httpError.js';
@@ -69,8 +70,8 @@ export async function getMyPlaylistsInternal({ query: queryParams }, actorUserId
       FROM public.playlists p
         LEFT JOIN LATERAL (
         SELECT COUNT(*)::int AS video_count
-        FROM public.playlist_items pi3
-        WHERE pi3.playlist_id = p.id
+        FROM public.playlist_items pi3 JOIN public.videos v ON v.id = pi3.video_id
+        WHERE pi3.playlist_id = p.id AND ${videoCardAudienceWhere('$1')}
       ) ic ON TRUE
       WHERE ${whereClause}
       ORDER BY ${orderBy}

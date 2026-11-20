@@ -1,8 +1,9 @@
-import { writePool } from '../../../database/index.js';
+import { readPool, writePool } from '../../../database/index.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
 import { moderateText } from '../../../common/moderateText.js';
-import { requireVisibleVideo } from '../../../common/videoAccess.js';
+import { watchableVideoWhere } from '../../../common/videoAccess.js';
+import { HttpError } from '../../../common/httpError.js';
 
 function prerequisites(object, userId) {
   const schema = z.object({
@@ -32,10 +33,8 @@ function prerequisites(object, userId) {
 export async function postCommentInternal(object, userId) { 
   const { video_id, parent_id = null, content } = prerequisites(object,userId);
 
-  await requireVisibleVideo(writePool, video_id, userId, { allowLiveRecording: true });
-
   if (parent_id) {
-    const parentCheck = await writePool.query(
+    const parentCheck = await readPool.query(
       `SELECT id, video_id
        FROM public.video_comments
        WHERE id = $1 AND video_id = $2 AND is_deleted=false
@@ -53,7 +52,8 @@ export async function postCommentInternal(object, userId) {
   const insertRes = await writePool.query(
     `
       INSERT INTO public.video_comments (video_id, user_id, parent_id, content)
-      VALUES ($1, $2, $3, $4)
+      SELECT v.id, $2, $3, $4 FROM public.videos v
+      WHERE v.id = $1 AND ${watchableVideoWhere({ allowLiveRecording: true })}
       RETURNING
         id, video_id, user_id, parent_id, content,
         like_count, dislike_count, reply_count,
@@ -62,5 +62,6 @@ export async function postCommentInternal(object, userId) {
     [video_id, userId, parent_id, content]
   );
 
+  if (!insertRes.rowCount) throw new HttpError(404, { message: 'Video not found' });
   return insertRes.rows[0];
 }

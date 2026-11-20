@@ -1,6 +1,7 @@
 import Mux from '@mux/mux-node';
-import { writePool } from '../../../../database/index.js';
+import { readPool } from '../../../../database/index.js';
 import { HttpError } from '../../../../common/httpError.js';
+import { videoAudienceWhere } from '../../../../common/videoAccess.js';
 
 const mux = new Mux();
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -10,15 +11,14 @@ export async function getVideoPlaybackInternal(videoId, userId = null) {
     throw new HttpError(400, { message: 'Invalid video ID' });
   }
 
-  // Use the primary so recent visibility changes apply when issuing new tokens.
-  const { rows } = await writePool.query(
+  const { rows } = await readPool.query(
     `SELECT id, uploaded_by, visibility, mux_status, mux_playback_id,
             playback_policy, duration_seconds,
             (published_at <= NOW()) AS publication_due
-     FROM public.videos
-     WHERE id = $1
+     FROM public.videos v
+     WHERE v.id = $1 AND ${videoAudienceWhere(userId ? '$2' : 'NULL')}
      LIMIT 1`,
-    [videoId],
+    userId ? [videoId, userId] : [videoId],
   );
   const video = rows[0];
   const canView = video && (

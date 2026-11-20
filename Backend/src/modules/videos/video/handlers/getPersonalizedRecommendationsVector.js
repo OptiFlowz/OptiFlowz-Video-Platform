@@ -1,5 +1,5 @@
 import { HttpError } from '../../../../common/httpError.js';
-import { writePool } from '../../../../database/index.js';
+import { readPool } from '../../../../database/index.js';
 import {
   buildVideoCardJoins,
   buildVideoCardVisibilityWhere,
@@ -31,7 +31,7 @@ export async function getPersonalizedRecommendationsVectorInternal(userId, limit
 
   // Bound each activity list before loading embeddings; do not fill gaps with
   // older activity when recent videos are not indexed yet.
-  const { rows: profileRows } = await writePool.query(
+  const { rows: profileRows } = await readPool.query(
     `WITH recent_likes AS (
       SELECT vr.video_id, 2 AS weight
       FROM video_reactions vr
@@ -94,7 +94,7 @@ export async function getPersonalizedRecommendationsVectorInternal(userId, limit
     FROM videos v
     JOIN video_documents_pg d ON d.video_id = v.id
     JOIN video_indexing_sources s ON s.id = d.source_id
-    WHERE ${buildVideoCardVisibilityWhere()}
+    WHERE ${buildVideoCardVisibilityWhere('$1')}
       AND NOT (v.id = ANY($4::uuid[]))
       AND s.enabled = TRUE
       AND d.source_revision = s.indexed_revision
@@ -115,7 +115,7 @@ export async function getPersonalizedRecommendationsVectorInternal(userId, limit
     : JSON.stringify(profile.embedding);
 
   const [{ rows }, { rows: countRows }] = await Promise.all([
-    writePool.query(
+    readPool.query(
       `WITH ranked AS (
         SELECT v.id, MAX(1 - (d.embedding <=> $5::vector)) AS personal_score
         ${eligibleDocuments}
@@ -133,7 +133,7 @@ export async function getPersonalizedRecommendationsVectorInternal(userId, limit
       LIMIT $6 OFFSET $7`,
       [...filterParams, embedding, limit, offset],
     ),
-    writePool.query(`SELECT COUNT(DISTINCT v.id) AS total ${eligibleDocuments}`, filterParams),
+    readPool.query(`SELECT COUNT(DISTINCT v.id) AS total ${eligibleDocuments}`, filterParams),
   ]);
 
   return {

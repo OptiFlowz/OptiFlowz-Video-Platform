@@ -1,4 +1,5 @@
-import { writePool } from '../../../database/index.js';
+import { readPool, writePool } from '../../../database/index.js';
+import { watchableVideoWhere } from '../../../common/videoAccess.js';
 import { z } from 'zod';
 import { validateOrThrow } from '../../../common/input.validation.js';
 
@@ -27,11 +28,13 @@ export async function editCommentInternal(params, body, userId) {
 
   const { rows, rowCount } = await writePool.query(
     `
-      UPDATE public.video_comments
+      UPDATE public.video_comments AS c
       SET content = $1, updated_at = NOW()
       WHERE id = $2
         AND user_id = $3
         AND is_deleted = false
+        AND EXISTS (SELECT 1 FROM public.videos v WHERE v.id = c.video_id
+                    AND ${watchableVideoWhere({ userParam: '$3', allowLiveRecording: true })})
       RETURNING
         id, video_id, user_id, parent_id,
         content, like_count, dislike_count, reply_count,
@@ -44,9 +47,11 @@ export async function editCommentInternal(params, body, userId) {
     return rows[0];
   }
 
-  const check = await writePool.query(
-    `SELECT user_id, is_deleted FROM public.video_comments WHERE id = $1 LIMIT 1`,
-    [commentId]
+  const check = await readPool.query(
+    `SELECT c.user_id, c.is_deleted FROM public.video_comments c
+     JOIN public.videos v ON v.id = c.video_id
+     WHERE c.id = $1 AND ${watchableVideoWhere({ allowLiveRecording: true })}`,
+    [commentId, userId]
   );
 
   if (check.rowCount === 0) {

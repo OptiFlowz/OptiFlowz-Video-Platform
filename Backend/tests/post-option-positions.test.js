@@ -22,7 +22,7 @@ async function query(sql, params) {
 }
 
 mock.module(new URL('../src/database/index.js', import.meta.url).href, {
-  namedExports: { writePool: { query, async connect() { return { query, release() { released++; } }; } } },
+  namedExports: { readPool: {}, writePool: { query, async connect() { return { query, release() { released++; } }; } } },
 });
 mock.module(new URL('../src/middleware/auth.js', import.meta.url).href, {
   namedExports: {

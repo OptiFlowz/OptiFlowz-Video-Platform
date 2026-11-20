@@ -73,11 +73,15 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
     visibility, // "public" | "private"
     published_at,
     audience_mode,
+    show_locked_card,
     allowed_role_ids,
     chairs,
     speakers,
   } = inputBody || {};
 
+  if (isDefined(show_locked_card) && typeof show_locked_card !== 'boolean') {
+    throw new HttpError(400, { message: 'show_locked_card must be a boolean' });
+  }
   const audienceRoleIds = getAudienceRoleIds(audience_mode, allowed_role_ids);
 
   // visibility validacija (null ne prihvatamo; ako hoćeš i null->NULL reci)
@@ -150,7 +154,7 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
     isDefined(chapters) ||
     isDefined(visibility) ||
     isDefined(published_at) ||
-    isDefined(audience_mode);
+    isDefined(audience_mode) || isDefined(show_locked_card);
 
   const anyPeopleField = isDefined(chairs) || isDefined(speakers);
 
@@ -245,6 +249,11 @@ export async function patchVideoDetailsInternal({ params: routeParams, body: inp
       if (isDefined(published_at)) {
         set.push(`published_at = $${i++}::timestamptz`);
         params.push(published_at);
+      }
+
+      if (isDefined(show_locked_card)) {
+        set.push(`show_locked_card = $${i++}`);
+        params.push(show_locked_card);
       }
 
       if (isDefined(audience_mode)) {

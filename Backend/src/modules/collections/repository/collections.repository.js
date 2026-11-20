@@ -43,7 +43,7 @@ export async function getCollection(database, collectionId, viewerId = null) {
       SELECT jsonb_agg(to_jsonb(card) ORDER BY card.position, card.id) AS playlists
       FROM (
         ${buildPlaylistCardSelect()}, membership.position
-        ${buildPlaylistCardJoins()}
+        ${buildPlaylistCardJoins('$2')}
         JOIN public.collection_playlists membership ON membership.playlist_id = p.id
         WHERE membership.collection_id = collection.id
           AND (p.status = 'public' OR (p.status = 'private' AND p.created_by = $2::uuid))

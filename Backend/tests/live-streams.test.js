@@ -28,7 +28,7 @@ const client = {
   release() { calls.push(['release']); },
 };
 mock.module(new URL('../src/database/index.js', import.meta.url).href, {
-  namedExports: { writePool: {
+  namedExports: { readPool: {}, writePool: {
     async connect() {
       calls.push(['connect']);
       if (failure === 'connect') throw new Error('Database unavailable');

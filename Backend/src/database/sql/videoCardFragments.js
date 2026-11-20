@@ -1,3 +1,4 @@
+import { videoCardAudienceWhere } from '../../common/videoAccess.js';
 export function buildVideoCardSelect({ includeWatchProgress = false } = {}) {
   return `
     SELECT
@@ -44,10 +45,10 @@ export function buildVideoCardJoins({ includeWatchProgress = false, watchProgres
   `;
 }
 
-export function buildVideoCardVisibilityWhere() {
+export function buildVideoCardVisibilityWhere(userParam = 'NULL') {
   return `
     v.mux_status = 'ready'
     AND v.visibility = 'public'
-    AND v.published_at <= NOW()
+    AND v.published_at <= NOW() AND ${videoCardAudienceWhere(userParam)}
   `;
 }

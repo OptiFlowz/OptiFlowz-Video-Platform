@@ -16,6 +16,7 @@ main.channelPage .postCard > .postAuthor { display: flex; flex-direction: row; f
 .postInset figcaption { margin-bottom: 10px; }
 .postOptions { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
 .postOption { position: relative; isolation: isolate; overflow: hidden; display: flex; align-items: center; gap: 10px; width: 100%; min-height: 50px; padding: 12px 14px; border-radius: 10px; background: var(--background2); color: var(--text1); text-align: start; cursor: pointer; }
+.postOption:enabled:hover, a.postVideoMention:hover { background: var(--background3); }
 .postOptionFill { position: absolute; inset-block: 0; inset-inline-start: 0; z-index: -1; border-radius: inherit; background: var(--background2); min-width: 0; transition: width .55s cubic-bezier(.22, 1, .36, 1), min-width .55s cubic-bezier(.22, 1, .36, 1), background-color .25s ease; }
 .postOption.isSelected .postOptionFill { background: var(--accentOrange); }
 .postOption.isIncorrect .postOptionFill { background: var(--accentRed); }
@@ -81,6 +82,8 @@ main.myPostsPage #selectedButtons { flex-wrap: wrap; margin-left: 0; }
 .postDialog svg { width: 20px; height: 20px; flex-shrink: 0; }
 .postEditorTabs { display: flex; gap: 8px; margin-block: 20px; }
 .postEditorTabs button { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 10px; background: var(--background2); color: var(--text1); }
+.postIconButton:enabled:hover, .postBlockActions button:enabled:hover,
+.postSecondary:enabled:hover, .postEditorTabs button[aria-pressed="false"]:enabled:hover { background: var(--background3); }
 .postEditorTabs button[aria-pressed="true"] { background: var(--accentBlue); color: var(--borderWhite); }
 .postEditorTabs button svg path { stroke: currentColor; }
 .postEditorForm, .postEditorBlock, .postEditorOptions, .postEditorOption { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
@@ -311,7 +314,7 @@ main.channelPage .postCard.postCardInteractive > .postAuthor { grid-column: 1 / 
 }
 .postActions { display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center; gap: .5rem; min-width: 0; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; }
 .postActions button { flex-shrink: 0; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: .45rem; min-height: 40px; padding: .5rem .8rem; border-radius: var(--bR); background: var(--background2); color: var(--text1); cursor: pointer; font: inherit; font-size: .85rem; }
-.postActions button:hover { background: var(--background3); }
+.postActions button:enabled:hover { background: var(--background3); }
 .postActions button[aria-pressed="true"], .postActions button[aria-expanded="true"] { color: var(--accentBlue2); }
 .postActions button:disabled { cursor: not-allowed; opacity: .55; }
 .postActions button:focus-visible { outline: 2px solid var(--accentBlue2); outline-offset: -2px; }
@@ -320,7 +323,7 @@ main.channelPage .postCard.postCardInteractive > .postAuthor { grid-column: 1 / 
 .postReactions button { background: transparent; border-radius: 0; }
 .postReactions button:first-child { border-start-start-radius: var(--bR); border-end-start-radius: var(--bR); border-inline-end: 1px solid var(--border1); }
 .postReactions button:last-child { border-start-end-radius: var(--bR); border-end-end-radius: var(--bR); }
-.postReactions button:hover { background: var(--background2); }
+
 .postComments { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border1); min-width: 0; }
 
 /* Only channel posts can use the spare space beside the 680px post column. */

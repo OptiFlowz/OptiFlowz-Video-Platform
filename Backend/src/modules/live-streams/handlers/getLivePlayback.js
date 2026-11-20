@@ -1,7 +1,8 @@
 import Mux from '@mux/mux-node';
 import { z } from 'zod';
-import { writePool } from '../../../database/index.js';
+import { readPool } from '../../../database/index.js';
 import { HttpError } from '../../../common/httpError.js';
+import { videoAudienceWhere } from '../../../common/videoAccess.js';
 import { validateOrThrow } from '../../../common/input.validation.js';
 
 const mux = new Mux();
@@ -11,9 +12,8 @@ const TOKEN_LIFETIME_SECONDS = 3600;
 export async function getLivePlaybackInternal(liveStreamId, userId = null) {
   // Authentication is selected by the route; visibility is enforced for every viewer.
   const id = validateOrThrow(idSchema.safeParse(liveStreamId));
-  // Read the primary on each request so visibility changes apply to new tokens.
   // DVR must use this session's asset, never a recording from an earlier session.
-  const { rows } = await writePool.query(`SELECT ls.id, ls.user_id, ls.visibility,
+  const { rows } = await readPool.query(`SELECT ls.id, ls.user_id, ls.visibility,
     ls.status, ls.mux_status, ls.dvr_enabled, ls.playback_policy, ls.mux_live_playback_id,
     v.id AS video_id, v.mux_playback_id AS recording_playback_id,
     v.playback_policy AS recording_playback_policy
@@ -22,7 +22,8 @@ export async function getLivePlaybackInternal(liveStreamId, userId = null) {
       AND v.mux_asset_id=ls.mux_active_asset_id
       AND v.mux_recording_completed_at IS NULL
       AND v.mux_status IN ('preparing','ready')
-    WHERE ls.id=$1 LIMIT 1`, [id]);
+    WHERE ls.id=$1 AND (NOT ls.dvr_enabled OR v.id IS NULL OR ${videoAudienceWhere()})
+    LIMIT 1`, [id, userId]);
   const stream = rows[0];
   const canView = stream && (['public', 'unlisted'].includes(stream.visibility)
     || (stream.visibility === 'private' && stream.user_id === userId));

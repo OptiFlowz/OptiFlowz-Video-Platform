@@ -1,14 +1,15 @@
-import { writePool } from '../../../../database/index.js';
+import { videoCardAudienceWhere } from '../../../../common/videoAccess.js';
+import { readPool } from '../../../../database/index.js';
 import { buildVideoCardSelect, buildVideoCardJoins } from '../../../../database/sql/videoCardFragments.js';
 import { withVideoCardMedia } from '../../../videos/helpers/videoCardMedia.js';
 
 export async function withQuizRequirementVideoCards(requirements, userId) {
   if (!requirements.length) return [];
   const videoIds = [...new Set(requirements.map(requirement => requirement.video_id))];
-  const { rows } = await writePool.query(`
+  const { rows } = await readPool.query(`
     ${buildVideoCardSelect({ includeWatchProgress: true })}
     ${buildVideoCardJoins({ includeWatchProgress: true, watchProgressUserParam: '$2' })}
-    WHERE v.id = ANY($1::uuid[]) AND v.mux_status = 'ready'
+    WHERE v.id = ANY($1::uuid[]) AND v.mux_status = 'ready' AND ${videoCardAudienceWhere('$2')}
       AND ((v.visibility = 'public' AND v.published_at <= NOW())
         OR (v.visibility IN ('public', 'private') AND v.uploaded_by = $2))
   `, [videoIds, userId]);

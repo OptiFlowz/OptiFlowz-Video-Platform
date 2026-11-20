@@ -1,4 +1,4 @@
-import { readPool, writePool } from '../../../../database/index.js';
+import { readPool } from '../../../../database/index.js';
 import { HttpError } from '../../../../common/httpError.js';
 import { requireVisibleVideo } from '../../../../common/videoAccess.js';
 
@@ -13,7 +13,7 @@ export async function getCommentsInternal(
     if (!video_id) {
       throw new HttpError(400, { message: 'Missing video id' });
     }
-    await requireVisibleVideo(writePool, video_id, user_id, { allowLiveRecording: true });
+    await requireVisibleVideo(readPool, video_id, user_id, { allowLiveRecording: true, checkAudience: true });
 
     const page = Math.max(parseInt(queryParams.page || '1', 10), 1);
     const limit = Math.min(Math.max(parseInt(queryParams.limit || '20', 10), 1), 100);

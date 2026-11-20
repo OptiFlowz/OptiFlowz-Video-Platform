@@ -13,11 +13,9 @@ let queries;
 let permitted;
 mock.module(new URL('../src/database/index.js', import.meta.url).href, {
   namedExports: {
-    writePool: { async query(sql, params) {
+    readPool: { async query(sql, params) {
       queries.push({ sql, params });
-      return { rows: permitted ? [{ ...video }] : [] };
-    } },
-    readPool: { async query(sql) {
+      if (sql.includes('FROM videos v')) return { rows: permitted ? [{ ...video }] : [] };
       return { rows: sql.includes('COUNT(*)::int AS total') ? [{ total: 3 }] : [] };
     } },
   },

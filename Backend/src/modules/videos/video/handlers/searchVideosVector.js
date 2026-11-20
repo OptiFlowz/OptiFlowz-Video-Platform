@@ -1,5 +1,5 @@
 import { HttpError } from '../../../../common/httpError.js';
-import { writePool } from '../../../../database/index.js';
+import { readPool } from '../../../../database/index.js';
 import {
   buildVideoCardJoins,
   buildVideoCardVisibilityWhere,
@@ -41,11 +41,12 @@ export async function searchVideosVectorInternal(searchParams, userId = null) {
 
   const filterParams = [MODEL, INDEX_VERSION, JSON.stringify(embedding), MIN_RELEVANCE];
   const bindFilter = (value) => `$${filterParams.push(value)}`;
+  const userParam = userId ? bindFilter(userId) : 'NULL';
   let eligibleDocuments = `
     FROM videos v
     JOIN video_documents_pg d ON d.video_id = v.id
     JOIN video_indexing_sources s ON s.id = d.source_id
-    WHERE ${buildVideoCardVisibilityWhere()}
+    WHERE ${buildVideoCardVisibilityWhere(userParam)}
       AND s.enabled = TRUE
       AND d.source_revision = s.indexed_revision
       AND d.embedding_model = $1
@@ -70,7 +71,6 @@ export async function searchVideosVectorInternal(searchParams, userId = null) {
 
   const params = [...filterParams];
   const bind = (value) => `$${params.push(value)}`;
-  const userParam = userId ? bind(userId) : null;
   const orderBy = {
     relevance: 'ranked.relevance DESC, v.created_at DESC, v.id',
     date: 'v.created_at DESC, v.id',
@@ -79,10 +79,9 @@ export async function searchVideosVectorInternal(searchParams, userId = null) {
   };
   const order = Object.hasOwn(orderBy, sortBy) ? orderBy[sortBy] : orderBy.date;
 
-  // Use the primary database so visibility and source invalidation are current.
   // Keep the last published revision searchable while its replacement is queued.
   const [{ rows }, { rows: countRows }] = await Promise.all([
-    writePool.query(
+    readPool.query(
       `WITH ranked AS (
         SELECT v.id, MAX(1 - (d.embedding <=> $3::vector)) AS relevance
         ${eligibleDocuments}
@@ -103,7 +102,7 @@ export async function searchVideosVectorInternal(searchParams, userId = null) {
       LIMIT ${bind(limit)} OFFSET ${bind(offset)}`,
       params,
     ),
-    writePool.query(
+    readPool.query(
       `SELECT COUNT(DISTINCT v.id) AS total ${eligibleDocuments}`,
       filterParams,
     ),
