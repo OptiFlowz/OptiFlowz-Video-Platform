@@ -338,12 +338,11 @@ main.homePage .collection-header{
 
 .collection .item,
 .videoHolder .item {
-  transition: transform 0.18s ease, filter 0.18s ease;
+  transition: filter 0.18s ease;
 }
 
 .collection .item:hover,
 .videoHolder .item:hover {
-  transform: translateY(-6px);
   filter: none;
 }
 
