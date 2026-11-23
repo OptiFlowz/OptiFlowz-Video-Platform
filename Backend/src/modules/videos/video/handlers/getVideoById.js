@@ -68,14 +68,17 @@ export async function getVideoByIdInternal(videoId, userId = null) {
       p.name,
       p.image_url,
       vc.type,
-      COUNT(vc_all.video_id) AS total_video_count
-    FROM people p
-    JOIN video_chairs vc ON p.id = vc.person_id
-    JOIN video_chairs vc_all ON p.id = vc_all.person_id
-	  JOIN videos vid ON vc_all.video_id = vid.id
-    WHERE vc.video_id = $1 AND vid.mux_status = 'ready' AND vid.visibility = 'public'
-      AND vid.published_at <= NOW() AND ${videoCardAudienceWhere('$2', 'vid')}
-    GROUP BY p.id, p.name, p.image_url, vc.type;
+      (
+        SELECT COUNT(*)
+        FROM video_chairs vc_all
+        JOIN videos vid ON vid.id = vc_all.video_id
+        WHERE vc_all.person_id = p.id
+          AND vid.mux_status = 'ready' AND vid.visibility = 'public'
+          AND vid.published_at <= NOW() AND ${videoCardAudienceWhere('$2', 'vid')}
+      ) AS total_video_count
+    FROM video_chairs vc
+    JOIN people p ON p.id = vc.person_id
+    WHERE vc.video_id = $1;
     `;
   const { rows: chairRows } = await readPool.query(chairq, [videoId, userId]);
 

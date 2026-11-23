@@ -147,6 +147,18 @@ test('publication rules against PostgreSQL temporary fixtures', {
     await assert.rejects(playback(processing, owner), { status: 409 });
   });
 
+  await t.test('private video details include a first-time speaker with zero public videos', async () => {
+    const speaker = uuid(301);
+    await client.query('INSERT INTO people(id, name) VALUES ($1, $2)', [speaker, 'New speaker']);
+    await client.query('INSERT INTO video_chairs(video_id, person_id, type) VALUES ($1, $2, 1)', [privateId, speaker]);
+
+    const { people } = await details(privateId, owner);
+    assert.deepEqual(people.find(person => person.id === speaker), {
+      id: speaker, name: 'New speaker', image_url: null, type: 1, total_video_count: '0',
+    });
+    assert.equal(people.find(person => person.id === uuid(300)).total_video_count, '1');
+  });
+
   await t.test('public search, trending, channel lists, history and counts exclude unavailable videos', async () => {
     const result = await search({});
     assert.equal(result.total, 1);
